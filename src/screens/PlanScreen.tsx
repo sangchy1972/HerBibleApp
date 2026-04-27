@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Feather } from '@expo/vector-icons';
+import Svg, { Path, Rect } from 'react-native-svg';
 import { ROSE, LAV, TXT, TXTSUB, P } from '../constants/theme';
 import { PLANS_EXPLORE } from '../constants/data';
 
@@ -11,7 +13,7 @@ function ImagePlaceholder({ ac, width = 100, height = 66.6, radius = 5 }: {
 }) {
   return (
     <View style={{ width, height, borderRadius: radius, backgroundColor: `${ac}22`, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-      <Text style={{ fontSize: 22, opacity: 0.55 }}>🖼</Text>
+      <Feather name="image" size={22} color={ac} style={{ opacity: 0.55 }} />
     </View>
   );
 }
@@ -53,7 +55,7 @@ function PlanDetail({ plan, onBack }: { plan: Plan; onBack: () => void }) {
       {/* Back */}
       <View style={styles.detailNav}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-          <Text style={styles.backArrow}>‹</Text>
+          <Feather name="chevron-left" size={22} color={TXT} />
         </TouchableOpacity>
       </View>
 
@@ -62,7 +64,7 @@ function PlanDetail({ plan, onBack }: { plan: Plan; onBack: () => void }) {
 
       {/* Hero image placeholder */}
       <View style={[styles.heroImagePlaceholder, { borderColor: `${plan.ac}55`, backgroundColor: `${plan.ac}18` }]}>
-        <Text style={{ fontSize: 40, opacity: 0.4 }}>🖼</Text>
+        <Feather name="image" size={40} color={plan.ac} style={{ opacity: 0.4 }} />
         <Text style={[styles.heroImageLabel, { color: plan.ac }]}>HERO IMAGE</Text>
       </View>
 
@@ -101,23 +103,23 @@ function PlanDetail({ plan, onBack }: { plan: Plan; onBack: () => void }) {
         {/* Daily walk */}
         <TouchableOpacity style={styles.walkRow} activeOpacity={0.8}>
           <View style={[styles.walkIcon, { backgroundColor: `${plan.ac}22` }]}>
-            <Text style={{ fontSize: 14 }}>→</Text>
+            <Feather name="arrow-right" size={14} color={plan.ac} />
           </View>
           <View style={styles.walkMeta}>
             <Text style={[styles.walkCaption, { color: plan.ac }]}>DAILY WALK</Text>
             <Text style={styles.walkTitle}>{cur.walk}</Text>
           </View>
-          <Text style={{ color: TXTSUB, fontSize: 16 }}>›</Text>
+          <Feather name="chevron-right" size={16} color={TXTSUB} />
         </TouchableOpacity>
 
         {/* Verses */}
         {cur.verses.map((v, i) => (
           <TouchableOpacity key={i} style={styles.verseRow} activeOpacity={0.8}>
             <View style={styles.verseIcon}>
-              <Text style={{ fontSize: 12, opacity: 0.5 }}>📖</Text>
+              <Feather name="book-open" size={12} color={TXTSUB} style={{ opacity: 0.6 }} />
             </View>
             <Text style={styles.verseName}>{v}</Text>
-            <Text style={{ color: TXTSUB, fontSize: 16 }}>›</Text>
+            <Feather name="chevron-right" size={16} color={TXTSUB} />
           </TouchableOpacity>
         ))}
       </View>
@@ -256,7 +258,10 @@ export default function PlanScreen() {
               <View key={ci} style={styles.category}>
                 <View style={styles.catHeader}>
                   <Text style={styles.catName}>{cat.name}</Text>
-                  <Text style={[styles.seeAll, { color: ROSE }]}>See all ›</Text>
+                  <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                    <Text style={[styles.seeAll, { color: ROSE }]}>See all</Text>
+                    <Feather name="chevron-right" size={12} color={ROSE} />
+                  </TouchableOpacity>
                 </View>
                 <Text style={styles.catDesc}>{cat.desc}</Text>
                 {cat.plans.map((plan, i) => (
@@ -277,7 +282,7 @@ export default function PlanScreen() {
                 <View style={{ position: 'relative' }}>
                   <ImagePlaceholder ac={p.ac} />
                   <View style={styles.checkBadge}>
-                    <Text style={{ fontSize: 10, color: '#fff', fontWeight: '700' }}>✓</Text>
+                    <Feather name="check" size={10} color="#fff" />
                   </View>
                 </View>
                 <View style={styles.planMeta}>

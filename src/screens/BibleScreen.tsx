@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
-  StyleSheet, Modal, FlatList,
+  StyleSheet,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { ROSE, LAV, TXT, TXTSUB, P } from '../constants/theme';
 import { OT, NT, PSALM_23, RECENT_SEARCHES } from '../constants/data';
 
@@ -29,7 +30,7 @@ function BookDrawer({ onClose, testament, setTestament, currentBook, onPick }: {
         <View style={styles.drawerHeader}>
           <Text style={styles.drawerTitle}>Books</Text>
           <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-            <Text style={{ fontSize: 16, color: TXT }}>✕</Text>
+            <Feather name="x" size={18} color={TXT} />
           </TouchableOpacity>
         </View>
         <View style={styles.pillRow}>
@@ -86,7 +87,7 @@ function SearchOverlay({ onClose, onPick }: {
     <View style={styles.searchOverlay}>
       <View style={styles.searchBar}>
         <View style={styles.searchInputWrap}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Feather name="search" size={15} color={TXTSUB} style={{ marginRight: 6 }} />
           <TextInput
             value={q}
             onChangeText={setQ}
@@ -116,10 +117,10 @@ function SearchOverlay({ onClose, onPick }: {
                 onPress={() => setQ(term)}
                 style={styles.recentRow}
               >
-                <Text style={styles.clockIcon}>🕐</Text>
+                <Feather name="clock" size={13} color={TXTSUB} />
                 <Text style={styles.recentTerm}>{term}</Text>
                 <TouchableOpacity onPress={() => setRecents(r => r.filter(x => x !== term))}>
-                  <Text style={{ color: TXTSUB, fontSize: 12 }}>✕</Text>
+                  <Feather name="x" size={13} color={TXTSUB} />
                 </TouchableOpacity>
               </TouchableOpacity>
             ))}
@@ -133,7 +134,7 @@ function SearchOverlay({ onClose, onPick }: {
             ) : results.map(b => (
               <TouchableOpacity key={b} onPress={() => onPick(b)} style={styles.resultRow}>
                 <Text style={styles.resultBook}>{b}</Text>
-                <Text style={{ color: TXTSUB }}>›</Text>
+                <Feather name="chevron-right" size={14} color={TXTSUB} />
               </TouchableOpacity>
             ))}
           </View>
@@ -168,7 +169,7 @@ function ReaderSheet({ onClose, fontSize, setFontSize, lineH, setLineH, theme, s
         <View style={styles.readerHeader}>
           <Text style={styles.readerTitle}>Reader</Text>
           <TouchableOpacity onPress={onClose}>
-            <Text style={{ fontSize: 16, color: TXT }}>✕</Text>
+            <Feather name="x" size={18} color={TXT} />
           </TouchableOpacity>
         </View>
 
@@ -216,7 +217,7 @@ function ReaderSheet({ onClose, fontSize, setFontSize, lineH, setLineH, theme, s
                 borderColor: theme === t.id ? ROSE : 'rgba(30,27,46,0.12)',
               }]}
             >
-              {theme === t.id && <Text style={{ fontSize: 12, color: t.id === 'dark' ? '#fff' : TXT }}>✓</Text>}
+              {theme === t.id && <Feather name="check" size={12} color={t.id === 'dark' ? '#fff' : TXT} />}
             </TouchableOpacity>
           ))}
         </View>
@@ -273,11 +274,11 @@ export default function BibleScreen() {
         backgroundColor: TH.bg === 'transparent' ? '#FBF7F6' : TH.bg,
       }]}>
         <TouchableOpacity onPress={() => setDrawer(true)} style={styles.iconBtn}>
-          <Text style={[styles.iconBtnText, { color: TH.txt }]}>☰</Text>
+          <Feather name="menu" size={18} color={TH.txt} />
         </TouchableOpacity>
         <Text style={[styles.bookTitle, { color: TH.txt }]}>{book} {chapter}</Text>
         <TouchableOpacity onPress={() => setSearchOpen(true)} style={styles.iconBtn}>
-          <Text style={[styles.iconBtnText, { color: TH.txt }]}>🔍</Text>
+          <Feather name="search" size={18} color={TH.txt} />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => setFontMenu(v => !v)} style={styles.iconBtn}>
           <Text style={[styles.iconBtnText, styles.fontT, { color: TH.txt }]}>T</Text>
@@ -331,7 +332,7 @@ export default function BibleScreen() {
               onPress={() => { setHighlights(h => { const n = { ...h }; if (selVerse !== null) delete n[selVerse]; return n; }); setSelVerse(null); }}
               style={styles.colorDotClear}
             >
-              <Text style={{ fontSize: 10, color: TXTSUB }}>✕</Text>
+              <Feather name="x" size={11} color={TXTSUB} />
             </TouchableOpacity>
           </View>
           <View style={styles.toolbarDivider} />
@@ -347,7 +348,7 @@ export default function BibleScreen() {
 
       {/* Floating audio button */}
       <TouchableOpacity style={styles.audioBtn}>
-        <Text style={{ fontSize: 22 }}>🎧</Text>
+        <Feather name="headphones" size={20} color={ROSE} />
       </TouchableOpacity>
 
       {/* Drawers/overlays */}

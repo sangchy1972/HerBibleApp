@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import Svg, { Path, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
+import { Feather } from '@expo/vector-icons';
 import { ROSE, LAV, TXT, TXTSUB, P } from '../constants/theme';
 import { DAYS, WEEK, STREAK_DAYS, MAX_STREAK, STREAK_START } from '../constants/data';
 import DayCircle from '../components/shared/DayCircle';
@@ -55,6 +56,23 @@ function FlameIcon({ level }: { level: number }) {
   );
 }
 
+function MilestoneFlame({ active, level }: { active: boolean; level: number }) {
+  const c = active ? '#FF7043' : '#BCAFC8';
+  const inner = active ? 'rgba(255,180,120,0.7)' : 'rgba(200,190,210,0.5)';
+  return (
+    <Svg width={28} height={32} viewBox="0 0 100 110" opacity={active ? 1 : 0.45}>
+      <Path
+        d="M50 5 C 38 28, 22 38, 22 62 C 22 83, 35 100, 50 100 C 65 100, 78 83, 78 62 C 78 48, 70 42, 70 42 C 70 50, 62 55, 58 52 C 60 38, 56 22, 50 5 Z"
+        fill={c}
+      />
+      <Path
+        d="M50 50 C 44 60, 40 68, 40 80 C 40 90, 45 96, 50 96 C 55 96, 60 90, 60 80 C 60 68, 56 60, 50 50 Z"
+        fill={inner}
+      />
+    </Svg>
+  );
+}
+
 interface StreakScreenProps {
   onBack: () => void;
   mDone: boolean;
@@ -63,10 +81,15 @@ interface StreakScreenProps {
 
 export default function StreakScreen({ onBack, mDone, eDone }: StreakScreenProps) {
   const [info, setInfo] = useState(false);
+  const fade = useRef(new Animated.Value(0)).current;
   const lvl = streakLevel(STREAK_DAYS);
   const next = LEVEL_INFO[lvl].next;
   const remaining = Math.max(0, next - STREAK_DAYS);
   const TODAY_IDX = new Date().getDay();
+
+  useEffect(() => {
+    Animated.timing(fade, { toValue: 1, duration: 280, useNativeDriver: true }).start();
+  }, []);
 
   const card = {
     backgroundColor: 'rgba(255,255,255,0.70)',
@@ -76,15 +99,15 @@ export default function StreakScreen({ onBack, mDone, eDone }: StreakScreenProps
   };
 
   return (
-    <View style={[styles.container, StyleSheet.absoluteFillObject]}>
+    <Animated.View style={[styles.container, StyleSheet.absoluteFillObject, { opacity: fade }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.headerBtn}>
-          <Text style={styles.backArrow}>‹</Text>
+          <Feather name="chevron-left" size={22} color={TXT} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>DAY STREAK</Text>
         <TouchableOpacity onPress={() => setInfo(v => !v)} style={styles.headerBtn}>
-          <Text style={styles.infoIcon}>ⓘ</Text>
+          <Feather name="info" size={18} color={TXT} />
         </TouchableOpacity>
       </View>
 
@@ -151,7 +174,7 @@ export default function StreakScreen({ onBack, mDone, eDone }: StreakScreenProps
               {/* Left: current flame */}
               <View style={styles.milestoneFlame}>
                 <View style={styles.flameCircleActive}>
-                  <Text style={{ fontSize: 24 }}>🔥</Text>
+                  <MilestoneFlame active level={lvl} />
                 </View>
                 <Text style={styles.milestoneDays}>{STREAK_DAYS}</Text>
               </View>
@@ -171,7 +194,7 @@ export default function StreakScreen({ onBack, mDone, eDone }: StreakScreenProps
               {/* Right: next milestone */}
               <View style={styles.milestoneFlame}>
                 <View style={styles.flameCircleLocked}>
-                  <Text style={{ fontSize: 24, opacity: 0.55 }}>🔥</Text>
+                  <MilestoneFlame active={false} level={1} />
                 </View>
                 <Text style={[styles.milestoneDays, { color: TXTSUB }]}>{next}</Text>
               </View>
@@ -191,221 +214,86 @@ export default function StreakScreen({ onBack, mDone, eDone }: StreakScreenProps
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#FBF7F6',
-    zIndex: 150,
-  },
+  container: { backgroundColor: '#FBF7F6', zIndex: 150 },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: P,
-    paddingTop: 54,
-    paddingBottom: 8,
+    paddingHorizontal: P, paddingTop: 54, paddingBottom: 8,
   },
   headerBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 36, height: 36, borderRadius: 18,
     backgroundColor: 'rgba(255,255,255,0.7)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.92)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.92)',
+    alignItems: 'center', justifyContent: 'center',
   },
-  backArrow: { fontSize: 24, color: TXT, lineHeight: 30 },
-  infoIcon: { fontSize: 18, color: TXT },
-  headerTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: TXT,
-    letterSpacing: 2.2,
-  },
+  headerTitle: { fontSize: 12, fontWeight: '700', color: TXT, letterSpacing: 2.2 },
   infoOverlay: {
     position: 'absolute',
-    inset: 0,
+    top: 0, left: 0, right: 0, bottom: 0,
     zIndex: 5,
     backgroundColor: 'rgba(30,27,46,0.35)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
+    alignItems: 'center', justifyContent: 'center', padding: 24,
   },
-  infoCard: {
-    padding: 22,
-    maxWidth: 320,
-  },
-  infoTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: TXT,
-    marginBottom: 10,
-  },
-  infoBody: {
-    fontSize: 13.5,
-    lineHeight: 22,
-    color: TXTSUB,
-  },
-  flameSection: {
-    alignItems: 'center',
-    paddingTop: 16,
-    paddingBottom: 6,
-  },
+  infoCard: { padding: 22, maxWidth: 320 },
+  infoTitle: { fontSize: 18, fontWeight: '600', color: TXT, marginBottom: 10 },
+  infoBody: { fontSize: 13.5, lineHeight: 22, color: TXTSUB },
+  flameSection: { alignItems: 'center', paddingTop: 16, paddingBottom: 6 },
   streakNum: {
-    fontSize: 76,
-    fontWeight: '500',
-    color: TXT,
-    lineHeight: 80,
-    marginTop: 4,
+    fontSize: 76, fontWeight: '500', color: TXT,
+    lineHeight: 80, marginTop: 4,
   },
   streakLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: TXT,
-    letterSpacing: 2.4,
-    marginTop: 6,
+    fontSize: 12, fontWeight: '700', color: TXT,
+    letterSpacing: 2.4, marginTop: 6,
   },
   statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: P,
-    paddingVertical: 26,
-    paddingBottom: 18,
-    gap: 8,
+    flexDirection: 'row', justifyContent: 'space-between',
+    paddingHorizontal: P, paddingVertical: 26,
+    paddingBottom: 18, gap: 8,
   },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: TXT,
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: TXTSUB,
-    letterSpacing: 0.3,
-    textAlign: 'center',
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: 'rgba(30,27,46,0.10)',
-  },
-  sectionPad: {
-    paddingHorizontal: P,
-    paddingTop: 4,
-    paddingBottom: 10,
-  },
-  weekCard: {
-    padding: 14,
-    paddingHorizontal: 16,
-  },
+  statItem: { flex: 1, alignItems: 'center' },
+  statValue: { fontSize: 15, fontWeight: '700', color: TXT, marginBottom: 4 },
+  statLabel: { fontSize: 11, color: TXTSUB, letterSpacing: 0.3, textAlign: 'center' },
+  statDivider: { width: 1, backgroundColor: 'rgba(30,27,46,0.10)' },
+  sectionPad: { paddingHorizontal: P, paddingTop: 4, paddingBottom: 10 },
+  weekCard: { padding: 14, paddingHorizontal: 16 },
   weekHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 12,
   },
-  weekTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: TXT,
-    letterSpacing: 1.8,
-  },
-  weekSub: {
-    fontSize: 11,
-    color: TXTSUB,
-  },
-  weekDays: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  milestoneCard: {
-    padding: 18,
-    paddingHorizontal: 16,
-  },
-  milestoneRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  milestoneFlame: {
-    alignItems: 'center',
-    gap: 6,
-    flexShrink: 0,
-  },
+  weekTitle: { fontSize: 11, fontWeight: '700', color: TXT, letterSpacing: 1.8 },
+  weekSub: { fontSize: 11, color: TXTSUB },
+  weekDays: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  milestoneCard: { padding: 18, paddingHorizontal: 16 },
+  milestoneRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  milestoneFlame: { alignItems: 'center', gap: 6, flexShrink: 0 },
   flameCircleActive: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 2.5,
-    borderColor: ROSE,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 56, height: 56, borderRadius: 28,
+    borderWidth: 2.5, borderColor: ROSE,
+    alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(232,97,154,0.05)',
   },
   flameCircleLocked: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 56, height: 56, borderRadius: 28,
     backgroundColor: 'rgba(30,27,46,0.07)',
-    borderWidth: 1,
-    borderColor: 'rgba(30,27,46,0.10)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1, borderColor: 'rgba(30,27,46,0.10)',
+    alignItems: 'center', justifyContent: 'center',
   },
-  milestoneDays: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: TXT,
-  },
-  milestoneMiddle: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 6,
-  },
-  milestoneMoreDays: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: TXT,
-    textAlign: 'center',
-  },
+  milestoneDays: { fontSize: 15, fontWeight: '700', color: TXT },
+  milestoneMiddle: { flex: 1, alignItems: 'center', gap: 6 },
+  milestoneMoreDays: { fontSize: 14, fontWeight: '700', color: TXT, textAlign: 'center' },
   milestoneTrack: {
-    width: '100%',
-    height: 6,
-    borderRadius: 6,
-    backgroundColor: 'rgba(30,27,46,0.08)',
-    overflow: 'hidden',
+    width: '100%', height: 6, borderRadius: 6,
+    backgroundColor: 'rgba(30,27,46,0.08)', overflow: 'hidden',
   },
-  milestoneFill: {
-    height: '100%',
-    borderRadius: 6,
-  },
-  milestoneCaption: {
-    fontSize: 11.5,
-    color: TXTSUB,
-    textAlign: 'center',
-    lineHeight: 16,
-  },
-  footerCard: {
-    padding: 18,
-  },
-  footerTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: TXT,
-    marginBottom: 8,
-  },
-  footerBody: {
-    fontSize: 13,
-    color: TXTSUB,
-    lineHeight: 21,
-  },
+  milestoneFill: { height: '100%', borderRadius: 6 },
+  milestoneCaption: { fontSize: 11.5, color: TXTSUB, textAlign: 'center', lineHeight: 16 },
+  footerCard: { padding: 18 },
+  footerTitle: { fontSize: 17, fontWeight: '600', color: TXT, marginBottom: 8 },
+  footerBody: { fontSize: 13, color: TXTSUB, lineHeight: 21 },
 });

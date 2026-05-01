@@ -3,7 +3,7 @@ export const LAV = '#866BC0';
 export const TXT = '#1E1B2E';
 export const TXTSUB = 'rgba(30,27,46,0.50)';
 export const BG = '#FBF7F6';
-export const P = 16; // horizontal padding
+export const P = 17; // horizontal padding
 
 export const FONTS = {
   serif: 'RobotoSerif_400Regular',

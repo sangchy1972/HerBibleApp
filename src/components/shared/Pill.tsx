@@ -24,12 +24,12 @@ export default function Pill({ children, active, ac, onPress }: PillProps) {
 const styles = StyleSheet.create({
   pill: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 9,
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: 11,
   },
   text: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: 0.4,
   },

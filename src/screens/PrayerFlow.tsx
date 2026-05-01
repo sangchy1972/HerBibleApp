@@ -1,72 +1,95 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Dimensions, Modal, Animated,
+  View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Dimensions,
+  KeyboardAvoidingView, Keyboard, Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import Svg, { Path } from 'react-native-svg';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withTiming, withDelay, withRepeat, withSequence,
+  Easing, SlideInDown, FadeIn, runOnJS,
+} from 'react-native-reanimated';
 import { ROSE, LAV, TXT, TXTSUB } from '../constants/theme';
-import { FLOW_DATA } from '../constants/data';
+import { usePrayer } from '../state/PrayerContext';
+import { useNotes } from '../state/NotesContext';
+import { useActivity } from '../state/ActivityContext';
+import { useRatePrompt } from '../state/RatePromptContext';
+import { useDailyVerses } from '../state/DailyVersesContext';
+import { useTranslation } from '../state/TranslationsContext';
+import { dailyLabels } from '../constants/dailyVersesLabels';
+import WeeklyProgressView from '../components/WeeklyProgressView';
+import RatePromptSheet from '../components/RatePromptSheet';
+import type { RootStackScreenProps } from '../navigation/types';
 
 const { width, height } = Dimensions.get('window');
-
-interface PrayerFlowProps {
-  morning: boolean;
-  visible: boolean;
-  onComplete: () => void;
-  onClose: () => void;
-}
+const SECTIONS = ['verse', 'meditation', 'action', 'prayer'];
 
 function FlowPage({ children }: { children: React.ReactNode }) {
+  return <View style={[styles.flowPage, { height }]}>{children}</View>;
+}
+
+const WHEEL_ITEM_HEIGHT = 44;
+const WHEEL_VISIBLE = 5;
+
+function ScrollWheel<T>({ values, value, onChange, format }: {
+  values: T[];
+  value: T;
+  onChange: (v: T) => void;
+  format?: (v: T) => string;
+}) {
+  const idx = Math.max(0, values.indexOf(value));
+  const padding = ((WHEEL_VISIBLE - 1) / 2) * WHEEL_ITEM_HEIGHT;
+  const handleEnd = (e: { nativeEvent: { contentOffset: { y: number } } }) => {
+    const y = e.nativeEvent.contentOffset.y;
+    const newIdx = Math.max(0, Math.min(values.length - 1, Math.round(y / WHEEL_ITEM_HEIGHT)));
+    if (newIdx !== idx) onChange(values[newIdx]);
+  };
   return (
-    <View style={[styles.flowPage, { height: height }]}>
-      {children}
+    <View style={{ flex: 1, height: WHEEL_ITEM_HEIGHT * WHEEL_VISIBLE }}>
+      <View pointerEvents="none" style={styles.wheelHighlight} />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        snapToInterval={WHEEL_ITEM_HEIGHT}
+        decelerationRate="fast"
+        contentContainerStyle={{ paddingTop: padding, paddingBottom: padding }}
+        contentOffset={{ x: 0, y: idx * WHEEL_ITEM_HEIGHT }}
+        onMomentumScrollEnd={handleEnd}
+        scrollEventThrottle={16}
+      >
+        {values.map((v, i) => (
+          <View key={i} style={styles.wheelItemBox}>
+            <Text style={[styles.wheelText, i === idx ? styles.wheelActive : styles.wheelInactive]}>
+              {format ? format(v) : String(v)}
+            </Text>
+          </View>
+        ))}
+      </ScrollView>
     </View>
   );
 }
 
 function TimePickerSheet({ onConfirm, onClose }: { onConfirm: () => void; onClose: () => void }) {
-  const [hour, setHour] = useState(8);
-  const [minute, setMinute] = useState(0);
+  const [hour, setHour] = useState<number>(8);
+  const [minute, setMinute] = useState<number>(0);
   const [ampm, setAmpm] = useState<'AM' | 'PM'>('AM');
 
-  const hours = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6];
-  const minutes = [0, 15, 30, 45];
-
-  const Wheel = ({ values, value, onChange, format }: {
-    values: any[];
-    value: any;
-    onChange: (v: any) => void;
-    format?: (v: any) => string;
-  }) => {
-    const idx = values.indexOf(value);
-    const items = [
-      values[(idx - 1 + values.length) % values.length],
-      values[idx],
-      values[(idx + 1) % values.length],
-    ];
-    return (
-      <View style={{ flex: 1, alignItems: 'center' }}>
-        {items.map((v, i) => (
-          <TouchableOpacity key={i} onPress={() => i !== 1 && onChange(v)} style={styles.wheelItem}>
-            <Text style={[styles.wheelText, i === 1 ? styles.wheelActive : styles.wheelInactive]}>
-              {format ? format(v) : String(v)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    );
-  };
+  const hours = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  const minutes = Array.from({ length: 60 }, (_, i) => i);
+  const periods: ('AM' | 'PM')[] = ['AM', 'PM'];
 
   return (
     <View style={styles.sheet}>
       <View style={styles.sheetHandle} />
       <Text style={styles.sheetTitle}>What time do you want to be reminded?</Text>
       <View style={styles.wheelRow}>
-        <Wheel values={hours} value={hour} onChange={setHour} />
+        <ScrollWheel values={hours} value={hour} onChange={setHour} />
         <Text style={styles.wheelColon}>:</Text>
-        <Wheel values={minutes} value={minute} onChange={setMinute}
+        <ScrollWheel values={minutes} value={minute} onChange={setMinute}
           format={v => String(v).padStart(2, '0')} />
-        <Wheel values={['AM', 'PM']} value={ampm} onChange={setAmpm} />
+        <ScrollWheel values={periods} value={ampm} onChange={setAmpm} />
       </View>
       <View style={styles.sheetBtns}>
         <TouchableOpacity onPress={onClose} style={styles.sheetBtnBack}>
@@ -80,56 +103,348 @@ function TimePickerSheet({ onConfirm, onClose }: { onConfirm: () => void; onClos
   );
 }
 
-export default function PrayerFlow({ morning, visible, onComplete, onClose }: PrayerFlowProps) {
-  const data = morning ? FLOW_DATA.morning : FLOW_DATA.evening;
+// Deterministic daily count for "N prayed with you today" — the number is
+// stable within a calendar day but shifts between roughly 150k and 250k
+// across days, so it feels alive without ever being a hard-coded literal.
+function prayedTodayCount(): number {
+  const d = new Date();
+  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  const variation = Math.floor(Math.abs(Math.sin(seed)) * 100000);
+  return 150000 + variation;
+}
+
+function formatThousands(n: number): string {
+  return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+// Stylized praying-hand silhouette: four fingertip arches at the top
+// (index → middle → ring → pinky from inner to outer), thumb bump on the
+// inner side, and a wrist taper at the bottom. Right hand is drawn as-is;
+// the left hand mirrors via scaleX: -1.
+const HAND_PATH =
+  'M16 28 ' +
+  // Index fingertip (innermost)
+  'C16 16, 20 8, 24 8 ' +
+  'C28 8, 30 16, 30 18 ' +
+  // Middle fingertip (tallest)
+  'C30 10, 36 4, 38 4 ' +
+  'C42 4, 42 12, 42 18 ' +
+  // Ring fingertip
+  'C42 10, 48 6, 50 6 ' +
+  'C54 6, 54 14, 54 18 ' +
+  // Pinky fingertip (shortest, outermost)
+  'C54 14, 58 10, 58 16 ' +
+  'C58 18, 60 20, 60 24 ' +
+  // Outer side + wrist taper
+  'L60 88 ' +
+  'C60 106, 56 120, 50 126 ' +
+  'L48 142 ' +
+  'C48 145, 46 146, 44 146 ' +
+  'L20 146 ' +
+  'C18 146, 16 145, 16 142 ' +
+  'L14 126 ' +
+  // Inner wrist taper
+  'C8 120, 4 106, 4 88 ' +
+  'L4 58 ' +
+  // Thumb bump (subtle bulge on inner side)
+  'C2 56, 0 48, 4 42 ' +
+  'C8 36, 12 34, 14 30 ' +
+  'L16 28 Z';
+
+function PrayingHand({ side }: { side: 'left' | 'right' }) {
+  return (
+    <Svg
+      width={64}
+      height={150}
+      viewBox="0 0 64 150"
+      style={side === 'left' ? { transform: [{ scaleX: -1 }] } : undefined}
+    >
+      <Path d={HAND_PATH} fill="#FFFFFF" opacity={0.95} />
+      {/* Finger separator strokes — three subtle ticks between the four tips */}
+      <Path d="M30 18 L30 30" stroke="rgba(0,0,0,0.10)" strokeWidth={1.4} strokeLinecap="round" />
+      <Path d="M42 18 L42 30" stroke="rgba(0,0,0,0.10)" strokeWidth={1.4} strokeLinecap="round" />
+      <Path d="M54 18 L54 30" stroke="rgba(0,0,0,0.10)" strokeWidth={1.4} strokeLinecap="round" />
+      {/* Wrist cuff line */}
+      <Path d="M14 126 L50 126" stroke="rgba(0,0,0,0.08)" strokeWidth={1} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+// 4-point sparkle star
+function Sparkle({ size = 18 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M12 0 C12.6 8, 16 11.4, 24 12 C16 12.6, 12.6 16, 12 24 C11.4 16, 8 12.6, 0 12 C8 11.4, 11.4 8, 12 0 Z"
+        fill="#FFFFFF"
+      />
+    </Svg>
+  );
+}
+
+export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'PrayerFlow'>) {
+  const insets = useSafeAreaInsets();
+  const { markDone } = usePrayer();
+  const { addNote } = useNotes();
+  const { markToday, dates: activityDates } = useActivity();
+  const ratePrompt = useRatePrompt();
+  const { kind } = route.params;
+  const morning = kind === 'morning';
+  const { current: translation } = useTranslation();
+  const { getVerse, todayDay } = useDailyVerses();
+  const labels = dailyLabels(translation.code);
+  // Pull today's verse for the segment we entered with. Bundled fallback
+  // covers the first 3 days offline; the CDN file expands to 60 once cached.
+  const dailyVerse = getVerse(todayDay, morning ? 'morning' : 'evening');
+  const verseRef = dailyVerse?.reference.full_reference || '';
+  const verseText = dailyVerse?.modernText || '';
+  const meditationParas = (dailyVerse?.meditation || '').split('\n\n').filter(Boolean);
+  const actionBody = dailyVerse?.actionStep || '';
+  const prayerBody = dailyVerse?.prayer || '';
+  const verseCaption = (morning ? labels.verseOfDay : labels.verseOfNight).toUpperCase();
+  const meditationCaption = labels.meditationTitle.toUpperCase();
+  const actionCaption = (morning ? labels.actionTitleMorning : labels.actionTitleEvening).toUpperCase();
+  const prayerCaption = labels.prayerTitle.toUpperCase();
   const colors = morning
     ? (['#C2547A', '#7B2255', '#2D0A1A'] as const)
     : (['#5B3A9E', '#2D1660', '#100525'] as const);
-  const [page, setPage] = useState(0);
   const [amened, setAmened] = useState(false);
+  const [showWeekly, setShowWeekly] = useState(false);
   const [showSheet, setShowSheet] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showNoteSheet, setShowNoteSheet] = useState(false);
+  const [showRatePrompt, setShowRatePrompt] = useState(false);
+  const [noteText, setNoteText] = useState('');
+  const [page, setPage] = useState(0);
+  const [buttonReady, setButtonReady] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
-  const SECTIONS = ['verse', 'meditation', 'action', 'prayer'];
 
   const handleScroll = (e: any) => {
     const idx = Math.round(e.nativeEvent.contentOffset.y / height);
     if (idx !== page) setPage(idx);
   };
 
+  // Closing scene timing: hands move in, then 8 sparkles twinkle continuously
+  // for ~4s (6 cycles × ~700ms each) before fading out. Closing text appears
+  // in three phases: heading (0.7s) → 0.3s gap → "In Jesus' name" (0.7s) →
+  // 0.5s gap → Continue button (0.5s).
+  const HAND_CLOSE = 700;
+  const TWINKLE_HALF = 350;          // up-time = down-time of one twinkle pulse
+  const TWINKLE_LOOPS = 6;            // 6 × 700ms ≈ 4.2s of twinkling
+  const T_HEAD = 700;
+  const GAP_1 = 300;
+  const T_JESUS = 700;
+  const GAP_2 = 500;
+  const T_BTN = 500;
+
+  const handsOpacity = useSharedValue(0);
+  const leftHandX = useSharedValue(-44);
+  const rightHandX = useSharedValue(44);
+  const star1 = useSharedValue(0);
+  const star2 = useSharedValue(0);
+  const star3 = useSharedValue(0);
+  const star4 = useSharedValue(0);
+  const star5 = useSharedValue(0);
+  const star6 = useSharedValue(0);
+  const star7 = useSharedValue(0);
+  const star8 = useSharedValue(0);
+  const headingOpacity = useSharedValue(0);
+  const jesusOpacity = useSharedValue(0);
+  const buttonOpacity = useSharedValue(0);
+
+  // Music icon spin
+  const musicSpin = useSharedValue(0);
+  useEffect(() => {
+    musicSpin.value = withRepeat(
+      withTiming(360, { duration: 9000, easing: Easing.linear }),
+      -1,
+      false
+    );
+  }, [musicSpin]);
+  const musicSpinStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${musicSpin.value}deg` }],
+  }));
+
+  // Page text slide-in: fast-to-slow, settles on arrival in 0.8s
+  const pageProgress = useSharedValue(0);
+  useEffect(() => {
+    pageProgress.value = withTiming(page, { duration: 800, easing: Easing.out(Easing.cubic) });
+  }, [page, pageProgress]);
+  const verseAnim = useAnimatedStyle(() => {
+    const dist = Math.abs(pageProgress.value - 0);
+    const ty = Math.min(60, dist * 60);
+    return { transform: [{ translateY: ty }], opacity: 1 - ty / 60 };
+  });
+  const meditationAnim = useAnimatedStyle(() => {
+    const dist = Math.abs(pageProgress.value - 1);
+    const ty = Math.min(60, dist * 60);
+    return { transform: [{ translateY: ty }], opacity: 1 - ty / 60 };
+  });
+  const actionAnim = useAnimatedStyle(() => {
+    const dist = Math.abs(pageProgress.value - 2);
+    const ty = Math.min(60, dist * 60);
+    return { transform: [{ translateY: ty }], opacity: 1 - ty / 60 };
+  });
+  const prayerAnim = useAnimatedStyle(() => {
+    const dist = Math.abs(pageProgress.value - 3);
+    const ty = Math.min(60, dist * 60);
+    return { transform: [{ translateY: ty }], opacity: 1 - ty / 60 };
+  });
+
+  useEffect(() => {
+    if (!amened) return;
+    // Hands fade in as they slide together
+    handsOpacity.value = withTiming(1, { duration: HAND_CLOSE * 0.5, easing: Easing.out(Easing.cubic) });
+    leftHandX.value = withTiming(0, { duration: HAND_CLOSE, easing: Easing.out(Easing.cubic) });
+    rightHandX.value = withTiming(0, { duration: HAND_CLOSE, easing: Easing.out(Easing.cubic) });
+
+    // 8 sparkles: each does TWINKLE_LOOPS in/out cycles, then fades to 0
+    const twinkleSeq = () => withSequence(
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: TWINKLE_HALF, easing: Easing.out(Easing.cubic) }),
+          withTiming(0.35, { duration: TWINKLE_HALF, easing: Easing.in(Easing.cubic) }),
+        ),
+        TWINKLE_LOOPS,
+        false,
+      ),
+      withTiming(0, { duration: 500, easing: Easing.in(Easing.cubic) }),
+    );
+    const stars = [star1, star2, star3, star4, star5, star6, star7, star8];
+    const offsets = [0, 90, 180, 60, 150, 240, 30, 210];
+    stars.forEach((sv, i) => { sv.value = withDelay(HAND_CLOSE + offsets[i], twinkleSeq()); });
+
+    // Phased fade-in: heading 0.7s → 0.3s gap → "In Jesus' name" 0.7s → 0.5s gap → button 0.5s
+    headingOpacity.value = withDelay(HAND_CLOSE,
+      withTiming(1, { duration: T_HEAD, easing: Easing.out(Easing.cubic) }));
+    jesusOpacity.value = withDelay(HAND_CLOSE + T_HEAD + GAP_1,
+      withTiming(1, { duration: T_JESUS, easing: Easing.out(Easing.cubic) }));
+    buttonOpacity.value = withDelay(HAND_CLOSE + T_HEAD + GAP_1 + T_JESUS + GAP_2,
+      withTiming(1, { duration: T_BTN, easing: Easing.out(Easing.cubic) }));
+
+    // Lock in "this prayer is done" immediately so a force-close still counts.
+    markDone(kind);
+    markToday();
+
+    // Enable the Continue button only once it's visible
+    const btnTimer = setTimeout(
+      () => setButtonReady(true),
+      HAND_CLOSE + T_HEAD + GAP_1 + T_JESUS + GAP_2,
+    );
+    return () => clearTimeout(btnTimer);
+  }, [amened]);
+
+  const handsContainerStyle = useAnimatedStyle(() => ({ opacity: handsOpacity.value }));
+  const leftHandStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: leftHandX.value }],
+  }));
+  const rightHandStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: rightHandX.value }],
+  }));
+  const star1Style = useAnimatedStyle(() => ({ opacity: star1.value, transform: [{ scale: 0.6 + star1.value * 0.5 }] }));
+  const star2Style = useAnimatedStyle(() => ({ opacity: star2.value, transform: [{ scale: 0.6 + star2.value * 0.5 }] }));
+  const star3Style = useAnimatedStyle(() => ({ opacity: star3.value, transform: [{ scale: 0.6 + star3.value * 0.5 }] }));
+  const star4Style = useAnimatedStyle(() => ({ opacity: star4.value, transform: [{ scale: 0.6 + star4.value * 0.5 }] }));
+  const star5Style = useAnimatedStyle(() => ({ opacity: star5.value, transform: [{ scale: 0.6 + star5.value * 0.5 }] }));
+  const star6Style = useAnimatedStyle(() => ({ opacity: star6.value, transform: [{ scale: 0.6 + star6.value * 0.5 }] }));
+  const star7Style = useAnimatedStyle(() => ({ opacity: star7.value, transform: [{ scale: 0.6 + star7.value * 0.5 }] }));
+  const star8Style = useAnimatedStyle(() => ({ opacity: star8.value, transform: [{ scale: 0.6 + star8.value * 0.5 }] }));
+  const headingStyle = useAnimatedStyle(() => ({ opacity: headingOpacity.value }));
+  const jesusStyle = useAnimatedStyle(() => ({ opacity: jesusOpacity.value }));
+  const buttonStyle = useAnimatedStyle(() => ({ opacity: buttonOpacity.value }));
+
   const handleAmen = () => {
     setAmened(true);
-    setTimeout(() => setShowSheet(true), 1900);
+  };
+
+  const closeFlow = () => navigation.goBack();
+
+  // End-of-flow gate: show the rate prompt if the cadence rules say we
+  // should, otherwise dismiss the prayer flow.
+  const finishFlow = () => {
+    if (ratePrompt.shouldAsk()) {
+      ratePrompt.markShown();
+      setShowRatePrompt(true);
+    } else {
+      navigation.goBack();
+    }
+  };
+
+  const handleWeeklyOpenReminder = () => {
+    setShowWeekly(false);
+    setTimeout(() => setShowSheet(true), 200);
+  };
+
+  const handleWeeklyBack = () => {
+    setShowWeekly(false);
+    setTimeout(finishFlow, 200);
   };
 
   const handleSheetClose = () => {
     setShowSheet(false);
-    setTimeout(() => {
-      onComplete();
-      setAmened(false);
-      setPage(0);
-    }, 280);
+    setTimeout(finishFlow, 280);
   };
 
-  if (!visible) return null;
+  const handleRatePromptClose = () => {
+    setShowRatePrompt(false);
+    setTimeout(() => navigation.goBack(), 200);
+  };
+
+  const closeNoteSheet = () => {
+    Keyboard.dismiss();
+    setNoteText('');
+    setShowNoteSheet(false);
+  };
+
+  const saveNote = () => {
+    Keyboard.dismiss();
+    addNote(noteText);
+    setNoteText('');
+    setShowNoteSheet(false);
+  };
+
+  // Swipe-down gesture for note sheet
+  const noteDragY = useSharedValue(0);
+  useEffect(() => {
+    if (showNoteSheet) noteDragY.value = 0;
+  }, [showNoteSheet, noteDragY]);
+  const notePan = Gesture.Pan()
+    .activeOffsetY(12)
+    .onUpdate((e) => {
+      'worklet';
+      if (e.translationY > 0) noteDragY.value = e.translationY;
+    })
+    .onEnd((e) => {
+      'worklet';
+      if (e.translationY > 120 || e.velocityY > 800) {
+        noteDragY.value = withTiming(800, { duration: 560 }, (f) => {
+          if (f) runOnJS(closeNoteSheet)();
+        });
+      } else {
+        noteDragY.value = withTiming(0, { duration: 480 });
+      }
+    });
+  const noteSheetAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: noteDragY.value }],
+  }));
 
   return (
-    <View style={[styles.container, StyleSheet.absoluteFillObject]}>
+    <View style={styles.container}>
       <LinearGradient colors={colors} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={StyleSheet.absoluteFillObject} />
 
-      {/* Top chrome */}
       {!amened && (
-        <View style={styles.topChrome}>
-          <TouchableOpacity onPress={onClose} style={styles.chromeBtn}>
-            <Text style={styles.closeMark}>✕</Text>
+        <View style={[styles.topChrome, { top: insets.top + 8 }]}>
+          <TouchableOpacity onPress={closeFlow} style={styles.chromeBtn}>
+            <Feather name="x" size={20} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.chromeBtn}>
-            <Text style={{ color: '#fff', fontSize: 16 }}>♪</Text>
+            <Animated.View style={musicSpinStyle}>
+              <Feather name="music" size={21} color="#fff" />
+            </Animated.View>
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Progress indicator */}
       {!amened && (
         <View style={styles.progressDots}>
           {SECTIONS.map((_, i) => (
@@ -143,7 +458,6 @@ export default function PrayerFlow({ morning, visible, onComplete, onClose }: Pr
         </View>
       )}
 
-      {/* Pages */}
       {!amened && (
         <ScrollView
           ref={scrollRef}
@@ -153,105 +467,222 @@ export default function PrayerFlow({ morning, visible, onComplete, onClose }: Pr
           scrollEventThrottle={16}
           style={StyleSheet.absoluteFillObject}
         >
-          {/* Page 1 — Verse */}
           <FlowPage>
-            <View style={styles.pageContent}>
-              <Text style={styles.pageCaption}>{data.verse.label.toUpperCase()}</Text>
-              <Text style={styles.pageRef}>{data.verse.ref}</Text>
-              <Text style={styles.pageVerse}>"{data.verse.text}"</Text>
-            </View>
+            <Animated.View style={[styles.pageContent, verseAnim]}>
+              <Text style={styles.pageCaption}>{verseCaption}</Text>
+              <Text style={styles.pageRef}>{verseRef}</Text>
+              <Text style={styles.pageVerse}>"{verseText}"</Text>
+            </Animated.View>
           </FlowPage>
 
-          {/* Page 2 — Meditation */}
           <FlowPage>
             <ScrollView showsVerticalScrollIndicator={false} style={styles.pageScroll}>
-              <View style={styles.pageContent}>
-                <Text style={styles.pageCaption}>MEDITATION</Text>
-                <Text style={styles.pageHeading}>{data.meditation.title}</Text>
-                {data.meditation.body.split('\n\n').map((p, i) => (
+              <Animated.View style={[styles.pageContent, styles.meditationContent, meditationAnim]}>
+                <Text style={styles.pageCaption}>{meditationCaption}</Text>
+                {/* Verse reference doubles as the page heading — the source
+                    file doesn't ship a per-verse thematic title, and showing
+                    the ref keeps users anchored to the passage they're on. */}
+                <Text style={styles.pageHeading}>{verseRef}</Text>
+                {meditationParas.map((p, i) => (
                   <Text key={i} style={styles.pageBody}>{p}</Text>
                 ))}
-              </View>
+              </Animated.View>
             </ScrollView>
           </FlowPage>
 
-          {/* Page 3 — Action */}
           <FlowPage>
             <ScrollView showsVerticalScrollIndicator={false} style={styles.pageScroll}>
-              <View style={styles.pageContent}>
-                <Text style={styles.pageCaption}>ACTION STEP</Text>
-                <Text style={styles.pageHeading}>{data.action.title}</Text>
-                <Text style={styles.pageBody}>{data.action.body}</Text>
-                <TouchableOpacity style={styles.reflectBtn}>
-                  <Text style={styles.reflectIcon}>✏</Text>
+              <Animated.View style={[styles.pageContent, actionAnim]}>
+                <Text style={styles.pageCaption}>{actionCaption}</Text>
+                <Text style={styles.pageHeading}>{verseRef}</Text>
+                <Text style={styles.pageBody}>{actionBody}</Text>
+                <TouchableOpacity style={styles.reflectBtn} onPress={() => setShowNoteSheet(true)}>
+                  <Feather name="edit-2" size={18} color="rgba(255,255,255,0.85)" />
                   <Text style={styles.reflectText}>Write a reflection</Text>
                 </TouchableOpacity>
-              </View>
+              </Animated.View>
             </ScrollView>
           </FlowPage>
 
-          {/* Page 4 — Prayer */}
           <FlowPage>
             <ScrollView showsVerticalScrollIndicator={false} style={styles.pageScroll}>
-              <View style={styles.pageContent}>
-                <Text style={styles.pageCaption}>PRAYER</Text>
-                <Text style={styles.pageHeading}>{data.prayer.title}</Text>
-                <Text style={[styles.pageBody, { fontStyle: 'italic' }]}>{data.prayer.body}</Text>
+              <Animated.View style={[styles.pageContent, prayerAnim]}>
+                <Text style={styles.pageCaption}>{prayerCaption}</Text>
+                <Text style={styles.pageHeading}>{verseRef}</Text>
+                <Text style={styles.pageBody}>{prayerBody}</Text>
                 <TouchableOpacity onPress={handleAmen} style={styles.amenBtn}>
-                  <Text style={[styles.amenText, { color: morning ? '#7B2255' : '#2D1660' }]}>Amen 🙏</Text>
+                  <Text style={[styles.amenText, { color: morning ? '#7B2255' : '#2D1660' }]}>AMEN</Text>
                 </TouchableOpacity>
-                <Text style={styles.prayedCount}>187,881 prayed with you today</Text>
-              </View>
+                <Text style={styles.prayedCount}>{formatThousands(prayedTodayCount())} prayed with you today</Text>
+              </Animated.View>
             </ScrollView>
           </FlowPage>
         </ScrollView>
       )}
 
-      {/* Amen closing screen */}
-      {amened && (
+      {amened && !showWeekly && (
         <View style={styles.amenScreen}>
-          <TouchableOpacity onPress={onClose} style={[styles.chromeBtn, { position: 'absolute', top: 58, left: 18 }]}>
-            <Text style={styles.closeMark}>✕</Text>
+          <TouchableOpacity onPress={closeFlow} style={[styles.chromeBtn, { position: 'absolute', top: insets.top + 8, left: 19 }]}>
+            <Feather name="x" size={20} color="#fff" />
           </TouchableOpacity>
-          <View style={styles.amenHands}>
-            <Text style={{ fontSize: 80 }}>🙏</Text>
-          </View>
-          <Text style={styles.amenCaption}>CLOSING</Text>
-          <Text style={styles.amenHeading}>
+          <Animated.View style={[styles.amenHands, handsContainerStyle]}>
+            <View style={styles.handsStage}>
+              <Animated.View style={[styles.handWrap, styles.leftHandWrap, leftHandStyle]}>
+                <PrayingHand side="left" />
+              </Animated.View>
+              <Animated.View style={[styles.handWrap, styles.rightHandWrap, rightHandStyle]}>
+                <PrayingHand side="right" />
+              </Animated.View>
+              <Animated.View style={[styles.starPos, { top: 4, left: 14 }, star1Style]}>
+                <Sparkle size={22} />
+              </Animated.View>
+              <Animated.View style={[styles.starPos, { top: -6, left: 70 }, star2Style]}>
+                <Sparkle size={12} />
+              </Animated.View>
+              <Animated.View style={[styles.starPos, { top: 6, right: 36 }, star3Style]}>
+                <Sparkle size={16} />
+              </Animated.View>
+              <Animated.View style={[styles.starPos, { top: -4, right: 4 }, star4Style]}>
+                <Sparkle size={20} />
+              </Animated.View>
+              <Animated.View style={[styles.starPos, { top: 70, left: 0 }, star5Style]}>
+                <Sparkle size={14} />
+              </Animated.View>
+              <Animated.View style={[styles.starPos, { top: 64, right: 0 }, star6Style]}>
+                <Sparkle size={18} />
+              </Animated.View>
+              <Animated.View style={[styles.starPos, { bottom: 6, left: 26 }, star7Style]}>
+                <Sparkle size={14} />
+              </Animated.View>
+              <Animated.View style={[styles.starPos, { bottom: 12, right: 22 }, star8Style]}>
+                <Sparkle size={12} />
+              </Animated.View>
+            </View>
+          </Animated.View>
+          <Animated.Text style={[styles.amenHeading, headingStyle]}>
             We hope this prayer time encouraged you. Come back again soon.
-          </Text>
-          <Text style={styles.amenFarewell}>In Jesus' name</Text>
-          <Text style={styles.amenFarewell}>Thank you, Lord</Text>
-          <Text style={styles.amenFarewell}>Bless us, O Lord</Text>
+          </Animated.Text>
+          <Animated.Text style={[styles.amenFarewell, jesusStyle]}>
+            In Jesus' name
+          </Animated.Text>
+          <Animated.View
+            style={[styles.amenContinueWrap, buttonStyle]}
+            pointerEvents={buttonReady ? 'auto' : 'none'}
+          >
+            <TouchableOpacity
+              onPress={() => setShowWeekly(true)}
+              activeOpacity={0.85}
+              style={styles.amenContinueBtn}
+            >
+              <Text style={[styles.amenContinueText, { color: morning ? '#7B2255' : '#2D1660' }]}>
+                Continue
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
         </View>
       )}
 
-      {/* Notification sheet */}
-      {showSheet && (
-        <TouchableOpacity
-          style={styles.sheetOverlay}
-          activeOpacity={1}
-          onPress={() => !showTimePicker && handleSheetClose()}
-        >
-          {!showTimePicker ? (
-            <View style={styles.sheet}>
-              <View style={styles.sheetHandle} />
-              <Text style={styles.sheetHeading}>Make Prayer a Habit</Text>
-              <Text style={styles.sheetDesc}>Get a daily reminder to spend time in prayer.</Text>
-              <TouchableOpacity
-                onPress={() => setShowTimePicker(true)}
-                style={[styles.setTimeBtn, { backgroundColor: 'rgba(232,97,154,0.10)' }]}
+      {showWeekly && (
+        <View style={StyleSheet.absoluteFillObject}>
+          <WeeklyProgressView
+            morning={morning}
+            activityDates={activityDates}
+            onOpenReminder={handleWeeklyOpenReminder}
+            onBack={handleWeeklyBack}
+          />
+        </View>
+      )}
+
+      {showRatePrompt && <RatePromptSheet onClose={handleRatePromptClose} />}
+
+      {showNoteSheet && (
+        <View style={styles.sheetOverlay}>
+          <Animated.View
+            entering={FadeIn.duration(300)}
+            style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.4)' }]}
+          >
+            <TouchableOpacity
+              style={StyleSheet.absoluteFillObject}
+              activeOpacity={1}
+              onPress={closeNoteSheet}
+            />
+          </Animated.View>
+          <GestureDetector gesture={notePan}>
+            <Animated.View
+              entering={SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic))}
+              style={[styles.noteSheet, noteSheetAnimStyle]}
+            >
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={[
+                  styles.noteSheetInner,
+                  // Adaptive bottom padding: insets.bottom covers the home
+                  // indicator / gesture bar; +24 keeps the Save button clear.
+                  // Floor of 24 ensures phones without a notch still breathe.
+                  { paddingBottom: Math.max(insets.bottom, 12) + 24 },
+                ]}
               >
-                <Text style={[styles.setTimeText, { color: ROSE }]}>Set Time</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleSheetClose}>
-                <Text style={styles.notNowText}>Not now</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TimePickerSheet onConfirm={handleSheetClose} onClose={() => setShowTimePicker(false)} />
-          )}
-        </TouchableOpacity>
+                <TouchableOpacity onPress={Keyboard.dismiss} activeOpacity={1} style={styles.noteHandleHit}>
+                  <View style={styles.sheetHandle} />
+                </TouchableOpacity>
+                <Text style={styles.noteSheetTitle}>Write a reflection</Text>
+                <TextInput
+                  value={noteText}
+                  onChangeText={setNoteText}
+                  placeholder="What is God speaking to you today?"
+                  placeholderTextColor={TXTSUB}
+                  multiline
+                  style={styles.noteInput}
+                  autoFocus
+                  textAlignVertical="top"
+                />
+                <View style={styles.sheetBtns}>
+                  <TouchableOpacity onPress={closeNoteSheet} style={styles.sheetBtnBack}>
+                    <Text style={[styles.sheetBtnText, { color: TXTSUB }]}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={saveNote} style={[styles.sheetBtnConfirm, { backgroundColor: morning ? ROSE : LAV }]}>
+                    <Text style={[styles.sheetBtnText, { color: '#fff', fontWeight: '700' }]}>Save</Text>
+                  </TouchableOpacity>
+                </View>
+              </KeyboardAvoidingView>
+            </Animated.View>
+          </GestureDetector>
+        </View>
+      )}
+
+      {showSheet && (
+        <View style={styles.sheetOverlay}>
+          <Animated.View
+            entering={FadeIn.duration(300)}
+            style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.4)' }]}
+          >
+            <TouchableOpacity
+              style={StyleSheet.absoluteFillObject}
+              activeOpacity={1}
+              onPress={() => !showTimePicker && handleSheetClose()}
+            />
+          </Animated.View>
+          <Animated.View entering={SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic))}>
+            {!showTimePicker ? (
+              <View style={[styles.sheet, styles.habitSheet]}>
+                <View style={styles.sheetHandle} />
+                <Text style={styles.sheetHeading}>Make Prayer a Habit</Text>
+                <Text style={styles.sheetDesc}>Get a daily reminder to spend time in prayer.</Text>
+                <TouchableOpacity
+                  onPress={() => setShowTimePicker(true)}
+                  style={[styles.setTimeBtn, { backgroundColor: 'rgba(232,97,154,0.10)' }]}
+                >
+                  <Text style={[styles.setTimeText, { color: ROSE }]}>Set Time</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleSheetClose}>
+                  <Text style={styles.notNowText}>Not now</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TimePickerSheet onConfirm={handleSheetClose} onClose={() => setShowTimePicker(false)} />
+            )}
+          </Animated.View>
+        </View>
       )}
     </View>
   );
@@ -259,56 +690,24 @@ export default function PrayerFlow({ morning, visible, onComplete, onClose }: Pr
 
 const styles = StyleSheet.create({
   container: {
-    zIndex: 300,
+    flex: 1,
   },
   topChrome: {
     position: 'absolute',
-    top: 58,
-    left: 18,
-    right: 18,
+    left: 19,
+    right: 19,
     zIndex: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   chromeBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(0,0,0,0.32)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  closeMark: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  progressDots: {
-    position: 'absolute',
-    right: 22,
-    bottom: 32,
-    zIndex: 10,
-    alignItems: 'center',
-    gap: 8,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  dotActive: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-  },
-  pageCount: {
-    marginTop: 10,
-    fontSize: 9.5,
-    letterSpacing: 1.4,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.7)',
-    textTransform: 'uppercase',
   },
   flowPage: {
     width,
@@ -317,178 +716,287 @@ const styles = StyleSheet.create({
   pageScroll: {
     flex: 1,
   },
+  progressDots: {
+    position: 'absolute',
+    right: 24,
+    bottom: 37,
+    zIndex: 10,
+    alignItems: 'center',
+    gap: 9,
+  },
+  dot: {
+    width: 9,
+    height: 9,
+    borderRadius: 4,
+  },
+  dotActive: {
+    width: 15,
+    height: 15,
+    borderRadius: 8,
+  },
+  pageCount: {
+    marginTop: 12,
+    fontSize: 10.5,
+    letterSpacing: 1.4,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.7)',
+    textTransform: 'uppercase',
+  },
   pageContent: {
-    paddingHorizontal: 26,
-    paddingVertical: 100,
+    paddingHorizontal: 28,
+    paddingTop: 135,
+    paddingBottom: 115,
     justifyContent: 'center',
   },
+  meditationContent: {
+    paddingBottom: 280,
+  },
   pageCaption: {
-    fontSize: 11,
+    fontSize: 14,
     letterSpacing: 2.4,
     textTransform: 'uppercase',
     color: 'rgba(255,255,255,0.65)',
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 9,
   },
   pageRef: {
     color: 'rgba(255,255,255,0.85)',
     fontWeight: '600',
-    fontSize: 20,
+    fontSize: 22,
     letterSpacing: 0.3,
-    marginBottom: 26,
+    marginBottom: 30,
   },
   pageVerse: {
-    fontSize: 20,
-    lineHeight: 30,
+    fontSize: 22,
+    lineHeight: 32,
     color: '#fff',
   },
   pageHeading: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '500',
     color: '#fff',
-    lineHeight: 28,
-    marginBottom: 18,
+    lineHeight: 30,
+    marginBottom: 21,
   },
   pageBody: {
-    fontSize: 16,
-    lineHeight: 27,
+    fontSize: 20,
+    lineHeight: 28,
     color: 'rgba(255,255,255,0.88)',
-    marginBottom: 16,
+    marginBottom: 18,
   },
   reflectBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 13,
     backgroundColor: 'rgba(255,255,255,0.10)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 20,
-    padding: 12,
-    paddingHorizontal: 18,
-    marginTop: 10,
+    borderRadius: 22,
+    padding: 13,
+    paddingHorizontal: 19,
+    marginTop: 62,
+    alignSelf: 'flex-start',
   },
-  reflectIcon: { fontSize: 18, color: 'rgba(255,255,255,0.85)' },
-  reflectText: { fontSize: 14, color: 'rgba(255,255,255,0.85)', fontWeight: '500' },
+  reflectText: { fontSize: 17, color: 'rgba(255,255,255,0.85)', fontWeight: '500' },
   amenBtn: {
     width: '100%',
     backgroundColor: 'rgba(255,255,255,0.95)',
-    borderRadius: 30,
-    paddingVertical: 14,
+    borderRadius: 32,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 32,
+    marginTop: 100,
   },
   amenText: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '700',
-    letterSpacing: 0.8,
+    letterSpacing: 1.4,
+  },
+  amenContinueWrap: {
+    marginTop: 36,
+    alignItems: 'center',
+  },
+  amenContinueBtn: {
+    paddingHorizontal: 44,
+    paddingVertical: 14,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+  },
+  amenContinueText: {
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
   prayedCount: {
-    fontSize: 11.5,
+    fontSize: 12.5,
     color: 'rgba(255,255,255,0.55)',
     textAlign: 'center',
-    marginTop: 14,
+    marginTop: 16,
   },
   amenScreen: {
     flex: 1,
-    paddingHorizontal: 28,
-    paddingTop: 100,
-    paddingBottom: 200,
+    paddingHorizontal: 30,
+    paddingTop: 115,
+    paddingBottom: 230,
     justifyContent: 'flex-end',
   },
   amenHands: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 37,
   },
-  amenCaption: {
-    fontSize: 11,
-    letterSpacing: 2.4,
-    textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.65)',
-    fontWeight: '600',
-    marginBottom: 16,
+  handsStage: {
+    width: 280,
+    height: 180,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  handWrap: {
+    position: 'absolute',
+    top: 14,
+  },
+  leftHandWrap: {
+    right: '50%',
+    marginRight: -4,   // pull 4 px past the seam so the two hands meet 8 px tighter
+  },
+  rightHandWrap: {
+    left: '50%',
+    marginLeft: -4,
+  },
+  starPos: {
+    position: 'absolute',
   },
   amenHeading: {
-    fontSize: 30,
+    fontSize: 26,
     fontWeight: '600',
     color: '#fff',
-    lineHeight: 36,
-    marginBottom: 24,
+    lineHeight: 31,
+    marginBottom: 28,
+    textAlign: 'center',
   },
   amenFarewell: {
-    fontSize: 18,
+    fontSize: 19,
     fontStyle: 'italic',
     color: 'rgba(255,255,255,0.85)',
-    lineHeight: 29,
+    lineHeight: 31,
+    textAlign: 'center',
   },
   sheetOverlay: {
-    position: 'absolute',
-    inset: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'transparent',
     justifyContent: 'flex-end',
+    zIndex: 20,
   },
   sheet: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 24,
-    paddingBottom: 40,
+    padding: 26,
+    paddingBottom: 46,
+  },
+  habitSheet: {
+    paddingTop: 75,
+    paddingBottom: 105,
   },
   sheetHandle: {
-    width: 36,
-    height: 4,
+    width: 39,
+    height: 5,
     borderRadius: 2,
     backgroundColor: 'rgba(0,0,0,0.16)',
     alignSelf: 'center',
-    marginBottom: 22,
+    marginBottom: 25,
   },
   sheetHeading: {
     textAlign: 'center',
-    fontSize: 18,
+    fontSize: 21,
     fontWeight: '700',
     color: TXT,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   sheetDesc: {
     textAlign: 'center',
-    fontSize: 14,
+    fontSize: 17,
     color: TXTSUB,
-    lineHeight: 21,
-    marginBottom: 22,
-    paddingHorizontal: 12,
+    lineHeight: 25,
+    marginBottom: 25,
+    paddingHorizontal: 13,
   },
   sheetTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
     color: TXT,
+    marginBottom: 21,
+  },
+  noteSheet: {
+    height: '92%',
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
+  },
+  noteSheetInner: {
+    flex: 1,
+    paddingHorizontal: 26,
+    paddingTop: 6,
+    // paddingBottom is set inline via insets so it adapts per device.
+  },
+  noteHandleHit: {
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  noteSheetTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: TXT,
+    marginBottom: 21,
+  },
+  noteInput: {
+    flex: 1,
+    fontSize: 17,
+    lineHeight: 25,
+    color: TXT,
+    backgroundColor: 'rgba(30,27,46,0.04)',
+    borderRadius: 14,
+    padding: 16,
+    textAlignVertical: 'top',
     marginBottom: 18,
   },
   setTimeBtn: {
     alignSelf: 'center',
-    paddingHorizontal: 38,
-    paddingVertical: 13,
-    borderRadius: 24,
-    marginBottom: 14,
+    paddingHorizontal: 41,
+    paddingVertical: 15,
+    borderRadius: 26,
+    marginBottom: 16,
   },
-  setTimeText: { fontSize: 15, fontWeight: '600' },
+  setTimeText: { fontSize: 18, fontWeight: '600' },
   notNowText: {
     textAlign: 'center',
     color: TXTSUB,
-    fontSize: 14,
+    fontSize: 17,
   },
   wheelRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    marginBottom: 8,
+    gap: 9,
+    marginBottom: 14,
   },
-  wheelItem: {
-    paddingVertical: 8,
+  wheelItemBox: {
+    height: 44,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  wheelText: { fontSize: 18 },
+  wheelHighlight: {
+    position: 'absolute',
+    top: 88,
+    left: 0,
+    right: 0,
+    height: 44,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(30,27,46,0.10)',
+    zIndex: 1,
+  },
+  wheelText: { fontSize: 17 },
   wheelActive: {
-    fontSize: 24,
+    fontSize: 21,
     fontWeight: '700',
     color: TXT,
   },
@@ -502,24 +1010,24 @@ const styles = StyleSheet.create({
   },
   sheetBtns: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 22,
+    gap: 11,
+    marginTop: 25,
   },
   sheetBtnBack: {
     flex: 1,
-    paddingVertical: 13,
+    paddingVertical: 15,
     backgroundColor: 'rgba(30,27,46,0.05)',
-    borderRadius: 22,
+    borderRadius: 24,
     alignItems: 'center',
   },
   sheetBtnConfirm: {
     flex: 2,
-    paddingVertical: 13,
-    borderRadius: 22,
+    paddingVertical: 15,
+    borderRadius: 24,
     alignItems: 'center',
   },
   sheetBtnText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
 });

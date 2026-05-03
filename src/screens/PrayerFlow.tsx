@@ -184,12 +184,16 @@ function Sparkle({ size = 18 }: { size?: number }) {
 
 export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'PrayerFlow'>) {
   const insets = useSafeAreaInsets();
-  const { markDone } = usePrayer();
+  const { markDone, mDone, eDone } = usePrayer();
   const { addNote } = useNotes();
-  const { markToday, dates: activityDates } = useActivity();
+  const { markToday } = useActivity();
   const ratePrompt = useRatePrompt();
   const { kind } = route.params;
   const morning = kind === 'morning';
+  // Capture whether this slot was already completed BEFORE this flow started.
+  // If so, this is a re-do and the celebration screens (weekly progress + set
+  // reminder sheet) are skipped — the user just wanted to revisit the prayer.
+  const isRedoRef = useRef<boolean>(morning ? mDone : eDone);
   const { current: translation } = useTranslation();
   const { getVerse, todayDay } = useDailyVerses();
   const labels = dailyLabels(translation.code);
@@ -398,7 +402,11 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
 
   const saveNote = () => {
     Keyboard.dismiss();
-    addNote(noteText);
+    addNote(
+      noteText,
+      verseRef ? { ref: verseRef, text: verseText } : undefined,
+      'reflection',
+    );
     setNoteText('');
     setShowNoteSheet(false);
   };
@@ -479,10 +487,6 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             <ScrollView showsVerticalScrollIndicator={false} style={styles.pageScroll}>
               <Animated.View style={[styles.pageContent, styles.meditationContent, meditationAnim]}>
                 <Text style={styles.pageCaption}>{meditationCaption}</Text>
-                {/* Verse reference doubles as the page heading — the source
-                    file doesn't ship a per-verse thematic title, and showing
-                    the ref keeps users anchored to the passage they're on. */}
-                <Text style={styles.pageHeading}>{verseRef}</Text>
                 {meditationParas.map((p, i) => (
                   <Text key={i} style={styles.pageBody}>{p}</Text>
                 ))}
@@ -494,7 +498,6 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             <ScrollView showsVerticalScrollIndicator={false} style={styles.pageScroll}>
               <Animated.View style={[styles.pageContent, actionAnim]}>
                 <Text style={styles.pageCaption}>{actionCaption}</Text>
-                <Text style={styles.pageHeading}>{verseRef}</Text>
                 <Text style={styles.pageBody}>{actionBody}</Text>
                 <TouchableOpacity style={styles.reflectBtn} onPress={() => setShowNoteSheet(true)}>
                   <Feather name="edit-2" size={18} color="rgba(255,255,255,0.85)" />
@@ -508,7 +511,6 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             <ScrollView showsVerticalScrollIndicator={false} style={styles.pageScroll}>
               <Animated.View style={[styles.pageContent, prayerAnim]}>
                 <Text style={styles.pageCaption}>{prayerCaption}</Text>
-                <Text style={styles.pageHeading}>{verseRef}</Text>
                 <Text style={styles.pageBody}>{prayerBody}</Text>
                 <TouchableOpacity onPress={handleAmen} style={styles.amenBtn}>
                   <Text style={[styles.amenText, { color: morning ? '#7B2255' : '#2D1660' }]}>AMEN</Text>
@@ -570,7 +572,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             pointerEvents={buttonReady ? 'auto' : 'none'}
           >
             <TouchableOpacity
-              onPress={() => setShowWeekly(true)}
+              onPress={() => isRedoRef.current ? navigation.goBack() : setShowWeekly(true)}
               activeOpacity={0.85}
               style={styles.amenContinueBtn}
             >
@@ -586,7 +588,6 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
         <View style={StyleSheet.absoluteFillObject}>
           <WeeklyProgressView
             morning={morning}
-            activityDates={activityDates}
             onOpenReminder={handleWeeklyOpenReminder}
             onBack={handleWeeklyBack}
           />
@@ -596,7 +597,14 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
       {showRatePrompt && <RatePromptSheet onClose={handleRatePromptClose} />}
 
       {showNoteSheet && (
-        <View style={styles.sheetOverlay}>
+        // KAV must wrap the SHEET, not its inner content — with the sheet
+        // clipped to 92% height + overflow: hidden, padding inside the sheet
+        // pushes the Save button off the bottom edge. Wrapping outside lets
+        // the sheet itself shift up by the keyboard height (flex-end).
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.sheetOverlay}
+        >
           <Animated.View
             entering={FadeIn.duration(300)}
             style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.4)' }]}
@@ -612,20 +620,13 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               entering={SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic))}
               style={[styles.noteSheet, noteSheetAnimStyle]}
             >
-              <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={[
-                  styles.noteSheetInner,
-                  // Adaptive bottom padding: insets.bottom covers the home
-                  // indicator / gesture bar; +24 keeps the Save button clear.
-                  // Floor of 24 ensures phones without a notch still breathe.
-                  { paddingBottom: Math.max(insets.bottom, 12) + 24 },
-                ]}
-              >
+              <View style={[styles.noteSheetInner, { paddingBottom: Math.max(insets.bottom, 12) + 24 }]}>
                 <TouchableOpacity onPress={Keyboard.dismiss} activeOpacity={1} style={styles.noteHandleHit}>
                   <View style={styles.sheetHandle} />
                 </TouchableOpacity>
-                <Text style={styles.noteSheetTitle}>Write a reflection</Text>
+                <TouchableOpacity onPress={Keyboard.dismiss} activeOpacity={1}>
+                  <Text style={styles.noteSheetTitle}>Write a reflection</Text>
+                </TouchableOpacity>
                 <TextInput
                   value={noteText}
                   onChangeText={setNoteText}
@@ -638,16 +639,16 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                 />
                 <View style={styles.sheetBtns}>
                   <TouchableOpacity onPress={closeNoteSheet} style={styles.sheetBtnBack}>
-                    <Text style={[styles.sheetBtnText, { color: TXTSUB }]}>Cancel</Text>
+                    <Text style={[styles.sheetBtnText, styles.reflectionBtnText, { color: TXTSUB }]}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={saveNote} style={[styles.sheetBtnConfirm, { backgroundColor: morning ? ROSE : LAV }]}>
-                    <Text style={[styles.sheetBtnText, { color: '#fff', fontWeight: '700' }]}>Save</Text>
+                    <Text style={[styles.sheetBtnText, styles.reflectionBtnText, { color: '#fff', fontWeight: '700' }]}>Save</Text>
                   </TouchableOpacity>
                 </View>
-              </KeyboardAvoidingView>
+              </View>
             </Animated.View>
           </GestureDetector>
-        </View>
+        </KeyboardAvoidingView>
       )}
 
       {showSheet && (
@@ -752,7 +753,7 @@ const styles = StyleSheet.create({
     paddingBottom: 280,
   },
   pageCaption: {
-    fontSize: 14,
+    fontSize: 15,
     letterSpacing: 2.4,
     textTransform: 'uppercase',
     color: 'rgba(255,255,255,0.65)',
@@ -762,25 +763,18 @@ const styles = StyleSheet.create({
   pageRef: {
     color: 'rgba(255,255,255,0.85)',
     fontWeight: '600',
-    fontSize: 22,
+    fontSize: 24,
     letterSpacing: 0.3,
     marginBottom: 30,
   },
   pageVerse: {
-    fontSize: 22,
-    lineHeight: 32,
-    color: '#fff',
-  },
-  pageHeading: {
     fontSize: 24,
-    fontWeight: '500',
+    lineHeight: 35,
     color: '#fff',
-    lineHeight: 30,
-    marginBottom: 21,
   },
   pageBody: {
-    fontSize: 20,
-    lineHeight: 28,
+    fontSize: 22,
+    lineHeight: 31,
     color: 'rgba(255,255,255,0.88)',
     marginBottom: 18,
   },
@@ -795,7 +789,7 @@ const styles = StyleSheet.create({
     marginTop: 62,
     alignSelf: 'flex-start',
   },
-  reflectText: { fontSize: 17, color: 'rgba(255,255,255,0.85)', fontWeight: '500' },
+  reflectText: { fontSize: 19, color: 'rgba(255,255,255,0.85)', fontWeight: '500' },
   amenBtn: {
     width: '100%',
     backgroundColor: 'rgba(255,255,255,0.95)',
@@ -805,7 +799,7 @@ const styles = StyleSheet.create({
     marginTop: 100,
   },
   amenText: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
     letterSpacing: 1.4,
   },
@@ -942,7 +936,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   noteSheetTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
     color: TXT,
     marginBottom: 21,
@@ -1030,4 +1024,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
+  reflectionBtnText: { fontSize: 17 },
 });

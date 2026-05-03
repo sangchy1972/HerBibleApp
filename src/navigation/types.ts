@@ -34,6 +34,8 @@ export type RootStackParamList = {
   AboutUs: undefined;
   Policy: { id: 'terms' | 'privacy' | 'content' };
   Notifications: undefined;
+  Achievement: undefined;
+  Reflections: undefined;
 };
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> =

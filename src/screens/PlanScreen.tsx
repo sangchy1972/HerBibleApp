@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, FadeIn, SlideInRight, Easing,
+  useSharedValue, useAnimatedStyle, withTiming, FadeIn,
 } from 'react-native-reanimated';
 import { ROSE, LAV, TXT, TXTSUB, P } from '../constants/theme';
 import { PLANS_EXPLORE } from '../constants/data';
@@ -60,82 +60,94 @@ function PlanDetail({ plan, onBack }: { plan: Plan; onBack: () => void }) {
   });
   const cur = days[activeDay];
 
+  // Phased fade-in on each section after the page mounts. Walks the eye from
+  // top to bottom rather than sliding the whole view from the right.
   return (
-    <Animated.ScrollView
-      entering={SlideInRight.duration(700).easing(Easing.out(Easing.cubic))}
+    <ScrollView
       showsVerticalScrollIndicator={false}
       contentContainerStyle={[styles.detailScroll, { paddingTop: insets.top + 8 }]}
     >
-      <View style={styles.detailNav}>
-        <TouchableOpacity onPress={onBack} style={styles.backBtn} hitSlop={8}>
-          <Feather name="chevron-left" size={22} color={TXT} />
-        </TouchableOpacity>
-      </View>
-
-      <Text style={styles.detailTitle}>{plan.title}</Text>
-
-      <View style={[styles.heroImagePlaceholder, { borderColor: `${plan.ac}55`, backgroundColor: `${plan.ac}18` }]}>
-        <Feather name="image" size={44} color={`${plan.ac}88`} />
-        <Text style={[styles.heroImageLabel, { color: plan.ac }]}>HERO IMAGE</Text>
-      </View>
-
-      <Text style={styles.detailSubtitle}>{plan.subtitle}</Text>
-      <Text style={styles.detailGoal}>{plan.goal}</Text>
-
-      <Text style={styles.dailyPlanLabel}>Daily Plan</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dayStrip} contentContainerStyle={styles.dayStripContent}>
-        {days.map((d, i) => {
-          const sel = i === activeDay;
-          return (
-            <TouchableOpacity
-              key={i}
-              onPress={() => setActiveDay(i)}
-              style={[styles.dayBtn, { backgroundColor: sel ? plan.ac : 'rgba(255,255,255,0.7)', borderColor: sel ? 'transparent' : 'rgba(30,27,46,0.08)' }]}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.dayNum, { color: sel ? '#fff' : TXT }]}>{d.n}</Text>
-              <Text style={[styles.dayDate, { color: sel ? 'rgba(255,255,255,0.9)' : TXTSUB }]}>{d.label}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
-      <View style={styles.dayContent}>
-        <View style={styles.dayHeader}>
-          <Text style={styles.dayTitle}>Day {cur.n} of {plan.days}</Text>
-          <View style={[styles.timeBadge, { backgroundColor: `${plan.ac}18` }]}>
-            <Text style={[styles.timeBadgeText, { color: plan.ac }]}>~8 MIN</Text>
-          </View>
+      <Animated.View entering={FadeIn.duration(360)}>
+        <View style={styles.detailNav}>
+          <TouchableOpacity onPress={onBack} style={styles.backBtn} hitSlop={8}>
+            <Feather name="chevron-left" size={22} color={TXT} />
+          </TouchableOpacity>
         </View>
+        <Text style={styles.detailTitle}>{plan.title}</Text>
+      </Animated.View>
 
-        <TouchableOpacity style={styles.walkRow} activeOpacity={0.8}>
-          <View style={[styles.walkIcon, { backgroundColor: `${plan.ac}22` }]}>
-            <Feather name="arrow-right" size={16} color={plan.ac} />
-          </View>
-          <View style={styles.walkMeta}>
-            <Text style={[styles.walkCaption, { color: plan.ac }]}>DAILY WALK</Text>
-            <Text style={styles.walkTitle}>{cur.walk}</Text>
-          </View>
-          <Feather name="chevron-right" size={18} color={TXTSUB} />
-        </TouchableOpacity>
+      <Animated.View entering={FadeIn.delay(140).duration(420)}>
+        <View style={[styles.heroImagePlaceholder, { borderColor: `${plan.ac}55`, backgroundColor: `${plan.ac}18` }]}>
+          <Feather name="image" size={44} color={`${plan.ac}88`} />
+          <Text style={[styles.heroImageLabel, { color: plan.ac }]}>HERO IMAGE</Text>
+        </View>
+      </Animated.View>
 
-        {cur.verses.map((v, i) => (
-          <TouchableOpacity key={i} style={styles.verseRow} activeOpacity={0.8}>
-            <View style={styles.verseIcon}>
-              <Feather name="book-open" size={15} color={TXTSUB} />
+      <Animated.View entering={FadeIn.delay(280).duration(420)}>
+        <Text style={styles.detailSubtitle}>{plan.subtitle}</Text>
+        <Text style={styles.detailGoal}>{plan.goal}</Text>
+      </Animated.View>
+
+      <Animated.View entering={FadeIn.delay(420).duration(420)}>
+        <Text style={styles.dailyPlanLabel}>Daily Plan</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dayStrip} contentContainerStyle={styles.dayStripContent}>
+          {days.map((d, i) => {
+            const sel = i === activeDay;
+            return (
+              <TouchableOpacity
+                key={i}
+                onPress={() => setActiveDay(i)}
+                style={[styles.dayBtn, { backgroundColor: sel ? plan.ac : 'rgba(255,255,255,0.7)', borderColor: sel ? 'transparent' : 'rgba(30,27,46,0.08)' }]}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.dayNum, { color: sel ? '#fff' : TXT }]}>{d.n}</Text>
+                <Text style={[styles.dayDate, { color: sel ? 'rgba(255,255,255,0.9)' : TXTSUB }]}>{d.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </Animated.View>
+
+      <Animated.View entering={FadeIn.delay(560).duration(420)}>
+        <View style={styles.dayContent}>
+          <View style={styles.dayHeader}>
+            <Text style={styles.dayTitle}>Day {cur.n} of {plan.days}</Text>
+            <View style={[styles.timeBadge, { backgroundColor: `${plan.ac}18` }]}>
+              <Text style={[styles.timeBadgeText, { color: plan.ac }]}>~8 MIN</Text>
             </View>
-            <Text style={styles.verseName}>{v}</Text>
+          </View>
+
+          <TouchableOpacity style={styles.walkRow} activeOpacity={0.8}>
+            <View style={[styles.walkIcon, { backgroundColor: `${plan.ac}22` }]}>
+              <Feather name="arrow-right" size={16} color={plan.ac} />
+            </View>
+            <View style={styles.walkMeta}>
+              <Text style={[styles.walkCaption, { color: plan.ac }]}>DAILY WALK</Text>
+              <Text style={styles.walkTitle}>{cur.walk}</Text>
+            </View>
             <Feather name="chevron-right" size={18} color={TXTSUB} />
           </TouchableOpacity>
-        ))}
-      </View>
 
-      <TouchableOpacity style={[styles.startReadingBtn, { backgroundColor: plan.ac }]}>
-        <Text style={styles.startReadingText}>Start Reading Plan</Text>
-      </TouchableOpacity>
+          {cur.verses.map((v, i) => (
+            <TouchableOpacity key={i} style={styles.verseRow} activeOpacity={0.8}>
+              <View style={styles.verseIcon}>
+                <Feather name="book-open" size={15} color={TXTSUB} />
+              </View>
+              <Text style={styles.verseName}>{v}</Text>
+              <Feather name="chevron-right" size={18} color={TXTSUB} />
+            </TouchableOpacity>
+          ))}
+        </View>
+      </Animated.View>
+
+      <Animated.View entering={FadeIn.delay(720).duration(400)}>
+        <TouchableOpacity style={[styles.startReadingBtn, { backgroundColor: plan.ac }]}>
+          <Text style={styles.startReadingText}>Start Reading Plan</Text>
+        </TouchableOpacity>
+      </Animated.View>
 
       <View style={{ height: 23 }} />
-    </Animated.ScrollView>
+    </ScrollView>
   );
 }
 
@@ -523,13 +535,13 @@ const styles = StyleSheet.create({
   },
   heroImageLabel: { fontSize: 14, fontWeight: '600', marginTop: 9, letterSpacing: 1 },     // +15% from 12
   detailSubtitle: { fontSize: 18, fontWeight: '600', color: TXT, marginBottom: 6, lineHeight: 26 },  // +15% from 16
-  detailGoal: { fontSize: 16, color: TXTSUB, lineHeight: 26, marginBottom: 25 },           // +15% from 14
+  detailGoal: { fontSize: 17, color: TXTSUB, lineHeight: 26, marginBottom: 25 },           // +5 % bump (16 → 17), line-height held
   dailyPlanLabel: { fontSize: 18, fontWeight: '600', color: TXT, marginBottom: 12 },       // +15% from 16
   dayStrip: { marginHorizontal: -P, marginBottom: 0 },
   dayStripContent: { paddingHorizontal: P, gap: 9, paddingBottom: 7, marginBottom: 23 },
   dayBtn: {
     flexShrink: 0,
-    width: 60,
+    width: 72,                                                                             // +20% from 60
     paddingVertical: 12,
     borderRadius: 11,
     borderWidth: 1,
@@ -537,7 +549,7 @@ const styles = StyleSheet.create({
   },
   dayNum: { fontSize: 20, fontWeight: '700', lineHeight: 25 },                             // +15% from 17
   dayDate: { fontSize: 13, marginTop: 2 },                                                 // +15% from 11
-  dayContent: { marginBottom: 18, marginTop: 23 },
+  dayContent: { marginBottom: 18, marginTop: 15 },                                         // −8 px gap below day strip
   dayHeader: {
     flexDirection: 'row',
     alignItems: 'center',

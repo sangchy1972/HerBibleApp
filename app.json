@@ -36,17 +36,13 @@
         "backgroundColor": "#FBF7F6"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "queries": [
-        { "package": "com.facebook.katana" },
-        { "package": "com.whatsapp" },
-        { "package": "com.instagram.android" }
-      ]
+      "predictiveBackGestureEnabled": false
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "./plugins/withAndroidPackageQueries.js",
       "expo-font",
       "expo-web-browser",
       [

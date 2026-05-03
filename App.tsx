@@ -22,6 +22,9 @@ import { RatePromptProvider } from './src/state/RatePromptContext';
 import { MoodCheckInProvider } from './src/state/MoodCheckInContext';
 import { NotificationsProvider } from './src/state/NotificationsContext';
 import { DailyVersesProvider } from './src/state/DailyVersesContext';
+import { ShareProvider } from './src/state/ShareContext';
+import { AchievementsProvider } from './src/state/AchievementsContext';
+import AchievementUnlockSheet from './src/components/AchievementUnlockSheet';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -48,18 +51,28 @@ export default function App() {
                       <ActivityProvider>
                         <TranslationsProvider>
                           <DailyVersesProvider>
-                            <OnboardingProvider>
-                              <RatePromptProvider>
-                                <MoodCheckInProvider>
-                                  <NotificationsProvider>
-                                    <NavigationContainer>
-                                      <StatusBar style="dark" />
-                                      <RootNavigator />
-                                    </NavigationContainer>
-                                  </NotificationsProvider>
-                                </MoodCheckInProvider>
-                              </RatePromptProvider>
-                            </OnboardingProvider>
+                            <ShareProvider>
+                              <AchievementsProvider>
+                                <OnboardingProvider>
+                                  <RatePromptProvider>
+                                    <MoodCheckInProvider>
+                                      <NotificationsProvider>
+                                        <NavigationContainer>
+                                          <StatusBar style="dark" />
+                                          <RootNavigator />
+                                          {/* Mounted inside NavigationContainer
+                                              so the View Details button can
+                                              navigate; reads its queue off
+                                              AchievementsContext, so it fires
+                                              from anywhere a counter changes. */}
+                                          <AchievementUnlockSheet />
+                                        </NavigationContainer>
+                                      </NotificationsProvider>
+                                    </MoodCheckInProvider>
+                                  </RatePromptProvider>
+                                </OnboardingProvider>
+                              </AchievementsProvider>
+                            </ShareProvider>
                           </DailyVersesProvider>
                         </TranslationsProvider>
                       </ActivityProvider>

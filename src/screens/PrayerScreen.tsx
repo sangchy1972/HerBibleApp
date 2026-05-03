@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, LayoutChangeEvent, Alert,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, LayoutChangeEvent,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,7 +9,7 @@ import Svg, { Path, Line, Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, withRepeat, withDelay, interpolateColor, FadeIn, Easing,
+  useSharedValue, useAnimatedStyle, withTiming, withRepeat, withDelay, interpolateColor, Easing, FadeIn, FadeOut,
 } from 'react-native-reanimated';
 import Glass from '../components/shared/Glass';
 import DayCircle from '../components/shared/DayCircle';
@@ -25,6 +25,7 @@ import { useReadChapters } from '../state/ReadChaptersContext';
 import { dailyLabels } from '../constants/dailyVersesLabels';
 import { localizeBookName, englishBookName, chaptersInBook } from '../constants/bibleBookNames';
 import { parseReference } from '../services/parseReference';
+import ShareVerseSheet from '../components/ShareVerseSheet';
 import type { TabScreenProps } from '../navigation/types';
 
 const NOTO_REG = 'NotoSansSC_400Regular';
@@ -69,22 +70,6 @@ function MoreIcon({ color }: { color: string }) {
   );
 }
 
-type ButtonMode = 'start' | 'next' | 'completed';
-
-function atTime(d: Date, h: number, m = 0): Date {
-  const t = new Date(d);
-  t.setHours(h, m, 0, 0);
-  return t;
-}
-
-function formatCountdown(ms: number): string {
-  const totalMin = Math.max(1, Math.ceil(ms / 60000));   // never show "0m"
-  const h = Math.floor(totalMin / 60);
-  const m = totalMin % 60;
-  if (h === 0) return `${m}m`;
-  return `${h}h ${m}m`;
-}
-
 // Deterministic per-day pseudo-random count: stable within a calendar day,
 // varies day to day. `salt` lets us emit different streams (likes vs comments
 // vs morning vs evening) from the same date.
@@ -98,22 +83,9 @@ function formatLikes(n: number): string {
   return n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(n);
 }
 
-function lockedReminder(nextLabel: string, allDone: boolean): { title: string; message: string } {
-  if (allDone) {
-    return { title: 'Beautiful work today', message: 'You\'ve completed both prayers. Come back tomorrow morning to continue.' };
-  }
-  if (nextLabel.startsWith('Night Prayer')) {
-    return { title: 'See you tonight', message: 'Night Prayer opens at 6:00 PM. Come back this evening to continue your devotion.' };
-  }
-  return { title: 'See you in the morning', message: 'Morning Prayer opens at 6:00 AM. Come back tomorrow to continue your devotion.' };
-}
-
-function VerseHeroCard({ morning, isDone, mode, nextLabel, allDone, onBegin, onOpenRef, cardLabel, verseRef, verseText }: {
+function VerseHeroCard({ morning, isDone, onBegin, onOpenRef, cardLabel, verseRef, verseText }: {
   morning: boolean;
   isDone: boolean;
-  mode: ButtonMode;
-  nextLabel: string;
-  allDone: boolean;
   onBegin: () => void;
   onOpenRef: () => void;
   cardLabel: string;
@@ -121,6 +93,7 @@ function VerseHeroCard({ morning, isDone, mode, nextLabel, allDone, onBegin, onO
   verseText: string;
 }) {
   const [liked, setLiked] = React.useState(false);
+  const [showShare, setShowShare] = useState(false);
   const colors = morning
     ? (['#C2547A', '#7B2255', '#2D0A1A'] as const)
     : (['#5B3A9E', '#2D1660', '#100525'] as const);
@@ -131,31 +104,37 @@ function VerseHeroCard({ morning, isDone, mode, nextLabel, allDone, onBegin, onO
   const likes = dailyCount(morning ? 1 : 2, 1001, 4000);
   const comments = dailyCount(morning ? 3 : 4, 36, 100);
 
-  const showLockedReminder = () => {
-    const r = lockedReminder(nextLabel, allDone);
-    Alert.alert(r.title, r.message);
-  };
-  // Tapping the verse card or the Next button when the slot is closed should
-  // never re-open the prayer flow — instead show the friendly "come back" alert.
-  const onCardPress = mode === 'start' ? onBegin : showLockedReminder;
-
-  // Breathing pulse on the Start Prayer CTA: 1 ↔ 1.06, 1.5 s each way.
+  // Breathing pulse on the Start CTA — only while the slot is live. Once the
+  // user taps Amen and returns here, the button switches to a quiet "done"
+  // state and the pulse stops.
   const pulse = useSharedValue(1);
   useEffect(() => {
+    if (isDone) { pulse.value = 1; return; }
     pulse.value = withRepeat(
       withTiming(1.06, { duration: 1500, easing: Easing.inOut(Easing.quad) }),
       -1,
       true,
     );
-  }, [pulse]);
-  const pulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulse.value }],
-  }));
+  }, [pulse, isDone]);
+  const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
+
+  // Tapping the disabled-looking button after the slot is complete pops a
+  // friendly hint that auto-fades after a few seconds.
+  const [hint, setHint] = useState<string | null>(null);
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (hintTimer.current) clearTimeout(hintTimer.current); }, []);
+  const popHint = () => {
+    if (hintTimer.current) clearTimeout(hintTimer.current);
+    setHint(morning
+      ? 'Lovely, you\'re all set for the morning. Come back tonight for Night Prayer.'
+      : 'Beautiful work today. See you tomorrow morning for sunrise prayer.');
+    hintTimer.current = setTimeout(() => setHint(null), 3200);
+  };
 
   return (
     <View>
       <LinearGradient colors={colors} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={styles.heroCard}>
-        <TouchableOpacity onPress={onCardPress} activeOpacity={0.85}>
+        <TouchableOpacity onPress={onBegin} activeOpacity={0.85}>
           <View style={styles.heroTop}>
             <Text style={styles.heroLabel}>{cardLabel}</Text>
             {/* Reference is its own tap target — jumps the reader to the
@@ -190,7 +169,7 @@ function VerseHeroCard({ morning, isDone, mode, nextLabel, allDone, onBegin, onO
             <CommentIcon color={iconColor} />
             <Text style={[styles.actionLabel, { color: iconColor }]}>{comments}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn}>
+          <TouchableOpacity style={styles.actionBtn} onPress={() => setShowShare(true)}>
             <ShareIcon color={iconColor} />
             <Text style={[styles.actionLabel, { color: iconColor }]}>Share</Text>
           </TouchableOpacity>
@@ -201,31 +180,44 @@ function VerseHeroCard({ morning, isDone, mode, nextLabel, allDone, onBegin, onO
         </View>
       </LinearGradient>
 
-      <Animated.View key={mode} entering={FadeIn.duration(180)}>
-        {mode === 'start' && (
-          <Animated.View style={pulseStyle}>
-            <TouchableOpacity
-              onPress={onBegin}
-              activeOpacity={0.9}
-              style={[styles.startBtn, { backgroundColor: morning ? ROSE : LAV }]}
-            >
-              <Text style={styles.startBtnText}>Start Prayer →</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        )}
-        {mode === 'next' && (
-          <TouchableOpacity onPress={showLockedReminder} activeOpacity={0.85} style={styles.nextBtn}>
-            <Text style={[styles.nextBtnText, { color: morning ? ROSE : LAV }]}>
-              {nextLabel}
+      {isDone ? (
+        <TouchableOpacity onPress={popHint} activeOpacity={0.85} style={styles.doneBtn}>
+          <Text style={styles.doneBtnText}>
+            {morning ? 'Morning Prayer · Done' : 'Night Prayer · Done'} ✓
+          </Text>
+        </TouchableOpacity>
+      ) : (
+        <Animated.View style={pulseStyle}>
+          <TouchableOpacity
+            onPress={onBegin}
+            activeOpacity={0.9}
+            style={[styles.startBtn, { backgroundColor: morning ? ROSE : LAV }]}
+          >
+            <Text style={styles.startBtnText}>
+              {morning ? 'Start Morning Prayer →' : 'Start Night Prayer →'}
             </Text>
           </TouchableOpacity>
-        )}
-        {mode === 'completed' && (
-          <View style={styles.completedBtn}>
-            <Text style={[styles.completedText, { color: TXTSUB }]}>Completed ✓</Text>
-          </View>
-        )}
-      </Animated.View>
+        </Animated.View>
+      )}
+
+      {hint && (
+        <Animated.View
+          key={hint}
+          entering={FadeIn.duration(220)}
+          exiting={FadeOut.duration(180)}
+          style={styles.hintWrap}
+        >
+          <Text style={styles.hintText}>{hint}</Text>
+        </Animated.View>
+      )}
+
+      {showShare && verseRef && verseText && (
+        <ShareVerseSheet
+          reference={verseRef}
+          text={verseText}
+          onClose={() => setShowShare(false)}
+        />
+      )}
     </View>
   );
 }
@@ -290,14 +282,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   const pct = (mDone ? 50 : 0) + (eDone ? 50 : 0);
   const isDone = morning ? mDone : eDone;
 
-  // Live clock so the countdown ticks while the screen is visible.
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 30_000);
-    return () => clearInterval(id);
-  }, []);
-
-  const today = now;
+  const today = new Date();
   // Week keys for "This Week" — Sunday → Saturday for the current week.
   const weekKeys = (() => {
     const dow = today.getDay();
@@ -317,33 +302,6 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
     : hr < 12 ? 'Good Morning'
     : hr < 18 ? 'Good Afternoon'
     : 'Good Evening';
-
-  // Each prayer has a real-time window: morning before 6 PM, evening after.
-  // "Start" only shows when the active slot is BOTH within its window AND
-  // not yet completed. Outside the window (or already done), we surface the
-  // countdown to whichever prayer is actually next, regardless of which tab
-  // the user is looking at.
-  const morningOpen = hr < 18;
-  const eveningOpen = hr >= 18;
-  const slotAvailable = morning ? morningOpen : eveningOpen;
-  const allDone = mDone && eDone;
-
-  let buttonMode: ButtonMode;
-  let nextLabel = '';
-  if (allDone) {
-    buttonMode = 'completed';
-  } else if (slotAvailable && !isDone) {
-    buttonMode = 'start';
-  } else {
-    buttonMode = 'next';
-    if (hr < 18) {
-      const target = atTime(today, 18);
-      nextLabel = `Night Prayer · ${formatCountdown(target.getTime() - now.getTime())}`;
-    } else {
-      const target = atTime(new Date(today.getTime() + 86_400_000), 6);
-      nextLabel = `Morning Prayer · ${formatCountdown(target.getTime() - now.getTime())}`;
-    }
-  }
 
   const [trackWidth, setTrackWidth] = useState(0);
   const progressVal = useSharedValue(pct);
@@ -463,9 +421,6 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
         <VerseHeroCard
           morning={morning}
           isDone={isDone}
-          mode={buttonMode}
-          nextLabel={nextLabel}
-          allDone={allDone}
           cardLabel={morning ? labels.verseOfDay : labels.verseOfNight}
           verseRef={dailyVerse?.reference.full_reference || ''}
           verseText={dailyVerse?.modernText || ''}
@@ -769,30 +724,36 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.3,
   },
-  nextBtn: {
-    marginTop: 17,
-    marginBottom: 5,
-    paddingVertical: 18,
-    backgroundColor: 'rgba(232,97,154,0.10)',
-    borderRadius: 29,
+  doneBtn: {
+    marginTop: 16,
+    marginBottom: 10,
+    marginHorizontal: P,
+    height: 55,
+    borderRadius: 28,
+    alignSelf: 'stretch',
     alignItems: 'center',
-  },
-  nextBtnText: {
-    fontSize: 17,
-    fontWeight: '700',
-    letterSpacing: 0.4,
-  },
-  completedBtn: {
-    marginTop: 17,
-    marginBottom: 5,
-    paddingVertical: 18,
+    justifyContent: 'center',
     backgroundColor: 'rgba(30,27,46,0.06)',
-    borderRadius: 29,
-    alignItems: 'center',
   },
-  completedText: {
+  doneBtnText: {
+    color: TXTSUB,
     fontSize: 17,
     fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  hintWrap: {
+    marginHorizontal: P,
+    marginBottom: 6,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(232,97,154,0.08)',
+    borderRadius: 14,
+  },
+  hintText: {
+    color: TXT,
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
   },
   weekCard: {
     padding: 20,

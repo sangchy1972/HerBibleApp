@@ -1,17 +1,20 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+export type NoteKind = 'reflection' | 'note';
+
 export interface Note {
   id: string;
   text: string;
   savedAt: string;
   verseRef?: string;
   verseText?: string;
+  kind?: NoteKind;
 }
 
 interface NotesState {
   notes: Note[];
-  addNote: (text: string, verse?: { ref: string; text: string }) => void;
+  addNote: (text: string, verse?: { ref: string; text: string }, kind?: NoteKind) => void;
   removeNote: (id: string) => void;
 }
 
@@ -34,7 +37,7 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<NotesState>(() => ({
     notes,
-    addNote: (text, verse) => {
+    addNote: (text, verse, kind) => {
       const trimmed = text.trim();
       if (!trimmed) return;
       persist([
@@ -44,6 +47,7 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
           savedAt: new Date().toISOString(),
           verseRef: verse?.ref,
           verseText: verse?.text,
+          kind,
         },
         ...notes,
       ]);

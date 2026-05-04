@@ -27,6 +27,8 @@ export interface EvaluatorSnapshot {
   notesCount: number;
   highlightsCount: number;
   distinctHighlightedBooks: number;
+  booksRead: number;                 // distinct books with ≥1 chapter read
+
 
   // Plans (placeholder — wire when PlanCompletionContext lands)
   planCount: number;
@@ -51,6 +53,7 @@ function meets(a: Achievement, s: EvaluatorSnapshot): boolean {
     case 'notesCount':         return s.notesCount >= c.total;
     case 'highlightsCount':    return s.highlightsCount >= c.total;
     case 'highlightedBooks':   return s.distinctHighlightedBooks >= c.total;
+    case 'booksRead':          return s.booksRead >= c.total;
     case 'planCount':          return s.planCount >= c.total;
     case 'planInWindow':       return countWithinDays(s.planRecentDates, c.days) >= c.total;
     case 'planRepeated':       return s.hasRepeatedPlan;

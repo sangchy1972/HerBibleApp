@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, LayoutChangeEvent,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, LayoutChangeEvent, Dimensions, Modal, TextInput,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,8 +9,13 @@ import Svg, { Path, Line, Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, withRepeat, withDelay, interpolateColor, Easing, FadeIn, FadeOut,
+  useSharedValue, useAnimatedStyle, useAnimatedProps, withTiming, withRepeat, withDelay, withSequence,
+  interpolateColor, runOnJS, Easing, FadeIn, FadeOut,
 } from 'react-native-reanimated';
+
+// AnimatedTextInput is the standard pattern for streaming a worklet-driven
+// number into a Text-like component without a JS re-render per frame.
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 import Glass from '../components/shared/Glass';
 import DayCircle from '../components/shared/DayCircle';
 import FireFlame from '../components/shared/FireFlame';
@@ -24,7 +29,7 @@ import { useTranslation } from '../state/TranslationsContext';
 import { useReadChapters } from '../state/ReadChaptersContext';
 import { dailyLabels } from '../constants/dailyVersesLabels';
 import { localizeBookName, englishBookName, chaptersInBook } from '../constants/bibleBookNames';
-import { parseReference } from '../services/parseReference';
+import { parseReference, localizeReference } from '../services/parseReference';
 import ShareVerseSheet from '../components/ShareVerseSheet';
 import type { TabScreenProps } from '../navigation/types';
 
@@ -70,6 +75,74 @@ function MoreIcon({ color }: { color: string }) {
   );
 }
 
+// Compact bottom-sheet menu fired by the verse card's More button. Keeps a
+// single entry today ("See past days") but is shaped so we can add archival /
+// copy-link / report actions later without restructuring.
+// Floating menu anchored to the More button. The button passes its measured
+// window-space rect on tap; we position the popover so its right edge sits at
+// the More button's left edge and its bottom rises just above the action row,
+// so the menu visually unfolds out the left side of More.
+interface MoreAnchor { x: number; y: number; w: number; h: number }
+function MoreMenu({ anchor, onClose, onSeePastDays, onReadFullChapter }: {
+  anchor: MoreAnchor;
+  onClose: () => void;
+  onSeePastDays: () => void;
+  onReadFullChapter: () => void;
+}) {
+  const { width: screenW, height: screenH } = Dimensions.get('window');
+  return (
+    <View style={moreStyles.overlay}>
+      <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={onClose} />
+      <Animated.View
+        entering={FadeIn.duration(160)}
+        exiting={FadeOut.duration(120)}
+        style={[
+          moreStyles.popover,
+          {
+            right: Math.max(8, screenW - anchor.x),
+            bottom: Math.max(8, screenH - anchor.y + 6),
+          },
+        ]}
+      >
+        <TouchableOpacity onPress={onReadFullChapter} activeOpacity={0.85} style={moreStyles.row}>
+          <Feather name="book-open" size={18} color={TXT} />
+          <Text style={moreStyles.rowText}>Read full chapter</Text>
+        </TouchableOpacity>
+        <View style={moreStyles.rowDivider} />
+        <TouchableOpacity onPress={onSeePastDays} activeOpacity={0.85} style={moreStyles.row}>
+          <Feather name="calendar" size={18} color={TXT} />
+          <Text style={moreStyles.rowText}>See past days</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
+  );
+}
+
+const moreStyles = StyleSheet.create({
+  overlay: { ...StyleSheet.absoluteFillObject, zIndex: 100 },
+  popover: {
+    position: 'absolute',
+    minWidth: 208,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingVertical: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    elevation: 10,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  rowText: { fontSize: 15, color: TXT, fontWeight: '600' },
+  rowDivider: { height: 1, marginHorizontal: 14, backgroundColor: 'rgba(30,27,46,0.06)' },
+});
+
 // Deterministic per-day pseudo-random count: stable within a calendar day,
 // varies day to day. `salt` lets us emit different streams (likes vs comments
 // vs morning vs evening) from the same date.
@@ -83,17 +156,37 @@ function formatLikes(n: number): string {
   return n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(n);
 }
 
-function VerseHeroCard({ morning, isDone, onBegin, onOpenRef, cardLabel, verseRef, verseText }: {
+// Countdown formatter — never returns "0m" so the wait-state button always
+// has a sensible label until the window opens.
+function formatCountdown(ms: number): string {
+  const totalMin = Math.max(1, Math.ceil(ms / 60000));
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h === 0) return `${m}m`;
+  return `${h}h ${m}m`;
+}
+
+function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTab, waitLabel, waitHint, onBegin, onOpenRef, onShare, onMore, cardLabel, verseRef, verseText }: {
   morning: boolean;
-  isDone: boolean;
+  canStart: boolean;        // active slot in window + not yet done
+  canReplay: boolean;       // slot already done — tapping the card re-enters as redo
+  readyToSwitch: boolean;   // morning done + evening already open → tap = flip tab
+  onSwitchTab: () => void;
+  waitLabel: string;        // copy for the gray wait-state button (countdown)
+  waitHint: string;         // pop-up text shown on tapping the gray button
   onBegin: () => void;
   onOpenRef: () => void;
+  onShare: () => void;
+  onMore: (anchor: { x: number; y: number; w: number; h: number }) => void;
   cardLabel: string;
   verseRef: string;
   verseText: string;
 }) {
+  const moreBtnRef = React.useRef<View>(null);
+  const handleMorePress = () => {
+    moreBtnRef.current?.measureInWindow((x, y, w, h) => onMore({ x, y, w, h }));
+  };
   const [liked, setLiked] = React.useState(false);
-  const [showShare, setShowShare] = useState(false);
   const colors = morning
     ? (['#C2547A', '#7B2255', '#2D0A1A'] as const)
     : (['#5B3A9E', '#2D1660', '#100525'] as const);
@@ -107,34 +200,50 @@ function VerseHeroCard({ morning, isDone, onBegin, onOpenRef, cardLabel, verseRe
   // Breathing pulse on the Start CTA — only while the slot is live. Once the
   // user taps Amen and returns here, the button switches to a quiet "done"
   // state and the pulse stops.
-  const pulse = useSharedValue(1);
+  // Pulse 0.9 ↔ 1.0 (10 % inward breath) at 1300 ms each direction. Pulses
+  // inward from rest size rather than overshooting past it, so the button
+  // never grows beyond its natural footprint.
+  // Pulse runs in two cases: the slot is open ("Start XXX Prayer →") OR the
+  // user is ready to flip from a finished morning to evening.
+  const pulseActive = canStart || readyToSwitch;
+  const pulse = useSharedValue(0.9);
   useEffect(() => {
-    if (isDone) { pulse.value = 1; return; }
+    if (!pulseActive) { pulse.value = 1; return; }
+    pulse.value = 0.9;
     pulse.value = withRepeat(
-      withTiming(1.06, { duration: 1500, easing: Easing.inOut(Easing.quad) }),
+      withTiming(1, { duration: 1300, easing: Easing.inOut(Easing.quad) }),
       -1,
       true,
     );
-  }, [pulse, isDone]);
+  }, [pulse, pulseActive]);
   const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
 
-  // Tapping the disabled-looking button after the slot is complete pops a
-  // friendly hint that auto-fades after a few seconds.
+  // Tapping anywhere in the wait state (gray button OR the verse area when
+  // the flow is locked) pops a friendly hint that auto-fades after ~3 s.
   const [hint, setHint] = useState<string | null>(null);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (hintTimer.current) clearTimeout(hintTimer.current); }, []);
   const popHint = () => {
     if (hintTimer.current) clearTimeout(hintTimer.current);
-    setHint(morning
-      ? 'Lovely, you\'re all set for the morning. Come back tonight for Night Prayer.'
-      : 'Beautiful work today. See you tomorrow morning for sunrise prayer.');
+    setHint(waitHint);
     hintTimer.current = setTimeout(() => setHint(null), 3200);
   };
+  // Card tap routing:
+  //   • canStart → start the flow normally
+  //   • readyToSwitch → flip to the evening tab
+  //   • canReplay → re-enter the (already-done) flow so the user can read
+  //     meditation / prayer / closing again. PrayerFlow detects the redo
+  //     via its isRedoRef and skips the celebration screens after Amen.
+  //   • otherwise → pop the friendly hint
+  const onCardPress = canStart ? onBegin
+    : readyToSwitch ? onSwitchTab
+    : canReplay ? onBegin
+    : popHint;
 
   return (
     <View>
       <LinearGradient colors={colors} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={styles.heroCard}>
-        <TouchableOpacity onPress={onBegin} activeOpacity={0.85}>
+        <TouchableOpacity onPress={onCardPress} activeOpacity={0.85}>
           <View style={styles.heroTop}>
             <Text style={styles.heroLabel}>{cardLabel}</Text>
             {/* Reference is its own tap target — jumps the reader to the
@@ -169,24 +278,18 @@ function VerseHeroCard({ morning, isDone, onBegin, onOpenRef, cardLabel, verseRe
             <CommentIcon color={iconColor} />
             <Text style={[styles.actionLabel, { color: iconColor }]}>{comments}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => setShowShare(true)}>
+          <TouchableOpacity style={styles.actionBtn} onPress={onShare}>
             <ShareIcon color={iconColor} />
             <Text style={[styles.actionLabel, { color: iconColor }]}>Share</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn}>
+          <TouchableOpacity ref={moreBtnRef} style={styles.actionBtn} onPress={handleMorePress}>
             <MoreIcon color={iconColor} />
             <Text style={[styles.actionLabel, { color: iconColor }]}>More</Text>
           </TouchableOpacity>
         </View>
       </LinearGradient>
 
-      {isDone ? (
-        <TouchableOpacity onPress={popHint} activeOpacity={0.85} style={styles.doneBtn}>
-          <Text style={styles.doneBtnText}>
-            {morning ? 'Morning Prayer · Done' : 'Night Prayer · Done'} ✓
-          </Text>
-        </TouchableOpacity>
-      ) : (
+      {canStart ? (
         <Animated.View style={pulseStyle}>
           <TouchableOpacity
             onPress={onBegin}
@@ -198,6 +301,27 @@ function VerseHeroCard({ morning, isDone, onBegin, onOpenRef, cardLabel, verseRe
             </Text>
           </TouchableOpacity>
         </Animated.View>
+      ) : readyToSwitch ? (
+        // Morning is done and night has opened — same active styling as the
+        // Start CTA (LAV to telegraph "evening"), tinted toward the
+        // destination tab. Tap flips to evening rather than popping a hint.
+        <Animated.View style={pulseStyle}>
+          <TouchableOpacity
+            onPress={onSwitchTab}
+            activeOpacity={0.9}
+            style={[styles.startBtn, { backgroundColor: LAV }]}
+          >
+            <Text style={styles.startBtnText}>{waitLabel}</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      ) : (
+        // Wait state — slot is either before its window or already done.
+        // Tinted with the active accent at low opacity so it still reads as
+        // "this is your prayer button, just not active right now". Tap pops
+        // the hint that explains when it'll open.
+        <TouchableOpacity onPress={popHint} activeOpacity={0.85} style={[styles.waitBtn, { backgroundColor: `${morning ? ROSE : LAV}1F` }]}>
+          <Text style={[styles.waitBtnText, { color: morning ? ROSE : LAV }]}>{waitLabel}</Text>
+        </TouchableOpacity>
       )}
 
       {hint && (
@@ -210,25 +334,23 @@ function VerseHeroCard({ morning, isDone, onBegin, onOpenRef, cardLabel, verseRe
           <Text style={styles.hintText}>{hint}</Text>
         </Animated.View>
       )}
-
-      {showShare && verseRef && verseText && (
-        <ShareVerseSheet
-          reference={verseRef}
-          text={verseText}
-          onClose={() => setShowShare(false)}
-        />
-      )}
     </View>
   );
 }
 
 export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   const insets = useSafeAreaInsets();
-  const { morning, setMorning, mDone, eDone, wasCompleteOn } = usePrayer();
+  const { morning, setMorning, mDone, eDone, wasCompleteOn, currentStreak } = usePrayer();
   const { markToday } = useActivity();
   const { current: translation } = useTranslation();
   const { getVerse, todayDay } = useDailyVerses();
   const { read: readChapterSet } = useReadChapters();
+  // Share + More overlays live at the screen root so their absolute-fill
+  // overlays are sized to the screen, not to the verse-card section. Render-
+  // ing them inside VerseHeroCard sized them to the card and the share sheet
+  // ended up anchored a few hundred px above the bottom edge.
+  const [showShare, setShowShare] = useState(false);
+  const [moreAnchor, setMoreAnchor] = useState<MoreAnchor | null>(null);
   const labels = dailyLabels(translation.code);
   const segment: 'morning' | 'evening' = morning ? 'morning' : 'evening';
   // Daily verse for the active segment. Bundled fallback guarantees a value
@@ -280,9 +402,15 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   }, [moodCheckIn.ready]);
   const ac = morning ? ROSE : LAV;
   const pct = (mDone ? 50 : 0) + (eDone ? 50 : 0);
-  const isDone = morning ? mDone : eDone;
 
-  const today = new Date();
+  // Tick once per minute so the wait-state countdown updates without forcing
+  // the whole screen onto a faster clock.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  const today = now;
   // Week keys for "This Week" — Sunday → Saturday for the current week.
   const weekKeys = (() => {
     const dow = today.getDay();
@@ -297,7 +425,63 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   const completeThisWeek = weekKeys.filter(k => wasCompleteOn(k)).length;
   const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
   const TODAY_IDX = today.getDay();
-  const hr = today.getHours();
+
+  // ── Slot rules ───────────────────────────────────────────────────────────
+  // Morning window opens at 06:00, closes (effectively) when evening opens.
+  // Evening window opens at 18:00. The active slot can only enter the flow
+  // inside its own window AND if it's not already done. Outside the window
+  // OR after completion, the button shows a wait-state with a countdown.
+  const hr = now.getHours();
+  const slotDone = morning ? mDone : eDone;
+  const inWindow = morning ? hr >= 6 : hr >= 18;
+  const canStart = !slotDone && inWindow;
+
+  // Compute the wait-state label and the hint that pops on tap. Only used
+  // when canStart === false; otherwise the button is the active "Start" CTA.
+  // readyToSwitch is the special case where the morning slot is complete AND
+  // night has already opened — the button still pulses, and tapping flips
+  // the active tab to evening rather than popping a hint.
+  let waitLabel = '';
+  let waitHint = '';
+  let readyToSwitch = false;
+  if (!canStart) {
+    if (morning) {
+      if (slotDone) {
+        const ms = (() => {
+          const target = new Date(now); target.setHours(18, 0, 0, 0);
+          return target.getTime() - now.getTime();
+        })();
+        if (ms > 0) {
+          waitLabel = `Night Prayer · ${formatCountdown(ms)}`;
+          waitHint = 'Lovely, you\'re all set for the morning. Come back tonight for Night Prayer.';
+        } else if (!eDone) {
+          // Past 18:00, evening still pending → hand off to the evening tab.
+          readyToSwitch = true;
+          waitLabel = 'Night Prayer · Ready';
+        } else {
+          waitLabel = 'Beautiful Work Today';
+          waitHint = 'Both prayers done. See you tomorrow morning.';
+        }
+      } else {
+        // Before 06:00 → countdown to today's 06:00.
+        const target = new Date(now); target.setHours(6, 0, 0, 0);
+        waitLabel = `Morning Prayer · ${formatCountdown(target.getTime() - now.getTime())}`;
+        waitHint = 'Sunrise prayer opens at 6 AM. See you bright and early.';
+      }
+    } else {
+      if (slotDone) {
+        // Evening done → "Beautiful Work Today" celebration; no countdown
+        // line on the button itself. The hint carries the timing.
+        waitLabel = 'Beautiful Work Today';
+        waitHint = 'See you tomorrow morning for sunrise prayer.';
+      } else {
+        // Before 18:00 → countdown to today's 18:00.
+        const target = new Date(now); target.setHours(18, 0, 0, 0);
+        waitLabel = `Night Prayer · ${formatCountdown(target.getTime() - now.getTime())}`;
+        waitHint = 'Night Prayer opens at 6 PM. Come back this evening.';
+      }
+    }
+  }
   const greeting = hr < 5 ? 'Good Evening'
     : hr < 12 ? 'Good Morning'
     : hr < 18 ? 'Good Afternoon'
@@ -307,16 +491,112 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   const progressVal = useSharedValue(pct);
   const prevPctRef = useRef(pct);
 
+  // Celebration choreography — pop the %, fly a sparkle to the streak badge,
+  // then punch the streak number with a delayed +1. Each piece has its own
+  // shared value so they can be sequenced precisely.
+  const pctTextScale = useSharedValue(1);
+  const starOpacity = useSharedValue(0);
+  const starProgress = useSharedValue(0);   // 0 → 1, position interpolation
+  const streakScale = useSharedValue(1);
+  const [displayedStreak, setDisplayedStreak] = useState(currentStreak);
+  // Window-space anchors captured when the celebration kicks off so the star
+  // flies from the % text to the streak badge regardless of layout.
+  const pctAnchorRef = useRef({ x: 0, y: 0 });
+  const streakAnchorRef = useRef({ x: 0, y: 0 });
+  const pctTextRef = useRef<TextInput>(null);
+  const streakRef = useRef<View>(null);
+  const [starOverlayVisible, setStarOverlayVisible] = useState(false);
+  // Star position is driven on JS for the Modal child — Modal doesn't share a
+  // reanimated context with the screen, so we mirror starProgress into JS via
+  // an extra animation completion callback below.
+  const starStyle = useAnimatedStyle(() => {
+    const x = pctAnchorRef.current.x + (streakAnchorRef.current.x - pctAnchorRef.current.x) * starProgress.value;
+    const y = pctAnchorRef.current.y + (streakAnchorRef.current.y - pctAnchorRef.current.y) * starProgress.value;
+    // Centre the 28×28 star on (x, y) and fade it as it lands.
+    return {
+      opacity: starOpacity.value,
+      transform: [
+        { translateX: x - 14 },
+        { translateY: y - 14 },
+        { scale: 1 + (1 - starProgress.value) * 0.4 },   // shrinks slightly as it lands
+      ],
+    };
+  });
+
+  const playStreakPunch = useCallback(() => {
+    // Streak number scale 1 → 2 over 0.3s, +1 increment after 0.2s, hold 0.2s,
+    // then scale back over 0.2s. Total ~0.7s.
+    streakScale.value = withSequence(
+      withTiming(2, { duration: 300, easing: Easing.out(Easing.cubic) }),
+      withDelay(200, withTiming(1, { duration: 200, easing: Easing.in(Easing.cubic) })),
+    );
+    setTimeout(() => setDisplayedStreak(currentStreak), 200);
+    // Hide the overlay once the streak punch has landed.
+    setTimeout(() => setStarOverlayVisible(false), 900);
+  }, [currentStreak, streakScale]);
+
+  const playCelebration = useCallback(() => {
+    // 1. Pop the %: 1 → 2 → 1 over 0.5s, with cubic on both halves.
+    pctTextScale.value = withSequence(
+      withTiming(2, { duration: 250, easing: Easing.out(Easing.cubic) }),
+      withTiming(1, { duration: 250, easing: Easing.in(Easing.cubic) }),
+    );
+    // 2. Re-measure both anchors right before the star fires so we hand the
+    //    interpolation accurate positions even if the screen has scrolled.
+    pctTextRef.current?.measureInWindow((x, y, w, h) => {
+      pctAnchorRef.current = { x: x + w / 2, y: y + h / 2 };
+    });
+    streakRef.current?.measureInWindow((x, y, w, h) => {
+      streakAnchorRef.current = { x: x + w / 2, y: y + h / 2 };
+    });
+    // 3. Reveal the star, fly it, fade it out, then punch the streak.
+    setStarOverlayVisible(true);
+    starProgress.value = 0;
+    starOpacity.value = 0;
+    setTimeout(() => {
+      starOpacity.value = withTiming(1, { duration: 120 });
+      starProgress.value = withTiming(1, { duration: 600, easing: Easing.in(Easing.cubic) }, (finished) => {
+        if (!finished) return;
+        starOpacity.value = withTiming(0, { duration: 120 });
+        runOnJS(playStreakPunch)();
+      });
+    }, 500);
+  }, [pctTextScale, starProgress, starOpacity, playStreakPunch]);
+
   useFocusEffect(useCallback(() => {
     if (pct !== prevPctRef.current) {
-      progressVal.value = prevPctRef.current;
-      progressVal.value = withDelay(800, withTiming(pct, { duration: 3000, easing: Easing.out(Easing.cubic) }));
+      const startPct = prevPctRef.current;
       prevPctRef.current = pct;
+      // 10 % faster than before (3000 → 2700 ms).
+      progressVal.value = startPct;
+      progressVal.value = withDelay(800, withTiming(pct, { duration: 2700, easing: Easing.out(Easing.cubic) }, (finished) => {
+        if (finished && pct === 100) runOnJS(playCelebration)();
+      }));
+      // If we're not heading to 100, keep the streak number in sync now.
+      // For pct === 100, the celebration sequence updates displayedStreak.
+      if (pct < 100) setDisplayedStreak(currentStreak);
     }
-  }, [pct, progressVal]));
+  }, [pct, progressVal, currentStreak, playCelebration]));
+
+  // Resync displayedStreak whenever currentStreak changes outside a 0→100
+  // transition (e.g., context hydration on mount, day rollover).
+  useEffect(() => {
+    if (pct !== 100) setDisplayedStreak(currentStreak);
+  }, [currentStreak, pct]);
 
   const progressFillStyle = useAnimatedStyle(() => ({
     width: (progressVal.value / 100) * trackWidth,
+  }));
+  // Pct text — color follows the same 0/50/100 stops as the bar gradient.
+  const pctTextStyle = useAnimatedStyle(() => ({
+    color: interpolateColor(progressVal.value, [0, 50, 100], ['#F9A8C9', '#F9A8C9', '#9D7FE0']),
+    transform: [{ scale: pctTextScale.value }],
+  }));
+  const pctAnimatedProps = useAnimatedProps(() => ({
+    text: `${Math.round(progressVal.value)}%`,
+  } as any));
+  const streakNumStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: streakScale.value }],
   }));
 
   // Toggle slide animation
@@ -343,6 +623,23 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
     toggleWidth.value = e.nativeEvent.layout.width;
   };
 
+  const liveVerseRef = dailyVerse?.reference.full_reference
+    ? localizeReference(translation.code, dailyVerse.reference.full_reference)
+    : '';
+  const liveVerseText = dailyVerse?.modernText || '';
+
+  // Single source of truth for "open today's verse in the reader" — the verse
+  // ref tap, the More → Read full chapter action, and any future entry point
+  // all funnel through here so the reader gets a consistent dim-and-highlight
+  // focus on this exact verse range.
+  const openVerseInBible = () => {
+    const ref = dailyVerse?.reference.full_reference;
+    const focus = ref ? parseReference(ref) : null;
+    navigation.navigate('Tabs', focus
+      ? { screen: 'bible', params: { focus } }
+      : { screen: 'bible' });
+  };
+
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
@@ -359,7 +656,9 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
             <View style={styles.streakFlame}>
               <FireFlame size={28} />
             </View>
-            <Text style={styles.streakNum}>12</Text>
+            <View ref={streakRef} collapsable={false}>
+              <Animated.Text style={[styles.streakNum, streakNumStyle]}>{displayedStreak}</Animated.Text>
+            </View>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => navigation.navigate('Tabs', { screen: 'profile' })}
@@ -379,7 +678,18 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
       <View style={styles.progressSection}>
         <View style={styles.progressHeader}>
           <Text style={styles.progressLabel}>TODAY'S PROGRESS</Text>
-          <Text style={[styles.progressPct, { color: ac }]}>{pct}%</Text>
+          {/* Number is driven by progressVal (same source the bar reads), so
+              the count animates in lockstep with the fill. AnimatedTextInput
+              is the standard hack — TextInput is the only RN text node whose
+              `text`/`value` prop accepts animatedProps. */}
+          <AnimatedTextInput
+            ref={pctTextRef}
+            editable={false}
+            underlineColorAndroid="transparent"
+            defaultValue={`${pct}%`}
+            animatedProps={pctAnimatedProps}
+            style={[styles.progressPct, pctTextStyle]}
+          />
         </View>
         <View
           style={styles.progressTrack}
@@ -420,22 +730,21 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
       <View style={styles.section}>
         <VerseHeroCard
           morning={morning}
-          isDone={isDone}
+          canStart={canStart}
+          canReplay={slotDone}
+          readyToSwitch={readyToSwitch}
+          onSwitchTab={() => setMorning(false)}
+          waitLabel={waitLabel}
+          waitHint={waitHint}
           cardLabel={morning ? labels.verseOfDay : labels.verseOfNight}
-          verseRef={dailyVerse?.reference.full_reference || ''}
+          verseRef={dailyVerse?.reference.full_reference
+            ? localizeReference(translation.code, dailyVerse.reference.full_reference)
+            : ''}
           verseText={dailyVerse?.modernText || ''}
           onBegin={() => navigation.navigate('PrayerFlow', { kind: morning ? 'morning' : 'evening' })}
-          onOpenRef={() => {
-            const ref = dailyVerse?.reference.full_reference;
-            // Reference uses English book names (e.g. "John 1:9") in every
-            // language file, so parseReference resolves the same slug
-            // regardless of UI language. The reader then renders KJV / 和合本
-            // / Lutherbibel etc. for that slug per the active translation.
-            const focus = ref ? parseReference(ref) : null;
-            navigation.navigate('Tabs', focus
-              ? { screen: 'bible', params: { focus } }
-              : { screen: 'bible' });
-          }}
+          onOpenRef={openVerseInBible}
+          onShare={() => setShowShare(true)}
+          onMore={(anchor) => setMoreAnchor(anchor)}
         />
       </View>
 
@@ -523,7 +832,70 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
       </View>
 
       <View style={{ height: 23 }} />
+
+      {/* Overlays are wrapped in Modal so they render on a separate native
+          layer above the tab content. Earlier they sat as siblings of this
+          ScrollView under a flex:1 wrapper, which broke ScrollView's "fill
+          the screen" sizing — the screen rendered without its scrollable
+          viewport and started to swallow taps in the lower half. */}
+      <Modal
+        visible={showShare && !!liveVerseRef && !!liveVerseText}
+        transparent
+        animationType="none"
+        onRequestClose={() => setShowShare(false)}
+      >
+        <ShareVerseSheet
+          reference={liveVerseRef}
+          text={liveVerseText}
+          onClose={() => setShowShare(false)}
+        />
+      </Modal>
+
+      <Modal
+        visible={!!moreAnchor}
+        transparent
+        animationType="none"
+        onRequestClose={() => setMoreAnchor(null)}
+      >
+        {moreAnchor ? (
+          <MoreMenu
+            anchor={moreAnchor}
+            onClose={() => setMoreAnchor(null)}
+            onSeePastDays={() => {
+              setMoreAnchor(null);
+              navigation.navigate('PastVerses');
+            }}
+            onReadFullChapter={() => {
+              setMoreAnchor(null);
+              openVerseInBible();
+            }}
+          />
+        ) : null}
+      </Modal>
+
+      {/* Shooting-star celebration overlay. Modal lifts the layer above the
+          tab content so the sparkle can fly across the whole screen. */}
+      <Modal visible={starOverlayVisible} transparent animationType="none" hardwareAccelerated>
+        <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+          <Animated.View style={[styles.starOverlay, starStyle]}>
+            <Sparkle size={28} />
+          </Animated.View>
+        </View>
+      </Modal>
     </ScrollView>
+  );
+}
+
+// Soft 4-point sparkle used by the celebration star. White core with a
+// gentle gold edge so it reads against any of the gradient colors below.
+function Sparkle({ size }: { size: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M12 0 C12.6 8, 16 11.4, 24 12 C16 12.6, 12.6 16, 12 24 C11.4 16, 8 12.6, 0 12 C8 11.4, 11.4 8, 12 0 Z"
+        fill="#F4D58A"
+      />
+    </Svg>
   );
 }
 
@@ -596,6 +968,23 @@ const styles = StyleSheet.create({
   progressPct: {
     fontSize: 14,
     fontWeight: '700',
+    // TextInput needs explicit dimensions / padding-zero to match a Text node.
+    minWidth: 44,
+    textAlign: 'right',
+    padding: 0,
+    margin: 0,
+  },
+  starOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 28,
+    height: 28,
+    shadowColor: '#F4D58A',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 12,
+    elevation: 8,
   },
   progressTrack: {
     height: 10,
@@ -724,21 +1113,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.3,
   },
-  doneBtn: {
+  // Wait-state button — slightly smaller than the active Start CTA so it
+  // visually recedes, tinted with the active accent at low opacity.
+  waitBtn: {
     marginTop: 16,
     marginBottom: 10,
     marginHorizontal: P,
-    height: 55,
-    borderRadius: 28,
+    height: 48,
+    borderRadius: 24,
     alignSelf: 'stretch',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(30,27,46,0.06)',
   },
-  doneBtnText: {
-    color: TXTSUB,
-    fontSize: 17,
-    fontWeight: '600',
+  waitBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
     letterSpacing: 0.3,
   },
   hintWrap: {

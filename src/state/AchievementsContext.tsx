@@ -44,7 +44,7 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
   const { count: highlightsCount, highlights } = useHighlights();
   const {
     chaptersRead, percent: readPercent,
-    readToday, readingStreak,
+    readToday, readingStreak, booksTouched,
   } = useReadChapters();
   const { shareCount } = useShare();
 
@@ -124,6 +124,7 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
       notesCount: notes.length,
       highlightsCount,
       distinctHighlightedBooks,
+      booksRead: booksTouched,
       planCount: 0,                  // TODO: wire when PlanCompletionContext lands
       planRecentDates: [] as string[],
       hasRepeatedPlan: false,
@@ -174,7 +175,7 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
   }, [
     prayer.currentStreak, prayer.totalComplete, prayerDoneToday,
     chaptersRead, readPercent, readingStreak, bookCompletedToday, noteAddedToday,
-    notes.length, highlightsCount, distinctHighlightedBooks,
+    notes.length, highlightsCount, distinctHighlightedBooks, booksTouched,
     shareCount, daysSinceFirstLaunch, isAnniversaryToday, earned,
   ]);
 

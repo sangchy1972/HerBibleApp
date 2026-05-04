@@ -24,6 +24,7 @@ import { useReadChapters } from '../state/ReadChaptersContext';
 import ShareVerseSheet from '../components/ShareVerseSheet';
 import VerseNoteSheet from '../components/VerseNoteSheet';
 import { fetchTranslationIndex, fetchChapter, streamingSearchVerses, type BookSummary, type Verse, type VerseHit, type SearchProgress } from '../services/bibleService';
+import { adjustFocus } from '../constants/versification';
 import type { BibleFocus, TabParamList } from '../navigation/types';
 
 type FontChoice = 'Serif' | 'Sans' | 'Inter';
@@ -587,14 +588,18 @@ export default function BibleScreen() {
   // does NOT touch last-read — viewing a verse from the card is not reading
   // progress. The visit ref above blocks the rehydrate from clobbering us.
   useEffect(() => {
-    const focus = route.params?.focus;
-    if (!focus) return;
+    const incoming = route.params?.focus;
+    if (!incoming) return;
+    // Incoming focus is in canonical (KJV-style) numbering. Translate it
+    // into whatever the active translation's chapter file actually uses
+    // (Lutherbibel/LSG diverge on Psalms with Hebrew titles, Joel, Malachi).
+    const focus = adjustFocus(translation.code, incoming);
     focusVisitRef.current = true;
     setBookSlug(focus.bookSlug);
     setChapter(focus.chapter);
     setFocusRange(focus);
     navigation.setParams({ focus: undefined } as never);
-  }, [route.params?.focus, navigation]);
+  }, [route.params?.focus, navigation, translation.code]);
   // Drop the highlight when leaving the tab so a normal next visit reads
   // without dimming. Reset the visit flag too so the next entry rehydrates.
   useFocusEffect(

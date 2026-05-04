@@ -86,6 +86,7 @@ export default function AchievementUnlockSheet() {
 
           <Animated.View style={[styles.badgeWrap, badgeStyle]}>
             <BadgeIcon
+              id={current.id}
               iconKey={current.iconKey}
               rarity={current.rarity}
               size={120}

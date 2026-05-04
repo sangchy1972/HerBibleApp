@@ -41,7 +41,8 @@ export type AchievementCondition =
   | { kind: 'readingStreak'; days: number }             // ActivityContext.streak >= N
   | { kind: 'notesCount'; total: number }
   | { kind: 'highlightsCount'; total: number }
-  | { kind: 'highlightedBooks'; total: number }         // distinct books with at least one highlight
+  | { kind: 'highlightedBooks'; total: number }         // distinct books with at least one highlight (legacy — currently unused)
+  | { kind: 'booksRead'; total: number }                // distinct books with ≥1 chapter read
   | { kind: 'planCount'; total: number }                // plans completed (lifetime) >= N
   | { kind: 'planInWindow'; total: number; days: number } // N plans in last `days` days
   | { kind: 'planRepeated' }                            // same plan completed 2+ times
@@ -167,6 +168,30 @@ export const ACHIEVEMENTS: Achievement[] = [
     rule: R('Complete your daily reading 30 days in a row', '连续 30 天每天完成当日阅读', '連續 30 天每天完成當日閱讀', 'Lee cada día durante 30 días seguidos', 'Complete a leitura diária 30 dias seguidos', '30 Tage in Folge täglich lesen', 'Lecture quotidienne 30 jours de suite'),
     condition: { kind: 'readingStreak', days: 30 },
   },
+  {
+    id: 'scripture.books10', category: 'scripture', rarity: 'rare', iconKey: 'gift',
+    name: N('Verse Collector', '金句收藏家', '金句收藏家', 'Coleccionista de Versículos', 'Colecionadora', 'Vers-Sammlerin', 'Collectionneuse de Versets'),
+    rule: R('Read at least one chapter from 10 different books of the Bible', '阅读 10 本不同圣经书卷', '閱讀 10 本不同聖經書卷', 'Lee al menos un capítulo de 10 libros distintos', 'Leia pelo menos um capítulo de 10 livros distintos', 'Lies aus 10 verschiedenen Büchern', "Lis au moins un chapitre dans 10 livres différents"),
+    condition: { kind: 'booksRead', total: 10 },
+  },
+  {
+    id: 'scripture.books20', category: 'scripture', rarity: 'epic', iconKey: 'gift',
+    name: N('Page Pilgrim', '行路阅卷', '行路閱卷', 'Peregrina de Páginas', 'Peregrina das Páginas', 'Seiten-Pilgerin', 'Pèlerine des Pages'),
+    rule: R('Read at least one chapter from 20 different books of the Bible', '阅读 20 本不同圣经书卷', '閱讀 20 本不同聖經書卷', 'Lee de 20 libros distintos', 'Leia de 20 livros distintos', 'Lies aus 20 verschiedenen Büchern', '20 livres différents lus'),
+    condition: { kind: 'booksRead', total: 20 },
+  },
+  {
+    id: 'scripture.books30', category: 'scripture', rarity: 'epic', iconKey: 'gift',
+    name: N('Scripture Scholar', '勤研学者', '勤研學者', 'Erudita de las Escrituras', 'Erudita das Escrituras', 'Schrift-Gelehrte', 'Érudite des Écritures'),
+    rule: R('Read at least one chapter from 30 different books of the Bible', '阅读 30 本不同圣经书卷', '閱讀 30 本不同聖經書卷', 'Lee de 30 libros distintos', 'Leia de 30 livros distintos', 'Lies aus 30 verschiedenen Büchern', '30 livres différents lus'),
+    condition: { kind: 'booksRead', total: 30 },
+  },
+  {
+    id: 'scripture.books50', category: 'scripture', rarity: 'legendary', iconKey: 'gift',
+    name: N('Bible Cartographer', '圣经导航者', '聖經導航者', 'Cartógrafa Bíblica', 'Cartógrafa Bíblica', 'Bibel-Kartografin', 'Cartographe Biblique'),
+    rule: R('Read at least one chapter from 50 different books of the Bible', '阅读 50 本不同圣经书卷', '閱讀 50 本不同聖經書卷', 'Lee de 50 libros distintos', 'Leia de 50 livros distintos', 'Lies aus 50 verschiedenen Büchern', '50 livres différents lus'),
+    condition: { kind: 'booksRead', total: 50 },
+  },
 
   // ───── Study Plans (9) ───────────────────────────────────────────
   {
@@ -267,14 +292,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     rule: R('Create 500 notes in total', '累计创建 500 条笔记', '累積創建 500 條筆記', 'Crea 500 notas en total', 'Crie 500 notas no total', 'Insgesamt 500 Notizen', '500 notes au total'),
     condition: { kind: 'notesCount', total: 500 },
   },
-  {
-    id: 'highlight.books10', category: 'note', rarity: 'legendary', iconKey: 'gift',
-    name: N('Verse Collector', '金句收藏家', '金句收藏家', 'Coleccionista de Versículos', 'Colecionadora', 'Vers-Sammlerin', 'Collectionneuse de Versets'),
-    rule: R('Highlight verses across 10 different books of the Bible', '高亮覆盖圣经 10 个不同书卷', '高亮覆蓋聖經 10 個不同書卷', 'Subraya versículos de 10 libros distintos', 'Destaque versículos de 10 livros diferentes', 'Verse aus 10 verschiedenen Büchern', 'Versets de 10 livres différents'),
-    condition: { kind: 'highlightedBooks', total: 10 },
-  },
 
-  // ───── Milestones (8) ────────────────────────────────────────────
+  // ───── Milestones (9) ────────────────────────────────────────────
   {
     id: 'milestone.dawn7', category: 'milestone', rarity: 'rare', iconKey: 'sunrise',
     name: N('Dawn Devotion', '晨曦敬拜', '晨曦敬拜', 'Devoción al Amanecer', 'Devoção ao Amanhecer', 'Morgenandacht', 'Dévotion à l’Aube'),
@@ -294,10 +313,16 @@ export const ACHIEVEMENTS: Achievement[] = [
     condition: { kind: 'shareCount', total: 1 },
   },
   {
-    id: 'milestone.share10', category: 'milestone', rarity: 'rare', iconKey: 'mail',
+    id: 'milestone.share3', category: 'milestone', rarity: 'rare', iconKey: 'mail',
+    name: N('Sower of Hope', '播种希望', '播種希望', 'Sembradora de Esperanza', 'Semeadora de Esperança', 'Säerin der Hoffnung', "Semeuse d'Espérance"),
+    rule: R('Share verses or study plans 3 times in total', '累计分享经文或计划 3 次', '累積分享經文或計劃 3 次', 'Comparte versículos o planes 3 veces', 'Compartilhe versículos ou planos 3 vezes', 'Insgesamt 3 Mal teilen', 'Partager des versets 3 fois'),
+    condition: { kind: 'shareCount', total: 3 },
+  },
+  {
+    id: 'milestone.share5', category: 'milestone', rarity: 'rare', iconKey: 'mail',
     name: N('Faithful Sower', '播种者', '播種者', 'Sembradora Fiel', 'Semeadora Fiel', 'Treue Säerin', 'Semeuse Fidèle'),
-    rule: R('Share verses or study plans 10 times in total', '累计分享经文或计划 10 次', '累積分享經文或計劃 10 次', 'Comparte versículos o planes 10 veces', 'Compartilhe versículos ou planos 10 vezes', 'Insgesamt 10 Mal teilen', 'Partager des versets 10 fois'),
-    condition: { kind: 'shareCount', total: 10 },
+    rule: R('Share verses or study plans 5 times in total', '累计分享经文或计划 5 次', '累積分享經文或計劃 5 次', 'Comparte versículos o planes 5 veces', 'Compartilhe versículos ou planos 5 vezes', 'Insgesamt 5 Mal teilen', 'Partager des versets 5 fois'),
+    condition: { kind: 'shareCount', total: 5 },
   },
   {
     id: 'milestone.anniversary', category: 'milestone', rarity: 'epic', iconKey: 'calendar',

@@ -15,6 +15,7 @@ import PolicyScreen from '../screens/PolicyScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import AchievementScreen from '../screens/AchievementScreen';
 import ReflectionsScreen from '../screens/ReflectionsScreen';
+import PastVersesScreen from '../screens/PastVersesScreen';
 import { useOnboarding } from '../state/OnboardingContext';
 import type { RootStackParamList } from './types';
 
@@ -88,6 +89,11 @@ export default function RootNavigator() {
       <Stack.Screen
         name="Reflections"
         component={ReflectionsScreen}
+        options={{ animation: 'slide_from_right', animationDuration: 320 }}
+      />
+      <Stack.Screen
+        name="PastVerses"
+        component={PastVersesScreen}
         options={{ animation: 'slide_from_right', animationDuration: 320 }}
       />
     </Stack.Navigator>

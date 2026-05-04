@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Linking, Platform } from 'react-native';
 import Svg, { Path, G } from 'react-native-svg';
 import { Feather } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import * as Facebook from 'expo-auth-session/providers/facebook';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import Animated, { FadeIn, SlideInDown, Easing } from 'react-native-reanimated';
 import { ROSE, TXT, TXTSUB, P } from '../constants/theme';
 import { GOOGLE_CLIENT_IDS, FACEBOOK_APP_ID, isConfigured } from '../constants/oauth';
@@ -90,6 +91,37 @@ export default function SignInSheet({ onClose, onError }: Props) {
     promptFb();
   };
 
+  // Apple is iOS-only. fullName + email come back ONLY on the very first
+  // sign-in for a given Apple ID + bundle pair — re-signs return only the
+  // stable user identifier. We handle that by falling back to the email
+  // prefix for the display name on subsequent sign-ins. Cancel is silent.
+  const onApple = async () => {
+    if (!isConfigured.apple()) {
+      onError?.('Apple sign-in is iOS-only.');
+      return;
+    }
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      const email = credential.email ?? `${credential.user}@privaterelay.appleid.com`;
+      const fullName = [credential.fullName?.givenName, credential.fullName?.familyName]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+      const name = fullName || email.split('@')[0];
+      signIn({ name, email });
+      onClose();
+    } catch (e: unknown) {
+      const code = (e as { code?: string })?.code;
+      if (code === 'ERR_REQUEST_CANCELED') return;          // user dismissed — no toast
+      onError?.('Apple sign-in failed. Please try again.');
+    }
+  };
+
   return (
     <View style={styles.overlay}>
       <Animated.View
@@ -104,6 +136,15 @@ export default function SignInSheet({ onClose, onError }: Props) {
         <Text style={styles.desc}>
           Sync your highlights, notes, saved verses, and reading streak across devices.
         </Text>
+
+        {Platform.OS === 'ios' && (
+          // Apple HIG requires Sign in with Apple to sit at-or-above any
+          // other social sign-in option, so it leads the stack on iOS.
+          <TouchableOpacity onPress={onApple} style={[styles.providerBtn, styles.providerBtnApple]} activeOpacity={0.85}>
+            <AppleGlyph />
+            <Text style={[styles.providerText, { color: '#fff' }]}>Continue with Apple</Text>
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity onPress={onGoogle} style={styles.providerBtn} activeOpacity={0.85}>
           <GoogleGlyph />
@@ -154,6 +195,17 @@ function GoogleGlyph() {
         <Path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" />
         <Path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571.001-.001.002-.001.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" />
       </G>
+    </Svg>
+  );
+}
+
+function AppleGlyph() {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24">
+      <Path
+        fill="#FFFFFF"
+        d="M16.365 1.43c0 1.14-.43 2.25-1.21 3.06-.83.86-2.21 1.5-3.36 1.42-.13-1.13.4-2.32 1.18-3.13C13.83 1.83 15.21 1.2 16.365 1.43zM20.5 17.27c-.46 1.07-1.01 2.06-1.66 2.99-.85 1.21-1.55 2.05-2.08 2.51-.83.74-1.72 1.12-2.67 1.13-.68 0-1.5-.19-2.46-.58-.96-.39-1.84-.58-2.65-.58-.85 0-1.76.19-2.74.58-.98.39-1.77.6-2.38.62-.91.04-1.82-.34-2.73-1.16-.57-.5-1.31-1.37-2.21-2.61-.96-1.32-1.76-2.85-2.39-4.6-.67-1.89-1-3.72-1-5.49 0-2.03.44-3.78 1.32-5.24.69-1.18 1.61-2.11 2.76-2.79C3.46 1.59 4.71 1.24 6.06 1.22c.71 0 1.66.22 2.86.65 1.19.43 1.96.65 2.3.65.25 0 1.1-.26 2.55-.77 1.37-.47 2.52-.67 3.46-.59 2.55.21 4.46 1.21 5.74 3.02-2.28 1.38-3.41 3.32-3.39 5.79.02 1.93.72 3.53 2.1 4.81.62.59 1.32 1.05 2.09 1.38-.17.49-.34.96-.52 1.41z"
+      />
     </Svg>
   );
 }
@@ -222,6 +274,10 @@ const styles = StyleSheet.create({
   providerBtnFb: {
     backgroundColor: '#1877F2',
     borderColor: '#1877F2',
+  },
+  providerBtnApple: {
+    backgroundColor: '#000',
+    borderColor: '#000',
   },
   providerText: {
     fontSize: 16,

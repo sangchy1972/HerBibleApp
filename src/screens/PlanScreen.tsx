@@ -442,9 +442,9 @@ const styles = StyleSheet.create({
   },
   carousel: { marginBottom: 28 },
   carouselContent: { gap: 13, paddingBottom: 7 },
-  featuredCard: { width: 281 },
+  featuredCard: { width: 309 },                                                // +10 % from 281
   featuredGrad: {
-    height: 173,
+    height: 190,                                                                // +10 % from 173
     borderRadius: 11,
     padding: 17,
     justifyContent: 'space-between',
@@ -474,12 +474,15 @@ const styles = StyleSheet.create({
   emotionGrid: { flexDirection: 'column', gap: 10 },
   emotionRow: { flexDirection: 'row', gap: 11 },
   emotionTag: {
-    paddingHorizontal: 24,
-    paddingVertical: 14,
+    paddingHorizontal: 22,
+    paddingVertical: 15,
+    minHeight: 56,                                                              // +15 % vs the old ~48 px
     borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emotionLabel: {
-    fontSize: 12.5,
+    fontSize: 14,                                                               // +10 % from 12.5
     fontWeight: '800',
     color: '#fff',
     letterSpacing: 1.4,

@@ -17,6 +17,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.holy.bible.kjv.audio.prayer",
       "buildNumber": "1",
+      "usesAppleSignIn": true,
       "infoPlist": {
         "LSApplicationQueriesSchemes": [
           "fb",
@@ -58,7 +59,8 @@
           "icon": "./assets/adaptive-icon.png",
           "color": "#E8619A"
         }
-      ]
+      ],
+      "expo-apple-authentication"
     ]
   }
 }

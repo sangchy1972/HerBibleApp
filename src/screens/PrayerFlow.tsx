@@ -19,6 +19,7 @@ import { useActivity } from '../state/ActivityContext';
 import { useRatePrompt } from '../state/RatePromptContext';
 import { useDailyVerses } from '../state/DailyVersesContext';
 import { useTranslation } from '../state/TranslationsContext';
+import { localizeReference } from '../services/parseReference';
 import { dailyLabels } from '../constants/dailyVersesLabels';
 import WeeklyProgressView from '../components/WeeklyProgressView';
 import RatePromptSheet from '../components/RatePromptSheet';
@@ -200,7 +201,12 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // Pull today's verse for the segment we entered with. Bundled fallback
   // covers the first 3 days offline; the CDN file expands to 60 once cached.
   const dailyVerse = getVerse(todayDay, morning ? 'morning' : 'evening');
-  const verseRef = dailyVerse?.reference.full_reference || '';
+  // The corpus stores English book names; localize for the active translation
+  // so Chinese / Spanish / Portuguese / etc. readers see "創世記 1:2" instead
+  // of "Genesis 1:2" under the daily-verse heading.
+  const verseRef = dailyVerse?.reference.full_reference
+    ? localizeReference(translation.code, dailyVerse.reference.full_reference)
+    : '';
   const verseText = dailyVerse?.modernText || '';
   const meditationParas = (dailyVerse?.meditation || '').split('\n\n').filter(Boolean);
   const actionBody = dailyVerse?.actionStep || '';
@@ -222,6 +228,17 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const [page, setPage] = useState(0);
   const [buttonReady, setButtonReady] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  // Each page that can overflow has its own inner ScrollView. Reset whichever
+  // one is no longer active so swiping back into it lands on its caption,
+  // not on whatever scroll offset the user last left there.
+  const meditationScrollRef = useRef<ScrollView>(null);
+  const actionScrollRef = useRef<ScrollView>(null);
+  const prayerScrollRef = useRef<ScrollView>(null);
+  useEffect(() => {
+    if (page !== 1) meditationScrollRef.current?.scrollTo({ y: 0, animated: false });
+    if (page !== 2) actionScrollRef.current?.scrollTo({ y: 0, animated: false });
+    if (page !== 3) prayerScrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [page]);
 
   const handleScroll = (e: any) => {
     const idx = Math.round(e.nativeEvent.contentOffset.y / height);
@@ -411,11 +428,16 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     setShowNoteSheet(false);
   };
 
-  // Swipe-down gesture for note sheet
+  // Swipe-down gesture for note sheet. The shared value persists across
+  // mounts; if a previous close left it animated off-screen at translateY
+  // 800, the next open would render the sheet below the viewport. Reset it
+  // synchronously in `openNoteSheet` BEFORE flipping the visibility flag
+  // so the sheet's first frame is always at translateY 0.
   const noteDragY = useSharedValue(0);
-  useEffect(() => {
-    if (showNoteSheet) noteDragY.value = 0;
-  }, [showNoteSheet, noteDragY]);
+  const openNoteSheet = () => {
+    noteDragY.value = 0;
+    setShowNoteSheet(true);
+  };
   const notePan = Gesture.Pan()
     .activeOffsetY(12)
     .onUpdate((e) => {
@@ -484,9 +506,9 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
           </FlowPage>
 
           <FlowPage>
-            <ScrollView showsVerticalScrollIndicator={false} style={styles.pageScroll}>
-              <Animated.View style={[styles.pageContent, styles.meditationContent, meditationAnim]}>
-                <Text style={styles.pageCaption}>{meditationCaption}</Text>
+            <ScrollView ref={meditationScrollRef} showsVerticalScrollIndicator={false} style={styles.pageScroll}>
+              <Animated.View style={[styles.pageContent, styles.deepPageOffset, styles.meditationContent, meditationAnim]}>
+                <Text style={[styles.pageCaption, styles.deepPageCaption]}>{meditationCaption}</Text>
                 {meditationParas.map((p, i) => (
                   <Text key={i} style={styles.pageBody}>{p}</Text>
                 ))}
@@ -495,11 +517,11 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
           </FlowPage>
 
           <FlowPage>
-            <ScrollView showsVerticalScrollIndicator={false} style={styles.pageScroll}>
-              <Animated.View style={[styles.pageContent, actionAnim]}>
-                <Text style={styles.pageCaption}>{actionCaption}</Text>
+            <ScrollView ref={actionScrollRef} showsVerticalScrollIndicator={false} style={styles.pageScroll}>
+              <Animated.View style={[styles.pageContent, styles.deepPageOffset, actionAnim]}>
+                <Text style={[styles.pageCaption, styles.deepPageCaption]}>{actionCaption}</Text>
                 <Text style={styles.pageBody}>{actionBody}</Text>
-                <TouchableOpacity style={styles.reflectBtn} onPress={() => setShowNoteSheet(true)}>
+                <TouchableOpacity style={styles.reflectBtn} onPress={openNoteSheet}>
                   <Feather name="edit-2" size={18} color="rgba(255,255,255,0.85)" />
                   <Text style={styles.reflectText}>Write a reflection</Text>
                 </TouchableOpacity>
@@ -508,9 +530,9 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
           </FlowPage>
 
           <FlowPage>
-            <ScrollView showsVerticalScrollIndicator={false} style={styles.pageScroll}>
-              <Animated.View style={[styles.pageContent, prayerAnim]}>
-                <Text style={styles.pageCaption}>{prayerCaption}</Text>
+            <ScrollView ref={prayerScrollRef} showsVerticalScrollIndicator={false} style={styles.pageScroll}>
+              <Animated.View style={[styles.pageContent, styles.deepPageOffset, prayerAnim]}>
+                <Text style={[styles.pageCaption, styles.deepPageCaption]}>{prayerCaption}</Text>
                 <Text style={styles.pageBody}>{prayerBody}</Text>
                 <TouchableOpacity onPress={handleAmen} style={styles.amenBtn}>
                   <Text style={[styles.amenText, { color: morning ? '#7B2255' : '#2D1660' }]}>AMEN</Text>
@@ -749,6 +771,11 @@ const styles = StyleSheet.create({
     paddingBottom: 115,
     justifyContent: 'center',
   },
+  // Pushes the caption further down on the meditation / action / prayer
+  // pages so the title doesn't crowd the top edge.
+  deepPageOffset: {
+    paddingTop: 185,                                                            // +30 from 155
+  },
   meditationContent: {
     paddingBottom: 280,
   },
@@ -759,6 +786,11 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.65)',
     fontWeight: '600',
     marginBottom: 9,
+  },
+  // Extra breathing room below the caption on Reflection / Tonight's Practice
+  // / Closing pages — gives the title some space before the body copy.
+  deepPageCaption: {
+    marginBottom: 29,                                                           // +20 from 9
   },
   pageRef: {
     color: 'rgba(255,255,255,0.85)',

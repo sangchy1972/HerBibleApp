@@ -36,6 +36,7 @@ export type RootStackParamList = {
   Notifications: undefined;
   Achievement: undefined;
   Reflections: undefined;
+  PastVerses: undefined;
 };
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> =

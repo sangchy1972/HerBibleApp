@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
 import BadgeIcon from '../components/BadgeIcon';
+import SignInSheet from '../components/SignInSheet';
 import { ACHIEVEMENTS, achievementUi, localizedAchievementName, localizedAchievementRule, type Achievement } from '../constants/achievements';
 import { useAchievements } from '../state/AchievementsContext';
 import { useTranslation } from '../state/TranslationsContext';
@@ -46,6 +47,7 @@ export default function AchievementScreen({ navigation }: RootStackScreenProps<'
   const { user } = useAuth();
   const ui = achievementUi(translation.code);
   const [detail, setDetail] = useState<Achievement | null>(null);
+  const [showSignIn, setShowSignIn] = useState(false);
 
   const earnedList = useMemo(() => ACHIEVEMENTS.filter(a => !!earned[a.id]), [earned]);
   const lockedList = useMemo(() => ACHIEVEMENTS.filter(a => !earned[a.id]), [earned]);
@@ -63,7 +65,7 @@ export default function AchievementScreen({ navigation }: RootStackScreenProps<'
       {!user && (
         <View style={styles.signInBar}>
           <Text style={styles.signInText} numberOfLines={2}>Sign in to save your Bible data permanently</Text>
-          <TouchableOpacity style={styles.signInBtn} activeOpacity={0.85}>
+          <TouchableOpacity style={styles.signInBtn} activeOpacity={0.85} onPress={() => setShowSignIn(true)}>
             <Text style={styles.signInBtnText}>Sign In</Text>
           </TouchableOpacity>
         </View>
@@ -117,6 +119,8 @@ export default function AchievementScreen({ navigation }: RootStackScreenProps<'
           lang={translation.code}
         />
       )}
+
+      {showSignIn && <SignInSheet onClose={() => setShowSignIn(false)} />}
     </View>
   );
 }
@@ -144,6 +148,7 @@ function BadgeTile({ badge, count, locked, lang, onPress }: {
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.tile}>
       <BadgeIcon
+        id={badge.id}
         iconKey={badge.iconKey}
         rarity={badge.rarity}
         size={88}
@@ -178,6 +183,7 @@ function DetailSheet({ badge, earnedAt, count, onClose, lang }: {
         <View style={styles.sheetHandle} />
         <View style={{ alignItems: 'center', marginTop: 8 }}>
           <BadgeIcon
+            id={badge.id}
             iconKey={badge.iconKey}
             rarity={badge.rarity}
             size={108}

@@ -513,6 +513,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
               .map(a => (
                 <View key={a.id} style={styles.achievementPreviewTile}>
                   <BadgeIcon
+                    id={a.id}
                     iconKey={a.iconKey}
                     rarity={a.rarity}
                     size={64}

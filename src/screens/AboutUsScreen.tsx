@@ -7,9 +7,10 @@ import { POLICIES, SUPPORT_EMAIL, type PolicyId } from '../constants/aboutConten
 import type { RootStackScreenProps } from '../navigation/types';
 
 const ITEMS: { id: PolicyId; label: string }[] = [
-  { id: 'terms',   label: 'Terms of Service' },
-  { id: 'privacy', label: 'Privacy Policy' },
-  { id: 'content', label: 'Content Policy' },
+  { id: 'terms',           label: 'Terms of Service' },
+  { id: 'privacy',         label: 'Privacy Policy' },
+  { id: 'content',         label: 'Content Policy' },
+  { id: 'acknowledgments', label: 'Acknowledgments' },
 ];
 
 export default function AboutUsScreen({ navigation }: RootStackScreenProps<'AboutUs'>) {

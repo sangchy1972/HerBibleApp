@@ -4,7 +4,7 @@
 // written readably rather than as legalese. Have a lawyer review before
 // publishing if you operate in regulated regions.
 
-export type PolicyId = 'terms' | 'privacy' | 'content';
+export type PolicyId = 'terms' | 'privacy' | 'content' | 'acknowledgments';
 
 export interface PolicySection {
   heading?: string;
@@ -225,6 +225,27 @@ export const POLICIES: Record<PolicyId, PolicyDoc> = {
         heading: 'Our removal rights',
         paragraphs: [
           'We may remove content that violates this policy, applicable laws, or the Terms of Service. For repeated violations we may suspend the account.',
+        ],
+      },
+    ],
+  },
+  acknowledgments: {
+    title: 'Acknowledgments',
+    updatedOn: '2026-05-11',
+    sections: [
+      {
+        heading: 'Verse explanations',
+        paragraphs: [
+          'Verse explanations in the "Explore" feature are sourced from the Tyndale Open Study Notes, originally published by Tyndale House Publishers, used under the Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0).',
+          'The notes have been reshaped to match each verse individually, with no edits to the underlying text. A small number of explanations (about 1%, for passages the Tyndale notes do not cover) were written specifically for this app.',
+          'License: https://creativecommons.org/licenses/by-sa/4.0/',
+          'Source: https://tyndaleopenresources.com/',
+        ],
+      },
+      {
+        heading: 'Scripture text',
+        paragraphs: [
+          'Public-domain Bible translations (KJV English 1769, 和合本 Chinese 1919, Lutherbibel 1912 German, Louis Segond 1910 French, Reina-Valera 1909 Spanish, João Ferreira de Almeida Portuguese) served from a community-maintained corpus mirror.',
         ],
       },
     ],

@@ -35,6 +35,7 @@ export interface TranslationIndex {
 const indexKey = (code: string) => `bible:idx:${CACHE_TAG}:${code}`;
 const chapterKey = (code: string, slug: string, ch: number) => `bible:ch:${CACHE_TAG}:${code}:${slug}:${ch}`;
 const downloadStateKey = (code: string) => `bible:dl:${CACHE_TAG}:${code}`;
+const commentaryKey = (code: string, slug: string, ch: number) => `bible:commentary:${CACHE_TAG}:${code}:${slug}:${ch}`;
 
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -64,6 +65,31 @@ export async function fetchChapter(code: string, baseUrl: string, slug: string, 
   const cached = await AsyncStorage.getItem(key);
   if (cached) return JSON.parse(cached) as Chapter;
   const data = await fetchJson<Chapter>(`${baseUrl}/books/${slug}/chapters/${chapter}.json`);
+  await AsyncStorage.setItem(key, JSON.stringify(data));
+  return data;
+}
+
+export interface CommentaryChapter {
+  verses: Verse[];
+}
+
+// Fetch the per-verse commentary for a chapter from the same pd-text-corpus
+// mirror that serves Bible text. Same per-chapter JSON shape as `Chapter`,
+// keyed under `commentary/<code>/...` at the repo root (sibling of `bibles/...`).
+// Pass `CORPUS_CDN_ROOT` from constants/corpus + the active translation code.
+// Throws on any failure — every covered verse is expected to have data, so a
+// 404 indicates either a translation we haven't shipped yet or a real outage,
+// and the UI surfaces both as a network-error retry prompt.
+export async function fetchCommentaryChapter(
+  cdnRoot: string, code: string, slug: string, chapter: number,
+): Promise<CommentaryChapter> {
+  const key = commentaryKey(code, slug, chapter);
+  const cached = await AsyncStorage.getItem(key);
+  if (cached) return JSON.parse(cached) as CommentaryChapter;
+  const url = `${cdnRoot}/commentary/${code}/books/${slug}/chapters/${chapter}.json`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+  const data = (await res.json()) as CommentaryChapter;
   await AsyncStorage.setItem(key, JSON.stringify(data));
   return data;
 }

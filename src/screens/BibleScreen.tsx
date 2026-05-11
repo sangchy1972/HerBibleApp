@@ -23,7 +23,8 @@ import { useBookmarks } from '../state/BookmarksContext';
 import { useReadChapters } from '../state/ReadChaptersContext';
 import ShareVerseSheet from '../components/ShareVerseSheet';
 import VerseNoteSheet from '../components/VerseNoteSheet';
-import { fetchTranslationIndex, fetchChapter, streamingSearchVerses, type BookSummary, type Verse, type VerseHit, type SearchProgress } from '../services/bibleService';
+import { fetchTranslationIndex, fetchChapter, fetchCommentaryChapter, streamingSearchVerses, type BookSummary, type Verse, type VerseHit, type SearchProgress } from '../services/bibleService';
+import { CORPUS_CDN_ROOT } from '../constants/corpus';
 import type { BibleFocus, TabParamList } from '../navigation/types';
 
 type FontChoice = 'Serif' | 'Sans' | 'Inter';
@@ -738,6 +739,47 @@ export default function BibleScreen() {
   // Index into `verses` for the verse whose Explanation is currently open.
   // Inlined under that verse, so we only need an index — no copy of the text.
   const [exploreIdx, setExploreIdx]   = useState<number | null>(null);
+  // Commentary fetch state for the currently-open Explore card. Every verse in
+  // every shipped translation is expected to have data on the CDN, so the only
+  // states the UI distinguishes are loading / ready / error. A 5 s timeout
+  // promotes a stuck fetch to `error` so users never see a forever-spinner.
+  type ExplainStatus = 'idle' | 'loading' | 'ready' | 'error';
+  const [explainStatus, setExplainStatus] = useState<ExplainStatus>('idle');
+  const [explainText, setExplainText] = useState<string | null>(null);
+
+  // Load the explanation whenever Explore opens (or the verse / chapter / book
+  // / translation changes underneath it). URL uses `translation.code` so future
+  // non-en commentaries activate automatically once their CDN paths land.
+  useEffect(() => {
+    if (exploreIdx === null) {
+      setExplainStatus('idle');
+      setExplainText(null);
+      return;
+    }
+    const v = verses[exploreIdx];
+    if (!v) return;
+    let cancelled = false;
+    setExplainStatus('loading');
+    setExplainText(null);
+    const timeout = setTimeout(() => {
+      if (!cancelled) setExplainStatus('error');
+    }, 5000);
+    fetchCommentaryChapter(CORPUS_CDN_ROOT, translation.code, bookSlug, chapter)
+      .then(ch => {
+        if (cancelled) return;
+        clearTimeout(timeout);
+        const row = ch.verses.find(r => r.verse === v.verse);
+        if (!row || !row.text) { setExplainStatus('error'); return; }
+        setExplainText(row.text);
+        setExplainStatus('ready');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        clearTimeout(timeout);
+        setExplainStatus('error');
+      });
+    return () => { cancelled = true; clearTimeout(timeout); };
+  }, [exploreIdx, bookSlug, chapter, translation.code, verses]);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showToast = (msg: string, ms = 1400) => {
@@ -848,22 +890,22 @@ export default function BibleScreen() {
                       <Feather name="x" size={18} color={TXTSUB} />
                     </TouchableOpacity>
                   </View>
-                  <Text
-                    style={[
-                      {
+                  {explainStatus === 'loading' ? (
+                    <ActivityIndicator color={ROSE} style={{ alignSelf: 'flex-start' }} />
+                  ) : (
+                    <Text
+                      style={{
                         fontFamily: FONT_FAMILY[font],
                         fontSize: fontSize - 1,
                         lineHeight: (fontSize - 1) * lineH,
                         color: ROSE,
-                      },
-                    ]}
-                  >
-                    {/* TODO: replace placeholder with the real commentary keyed
-                        on (translation, bookSlug, chapter, v.verse) when the corpus is ready. */}
-                    A short reflection on this verse will appear here once the commentary
-                    corpus lands. We're scaffolding the experience now so the explore
-                    action shows up under the verse you tapped, in your reader font and size.
-                  </Text>
+                      }}
+                    >
+                      {explainStatus === 'ready' && explainText}
+                      {explainStatus === 'error' &&
+                        "Network error. Check your connection and tap Explore again."}
+                    </Text>
+                  )}
                 </View>
               )}
             </View>

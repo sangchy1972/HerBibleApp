@@ -32,7 +32,7 @@ export type RootStackParamList = {
   HelpAnswer: { id: string };
   AddWidget: undefined;
   AboutUs: undefined;
-  Policy: { id: 'terms' | 'privacy' | 'content' };
+  Policy: { id: 'terms' | 'privacy' | 'content' | 'acknowledgments' };
   Notifications: undefined;
 };
 

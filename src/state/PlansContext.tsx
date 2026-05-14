@@ -47,7 +47,17 @@ export function PlansProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      const data = await loadSummary(l, opts);
+      const data = await loadSummary(l, {
+        ...opts,
+        // Stale-while-revalidate hook: if the background refresh fetched
+        // a newer summary (different `generated_at`), swap it into state
+        // as long as the user hasn't since switched language. Without
+        // this, republished content wouldn't surface until cold restart.
+        onBackgroundRefresh: (fresh) => {
+          if (seqRef.current !== mySeq) return;
+          setSummary(fresh);
+        },
+      });
       if (seqRef.current !== mySeq) return;
       setSummary(data);
     } catch (e: any) {

@@ -3,7 +3,9 @@
 // when the schema or content of summaries/plans changes meaningfully.
 
 export const PLANS_API_BASE = 'https://plans.everlandapps.com';
-export const PLANS_SUMMARY_VERSION = '1.0.0';
+// 1.1.0 — day_outlines gains `scripture_refs: string[]` and cover.image_url
+// is now null (AI covers retired in favour of gradient + icon).
+export const PLANS_SUMMARY_VERSION = '1.1.0';
 
 // Google Cloud Project number for Play Integrity (find it in the GCP console:
 // IAM & Admin → Settings → "Project number"). Required on Android. Set to 0

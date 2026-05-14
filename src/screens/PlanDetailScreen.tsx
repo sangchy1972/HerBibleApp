@@ -183,11 +183,12 @@ export default function PlanDetailScreen() {
         })}
       </ScrollView>
 
-      {/* Day card. Outline data is always available; expanded teaching arrives
-          after lazy load. */}
+      {/* Day card. Outline data (walk title + verse list) is always available
+          from the cached summary; the long teaching/reflection bodies arrive
+          after lazy-load. */}
       <View style={styles.dayContent}>
         <View style={styles.dayHeader}>
-          <Text style={styles.dayTitle}>{dayOutline?.title || `Day ${activeDay + 1}`}</Text>
+          <Text style={styles.dayTitle}>Day {currentDayNum} of {total}</Text>
           {!!dayOutline?.estimated_minutes && (
             <View style={[styles.timeBadge, { backgroundColor: `${ROSE}18` }]}>
               <Text style={[styles.timeBadgeText, { color: ROSE }]}>~{dayOutline.estimated_minutes} MIN</Text>
@@ -195,14 +196,40 @@ export default function PlanDetailScreen() {
           )}
         </View>
 
+        {/* DAILY WALK row — day title, tap to load the full body. */}
+        {!!dayOutline?.title && (
+          <TouchableOpacity style={styles.walkRow} activeOpacity={0.8} onPress={onStart}>
+            <View style={[styles.walkIcon, { backgroundColor: `${ROSE}22` }]}>
+              <Feather name="arrow-right" size={16} color={ROSE} />
+            </View>
+            <View style={styles.walkMeta}>
+              <Text style={[styles.walkCaption, { color: ROSE }]}>DAILY WALK</Text>
+              <Text style={styles.walkTitle} numberOfLines={2}>{dayOutline.title}</Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={TXTSUB} />
+          </TouchableOpacity>
+        )}
+
         {!!dayOutline?.subtitle && <Text style={styles.daySubtitle}>{dayOutline.subtitle}</Text>}
 
-        {!!dayOutline?.scripture_ref && (
-          <View style={styles.scriptureRow}>
-            <Feather name="book-open" size={16} color={ROSE} />
-            <Text style={styles.scriptureRef}>{dayOutline.scripture_ref}</Text>
-          </View>
-        )}
+        {/* Today's scripture list — pulled from `scripture_refs` (1.1.0+).
+            Falls back to the legacy single `scripture_ref` on older
+            summaries. Each row taps to load the full plan so DaySection
+            below can render the verse text. */}
+        {(() => {
+          const refs: string[] = dayOutline?.scripture_refs && dayOutline.scripture_refs.length > 0
+            ? dayOutline.scripture_refs
+            : (dayOutline?.scripture_ref ? [dayOutline.scripture_ref] : []);
+          return refs.map((ref, i) => (
+            <TouchableOpacity key={`${currentDayNum}-${i}`} style={styles.verseRow} activeOpacity={0.8} onPress={onStart}>
+              <View style={styles.verseIcon}>
+                <Feather name="book-open" size={15} color={TXTSUB} />
+              </View>
+              <Text style={styles.verseName}>{ref}</Text>
+              <Feather name="chevron-right" size={18} color={TXTSUB} />
+            </TouchableOpacity>
+          ));
+        })()}
 
         {loadingFull && (
           <View style={styles.loadingBlock}>
@@ -325,8 +352,11 @@ function DaySection({ section }: { section: any }) {
     );
   }
 
-  if (type === 'verse_wall' || type === 'additional_scriptures') {
+  if (type === 'verse_wall' || type === 'additional_scriptures' || type === 'scriptures' || type === 'scriptures_to_carry') {
     const verses = section.verses || [];
+    // Some shapes have `verses` as objects with `display`/`ref`/`text`;
+    // others (verse_to_memorize / scriptures) put the verse text inline
+    // in paragraphs[]. Render both.
     return (
       <View style={styles.sectionCard}>
         {heading && <Text style={styles.sectionHeading}>{heading}</Text>}
@@ -335,6 +365,31 @@ function DaySection({ section }: { section: any }) {
             <Feather name="book-open" size={13} color={TXTSUB} />
             <Text style={styles.verseListText}>{v.display || v.ref}</Text>
           </View>
+        ))}
+        {Array.isArray(section.paragraphs) && section.paragraphs.map((p: string, i: number) => (
+          <Text key={`p${i}`} style={[styles.bodyText, { fontStyle: 'italic' }]}>{p}</Text>
+        ))}
+      </View>
+    );
+  }
+
+  // Generic fallback: any section type with a `heading` + (`paragraphs[]` or
+  // `body`) gets rendered as a teaching card. This catches `opening`,
+  // `today_as_you_read`, `one_line_intro`, `verse_to_memorize`, `why_matters`,
+  // `memory_method`, `carry_today`, `before_we_begin`, `todays_scripture`,
+  // `what_this_means`, `small_step` etc. — the walking-with-god plans rely
+  // on these names. Without this catch-all the screen would silently drop
+  // ~390 sections per language.
+  const paras: string[] = Array.isArray(section?.paragraphs)
+    ? section.paragraphs
+    : (typeof section?.body === 'string' ? [section.body] : []);
+  if (paras.length > 0) {
+    const calloutTint = section?.ui_hint === 'card.callout' || section?.ui_hint === 'card.verse_hero';
+    return (
+      <View style={[styles.sectionCard, calloutTint && { backgroundColor: 'rgba(232,97,154,0.06)' }]}>
+        {heading && <Text style={styles.sectionHeading}>{heading}</Text>}
+        {paras.map((p: string, i: number) => (
+          <Text key={i} style={styles.bodyText}>{p}</Text>
         ))}
       </View>
     );
@@ -389,19 +444,40 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: '#FBF7F6',
   },
   dayContent: { marginTop: 23 },
-  dayHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  dayHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
   dayTitle: { fontSize: 19, fontWeight: '700', color: TXT, flex: 1, marginRight: 12 },
-  daySubtitle: { fontSize: 15, color: TXTSUB, lineHeight: 22, marginBottom: 12 },
+  daySubtitle: { fontSize: 14, color: TXTSUB, lineHeight: 21, marginTop: 4, marginBottom: 14 },
   timeBadge: { paddingHorizontal: 11, paddingVertical: 5, borderRadius: 11 },
   timeBadgeText: { fontSize: 13, fontWeight: '700', letterSpacing: 0.5 },
-  scriptureRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 9,
-    paddingHorizontal: 14, paddingVertical: 12,
+  // DAILY WALK row — primary action row at the top of the day card.
+  walkRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 13,
+    paddingHorizontal: 15, paddingVertical: 15,
     backgroundColor: 'rgba(255,255,255,0.7)',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.92)',
-    borderRadius: 13, marginBottom: 6,
+    borderRadius: 13, marginBottom: 9,
   },
-  scriptureRef: { fontSize: 15.5, fontWeight: '600', color: TXT, flex: 1 },
+  walkIcon: {
+    width: 36, height: 36, borderRadius: 10,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  walkMeta: { flex: 1 },
+  walkCaption: { fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 2 },
+  walkTitle: { fontSize: 15, fontWeight: '600', color: TXT, lineHeight: 21 },
+  // Verse rows — one per scripture_ref in the day outline.
+  verseRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 13,
+    paddingHorizontal: 15, paddingVertical: 14,
+    backgroundColor: 'rgba(255,255,255,0.55)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.85)',
+    borderRadius: 13, marginBottom: 9,
+  },
+  verseIcon: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: 'rgba(30,27,46,0.05)',
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  verseName: { flex: 1, fontSize: 15, fontWeight: '500', color: TXT },
   loadingBlock: { paddingVertical: 24, alignItems: 'center' },
   loadingText: { color: TXTSUB, fontSize: 13, marginTop: 8 },
   errorBlock: { paddingVertical: 16 },

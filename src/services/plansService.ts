@@ -21,6 +21,11 @@ export interface DayOutline {
   title: string;
   subtitle?: string | null;
   estimated_minutes?: number | null;
+  // 1.1.0: list of every verse reference for the day, in section order,
+  // de-duped. The legacy scalar `scripture_ref` is the first entry of
+  // `scripture_refs` and stays populated for older clients reading newer
+  // summaries (and vice versa).
+  scripture_refs?: string[];
   scripture_ref?: string | null;
 }
 
@@ -96,15 +101,32 @@ async function authedFetch(path: string): Promise<Response> {
 
 // ---------- Summary (small, all 113 cards for the lang) ----------
 
-export async function loadSummary(lang: string, opts: { force?: boolean } = {}): Promise<SummaryFile> {
+interface LoadSummaryOpts {
+  force?: boolean;
+  // Called when the background revalidation completes with newer content
+  // than what we returned from cache. Lets PlansContext update React state
+  // mid-session instead of forcing a cold restart for the user to see a
+  // republished summary.
+  onBackgroundRefresh?: (fresh: SummaryFile) => void;
+}
+
+export async function loadSummary(lang: string, opts: LoadSummaryOpts = {}): Promise<SummaryFile> {
   const key = plansSummaryKey(lang);
   if (!opts.force) {
     const cached = await AsyncStorage.getItem(key);
     if (cached) {
       try {
         const parsed = JSON.parse(cached) as SummaryFile;
-        // Kick off a non-blocking refresh in the background so the next launch is fresh.
-        refreshSummary(lang).catch(() => {});
+        // Stale-while-revalidate: hand the cached copy back immediately,
+        // refresh in the background, and only notify the caller if the
+        // refreshed copy is actually newer (different `generated_at`).
+        // `summary_version` mismatch already invalidates the AsyncStorage
+        // key via PLANS_SUMMARY_VERSION, so we don't need to compare it.
+        refreshSummary(lang)
+          .then((fresh) => {
+            if (fresh.generated_at !== parsed.generated_at) opts.onBackgroundRefresh?.(fresh);
+          })
+          .catch(() => {});
         return parsed;
       } catch {
         // fall through to network

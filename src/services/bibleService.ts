@@ -77,21 +77,36 @@ export interface CommentaryChapter {
 // mirror that serves Bible text. Same per-chapter JSON shape as `Chapter`,
 // keyed under `commentary/<code>/...` at the repo root (sibling of `bibles/...`).
 // Pass `CORPUS_CDN_ROOT` from constants/corpus + the active translation code.
-// Throws on any failure — every covered verse is expected to have data, so a
-// 404 indicates either a translation we haven't shipped yet or a real outage,
-// and the UI surfaces both as a network-error retry prompt.
+//
+// Only English commentary exists today. Non-`en` translations transparently
+// fall back to the English file so a Chinese / French / German reader sees
+// the Tyndale notes rather than a network error. When a localised commentary
+// ships later, `CORPUS_COMMIT` bumps, the cache invalidates, and the same
+// fetch path picks up the new file automatically.
 export async function fetchCommentaryChapter(
   cdnRoot: string, code: string, slug: string, chapter: number,
 ): Promise<CommentaryChapter> {
   const key = commentaryKey(code, slug, chapter);
   const cached = await AsyncStorage.getItem(key);
   if (cached) return JSON.parse(cached) as CommentaryChapter;
-  const url = `${cdnRoot}/commentary/${code}/books/${slug}/chapters/${chapter}.json`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-  const data = (await res.json()) as CommentaryChapter;
+  const data = await fetchCommentaryWithFallback(cdnRoot, code, slug, chapter);
   await AsyncStorage.setItem(key, JSON.stringify(data));
   return data;
+}
+
+async function fetchCommentaryWithFallback(
+  cdnRoot: string, code: string, slug: string, chapter: number,
+): Promise<CommentaryChapter> {
+  const primary = `${cdnRoot}/commentary/${code}/books/${slug}/chapters/${chapter}.json`;
+  const res = await fetch(primary);
+  if (res.ok) return (await res.json()) as CommentaryChapter;
+  if (res.status === 404 && code !== 'en') {
+    const fallback = `${cdnRoot}/commentary/en/books/${slug}/chapters/${chapter}.json`;
+    const r2 = await fetch(fallback);
+    if (!r2.ok) throw new Error(`HTTP ${r2.status} for ${fallback}`);
+    return (await r2.json()) as CommentaryChapter;
+  }
+  throw new Error(`HTTP ${res.status} for ${primary}`);
 }
 
 export interface VerseHit {

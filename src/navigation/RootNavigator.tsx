@@ -16,6 +16,9 @@ import NotificationsScreen from '../screens/NotificationsScreen';
 import AchievementScreen from '../screens/AchievementScreen';
 import ReflectionsScreen from '../screens/ReflectionsScreen';
 import PastVersesScreen from '../screens/PastVersesScreen';
+import PlanCategoryScreen from '../screens/PlanCategoryScreen';
+import PlanDetailScreen from '../screens/PlanDetailScreen';
+import PlanProfileScreen from '../screens/PlanProfileScreen';
 import { useOnboarding } from '../state/OnboardingContext';
 import type { RootStackParamList } from './types';
 
@@ -95,6 +98,21 @@ export default function RootNavigator() {
         name="PastVerses"
         component={PastVersesScreen}
         options={{ animation: 'slide_from_right', animationDuration: 320 }}
+      />
+      <Stack.Screen
+        name="PlanCategory"
+        component={PlanCategoryScreen}
+        options={{ animation: 'slide_from_right', animationDuration: 320 }}
+      />
+      <Stack.Screen
+        name="PlanDetail"
+        component={PlanDetailScreen}
+        options={{ animation: 'slide_from_right', animationDuration: 320 }}
+      />
+      <Stack.Screen
+        name="PlanProfile"
+        component={PlanProfileScreen}
+        options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', animationDuration: 380 }}
       />
     </Stack.Navigator>
   );

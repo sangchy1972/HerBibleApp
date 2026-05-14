@@ -60,7 +60,13 @@
           "color": "#E8619A"
         }
       ],
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      [
+        "./modules/expo-device-attest/plugin",
+        {
+          "environment": "production"
+        }
+      ]
     ]
   }
 }

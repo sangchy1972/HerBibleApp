@@ -1,0 +1,8 @@
+{
+  "name": "expo-device-attest",
+  "version": "0.1.0",
+  "description": "Local Expo module exposing Apple App Attest + Google Play Integrity to JS.",
+  "main": "index.ts",
+  "types": "index.ts",
+  "private": true
+}

@@ -37,6 +37,10 @@ export type RootStackParamList = {
   Achievement: undefined;
   Reflections: undefined;
   PastVerses: undefined;
+  // Plan subsystem (Cloudflare R2 + Worker).
+  PlanCategory: { section: import('../constants/plansApi').PlanSectionId; initialSecondary?: string };
+  PlanDetail: { slug: string };
+  PlanProfile: undefined;
 };
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> =

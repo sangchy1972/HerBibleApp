@@ -24,6 +24,8 @@ import { NotificationsProvider } from './src/state/NotificationsContext';
 import { DailyVersesProvider } from './src/state/DailyVersesContext';
 import { ShareProvider } from './src/state/ShareContext';
 import { AchievementsProvider } from './src/state/AchievementsContext';
+import { PlanProfileProvider } from './src/state/PlanProfileContext';
+import { PlansProvider } from './src/state/PlansContext';
 import AchievementUnlockSheet from './src/components/AchievementUnlockSheet';
 
 export default function App() {
@@ -57,16 +59,20 @@ export default function App() {
                                   <RatePromptProvider>
                                     <MoodCheckInProvider>
                                       <NotificationsProvider>
-                                        <NavigationContainer>
-                                          <StatusBar style="dark" />
-                                          <RootNavigator />
-                                          {/* Mounted inside NavigationContainer
-                                              so the View Details button can
-                                              navigate; reads its queue off
-                                              AchievementsContext, so it fires
-                                              from anywhere a counter changes. */}
-                                          <AchievementUnlockSheet />
-                                        </NavigationContainer>
+                                        <PlanProfileProvider>
+                                          <PlansProvider>
+                                            <NavigationContainer>
+                                              <StatusBar style="dark" />
+                                              <RootNavigator />
+                                              {/* Mounted inside NavigationContainer
+                                                  so the View Details button can
+                                                  navigate; reads its queue off
+                                                  AchievementsContext, so it fires
+                                                  from anywhere a counter changes. */}
+                                              <AchievementUnlockSheet />
+                                            </NavigationContainer>
+                                          </PlansProvider>
+                                        </PlanProfileProvider>
                                       </NotificationsProvider>
                                     </MoodCheckInProvider>
                                   </RatePromptProvider>

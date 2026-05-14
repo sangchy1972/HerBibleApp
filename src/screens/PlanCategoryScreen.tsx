@@ -50,9 +50,18 @@ export default function PlanCategoryScreen() {
   // secondary pill; otherwise default to the All view.
   const [activeTab, setActiveTab] = useState<string>(route.params.initialSecondary ?? ALL);
 
+  // Match logic: exact OR token-substring (so the new singular pills `anger`
+  // and `bitterness` both pick up plans whose source secondary is the
+  // compound `anger-bitterness`; same for `anxiety` ↔ `anxiety-fear`, etc.).
+  // Splitting on '-' avoids the over-match where `joy` would catch `nojoy`.
   const filtered = useMemo(() => {
     if (activeTab === ALL) return plans;
-    return plans.filter(p => p.secondary === activeTab);
+    return plans.filter(p => {
+      if (!p.secondary) return false;
+      if (p.secondary === activeTab) return true;
+      const tokens = p.secondary.split('-');
+      return tokens.includes(activeTab);
+    });
   }, [plans, activeTab]);
 
   return (

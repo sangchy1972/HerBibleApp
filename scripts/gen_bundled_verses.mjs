@@ -7,7 +7,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const SRC = '/Users/liwencao/Downloads/120 verse 7 languages';
+const SRC = '/Users/liwencao/Desktop/120 verse 7 languages';
 const OUT = '/Users/liwencao/HerBibleApp/src/constants/dailyVersesBundled.ts';
 const LANGS = ['en', 'zh-Hans', 'zh-Hant', 'de', 'fr', 'es', 'pt'];
 const DAYS = [1, 2, 3];

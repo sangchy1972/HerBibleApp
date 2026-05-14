@@ -81,6 +81,20 @@ export interface ParsedReference {
   verseEnd: number;
 }
 
+// Re-renders an English reference like "Genesis 1:2" into the user's active
+// language (e.g. "創世記 1:2", "Génesis 1:2"). Falls back to the input if the
+// book name can't be parsed — better to show the English ref than blank.
+import { localizeBookName, englishBookName } from '../constants/bibleBookNames';
+export function localizeReference(code: string, ref: string): string {
+  const parsed = parseReference(ref);
+  if (!parsed) return ref;
+  const name = localizeBookName(code, parsed.bookSlug, englishBookName(parsed.bookSlug));
+  const verses = parsed.verseStart === parsed.verseEnd
+    ? `${parsed.verseStart}`
+    : `${parsed.verseStart}-${parsed.verseEnd}`;
+  return `${name} ${parsed.chapter}:${verses}`;
+}
+
 export function parseReference(ref: string): ParsedReference | null {
   // Normalize en-dash/em-dash to hyphen, collapse internal whitespace, lowercase.
   const normalized = ref

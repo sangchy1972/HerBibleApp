@@ -79,19 +79,26 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
             style={styles.tab}
             activeOpacity={0.7}
           >
-            <View style={{ transform: [{ scale: isActive ? 1.12 : 1 }] }}>
-              <Icon active={isActive} />
+            {/* Fixed-size icon slot decouples per-icon SVG dimensions
+                (prayer is 30×27, bible 26×25, etc.) from the row's layout.
+                The 1.12 scale on active is a visual-only transform, so it
+                doesn't bleed into measured height. */}
+            <View style={styles.iconSlot}>
+              <View style={{ transform: [{ scale: isActive ? 1.12 : 1 }] }}>
+                <Icon active={isActive} />
+              </View>
             </View>
             <Text style={[styles.label, { color: isActive ? ROSE : TXTSUB, fontWeight: isActive ? '700' : '500' }]}>
               {label}
             </Text>
-            {isActive && (
-              <LinearGradient
-                colors={[ROSE, LAV]}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                style={styles.activeBar}
-              />
-            )}
+            {/* The bar is always rendered; opacity hides it on inactive
+                tabs. Conditional render previously left the inactive tabs
+                5 px shorter, so the bar height changed when switching. */}
+            <LinearGradient
+              colors={[ROSE, LAV]}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              style={[styles.activeBar, !isActive && { opacity: 0 }]}
+            />
           </TouchableOpacity>
         );
       })}
@@ -113,6 +120,12 @@ const styles = StyleSheet.create({
     gap: 4,               // 3 → 4
     paddingTop: 8,        // 7 → 8
     paddingHorizontal: 4,
+  },
+  iconSlot: {
+    width: 32,
+    height: 28,            // ≥ tallest icon (prayer = 27)
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   label: {
     fontSize: 12,         // 11 → 12 (~+10%)

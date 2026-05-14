@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 // OAuth client IDs for social sign-in.
 //
 // These are PUBLIC identifiers — safe to commit (the client secret is what's
@@ -33,10 +35,14 @@ export const GOOGLE_CLIENT_IDS = {
 export const FACEBOOK_APP_ID = 'YOUR_FACEBOOK_APP_ID';
 
 // Helper to detect whether at least one usable client ID exists for a provider.
+// Apple Sign In has no per-app client ID — it's wired through the iOS team +
+// bundle identifier + the `usesAppleSignIn: true` capability in app.json. So
+// "configured" here just means "we're on iOS where the native flow exists".
 export const isConfigured = {
   google: () =>
     !GOOGLE_CLIENT_IDS.ios.startsWith('YOUR_') ||
     !GOOGLE_CLIENT_IDS.android.startsWith('YOUR_') ||
     !GOOGLE_CLIENT_IDS.web.startsWith('YOUR_'),
   facebook: () => !FACEBOOK_APP_ID.startsWith('YOUR_'),
+  apple: () => Platform.OS === 'ios',
 };

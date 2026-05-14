@@ -6,6 +6,7 @@ import Svg, { Path } from 'react-native-svg';
 import Animated, { FadeIn, SlideInDown, Easing } from 'react-native-reanimated';
 import { Feather } from '@expo/vector-icons';
 import { ROSE, LAV, TXT, TXTSUB } from '../constants/theme';
+import { usePrayer } from '../state/PrayerContext';
 
 // Drop your flat-illustration art at assets/weekly-jesus.png and uncomment.
 // Until then we render a soft gradient with a placeholder badge.
@@ -28,7 +29,9 @@ function dateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function countPrayersThisWeek(dates: Set<string>): { count: number; weekFlags: boolean[]; todayIdx: number } {
+function countPrayersThisWeek(
+  recordOn: (k: string) => { m: boolean; e: boolean },
+): { count: number; weekFlags: boolean[]; todayIdx: number } {
   const today = new Date();
   const todayIdx = today.getDay();             // 0 = Sunday
   const sunday = new Date(today);
@@ -38,23 +41,23 @@ function countPrayersThisWeek(dates: Set<string>): { count: number; weekFlags: b
   for (let i = 0; i < 7; i++) {
     const d = new Date(sunday);
     d.setDate(sunday.getDate() + i);
-    const has = dates.has(dateKey(d));
-    weekFlags.push(has);
-    if (has && i <= todayIdx) count++;
+    const r = recordOn(dateKey(d));
+    weekFlags.push(r.m || r.e);
+    if (i <= todayIdx) count += (r.m ? 1 : 0) + (r.e ? 1 : 0);
   }
   return { count, weekFlags, todayIdx };
 }
 
 interface Props {
   morning: boolean;
-  activityDates: Set<string>;
   onOpenReminder: () => void;
   onBack: () => void;
 }
 
-export default function WeeklyProgressView({ morning, activityDates, onOpenReminder, onBack }: Props) {
+export default function WeeklyProgressView({ morning, onOpenReminder, onBack }: Props) {
   const insets = useSafeAreaInsets();
-  const { count, weekFlags, todayIdx } = countPrayersThisWeek(activityDates);
+  const { recordOn } = usePrayer();
+  const { count, weekFlags, todayIdx } = countPrayersThisWeek(recordOn);
   const accent = morning ? ROSE : LAV;
 
   const headline =
@@ -112,7 +115,7 @@ export default function WeeklyProgressView({ morning, activityDates, onOpenRemin
         </TouchableOpacity>
       </Animated.View>
 
-      <Animated.View entering={FadeIn.duration(360).delay(360)}>
+      <Animated.View entering={FadeIn.duration(360).delay(360)} style={styles.backWrap}>
         <TouchableOpacity onPress={onBack} activeOpacity={0.85} style={[styles.backBtn, { marginBottom: insets.bottom + 24 }]}>
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
@@ -252,8 +255,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   reminderKnob: { width: 18, height: 18, borderRadius: 9, backgroundColor: '#FFFFFF' },
+  backWrap: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    paddingTop: 32,    // guarantees ≥ 32 px between the card and Back, even
+                       // when the card grows tall on small phones.
+  },
   backBtn: {
-    marginTop: 'auto',
     marginHorizontal: 16,
     height: 56,
     borderRadius: 28,

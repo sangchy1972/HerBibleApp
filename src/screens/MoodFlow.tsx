@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions } from
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
-import Animated, { FadeIn, SlideInRight, Easing } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import MoodEmoji, { MOOD_LIST, MOOD_LABEL, type Mood } from '../components/MoodEmoji';
 import MoodCalendar from '../components/MoodCalendar';
 import { MOOD_VERSES, FUN_FACTS } from '../constants/moodContent';
@@ -32,21 +32,23 @@ export default function MoodFlow({ navigation }: RootStackScreenProps<'MoodFlow'
 
   return (
     <View style={styles.root}>
-      {/* Single top-right close — applies to every step. */}
-      <View style={[styles.topRow, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity onPress={exit} style={styles.closeBtn} hitSlop={10}>
-          <Feather name="x" size={22} color={TXT} />
-        </TouchableOpacity>
-      </View>
+      {/* Top-right close lives on the picker only. The verse and calendar
+          steps each have their own primary CTA — a redundant × there is
+          visual noise. */}
+      {step === 'pick' && (
+        <View style={[styles.topRow, { paddingTop: insets.top + 8 }]}>
+          <TouchableOpacity onPress={exit} style={styles.closeBtn} hitSlop={10}>
+            <Feather name="x" size={22} color={TXT} />
+          </TouchableOpacity>
+        </View>
+      )}
+      {(step === 'verse' || step === 'calendar') && (
+        <View style={{ paddingTop: insets.top + 8, paddingBottom: 6 }} />
+      )}
 
       {step === 'pick' && <PickStep onPick={onPick} />}
       {step === 'verse' && mood && <VerseStep mood={mood} onClose={() => setStep('calendar')} />}
-      {step === 'calendar' && (
-        <CalendarStep
-          onViewFact={() => setStep('fact')}
-          onReturn={exit}
-        />
-      )}
+      {step === 'calendar' && <CalendarStep onContinue={exit} />}
       {step === 'fact' && (
         <FactModal
           fact={FUN_FACTS[factIdx]}
@@ -82,46 +84,53 @@ function PickStep({ onPick }: { onPick: (m: Mood) => void }) {
 function VerseStep({ mood, onClose }: { mood: Mood; onClose: () => void }) {
   const v = MOOD_VERSES[mood];
   const today = new Date();
-  const dateStr = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+  const dateStr = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   return (
-    <Animated.View entering={SlideInRight.duration(360).easing(Easing.out(Easing.cubic))} style={styles.verseWrap}>
-      <View style={styles.verseHeader}>
+    <View style={styles.verseWrap}>
+      {/* Phased fade-in: title → card → close. Each block starts after the
+          previous has had a moment to settle, so the eye walks down the page. */}
+      <Animated.View entering={FadeIn.duration(450)}>
         <Text style={styles.verseHeaderTitle}>When you feel {MOOD_LABEL[mood]}</Text>
-        <View style={{ marginLeft: 6 }}><MoodEmoji mood={mood} size={32} /></View>
-      </View>
-      <Text style={styles.verseHeaderSub}>God's words for you</Text>
+        <Text style={styles.verseHeaderSub}>God's words for you</Text>
+      </Animated.View>
 
-      <LinearGradient colors={['#5A2B14', '#A86430', '#5A2B14']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.verseCard}>
-        <View style={styles.verseFrame}>
-          <Text style={styles.verseDate}>{dateStr}</Text>
-          <Text style={styles.verseRef}>{v.ref}</Text>
-          <Text style={styles.verseText}>{v.text}</Text>
-        </View>
-      </LinearGradient>
+      <Animated.View entering={FadeIn.delay(500).duration(500)}>
+        <LinearGradient colors={['#5A2B14', '#A86430', '#5A2B14']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.verseCard}>
+          <View style={styles.verseFrame}>
+            <Text style={styles.verseDate}>{dateStr}</Text>
+            <Text style={styles.verseRef}>{v.ref}</Text>
+            <Text style={styles.verseText}>{v.text}</Text>
+          </View>
+        </LinearGradient>
+      </Animated.View>
 
-      <TouchableOpacity onPress={onClose} style={styles.verseCloseBtn} activeOpacity={0.85}>
-        <Text style={styles.verseCloseText}>Close</Text>
-      </TouchableOpacity>
-    </Animated.View>
+      <Animated.View entering={FadeIn.delay(1100).duration(500)} style={styles.verseCloseWrap}>
+        <TouchableOpacity onPress={onClose} style={styles.verseCloseBtn} activeOpacity={0.85}>
+          <Text style={styles.verseCloseText}>Close</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
   );
 }
 
 // ─── Step 3: Check-in calendar ──────────────────────────────────────────────
-function CalendarStep({
-  onViewFact, onReturn,
-}: {
-  onViewFact: () => void;
-  onReturn: () => void;
-}) {
+function CalendarStep({ onContinue }: { onContinue: () => void }) {
+  const insets = useSafeAreaInsets();
   return (
     <Animated.View entering={FadeIn.duration(220)} style={styles.calWrap}>
-      <MoodCalendar />
-      <TouchableOpacity onPress={onViewFact} activeOpacity={0.85} style={styles.calCta}>
-        <Text style={styles.calCtaText}>View Today's Did You Know</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={onReturn} activeOpacity={0.85} style={styles.calReturn}>
-        <Text style={styles.calReturnText}>Return</Text>
-      </TouchableOpacity>
+      {/* Calendar scrolls if the screen is short — keeps the Continue CTA
+          reachable on small phones (iPhone SE etc.). */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.calScroll}
+      >
+        <MoodCalendar />
+      </ScrollView>
+      <View style={[styles.calFooter, { paddingBottom: Math.max(insets.bottom, 12) + 30 }]}>
+        <TouchableOpacity onPress={onContinue} activeOpacity={0.85} style={styles.calCta}>
+          <Text style={styles.calCtaText}>Continue</Text>
+        </TouchableOpacity>
+      </View>
     </Animated.View>
   );
 }
@@ -223,9 +232,14 @@ const styles = StyleSheet.create({
 
   // Verse step
   verseWrap: { flex: 1, paddingHorizontal: 22, paddingTop: 12 },
-  verseHeader: { flexDirection: 'row', alignItems: 'center', marginTop: 16 },
-  verseHeaderTitle: { color: TXT, fontSize: 26, fontWeight: '700' },
-  verseHeaderSub: { color: TXT, fontSize: 26, fontWeight: '700', marginBottom: 18 },
+  verseHeaderTitle: {
+    color: TXT, fontSize: 26, fontWeight: '700',
+    textAlign: 'center', marginTop: 16,
+  },
+  verseHeaderSub: {
+    color: TXT, fontSize: 26, fontWeight: '700',
+    textAlign: 'center', marginBottom: 24,
+  },
   verseCard: {
     borderRadius: 14,
     paddingVertical: 28,
@@ -235,42 +249,35 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: 'rgba(255,235,180,0.6)',
     borderRadius: 8,
-    paddingVertical: 28,
+    paddingTop: 28,
+    paddingBottom: 48,                     // +20 px breathing room below the body
     paddingHorizontal: 22,
   },
   verseDate: { color: '#FFFFFF', fontSize: 14, fontWeight: '600', marginBottom: 18, opacity: 0.85 },
-  verseRef:  { color: '#FFFFFF', fontSize: 26, fontWeight: '700', marginBottom: 16 },
+  verseRef:  { color: '#FFFFFF', fontSize: 21, fontWeight: '700', marginBottom: 31 },   // ref −20 %, body +15 px gap
   verseText: { color: '#FFFFFF', fontSize: 18, lineHeight: 26, fontWeight: '500' },
+  verseCloseWrap: { alignItems: 'center', marginTop: 28 },
   verseCloseBtn: {
-    marginTop: 22,
+    width: '80%',                          // −20 % wide, centered by the wrap
     backgroundColor: '#FF82A8',
     borderRadius: 28,
-    paddingVertical: 16,
+    paddingVertical: 18,                   // height +10 % (16 → 18)
     alignItems: 'center',
   },
-  verseCloseText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700' },
+  verseCloseText: { color: '#FFFFFF', fontSize: 20, fontWeight: '700' },                // text +10 %
 
-  // Calendar step — calendar grid lives in MoodCalendar; we only own the wrap
-  // and the two CTAs underneath.
+  // Calendar step — scrollable body + pinned Continue CTA so the button is
+  // always reachable, even on iPhone SE-class screens.
   calWrap: { flex: 1, paddingHorizontal: 18, paddingTop: 4 },
+  calScroll: { paddingBottom: 12 },
+  calFooter: { paddingTop: 12 },
   calCta: {
-    marginTop: 18,
     backgroundColor: '#FF82A8',
     borderRadius: 28,
     paddingVertical: 16,
     alignItems: 'center',
   },
   calCtaText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700' },
-  calReturn: {
-    marginTop: 12,
-    borderWidth: 1.5,
-    borderColor: '#FF82A8',
-    borderRadius: 28,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  calReturnText: { color: '#FF82A8', fontSize: 18, fontWeight: '700' },
 
   // Fact modal
   factOverlay: {
@@ -301,5 +308,3 @@ const styles = StyleSheet.create({
   factActionText: { fontSize: 17, fontWeight: '700' },
 });
 
-// `ScrollView` import kept around for if we later need scrollable variants.
-void ScrollView;

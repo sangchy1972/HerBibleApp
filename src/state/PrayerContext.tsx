@@ -11,9 +11,11 @@ interface PrayerState {
   mDone: boolean;                // today's morning completed
   eDone: boolean;                // today's evening completed
   totalComplete: number;         // total days where BOTH prayers were done
+  currentStreak: number;         // consecutive complete days ending today (or yesterday with grace)
   maxStreak: number;             // longest run of consecutive complete days
   firstCompleteDate: string | null;   // earliest 'YYYY-MM-DD' with both done
   wasCompleteOn: (dateKey: string) => boolean;
+  recordOn: (dateKey: string) => DayRecord;
   setMorning: (v: boolean) => void;
   markDone: (kind: PrayerKind) => void;
 }
@@ -43,6 +45,22 @@ function longestStreak(dates: string[]): number {
     }
   }
   return max;
+}
+
+// Active streak ending today, with a one-day grace if today isn't yet complete
+// (so the streak doesn't break until a full day is missed). Mirrors the same
+// grace policy as ActivityContext.computeStreak.
+function activeStreak(dateSet: Set<string>): number {
+  if (dateSet.size === 0) return 0;
+  const cur = new Date();
+  const k = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  if (!dateSet.has(k(cur))) cur.setDate(cur.getDate() - 1);
+  let streak = 0;
+  while (dateSet.has(k(cur))) {
+    streak++;
+    cur.setDate(cur.getDate() - 1);
+  }
+  return streak;
 }
 
 export function PrayerProvider({ children }: { children: React.ReactNode }) {
@@ -75,12 +93,14 @@ export function PrayerProvider({ children }: { children: React.ReactNode }) {
       mDone: todayRec.m,
       eDone: todayRec.e,
       totalComplete: completeDates.length,
+      currentStreak: activeStreak(new Set(completeDates)),
       maxStreak: longestStreak(completeDates),
       firstCompleteDate: completeDates[0] ?? null,
       wasCompleteOn: (dateKey) => {
         const r = records[dateKey];
         return !!(r && r.m && r.e);
       },
+      recordOn: (dateKey) => records[dateKey] || { m: false, e: false },
       setMorning,
       markDone: (kind) => {
         const cur = records[today] || { m: false, e: false };

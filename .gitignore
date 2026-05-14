@@ -42,3 +42,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Local PNG backups before lossy compression — kept off git
+assets/badges/.backup-*/

@@ -17,6 +17,7 @@ import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
 import VerseCardArt, { VERSE_FORMATS, type VerseFormat } from './VerseCardArt';
 import { ROSE, TXT, TXTSUB, P } from '../constants/theme';
+import { useShare } from '../state/ShareContext';
 
 interface Props {
   reference: string;
@@ -55,6 +56,7 @@ const APP_CONFIG: Record<AppKey, { label: string; scheme: string; iosStore: stri
 };
 
 export default function ShareVerseSheet({ reference, text, onClose }: Props) {
+  const { recordShare } = useShare();
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState<VerseFormat>('square');
   const [busy, setBusy] = useState(false);
@@ -123,6 +125,8 @@ export default function ShareVerseSheet({ reference, text, onClose }: Props) {
         mimeType: 'image/png',
         dialogTitle: `Share to ${cfg.label}`,
       });
+      // Count the share — feeds the Share the Word + Faithful Sower badges.
+      recordShare();
     } catch (e) {
       Alert.alert('Could not share', e instanceof Error ? e.message : 'Please try again.');
     } finally {

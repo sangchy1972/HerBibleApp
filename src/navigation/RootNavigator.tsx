@@ -13,6 +13,9 @@ import AddWidgetScreen from '../screens/AddWidgetScreen';
 import AboutUsScreen from '../screens/AboutUsScreen';
 import PolicyScreen from '../screens/PolicyScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
+import AchievementScreen from '../screens/AchievementScreen';
+import ReflectionsScreen from '../screens/ReflectionsScreen';
+import PastVersesScreen from '../screens/PastVersesScreen';
 import { useOnboarding } from '../state/OnboardingContext';
 import type { RootStackParamList } from './types';
 
@@ -36,7 +39,7 @@ export default function RootNavigator() {
       <Stack.Screen
         name="MoodFlow"
         component={MoodFlow}
-        options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', animationDuration: 600 }}
+        options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', animationDuration: 800 }}
       />
       <Stack.Screen
         name="MoodCalendar"
@@ -76,6 +79,21 @@ export default function RootNavigator() {
       <Stack.Screen
         name="Notifications"
         component={NotificationsScreen}
+        options={{ animation: 'slide_from_right', animationDuration: 320 }}
+      />
+      <Stack.Screen
+        name="Achievement"
+        component={AchievementScreen}
+        options={{ animation: 'slide_from_right', animationDuration: 320 }}
+      />
+      <Stack.Screen
+        name="Reflections"
+        component={ReflectionsScreen}
+        options={{ animation: 'slide_from_right', animationDuration: 320 }}
+      />
+      <Stack.Screen
+        name="PastVerses"
+        component={PastVersesScreen}
         options={{ animation: 'slide_from_right', animationDuration: 320 }}
       />
     </Stack.Navigator>

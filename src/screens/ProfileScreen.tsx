@@ -23,6 +23,9 @@ import { useBookmarks } from '../state/BookmarksContext';
 import { useReadChapters, TOTAL_BIBLE_BOOKS } from '../state/ReadChaptersContext';
 import { useNotes, type Note } from '../state/NotesContext';
 import { useMoodCheckIn } from '../state/MoodCheckInContext';
+import { useAchievements } from '../state/AchievementsContext';
+import BadgeIcon from '../components/BadgeIcon';
+import { ACHIEVEMENTS } from '../constants/achievements';
 import SignInSheet from '../components/SignInSheet';
 import { GridTile, NotesTile, FaithBadgeCard } from '../components/ProfileTiles';
 import { downloadFullTranslation, getDownloadState, type DownloadState } from '../services/bibleService';
@@ -191,6 +194,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
   const { bookmarks, count: bookmarksCount, removeBookmark } = useBookmarks();
   const { notes, removeNote } = useNotes();
   const { totalCheckIns } = useMoodCheckIn();
+  const { earned, earnedCount } = useAchievements();
   const { booksTouched, percent: readPercent } = useReadChapters();
   const { current: currentTranslation, setTranslation } = useTranslation();
   const [showTranslationPicker, setShowTranslationPicker] = useState(false);
@@ -487,17 +491,75 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
         </LinearGradient>
       </TouchableOpacity>
 
-      {/* Faith Achievement */}
-      {firstPrayerDate && (
+      {/* Faith Achievement — preview up to 4 most-recent badges + a CTA into
+          the full gallery. Hidden until the user has earned at least one. */}
+      {earnedCount > 0 && (
         <>
-          <Text style={[styles.sectionTitle, { marginBottom: 14 }]}>Faith Achievement</Text>
-          <FaithBadgeCard
-            title="First Prayer"
-            awardedOn={firstPrayerDate}
-            onPress={() => showToast('Achievements coming soon')}
-          />
+          <View style={[styles.sectionHeader, { marginBottom: 14 }]}>
+            <Text style={styles.sectionTitle}>Faith Achievement</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Achievement')} hitSlop={8}>
+              <Text style={[styles.seeAll, { color: ROSE }]}>See all →</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Achievement')}
+            activeOpacity={0.85}
+            style={styles.achievementPreview}
+          >
+            {ACHIEVEMENTS
+              .filter(a => !!earned[a.id])
+              .sort((a, b) => (earned[b.id]!.lastAwardedAt - earned[a.id]!.lastAwardedAt))
+              .slice(0, 4)
+              .map(a => (
+                <View key={a.id} style={styles.achievementPreviewTile}>
+                  <BadgeIcon
+                    id={a.id}
+                    iconKey={a.iconKey}
+                    rarity={a.rarity}
+                    size={64}
+                    count={earned[a.id]?.count || 1}
+                  />
+                </View>
+              ))}
+            <View style={styles.achievementPreviewMore}>
+              <Text style={styles.achievementPreviewCount}>{earnedCount}</Text>
+              <Text style={styles.achievementPreviewMoreLabel}>earned</Text>
+            </View>
+          </TouchableOpacity>
         </>
       )}
+
+      {/* My Reflections — pulled from the notes store, filtered to entries
+          saved from the prayer flow's "Write a reflection" sheet. */}
+      <View style={[styles.sectionHeader, { marginTop: 28 }]}>
+        <Text style={styles.sectionTitle}>My Reflections</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Reflections')} hitSlop={8}>
+          <Text style={[styles.seeAll, { color: ROSE }]}>See all →</Text>
+        </TouchableOpacity>
+      </View>
+      {(() => {
+        const reflections = notes.filter(n => n.kind === 'reflection');
+        if (reflections.length === 0) {
+          return (
+            <View style={styles.savedEmpty}>
+              <Text style={styles.savedEmptyText}>
+                Reflections you write after a prayer flow will live here.
+              </Text>
+            </View>
+          );
+        }
+        return reflections.slice(0, 2).map(r => (
+          <TouchableOpacity
+            key={r.id}
+            onPress={() => navigation.navigate('Reflections')}
+            style={styles.savedVerse}
+            activeOpacity={0.85}
+          >
+            {r.verseRef ? <Text style={styles.savedRef}>{r.verseRef}</Text> : null}
+            <Text style={styles.savedText} numberOfLines={2}>{r.text}</Text>
+          </TouchableOpacity>
+        ));
+      })()}
 
       {/* My Notes — moved above Learning Bible per design feedback. Each tile
           opens a real list sheet now (no more 'coming soon' toasts). */}
@@ -1020,6 +1082,30 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
+  achievementPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(232,97,154,0.14)',
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+    gap: 6,
+  },
+  achievementPreviewTile: { flex: 1, alignItems: 'center' },
+  achievementPreviewMore: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    minWidth: 56,
+    borderLeftWidth: 1,
+    borderLeftColor: 'rgba(30,27,46,0.06)',
+    marginLeft: 4,
+  },
+  achievementPreviewCount: { fontSize: 22, fontWeight: '800', color: ROSE, lineHeight: 26 },
+  achievementPreviewMoreLabel: { fontSize: 11, color: TXTSUB, letterSpacing: 0.4, marginTop: 2 },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

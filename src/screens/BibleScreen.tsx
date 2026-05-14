@@ -23,7 +23,13 @@ import { useBookmarks } from '../state/BookmarksContext';
 import { useReadChapters } from '../state/ReadChaptersContext';
 import ShareVerseSheet from '../components/ShareVerseSheet';
 import VerseNoteSheet from '../components/VerseNoteSheet';
+// Merge resolution: kept all three imports. `adjustFocus` (from
+// versification) is used at the chapter-focus call site (line ~601);
+// `fetchCommentaryChapter` + `CORPUS_CDN_ROOT` (main's commentary feature)
+// are used at the commentary fetch (line ~776). Branch and main both
+// modified this import block, but their additions are non-overlapping.
 import { fetchTranslationIndex, fetchChapter, fetchCommentaryChapter, streamingSearchVerses, type BookSummary, type Verse, type VerseHit, type SearchProgress } from '../services/bibleService';
+import { adjustFocus } from '../constants/versification';
 import { CORPUS_CDN_ROOT } from '../constants/corpus';
 import type { BibleFocus, TabParamList } from '../navigation/types';
 
@@ -588,14 +594,18 @@ export default function BibleScreen() {
   // does NOT touch last-read — viewing a verse from the card is not reading
   // progress. The visit ref above blocks the rehydrate from clobbering us.
   useEffect(() => {
-    const focus = route.params?.focus;
-    if (!focus) return;
+    const incoming = route.params?.focus;
+    if (!incoming) return;
+    // Incoming focus is in canonical (KJV-style) numbering. Translate it
+    // into whatever the active translation's chapter file actually uses
+    // (Lutherbibel/LSG diverge on Psalms with Hebrew titles, Joel, Malachi).
+    const focus = adjustFocus(translation.code, incoming);
     focusVisitRef.current = true;
     setBookSlug(focus.bookSlug);
     setChapter(focus.chapter);
     setFocusRange(focus);
     navigation.setParams({ focus: undefined } as never);
-  }, [route.params?.focus, navigation]);
+  }, [route.params?.focus, navigation, translation.code]);
   // Drop the highlight when leaving the tab so a normal next visit reads
   // without dimming. Reset the visit flag too so the next entry rehydrates.
   useFocusEffect(

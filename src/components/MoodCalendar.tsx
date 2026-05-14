@@ -9,6 +9,16 @@ function isoKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+function ordinal(n: number): string {
+  if (n >= 11 && n <= 13) return `${n}th`;
+  switch (n % 10) {
+    case 1: return `${n}st`;
+    case 2: return `${n}nd`;
+    case 3: return `${n}rd`;
+    default: return `${n}th`;
+  }
+}
+
 interface Cell { day: number; date: Date }
 function monthGrid(cursor: Date): (Cell | null)[] {
   const year = cursor.getFullYear();
@@ -40,7 +50,7 @@ export default function MoodCalendar({ headline }: Props) {
     setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + delta, 1));
   };
 
-  const headlineText = headline ?? `You have completed\nyour ${totalCheckIns} check-in.`;
+  const headlineText = headline ?? `You've completed\nyour ${ordinal(totalCheckIns)} check-in.`;
 
   return (
     <View>
@@ -73,9 +83,7 @@ export default function MoodCalendar({ headline }: Props) {
           return (
             <View key={i} style={styles.cell}>
               <View style={styles.bubble}>
-                {cellMood
-                  ? <MoodEmoji mood={cellMood} size={32} />
-                  : <View style={styles.empty} />}
+                {cellMood ? <MoodEmoji mood={cellMood} size={37} /> : null}
               </View>
               <View style={[styles.numWrap, isToday && styles.numToday]}>
                 <Text style={[styles.num, isToday && { color: '#FFFFFF', fontWeight: '700' }]}>{cell.day}</Text>
@@ -102,6 +110,8 @@ const styles = StyleSheet.create({
     color: TXT,
     lineHeight: 36,
     marginTop: 12,
+    marginBottom: 5,
+    textAlign: 'center',
   },
   monthRow: {
     flexDirection: 'row',
@@ -133,12 +143,10 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 4 },
   cell: { width: `${100 / 7}%`, alignItems: 'center', paddingVertical: 5 },   // tighter rows to match smaller bubble
   bubble: {
-    width: 34, height: 34, borderRadius: 17,                                   // -10 % diameter, same center
-    backgroundColor: 'rgba(30,27,46,0.06)',
+    width: 40, height: 40,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 4,
   },
-  empty: { width: 18, height: 18, borderRadius: 9, backgroundColor: 'rgba(30,27,46,0.08)' },
   numWrap: {
     paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6,
     minWidth: 26, alignItems: 'center',

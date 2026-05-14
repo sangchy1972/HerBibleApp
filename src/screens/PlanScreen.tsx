@@ -185,7 +185,9 @@ function ExploreTab({
 // "How Are You Feeling Today?" — 11 mood tags arranged 4-4-3. Tap routes to
 // PlanCategoryScreen with the matching cloud `secondary` preselected.
 function EmotionsSection({ onTagPress }: { onTagPress: (secondary: string) => void }) {
-  const rows = [EMOTION_TAGS.slice(0, 4), EMOTION_TAGS.slice(4, 8), EMOTION_TAGS.slice(8, 11)];
+  // 12 tags arranged 4 × 3. If you change EMOTION_TAGS, this still tiles
+  // cleanly as long as count stays a multiple of 4 or 3.
+  const rows = [EMOTION_TAGS.slice(0, 4), EMOTION_TAGS.slice(4, 8), EMOTION_TAGS.slice(8, 12)];
   return (
     <View style={styles.category}>
       <Text style={styles.bigSectionLabel}>HOW ARE YOU FEELING TODAY?</Text>

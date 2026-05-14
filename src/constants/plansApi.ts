@@ -60,7 +60,8 @@ export interface EmotionTag {
 export const EMOTION_TAGS: EmotionTag[] = [
   { label: 'ANXIETY',     color: '#A8C0E0', secondary: 'anxiety' },
   { label: 'FEAR',        color: '#9AAAC0', secondary: 'fear' },
-  { label: 'ANGER',       color: '#88C2B9', secondary: 'anger-bitterness' },
+  { label: 'ANGER',       color: '#D9762A', secondary: 'anger' },
+  { label: 'BITTERNESS',  color: '#88C2B9', secondary: 'bitterness' },
   { label: 'GRIEF',       color: '#B6A6E0', secondary: 'grief' },
   { label: 'JOY',         color: '#F0CC85', secondary: 'joy' },
   { label: 'WEARINESS',   color: '#F4AC93', secondary: 'weariness' },

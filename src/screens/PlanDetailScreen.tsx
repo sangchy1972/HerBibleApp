@@ -10,6 +10,7 @@ import { ROSE, TXT, TXTSUB, P } from '../constants/theme';
 import { usePlans } from '../state/PlansContext';
 import { usePlanProfile } from '../state/PlanProfileContext';
 import { useActivity } from '../state/ActivityContext';
+import { usePlanCompletion } from '../state/PlanCompletionContext';
 import PlanCover from '../components/PlanCover';
 import type { RootStackParamList } from '../navigation/types';
 import type { FullPlan } from '../services/plansService';
@@ -30,8 +31,9 @@ export default function PlanDetailScreen() {
   const slug = route.params.slug;
 
   const { getPlanBySlug, loadFull } = usePlans();
-  const { trackStart } = usePlanProfile();
+  const { trackStart, trackComplete } = usePlanProfile();
   const { markToday } = useActivity();
+  const { isDayComplete, markDayComplete, planProgress } = usePlanCompletion();
 
   const summary = getPlanBySlug(slug);
 
@@ -41,6 +43,32 @@ export default function PlanDetailScreen() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => { markToday(); }, [markToday]);
+
+  // Plan-level progress. day_outlines[].day is the 1-indexed day number that
+  // PlanCompletionContext stores against; we read it for both the day-strip
+  // check overlays and the bottom-CTA state machine.
+  const total = summary?.duration_days || summary?.day_outlines?.length || 0;
+  const progress = total > 0 ? planProgress(slug, total) : { completed: 0, total: 0, complete: false };
+  const currentDayNum = summary?.day_outlines?.[activeDay]?.day ?? activeDay + 1;
+  const thisDayDone = isDayComplete(slug, currentDayNum);
+
+  // Fire trackComplete (behavior signal) exactly once when the plan flips to
+  // fully complete. PlanCompletionContext also stamps `finishedAt` and
+  // AchievementsContext re-evaluates as soon as `completedPlans` grows.
+  useEffect(() => {
+    if (progress.complete) trackComplete(slug);
+  }, [progress.complete, slug, trackComplete]);
+
+  const onMarkDayComplete = () => {
+    if (!summary) return;
+    markDayComplete(slug, currentDayNum, total);
+    // Auto-advance to the next un-finished day so the user can keep reading.
+    const next = summary.day_outlines.findIndex(d => !isDayComplete(slug, d.day));
+    if (next >= 0 && next !== activeDay) {
+      setActiveDay(next);
+      ensureFullLoaded();
+    }
+  };
 
   const ensureFullLoaded = async () => {
     if (fullPlan || loadingFull) return fullPlan;
@@ -109,12 +137,28 @@ export default function PlanDetailScreen() {
         </View>
       )}
 
-      <Text style={styles.dailyPlanLabel}>Daily Plan</Text>
+      <View style={styles.dailyPlanHeader}>
+        <Text style={styles.dailyPlanLabel}>Daily Plan</Text>
+        {total > 0 && (
+          <Text style={styles.progressText}>
+            {progress.completed} / {total} days
+          </Text>
+        )}
+      </View>
 
-      {/* Horizontal day-chip strip from day_outlines (cached) */}
+      {/* Slim progress bar — visualises the same fraction as the text above. */}
+      {total > 0 && (
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: `${(progress.completed / total) * 100}%` }]} />
+        </View>
+      )}
+
+      {/* Horizontal day-chip strip. A small check overlay marks days the user
+          has already finished — they can still tap them to re-read. */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dayStrip} contentContainerStyle={styles.dayStripContent}>
         {summary.day_outlines.map((d, i) => {
           const sel = i === activeDay;
+          const done = isDayComplete(slug, d.day);
           return (
             <TouchableOpacity
               key={i}
@@ -129,6 +173,11 @@ export default function PlanDetailScreen() {
               <Text style={[styles.dayHint, { color: sel ? 'rgba(255,255,255,0.9)' : TXTSUB }]} numberOfLines={1}>
                 Day {d.day}
               </Text>
+              {done && (
+                <View style={styles.dayCheckBadge}>
+                  <Feather name="check" size={11} color="#fff" />
+                </View>
+              )}
             </TouchableOpacity>
           );
         })}
@@ -180,9 +229,32 @@ export default function PlanDetailScreen() {
         )}
       </View>
 
-      <TouchableOpacity style={[styles.startReadingBtn, { backgroundColor: ROSE }]} onPress={onStart} activeOpacity={0.9}>
-        <Text style={styles.startReadingText}>{fullPlan ? 'Continue Reading' : 'Start Reading Plan'}</Text>
-      </TouchableOpacity>
+      {/* Bottom CTA state machine. Plan flow is:
+            ① not yet loaded   → "Start Reading Plan" (fetches the full plan)
+            ② loaded, day open → "Mark Day N Complete" (writes completion + auto-advances)
+            ③ this day done    → "Day N Completed" (idle, mark already counted)
+            ④ all days done    → "Plan Completed" with check ribbon.
+          Completion is per-day; the plan flips to `finished` only when every
+          day's check has been set. AchievementsContext keys off that flip. */}
+      {progress.complete ? (
+        <View style={[styles.startReadingBtn, styles.completedBtn]}>
+          <Feather name="check-circle" size={20} color="#fff" />
+          <Text style={styles.startReadingText}>Plan Completed</Text>
+        </View>
+      ) : !fullPlan ? (
+        <TouchableOpacity style={[styles.startReadingBtn, { backgroundColor: ROSE }]} onPress={onStart} activeOpacity={0.9}>
+          <Text style={styles.startReadingText}>Start Reading Plan</Text>
+        </TouchableOpacity>
+      ) : thisDayDone ? (
+        <View style={[styles.startReadingBtn, styles.dayDoneBtn]}>
+          <Feather name="check" size={18} color={ROSE} />
+          <Text style={[styles.startReadingText, { color: ROSE }]}>Day {currentDayNum} Completed</Text>
+        </View>
+      ) : (
+        <TouchableOpacity style={[styles.startReadingBtn, { backgroundColor: ROSE }]} onPress={onMarkDayComplete} activeOpacity={0.9}>
+          <Text style={styles.startReadingText}>Mark Day {currentDayNum} Complete</Text>
+        </TouchableOpacity>
+      )}
 
       <View style={{ height: 23 }} />
     </Animated.ScrollView>
@@ -291,15 +363,31 @@ const styles = StyleSheet.create({
   },
   keyVerseRow: { flexDirection: 'row', alignItems: 'center', gap: 9, paddingVertical: 7 },
   keyVerseText: { fontSize: 15, fontWeight: '500', color: TXT },
-  dailyPlanLabel: { fontSize: 18, fontWeight: '600', color: TXT, marginBottom: 12 },
+  dailyPlanHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 },
+  dailyPlanLabel: { fontSize: 18, fontWeight: '600', color: TXT },
+  progressText: { fontSize: 13, fontWeight: '600', color: TXTSUB },
+  progressTrack: {
+    height: 5, borderRadius: 4,
+    backgroundColor: 'rgba(30,27,46,0.08)',
+    overflow: 'hidden', marginBottom: 14,
+  },
+  progressFill: { height: '100%', borderRadius: 4, backgroundColor: ROSE },
   dayStrip: { marginHorizontal: -P, marginBottom: 0 },
   dayStripContent: { paddingHorizontal: P, gap: 9, paddingBottom: 7 },
   dayBtn: {
     flexShrink: 0, width: 64, paddingVertical: 12,
     borderRadius: 11, borderWidth: 1, alignItems: 'center',
+    position: 'relative',
   },
   dayNum: { fontSize: 20, fontWeight: '700', lineHeight: 25 },
   dayHint: { fontSize: 11, marginTop: 2 },
+  dayCheckBadge: {
+    position: 'absolute', top: -5, right: -5,
+    width: 18, height: 18, borderRadius: 9,
+    backgroundColor: '#7DB87D',
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: '#FBF7F6',
+  },
   dayContent: { marginTop: 23 },
   dayHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   dayTitle: { fontSize: 19, fontWeight: '700', color: TXT, flex: 1, marginRight: 12 },
@@ -334,8 +422,18 @@ const styles = StyleSheet.create({
   verseListText: { fontSize: 14, color: TXT, fontWeight: '500' },
   startReadingBtn: {
     height: 55, borderRadius: 28,
+    flexDirection: 'row', gap: 9,
     alignItems: 'center', justifyContent: 'center', marginTop: 30,
   },
   startReadingText: { color: '#fff', fontSize: 18, fontWeight: '700', letterSpacing: 0.3 },
+  // "Day N Completed" idle state — ROSE on the rim, white fill. Looks
+  // closed-out without being a dead grey button.
+  dayDoneBtn: {
+    backgroundColor: 'rgba(232,97,154,0.08)',
+    borderWidth: 1.5,
+    borderColor: ROSE,
+  },
+  // "Plan Completed" — green so the celebration reads at a glance.
+  completedBtn: { backgroundColor: '#7DB87D' },
   notFound: { textAlign: 'center', marginTop: 60, color: TXTSUB, fontSize: 15 },
 });

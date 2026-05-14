@@ -24,6 +24,7 @@ import { NotificationsProvider } from './src/state/NotificationsContext';
 import { DailyVersesProvider } from './src/state/DailyVersesContext';
 import { ShareProvider } from './src/state/ShareContext';
 import { AchievementsProvider } from './src/state/AchievementsContext';
+import { PlanCompletionProvider } from './src/state/PlanCompletionContext';
 import { PlanProfileProvider } from './src/state/PlanProfileContext';
 import { PlansProvider } from './src/state/PlansContext';
 import AchievementUnlockSheet from './src/components/AchievementUnlockSheet';
@@ -54,30 +55,35 @@ export default function App() {
                         <TranslationsProvider>
                           <DailyVersesProvider>
                             <ShareProvider>
-                              <AchievementsProvider>
-                                <OnboardingProvider>
-                                  <RatePromptProvider>
-                                    <MoodCheckInProvider>
-                                      <NotificationsProvider>
-                                        <PlanProfileProvider>
-                                          <PlansProvider>
-                                            <NavigationContainer>
-                                              <StatusBar style="dark" />
-                                              <RootNavigator />
-                                              {/* Mounted inside NavigationContainer
-                                                  so the View Details button can
-                                                  navigate; reads its queue off
-                                                  AchievementsContext, so it fires
-                                                  from anywhere a counter changes. */}
-                                              <AchievementUnlockSheet />
-                                            </NavigationContainer>
-                                          </PlansProvider>
-                                        </PlanProfileProvider>
-                                      </NotificationsProvider>
-                                    </MoodCheckInProvider>
-                                  </RatePromptProvider>
-                                </OnboardingProvider>
-                              </AchievementsProvider>
+                              {/* PlanCompletionProvider must wrap AchievementsProvider
+                                  — AchievementsContext reads `completedPlans` /
+                                  `completedPlanFinishedDates` from it. */}
+                              <PlanCompletionProvider>
+                                <AchievementsProvider>
+                                  <OnboardingProvider>
+                                    <RatePromptProvider>
+                                      <MoodCheckInProvider>
+                                        <NotificationsProvider>
+                                          <PlanProfileProvider>
+                                            <PlansProvider>
+                                              <NavigationContainer>
+                                                <StatusBar style="dark" />
+                                                <RootNavigator />
+                                                {/* Mounted inside NavigationContainer
+                                                    so the View Details button can
+                                                    navigate; reads its queue off
+                                                    AchievementsContext, so it fires
+                                                    from anywhere a counter changes. */}
+                                                <AchievementUnlockSheet />
+                                              </NavigationContainer>
+                                            </PlansProvider>
+                                          </PlanProfileProvider>
+                                        </NotificationsProvider>
+                                      </MoodCheckInProvider>
+                                    </RatePromptProvider>
+                                  </OnboardingProvider>
+                                </AchievementsProvider>
+                              </PlanCompletionProvider>
                             </ShareProvider>
                           </DailyVersesProvider>
                         </TranslationsProvider>

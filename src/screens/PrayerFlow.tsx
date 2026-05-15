@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView, Keyboard, Platform, Linking,
 } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
@@ -25,6 +24,7 @@ import { localizeReference } from '../services/parseReference';
 import { dailyLabels } from '../constants/dailyVersesLabels';
 import WeeklyProgressView from '../components/WeeklyProgressView';
 import RatePromptSheet from '../components/RatePromptSheet';
+import AuroraBackground from '../components/AuroraBackground';
 import type { RootStackScreenProps } from '../navigation/types';
 
 const { width, height } = Dimensions.get('window');
@@ -222,9 +222,6 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const meditationCaption = labels.meditationTitle.toUpperCase();
   const actionCaption = (morning ? labels.actionTitleMorning : labels.actionTitleEvening).toUpperCase();
   const prayerCaption = labels.prayerTitle.toUpperCase();
-  const colors = morning
-    ? (['#C2547A', '#7B2255', '#2D0A1A'] as const)
-    : (['#5B3A9E', '#2D1660', '#100525'] as const);
   const [amened, setAmened] = useState(false);
   const [showWeekly, setShowWeekly] = useState(false);
   const [showNotifRationale, setShowNotifRationale] = useState(false);
@@ -468,7 +465,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={colors} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={StyleSheet.absoluteFillObject} />
+      <AuroraBackground variant={morning ? 'morning' : 'evening'} />
 
       {!amened && (
         <View style={[styles.topChrome, { top: insets.top + 8 }]}>

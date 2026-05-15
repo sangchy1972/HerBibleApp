@@ -42,13 +42,27 @@ export default function BadgeIcon({
   return (
     <View style={[styles.wrap, { width: size, height: size }]}>
       {png ? (
-        <Image
-          source={png}
-          // The PNG is the entire badge — no extra frame, no overlay glyph.
-          // Locked just dims the whole thing.
-          style={[styles.png, { width: size, height: size, opacity: locked ? 0.4 : 1 }]}
-          resizeMode="contain"
-        />
+        // Locked rendering: 0.55 opacity (was 0.4 — a flat 0.4 multiplier
+        // crushed pastel-palette badges like Anniversary Blessing or
+        // Fifty Lights below the readability threshold while leaving
+        // gold/saturated badges still legible. 0.55 keeps the "dimmed"
+        // semantic clearly distinct from the earned 1.0 state and treats
+        // every palette consistently). The `desaturate` overlay layers a
+        // soft warm-white wash that further unifies the locked treatment
+        // across hue families without killing the badge's identity.
+        <View style={[styles.png, { width: size, height: size }]}>
+          <Image
+            source={png}
+            style={{ width: size, height: size, opacity: locked ? 0.55 : 1 }}
+            resizeMode="contain"
+          />
+          {locked && (
+            <View
+              pointerEvents="none"
+              style={[styles.lockedWash, { width: size, height: size }]}
+            />
+          )}
+        </View>
       ) : (
         <View
           style={[
@@ -91,7 +105,15 @@ export default function BadgeIcon({
 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', justifyContent: 'center', position: 'relative' },
-  png: {},
+  png: { position: 'relative' },
+  // Faint warm-white film over locked badges. Sits on top of the dimmed
+  // image and pushes every palette toward a uniform "unowned" feel —
+  // pastels don't disappear, saturated badges don't dominate.
+  lockedWash: {
+    position: 'absolute',
+    top: 0, left: 0,
+    backgroundColor: 'rgba(251,247,246,0.35)',
+  },
   placeholder: {
     alignItems: 'center',
     justifyContent: 'center',

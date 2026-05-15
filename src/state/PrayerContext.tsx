@@ -3,7 +3,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type PrayerKind = 'morning' | 'evening';
 
-interface DayRecord { m: boolean; e: boolean }
+// `mAt` / `eAt` — ISO timestamps recorded the moment the user marks each
+// prayer done. Optional because pre-existing AsyncStorage records (from
+// before the schema bump) don't have them; consumers that need the
+// timestamp (e.g. earlyBirdStreak) treat missing as "doesn't qualify".
+interface DayRecord { m: boolean; e: boolean; mAt?: string; eAt?: string }
 type DayRecords = Record<string, DayRecord>;
 
 interface PrayerState {
@@ -13,7 +17,13 @@ interface PrayerState {
   totalComplete: number;         // total days where BOTH prayers were done
   currentStreak: number;         // consecutive complete days ending today (or yesterday with grace)
   maxStreak: number;             // longest run of consecutive complete days
+  // Consecutive days ending today (with 1-day grace) where the EARLIEST
+  // prayer of that day was completed before 21:00 local. Drives the
+  // milestone.dawn7 achievement. Days with records but no timestamps
+  // (legacy data) don't qualify and break the streak.
+  earlyBirdStreak: number;
   firstCompleteDate: string | null;   // earliest 'YYYY-MM-DD' with both done
+  everPrayed: boolean;                // any record has m or e set — used to detect first-prayer onboarding moment
   wasCompleteOn: (dateKey: string) => boolean;
   recordOn: (dateKey: string) => DayRecord;
   setMorning: (v: boolean) => void;
@@ -63,6 +73,34 @@ function activeStreak(dateSet: Set<string>): number {
   return streak;
 }
 
+// Consecutive days ending today (1-day grace, mirroring `activeStreak`)
+// where the EARLIEST prayer of that day was completed before 21:00 local.
+// Drives milestone.dawn7 — the user's chosen threshold. Treats records
+// missing both timestamps (legacy data, schema-bump backfill) as
+// non-qualifying so they break the streak.
+const EARLY_BIRD_HOUR = 21;             // 9 PM local cutoff
+function earlyBirdStreakOf(records: DayRecords): number {
+  const k = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const qualifies = (rec: DayRecord | undefined) => {
+    if (!rec) return false;
+    const stamps = [rec.mAt, rec.eAt].filter(Boolean) as string[];
+    if (stamps.length === 0) return false;
+    // Earliest completion of the day. Local-time comparison via Date — the
+    // ISO string parses to a Date, getHours() returns local hour.
+    const earliestHour = Math.min(...stamps.map(s => new Date(s).getHours()));
+    return earliestHour < EARLY_BIRD_HOUR;
+  };
+  const cur = new Date();
+  // Today doesn't count yet → start from yesterday with grace, same as activeStreak.
+  if (!qualifies(records[k(cur)])) cur.setDate(cur.getDate() - 1);
+  let streak = 0;
+  while (qualifies(records[k(cur)])) {
+    streak++;
+    cur.setDate(cur.getDate() - 1);
+  }
+  return streak;
+}
+
 export function PrayerProvider({ children }: { children: React.ReactNode }) {
   const hr = new Date().getHours();
   const [morning, setMorning] = useState(hr >= 5 && hr < 17);
@@ -95,7 +133,9 @@ export function PrayerProvider({ children }: { children: React.ReactNode }) {
       totalComplete: completeDates.length,
       currentStreak: activeStreak(new Set(completeDates)),
       maxStreak: longestStreak(completeDates),
+      earlyBirdStreak: earlyBirdStreakOf(records),
       firstCompleteDate: completeDates[0] ?? null,
+      everPrayed: Object.values(records).some(r => r.m || r.e),
       wasCompleteOn: (dateKey) => {
         const r = records[dateKey];
         return !!(r && r.m && r.e);
@@ -104,7 +144,13 @@ export function PrayerProvider({ children }: { children: React.ReactNode }) {
       setMorning,
       markDone: (kind) => {
         const cur = records[today] || { m: false, e: false };
-        const next = kind === 'morning' ? { ...cur, m: true } : { ...cur, e: true };
+        // Stamp the completion time so earlyBirdStreakOf can read it later.
+        // Idempotent: if the boolean is already true we don't overwrite the
+        // earlier timestamp (preserves the actual moment the prayer landed).
+        const nowIso = new Date().toISOString();
+        const next: DayRecord = kind === 'morning'
+          ? { ...cur, m: true, mAt: cur.m ? cur.mAt : nowIso }
+          : { ...cur, e: true, eAt: cur.e ? cur.eAt : nowIso };
         if (next.m === cur.m && next.e === cur.e) return;
         persist({ ...records, [today]: next });
       },

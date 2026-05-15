@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Dimensions,
-  KeyboardAvoidingView, Keyboard, Platform,
+  KeyboardAvoidingView, Keyboard, Platform, Linking,
 } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
@@ -19,6 +20,7 @@ import { useActivity } from '../state/ActivityContext';
 import { useRatePrompt } from '../state/RatePromptContext';
 import { useDailyVerses } from '../state/DailyVersesContext';
 import { useTranslation } from '../state/TranslationsContext';
+import { useOnboarding } from '../state/OnboardingContext';
 import { localizeReference } from '../services/parseReference';
 import { dailyLabels } from '../constants/dailyVersesLabels';
 import WeeklyProgressView from '../components/WeeklyProgressView';
@@ -185,16 +187,21 @@ function Sparkle({ size = 18 }: { size?: number }) {
 
 export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'PrayerFlow'>) {
   const insets = useSafeAreaInsets();
-  const { markDone, mDone, eDone } = usePrayer();
+  const { markDone, mDone, eDone, everPrayed } = usePrayer();
   const { addNote } = useNotes();
   const { markToday } = useActivity();
   const ratePrompt = useRatePrompt();
+  const { notifRationaleShown, markNotifRationaleShown } = useOnboarding();
   const { kind } = route.params;
   const morning = kind === 'morning';
   // Capture whether this slot was already completed BEFORE this flow started.
   // If so, this is a re-do and the celebration screens (weekly progress + set
   // reminder sheet) are skipped — the user just wanted to revisit the prayer.
   const isRedoRef = useRef<boolean>(morning ? mDone : eDone);
+  // Capture whether this is the user's first-ever prayer of any kind. We
+  // freeze the value at flow mount so markDone (which fires inside the flow)
+  // doesn't flip it before we get to the Continue branch.
+  const isFirstEverRef = useRef<boolean>(!everPrayed && !notifRationaleShown);
   const { current: translation } = useTranslation();
   const { getVerse, todayDay } = useDailyVerses();
   const labels = dailyLabels(translation.code);
@@ -220,6 +227,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     : (['#5B3A9E', '#2D1660', '#100525'] as const);
   const [amened, setAmened] = useState(false);
   const [showWeekly, setShowWeekly] = useState(false);
+  const [showNotifRationale, setShowNotifRationale] = useState(false);
   const [showSheet, setShowSheet] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showNoteSheet, setShowNoteSheet] = useState(false);
@@ -544,7 +552,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
         </ScrollView>
       )}
 
-      {amened && !showWeekly && (
+      {amened && !showWeekly && !showNotifRationale && (
         <View style={styles.amenScreen}>
           <TouchableOpacity onPress={closeFlow} style={[styles.chromeBtn, { position: 'absolute', top: insets.top + 8, left: 19 }]}>
             <Feather name="x" size={20} color="#fff" />
@@ -594,7 +602,21 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             pointerEvents={buttonReady ? 'auto' : 'none'}
           >
             <TouchableOpacity
-              onPress={() => isRedoRef.current ? navigation.goBack() : setShowWeekly(true)}
+              onPress={() => {
+                if (isRedoRef.current) {
+                  navigation.goBack();
+                } else if (isFirstEverRef.current) {
+                  // First-ever prayer (any kind) → onboarding rationale.
+                  setShowNotifRationale(true);
+                } else if (morning) {
+                  // Morning re-completion is not a "day done" moment,
+                  // so we skip the Weekly green screen and head home.
+                  navigation.goBack();
+                } else {
+                  // Evening prayer → Weekly progress + Set Reminder.
+                  setShowWeekly(true);
+                }
+              }}
               activeOpacity={0.85}
               style={styles.amenContinueBtn}
             >
@@ -612,6 +634,17 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             morning={morning}
             onOpenReminder={handleWeeklyOpenReminder}
             onBack={handleWeeklyBack}
+          />
+        </View>
+      )}
+
+      {showNotifRationale && (
+        <View style={StyleSheet.absoluteFillObject}>
+          <NotifRationaleScreen
+            onDismiss={() => {
+              markNotifRationaleShown();
+              navigation.goBack();
+            }}
           />
         </View>
       )}
@@ -1057,4 +1090,185 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   reflectionBtnText: { fontSize: 17 },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NotifRationale — one-time post-Amen onboarding moment for first-prayer users.
+// White-pink palette matching the app shell (NOT the dark hero gradient of the
+// onboarding cover). Layout mirrors the Gentler Streak reference: heading
+// top-left, body paragraph below, a phone mockup centered, two buttons row at
+// the bottom (Skip / Allow notifications).
+// ─────────────────────────────────────────────────────────────────────────────
+
+function NotifRationaleScreen({ onDismiss }: { onDismiss: () => void }) {
+  const insets = useSafeAreaInsets();
+
+  const requestPermission = async () => {
+    try {
+      let perm = await Notifications.getPermissionsAsync();
+      if (!perm.granted && perm.canAskAgain) {
+        perm = await Notifications.requestPermissionsAsync();
+      }
+      if (!perm.granted && Platform.OS !== 'web') {
+        // Permanently denied — surface Settings so the user can flip it
+        // there. We still dismiss either way so they aren't stuck.
+        Linking.openSettings().catch(() => {});
+      }
+    } catch {
+      // Notifications API can throw on some sims/unsupported runtimes.
+    } finally {
+      onDismiss();
+    }
+  };
+
+  return (
+    <View style={[rationaleStyles.root, { paddingTop: insets.top + 28 }]}>
+      <Animated.View entering={FadeIn.duration(360)}>
+        <Text style={rationaleStyles.heading}>Stay close to God.</Text>
+      </Animated.View>
+
+      <Animated.View entering={FadeIn.duration(360).delay(200)}>
+        <Text style={rationaleStyles.body}>
+          Turn on prayer reminders so morning and evening verses gently meet
+          you where you are. Just 5–10 minutes a day to draw nearer in heart
+          and mind.
+        </Text>
+      </Animated.View>
+
+      <Animated.View entering={FadeIn.duration(360).delay(400)} style={rationaleStyles.mockupWrap}>
+        <PhoneMockup />
+      </Animated.View>
+
+      <Animated.View
+        entering={FadeIn.duration(360).delay(700)}
+        style={[rationaleStyles.ctaRow, { paddingBottom: Math.max(insets.bottom, 12) + 24 }]}
+      >
+        <TouchableOpacity onPress={onDismiss} activeOpacity={0.85} style={rationaleStyles.skipBtn}>
+          <Text style={rationaleStyles.skipText}>Skip</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={requestPermission} activeOpacity={0.9} style={rationaleStyles.allowBtn}>
+          <Text style={rationaleStyles.allowText}>Allow notifications</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
+  );
+}
+
+// Tilted phone mockup with a HerBible push notification + faux home-screen
+// grid. ~280×360 viewBox; everything tinted with the rose palette so it
+// reads as a HerBible screenshot, not a generic phone.
+function PhoneMockup() {
+  return (
+    <Svg width={280} height={360} viewBox="0 0 280 360">
+      {/* Soft drop shadow under the phone */}
+      <Path
+        d="M70 350 Q140 372 210 350 L200 348 Q140 358 80 348 Z"
+        fill="rgba(232,97,154,0.10)"
+      />
+      {/* Phone outer frame, slightly tilted */}
+      <Path
+        d="M88 36 Q88 28 96 28 L208 28 Q216 28 216 36 L216 320 Q216 328 208 328 L96 328 Q88 328 88 320 Z"
+        fill="#FFFFFF"
+        stroke="#E8DDE8"
+        strokeWidth={1.5}
+      />
+      {/* Subtle pink-peach gradient fill on the phone screen */}
+      <Path
+        d="M94 50 L210 50 L210 320 Q210 326 204 326 L100 326 Q94 326 94 320 Z"
+        fill="rgba(249,168,201,0.18)"
+      />
+      <Path
+        d="M94 130 L210 130 L210 320 Q210 326 204 326 L100 326 Q94 326 94 320 Z"
+        fill="rgba(196,181,253,0.18)"
+      />
+
+      {/* Notification card near the top */}
+      <Path
+        d="M104 78 Q104 70 112 70 L200 70 Q208 70 208 78 L208 122 Q208 130 200 130 L112 130 Q104 130 104 122 Z"
+        fill="#FFFFFF"
+        stroke="rgba(30,27,46,0.06)"
+        strokeWidth={1}
+      />
+      {/* App icon dot in the notification */}
+      <Path d="M118 88 Q118 84 122 84 L130 84 Q134 84 134 88 L134 96 Q134 100 130 100 L122 100 Q118 100 118 96 Z" fill={ROSE} />
+
+      {/* Faux home-screen icon grid below the notification. Phone screen is
+          x=94..210, so a 4-col grid with 22-wide icons + 6 px gap fits at
+          x = 106 / 134 / 162 / 190 (last icon ends at 212 — flush right). */}
+      {[170, 210, 250].flatMap(y =>
+        [106, 134, 162, 190].map(x => {
+          const isHero = x === 162 && y === 210;
+          const r = 4;
+          const w = 22;
+          const path = `M${x} ${y + r} Q${x} ${y} ${x + r} ${y} L${x + w - r} ${y} Q${x + w} ${y} ${x + w} ${y + r} L${x + w} ${y + w - r} Q${x + w} ${y + w} ${x + w - r} ${y + w} L${x + r} ${y + w} Q${x} ${y + w} ${x} ${y + w - r} Z`;
+          return isHero ? (
+            <Path key={`${x}-${y}`} d={path} fill="#FFFFFF" stroke={ROSE} strokeWidth={1.6} />
+          ) : (
+            <Path key={`${x}-${y}`} d={path} fill="rgba(255,255,255,0.70)" />
+          );
+        }),
+      )}
+      {/* Rose dot inside the highlighted icon (HerBible glyph stand-in) */}
+      <Path
+        d="M167 215 Q167 213 169 213 L177 213 Q179 213 179 215 L179 227 Q179 229 177 229 L169 229 Q167 229 167 227 Z"
+        fill={ROSE}
+      />
+    </Svg>
+  );
+}
+
+const rationaleStyles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: '#FBF7F6',
+    paddingHorizontal: 24,
+  },
+  heading: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: TXT,
+    letterSpacing: -0.4,
+    marginBottom: 14,
+  },
+  body: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: TXTSUB,
+    marginBottom: 20,
+  },
+  mockupWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ctaRow: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingTop: 6,
+  },
+  skipBtn: {
+    flex: 1,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(30,27,46,0.08)',
+  },
+  skipText: { fontSize: 16, fontWeight: '700', color: TXT, letterSpacing: 0.3 },
+  allowBtn: {
+    flex: 2,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: ROSE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: ROSE,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    elevation: 4,
+  },
+  allowText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF', letterSpacing: 0.3 },
 });

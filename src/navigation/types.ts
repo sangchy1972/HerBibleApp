@@ -17,7 +17,12 @@ export type TabParamList = {
   // chapter and dims everything outside the verse range. BibleScreen consumes
   // and clears it immediately, so plain re-entries to the tab read normally.
   bible: { focus?: BibleFocus } | undefined;
-  plan: undefined;
+  // `reset` is a one-shot directive (a timestamp from the caller). When
+  // present, PlanScreen forces tab → 'current', scrolls the page to the
+  // top, and replays its fade-in. Used by the Profile "My Plan" tile so
+  // the entry always lands at the same starting point. Undefined → the
+  // user just tabbed in normally; preserve their current state.
+  plan: { reset?: number } | undefined;
   profile: undefined;
 };
 

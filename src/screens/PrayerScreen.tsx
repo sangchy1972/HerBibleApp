@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, LayoutChangeEvent, Dimensions, Modal, TextInput,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, LayoutChangeEvent, Dimensions, Modal, TextInput, Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,8 +19,10 @@ const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 import Glass from '../components/shared/Glass';
 import DayCircle from '../components/shared/DayCircle';
 import FireFlame from '../components/shared/FireFlame';
-import { ROSE, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
+import StreakBorderAnim from '../components/shared/StreakBorderAnim';
+import { ROSE, LAV, TXT, TXTSUB, P, FONTS, SERIF_BODY } from '../constants/theme';
 import { DAYS, PSALMS_CARDS } from '../constants/data';
+import { useAuth } from '../state/AuthContext';
 import { usePrayer } from '../state/PrayerContext';
 import { useMoodCheckIn } from '../state/MoodCheckInContext';
 import { useActivity } from '../state/ActivityContext';
@@ -340,11 +342,21 @@ function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTa
 
 export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   const insets = useSafeAreaInsets();
-  const { morning, setMorning, mDone, eDone, wasCompleteOn, currentStreak } = usePrayer();
+  // The header chip and the StreakScreen it routes to must show the same
+  // metric. StreakScreen displays `totalComplete` (lifetime count of days
+  // where BOTH prayers were finished) under the "DAY STREAK" label, so the
+  // header has to read from the same source. Using `currentStreak` (the
+  // active consecutive run) here was the cause of "header shows 0, tap
+  // shows 4" — the user has 4 lifetime complete days but no active streak.
+  const { morning, setMorning, mDone, eDone, wasCompleteOn, totalComplete } = usePrayer();
   const { markToday } = useActivity();
   const { current: translation } = useTranslation();
+  // Same source of truth as ProfileScreen: header avatar must mirror the
+  // Profile tab's avatar exactly. Logged in → first initial; logged out → "H".
+  const { user } = useAuth();
+  const initials = user?.name?.trim().slice(0, 1).toUpperCase() || 'H';
   const { getVerse, todayDay } = useDailyVerses();
-  const { read: readChapterSet } = useReadChapters();
+  const { read: readChapterSet, viewed: viewedChapterSet } = useReadChapters();
   // Share + More overlays live at the screen root so their absolute-fill
   // overlays are sized to the screen, not to the verse-card section. Render-
   // ing them inside VerseHeroCard sized them to the card and the share sheet
@@ -356,14 +368,17 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   // Daily verse for the active segment. Bundled fallback guarantees a value
   // for the first 3 days even with no network.
   const dailyVerse = getVerse(todayDay, segment);
-  // Continue Reading card mirrors whatever the bible reader has persisted as
-  // last-read. Default = Genesis 1, matching BibleScreen's fresh-install
-  // baseline. Refreshed on every Prayer-tab focus so changes made in the
-  // reader (drawer / search / saved-verse jump) propagate back here.
+  // Continue Reading reflects the chapter the user has actually been READING,
+  // not just any chapter they navigated to. Source = `bible:reading-position`,
+  // which BibleScreen only writes once the user has dwelt on a chapter for
+  // ≥ 60 s in foreground (and not as a verse-card focus peek). Drawer / search
+  // / prev-next / bookmark jumps do NOT update this — they only update the
+  // separate `bible:last-read` that BibleScreen uses to rehydrate on refocus.
+  // Default = Genesis 1 for fresh installs / users who haven't dwelt yet.
   const [lastRead, setLastRead] = useState<{ bookSlug: string; chapter: number }>({ bookSlug: 'genesis', chapter: 1 });
   useFocusEffect(
     React.useCallback(() => {
-      AsyncStorage.getItem('bible:last-read').then(raw => {
+      AsyncStorage.getItem('bible:reading-position').then(raw => {
         if (!raw) return;
         try {
           const v = JSON.parse(raw);
@@ -376,15 +391,20 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   );
   const continueBookName = localizeBookName(translation.code, lastRead.bookSlug, englishBookName(lastRead.bookSlug));
   const continueTotalChapters = chaptersInBook(lastRead.bookSlug);
-  // % of the current book's chapters the user has actually opened. The set
-  // is stored as "slug:chapter" strings, so a slug-prefix scan is enough.
-  const continueBookReadCount = useMemo(() => {
-    let count = 0;
+  // Per-book weighted progress: Mark-as-Complete chapters count 1.0, viewed-
+  // only chapters (≥ 15 s dwell, no completion tap) count 0.5. Mirrors the
+  // global `percent` formula in ReadChaptersContext so the home card and the
+  // Profile/global stat agree.
+  const continueBookWeighted = useMemo(() => {
     const prefix = `${lastRead.bookSlug}:`;
-    for (const k of readChapterSet) if (k.startsWith(prefix)) count++;
-    return count;
-  }, [readChapterSet, lastRead.bookSlug]);
-  const continuePct = Math.min(100, Math.round((continueBookReadCount / continueTotalChapters) * 100));
+    let w = 0;
+    for (const k of readChapterSet) if (k.startsWith(prefix)) w += 1.0;
+    for (const k of viewedChapterSet) {
+      if (k.startsWith(prefix) && !readChapterSet.has(k)) w += 0.5;
+    }
+    return w;
+  }, [readChapterSet, viewedChapterSet, lastRead.bookSlug]);
+  const continuePct = Math.min(100, Math.round((continueBookWeighted / continueTotalChapters) * 100));
   // Pct widget can collapse the visual to 0 % which looks broken; clamp the
   // bar to a thin minimum so users see SOME fill before they've read much.
   const continuePctWidth = Math.max(continuePct, 4);
@@ -498,7 +518,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   const starOpacity = useSharedValue(0);
   const starProgress = useSharedValue(0);   // 0 → 1, position interpolation
   const streakScale = useSharedValue(1);
-  const [displayedStreak, setDisplayedStreak] = useState(currentStreak);
+  const [displayedStreak, setDisplayedStreak] = useState(totalComplete);
   // Window-space anchors captured when the celebration kicks off so the star
   // flies from the % text to the streak badge regardless of layout.
   const pctAnchorRef = useRef({ x: 0, y: 0 });
@@ -530,10 +550,10 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
       withTiming(2, { duration: 300, easing: Easing.out(Easing.cubic) }),
       withDelay(200, withTiming(1, { duration: 200, easing: Easing.in(Easing.cubic) })),
     );
-    setTimeout(() => setDisplayedStreak(currentStreak), 200);
+    setTimeout(() => setDisplayedStreak(totalComplete), 200);
     // Hide the overlay once the streak punch has landed.
     setTimeout(() => setStarOverlayVisible(false), 900);
-  }, [currentStreak, streakScale]);
+  }, [totalComplete, streakScale]);
 
   const playCelebration = useCallback(() => {
     // 1. Pop the %: 1 → 2 → 1 over 0.5s, with cubic on both halves.
@@ -572,17 +592,29 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
       progressVal.value = withDelay(800, withTiming(pct, { duration: 2700, easing: Easing.out(Easing.cubic) }, (finished) => {
         if (finished && pct === 100) runOnJS(playCelebration)();
       }));
-      // If we're not heading to 100, keep the streak number in sync now.
-      // For pct === 100, the celebration sequence updates displayedStreak.
-      if (pct < 100) setDisplayedStreak(currentStreak);
     }
-  }, [pct, progressVal, currentStreak, playCelebration]));
+  }, [pct, progressVal, playCelebration]));
 
-  // Resync displayedStreak whenever currentStreak changes outside a 0→100
-  // transition (e.g., context hydration on mount, day rollover).
+  // Sync `displayedStreak` to the source-of-truth `totalComplete` on every
+  // change, EXCEPT when the change is exactly the +1 increment that an
+  // incoming celebration is going to animate. Two cases this gets right
+  // that the previous `pct !== 100` guard got wrong:
+  //   • Cold start with pct already at 100. Old code skipped the sync, so
+  //     the header read "0" forever; here `prev` was the freshly-mounted 0
+  //     and `totalComplete` is the hydrated value, so the +1 check fails
+  //     and we sync immediately.
+  //   • Day rollover, totals reset, etc. → not +1 from non-zero, sync.
+  // Only the genuine N → N+1 transition is held back, so the celebration
+  // can punch from N up to N+1 inside `playStreakPunch`.
+  const prevTotalCompleteRef = useRef(totalComplete);
   useEffect(() => {
-    if (pct !== 100) setDisplayedStreak(currentStreak);
-  }, [currentStreak, pct]);
+    const prev = prevTotalCompleteRef.current;
+    prevTotalCompleteRef.current = totalComplete;
+    const isCelebrationIncrement = totalComplete === prev + 1 && prev > 0;
+    if (!isCelebrationIncrement) {
+      setDisplayedStreak(totalComplete);
+    }
+  }, [totalComplete]);
 
   const progressFillStyle = useAnimatedStyle(() => ({
     width: (progressVal.value / 100) * trackWidth,
@@ -659,17 +691,31 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
             <View ref={streakRef} collapsable={false}>
               <Animated.Text style={[styles.streakNum, streakNumStyle]}>{displayedStreak}</Animated.Text>
             </View>
+            {/* Sweeping orange→red border that orbits the badge twice in
+                the first ~5 s after entering the screen, then fades. The
+                values mirror styles.streakBadge so any width/height/radius
+                tweak there must be reflected here too. */}
+            <StreakBorderAnim width={70} height={40} borderRadius={20} />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => navigation.navigate('Tabs', { screen: 'profile' })}
             activeOpacity={0.85}
           >
-            <LinearGradient
-              colors={['#F9A8C9', '#E8619A']}
-              style={styles.avatar}
-            >
-              <Text style={styles.avatarText}>S</Text>
-            </LinearGradient>
+            {/* Mirrors ProfileScreen exactly: photoUri wins over the
+                gradient + initial fallback. The hardcoded "S" was a stray
+                placeholder from the early header mockup — not pulled from
+                user state, so it desynced as soon as the user picked any
+                other initial in Profile. */}
+            {user?.photoUri ? (
+              <Image source={{ uri: user.photoUri }} style={styles.avatar} />
+            ) : (
+              <LinearGradient
+                colors={['#F9A8C9', '#E8619A']}
+                style={styles.avatar}
+              >
+                <Text style={styles.avatarText}>{initials}</Text>
+              </LinearGradient>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -726,8 +772,10 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
         })}
       </View>
 
-      {/* Hero verse card */}
-      <View style={styles.section}>
+      {/* Hero verse card. Inline -3 px on paddingTop tightens the gap to
+          the Morning/Evening toggle above without changing the standard
+          14-px gap that the other two `section` blocks below rely on. */}
+      <View style={[styles.section, { paddingTop: 11 }]}>
         <VerseHeroCard
           morning={morning}
           canStart={canStart}
@@ -927,26 +975,44 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 7,
   },
+  // -10 % from 78 → 70. If you change width/height/borderRadius here, also
+  // update the matching props on the <StreakBorderAnim> render so the SVG
+  // stroke aligns with the badge's actual edge.
+  // paddingRight 6 with justifyContent: 'center' biases the content 3 px
+  // left of the badge's geometric center — the flame's visual mass sits
+  // off-center to the right of the icon's bounding box, so a true centered
+  // layout reads as if everything is pushed right.
   streakBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingRight: 6,
     gap: 2,
-    width: 78,
+    width: 70,
     height: 40,
     borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.78)',
   },
-  streakFlame: { marginTop: -3 },
-  streakNum: { fontSize: 17, fontWeight: '700', color: TXT },
+  // marginTop -5: nudges the flame 2 px higher than before (was -3) so its
+  // body sits visually centered against the digit baseline rather than
+  // hanging slightly low.
+  streakFlame: { marginTop: -5 },
+  // +10 % from 17 → 18.7 per design.
+  streakNum: { fontSize: 18.7, fontWeight: '700', color: TXT },
+  // Square = perfect circle. Height matches `streakBadge.height: 40` so the
+  // two header chips align on a single baseline. If you tweak streakBadge's
+  // height, change this in lockstep.
   avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { fontSize: 22, fontWeight: '700', color: '#fff' },
+  // Down from 22 → 18 to keep the 45 %-of-circle ratio the previous 50 px
+  // avatar had (22/50 ≈ 0.44 → 18/40 = 0.45). 22 pt in a 40 px circle felt
+  // crowded.
+  avatarText: { fontSize: 18, fontWeight: '700', color: '#fff' },
   progressSection: {
     paddingHorizontal: P + 6,
     paddingTop: 14,
@@ -1076,8 +1142,16 @@ const styles = StyleSheet.create({
   },
   heroText: {
     fontFamily: FONTS.serif,
-    fontSize: 20,
-    lineHeight: 31,
+    // Verse-hero card is the most prominent scripture surface in the app
+    // — bumped to 22 pt and Medium weight (500) for emphasis. opsz stays
+    // at 35 to match the body-text master used everywhere else, so the
+    // letterforms feel like the same voice, just slightly heavier.
+    fontVariationSettings: [
+      { axis: 'opsz', value: 35 },
+      { axis: 'wght', value: 500 },
+    ],
+    fontSize: 22,
+    lineHeight: 34,                       // 31 → 34, scales with the +2 pt bump
     color: 'rgba(255,255,255,0.96)',
   },
   heroActions: {
@@ -1097,10 +1171,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: 0.3,
   },
+  // No `marginHorizontal` — the parent `section` already insets by P, so
+  // alignSelf: 'stretch' here makes the button span the same width as the
+  // hero card above it. Adding margin would inset the button an extra P on
+  // each side, leaving it 2 × P narrower than the card (the previous
+  // mismatch the design called out).
   startBtn: {
     marginTop: 16,
     marginBottom: 10,
-    marginHorizontal: P,
     height: 55,
     borderRadius: 28,
     alignSelf: 'stretch',
@@ -1114,11 +1192,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   // Wait-state button — slightly smaller than the active Start CTA so it
-  // visually recedes, tinted with the active accent at low opacity.
+  // visually recedes, tinted with the active accent at low opacity. Matches
+  // startBtn's full card-width by relying on `section`'s padding (no extra
+  // marginHorizontal) — keeps the slot's footprint stable across states so
+  // the layout doesn't shift when the button toggles wait ↔ active.
   waitBtn: {
     marginTop: 16,
     marginBottom: 10,
-    marginHorizontal: P,
     height: 48,
     borderRadius: 24,
     alignSelf: 'stretch',

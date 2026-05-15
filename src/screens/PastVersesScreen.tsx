@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
-import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
+import { ROSE, TXT, TXTSUB, P, FONTS, SERIF_BODY } from '../constants/theme';
 import { useDailyVerses } from '../state/DailyVersesContext';
 import { useTranslation } from '../state/TranslationsContext';
 import { localizeReference } from '../services/parseReference';
@@ -184,6 +184,7 @@ const styles = StyleSheet.create({
   cardDate: { fontSize: 14, color: TXTSUB },
   cardBody: {
     fontFamily: FONTS.serif,
+    fontVariationSettings: SERIF_BODY,    // Source Serif 4 VF — body opsz/wght
     fontSize: 19,
     lineHeight: 28,
     color: TXT,

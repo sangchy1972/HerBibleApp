@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
-  StyleSheet, ActivityIndicator,
+  StyleSheet, ActivityIndicator, AppState,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, Ionicons } from '@expo/vector-icons';
@@ -10,10 +10,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import Slider from '@react-native-community/slider';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, interpolateColor, Easing,
+  useSharedValue, useAnimatedStyle, withTiming, withSequence, withDelay,
+  interpolateColor, Easing,
   FadeIn, FadeOut, SlideInUp, SlideInDown,
 } from 'react-native-reanimated';
-import { ROSE, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
+import { ROSE, LAV, TXT, TXTSUB, P, FONTS, SERIF_BODY } from '../constants/theme';
 import { RECENT_SEARCHES } from '../constants/data';
 import { useTranslation } from '../state/TranslationsContext';
 import { useSavedVerses } from '../state/SavedVersesContext';
@@ -33,13 +34,19 @@ import { adjustFocus } from '../constants/versification';
 import { CORPUS_CDN_ROOT } from '../constants/corpus';
 import type { BibleFocus, TabParamList } from '../navigation/types';
 
-type FontChoice = 'Serif' | 'Sans' | 'Inter';
-const FONT_CHOICES: FontChoice[] = ['Serif', 'Sans', 'Inter'];
+type FontChoice = 'Serif' | 'Merriweather' | 'Inter';
+const FONT_CHOICES: FontChoice[] = ['Serif', 'Merriweather', 'Inter'];
 const FONT_FAMILY: Record<FontChoice, string | undefined> = {
   Serif: FONTS.serif,
-  Sans: undefined,
-  Inter: 'Inter_400Regular',
+  Merriweather: FONTS.merriweather,
+  Inter: FONTS.inter,
 };
+
+// Local-day key for the reading timer's per-day accumulator (`YYYY-MM-DD`).
+// Local time intentionally — counters are user-local, not UTC.
+function ymdLocal(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 const HL_COLORS = [
   { name: 'rose', bg: 'rgba(245,194,213,0.55)', dot: '#F5C2D5' },
@@ -439,7 +446,7 @@ function ReaderSheet({
           label="Font size"
           value={fontSize}
           display={`${Math.round(fontSize)}px`}
-          min={16} max={26} step={1}
+          min={19} max={26} step={1}
           onChange={setFontSize}
         />
         <SliderRow
@@ -453,7 +460,7 @@ function ReaderSheet({
           label="Paragraph spacing"
           value={paragraphSpacing}
           display={`${Math.round(paragraphSpacing)}px`}
-          min={4} max={30} step={1}
+          min={10} max={30} step={1}
           onChange={setParagraphSpacing}
         />
 
@@ -468,7 +475,12 @@ function ReaderSheet({
                 style={[styles.fontPill, active ? styles.fontPillActive : styles.fontPillInactive]}
                 activeOpacity={0.85}
               >
-                <Text style={[styles.fontPillText, { color: active ? '#fff' : TXT }]}>
+                <Text
+                  style={[styles.fontPillText, { color: active ? '#fff' : TXT }]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.75}
+                >
                   {f}
                 </Text>
               </TouchableOpacity>
@@ -520,7 +532,7 @@ export default function BibleScreen() {
   const { markToday } = useActivity();
   const { setHighlight, getColor } = useHighlights();
   const { isBookmarked, toggleBookmark } = useBookmarks();
-  const { markRead } = useReadChapters();
+  const { markRead, markViewed, isRead, readDates } = useReadChapters();
   // Fresh-install default is Genesis 1 — the start of the whole Bible. Returning
   // users get jumped to their persisted last-read position by the mount effect
   // below, so they never actually see this default.
@@ -630,12 +642,64 @@ export default function BibleScreen() {
   const [error, setError] = useState<string | null>(null);
   const [drawer, setDrawer] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [fontSize, setFontSize] = useState(20);
-  const [lineH, setLineH] = useState(1.7);
+  const [fontSize, setFontSize] = useState(25);            // 20 → 22 → 25 (+15 % on user feedback; chapter body felt small on iPhone)
+  const [lineH, setLineH] = useState(1.6);                 // 1.7 → 1.6 default per design
   const [paragraphSpacing, setParagraphSpacing] = useState(20);
-  const [font, setFont] = useState<FontChoice>('Sans');
+  // Merriweather is the default reader font — purpose-built for on-screen
+  // reading (slab-influenced serif, generous x-height) and gives the Bible
+  // body a warm, editorial feel out of the box. Users can still pick Serif
+  // (Source Serif 4) or Inter from the type-controls sheet.
+  const [font, setFont] = useState<FontChoice>('Merriweather');
   const [theme, setTheme] = useState('default');
   const [fontMenu, setFontMenu] = useState(false);
+
+  // ─── Reader-settings persistence ──────────────────────────────────────
+  // Hydrate from AsyncStorage on mount so the user's last-picked font /
+  // size / line height / paragraph spacing / theme survive a cold start.
+  // Same `useState` (not `useRef`) hydration-gate pattern as the 5-min
+  // reading timer above — a ref-based gate would not re-run the persist
+  // effect when hydration finishes asynchronously.
+  const SETTINGS_KEY = 'bible:reader-settings:v1';
+  const [settingsHydrated, setSettingsHydrated] = useState(false);
+  useEffect(() => {
+    AsyncStorage.getItem(SETTINGS_KEY).then(raw => {
+      if (raw) {
+        try {
+          const s = JSON.parse(raw) as Partial<{
+            fontSize: number; lineH: number; paragraphSpacing: number;
+            font: FontChoice; theme: string;
+          }>;
+          if (typeof s.fontSize === 'number') setFontSize(s.fontSize);
+          if (typeof s.lineH === 'number') setLineH(s.lineH);
+          if (typeof s.paragraphSpacing === 'number') setParagraphSpacing(s.paragraphSpacing);
+          // 'Sans' was the previous body-font choice; existing users with
+          // it persisted are migrated to Merriweather (the new default) so
+          // they pick up the upgrade without a manual re-pick.
+          if (s.font === 'Serif' || s.font === 'Merriweather' || s.font === 'Inter') setFont(s.font);
+          else if ((s.font as unknown) === 'Sans') setFont('Merriweather');
+          if (typeof s.theme === 'string' && s.theme in THEMES) setTheme(s.theme);
+        } catch {}
+      }
+      setSettingsHydrated(true);
+    });
+  }, []);
+  // Debounced persist: every change to any of the five settings schedules
+  // a 300 ms timer; subsequent changes within the window cancel + reset
+  // the timer. Prevents AsyncStorage thrashing during slider drags
+  // (the slider fires onChange continuously, ~60/sec).
+  const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!settingsHydrated) return;
+    if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
+    persistTimerRef.current = setTimeout(() => {
+      AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify({
+        fontSize, lineH, paragraphSpacing, font, theme,
+      })).catch(() => {});
+    }, 300);
+    return () => {
+      if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
+    };
+  }, [fontSize, lineH, paragraphSpacing, font, theme, settingsHydrated]);
   const [selVerse, setSelVerse] = useState<number | null>(null);
   const [toolbarTop, setToolbarTop] = useState(120);
   const scrollRef = useRef<ScrollView>(null);
@@ -652,25 +716,178 @@ export default function BibleScreen() {
     return () => { cancelled = true; };
   }, [translation.code, translation.source]);
 
-  // Load chapter when bookSlug / chapter / language changes
+  // Load chapter when bookSlug / chapter / language changes.
+  //
+  // We clear `verses` synchronously at the start of the fetch so the user
+  // sees a clean spinner-only state during the transition instead of the
+  // previous chapter's text frozen on screen — that "stale text + delayed
+  // swap" was the source of the laggy feel when picking from the book
+  // drawer. Combined with `scrollTo({ y: 0 })` in the next effect, the
+  // result is: drawer tap → spinner → fresh chapter from verse 1.
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setVerses([]);
     fetchChapter(translation.code, translation.source, bookSlug, chapter)
       .then(data => {
         if (!cancelled) {
           setVerses(data.verses);
           setSelVerse(null);
           setExploreIdx(null);
-          markToday();
-          markRead(bookSlug, chapter);
+          // Note: `markToday()` + `markRead()` used to fire here on every
+          // chapter open — that was the source of "open a chapter for one
+          // second and Days Read +1". Triggering moved to the explicit
+          // "Mark as Complete" button rendered after the last verse, so
+          // counters only advance on confirmed user intent.
         }
       })
       .catch(err => { if (!cancelled) setError(err.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [translation.code, translation.source, bookSlug, chapter, markToday, markRead]);
+  }, [translation.code, translation.source, bookSlug, chapter]);
+
+  // ─── 3-minute reading timer ────────────────────────────────────────────
+  // A day counts as "Days Read" once the user has spent 3+ minutes in
+  // foreground on the Bible tab. Independent of the explicit "Mark as
+  // Complete" button — either path counts the day. Persisted per-day key so
+  // a backgrounded session resumes accumulating instead of resetting.
+  // Cumulative foreground time on the Bible tab today — does NOT reset on
+  // chapter change, so a session that drifts across Genesis 1 → 2 → 3 still
+  // counts toward Days Read at the 3-minute mark.
+  const READ_TIMER_THRESHOLD_SECONDS = 180;
+  const READ_TIMER_KEY_PREFIX = 'bible-reading-time:';
+  // Per-chapter dwell threshold for committing "current reading position".
+  // Distinct from `bible:last-read` (which tracks any navigation target) —
+  // `bible:reading-position` only updates after the user has actually sat
+  // on a chapter for this long, so PrayerScreen's "Continue Reading" card
+  // doesn't get bumped by drawer-flips or prev/next mashing. Resets every
+  // chapter change; independent of the cumulative day timer.
+  const READING_POSITION_DWELL_SECONDS = 15;
+  const todayKey = ymdLocal(new Date());
+  const [secondsToday, setSecondsToday] = useState(0);
+  const [secondsOnChapter, setSecondsOnChapter] = useState(0);
+  const positionCommittedRef = useRef(false);
+  // `useState` (not `useRef`) — the timer effect's deps must include this
+  // so the effect re-runs once hydration finishes. With a ref, the timer
+  // bailed out on cold-start-with-Bible-focused (because hydration is
+  // async, the ref was still false on first run, and `[navigation]` deps
+  // never re-trigger). Using state here forces the effect to re-evaluate
+  // when `hydrated` flips to true, and the gate disappears.
+  const [hydrated, setHydrated] = useState(false);
+  const timerThresholdFiredRef = useRef(false);
+  // Hydrate the day's accumulator on mount; reset if the date key shifted
+  // since last write (handles app left open across midnight).
+  useEffect(() => {
+    AsyncStorage.getItem(READ_TIMER_KEY_PREFIX + todayKey).then(raw => {
+      const restored = raw ? parseInt(raw, 10) : 0;
+      setSecondsToday(Number.isFinite(restored) ? restored : 0);
+      setHydrated(true);
+    });
+  }, [todayKey]);
+  // Tick at 1 Hz only while: (a) Bible tab is focused AND (b) the app is in
+  // the foreground AND (c) hydration has landed. Listeners are attached /
+  // detached cleanly so a cold start on a different tab doesn't accumulate.
+  useEffect(() => {
+    if (!hydrated) return;
+    let interval: ReturnType<typeof setInterval> | null = null;
+    const startTimer = () => {
+      if (interval) return;
+      interval = setInterval(() => {
+        if (AppState.currentState === 'active') {
+          setSecondsToday(s => s + 1);
+          setSecondsOnChapter(s => s + 1);
+        }
+      }, 1000);
+    };
+    const stopTimer = () => {
+      if (interval) { clearInterval(interval); interval = null; }
+    };
+    const focusUnsub = navigation.addListener('focus', startTimer);
+    const blurUnsub  = navigation.addListener('blur', stopTimer);
+    const appSub = AppState.addEventListener('change', state => {
+      if (state !== 'active') stopTimer();
+      else if ((navigation as { isFocused?: () => boolean }).isFocused?.()) startTimer();
+    });
+    if ((navigation as { isFocused?: () => boolean }).isFocused?.()) startTimer();
+    return () => {
+      stopTimer();
+      focusUnsub();
+      blurUnsub();
+      appSub.remove();
+    };
+  }, [navigation, hydrated]);
+  // Persist the accumulator (every 10 ticks is plenty — bounds disk writes
+  // to ~6 / minute). Once past the threshold we no longer need to persist
+  // (the firing already side-effected to ReadChaptersContext + ActivityContext
+  // which have their own AsyncStorage layers). Skipping post-threshold
+  // also keeps writes bounded for users who park on the Bible tab for hours.
+  useEffect(() => {
+    if (!hydrated) return;
+    if (secondsToday >= READ_TIMER_THRESHOLD_SECONDS) return;
+    if (secondsToday % 10 !== 0) return;
+    AsyncStorage.setItem(READ_TIMER_KEY_PREFIX + todayKey, String(secondsToday)).catch(() => {});
+  }, [secondsToday, todayKey, hydrated]);
+  // Reset the threshold-fired ref when the calendar day rolls over so a
+  // session that spans midnight can still fire on the new day's first
+  // 5-minute crossing.
+  useEffect(() => {
+    timerThresholdFiredRef.current = false;
+  }, [todayKey]);
+  // Threshold-crossing side effect — when the user crosses 5 min today and
+  // we haven't fired yet, mark today as a reading day. Idempotent against
+  // the Mark-as-Complete button (both add today to readDates). Toast only
+  // fires when this is what flipped today from unmarked to marked.
+  //
+  // Deliberately does NOT call markRead(): per-chapter completion is gated
+  // strictly on the explicit Mark-as-Complete tap so the progress bar
+  // reflects what the user actually read, not what they scrolled past.
+  useEffect(() => {
+    if (timerThresholdFiredRef.current) return;
+    if (secondsToday < READ_TIMER_THRESHOLD_SECONDS) return;
+    if (!verses.length) return;          // chapter still loading — wait
+    timerThresholdFiredRef.current = true;
+    const todayWasAlreadyMarked = readDates.has(todayKey);
+    markToday();
+    if (!todayWasAlreadyMarked) {
+      showToast('3 minutes of reading · counted toward Days Read', { icon: 'check', ms: 2000 });
+    }
+  }, [secondsToday, verses.length, markToday, readDates, todayKey]);
+
+  // Per-chapter dwell → commit `bible:reading-position` (the source of truth
+  // for PrayerScreen's "Continue Reading" card). Reset on every chapter
+  // change so a session that flips chapters never accidentally commits the
+  // wrong one. Skipped while a verse-card focus is highlighted on this exact
+  // chapter — peeking at a verse from the home screen isn't reading.
+  useEffect(() => {
+    setSecondsOnChapter(0);
+    positionCommittedRef.current = false;
+  }, [bookSlug, chapter]);
+  useEffect(() => {
+    if (positionCommittedRef.current) return;
+    if (secondsOnChapter < READING_POSITION_DWELL_SECONDS) return;
+    if (!verses.length) return;
+    const isFocusPeek = !!focusRange && focusRange.bookSlug === bookSlug && focusRange.chapter === chapter;
+    if (isFocusPeek) return;
+    positionCommittedRef.current = true;
+    AsyncStorage.setItem('bible:reading-position', JSON.stringify({ bookSlug, chapter })).catch(() => {});
+    // Same gate as the position commit: 15 s dwell on a non-focus-peek visit
+    // counts as a "viewed" chapter (0.5 weight in the progress bar). The
+    // Mark-as-Complete button below promotes the same chapter to 1.0.
+    markViewed(bookSlug, chapter);
+  }, [secondsOnChapter, verses.length, bookSlug, chapter, focusRange, markViewed]);
+
+  // Reset scroll to the top when the chapter changes. Without this, picking
+  // a chapter from the drawer kept the previous chapter's scroll offset, so
+  // the new chapter mid-rendered at e.g. verse 7 — the user had to scroll
+  // up to find verse 1. Skipped when an active focus-jump is targeting a
+  // specific verse in this exact chapter; the focus-scroll effect below
+  // handles that case.
+  useEffect(() => {
+    const isFocusing = focusRange && focusRange.bookSlug === bookSlug && focusRange.chapter === chapter;
+    if (isFocusing) return;
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [bookSlug, chapter, focusRange]);
 
   // Reset measured layouts when the chapter changes so stale offsets from a
   // previous chapter don't mis-target a focus-scroll.
@@ -735,8 +952,52 @@ export default function BibleScreen() {
   };
 
   const bookmarked = isBookmarked(translation.code, bookSlug, chapter);
+  // Bookmark "add" animations: a small ROSE bookmark tag drops down from
+  // beneath the header and a white toast slides up at the bottom. Both
+  // fire ONLY on add — un-bookmarking is silent (no false-positive
+  // celebration). bookmarkTagAnim drives both opacity and translateY in
+  // a single shared value via interpolation in the animated style.
+  const bookmarkTagAnim = useSharedValue(0);
   const onBookmark = () => {
+    const wasBookmarked = bookmarked;
     toggleBookmark({ translation: translation.code, bookSlug, bookTitle, chapter });
+    if (!wasBookmarked) {
+      bookmarkTagAnim.value = 0;
+      bookmarkTagAnim.value = withSequence(
+        withTiming(1, { duration: 240, easing: Easing.out(Easing.cubic) }),
+        withDelay(1200, withTiming(0, { duration: 280, easing: Easing.in(Easing.cubic) })),
+      );
+      showToast('Bookmark Added', { icon: 'bookmark', ms: 1700 });
+    }
+  };
+  const bookmarkTagStyle = useAnimatedStyle(() => ({
+    opacity: bookmarkTagAnim.value,
+    transform: [{ translateY: -16 + 16 * bookmarkTagAnim.value }],
+  }));
+
+  // Chapter navigation — prev / next buttons in the floating bottom row.
+  // Crosses book boundaries (last chapter of Genesis → Exodus 1) so the
+  // user can keep tapping straight through the canon. Disabled at the
+  // very first/last chapter of the whole Bible.
+  const currentBookIdx = bookList.findIndex(b => b.slug === bookSlug);
+  const totalChapters = currentBook?.chapters ?? 1;
+  const canPrev = !(currentBookIdx <= 0 && chapter === 1);
+  const canNext = !(currentBookIdx === bookList.length - 1 && chapter === totalChapters);
+  const goToPrevChapter = () => {
+    if (chapter > 1) {
+      goToChapter(bookSlug, chapter - 1);
+    } else if (currentBookIdx > 0) {
+      const prev = bookList[currentBookIdx - 1];
+      goToChapter(prev.slug, prev.chapters);
+    }
+  };
+  const goToNextChapter = () => {
+    if (chapter < totalChapters) {
+      goToChapter(bookSlug, chapter + 1);
+    } else if (currentBookIdx < bookList.length - 1) {
+      const next = bookList[currentBookIdx + 1];
+      goToChapter(next.slug, 1);
+    }
   };
 
   // Audio playback for the chapter being read.
@@ -790,12 +1051,15 @@ export default function BibleScreen() {
       });
     return () => { cancelled = true; clearTimeout(timeout); };
   }, [exploreIdx, bookSlug, chapter, translation.code, verses]);
-  const [toast, setToast] = useState<string | null>(null);
+  // Toast supports an optional Feather icon — a soft white card variant
+  // is rendered when `icon` is set (used by the bookmark-added confirm),
+  // otherwise the default dark pill renders for plain text messages.
+  const [toast, setToast] = useState<{ text: string; icon?: keyof typeof Feather.glyphMap } | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const showToast = (msg: string, ms = 1400) => {
+  const showToast = (msg: string, opts: { icon?: keyof typeof Feather.glyphMap; ms?: number } = {}) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setToast(msg);
-    toastTimerRef.current = setTimeout(() => setToast(null), ms);
+    setToast({ text: msg, icon: opts.icon });
+    toastTimerRef.current = setTimeout(() => setToast(null), opts.ms ?? 1400);
   };
   useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); }, []);
   const toggleAudio = () => {
@@ -840,8 +1104,11 @@ export default function BibleScreen() {
         <Text style={[styles.chapterTitle, { color: TH.txt }]}>{bookTitle} {chapter}</Text>
 
         {loading && verses.length === 0 && (
-          <View style={{ paddingVertical: 80, alignItems: 'center' }}>
-            <ActivityIndicator color={ROSE} />
+          // Larger ROSE spinner during chapter transitions. iOS renders this
+          // as the rotating circle-of-pink-dashes the user asked for; Android
+          // uses its system equivalent at the same accent colour.
+          <View style={styles.chapterLoader}>
+            <ActivityIndicator size="large" color={ROSE} />
           </View>
         )}
 
@@ -884,6 +1151,12 @@ export default function BibleScreen() {
                     fontSize,
                     lineHeight: fontSize * lineH,
                     color: TH.txt,
+                    // Source Serif 4 only: pin opsz/wght to the SERIF_BODY
+                    // master (35 / 500) so the chapter body shape stays
+                    // consistent regardless of where the user drags the
+                    // size slider — and matches the plan-reader styles.
+                    // Sans / Inter ignore this prop, so it's safe.
+                    ...(font === 'Serif' ? { fontVariationSettings: SERIF_BODY } : null),
                   },
                   (hlColor || isSel) && { backgroundColor: hlColor || 'rgba(30,27,46,0.04)', borderRadius: 6 },
                   dimmed && { opacity: 0.32 },
@@ -921,6 +1194,37 @@ export default function BibleScreen() {
             </View>
           );
         })}
+
+        {/* Mark-as-Complete CTA — replaces the old "open chapter → counters
+            auto-increment" trigger. The user explicitly confirms they read
+            by tapping this. First tap fires markToday() + markRead() (which
+            in turn drive ProfileScreen "Days Read", scripture.streak7/30,
+            scripture.first/read*, scripture.books*). Subsequent taps on a
+            chapter already marked complete are no-ops — `isRead()` flips
+            the button into a muted "Chapter completed" state on next mount.
+            Hidden while the chapter is still loading. */}
+        {verses.length > 0 && (() => {
+          const completed = isRead(bookSlug, chapter);
+          const onMark = () => {
+            if (completed) return;
+            markRead(bookSlug, chapter);
+            markToday();
+            showToast('Your days read +1', { icon: 'check', ms: 2000 });
+          };
+          return (
+            <TouchableOpacity
+              onPress={onMark}
+              disabled={completed}
+              activeOpacity={completed ? 1 : 0.85}
+              style={[styles.markCompleteBtn, completed && styles.markCompleteBtnDone]}
+            >
+              <Feather name={completed ? 'check' : 'check-circle'} size={20} color="#FFFFFF" />
+              <Text style={styles.markCompleteBtnText}>
+                {completed ? 'Chapter completed' : 'Mark as Complete'}
+              </Text>
+            </TouchableOpacity>
+          );
+        })()}
       </ScrollView>
 
       {/* Verse toolbar */}
@@ -1005,6 +1309,45 @@ export default function BibleScreen() {
         </Animated.View>
       )}
 
+      {/* Bookmark "tag" indicator — drops down beneath the header on add,
+          holds briefly, then slides back up. Pinned to the same right
+          column as the header bookmark icon so the eye links the two. */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.bookmarkTag,
+          { top: insets.top + 50 },
+          bookmarkTagStyle,
+        ]}
+      >
+        <Feather name="bookmark" size={20} color={ROSE} />
+      </Animated.View>
+
+      {/* Chapter-nav floating pair — Prev anchors bottom-LEFT corner,
+          Next anchors bottom-RIGHT corner. Matches the natural thumb-arc
+          for page-turn gestures (back-left / forward-right) and keeps both
+          controls reachable one-handed. Glass-style translucent circles
+          so they sit above the verse text without dominating it. Disabled
+          at the very start / end of the canon. */}
+      <TouchableOpacity
+        onPress={goToPrevChapter}
+        disabled={!canPrev}
+        activeOpacity={0.85}
+        style={[styles.chapterNavBtn, styles.chapterNavBtnLeft, !canPrev && styles.chapterNavBtnDisabled]}
+        hitSlop={6}
+      >
+        <Feather name="chevron-left" size={22} color={canPrev ? TH.txt : 'rgba(30,27,46,0.25)'} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={goToNextChapter}
+        disabled={!canNext}
+        activeOpacity={0.85}
+        style={[styles.chapterNavBtn, styles.chapterNavBtnRight, !canNext && styles.chapterNavBtnDisabled]}
+        hitSlop={6}
+      >
+        <Feather name="chevron-right" size={22} color={canNext ? TH.txt : 'rgba(30,27,46,0.25)'} />
+      </TouchableOpacity>
+
       {/* Floating audio button */}
       <TouchableOpacity onPress={toggleAudio} style={styles.audioBtn} activeOpacity={0.85}>
         {audioPlaying
@@ -1060,14 +1403,36 @@ export default function BibleScreen() {
         />
       )}
       {toast && (
-        <Animated.View
-          entering={FadeIn.duration(180)}
-          exiting={FadeOut.duration(180)}
-          pointerEvents="none"
-          style={[styles.toast, { bottom: insets.bottom + 90 }]}
-        >
-          <Text style={styles.toastText}>{toast}</Text>
-        </Animated.View>
+        toast.icon ? (
+          // White-card variant — small ROSE-tinted icon dot + dark text.
+          // Used when the toast carries semantic info (Bookmark Added).
+          <Animated.View
+            // 500 ms slide-up + 500 ms fade-out — chapter-complete toast needs
+            // to feel like a proper celebration, not a flicker. SlideInDown in
+            // Reanimated means "enters from the bottom moving up", so the
+            // banner pops up from below the tab bar. Same easing for entry,
+            // straight fade on exit (no slide-down) so it dissolves in place.
+            entering={SlideInDown.duration(500).easing(Easing.out(Easing.cubic))}
+            exiting={FadeOut.duration(500)}
+            pointerEvents="none"
+            style={[styles.softToast, { bottom: insets.bottom + 90 }]}
+          >
+            <View style={styles.softToastIcon}>
+              <Feather name={toast.icon} size={12} color="#FFFFFF" />
+            </View>
+            <Text style={styles.softToastText}>{toast.text}</Text>
+          </Animated.View>
+        ) : (
+          // Default dark pill — for plain confirmations (Copied, Saved).
+          <Animated.View
+            entering={FadeIn.duration(180)}
+            exiting={FadeOut.duration(180)}
+            pointerEvents="none"
+            style={[styles.toast, { bottom: insets.bottom + 90 }]}
+          >
+            <Text style={styles.toastText}>{toast.text}</Text>
+          </Animated.View>
+        )
       )}
     </View>
   );
@@ -1121,8 +1486,51 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   verse: {
+    // wght comes from `fontVariationSettings` per-instance so the static
+    // `fontWeight` is unset here — letting Reanimated/Yoga apply the
+    // axis cleanly without a competing weight token.
     lineHeight: 32,
     color: TXT,
+  },
+  // Centred ROSE spinner shown while a chapter is fetching. Padded so it
+  // sits roughly where the first verse would, giving a stable visual
+  // anchor instead of a tiny indicator at the very top.
+  chapterLoader: {
+    paddingVertical: 96,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // "Mark as Complete" — the only entry point now for incrementing Days
+  // Read + chapter / book scripture badges. Visual template mirrors
+  // PlanDayWalk's "Finish Reading" CTA so the gesture feels familiar.
+  markCompleteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: ROSE,
+    marginTop: 40,
+    marginHorizontal: P,
+    marginBottom: 28,
+    shadowColor: ROSE,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    elevation: 4,
+  },
+  // Muted-green "done" state once `isRead` returns true for this chapter.
+  // Same dimensions so the layout doesn't jump after the tap.
+  markCompleteBtnDone: {
+    backgroundColor: 'rgba(125,184,125,0.85)',
+    shadowOpacity: 0.10,
+  },
+  markCompleteBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.4,
   },
   verseNum: {
     fontWeight: '600',
@@ -1216,13 +1624,79 @@ const styles = StyleSheet.create({
     zIndex: 50,
   },
   toastText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600', letterSpacing: 0.3 },
+  // Soft white-card toast variant — matches the app's translucent Glass
+  // pattern (rgba 0.92 + soft border) for in-context confirmations.
+  softToast: {
+    position: 'absolute',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(30,27,46,0.05)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 12,
+    elevation: 5,
+    zIndex: 50,
+  },
+  softToastIcon: {
+    width: 22, height: 22, borderRadius: 11,
+    backgroundColor: ROSE,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  softToastText: { color: TXT, fontSize: 15, fontWeight: '600', letterSpacing: 0.2 },
+  // Bookmark indicator that drops in from above the header on add.
+  // Right-aligned under the header bookmark button (P + 8 ≈ same column
+  // as `headerBtn`'s glyph centerline). Animated translateY + opacity
+  // come from `bookmarkTagStyle`.
+  bookmarkTag: {
+    position: 'absolute',
+    right: P + 8,
+    width: 28, height: 36,
+    alignItems: 'center', justifyContent: 'center',
+    zIndex: 60,
+  },
+  // Floating page-nav + audio buttons. All three share size (52×52) so the
+  // control cluster reads as one family — Prev anchors the bottom-LEFT
+  // corner, Next anchors the bottom-RIGHT corner (matches the user's
+  // page-turn muscle memory — left thumb back, right thumb forward), and
+  // the pink Audio button sits stacked above Next on the right column.
+  //
+  // Adaptive-safe across device sizes: the bottom-tab navigator already
+  // inserts its own bottom inset (TabBar.tsx — paddingBottom: max(insets.bottom, 11)),
+  // so `bottom: 24` puts the buttons exactly 24 px above the tab bar on
+  // every iPhone from SE (no home indicator) to 14 Pro Max (with home
+  // indicator) — no clipping, no extra inset math needed here.
+  chapterNavBtn: {
+    position: 'absolute',
+    bottom: 24,
+    width: 52, height: 52, borderRadius: 26,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    borderWidth: 1, borderColor: 'rgba(30,27,46,0.06)',
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+    zIndex: 40,
+  },
+  chapterNavBtnLeft:  { left:  P + 4 },
+  chapterNavBtnRight: { right: P + 4 },
+  chapterNavBtnDisabled: { opacity: 0.45 },
   audioBtn: {
     position: 'absolute',
-    bottom: 75,                  // 115 → 75 (moved 40 px lower per request)
-    right: P + 2,
-    width: 62,                   // square — width = height = 62
-    height: 62,
-    borderRadius: 31,
+    // Stacked above the bottom-right Next button: 24 (Next bottom)
+    // + 52 (Next height) + 16 (gap) = 92.
+    bottom: 92,
+    right: P + 4,
+    width: 52, height: 52, borderRadius: 26,
     backgroundColor: ROSE,
     alignItems: 'center',
     justifyContent: 'center',

@@ -1,14 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, Alert, ImageBackground } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
-import { ROSE, LAV, TXT, TXTSUB, P } from '../constants/theme';
+import { ROSE, TXT, TXTSUB, P } from '../constants/theme';
 import type { RootStackScreenProps } from '../navigation/types';
-
-// Drop your hero artwork at assets/paywall-hero.png and uncomment.
-const HERO_SOURCE: number | null = null;
-// const HERO_SOURCE = require('../../assets/paywall-hero.png');
 
 type PlanId = 'lifetime' | 'annual' | 'monthly';
 
@@ -33,9 +28,13 @@ export default function RemoveAdsScreen({ navigation }: RootStackScreenProps<'Re
   const [selected, setSelected] = useState<PlanId>('lifetime');
 
   const onSubscribe = () => {
-    // TODO: integrate expo-in-app-purchases (or react-native-iap) and trigger
-    // the purchase flow for the chosen product. Until then we surface a clear
-    // placeholder so testers can confirm the wiring without crashing.
+    // TODO: wire StoreKit / Play Billing. Library choice is deliberately
+    // deferred — `react-native-iap` was removed from deps because its
+    // autolinked native module triggers Play Integrity checks on
+    // non-certified Android emulators, surfacing a verbose `-17
+    // CLIENT_TRANSIENT_ERROR`. Add the chosen lib (expo-iap when stable
+    // for SDK 54, or react-native-iap behind an explicit init guard) at
+    // the same time the real product IDs land.
     const plan = PLANS.find(p => p.id === selected);
     Alert.alert(
       'Subscriptions coming soon',
@@ -62,8 +61,6 @@ export default function RemoveAdsScreen({ navigation }: RootStackScreenProps<'Re
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 130 }]}
       >
-        <Hero />
-
         <Text style={styles.title}>Reading without distractions</Text>
         <Text style={styles.body}>
           Subscribe and turn off all in-app ads, unlock early access to new study tools,
@@ -122,28 +119,6 @@ export default function RemoveAdsScreen({ navigation }: RootStackScreenProps<'Re
   );
 }
 
-function Hero() {
-  if (HERO_SOURCE) {
-    return <ImageBackground source={HERO_SOURCE} style={styles.hero} resizeMode="contain" />;
-  }
-  return (
-    <LinearGradient
-      colors={[`${ROSE}26`, `${LAV}26`]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.hero}
-    >
-      <View style={styles.heroRing}>
-        <Feather name="heart" size={42} color={ROSE} />
-      </View>
-      <View style={styles.heroPlaceholderRow} pointerEvents="none">
-        <Feather name="image" size={14} color={TXTSUB} />
-        <Text style={styles.heroPlaceholderText}>assets/paywall-hero.png</Text>
-      </View>
-    </LinearGradient>
-  );
-}
-
 function Feature({ label }: { label: string }) {
   return (
     <View style={styles.feature}>
@@ -168,30 +143,10 @@ const styles = StyleSheet.create({
   },
   restore: { color: ROSE, fontSize: 16, fontWeight: '700', paddingHorizontal: 6 },
 
-  scroll: { paddingHorizontal: P + 4, paddingTop: 16 },
-
-  hero: {
-    height: 220,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    marginBottom: 18,
-  },
-  heroRing: {
-    width: 96, height: 96, borderRadius: 48,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 12,
-    elevation: 4,
-  },
-  heroPlaceholderRow: {
-    position: 'absolute', bottom: 14, flexDirection: 'row',
-    alignItems: 'center', gap: 6,
-    paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-  },
-  heroPlaceholderText: { fontSize: 12, color: TXTSUB, fontWeight: '500' },
+  // Extra paddingTop now that the hero placeholder is gone — gives the
+  // title some breathing room below the close button instead of butting
+  // straight up against it.
+  scroll: { paddingHorizontal: P + 4, paddingTop: 28 },
 
   title: {
     fontSize: 28,

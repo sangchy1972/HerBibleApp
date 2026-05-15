@@ -4,9 +4,17 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { RobotoSerif_400Regular, RobotoSerif_600SemiBold } from '@expo-google-fonts/roboto-serif';
+// Source Serif 4 is loaded as the variable-font TTF (with the opsz +
+// wght axes), not the static per-weight files. The default instance is
+// already at opsz 14 / wght 400 (the body-text master), and any style
+// can override via `fontVariationSettings` to push toward Caption (small
+// opsz) or Display (large opsz) shapes. See `serifVariation` in theme.ts.
 import { NotoSansSC_400Regular, NotoSansSC_500Medium, NotoSansSC_700Bold } from '@expo-google-fonts/noto-sans-sc';
 import { Inter_400Regular } from '@expo-google-fonts/inter';
+// Merriweather — purpose-built for on-screen reading. Used as the default
+// body font in the Bible reader. Regular (400) + Bold (700) cover the verse
+// text and verse-number weight; loading just two keeps the bundle slim.
+import { Merriweather_400Regular, Merriweather_700Bold } from '@expo-google-fonts/merriweather';
 import RootNavigator from './src/navigation/RootNavigator';
 import { PrayerProvider } from './src/state/PrayerContext';
 import { NotesProvider } from './src/state/NotesContext';
@@ -31,12 +39,14 @@ import AchievementUnlockSheet from './src/components/AchievementUnlockSheet';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    RobotoSerif_400Regular,
-    RobotoSerif_600SemiBold,
+    'SourceSerif4Variable-Roman':  require('./assets/fonts/SourceSerif4Variable-Roman.ttf'),
+    'SourceSerif4Variable-Italic': require('./assets/fonts/SourceSerif4Variable-Italic.ttf'),
     NotoSansSC_400Regular,
     NotoSansSC_500Medium,
     NotoSansSC_700Bold,
     Inter_400Regular,
+    Merriweather_400Regular,
+    Merriweather_700Bold,
   });
 
   if (!fontsLoaded) return null;

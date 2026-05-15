@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Linking, Platform } from 'react-native';
 import Svg, { Path, G } from 'react-native-svg';
-import { Feather } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import * as Facebook from 'expo-auth-session/providers/facebook';
@@ -199,15 +199,14 @@ function GoogleGlyph() {
   );
 }
 
+// Use Ionicons' "logo-apple" — the SVG path I had hand-rolled here was
+// malformed (the bite-out arc was placed wrong, so the apple looked like
+// it had a chunk cut from the side instead of the top-right). Ionicons
+// ships the canonical SF-Symbols-style Apple mark and renders identically
+// across iOS / Android. `marginTop: -2` nudges the optical centre to
+// match the Google + Facebook glyphs sitting beside it in the row.
 function AppleGlyph() {
-  return (
-    <Svg width={20} height={20} viewBox="0 0 24 24">
-      <Path
-        fill="#FFFFFF"
-        d="M16.365 1.43c0 1.14-.43 2.25-1.21 3.06-.83.86-2.21 1.5-3.36 1.42-.13-1.13.4-2.32 1.18-3.13C13.83 1.83 15.21 1.2 16.365 1.43zM20.5 17.27c-.46 1.07-1.01 2.06-1.66 2.99-.85 1.21-1.55 2.05-2.08 2.51-.83.74-1.72 1.12-2.67 1.13-.68 0-1.5-.19-2.46-.58-.96-.39-1.84-.58-2.65-.58-.85 0-1.76.19-2.74.58-.98.39-1.77.6-2.38.62-.91.04-1.82-.34-2.73-1.16-.57-.5-1.31-1.37-2.21-2.61-.96-1.32-1.76-2.85-2.39-4.6-.67-1.89-1-3.72-1-5.49 0-2.03.44-3.78 1.32-5.24.69-1.18 1.61-2.11 2.76-2.79C3.46 1.59 4.71 1.24 6.06 1.22c.71 0 1.66.22 2.86.65 1.19.43 1.96.65 2.3.65.25 0 1.1-.26 2.55-.77 1.37-.47 2.52-.67 3.46-.59 2.55.21 4.46 1.21 5.74 3.02-2.28 1.38-3.41 3.32-3.39 5.79.02 1.93.72 3.53 2.1 4.81.62.59 1.32 1.05 2.09 1.38-.17.49-.34.96-.52 1.41z"
-      />
-    </Svg>
-  );
+  return <Ionicons name="logo-apple" size={20} color="#FFFFFF" style={{ marginTop: -2 }} />;
 }
 
 function FacebookGlyph() {

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
-import { ROSE, LAV, FONTS } from '../constants/theme';
+import { ROSE, LAV, FONTS, SERIF_BODY } from '../constants/theme';
 
 export type VerseFormat = 'square' | 'portrait' | 'story';
 
@@ -82,8 +82,8 @@ const styles = StyleSheet.create({
   body: { alignItems: 'center', justifyContent: 'center', flex: 1 },
   verse: {
     fontFamily: FONTS.serif,
+    fontVariationSettings: SERIF_BODY,  // Source Serif 4 VF — body opsz/wght
     color: '#3A2548',
-    fontWeight: '500',
     textAlign: 'center',
   },
   ref: {

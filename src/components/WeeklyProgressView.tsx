@@ -69,6 +69,13 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack }: 
 
   return (
     <View style={styles.root}>
+      {/* Full-screen pink gradient + soft blurry blobs. Renders behind all
+          content as a non-interactive backdrop. The blobs are oversized
+          translucent circles that extend past the screen edges; their
+          low opacity + scale + overlap blends them into the gradient with
+          no hard color boundaries (no native blur lib needed). */}
+      <BackgroundDecor />
+
       <Hero />
 
       <Animated.View
@@ -103,9 +110,9 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack }: 
           Your <Text style={[styles.subStrong, { color: accent }]}>{ordinal(count)}</Text> prayer of the week!
         </Text>
 
-        <TouchableOpacity onPress={onOpenReminder} activeOpacity={0.85} style={[styles.reminderBtn, { backgroundColor: '#1FB35E' }]}>
+        <TouchableOpacity onPress={onOpenReminder} activeOpacity={0.85} style={[styles.reminderBtn, { backgroundColor: ROSE }]}>
           <View style={styles.reminderIcon}>
-            <PrayingHandsGlyph color="#1FB35E" small />
+            <PrayingHandsGlyph color={ROSE} small />
             <View style={styles.reminderDot} />
           </View>
           <Text style={styles.reminderText}>Open Daily Verse Reminder</Text>
@@ -115,7 +122,15 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack }: 
         </TouchableOpacity>
       </Animated.View>
 
-      <Animated.View entering={FadeIn.duration(360).delay(360)} style={styles.backWrap}>
+      {/* Spacer between card and Back: flex:1 expands to fill the remaining
+          vertical space; minHeight: 24 guarantees at least 24 px even on
+          short phones where the card + hero eat into the available area.
+          Replaces the old `backWrap` flex container that collapsed when
+          hero + card content together exceeded the screen and pushed Back
+          up against the card edge. */}
+      <View style={styles.spacer} />
+
+      <Animated.View entering={FadeIn.duration(360).delay(360)}>
         <TouchableOpacity onPress={onBack} activeOpacity={0.85} style={[styles.backBtn, { marginBottom: insets.bottom + 24 }]}>
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
@@ -124,20 +139,46 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack }: 
   );
 }
 
+// Background gradient + decorative blurry blobs. Sits in absoluteFill so
+// content (hero, card, back) renders on top with no z-index ceremony.
+function BackgroundDecor() {
+  return (
+    <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+      <LinearGradient
+        // Soft pink → deeper pink → soft pink — top-left to bottom-right.
+        // Four stops with low-contrast neighbors mean no visible band.
+        colors={['#FBE5EF', '#F8C5DA', '#F0A8C9', '#FAD2E4']}
+        locations={[0, 0.35, 0.7, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+      />
+      {/* Oversized translucent circles, partially off-screen, with
+          opacities in the 0.2–0.5 range. Overlapping at low alpha
+          stacks the tints additively for a painterly, no-edge feel. */}
+      <View style={[styles.blob, styles.blobA]} />
+      <View style={[styles.blob, styles.blobB]} />
+      <View style={[styles.blob, styles.blobC]} />
+      <View style={[styles.blob, styles.blobD]} />
+      <View style={[styles.blob, styles.blobE]} />
+    </View>
+  );
+}
+
 function Hero() {
   if (HERO_SOURCE) {
     return <ImageBackground source={HERO_SOURCE} style={styles.hero} resizeMode="cover" />;
   }
+  // No image yet — leave the hero area transparent so the global gradient
+  // + blobs show through. The placeholder tag is centered so the user can
+  // still see exactly where the asset slot is during development.
   return (
-    <LinearGradient
-      colors={['#A8CFA1', '#7CB67D', '#5C9F66']}
-      style={styles.hero}
-    >
+    <View style={styles.hero}>
       <View style={styles.placeholderTag} pointerEvents="none">
-        <Feather name="image" size={18} color="rgba(255,255,255,0.85)" />
+        <Feather name="image" size={18} color="rgba(255,255,255,0.95)" />
         <Text style={styles.placeholderText}>assets/weekly-jesus.png</Text>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -159,14 +200,14 @@ function PrayingHandsGlyph({ color, small }: { color: string; small?: boolean })
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#A8CFA1' },
+  // Base color is the lightest stop of the gradient so a flash of solid
+  // background during initial paint matches the gradient's top-left.
+  root: { flex: 1, backgroundColor: '#FBE5EF' },
   hero: {
-    // Was 52 % — too tall: pushed the white card down so far it overlapped
-    // the Back button on most phones. The user is dropping a smaller hero
-    // image anyway, so 38 % gives the card enough room above the bottom CTA.
     height: '38%',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'transparent',
   },
   placeholderTag: {
     flexDirection: 'row',
@@ -175,9 +216,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 14,
-    backgroundColor: 'rgba(0,0,0,0.30)',
+    // Darker tag so it stays legible over the bright pink gradient.
+    backgroundColor: 'rgba(30,27,46,0.32)',
   },
-  placeholderText: { color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: '600' },
+  placeholderText: { color: 'rgba(255,255,255,0.95)', fontSize: 13, fontWeight: '600' },
+  // Decorative blobs — large, soft, translucent. Position is hand-tuned
+  // so the colors stack pleasantly in the upper third (where the hero
+  // shows through) and ease off below the card.
+  blob: {
+    position: 'absolute',
+    borderRadius: 999,
+  },
+  blobA: {
+    width: 380, height: 380,
+    backgroundColor: 'rgba(232,97,154,0.22)',   // ROSE @ 22 %
+    top: -110, right: -90,
+  },
+  blobB: {
+    width: 460, height: 460,
+    backgroundColor: 'rgba(255,255,255,0.32)',
+    top: '8%', left: -200,
+  },
+  blobC: {
+    width: 300, height: 300,
+    backgroundColor: 'rgba(249,168,201,0.45)',  // soft pink @ 45 %
+    top: '18%', right: -60,
+  },
+  blobD: {
+    width: 360, height: 360,
+    backgroundColor: 'rgba(252,217,232,0.55)',  // very-light pink @ 55 %
+    bottom: -80, left: -100,
+  },
+  blobE: {
+    width: 240, height: 240,
+    backgroundColor: 'rgba(232,97,154,0.16)',   // ROSE @ 16 %
+    bottom: '12%', right: -50,
+  },
   card: {
     marginTop: -32,
     marginHorizontal: 16,
@@ -245,7 +319,7 @@ const styles = StyleSheet.create({
   },
   reminderDot: {
     position: 'absolute', top: 4, right: 4,
-    width: 8, height: 8, borderRadius: 4, backgroundColor: '#FF4D4D',
+    width: 8, height: 8, borderRadius: 4, backgroundColor: '#FFE066',
   },
   reminderText: { flex: 1, fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
   reminderToggle: {
@@ -255,11 +329,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   reminderKnob: { width: 18, height: 18, borderRadius: 9, backgroundColor: '#FFFFFF' },
-  backWrap: {
+  // Replaces the old `backWrap` (flex:1 + justifyContent:'flex-end' +
+  // paddingTop:32). That layout collapsed when hero + card + reminder
+  // button together overflowed available height — paddingTop went away,
+  // Back hit the card edge. Now the spacer's minHeight:24 is a hard
+  // floor that survives even when the rest is squeezed.
+  spacer: {
     flex: 1,
-    justifyContent: 'flex-end',
-    paddingTop: 32,    // guarantees ≥ 32 px between the card and Back, even
-                       // when the card grows tall on small phones.
+    minHeight: 24,
   },
   backBtn: {
     marginHorizontal: 16,

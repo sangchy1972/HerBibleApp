@@ -31,20 +31,40 @@ export function GridTile({
   );
 }
 
-// Wider 3-up tile for the "My Notes" row (Notes / Bookmarks / Highlight).
+// Wider 3-up tile used for both the "My Notes" row (Notes / Bookmarks /
+// Highlight) and the "Learning Bible" row (My Plan / Quiz / Did You Know).
+// The shared treatment is a clean white card with a centered icon + label —
+// no rose-tinted icon background, no extra chrome — so the two rows look
+// like siblings rather than competing styles.
+//
+// Layout: a flex-1 icon slot on top + a fixed-height (34 px = 2 lines @
+// lineHeight 17) label slot at the bottom. Splitting into two slots keeps
+// every tile's icon at the same Y regardless of whether the label wraps
+// to one line ("Notes") or two ("Saved Verses" / "Did you know"). Without
+// this, `justifyContent: 'center'` makes the whole group center as a unit
+// — so a 2-line group sits ~9 px higher than a 1-line group, and the
+// row-of-tiles reads as misaligned.
 export function NotesTile({
   label,
   icon,
+  badge,
   onPress,
 }: {
   label: string;
   icon: FeatherIcon;
+  /** Tiny red pip in the top-right corner — used for "new / unseen" hints. */
+  badge?: boolean;
   onPress?: () => void;
 }) {
   return (
     <TouchableOpacity onPress={onPress} style={styles.notesTile} activeOpacity={0.8}>
-      <Feather name={icon} size={28} color={ROSE} />
-      <Text style={styles.notesLabel}>{label}</Text>
+      <View style={styles.notesIconSlot}>
+        <Feather name={icon} size={24} color={ROSE} />
+      </View>
+      <View style={styles.notesLabelSlot}>
+        <Text style={styles.notesLabel} numberOfLines={2}>{label}</Text>
+      </View>
+      {badge && <View style={styles.notesTileBadge} />}
     </TouchableOpacity>
   );
 }
@@ -140,22 +160,57 @@ const styles = StyleSheet.create({
   },
   notesTile: {
     width: '31%',
-    aspectRatio: 1.25,                  // -20 % height: width / 0.8 = 1.25
+    // 4:3 (width:height) — height = 75 % of width, i.e. the requested −25 %.
+    // Width stays at 31 % so a row still fits three tiles + columnGap. Was 1
+    // (square ~105 × 105) and felt vertically heavy; now ~105 × 79 reads as
+    // a compact horizontal card while preserving the icon-over-label rhythm.
+    aspectRatio: 4 / 3,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.92)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    paddingVertical: 9,                   // 12 → 9, proportional to height shrink
+    paddingHorizontal: 6,
+    alignItems: 'stretch',                // children fill horizontal — needed so the
+                                          // label slot can centre 2-line text properly
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 1,
   },
+  // Upper slot — icon hugs the BOTTOM of its slot (toward the label),
+  // then `paddingBottom: 8` lifts it back up by 8 px (was 5; bumped +3
+  // per user feedback that the icon sat too far from the top of the
+  // card). Net: icon top ≈ 12 px from card top, icon-label visual gap
+  // ≈ 10 px. Cross-tile icon-Y alignment still holds because every
+  // tile's icon-slot bottom edge is at the same Y.
+  notesIconSlot: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: 8,                     // lifts the bottom-aligned icon upward; +3 from previous
+  },
+  // Bottom slot — 26 px (was 34 = 2 lines @ lineHeight 17). Label hugs the
+  // TOP of its slot (toward the icon) so there's no in-slot margin above
+  // the label. Combined with the icon's flex-end, the icon-label pair now
+  // sits as a tight unit — the ~10 px gap the user flagged shrinks to
+  // ~2 px visual. Label Y is still consistent across tiles (slot top
+  // edge is fixed-Y).
+  notesLabelSlot: {
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'flex-start',         // was 'center' — pulls label ~5 px closer to icon
+  },
   notesLabel: {
     fontSize: 14, color: TXT, fontWeight: '600',
+    lineHeight: 17,
+    textAlign: 'center',
+  },
+  notesTileBadge: {
+    position: 'absolute', top: 8, right: 8,
+    width: 8, height: 8, borderRadius: 4,
+    backgroundColor: '#FF4D4D',
   },
   badgeCard: {
     flexDirection: 'row',

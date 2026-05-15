@@ -86,7 +86,11 @@ export default function StreakScreen({ navigation }: RootStackScreenProps<'Strea
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
           <Text style={styles.backArrow}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>DAY STREAK</Text>
+        {/* Was "DAY STREAK"; renamed to match the big-number label below
+            since both describe the lifetime `totalComplete`, not an active
+            streak. The legitimate streak number lives in the "Max streak"
+            stat further down the page. */}
+        <Text style={styles.headerTitle}>DAYS PRAYED</Text>
         <TouchableOpacity onPress={() => setInfo(v => !v)} style={styles.headerBtn}>
           <Text style={styles.infoIcon}>ⓘ</Text>
         </TouchableOpacity>
@@ -114,7 +118,12 @@ export default function StreakScreen({ navigation }: RootStackScreenProps<'Strea
         <View style={styles.flameSection}>
           <FireFlame size={flameSizeForLevel(lvl)} />
           <Text style={styles.streakNum}>{totalComplete}</Text>
-          <Text style={styles.streakLabel}>DAY STREAK</Text>
+          {/* The big number is `totalComplete` — lifetime count of days where
+              both prayers were finished, not an active consecutive streak.
+              Label was "DAY STREAK" which conflated the two; "DAYS PRAYED"
+              describes the actual quantity. The "Max streak" stat below
+              remains the page's single legitimate streak indicator. */}
+          <Text style={styles.streakLabel}>DAYS PRAYED</Text>
         </View>
 
         <View style={styles.statsRow}>

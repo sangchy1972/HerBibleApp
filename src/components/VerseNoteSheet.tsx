@@ -10,21 +10,32 @@ import Animated, {
 } from 'react-native-reanimated';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { ROSE, TXT, TXTSUB, P } from '../constants/theme';
-import { useNotes } from '../state/NotesContext';
+import { useNotes, type Note } from '../state/NotesContext';
 
 interface Props {
   verseRef: string;
   verseText: string;
+  // When provided, the sheet opens in edit mode: prefilled with the note's
+  // current text and Save routes to editNote instead of addNote.
+  existingNote?: Note;
   onClose: () => void;
   onSaved?: () => void;
 }
 
-export default function VerseNoteSheet({ verseRef, verseText, onClose, onSaved }: Props) {
+export default function VerseNoteSheet({ verseRef, verseText, existingNote, onClose, onSaved }: Props) {
   const insets = useSafeAreaInsets();
-  const { addNote } = useNotes();
-  const [text, setText] = useState('');
+  const { addNote, editNote } = useNotes();
+  const [text, setText] = useState(existingNote?.text ?? '');
+  const isEdit = !!existingNote;
 
-  const dirty = text.trim().length > 0;
+  // "dirty" = the Save button should do something. In create mode that's any
+  // non-empty text; in edit mode the text must also actually differ from the
+  // existing note (otherwise tapping Cancel shouldn't trigger the discard
+  // prompt, and Save should be visually disabled).
+  const trimmed = text.trim();
+  const dirty = isEdit
+    ? trimmed.length > 0 && trimmed !== existingNote!.text
+    : trimmed.length > 0;
 
   const closeWithoutSave = () => {
     Keyboard.dismiss();
@@ -33,7 +44,11 @@ export default function VerseNoteSheet({ verseRef, verseText, onClose, onSaved }
 
   const save = () => {
     if (dirty) {
-      addNote(text, { ref: verseRef, text: verseText });
+      if (isEdit) {
+        editNote(existingNote!.id, text);
+      } else {
+        addNote(text, { ref: verseRef, text: verseText });
+      }
       onSaved?.();
     }
     closeWithoutSave();
@@ -96,7 +111,7 @@ export default function VerseNoteSheet({ verseRef, verseText, onClose, onSaved }
                 <TouchableOpacity onPress={attemptDismiss} hitSlop={10}>
                   <Text style={styles.cancel}>Cancel</Text>
                 </TouchableOpacity>
-                <Text style={styles.title}>Note</Text>
+                <Text style={styles.title}>{isEdit ? 'Edit note' : 'Note'}</Text>
                 <TouchableOpacity onPress={save} hitSlop={10}>
                   <Text style={[styles.saveBtn, !dirty && { color: 'rgba(232,97,154,0.45)' }]}>Save</Text>
                 </TouchableOpacity>

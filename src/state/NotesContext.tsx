@@ -15,6 +15,7 @@ export interface Note {
 interface NotesState {
   notes: Note[];
   addNote: (text: string, verse?: { ref: string; text: string }, kind?: NoteKind) => void;
+  editNote: (id: string, text: string) => void;
   removeNote: (id: string) => void;
 }
 
@@ -51,6 +52,15 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
         },
         ...notes,
       ]);
+    },
+    editNote: (id, text) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      const target = notes.find(n => n.id === id);
+      if (!target || target.text === trimmed) return; // no-op when unchanged
+      persist(notes.map(n =>
+        n.id === id ? { ...n, text: trimmed, savedAt: new Date().toISOString() } : n,
+      ));
     },
     removeNote: (id) => persist(notes.filter((n) => n.id !== id)),
   }), [notes]);

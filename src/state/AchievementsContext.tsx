@@ -8,7 +8,7 @@ import { useHighlights } from './HighlightsContext';
 import { useReadChapters } from './ReadChaptersContext';
 import { useShare } from './ShareContext';
 import { usePlanCompletion } from './PlanCompletionContext';
-import { useFeaturedPlans } from './FeaturedPlansContext';
+import { usePlans } from './PlansContext';
 import { useActivity } from './ActivityContext';
 
 // Per-badge record. `count` lets repeatable badges (streak resets, triple-day)
@@ -62,7 +62,11 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
   } = useReadChapters();
   const { shareCount } = useShare();
   const { completedPlans, completedPlanFinishedDates, hasRepeatedPlan, records: planRecords } = usePlanCompletion();
-  const { summary: planSummary } = useFeaturedPlans();
+  // PlansContext exposes a SummaryFile (with .plans[]) instead of a bare
+  // PlanSummary[]. The summary can be null while the worker fetch is in
+  // flight — bare [] is fine for the duration-map below in that case.
+  const { summary: planSummaryFile } = usePlans();
+  const planSummary = planSummaryFile?.plans ?? [];
   // For milestone.fullYear (v2.3): app age ≥ 365 days AND ≥ 300 distinct
   // active days. ActivityContext.dates already tracks the latter.
   const { dates: activityDates } = useActivity();
@@ -187,7 +191,7 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
       planCount: completedPlans.length,
       planRecentDates: completedPlanFinishedDates,
       hasRepeatedPlan: hasRepeatedPlan(
-        Object.fromEntries(planSummary.map(p => [p.slug, p.duration])),
+        Object.fromEntries(planSummary.map((p) => [p.slug, p.duration_days])),
       ),
       shareCount,
       daysSinceFirstLaunch,

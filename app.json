@@ -37,7 +37,10 @@
         "backgroundColor": "#FBF7F6"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -67,6 +70,12 @@
           "environment": "production"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "098a8f35-7f65-4e4b-8263-da7af4173750"
+      }
+    },
+    "owner": "sangchy1972"
   }
 }

@@ -770,7 +770,13 @@ export default function BibleScreen() {
         clearTimeout(timeout);
         const row = ch.verses.find(r => r.verse === v.verse);
         if (!row || !row.text) { setExplainStatus('error'); return; }
-        setExplainText(row.text);
+        // Tyndale notes lead with a verse reference like "5:5 " or "5:1-14 "
+        // or "10:1–12:13 ". The reader already shows the verse number above
+        // the card, so the leading ref is redundant and — when the note was
+        // inherited from a different verse in a range — actively confusing
+        // (e.g. tapping verse 7 and seeing "5:5 …" in the card). Strip it.
+        const cleaned = row.text.replace(/^\d+:\d+(?:[-–—]\d+(?::\d+)?)?\s+/, '');
+        setExplainText(cleaned);
         setExplainStatus('ready');
       })
       .catch(() => {

@@ -209,36 +209,62 @@ print(f'Round N: {added} entries added; cache total: {len(cache)}')
 User then runs `python3 scripts/commentary_cleanup/rounds/round<N>.py` and
 that's the cache updated.
 
-### The user's 5-command sequence (after cowork delivers a round)
+### The autonomous one-command sequence
+
+After cowork writes `rounds/round<N>.py`, the **entire** rest of the
+pipeline (apply → commit → rebuild → push corpus → bump pin → commit
+bump → push) is a single command:
 
 ```bash
-# 1. Apply the round to cache.json
-python3 scripts/commentary_cleanup/rounds/round<N>.py
-
-# 2. Commit cache to HerBibleApp
-git add scripts/.translation_progress/cache.json
-git commit -m "translations: round <N> — <description>"
-git push
-
-# 3. Rebuild corpus (needs ~/.commentary_workspace from setup.sh)
-python3 scripts/commentary_cleanup/build_phase0.py
-python3 scripts/commentary_cleanup/build_phase0_ot.py
-
-# 4. Push corpus to GitHub mirror
-cd ~/.commentary_workspace/pd-text-corpus
-git add commentary/
-git commit -m "round <N> translation propagation"
-git push origin main
-NEW_SHA=$(git rev-parse HEAD)
-echo "New SHA: $NEW_SHA"
-cd -
-
-# 5. Bump CORPUS_COMMIT — edit src/constants/corpus.ts line 14:
-#    Replace old SHA with $NEW_SHA
+bash scripts/commentary_cleanup/run_round.sh <N>
 ```
 
-After step 5, cowork takes the next batch. The cache file commit in step 2
-is what propagates progress to the next cowork session.
+Examples:
+```bash
+bash scripts/commentary_cleanup/run_round.sh 2
+bash scripts/commentary_cleanup/run_round.sh 3
+```
+
+This script:
+1. Applies the round file's translations to `scripts/.translation_progress/cache.json`
+2. Commits cache + round file to HerBibleApp, pushes
+3. Rebuilds FR/PT/ES corpus via Phase 0 + OT extension
+4. Pushes corpus update to `sangchy1972/pd-text-corpus`, captures new SHA
+5. Bumps `CORPUS_COMMIT` in `src/constants/corpus.ts` to the new SHA
+6. Commits the bump to HerBibleApp, pushes
+
+Safe to re-run: detects "no changes" at each step and continues without
+error. Uses `set -euo pipefail` so any actual failure stops the chain
+before doing damage.
+
+### Fully autonomous overnight workflow
+
+If cowork has Bash access (sandbox not blocked), the loop becomes:
+
+```
+for N in 2 3 4 5 ...
+  Cowork:
+    1. Write rounds/round<N>.py
+    2. Run: bash scripts/commentary_cleanup/run_round.sh <N>
+    3. Sleep or pick next batch
+```
+
+User wakes up to N pushed rounds + N CORPUS_COMMIT bumps on
+`claude/multilang-commentary`. They can either:
+- Cherry-pick the latest bump commit onto `main`
+- Or merge the branch
+- Or just keep developing from the latest pin
+
+### If cowork can't Bash (sandbox blocked)
+
+Cowork writes the round file. User runs the script themselves once:
+
+```bash
+bash scripts/commentary_cleanup/run_round.sh <N>
+```
+
+That's 1 command per round, not 5. The user only does this when cowork
+ping them. No editor needed; no SHA copying.
 
 See `docs/commentary_pipeline.md` for the full architecture diagram and
 rationale.

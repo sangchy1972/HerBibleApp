@@ -116,36 +116,138 @@ the commit, the next agent doesn't see your progress.
 
 ## How a translation round works
 
-Pseudocode for one round (e.g., "translate 50-80 cache-miss entries"):
+### Division of labor (cowork-friendly)
+
+Cowork (or any Read/Write-only agent) handles **steps 1-4**. The user
+handles **steps 5-9** in their Terminal. This split lets cowork keep
+working even when the macOS sandbox is full / disk-pressured, since
+write-translations-into-a-Python-file doesn't need Bash.
 
 ```
-1. Load workdata/translation_miss_only.json    ← the full backlog (7,142 hashes)
-2. Load scripts/.translation_progress/cache.json  ← current progress
-3. Pick the next 20-30 hashes you'll cover (some books are larger than others)
-4. For each hash:
-   - Read en_text (from work plan, NEVER re-type)
-   - Write fr/pt/es translation matching per-language style contract
-   - Insert into a Python dict keyed by hash
-5. Apply: cache[f'{lang}|en|{h}'] = translation_text
-6. Save: scripts/.translation_progress/cache.json (compact JSON)
-7. Sync hot copy: ~/.commentary_workspace/multilang_translation_cache.json
-8. git commit scripts/.translation_progress/cache.json
-9. Run build_phase0.py + build_phase0_ot.py to rebuild corpus
-10. cd ~/.commentary_workspace/pd-text-corpus
-    git add commentary/
-    git commit -m "..."
-    git push origin main          ← gets new SHA
-11. Curl-verify a sample verse from the new SHA at jsDelivr
-12. Deliver SHA to user as a 1-line CORPUS_COMMIT bump diff
+┌─────────────────────────────────────────────────────────────────────┐
+│  COWORK (Read + Write only)        │  USER (Terminal)               │
+│  ────────────────────────          │  ────────────                  │
+│  1. Read workdata/                 │                                │
+│     translation_miss_only.json     │                                │
+│  2. Read scripts/.translation_     │                                │
+│     progress/cache.json            │                                │
+│  3. Pick 50-80 hashes for round    │                                │
+│  4. Write Python file:             │                                │
+│     scripts/commentary_cleanup/    │                                │
+│     rounds/round<N>.py             │                                │
+│       T = {                        │                                │
+│         '<hash>': {                │                                │
+│           'fr': '...',             │                                │
+│           'pt': '...',             │                                │
+│           'es': '...',             │                                │
+│         },                         │                                │
+│         ...                        │                                │
+│       }                            │                                │
+│     + bottom: apply T to cache.json│                                │
+│                                    │                                │
+│  Tell user: "round <N> written     │                                │
+│  with X entries, please apply"    ─┼─→  5. python3 rounds/round<N>.py │
+│                                    │       (updates cache.json)      │
+│                                    │     6. git add scripts/         │
+│                                    │       .translation_progress/    │
+│                                    │       cache.json                │
+│                                    │       git commit -m "..."       │
+│                                    │       git push                  │
+│                                    │     7. python3 build_phase0.py  │
+│                                    │       python3 build_phase0_ot.py│
+│                                    │     8. cd ~/.commentary_         │
+│                                    │       workspace/pd-text-corpus  │
+│                                    │       git add commentary/       │
+│                                    │       git commit && git push    │
+│                                    │       → note new SHA            │
+│                                    │     9. Update CORPUS_COMMIT     │
+│                                    │       in src/constants/         │
+│                                    │       corpus.ts (1 line)        │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-See `commentary_pipeline.md` for the full diagram and rationale.
+### Template for a translation round file
+
+Cowork writes one file per round at `rounds/round<N>.py`. Use this skeleton:
+
+```python
+"""Round N translations: <N> entries across <which books>.
+
+Methodology: hash-keyed dict, no re-typing of EN text. Reads en_text from
+workdata/translation_miss_only.json for context, but the dict key is the
+hash directly.
+"""
+import json, hashlib
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent  # walk up to repo root
+REPO_CACHE = REPO_ROOT / 'scripts' / '.translation_progress' / 'cache.json'
+
+# Map: hash → {lang: translation_text}
+T = {
+    '<16-char-hash-from-work-plan>': {
+        'fr': "1:6 En cela — dans cette perspective...",
+        'pt': "1:6 Em que — nesta perspectiva...",
+        'es': "1:6 En lo cual — en esta perspectiva...",
+    },
+    # ... 50-80 more entries
+}
+
+# Apply
+cache = json.loads(REPO_CACHE.read_text())
+added = 0
+for h, lang_map in T.items():
+    for lang, text in lang_map.items():
+        key = f'{lang}|en|{h}'
+        if key not in cache:
+            cache[key] = text
+            added += 1
+REPO_CACHE.write_text(json.dumps(cache, ensure_ascii=False) + '\n')
+print(f'Round N: {added} entries added; cache total: {len(cache)}')
+```
+
+User then runs `python3 scripts/commentary_cleanup/rounds/round<N>.py` and
+that's the cache updated.
+
+### The user's 5-command sequence (after cowork delivers a round)
+
+```bash
+# 1. Apply the round to cache.json
+python3 scripts/commentary_cleanup/rounds/round<N>.py
+
+# 2. Commit cache to HerBibleApp
+git add scripts/.translation_progress/cache.json
+git commit -m "translations: round <N> — <description>"
+git push
+
+# 3. Rebuild corpus (needs ~/.commentary_workspace from setup.sh)
+python3 scripts/commentary_cleanup/build_phase0.py
+python3 scripts/commentary_cleanup/build_phase0_ot.py
+
+# 4. Push corpus to GitHub mirror
+cd ~/.commentary_workspace/pd-text-corpus
+git add commentary/
+git commit -m "round <N> translation propagation"
+git push origin main
+NEW_SHA=$(git rev-parse HEAD)
+echo "New SHA: $NEW_SHA"
+cd -
+
+# 5. Bump CORPUS_COMMIT — edit src/constants/corpus.ts line 14:
+#    Replace old SHA with $NEW_SHA
+```
+
+After step 5, cowork takes the next batch. The cache file commit in step 2
+is what propagates progress to the next cowork session.
+
+See `docs/commentary_pipeline.md` for the full architecture diagram and
+rationale.
 
 ## Style contract (CRITICAL)
 
 Translations must match the tone of Tyndale Open Study Notes:
 
-- 30-110 words (matching EN length, ratio 0.7-1.5 acceptable)
+- 30-70 words (matching EN length, ratio 0.7-1.5 acceptable)
 - Scholarly-warm register; no exclamations; no devotional fluff
 - *Hebrew / Greek* terms italicized with asterisks: `*shalom*`, `*davar*`
 - Cross-references in standard abbreviations per language:

@@ -21,17 +21,24 @@ fixed for EN and FR/PT/ES OT. The remaining work is:
 
 ## Read the canonical docs first
 
-Before touching any code:
+Before touching any code, read these in order (all in this directory's `docs/`):
 
-1. `~/.claude/projects/-Users-liwencao-HerBibleApp/memory/commentary_pipeline.md`
-   — end-to-end architecture, data flow, Phase A-E details, audit
-   methodology, propagation cycle. **The single most important file.**
-2. `~/.claude/projects/-Users-liwencao-HerBibleApp/memory/commentary_agent.md`
-   — style contracts (per-language), hash-keyed cache rule,
-   CORPUS_COMMIT bump workflow, verification checklist.
-3. `~/.claude/projects/-Users-liwencao-HerBibleApp/memory/mistakes_to_never_repeat.md`
-   — 20 patterns (especially K, L, M, N, O, P, Q which all came from
-   this exact work).
+1. **`docs/commentary_pipeline.md`** — end-to-end architecture, data flow,
+   Phase A-E details, audit methodology, propagation cycle. **The single
+   most important file.**
+2. **`docs/commentary_agent.md`** — style contracts (per-language), hash-keyed
+   cache rule, CORPUS_COMMIT bump workflow, verification checklist.
+3. **`docs/mistakes_to_never_repeat.md`** — 20 patterns. Pay especially close
+   attention to K (source-sparseness), L (audit-first), M (cosmetic-without-content),
+   N (don't force git checkout/merge), O (hash-keyed cache only),
+   P (multi-method audit), Q (1-line CORPUS_COMMIT diff). All came from
+   this exact work.
+
+These three files are MIRRORS of the user's local skill memory at
+`~/.claude/projects/-Users-liwencao-HerBibleApp/memory/`. Whichever copy
+you read, they're identical. The repo copy exists so any agent (cowork,
+codex, future Claude) has self-contained access without depending on the
+user's local Claude config directory.
 
 ## Layout
 

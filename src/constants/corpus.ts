@@ -21,7 +21,7 @@
 // 29670f4 — add fr/pt/es commentary trees from BurritoTruck Tyndale TSN.
 // 89e0579 — add English commentary tree (Tyndale CC BY-SA 4.0 + 266 original).
 // 4cd531e — strip word-segmentation spaces from zh-Hant / zh-Hans verse text.
-export const CORPUS_COMMIT = '226bb1b9aef265bfb4ad614619a361f5a77f0038';
+export const CORPUS_COMMIT = '8055c8f65dcc4bbaec5fe68e5fcfc7ee45f6ee23';
 
 export const CORPUS_CDN_ROOT =
   `https://cdn.jsdelivr.net/gh/sangchy1972/pd-text-corpus@${CORPUS_COMMIT}`;

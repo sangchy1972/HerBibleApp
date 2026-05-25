@@ -1,247 +1,1830 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTabFocusScrollReset } from '../components/shared/useTabFocusEntrance';
+import TabSection from '../components/shared/TabSection';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Feather } from '@expo/vector-icons';
-import Svg, { Path } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather, Ionicons } from '@expo/vector-icons';
+import FireFlame from '../components/shared/FireFlame';
+import Animated, {
+  SlideInDown, SlideInUp, FadeIn, FadeOut, Easing,
+  useSharedValue, useAnimatedStyle, withTiming, runOnJS,
+} from 'react-native-reanimated';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import * as ImagePicker from 'expo-image-picker';
 import Glass from '../components/shared/Glass';
-import { ROSE, LAV, TXT, TXTSUB, P } from '../constants/theme';
-import { SAVED_VERSES } from '../constants/data';
+import Logo from '../components/shared/Logo';
+import { ROSE, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
+import { TRANSLATIONS, useTranslation, type LanguageCode } from '../state/TranslationsContext';
+import { useUILanguage, UI_LANGUAGES, type UILanguageCode } from '../state/UILanguageContext';
+import { useT } from '../i18n/useT';
+import { useAuth } from '../state/AuthContext';
+import { useSavedVerses } from '../state/SavedVersesContext';
+import { useActivity } from '../state/ActivityContext';
+import { usePrayer } from '../state/PrayerContext';
+import { useHighlights } from '../state/HighlightsContext';
+import { useBookmarks } from '../state/BookmarksContext';
+import { useNotes, type Note } from '../state/NotesContext';
+import { useMoodCheckIn } from '../state/MoodCheckInContext';
+import { useAchievements } from '../state/AchievementsContext';
+import BadgeIcon from '../components/BadgeIcon';
+import { ACHIEVEMENTS } from '../constants/achievements';
+import SignInSheet from '../components/SignInSheet';
+import VerseNoteSheet from '../components/VerseNoteSheet';
+import { NotesTile } from '../components/ProfileTiles';
+import { downloadFullTranslation, getDownloadState, type DownloadState } from '../services/bibleService';
+import type { TabScreenProps } from '../navigation/types';
 
-function SmallFlame() {
+type FeatherIcon = keyof typeof Feather.glyphMap;
+
+function SettingRow({ label, icon, danger, isLast, onPress }: {
+  label: string;
+  icon: FeatherIcon;
+  danger?: boolean;
+  isLast?: boolean;
+  onPress?: () => void;
+}) {
+  const Wrapper: any = onPress ? TouchableOpacity : View;
   return (
-    <Svg width={18} height={20} viewBox="0 0 100 110">
-      <Path
-        d="M50 5 C 38 28, 22 38, 22 62 C 22 83, 35 100, 50 100 C 65 100, 78 83, 78 62 C 78 48, 70 42, 70 42 C 70 50, 62 55, 58 52 C 60 38, 56 22, 50 5 Z"
-        fill="#FF7043"
-      />
-      <Path
-        d="M50 50 C 44 60, 40 68, 40 80 C 40 90, 45 96, 50 96 C 55 96, 60 90, 60 80 C 60 68, 56 60, 50 50 Z"
-        fill="rgba(255,220,180,0.7)"
-      />
-    </Svg>
-  );
-}
-
-function FlowerIcon({ color }: { color: string }) {
-  return (
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 2C10 5 7 6 7 9C7 11.5 9.2 13.5 12 13.5C14.8 13.5 17 11.5 17 9C17 6 14 5 12 2Z" fill={color} opacity={0.85} />
-      <Path d="M12 22C10 19 7 18 7 15C7 12.5 9.2 10.5 12 10.5C14.8 10.5 17 12.5 17 15C17 18 14 19 12 22Z" fill={color} opacity={0.85} />
-      <Path d="M2 12C5 10 6 7 9 7C11.5 7 13.5 9.2 13.5 12C13.5 14.8 11.5 17 9 17C6 17 5 14 2 12Z" fill={color} opacity={0.85} />
-      <Path d="M22 12C19 10 18 7 15 7C12.5 7 10.5 9.2 10.5 12C10.5 14.8 12.5 17 15 17C18 17 19 14 22 12Z" fill={color} opacity={0.85} />
-      <Path d="M12 15C13.657 15 15 13.657 15 12C15 10.343 13.657 9 12 9C10.343 9 9 10.343 9 12C9 13.657 10.343 15 12 15Z" fill={color} />
-    </Svg>
-  );
-}
-
-const SETTING_ICONS: Record<string, string> = {
-  'Edit profile': 'user',
-  'Notifications': 'bell',
-  'Appearance': 'sun',
-  'Privacy': 'lock',
-  'Help & support': 'help-circle',
-  'Share Her Bible': 'share-2',
-};
-
-function SettingRow({ label, danger, isLast }: { label: string; danger?: boolean; isLast?: boolean }) {
-  const iconName = danger ? 'log-out' : (SETTING_ICONS[label] || 'chevron-right');
-  return (
-    <View style={[styles.settingRow, !isLast && styles.settingBorder]}>
+    <Wrapper onPress={onPress} activeOpacity={0.7} style={[styles.settingRow, !isLast && styles.settingBorder]}>
       <View style={[styles.settingIcon, danger && styles.settingIconDanger]}>
-        <Feather name={iconName as any} size={15} color={danger ? '#C84444' : TXT} />
+        <Feather name={icon} size={18} color={danger ? '#C84444' : TXT} />
       </View>
       <Text style={[styles.settingLabel, danger && { color: '#C84444' }]}>{label}</Text>
-      {!danger && <Feather name="chevron-right" size={16} color={TXTSUB} />}
+      {!danger && <Feather name="chevron-right" size={18} color={TXTSUB} />}
+    </Wrapper>
+  );
+}
+
+// Reusable search field for the My-Notes / Bookmarks / Highlights / Saved-
+// Verses sheets. Self-contained (no external state) — caller passes value
+// and onChangeText. Shows an inline clear button when there's content.
+function SheetSearch({ value, onChangeText, placeholder }: {
+  value: string;
+  onChangeText: (s: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <View style={styles.searchWrap}>
+      <Feather name="search" size={16} color={TXTSUB} />
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={TXTSUB}
+        style={styles.searchField}
+        returnKeyType="search"
+        autoCorrect={false}
+      />
+      {value.length > 0 && (
+        <TouchableOpacity onPress={() => onChangeText('')} hitSlop={10}>
+          <Feather name="x-circle" size={18} color={TXTSUB} />
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
 
-export default function ProfileScreen() {
+// Shown inside a sheet's ScrollView when the search query yields no matches.
+function SheetSearchEmpty({ query }: { query: string }) {
+  const t = useT();
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-      {/* Hero */}
-      <View style={styles.hero}>
-        <LinearGradient colors={['#F9A8C9', '#E8619A']} style={styles.avatar}>
-          <Text style={styles.avatarText}>S</Text>
-        </LinearGradient>
-        <Text style={styles.name}>Sarah</Text>
-        <Text style={styles.email}>sarah@email.com</Text>
-      </View>
+    <View style={{ paddingTop: 36, alignItems: 'center' }}>
+      <Feather name="search" size={22} color={TXTSUB} />
+      <Text style={{ marginTop: 8, color: TXTSUB, fontSize: 14 }}>
+        {t('profile.sheet.noMatches', { query })}
+      </Text>
+    </View>
+  );
+}
 
-      {/* Stats */}
-      <View style={styles.statsRow}>
-        {[
-          { n: '12', label: 'Day Streak' },
-          { n: '38', label: 'Days Read' },
-          { n: '9', label: 'Saved' },
-        ].map((s, i) => (
-          <Glass key={i} style={styles.statCard}>
-            <View style={styles.statIconWrap}>
-              {i === 0 ? <SmallFlame /> : i === 1
-                ? <Feather name="book-open" size={18} color={ROSE} />
-                : <FlowerIcon color={ROSE} />
-              }
-            </View>
-            <Text style={styles.statNum}>{s.n}</Text>
-            <Text style={styles.statLabel}>{s.label}</Text>
-          </Glass>
+// Three stat colors — Day Streak (rose), Days Read (lavender), Calendar (amber).
+// Widget lives in its own banner card below the row.
+const STAT_COLORS = [ROSE, LAV, '#F4B860'];
+
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+function dateKey(y: number, m: number, d: number) {
+  return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
+function formatNoteDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  } catch { return ''; }
+}
+
+// Mirror of HL_COLORS in BibleScreen — keeps the swatch consistent across screens.
+function highlightSwatch(name: string): string {
+  switch (name) {
+    case 'rose':  return '#F5C2D5';
+    case 'lav':   return '#CBC0E8';
+    case 'amber': return '#F4DD9E';
+    case 'sage':  return '#BAE0C6';
+    case 'sky':   return '#B8D2EE';
+    default:      return '#999999';
+  }
+}
+
+function MonthGrid({ year, month, activeSet }: { year: number; month: number; activeSet: Set<string> }) {
+  const firstDay = new Date(year, month, 1).getDay();        // 0=Sun
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = new Date();
+  const cells: (number | null)[] = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+  return (
+    <View style={{ marginBottom: 28 }}>
+      <Text style={styles.calMonthTitle}>{MONTH_NAMES[month]} {year}</Text>
+      <View style={styles.calWeekdayRow}>
+        {WEEKDAYS.map((w, i) => (
+          <Text key={i} style={styles.calWeekday}>{w}</Text>
         ))}
       </View>
-
-      {/* My Library */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>My Library</Text>
-        <TouchableOpacity style={styles.seeAllRow}>
-          <Text style={[styles.seeAll, { color: ROSE }]}>See all</Text>
-          <Feather name="chevron-right" size={13} color={ROSE} />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.libRow}>
-        {[
-          { label: 'Highlights', count: '24 verses', ac: ROSE, icon: 'edit-2' },
-          { label: 'Notes', count: '8 entries', ac: LAV, icon: 'file-text' },
-          { label: 'Bookmarks', count: '12 saved', ac: '#F4B860', icon: 'bookmark' },
-        ].map((t, i) => (
-          <TouchableOpacity key={i} style={styles.libTile} activeOpacity={0.8}>
-            <View style={[styles.libIcon, { backgroundColor: `${t.ac}1A` }]}>
-              <Feather name={t.icon as any} size={18} color={t.ac} />
+      <View style={styles.calGrid}>
+        {cells.map((d, i) => {
+          if (d === null) return <View key={i} style={styles.calCell} />;
+          const key = dateKey(year, month, d);
+          const isActive = activeSet.has(key);
+          const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
+          return (
+            <View key={i} style={styles.calCell}>
+              <View style={[
+                styles.calDot,
+                isActive && styles.calDotActive,
+                isToday && styles.calDotToday,
+              ]}>
+                <Text style={[styles.calDay, isActive && { color: '#fff', fontWeight: '700' }]}>
+                  {d}
+                </Text>
+              </View>
             </View>
-            <Text style={styles.libLabel}>{t.label}</Text>
-            <Text style={styles.libCount}>{t.count}</Text>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+// Pan gesture + animated translateY for swipe-down-to-dismiss on a sheet.
+// Returns the gesture and the style to apply to the sheet's outer Animated.View.
+// Resets translateY whenever `visible` flips on so a previously-dismissed sheet
+// re-opens at its natural position.
+function useSheetPan(onClose: () => void, visible: boolean) {
+  const dragY = useSharedValue(0);
+  useEffect(() => { if (visible) dragY.value = 0; }, [visible, dragY]);
+  const pan = Gesture.Pan()
+    .activeOffsetY(12)
+    .onUpdate((e) => {
+      'worklet';
+      if (e.translationY > 0) dragY.value = e.translationY;
+    })
+    .onEnd((e) => {
+      'worklet';
+      if (e.translationY > 120 || e.velocityY > 800) {
+        dragY.value = withTiming(800, { duration: 280 }, (f) => { if (f) runOnJS(onClose)(); });
+      } else {
+        dragY.value = withTiming(0, { duration: 240 });
+      }
+    });
+  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: dragY.value }] }));
+  return { gesture: pan, sheetStyle };
+}
+
+function SheetBackdrop({ onClose }: { onClose: () => void }) {
+  return (
+    <Animated.View
+      entering={FadeIn.duration(300)}
+      style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.4)' }]}
+    >
+      <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={onClose} />
+    </Animated.View>
+  );
+}
+
+const SHEET_ENTERING = SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic));
+
+function CalendarSheet({ activityDates, onClose }: { activityDates: Set<string>; onClose: () => void }) {
+  const t = useT();
+  const today = new Date();
+  // Show current month and 11 previous months
+  const months: { y: number; m: number }[] = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    months.push({ y: d.getFullYear(), m: d.getMonth() });
+  }
+  // Pull-down-to-dismiss — matches every other sheet on this screen. The
+  // sheet was missing this and the user had no way to swipe it closed.
+  const pan = useSheetPan(onClose, true);
+  return (
+    <View style={styles.pickerOverlay}>
+      <SheetBackdrop onClose={onClose} />
+      <GestureDetector gesture={pan.gesture}>
+        <Animated.View entering={SHEET_ENTERING} style={[styles.pickerSheet, { maxHeight: '88%' }, pan.sheetStyle]}>
+          <View style={styles.sheetHandle} />
+          <Text style={[styles.pickerTitle, styles.calSheetTitle]}>{t('profile.stats.daysRead')} · {activityDates.size}</Text>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+            {months.map(({ y, m }) => (
+              <MonthGrid key={`${y}-${m}`} year={y} month={m} activeSet={activityDates} />
+            ))}
+          </ScrollView>
+        </Animated.View>
+      </GestureDetector>
+    </View>
+  );
+}
+
+export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>) {
+  const insets = useSafeAreaInsets();
+  // Tab-entrance scroll-to-top — paired with the per-section <TabSection>
+  // animations below so the user always lands at the top of the Profile tab
+  // and the content lifts into place in waves on every focus.
+  const mainScrollRef = useRef<ScrollView>(null);
+  useTabFocusScrollReset(mainScrollRef);
+  const { user, signOut, updateProfile } = useAuth();
+  const { verses: savedVerses, removeVerse } = useSavedVerses();
+  const { dates: activityDates } = useActivity();
+  const { totalComplete } = usePrayer();
+  const { highlights: highlightMap, count: highlightsCount, removeHighlight } = useHighlights();
+  const { bookmarks, count: bookmarksCount, removeBookmark } = useBookmarks();
+  const { notes, removeNote } = useNotes();
+  const { totalCheckIns } = useMoodCheckIn();
+  const { earned, earnedCount } = useAchievements();
+  const { current: currentTranslation, setTranslation } = useTranslation();
+  const { lang: uiLang, meta: uiMeta, setLang: setUILang } = useUILanguage();
+  const t = useT();
+  const [showTranslationPicker, setShowTranslationPicker] = useState(false);
+  const [langExpanded, setLangExpanded] = useState(true);
+  const [showSignInSheet, setShowSignInSheet] = useState(false);
+  const [showEditNameSheet, setShowEditNameSheet] = useState(false);
+  const [showSavedSheet, setShowSavedSheet] = useState(false);
+  const [showCalendarSheet, setShowCalendarSheet] = useState(false);
+  const [showNotesSheet, setShowNotesSheet] = useState(false);
+  const [showBookmarksSheet, setShowBookmarksSheet] = useState(false);
+  const [showHighlightsSheet, setShowHighlightsSheet] = useState(false);
+  const [showReflectionsSheet, setShowReflectionsSheet] = useState(false);
+  // When non-null, the VerseNoteSheet opens in edit mode for this note.
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
+  // Per-sheet search queries. Each sheet owns its own state so closing one
+  // sheet doesn't carry the query into another. The filter is plain
+  // case-insensitive substring matching via useMemo (further down).
+  const [notesQuery, setNotesQuery] = useState('');
+  const [bookmarksQuery, setBookmarksQuery] = useState('');
+  const [highlightsQuery, setHighlightsQuery] = useState('');
+  const [savedVersesQuery, setSavedVersesQuery] = useState('');
+  const [versionToast, setVersionToast] = useState<string | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showToast = (msg: string, ms = 2000) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setVersionToast(msg);
+    toastTimerRef.current = setTimeout(() => setVersionToast(null), ms);
+  };
+  useEffect(() => () => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+  }, []);
+
+  const [editingName, setEditingName] = useState('');
+
+  const STATS = [
+    // First stat: lifetime count of fully-completed prayer days. Was
+    // labeled "Day Streak" but the value is `totalComplete` (lifetime),
+    // not the active consecutive run — relabeled "Days Prayed" so the
+    // word matches the number.
+    // FireFlame is absolutely-positioned so it floats above the in-flow
+    // statIcon slot without pulling it. top: -5 = 5 px below the card's top
+    // edge (= wrapper-top -5; wrapper sits at card.paddingVertical 10, so
+    // flame ends up at card-top + 5 per user).
+    { n: String(totalComplete),         label: t('profile.stats.daysPrayed'), render: (_c: string) => (
+        <View style={{ position: 'absolute', top: -5, left: 0, right: 0, alignItems: 'center' }}>
+          <FireFlame size={36.8} />
+        </View>
+      ) },
+
+    { n: String(activityDates.size),    label: t('profile.stats.daysRead'),   render: (c: string) => <Ionicons name="book" size={25} color={c} /> },     // Feather → Ionicons filled (+25 % visual weight) + 22 → 25 (+15 %)
+    { n: String(totalCheckIns),         label: t('profile.stats.calendar'),   render: (c: string) => <Ionicons name="calendar" size={25} color={c} /> }, // Feather → Ionicons filled (+25 % weight) + 22 → 25 (+15 %)
+  ];
+
+  const onStatTap = [
+    () => navigation.navigate('Streak'),
+    () => setShowCalendarSheet(true),
+    () => navigation.navigate('MoodCalendar'),
+  ];
+
+  // Earliest entry in activityDates → "First Prayer awarded on …".
+  // Returns null when the user has never prayed (badge section is hidden).
+  const firstPrayerDate = activityDates.size > 0
+    ? [...activityDates].sort()[0]
+    : null;
+
+  // Logged in → user's first initial (uppercase). Logged out → "H" for Herbible.
+  const initials = user?.name?.trim().slice(0, 1).toUpperCase() || 'H';
+
+  const openAvatarMenu = () => {
+    if (!user) {
+      setShowSignInSheet(true);
+      return;
+    }
+    Alert.alert(t('profile.menu.title'), undefined, [
+      { text: t('profile.menu.changePhoto'), onPress: pickPhoto },
+      { text: t('profile.menu.editName'), onPress: () => { setEditingName(user.name); setShowEditNameSheet(true); } },
+      { text: t('common.cancel'), style: 'cancel' },
+    ]);
+  };
+
+  const pickPhoto = async () => {
+    // Google Play / iOS App Store guidance: surface a clear in-app rationale
+    // BEFORE invoking the OS permission prompt, so the user understands what
+    // they're consenting to and why. Only after they tap "Allow" do we call
+    // the OS API. We also handle the "permanently denied" case by routing to
+    // Settings instead of looping the user through dead OS dialogs.
+    const explain = (): Promise<boolean> =>
+      new Promise((resolve) => {
+        Alert.alert(
+          t('profile.photo.consent.title'),
+          t('profile.photo.consent.body'),
+          [
+            { text: t('profile.photo.consent.notNow'), style: 'cancel', onPress: () => resolve(false) },
+            { text: t('profile.photo.consent.allow'), onPress: () => resolve(true) },
+          ],
+          { cancelable: true, onDismiss: () => resolve(false) },
+        );
+      });
+
+    const consented = await explain();
+    if (!consented) return;
+
+    let perm = await ImagePicker.getMediaLibraryPermissionsAsync();
+    if (!perm.granted && perm.canAskAgain) {
+      perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    }
+    if (!perm.granted) {
+      Alert.alert(
+        'Photo access is off',
+        'You’ve previously denied photo access. Open Settings to grant access, then come back to pick a picture.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+        ],
+      );
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (!result.canceled && result.assets[0]) {
+      updateProfile({ photoUri: result.assets[0].uri });
+    }
+  };
+
+  const submitEditName = () => {
+    const name = editingName.trim();
+    if (!name) return;
+    updateProfile({ name });
+    setShowEditNameSheet(false);
+  };
+
+  const pickTranslation = (code: LanguageCode) => {
+    const tr = TRANSLATIONS.find(x => x.code === code);
+    if (!tr) return;
+    // Re-tapping the active translation just dismisses the sheet.
+    if (code === currentTranslation.code) {
+      setShowTranslationPicker(false);
+      return;
+    }
+    // Block the switch unless the full Bible has been cached locally.
+    // Per-chapter on-demand fetching works in dev, but in production users
+    // expect "switching" to mean their device actually has the content.
+    const dl = dlStates[code];
+    if (dl?.status !== 'complete') {
+      showToast(t('sheet.langBible.toast.downloadFirst', { name: tr.nativeName }), 2400);
+      return;
+    }
+    setTranslation(code);
+    setShowTranslationPicker(false);
+    showToast(t('sheet.langBible.toast.switched', { name: tr.nativeName }));
+  };
+
+  // Picking a new UI language: persist it (drives plans CDN + all chrome
+  // strings) and offer to switch the Bible-reading translation to match.
+  // The two are intentionally decoupled — power users can read the KJV
+  // while their UI is Português, for example.
+  const pickLanguage = (code: UILanguageCode) => {
+    if (code === uiLang) return;
+    setUILang(code);
+    const matchingBible = TRANSLATIONS.find(x => x.code === code);
+    // Only prompt when the Bible doesn't already match — avoids a noisy
+    // confirm when UI and Bible were already in lockstep.
+    if (!matchingBible || matchingBible.code === currentTranslation.code) return;
+    const uiMetaForCode = UI_LANGUAGES.find(l => l.code === code);
+    Alert.alert(
+      t('sheet.langBible.switchPrompt.title', { name: matchingBible.nativeName }),
+      t('sheet.langBible.switchPrompt.body', {
+        ui: uiMetaForCode?.nativeName ?? code,
+        bible: matchingBible.edition,
+      }),
+      [
+        { text: t('sheet.langBible.switchPrompt.keep'), style: 'cancel' },
+        {
+          text: t('sheet.langBible.switchPrompt.switch'),
+          onPress: () => {
+            const dl = dlStates[code];
+            if (dl?.status === 'complete') {
+              setTranslation(code);
+              showToast(t('sheet.langBible.toast.switched', { name: matchingBible.nativeName }));
+            } else {
+              // Kick off download; Bible stays on current until it lands.
+              startDownload(code);
+              showToast(t('sheet.langBible.toast.downloadFirst', { name: matchingBible.nativeName }), 2400);
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  // Per-translation download state tracking
+  const [dlStates, setDlStates] = useState<Record<string, DownloadState>>({});
+  const dlAbortRef = useRef<Record<string, AbortController>>({});
+
+  useEffect(() => {
+    // Load existing download status for all translations on mount
+    Promise.all(
+      TRANSLATIONS.map(tr => getDownloadState(tr.code).then(s => [tr.code, s] as const))
+    ).then(entries => setDlStates(Object.fromEntries(entries)));
+  }, []);
+
+  const [activeCodes, setActiveCodes] = useState<Set<string>>(new Set());
+
+  const startDownload = (code: LanguageCode) => {
+    const t = TRANSLATIONS.find(x => x.code === code);
+    if (!t) return;
+    if (activeCodes.has(code)) return;
+    const ctl = new AbortController();
+    dlAbortRef.current[code] = ctl;
+    setActiveCodes(prev => { const n = new Set(prev); n.add(code); return n; });
+    setDlStates(prev => ({
+      ...prev,
+      [code]: { status: 'in-progress', fetched: prev[code]?.fetched || 0, total: prev[code]?.total || 0, updatedAt: new Date().toISOString() },
+    }));
+    downloadFullTranslation(code, t.source, (fetched, total) => {
+      setDlStates(prev => ({ ...prev, [code]: { status: 'in-progress', fetched, total, updatedAt: new Date().toISOString() } }));
+    }, ctl.signal).then(final => {
+      setDlStates(prev => ({ ...prev, [code]: final }));
+      setActiveCodes(prev => { const n = new Set(prev); n.delete(code); return n; });
+    });
+  };
+
+  const pauseDownload = (code: LanguageCode) => {
+    const ctl = dlAbortRef.current[code];
+    if (ctl) ctl.abort();
+    setActiveCodes(prev => { const n = new Set(prev); n.delete(code); return n; });
+  };
+
+  // Swipe-down-to-dismiss for the Bible-versions sheet.
+  const transPan = useSheetPan(() => setShowTranslationPicker(false), showTranslationPicker);
+  // Same for the Saved-verses sheet.
+  const savedPan = useSheetPan(() => setShowSavedSheet(false), showSavedSheet);
+  const notesPan = useSheetPan(() => setShowNotesSheet(false), showNotesSheet);
+  const bookmarksPan = useSheetPan(() => setShowBookmarksSheet(false), showBookmarksSheet);
+  const highlightsPan = useSheetPan(() => setShowHighlightsSheet(false), showHighlightsSheet);
+  const reflectionsPan = useSheetPan(() => setShowReflectionsSheet(false), showReflectionsSheet);
+
+  // Highlights are stored as { id → Highlight }; produce a sortable array for the sheet.
+  const highlightList = useMemo(
+    () => Object.values(highlightMap).sort((a, b) => b.savedAt.localeCompare(a.savedAt)),
+    [highlightMap],
+  );
+
+  // Filtered views for each My-Notes sheet. Empty query → unfiltered.
+  // Substring match is case-insensitive across the most-relevant text fields
+  // for that sheet (see the test plan TC-N-007 spec).
+  const filteredNotes = useMemo(() => {
+    const q = notesQuery.trim().toLowerCase();
+    if (!q) return notes;
+    return notes.filter(n =>
+      n.text.toLowerCase().includes(q) ||
+      (n.verseRef ?? '').toLowerCase().includes(q),
+    );
+  }, [notes, notesQuery]);
+
+  const filteredBookmarks = useMemo(() => {
+    const q = bookmarksQuery.trim().toLowerCase();
+    if (!q) return bookmarks;
+    return bookmarks.filter(b =>
+      b.bookTitle.toLowerCase().includes(q) ||
+      String(b.chapter).includes(q),
+    );
+  }, [bookmarks, bookmarksQuery]);
+
+  const filteredHighlights = useMemo(() => {
+    const q = highlightsQuery.trim().toLowerCase();
+    if (!q) return highlightList;
+    return highlightList.filter(h =>
+      h.text.toLowerCase().includes(q) ||
+      h.bookTitle.toLowerCase().includes(q) ||
+      String(h.chapter).includes(q),
+    );
+  }, [highlightList, highlightsQuery]);
+
+  const filteredSavedVerses = useMemo(() => {
+    const q = savedVersesQuery.trim().toLowerCase();
+    if (!q) return savedVerses;
+    return savedVerses.filter(v =>
+      v.text.toLowerCase().includes(q) ||
+      v.ref.toLowerCase().includes(q),
+    );
+  }, [savedVerses, savedVersesQuery]);
+
+  // Reflections — `notes` filtered to the `kind === 'reflection'` subset.
+  // The standalone ReflectionsScreen used to host this list; lifted in
+  // here (2026-05-22 per user) so the My-Notes row's 5 tiles all open the
+  // same slide-up sheet pattern instead of one routing to a separate
+  // screen. No search field — reflections are typically long paragraphs
+  // the user wrote themselves, scanning by date is fast enough.
+  const reflections = useMemo(() => notes.filter(n => n.kind === 'reflection'), [notes]);
+
+  // Jump to a specific chapter in the Bible tab. We persist the target via the
+  // last-read key, then navigate; BibleScreen's focus effect picks it up.
+  const goToChapter = async (slug: string, ch: number) => {
+    try {
+      await AsyncStorage.setItem('bible:last-read', JSON.stringify({ bookSlug: slug, chapter: ch }));
+    } catch {}
+    navigation.navigate('Tabs', { screen: 'bible' });
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+    {versionToast && (
+      <Animated.View
+        entering={FadeIn.duration(200)}
+        exiting={FadeOut.duration(200)}
+        pointerEvents="none"
+        style={[styles.versionToast, { top: insets.top + 12 }]}
+      >
+        <Feather name="check-circle" size={18} color="#fff" />
+        <Text style={styles.versionToastText}>{versionToast}</Text>
+      </Animated.View>
+    )}
+    <ScrollView
+      ref={mainScrollRef}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 8 }]}
+    >
+      {/* Hero */}
+      <TabSection delay={0}>
+      <View style={styles.hero}>
+        <TouchableOpacity style={styles.heroLeft} onPress={openAvatarMenu} activeOpacity={0.8}>
+          <View>
+            {user?.photoUri ? (
+              <Image source={{ uri: user.photoUri }} style={styles.avatar} />
+            ) : (
+              <LinearGradient colors={['#F9A8C9', '#E8619A']} style={styles.avatar}>
+                <Text style={styles.avatarText}>{initials}</Text>
+              </LinearGradient>
+            )}
+            {user && (
+              <View style={styles.cameraBadge}>
+                <Feather name="camera" size={14} color="#fff" />
+              </View>
+            )}
+          </View>
+          <View style={styles.heroMeta}>
+            {user ? (
+              <>
+                <Text style={styles.name}>{user.name}</Text>
+                <Text style={styles.email}>{user.email}</Text>
+              </>
+            ) : (
+              <>
+                <Text style={[styles.name, styles.welcomeText]}>{t('profile.welcome')}</Text>
+                <Text style={styles.email}>{t('profile.welcomeSub')}</Text>
+              </>
+            )}
+          </View>
+        </TouchableOpacity>
+        {!user && (
+          <TouchableOpacity style={styles.loginBtn} onPress={() => setShowSignInSheet(true)} activeOpacity={0.85}>
+            <Text style={styles.loginText}>{t('common.signIn')}</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+      </TabSection>
+
+      {/* Stats — Day Streak + Days Read share the row; Widget gets its own
+          banner card below since "add to home screen" isn't a count and
+          deserves richer affordances than a stat tile can give it. */}
+      <TabSection delay={30}>{/* 90 → 30 — cuts the 7-section cascade tail from 550 ms to ~180 ms */}
+      <View style={styles.statsRow}>
+        {STATS.map((s, i) => (
+          <TouchableOpacity key={i} onPress={onStatTap[i]} activeOpacity={0.85} style={{ flex: 1 }}>
+            <Glass style={styles.statCard}>
+              <View style={styles.statIcon}>{s.render(STAT_COLORS[i])}</View>
+              <View style={styles.statBottomRow}>
+                <Text style={styles.statNum}>{s.n}</Text>
+                <Text style={styles.statLabel} numberOfLines={2}>{s.label}</Text>
+              </View>
+            </Glass>
           </TouchableOpacity>
         ))}
       </View>
+      </TabSection>
 
-      {/* Faith Journey */}
-      <Text style={[styles.sectionTitle, { marginBottom: 11 }]}>Faith Journey</Text>
-      <Glass style={styles.journeyCard}>
-        <View style={styles.journeyInner}>
-          <LinearGradient colors={[`${ROSE}25`, `${LAV}25`]} style={styles.journeyIcon}>
-            <Feather name="book" size={22} color={ROSE} />
+      {/* Remove Ads — promoted out of the Account list to sit above the
+          Widget banner. Same card silhouette as the widget banner so the two
+          adjacent CTAs read as siblings rather than competing styles. */}
+      <TabSection delay={60}>{/* 180 → 60 */}
+      <TouchableOpacity
+        onPress={() => navigation.navigate('RemoveAds')}
+        activeOpacity={0.85}
+        style={[styles.removeAdsBanner]}
+      >
+        <LinearGradient
+          colors={[`${ROSE}1A`, `${LAV}1A`]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.widgetBannerInner}
+        >
+          <LinearGradient
+            colors={[`${ROSE}25`, `${LAV}25`]}
+            style={styles.removeAdsIcon}
+          >
+            {/* "AD" glyph with a coral slash crossed through it. Reads as
+                "no ads" without ambiguity (shield felt like privacy /
+                protection generally; heart felt like favourites). The
+                slash uses a ROSE-leaning warm red so the whole icon stays
+                inside the app's pink palette instead of clashing with a
+                pure-red prohibition glyph. */}
+            <Text style={styles.removeAdsAd}>AD</Text>
+            <View style={styles.removeAdsSlash} />
           </LinearGradient>
-          <View style={styles.journeyMeta}>
-            <Text style={styles.journeyTitle}>Through the Bible</Text>
-            <View style={styles.journeyTrack}>
-              <LinearGradient
-                colors={[ROSE, LAV]}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                style={styles.journeyFill}
-              />
-            </View>
-            <Text style={styles.journeySub}>5 of 66 books · 8% complete</Text>
+          <View style={styles.widgetBannerCopy}>
+            <Text style={[styles.widgetBannerTitle, styles.removeAdsTitle]}>{t('profile.removeAds.title')}</Text>
+            <Text style={styles.widgetBannerSub}>{t('profile.removeAds.sub')}</Text>
           </View>
-          <Feather name="chevron-right" size={16} color={TXTSUB} />
-        </View>
-      </Glass>
+          <Feather name="chevron-right" size={20} color={TXTSUB} />
+        </LinearGradient>
+      </TouchableOpacity>
+      </TabSection>
 
-      {/* Saved Verses */}
-      <View style={[styles.sectionHeader, { marginTop: 22 }]}>
-        <Text style={styles.sectionTitle}>Saved Verses</Text>
-        <TouchableOpacity style={styles.seeAllRow}>
-          <Text style={[styles.seeAll, { color: ROSE }]}>See all</Text>
-          <Feather name="chevron-right" size={13} color={ROSE} />
-        </TouchableOpacity>
+      {/* Faith Achievement — preview up to 4 most-recent badges + a CTA into
+          the full gallery. Hidden until the user has earned at least one. */}
+      {earnedCount > 0 && (
+        <TabSection delay={90}>{/* 270 → 90 */}
+          <View style={[styles.sectionHeader, { marginTop: 20, marginBottom: 14 }]}>
+            <Text style={styles.sectionTitle}>{t('profile.section.faithAchievement')}</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Achievement')} hitSlop={8}>
+              <Text style={[styles.seeAll, { color: ROSE }]}>{t('plan.seeAll')}</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Achievement')}
+            activeOpacity={0.85}
+            style={styles.achievementPreview}
+          >
+            {/* Show 1–3 most-recent badges (was 4). Three is enough to
+                hint at variety without crowding the row, and lets the
+                "Earned" column claim a chunkier ~24 % share. */}
+            {ACHIEVEMENTS
+              .filter(a => !!earned[a.id])
+              .sort((a, b) => (earned[b.id]!.lastAwardedAt - earned[a.id]!.lastAwardedAt))
+              .slice(0, 3)
+              .map(a => (
+                <View key={a.id} style={styles.achievementPreviewTile}>
+                  <BadgeIcon
+                    id={a.id}
+                    iconKey={a.iconKey}
+                    rarity={a.rarity}
+                    size={64}
+                    count={earned[a.id]?.count || 1}
+                  />
+                </View>
+              ))}
+            <View style={styles.achievementPreviewMore}>
+              <Text style={styles.achievementPreviewCount}>{earnedCount}</Text>
+              <Text style={styles.achievementPreviewMoreLabel}>{t('profile.achievement.earnedLabel')}</Text>
+            </View>
+          </TouchableOpacity>
+        </TabSection>
+      )}
+
+      {/* My Notes — five identical NotesTiles in one wrapping row. Row 1
+          (Saved Verses / Highlight / Bookmarks) is the most-read-back
+          content; row 2 (Notes / Reflections) is the user-authored
+          content. They were previously rendered as quieter subsection
+          lists, but the design now treats all five as the same kind of
+          shortcut card — single visual rank, no nested headings. Each
+          tile's `onPress` still routes to the relevant full-screen sheet
+          or screen. */}
+      <TabSection delay={120}>{/* 360 → 120 */}
+      <Text style={[styles.sectionTitle, { marginTop: 28, marginBottom: 14 }]}>{t('profile.section.myNotes')}</Text>
+      <View style={styles.notesRow}>
+        <NotesTile label={t('profile.notes.tile.saved')}       icon="heart"          onPress={() => setShowSavedSheet(true)} />
+        <NotesTile label={t('profile.notes.tile.highlight')}   icon="type"           onPress={() => setShowHighlightsSheet(true)} />
+        <NotesTile label={t('profile.notes.tile.bookmarks')}   icon="bookmark"       onPress={() => setShowBookmarksSheet(true)} />
+        <NotesTile label={t('profile.notes.tile.notes')}       icon="edit-2"         onPress={() => setShowNotesSheet(true)} />
+        <NotesTile label={t('profile.notes.tile.reflections')} icon="message-square" onPress={() => setShowReflectionsSheet(true)} />
       </View>
-      {SAVED_VERSES.slice(0, 2).map((v, i) => (
-        <TouchableOpacity key={i} style={styles.savedVerse} activeOpacity={0.85}>
-          <Text style={styles.savedRef}>{v.ref}</Text>
-          <Text style={styles.savedText}>{v.text}</Text>
-        </TouchableOpacity>
-      ))}
+      </TabSection>
 
-      {/* Account */}
-      <Text style={[styles.sectionTitle, { marginTop: 22, marginBottom: 11 }]}>Account</Text>
+      {/* Learning Bible — uses the same NotesTile component as My Notes so
+          the two rows look like siblings (white card + centered icon + label).
+          The previous GridTile carried a soft-rose icon background that made
+          this row read as a different tier of UI. */}
+      <TabSection delay={150}>{/* 450 → 150 */}
+      <Text style={[styles.sectionTitle, { marginTop: 28, marginBottom: 14 }]}>{t('profile.section.learningBible')}</Text>
+      <View style={styles.notesRow}>
+        <NotesTile label="My Plan"      icon="check-square" onPress={() => navigation.navigate('Tabs', { screen: 'plan', params: { reset: Date.now() } })} />
+        <NotesTile label="Quiz"         icon="help-circle"  onPress={() => showToast('Quiz coming soon')} />
+        <NotesTile label="Did You Know" icon="book-open"    badge onPress={() => showToast('Did You Know coming soon')} />
+      </View>
+
+      {/* Widget banner — moved here (was previously between Remove Ads and
+          Faith Achievement). Sits below Learning Bible so the page flow
+          reads: identity → upgrade → achievements → notes → tools → widget
+          → account. Left thumbnail is a big bold "+" so it reads
+          language-agnostically across locales (was a mini WidgetPreview
+          but sample verse text in 72 px got cramped/clipped in every
+          non-en lang). */}
+      <TouchableOpacity
+        onPress={() => navigation.navigate('AddWidget')}
+        activeOpacity={0.85}
+        style={[styles.widgetBanner, { marginTop: 22, marginBottom: 0 }]}
+      >
+        <LinearGradient
+          colors={[`${ROSE}1A`, `${LAV}1A`]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.widgetBannerInner}
+        >
+          {/* Left thumbnail — was a mini WidgetPreview rendering sample verse +
+              ref, but the cross-language text inside that 72-px tile rendered
+              cramped/clipped on every non-en locale. Replaced with a bold
+              "+" affordance (per user 2026-05-22) so the thumbnail reads
+              language-agnostically as "tap to add a widget". */}
+          <View style={styles.widgetBannerThumb}>
+            <Feather name="plus" size={42} color={ROSE} strokeWidth={3} />
+          </View>
+          <View style={styles.widgetBannerCopy}>
+            <Text style={styles.widgetBannerEyebrow} numberOfLines={1} ellipsizeMode="tail">{t('profile.widget.eyebrow')}</Text>
+            <Text style={styles.widgetBannerTitle} numberOfLines={2} ellipsizeMode="tail">{t('profile.widget.title')}</Text>
+            <Text style={styles.widgetBannerSub} numberOfLines={2} ellipsizeMode="tail">{t('profile.widget.sub')}</Text>
+          </View>
+          <View style={styles.widgetBannerCta}>
+            <Feather name="plus" size={20} color="#FFFFFF" />
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
+      </TabSection>
+
+      {/* Account — settings-style list of horizontal rows. */}
+      <TabSection delay={180}>{/* 550 → 180 */}
+      <Text style={[styles.sectionTitle, { marginTop: 28, marginBottom: 14 }]}>Account</Text>
       <Glass style={styles.settingsCard}>
-        <SettingRow label="Edit profile" />
-        <SettingRow label="Notifications" />
-        <SettingRow label="Appearance" />
-        <SettingRow label="Privacy" />
-        <SettingRow label="Help & support" />
-        <SettingRow label="Share Her Bible" isLast />
+        <SettingRow icon="share-2"     label="Share Her Bible"  onPress={() => showToast('Share App coming soon')} />
+        <TouchableOpacity
+          style={[styles.settingRow, styles.settingBorder]}
+          onPress={() => setShowTranslationPicker(true)}
+          activeOpacity={0.85}
+        >
+          <View style={styles.settingIcon}>
+            <Feather name="globe" size={18} color={TXT} />
+          </View>
+          <Text style={styles.settingLabel}>{t('profile.account.bibleVersions')}</Text>
+          <Text style={styles.settingValue}>{currentTranslation.nativeName}</Text>
+          <Feather name="chevron-right" size={18} color={TXTSUB} />
+        </TouchableOpacity>
+        <SettingRow icon="bell"          label={t('profile.account.notifications')} onPress={() => navigation.navigate('Notifications')} />
+        <SettingRow icon="settings"      label={t('profile.account.settings')}     onPress={() => showToast(t('toast.comingSoon', { feature: t('profile.account.settings') }))} />
+        <SettingRow icon="message-circle" label={t('profile.account.helpCenter')} onPress={() => navigation.navigate('HelpCenter')} />
+        <SettingRow icon="info"          label={t('profile.account.aboutUs')}     isLast onPress={() => navigation.navigate('AboutUs')} />
       </Glass>
 
-      <Glass style={[styles.settingsCard, { marginTop: 14 }]}>
-        <SettingRow label="Sign out" danger isLast />
-      </Glass>
+      {user && (
+        <Glass style={[styles.settingsCard, { marginTop: 16 }]}>
+          <SettingRow icon="log-out" label={t('profile.signOut.row')} danger isLast onPress={() => Alert.alert(t('profile.signOut.title'), t('profile.signOut.body'), [
+            { text: t('profile.signOut.confirmCancel'), style: 'cancel' },
+            { text: t('profile.signOut.confirmConfirm'), style: 'destructive', onPress: signOut },
+          ])} />
+        </Glass>
+      )}
 
-      <Text style={styles.version}>Her Bible · v1.0.0</Text>
-      <View style={{ height: 20 }} />
+      <View style={styles.versionFooter}>
+        <Logo size={44} style={styles.versionLogo} />
+        <Text style={styles.version}>{t('profile.version', { version: '1.0.0' })}</Text>
+      </View>
+      </TabSection>
+      <View style={{ height: 23 }} />
     </ScrollView>
+
+    {/* Sheets sit outside the ScrollView so they stay pinned to the screen. */}
+    {showSignInSheet && (
+      <SignInSheet
+        onClose={() => setShowSignInSheet(false)}
+        onError={(msg) => showToast(msg, 2800)}
+      />
+    )}
+
+    {editingNote && (
+      <VerseNoteSheet
+        verseRef={editingNote.verseRef ?? ''}
+        verseText={editingNote.verseText ?? ''}
+        existingNote={editingNote}
+        onClose={() => setEditingNote(null)}
+      />
+    )}
+
+      {showEditNameSheet && (
+        <View style={styles.pickerOverlay}>
+          <SheetBackdrop onClose={() => setShowEditNameSheet(false)} />
+          <Animated.View entering={SHEET_ENTERING} style={styles.pickerSheet}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.pickerTitle}>{t('profile.editName.title')}</Text>
+            <TextInput
+              value={editingName}
+              onChangeText={setEditingName}
+              placeholder={t('profile.editName.placeholder')}
+              placeholderTextColor={TXTSUB}
+              style={styles.signInInput}
+              autoFocus
+              autoCapitalize="words"
+            />
+            <TouchableOpacity onPress={submitEditName} style={[styles.signInBtn, { backgroundColor: ROSE }]}>
+              <Text style={styles.signInBtnText}>{t('profile.editName.save')}</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      )}
+
+      {showSavedSheet && (
+        <View style={styles.pickerOverlay}>
+          <SheetBackdrop onClose={() => setShowSavedSheet(false)} />
+          <GestureDetector gesture={savedPan.gesture}>
+          <Animated.View entering={SHEET_ENTERING} style={[styles.pickerSheet, styles.savedSheet, savedPan.sheetStyle]}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.pickerTitle}>{t('profile.savedSheet.title', { n: savedVerses.length })}</Text>
+            {savedVerses.length === 0 ? (
+              <View style={styles.savedSheetEmpty}>
+                <View style={styles.savedSheetEmptyIcon}>
+                  <Feather name="heart" size={32} color={ROSE} />
+                </View>
+                <Text style={styles.savedSheetEmptyTitle}>No saved verses yet</Text>
+                <Text style={styles.savedSheetEmptyHint}>
+                  Open any chapter, tap a verse, and choose{' '}
+                  <Text style={{ fontWeight: '700', color: TXT }}>Save</Text>
+                  {' '}to keep it here.
+                </Text>
+              </View>
+            ) : (
+              <>
+                <SheetSearch
+                  value={savedVersesQuery}
+                  onChangeText={setSavedVersesQuery}
+                  placeholder="Search saved verses"
+                />
+                <ScrollView showsVerticalScrollIndicator={false} style={styles.savedSheetScroll}>
+                  {filteredSavedVerses.length === 0 ? (
+                    <SheetSearchEmpty query={savedVersesQuery} />
+                  ) : filteredSavedVerses.map(v => (
+                    <View key={v.id} style={styles.savedSheetItem}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.savedSheetRef}>{v.ref}</Text>
+                        <Text style={styles.savedSheetText}>{v.text}</Text>
+                      </View>
+                      <TouchableOpacity onPress={() => removeVerse(v.id)} hitSlop={10} style={{ paddingLeft: 8 }}>
+                        <Feather name="trash-2" size={20} color={TXTSUB} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </ScrollView>
+              </>
+            )}
+          </Animated.View>
+          </GestureDetector>
+        </View>
+      )}
+
+      {showNotesSheet && (
+        <View style={styles.pickerOverlay}>
+          <SheetBackdrop onClose={() => setShowNotesSheet(false)} />
+          <GestureDetector gesture={notesPan.gesture}>
+          <Animated.View entering={SHEET_ENTERING} style={[styles.pickerSheet, styles.savedSheet, notesPan.sheetStyle]}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.pickerTitle}>Notes · {notes.length}</Text>
+            {notes.length === 0 ? (
+              <View style={styles.savedSheetEmpty}>
+                <View style={styles.savedSheetEmptyIcon}>
+                  <Feather name="edit-2" size={28} color={ROSE} />
+                </View>
+                <Text style={styles.savedSheetEmptyTitle}>No notes yet</Text>
+                <Text style={styles.savedSheetEmptyHint}>
+                  Open any chapter, tap a verse, choose{' '}
+                  <Text style={{ fontWeight: '700', color: TXT }}>Note</Text>
+                  {' '}and write what God is speaking to you.
+                </Text>
+              </View>
+            ) : (
+              <>
+                <SheetSearch
+                  value={notesQuery}
+                  onChangeText={setNotesQuery}
+                  placeholder="Search notes"
+                />
+                <ScrollView showsVerticalScrollIndicator={false} style={styles.savedSheetScroll}>
+                  {filteredNotes.length === 0 ? (
+                    <SheetSearchEmpty query={notesQuery} />
+                  ) : filteredNotes.map(n => (
+                    <View key={n.id} style={styles.savedSheetItem}>
+                      <TouchableOpacity
+                        style={{ flex: 1 }}
+                        onPress={() => setEditingNote(n)}
+                        activeOpacity={0.7}
+                      >
+                        {n.verseRef && <Text style={styles.savedSheetRef}>{n.verseRef}</Text>}
+                        <Text style={styles.savedSheetText}>{n.text}</Text>
+                        <Text style={styles.metaSmall}>{formatNoteDate(n.savedAt)}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => removeNote(n.id)} hitSlop={10} style={{ paddingLeft: 8 }}>
+                        <Feather name="trash-2" size={20} color={TXTSUB} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </ScrollView>
+              </>
+            )}
+          </Animated.View>
+          </GestureDetector>
+        </View>
+      )}
+
+      {showBookmarksSheet && (
+        <View style={styles.pickerOverlay}>
+          <SheetBackdrop onClose={() => setShowBookmarksSheet(false)} />
+          <GestureDetector gesture={bookmarksPan.gesture}>
+          <Animated.View entering={SHEET_ENTERING} style={[styles.pickerSheet, styles.savedSheet, bookmarksPan.sheetStyle]}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.pickerTitle}>Bookmarks · {bookmarksCount}</Text>
+            {bookmarks.length === 0 ? (
+              <View style={styles.savedSheetEmpty}>
+                <View style={styles.savedSheetEmptyIcon}>
+                  <Feather name="bookmark" size={28} color={ROSE} />
+                </View>
+                <Text style={styles.savedSheetEmptyTitle}>No bookmarks yet</Text>
+                <Text style={styles.savedSheetEmptyHint}>
+                  Open any chapter and tap the bookmark icon in the header to save it here.
+                </Text>
+              </View>
+            ) : (
+              <>
+                <SheetSearch
+                  value={bookmarksQuery}
+                  onChangeText={setBookmarksQuery}
+                  placeholder="Search bookmarks"
+                />
+                <ScrollView showsVerticalScrollIndicator={false} style={styles.savedSheetScroll}>
+                  {filteredBookmarks.length === 0 ? (
+                    <SheetSearchEmpty query={bookmarksQuery} />
+                  ) : filteredBookmarks.map(b => (
+                    <View key={b.id} style={styles.savedSheetItem}>
+                      <TouchableOpacity
+                        style={{ flex: 1 }}
+                        onPress={() => { setShowBookmarksSheet(false); goToChapter(b.bookSlug, b.chapter); }}
+                        activeOpacity={0.85}
+                      >
+                        <Text style={styles.savedSheetText}>{b.bookTitle} {b.chapter}</Text>
+                        <Text style={styles.metaSmall}>{formatNoteDate(b.savedAt)}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => removeBookmark(b.id)} hitSlop={10} style={{ paddingLeft: 8 }}>
+                        <Feather name="trash-2" size={20} color={TXTSUB} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </ScrollView>
+              </>
+            )}
+          </Animated.View>
+          </GestureDetector>
+        </View>
+      )}
+
+      {showHighlightsSheet && (
+        <View style={styles.pickerOverlay}>
+          <SheetBackdrop onClose={() => setShowHighlightsSheet(false)} />
+          <GestureDetector gesture={highlightsPan.gesture}>
+          <Animated.View entering={SHEET_ENTERING} style={[styles.pickerSheet, styles.savedSheet, highlightsPan.sheetStyle]}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.pickerTitle}>Highlights · {highlightsCount}</Text>
+            {highlightList.length === 0 ? (
+              <View style={styles.savedSheetEmpty}>
+                <View style={styles.savedSheetEmptyIcon}>
+                  <Feather name="type" size={28} color={ROSE} />
+                </View>
+                <Text style={styles.savedSheetEmptyTitle}>No highlights yet</Text>
+                <Text style={styles.savedSheetEmptyHint}>
+                  Tap a verse while reading and pick a colour dot to highlight it.
+                </Text>
+              </View>
+            ) : (
+              <>
+                <SheetSearch
+                  value={highlightsQuery}
+                  onChangeText={setHighlightsQuery}
+                  placeholder="Search highlights"
+                />
+                <ScrollView showsVerticalScrollIndicator={false} style={styles.savedSheetScroll}>
+                  {filteredHighlights.length === 0 ? (
+                    <SheetSearchEmpty query={highlightsQuery} />
+                  ) : filteredHighlights.map(h => (
+                    <View key={h.id} style={styles.savedSheetItem}>
+                      <View style={[styles.colorSwatch, { backgroundColor: highlightSwatch(h.color) }]} />
+                      <TouchableOpacity
+                        style={{ flex: 1 }}
+                        onPress={() => { setShowHighlightsSheet(false); goToChapter(h.bookSlug, h.chapter); }}
+                        activeOpacity={0.85}
+                      >
+                        <Text style={styles.savedSheetRef}>{h.bookTitle} {h.chapter}:{h.verse}</Text>
+                        <Text style={styles.savedSheetText} numberOfLines={3}>{h.text}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => removeHighlight(h.id)} hitSlop={10} style={{ paddingLeft: 8 }}>
+                        <Feather name="trash-2" size={20} color={TXTSUB} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </ScrollView>
+              </>
+            )}
+          </Animated.View>
+          </GestureDetector>
+        </View>
+      )}
+
+      {showCalendarSheet && (
+        <CalendarSheet
+          activityDates={activityDates}
+          onClose={() => setShowCalendarSheet(false)}
+        />
+      )}
+
+      {showReflectionsSheet && (
+        <View style={styles.pickerOverlay}>
+          <SheetBackdrop onClose={() => setShowReflectionsSheet(false)} />
+          <GestureDetector gesture={reflectionsPan.gesture}>
+          <Animated.View entering={SHEET_ENTERING} style={[styles.pickerSheet, styles.savedSheet, reflectionsPan.sheetStyle]}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.pickerTitle}>{t('profile.reflectionsSheet.title', { n: reflections.length })}</Text>
+            {reflections.length === 0 ? (
+              <View style={styles.savedSheetEmpty}>
+                <View style={styles.savedSheetEmptyIcon}>
+                  <Feather name="message-square" size={28} color={ROSE} />
+                </View>
+                <Text style={styles.savedSheetEmptyTitle}>{t('reflections.empty.title')}</Text>
+                <Text style={styles.savedSheetEmptyHint}>{t('reflections.empty.hint')}</Text>
+              </View>
+            ) : (
+              <ScrollView showsVerticalScrollIndicator={false} style={styles.savedSheetScroll}>
+                {reflections.map(r => (
+                  <View key={r.id} style={styles.savedSheetItem}>
+                    <TouchableOpacity
+                      style={{ flex: 1 }}
+                      onPress={() => setEditingNote(r)}
+                      activeOpacity={0.7}
+                    >
+                      {r.verseRef && <Text style={styles.savedSheetRef}>{r.verseRef}</Text>}
+                      <Text style={styles.savedSheetText}>{r.text}</Text>
+                      <Text style={styles.metaSmall}>{formatNoteDate(r.savedAt)}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => removeNote(r.id)} hitSlop={10} style={{ paddingLeft: 8 }}>
+                      <Feather name="trash-2" size={20} color={TXTSUB} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+          </Animated.View>
+          </GestureDetector>
+        </View>
+      )}
+
+      {showTranslationPicker && (
+        <View style={styles.pickerOverlay}>
+          <SheetBackdrop onClose={() => setShowTranslationPicker(false)} />
+          <GestureDetector gesture={transPan.gesture}>
+          {/* maxHeight 88% + inner ScrollView — without these the 7-row list
+              renders taller than the screen and the handle gets pushed above
+              the status bar where it can't be reached for swipe-dismiss.
+              See feedback_sheet_swipe_dismiss.md. */}
+          <Animated.View entering={SHEET_ENTERING} style={[styles.pickerSheet, { maxHeight: '88%' }, transPan.sheetStyle]}>
+            <View style={styles.sheetHandle} />
+            <Text style={[styles.pickerTitle, styles.translationSheetTitle]}>{t('sheet.langBible.title')}</Text>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 12 }}>
+
+              {/* Language section — collapsible. Drives UI strings (and via
+                  PlansContext, the plans CDN locale). When collapsed, only the
+                  header + current-language chip stay visible so the Bible-
+                  versions list below dominates the sheet. */}
+              <TouchableOpacity
+                style={styles.langSectionHeader}
+                onPress={() => setLangExpanded(v => !v)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.langSectionTitle}>{t('sheet.langBible.languageHeader')}</Text>
+                <View style={styles.langSectionTrigger}>
+                  <Text style={styles.langSectionCurrent}>{uiMeta.nativeName}</Text>
+                  <Feather name={langExpanded ? 'chevron-up' : 'chevron-down'} size={20} color={ROSE} />
+                </View>
+              </TouchableOpacity>
+
+              {langExpanded && (
+                <>
+                  <View style={styles.langChipGrid}>
+                    {UI_LANGUAGES.map(l => {
+                      const active = l.code === uiLang;
+                      return (
+                        <TouchableOpacity
+                          key={l.code}
+                          style={[styles.langChip, active && styles.langChipActive]}
+                          onPress={() => pickLanguage(l.code)}
+                          activeOpacity={0.85}
+                        >
+                          <Text style={[styles.langChipText, active && styles.langChipTextActive]}>
+                            {l.nativeName}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                  <Text style={styles.langSectionHint}>{t('sheet.langBible.languageHint')}</Text>
+                </>
+              )}
+
+              {/* Bible versions sub-section */}
+              <Text style={styles.bibleSubHeader}>{t('sheet.langBible.versionsHeader')}</Text>
+              <Text style={styles.translationSheetHint}>{t('sheet.langBible.versionsHint')}</Text>
+
+              {TRANSLATIONS.map((tr, i) => {
+                const active = tr.code === currentTranslation.code;
+                const isLast = i === TRANSLATIONS.length - 1;
+                const dl = dlStates[tr.code];
+                const pct = dl && dl.total > 0 ? Math.floor((dl.fetched / dl.total) * 100) : 0;
+                const downloaded = dl?.status === 'complete';
+                const selectable = active || downloaded;
+                return (
+                  <View
+                    key={tr.code}
+                    style={[styles.pickerRow, !isLast && styles.pickerRowBorder]}
+                  >
+                    <TouchableOpacity
+                      style={[{ flex: 1 }, !selectable && { opacity: 0.55 }]}
+                      onPress={() => pickTranslation(tr.code)}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={[styles.translationPickerName, active && { color: ROSE, fontWeight: '700' }]}>
+                        {tr.nativeName}
+                      </Text>
+                      <Text style={styles.translationPickerEdition}>{tr.edition}</Text>
+                      {dl?.status === 'in-progress' && activeCodes.has(tr.code) && (
+                        <Text style={styles.translationPickerProgress}>{t('sheet.langBible.downloading', { pct })}</Text>
+                      )}
+                      {dl?.status === 'in-progress' && !activeCodes.has(tr.code) && (
+                        <Text style={styles.translationPickerProgress}>{t('sheet.langBible.paused', { pct })}</Text>
+                      )}
+                      {downloaded && (
+                        <Text style={styles.translationPickerComplete}>{t('sheet.langBible.downloaded')}</Text>
+                      )}
+                      {!downloaded && dl?.status !== 'in-progress' && !active && (
+                        <Text style={styles.translationPickerLocked}>{t('sheet.langBible.downloadRequired')}</Text>
+                      )}
+                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                      {active && <Feather name="check" size={22} color={ROSE} />}
+                      {downloaded ? (
+                        <Feather name="check-circle" size={24} color="#7DB87D" />
+                      ) : activeCodes.has(tr.code) ? (
+                        <TouchableOpacity onPress={() => pauseDownload(tr.code)} hitSlop={10} style={styles.translationPickerDlBtn}>
+                          <Feather name="pause" size={18} color={ROSE} />
+                          <Text style={styles.translationPickerDlBtnPct}>{pct}%</Text>
+                        </TouchableOpacity>
+                      ) : (
+                        <TouchableOpacity onPress={() => startDownload(tr.code)} hitSlop={10} style={styles.translationPickerDlBtn}>
+                          <Feather name={dl?.status === 'in-progress' ? 'play' : 'download'} size={20} color={ROSE} />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
+          </Animated.View>
+          </GestureDetector>
+        </View>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { paddingHorizontal: P, paddingTop: 0, paddingBottom: 24 },
-  hero: { alignItems: 'center', paddingTop: 16, paddingBottom: 18 },
-  avatar: {
-    width: 76, height: 76, borderRadius: 38,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 12,
+  scroll: {
+    paddingHorizontal: P,
+    paddingTop: 0,
+    paddingBottom: 28,
   },
-  avatarText: { fontSize: 30, fontWeight: '600', color: '#fff' },
-  name: { fontSize: 22, fontWeight: '500', color: TXT, marginBottom: 3 },
-  email: { fontSize: 12.5, color: TXTSUB },
-  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 22 },
-  statCard: { flex: 1, padding: 14, paddingHorizontal: 10, alignItems: 'center' },
-  statIconWrap: { marginBottom: 4, height: 22, alignItems: 'center', justifyContent: 'center' },
-  statNum: { fontSize: 20, fontWeight: '700', color: TXT, marginBottom: 2 },
-  statLabel: { fontSize: 11, color: TXTSUB },
-  sectionHeader: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', marginBottom: 11,
+  hero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 9,                                                               // 18 → 14 → 9 (cumulative -9 px from baseline per user)
+    paddingBottom: 24,
   },
-  sectionTitle: { fontSize: 15, fontWeight: '600', color: TXT },
-  seeAllRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  seeAll: { fontSize: 12, fontWeight: '600' },
-  libRow: { flexDirection: 'row', gap: 10, marginBottom: 22 },
-  libTile: {
+  heroLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.92)',
-    borderRadius: 14, padding: 14, paddingHorizontal: 10, alignItems: 'center',
   },
-  libIcon: {
-    width: 36, height: 36, borderRadius: 10,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 8,
+  heroMeta: {
+    flex: 1,
+    minWidth: 0,
   },
-  libLabel: { fontSize: 13, fontWeight: '600', color: TXT, marginBottom: 2 },
-  libCount: { fontSize: 11, color: TXTSUB, fontWeight: '500' },
-  journeyCard: { marginBottom: 0, padding: 0, overflow: 'hidden' },
-  journeyInner: {
-    flexDirection: 'row', alignItems: 'center',
-    gap: 14, padding: 16, paddingHorizontal: 14,
+  avatar: {
+    width: 64.26,                                                                // 84 → 75.6 → 64.26 (-15 % per user)
+    height: 64.26,
+    borderRadius: 32.13,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  journeyIcon: {
-    width: 52, height: 52, borderRadius: 12,
-    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  cameraBadge: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: ROSE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2.5,
+    borderColor: '#FBF7F6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  journeyMeta: { flex: 1, minWidth: 0 },
-  journeyTitle: { fontSize: 14.5, fontWeight: '600', color: TXT, marginBottom: 4 },
-  journeyTrack: {
-    height: 5, borderRadius: 5,
-    backgroundColor: 'rgba(30,27,46,0.07)', overflow: 'hidden', marginBottom: 5,
+  avatarText: { fontSize: 26.78, fontWeight: '600', color: '#fff' },            // 35 → 31.5 → 26.78 (proportional to avatar -15 %)
+  name: { fontSize: 26, fontWeight: '500', color: TXT, marginBottom: 3 },
+  // "Welcome" — Lora bold, matches PrayerScreen.greetText size (24.77) per user.
+  welcomeText: { fontSize: 24.77, fontFamily: FONTS.loraBold, fontWeight: '600' },
+  email: { fontSize: 13.5, color: TXTSUB, fontFamily: FONTS.lato },              // 15 → 13.5 (-10 %) + Lato per user
+  loginBtn: {
+    paddingHorizontal: 20,
+    paddingVertical: 10.45,                                                      // 11 → 10.45 (-5 % height per user)
+    borderRadius: 22,
+    backgroundColor: ROSE,                                                       // solid rose fill (was outlined) per user
   },
-  journeyFill: { height: '100%', width: '8%', borderRadius: 5 },
-  journeySub: { fontSize: 11.5, color: TXTSUB },
-  savedVerse: {
-    paddingHorizontal: 14, paddingVertical: 12,
-    backgroundColor: 'rgba(255,255,255,0.68)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.92)',
-    borderRadius: 12, marginBottom: 9,
+  loginText: { fontSize: 15, fontWeight: '700', color: '#fff', letterSpacing: 0.3 },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 11,
+    marginBottom: 14,
   },
-  savedRef: { fontSize: 11, color: ROSE, fontWeight: '700', marginBottom: 4, letterSpacing: 0.5 },
-  savedText: { fontSize: 14.5, fontStyle: 'italic', color: 'rgba(30,27,46,0.72)', lineHeight: 22 },
-  settingsCard: { overflow: 'hidden', padding: 0 },
+  statCard: {
+    flex: 1,
+    height: 92,                                                                  // unified height across all 4 main Profile cards per user (statCard, achievementPreview, widgetBanner, removeAdsBanner)
+    backgroundColor: '#FFFFFF',
+    borderRadius: 11.2,
+    borderWidth: 0,
+    paddingTop: 10,
+    paddingBottom: 14,
+    paddingHorizontal: 11,
+    alignItems: 'stretch',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    // No Android elevation — it renders as an ugly gray frame during
+    // react-navigation screen transitions. iOS shadow is enough.
+  },
+  // Icon hugs the top center of the card; container height bumped to fit
+  // the +15 % icons. marginBottom 0 per user — no gap between icon and the
+  // number+label row below it.
+  statIcon: { alignSelf: 'center', marginBottom: 0, height: 38, justifyContent: 'center' },
+  // Bottom row splits 1 : 3 — number occupies the left 1/4 (right-aligned
+  // inside that slot), label occupies the right 3/4 (left-aligned).
+  statBottomRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 4 },
+  statNum: { flex: 1, fontSize: 22, fontWeight: '700', color: TXT, fontFamily: FONTS.latoBold, textAlign: 'right' },
+  statLabel: { flex: 3, fontSize: 12.14, color: TXTSUB, fontFamily: FONTS.lato, textAlign: 'center', lineHeight: 15.18 },
+  widgetBanner: {
+    // Same chrome as achievementPreview. White bg sits flat on the screen;
+    // Android elevation removed because it renders as a gray frame during
+    // navigation transitions. Height locked to 92 per user.
+    marginBottom: 25,
+    height: 92,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 11.2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+  },
+  widgetBannerInner: {
+    flex: 1,                                                                     // fills the outer banner's locked 92 px height — the gradient now matches the card outline exactly
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,                                                         // 14 → 10 so a 72 px icon + 2×10 padding == 92 (the locked card height) without clipping
+    paddingHorizontal: 14,
+    gap: 14,
+    // Round the gradient fill itself, since the outer wrapper no longer uses
+    // overflow:hidden (which would clash with shadow on Android).
+    borderRadius: 11.2,
+    overflow: 'hidden',
+  },
+  // Was a 72-px frame wrapping the mini WidgetPreview; now wraps a bold
+  // "+" icon (language-agnostic — doesn't need to render localized sample
+  // text inside a small thumbnail). Soft ROSE-tinted fill + rounded corners
+  // match the surrounding pill aesthetic.
+  widgetBannerThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: 14,
+    backgroundColor: `${ROSE}14`,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  widgetBannerCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  widgetBannerEyebrow: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: ROSE,
+    letterSpacing: 1.4,
+    marginBottom: 4,
+    fontFamily: FONTS.latoBold,
+  },
+  widgetBannerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: TXT,
+    marginBottom: 2,
+    fontFamily: FONTS.latoBold,
+  },
+  widgetBannerSub: {
+    fontSize: 13,
+    color: TXTSUB,
+    lineHeight: 18,
+    fontFamily: FONTS.lato,
+  },
+  widgetBannerCta: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: ROSE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: ROSE,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  achievementPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 11.2,
+    height: 92,                                                                  // unified height per user — same as statCard / widgetBanner / removeAdsBanner
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+    gap: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    // Android elevation removed — see statCard note.
+  },
+  achievementPreviewTile: { flex: 1, alignItems: 'center' },
+  achievementPreviewMore: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    // ~24 % of the card width on a typical 393-px phone (card content
+    // area ≈ 335 px → 80 px ≈ 23.9 %). Was 56 (~17 %).
+    minWidth: 80,
+    borderLeftWidth: 1,
+    borderLeftColor: 'rgba(30,27,46,0.06)',
+    marginLeft: 4,
+  },
+  achievementPreviewCount: { fontSize: 22, fontWeight: '800', color: ROSE, lineHeight: 26, fontFamily: FONTS.latoBold },
+  // 11 → 12.1 (+10 % per spec).
+  achievementPreviewMoreLabel: { fontSize: 12.1, color: TXTSUB, letterSpacing: 0.4, marginTop: 2, fontFamily: FONTS.lato },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    // Unified with sectionTitle below — every title block reads at the
+    // same vertical rhythm whether it's wrapped in sectionHeader (with a
+    // see-all link) or used standalone with an inline `marginBottom: 14`.
+    marginBottom: 14,
+  },
+  // Unified section-title style — shared with PlanScreen.sectionLabel /
+  // bigSectionLabel / catName so every section header on the app uses one
+  // visual treatment: 20 / weight 600 / TXT, no uppercase, no letter-spacing.
+  // Was 21 (-5 % per spec).
+  // Mirrors PrayerScreen's sectionTitle (Continue Reading) 1:1 per user —
+  // same Lora bold face, same 19.85 size, same weight. Every Profile
+  // section header (Faith Achievement / My Notes / Learning Bible / Account)
+  // reads with the home-screen heading voice.
+  sectionTitle: { fontSize: 19.85, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold },
+  seeAll: { fontSize: 16.94, fontWeight: '600', fontFamily: FONTS.latoBold },   // mirrors PlanScreen.seeAll 1:1 (Explore "See all ›" links) per user
+  notesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    // Same gap on both axes — column gap matches the visual spacing of
+    // the previous space-between layout (≈ 12 px on a 393-px screen),
+    // and the row gap kicks in once tiles wrap to a second row (e.g.
+    // My Notes' Reflections + Saved Verses sitting under Notes / Bookmarks
+    // / Highlight). NotesTile keeps its 31 % width.
+    columnGap: 12,
+    rowGap: 12,
+  },
+  metaSmall: {
+    fontSize: 12,
+    color: TXTSUB,
+    marginTop: 4,
+  },
+  colorSwatch: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    marginRight: 12,
+    alignSelf: 'flex-start',
+    marginTop: 6,
+  },
+  // Same chrome as widgetBanner — see note there re: background + height.
+  // Locked to 92 per user.
+  removeAdsBanner: {
+    marginBottom: 12,
+    height: 92,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 11.2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+  },
+  // Override on top of widgetBannerTitle — Lato 600 per user (reverted from
+  // Lora 600). Color matches the slash on the AD icon (#D54A6E) so the whole
+  // banner reads in the same warm-red palette. fontSize +5 % per user.
+  removeAdsTitle: { fontSize: 17.64, fontWeight: '600', fontFamily: FONTS.latoBold, color: ROSE },                     // ROSE matches "See all" link color per user; 16 → 16.8 → 17.64 (cumulative +10 %)
+  removeAdsIcon: {
+    // 72 × 71 — height net -1 px from the 72 baseline. widgetBannerInner uses
+    // `alignItems: 'center'` so the badge sits vertically centered inside the
+    // locked 92 px card. marginLeft -3 nudges the badge closer to the card's
+    // left edge per user (shared widgetBannerInner padding stays at 14 so the
+    // Widget banner is unaffected).
+    marginLeft: -3,
+    width: 72,
+    height: 71,
+    borderRadius: 10.08,                                                         // 18 → 12.6 → 10.08 (cumulative -44 % from baseline)
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    overflow: 'hidden',
+  },
+  removeAdsAd: {
+    fontSize: 18.2,                                                              // 26 → 18.2 (-30 % per user)
+    fontWeight: '800',
+    color: ROSE,
+    letterSpacing: 1.5,
+  },
+  // Diagonal strikethrough — sits on top of the "AD" via absolute
+  // positioning. Width is wider than the glyph so the slash visibly
+  // extends past both letters; rotation -22° feels like a natural
+  // hand-drawn cancel mark rather than a perfect ⊘ symbol. Scaled
+  // proportionally with the glyph (-30 %) so it still over-extends by the
+  // same ratio.
+  removeAdsSlash: {
+    position: 'absolute',
+    width: 39.2,                                                                 // 56 → 39.2 (-30 % to match AD shrink)
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: '#D54A6E',          // warm app-palette red, not a pure browser red
+    transform: [{ rotate: '-22deg' }],
+  },
+  settingsCard: {
+    overflow: 'hidden',
+    padding: 0,
+  },
   settingRow: {
-    flexDirection: 'row', alignItems: 'center',
-    gap: 14, paddingHorizontal: 16, paddingVertical: 13,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 15,
+    paddingHorizontal: 17,
+    paddingVertical: 12.4,                                                       // 20 → 17.4 → 12.4 (-10 px row height per user — 5 px off each side)
   },
-  settingBorder: { borderBottomWidth: 1, borderBottomColor: 'rgba(30,27,46,0.05)' },
+  settingBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(30,27,46,0.05)',
+  },
   settingIcon: {
-    width: 30, height: 30, borderRadius: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     backgroundColor: 'rgba(30,27,46,0.04)',
-    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
-  settingIconDanger: { backgroundColor: 'rgba(216,82,82,0.10)' },
-  settingLabel: { flex: 1, fontSize: 14, fontWeight: '500', color: TXT },
-  version: { fontSize: 11, color: TXTSUB, textAlign: 'center', marginTop: 18, opacity: 0.7 },
+  settingIconDanger: {
+    backgroundColor: 'rgba(216,82,82,0.10)',
+  },
+  settingLabel: { flex: 1, fontSize: 16.26, fontWeight: '500', color: TXT, fontFamily: FONTS.lato },                                 // 17.12 → 16.26 (-5 % per user)
+  settingValue: { fontSize: 14, color: TXTSUB, marginRight: 6, maxWidth: 120 },
+  pickerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'transparent',
+    justifyContent: 'flex-end',
+    zIndex: 50,
+  },
+  versionToast: {
+    position: 'absolute',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    borderRadius: 24,
+    backgroundColor: 'rgba(20,16,28,0.9)',
+    zIndex: 200,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  versionToastText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  pickerSheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: P,
+    paddingTop: 14,
+    paddingBottom: 36,
+  },
+  sheetHandle: {
+    width: 50,                                                                  // 40 → 50 (+10 px per user)
+    height: 4.5,                                                                // 5 → 4.5 (-10 % per user)
+    borderRadius: 3,
+    backgroundColor: 'rgba(30,27,46,0.16)',
+    alignSelf: 'center',
+    marginTop: -7,                                                              // -7 px from sheet top per user
+  },
+  pickerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: TXT,
+    marginBottom: 14,
+    marginTop: 12,
+  },
+  pickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+  },
+  pickerRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(30,27,46,0.06)',
+  },
+  pickerName: { fontSize: 16, fontWeight: '600', color: TXT, marginBottom: 3 },
+  pickerEdition: { fontSize: 13, color: TXTSUB },
+  pickerProgress: { fontSize: 12, color: ROSE, fontWeight: '600', marginTop: 4 },
+  pickerComplete: { fontSize: 12, color: '#7DB87D', fontWeight: '600', marginTop: 4 },
+  pickerDlBtn: {
+    minWidth: 44,
+    height: 32,
+    paddingHorizontal: 10,
+    borderRadius: 16,
+    backgroundColor: `${ROSE}14`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  pickerDlBtnText: { fontSize: 12, fontWeight: '700', color: ROSE },
+  pickerDlBtnPct: { fontSize: 12, fontWeight: '700', color: ROSE },
+  // Bible-versions picker — every text/control bumped 10% per request, plus a
+  // hint line and a muted "locked" caption for translations not yet downloaded.
+  translationSheetTitle: { fontSize: 22, marginBottom: 14 },                                         // 20 → 22; extra bottom space now that "Language" section sits between title and Bible list
+  translationSheetHint: { fontSize: 14, color: TXTSUB, marginBottom: 14, lineHeight: 20 },
+  // ── Language section (top of the Language & Bible Versions sheet) ──
+  // Collapsible: header row shows the current language chip + chevron;
+  // expanded body shows all 7 chips in a wrap-grid.
+  langSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+  },
+  langSectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: TXT,
+    fontFamily: FONTS.loraBold,
+  },
+  langSectionTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  langSectionCurrent: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: ROSE,
+  },
+  langChipGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 12,
+    marginBottom: 10,
+  },
+  // Language chips — same pink "pill" pattern as RemoveAdsScreen's feature
+  // chips (No ads / Future features) and the translation-picker download
+  // buttons. Unselected = ROSE @ 8 % fill + ROSE text (tone-on-tone, soft).
+  // Selected = solid ROSE + white text. Replaces an earlier cream/tan
+  // palette that didn't match the app's ROSE-centric brand.
+  langChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 14,
+    backgroundColor: `${ROSE}14`,
+  },
+  langChipActive: {
+    backgroundColor: ROSE,
+  },
+  langChipText: {
+    fontSize: 14.5,
+    fontWeight: '600',
+    color: ROSE,
+  },
+  langChipTextActive: {
+    color: '#FFFFFF',
+  },
+  langSectionHint: {
+    fontSize: 13,
+    color: TXTSUB,
+    lineHeight: 19,
+    marginBottom: 22,
+  },
+  bibleSubHeader: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: TXT,
+    fontFamily: FONTS.loraBold,
+    marginTop: 6,
+    marginBottom: 6,
+  },
+  translationPickerName: { fontSize: 18, fontWeight: '600', color: TXT, marginBottom: 4 },           // 16 → 18
+  translationPickerEdition: { fontSize: 14, color: TXTSUB },                                         // 13 → 14
+  translationPickerProgress: { fontSize: 13, color: ROSE, fontWeight: '600', marginTop: 5 },         // 12 → 13
+  translationPickerComplete: { fontSize: 13, color: '#7DB87D', fontWeight: '600', marginTop: 5 },    // 12 → 13
+  translationPickerLocked: { fontSize: 13, color: TXTSUB, fontWeight: '500', marginTop: 5 },
+  translationPickerDlBtn: {
+    minWidth: 48,                       // 44 → 48
+    height: 36,                         // 32 → 36
+    paddingHorizontal: 11,
+    borderRadius: 18,
+    backgroundColor: `${ROSE}14`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 7,
+  },
+  translationPickerDlBtnPct: { fontSize: 13, fontWeight: '700', color: ROSE },
+  signInInput: {
+    backgroundColor: 'rgba(30,27,46,0.05)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    fontSize: 16,
+    color: TXT,
+    marginBottom: 12,
+  },
+  signInBtn: {
+    paddingVertical: 14,
+    borderRadius: 24,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  signInBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(30,27,46,0.05)',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 10,
+  },
+  searchField: {
+    flex: 1,
+    fontSize: 15,
+    color: TXT,
+    padding: 0,
+  },
+  savedSheetItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(30,27,46,0.05)',
+  },
+  // Saved-verses sheet: 88 % proportional so it adapts to every screen size,
+  // leaves a 12 % backdrop strip for tap-to-dismiss, and never bleeds into the
+  // status bar / dynamic island.
+  savedSheet: {
+    height: '88%',
+  },
+  savedSheetScroll: {
+    flex: 1,
+  },
+  savedSheetRef: {                       // +15% from savedRef.fontSize 12
+    fontSize: 14,
+    color: ROSE,
+    fontWeight: '700',
+    marginBottom: 5,
+    letterSpacing: 0.5,
+  },
+  savedSheetText: {                      // +15% from savedText.fontSize 16
+    fontSize: 18,
+    color: 'rgba(30,27,46,0.72)',
+    lineHeight: 28,
+  },
+  savedSheetEmpty: {
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 60,
+    alignItems: 'center',
+  },
+  savedSheetEmptyIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: `${ROSE}1A`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 18,
+  },
+  savedSheetEmptyTitle: {                // +15% from 17
+    fontSize: 20,
+    fontWeight: '700',
+    color: TXT,
+    marginBottom: 10,
+  },
+  savedSheetEmptyHint: {                 // +15% from 14
+    fontSize: 16,
+    lineHeight: 24,
+    color: TXTSUB,
+    textAlign: 'center',
+    paddingHorizontal: 12,
+  },
+  // Days-Read sheet title — mirrors PlanScreen.heading ("My Plans") per user.
+  // Overrides pickerTitle's defaults (20 / 700 / no family).
+  calSheetTitle: { fontSize: 25.31, fontWeight: '600', fontFamily: FONTS.loraBold, marginBottom: 19 },
+  // Month title — same Lora 600 face but -20 % on font size per user.
+  calMonthTitle: { fontSize: 20.25, fontWeight: '600', color: TXT, marginBottom: 17, fontFamily: FONTS.loraBold },
+  calWeekdayRow: { flexDirection: 'row', marginBottom: 6 },
+  calWeekday: { flex: 1, textAlign: 'center', fontSize: 13, color: TXTSUB, fontWeight: '600' },  // +15% from 11
+  calGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+  calCell: { width: `${100 / 7}%`, alignItems: 'center', paddingVertical: 4 },
+  calDot: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  calDotActive: { backgroundColor: ROSE },
+  calDotToday: { borderWidth: 1.5, borderColor: ROSE },
+  calDay: { fontSize: 15, color: TXT },                      // +15% from 13
+  versionFooter: {
+    alignItems: 'center',
+    marginTop: 32,                                                              // 21 → 32 — logo needs more breathing room from the Sign-out card / About row above
+  },
+  versionLogo: { marginBottom: 8, opacity: 0.85 },
+  version: {
+    fontSize: 12,
+    color: TXTSUB,
+    textAlign: 'center',
+    opacity: 0.7,
+  },
 });

@@ -1,3 +1,8 @@
+// MV / EV used to live here as a static prayer-of-the-day. They've been
+// replaced in production by the daily-verses pipeline (DailyVersesContext
+// + per-language CDN JSON). These constants are kept as fallbacks for the
+// HEAD-restored PrayerScreen.tsx (rebuilt after a worktree-deletion data
+// loss) which still reads them directly.
 export const MV = {
   ref: 'Psalm 23:1–3',
   text: 'The Lord is my shepherd; I shall not want. He makes me lie down in green pastures. He leads me beside still waters.',
@@ -36,39 +41,6 @@ export const SAVED_VERSES = [
   { ref: 'Philippians 4:13', text: 'I can do all things through Christ who strengthens me.' },
   { ref: 'Jeremiah 29:11', text: 'For I know the plans I have for you, declares the Lord…' },
 ];
-
-export const FLOW_DATA = {
-  morning: {
-    verse: { ref: MV.ref, text: MV.text, label: 'Verse of the Day' },
-    meditation: {
-      title: 'Rest in the Shepherd',
-      body: 'Sometimes we wrestle with a haunting question: Am I truly cared for? In the rush of every morning, amid the weight of expectations, we convince ourselves we have to carry it all alone. But this verse offers a radical truth that rewrites everything.\n\nSometimes we wrestle with a haunting question: Am I truly cared for? In the rush of every morning, amid the weight of expectations, we convince ourselves we have to carry it all alone. But this verse offers a radical truth that rewrites everything.\n\nSometimes we wrestle with a haunting question: Am I truly cared for? In the rush of every morning, amid the weight of expectations, we convince ourselves we have to carry it all alone. But this verse offers a radical truth that rewrites everything.',
-    },
-    action: {
-      title: "Today's Practice",
-      body: 'Spend five minutes sitting with this question: If God is my shepherd, what am I trying to carry alone today? Then write down one anxiety you can release into His care. Take one action today that reflects this trust — pause before a hard meeting, breathe before you reply, choose rest without guilt.',
-    },
-    prayer: {
-      title: 'Closing Prayer',
-      body: 'Heavenly Father, thank you for being my shepherd. You know every path I\'ll walk today and every weight I carry. Lead me beside still waters when I\'m overwhelmed. Restore my soul when I feel empty. Help me trust that I am not alone in this day. Your love is not a distant concept — it is the most personal truth I will ever know. I rest and delight in it now. Amen.',
-    },
-  },
-  evening: {
-    verse: { ref: EV.ref, text: EV.text, label: 'Verse of the Night' },
-    meditation: {
-      title: 'Dwell in the Shelter',
-      body: 'Sometimes we wrestle with a haunting question: Am I truly safe? After a long day, amid replaying conversations and unfinished worries, we convince ourselves the world is too loud to rest in. But this verse offers a radical truth that rewrites everything.\n\nGod is your shelter — not a temporary roof, but the dwelling place of the Most High. The shadow of the Almighty is not a hiding spot; it is a home. He is not surprised by your day. He held the galaxies while you held your phone, and He is still here.\n\nWhen you feel restless, undone, or unable to switch off, pause and remember: you are held. The night is not yours to keep watch over. The God who never sleeps already does.',
-    },
-    action: {
-      title: "Tonight's Practice",
-      body: 'Spend five minutes sitting with this question: What am I still gripping that I need to hand over before I sleep? Then write down one fear you can release into His shelter. Take one action tonight that reflects this trust — close the laptop, silence the notifications, lie down with empty hands.',
-    },
-    prayer: {
-      title: 'Closing Prayer',
-      body: 'Father, thank you for being my refuge and my fortress. You have been with me through every hour of this day, and you are with me now as it ends. Take what I cannot put down. Quiet what I cannot silence. Hold what is too heavy for sleep. Let me rest in the shadow of your wings. Your love is not a distant concept — it is the most personal truth I will ever know. I rest and delight in it now. Amen.',
-    },
-  },
-};
 
 export const PLANS_EXPLORE = [
   {

@@ -1,0 +1,142 @@
+import React, { useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Share } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
+import LottieView from 'lottie-react-native';
+import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
+import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
+import { useFeaturedPlans } from '../state/FeaturedPlansContext';
+import { usePlanCompletion } from '../state/PlanCompletionContext';
+import type { RootStackScreenProps } from '../navigation/types';
+
+// Day-completion congrats. Plays the Lottie checkmark, shows progress, lets
+// the user share their progress or continue back to the plan detail.
+
+export default function PlanDayDone({ route, navigation }: RootStackScreenProps<'PlanDayDone'>) {
+  const insets = useSafeAreaInsets();
+  const { slug, day } = route.params;
+  const { getSummary } = useFeaturedPlans();
+  const { planProgress } = usePlanCompletion();
+  const summary = getSummary(slug);
+  const progress = summary ? planProgress(slug, summary.duration) : { completed: 0, total: 0, complete: false };
+
+  // Animated progress fill — sweeps from previous to current ratio over 1 s
+  // when the screen mounts so the user sees their bar grow.
+  const progressVal = useSharedValue(Math.max(0, progress.completed - 1) / Math.max(1, progress.total));
+  useEffect(() => {
+    progressVal.value = withTiming(progress.completed / Math.max(1, progress.total), {
+      duration: 900,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [progress.completed, progress.total, progressVal]);
+  const progressStyle = useAnimatedStyle(() => ({ width: `${Math.round(progressVal.value * 100)}%` }));
+
+  const onShare = () => {
+    if (!summary) return;
+    const remaining = Math.max(0, summary.duration - progress.completed);
+    Share.share({
+      message: remaining > 0
+        ? `Day ${day} of "${summary.title}" done — ${remaining} ${remaining === 1 ? 'day' : 'days'} to go in HerBibleApp.`
+        : `I just finished "${summary.title}" in HerBibleApp 🙏`,
+    }).catch(() => {});
+  };
+
+  // Lands on this plan's FeaturedPlanDetail (already in the stack underneath
+  // the modal: [Tabs, FeaturedPlanDetail, PlanDayDone]). The previous
+  // popToTop sent the user back to the Plan tab, which felt like losing
+  // their place — they wanted to stay inside the plan they just advanced.
+  const onContinue = () => navigation.goBack();
+
+  return (
+    <View style={styles.root}>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.closeBtn, { top: insets.top + 12 }]} hitSlop={10}>
+        <Feather name="x" size={24} color={TXT} />
+      </TouchableOpacity>
+
+      <View style={[styles.content, { paddingTop: insets.top + 80, paddingBottom: insets.bottom + 24 }]}>
+        <Animated.View entering={FadeIn.duration(360)} style={styles.lottieWrap}>
+          <LottieView
+            source={require('../../assets/lottie/done.json')}
+            autoPlay
+            loop={false}
+            style={{ width: 180, height: 180 }}
+          />
+        </Animated.View>
+
+        <Animated.Text entering={FadeIn.delay(420).duration(360)} style={styles.heading}>
+          Day {day} of {summary?.duration || '?'}
+        </Animated.Text>
+
+        {!!summary && (
+          <Animated.Text entering={FadeIn.delay(560).duration(360)} style={styles.subtitle}>
+            {summary.title}
+          </Animated.Text>
+        )}
+
+        <Animated.View entering={FadeIn.delay(700).duration(360)} style={styles.progressTrack}>
+          <Animated.View style={[styles.progressFill, progressStyle, { backgroundColor: ROSE }]} />
+        </Animated.View>
+        <Animated.Text entering={FadeIn.delay(700).duration(360)} style={styles.progressText}>
+          {progress.completed} of {progress.total || '?'} days complete
+        </Animated.Text>
+
+        <Animated.View entering={FadeIn.delay(900).duration(360)} style={styles.ctaWrap}>
+          <TouchableOpacity onPress={onShare} activeOpacity={0.9} style={styles.shareBtn}>
+            <Feather name="share-2" size={18} color="#FFFFFF" />
+            <Text style={styles.shareBtnText}>Share progress</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onContinue} activeOpacity={0.85} style={styles.continueBtn}>
+            <Text style={styles.continueBtnText}>Continue</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#FBF7F6' },
+  closeBtn: {
+    position: 'absolute', right: P, zIndex: 10,
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(30,27,46,0.06)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  content: {
+    flex: 1, alignItems: 'center', paddingHorizontal: P,
+  },
+  lottieWrap: { alignItems: 'center', justifyContent: 'center' },
+  // All on-screen text uses Noto Sans (matching the rest of the app's
+  // sans-serif system font) — the previous Roboto Serif heading felt
+  // editorial in a screen that's celebratory / functional.
+  heading: {
+    fontFamily: FONTS.sansBold, fontSize: 26, fontWeight: '700', color: TXT,
+    marginTop: 14, textAlign: 'center', letterSpacing: 0.2,
+  },
+  subtitle: {
+    fontFamily: FONTS.sans,
+    fontSize: 17, color: TXTSUB, marginTop: 6, textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  progressTrack: {
+    width: '80%', height: 8, borderRadius: 4,
+    backgroundColor: 'rgba(30,27,46,0.08)',
+    marginTop: 28, overflow: 'hidden',
+  },
+  progressFill: { height: '100%', borderRadius: 4 },
+  progressText: { fontFamily: FONTS.sansSemiBold, fontSize: 13, color: TXTSUB, marginTop: 10, fontWeight: '600' },
+  ctaWrap: { width: '100%', marginTop: 'auto', gap: 10 },
+  shareBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 10, height: 56, borderRadius: 28, backgroundColor: ROSE,
+    shadowColor: ROSE, shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25, shadowRadius: 14, elevation: 4,
+  },
+  shareBtnText: { fontFamily: FONTS.sansBold, fontSize: 16, fontWeight: '700', color: '#FFFFFF', letterSpacing: 0.4 },
+  continueBtn: {
+    height: 56, borderRadius: 28, backgroundColor: '#FFFFFF',
+    borderWidth: 1, borderColor: 'rgba(30,27,46,0.10)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  continueBtnText: { fontFamily: FONTS.sansBold, fontSize: 16, fontWeight: '700', color: TXT, letterSpacing: 0.4 },
+});

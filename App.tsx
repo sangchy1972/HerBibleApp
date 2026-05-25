@@ -1,171 +1,136 @@
-import React, { useState } from 'react';
-import {
-  View, Text, StyleSheet, StatusBar,
-} from 'react-native';
+import React from 'react';
+import { StatusBar } from 'expo-status-bar';
+import { Text, TextInput } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { NavigationContainer } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { RobotoSerif_400Regular, RobotoSerif_600SemiBold } from '@expo-google-fonts/roboto-serif';
-import { NotoSansSC_400Regular, NotoSansSC_500Medium, NotoSansSC_700Bold } from '@expo-google-fonts/noto-sans-sc';
-import PrayerScreen from './src/screens/PrayerScreen';
-import BibleScreen from './src/screens/BibleScreen';
-import PlanScreen from './src/screens/PlanScreen';
-import ProfileScreen from './src/screens/ProfileScreen';
-import PrayerFlow from './src/screens/PrayerFlow';
-import StreakScreen from './src/screens/StreakScreen';
-import TabBar from './src/components/shared/TabBar';
 
-type TabId = 'prayer' | 'bible' | 'plan' | 'profile';
+// Global default font: Lato 400 Regular. Many Text/TextInput styles in
+// the app set `fontSize` and `fontWeight` but forget `fontFamily` — without
+// this default they would render in the platform system sans (San Francisco
+// on iOS, Roboto on Android), which clashes with the brand fonts elsewhere.
+// Per-style `fontFamily` overrides this default normally.
+const DEFAULT_FONT_STYLE = { fontFamily: 'Lato_400Regular' };
+(Text as any).defaultProps = (Text as any).defaultProps || {};
+(Text as any).defaultProps.style = [DEFAULT_FONT_STYLE, (Text as any).defaultProps.style];
+(TextInput as any).defaultProps = (TextInput as any).defaultProps || {};
+(TextInput as any).defaultProps.style = [DEFAULT_FONT_STYLE, (TextInput as any).defaultProps.style];
+// Source Serif 4 is loaded as the variable-font TTF (with the opsz +
+// wght axes), not the static per-weight files. The default instance is
+// already at opsz 14 / wght 400 (the body-text master), and any style
+// can override via `fontVariationSettings` to push toward Caption (small
+// opsz) or Display (large opsz) shapes. See `serifVariation` in theme.ts.
+import { NotoSansSC_400Regular, NotoSansSC_500Medium, NotoSansSC_600SemiBold, NotoSansSC_700Bold } from '@expo-google-fonts/noto-sans-sc';
+import { Inter_400Regular } from '@expo-google-fonts/inter';
+// Merriweather — purpose-built for on-screen reading. Used as the default
+// body font in the Bible reader. Regular (400) + Bold (700) cover the verse
+// text and verse-number weight; loading just two keeps the bundle slim.
+import { Merriweather_400Regular, Merriweather_700Bold } from '@expo-google-fonts/merriweather';
+import { Lato_400Regular, Lato_700Bold } from '@expo-google-fonts/lato';
+import { Lora_400Regular, Lora_700Bold } from '@expo-google-fonts/lora';
+import RootNavigator from './src/navigation/RootNavigator';
+import { PrayerProvider } from './src/state/PrayerContext';
+import { NotesProvider } from './src/state/NotesContext';
+import { TranslationsProvider } from './src/state/TranslationsContext';
+import { UILanguageProvider } from './src/state/UILanguageContext';
+import { SavedVersesProvider } from './src/state/SavedVersesContext';
+import { ActivityProvider } from './src/state/ActivityContext';
+import { AuthProvider } from './src/state/AuthContext';
+import { HighlightsProvider } from './src/state/HighlightsContext';
+import { BookmarksProvider } from './src/state/BookmarksContext';
+import { ReadChaptersProvider } from './src/state/ReadChaptersContext';
+import { OnboardingProvider } from './src/state/OnboardingContext';
+import { RatePromptProvider } from './src/state/RatePromptContext';
+import { MoodCheckInProvider } from './src/state/MoodCheckInContext';
+import { NotificationsProvider } from './src/state/NotificationsContext';
+import { DailyVersesProvider } from './src/state/DailyVersesContext';
+import { PrayerBackgroundsProvider } from './src/state/PrayerBackgroundsContext';
+import { ShareProvider } from './src/state/ShareContext';
+import { AchievementsProvider } from './src/state/AchievementsContext';
+import { FeaturedPlansProvider } from './src/state/FeaturedPlansContext';
+import { PlanProfileProvider } from './src/state/PlanProfileContext';
+import { PlansProvider } from './src/state/PlansContext';
+import { PlanCompletionProvider } from './src/state/PlanCompletionContext';
+import AchievementUnlockSheet from './src/components/AchievementUnlockSheet';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    RobotoSerif_400Regular,
-    RobotoSerif_600SemiBold,
+    'SourceSerif4Variable-Roman':  require('./assets/fonts/SourceSerif4Variable-Roman.ttf'),
+    'SourceSerif4Variable-Italic': require('./assets/fonts/SourceSerif4Variable-Italic.ttf'),
     NotoSansSC_400Regular,
     NotoSansSC_500Medium,
+    NotoSansSC_600SemiBold,
     NotoSansSC_700Bold,
+    Inter_400Regular,
+    Merriweather_400Regular,
+    Merriweather_700Bold,
+    Lato_400Regular,
+    Lato_700Bold,
+    Lora_400Regular,
+    Lora_700Bold,
   });
-
-  const hr = new Date().getHours();
-  const [tab, setTab] = useState<TabId>('prayer');
-  const [morning, setMorning] = useState(hr >= 5 && hr < 17);
-  const [mDone, setMDone] = useState(false);
-  const [eDone, setEDone] = useState(false);
-  const [streakOpen, setStreakOpen] = useState(false);
-  const [flow, setFlow] = useState<{ kind: 'morning' | 'evening' } | null>(null);
-
-  const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-
-  const completeFlow = () => {
-    if (flow?.kind === 'morning') setMDone(true);
-    else setEDone(true);
-    setFlow(null);
-  };
 
   if (!fontsLoaded) return null;
 
   return (
-    <View style={styles.root}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FBF7F6" />
-
-      {/* Phone frame */}
-      <View style={styles.phone}>
-        {/* Notch */}
-        <View style={styles.notch} />
-
-        {/* Status bar */}
-        <View style={styles.statusBar}>
-          <Text style={styles.statusTime}>{time}</Text>
-          <View style={styles.statusIcons}>
-            <Text style={styles.statusIcon}>●●●</Text>
-            <Text style={styles.statusIcon}>WiFi</Text>
-            <Text style={styles.statusIcon}>🔋</Text>
-          </View>
-        </View>
-
-        {/* Content area */}
-        <View style={styles.content}>
-          {tab === 'prayer' && (
-            <PrayerScreen
-              mDone={mDone}
-              eDone={eDone}
-              morning={morning}
-              setMorning={setMorning}
-              onOpenStreak={() => setStreakOpen(true)}
-              onOpenBible={() => setTab('bible')}
-              openFlow={(kind) => setFlow({ kind })}
-            />
-          )}
-          {tab === 'bible' && <BibleScreen />}
-          {tab === 'plan' && <PlanScreen />}
-          {tab === 'profile' && <ProfileScreen />}
-        </View>
-
-        {/* Tab bar */}
-        <TabBar active={tab} onChange={setTab} />
-
-        {/* Overlays */}
-        {streakOpen && (
-          <StreakScreen
-            onBack={() => setStreakOpen(false)}
-            mDone={mDone}
-            eDone={eDone}
-          />
-        )}
-
-        {flow && (
-          <PrayerFlow
-            morning={flow.kind === 'morning'}
-            visible={!!flow}
-            onComplete={completeFlow}
-            onClose={() => setFlow(null)}
-          />
-        )}
-      </View>
-    </View>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <UILanguageProvider>
+        <AuthProvider>
+          <PrayerProvider>
+            <NotesProvider>
+              <SavedVersesProvider>
+                <HighlightsProvider>
+                  <BookmarksProvider>
+                    <ReadChaptersProvider>
+                      <ActivityProvider>
+                        <TranslationsProvider>
+                          <FeaturedPlansProvider>
+                            <PlanProfileProvider>
+                            <PlansProvider>
+                            <PlanCompletionProvider>
+                          <DailyVersesProvider>
+                            <PrayerBackgroundsProvider>
+                            <ShareProvider>
+                              <AchievementsProvider>
+                                <OnboardingProvider>
+                                  <RatePromptProvider>
+                                    <MoodCheckInProvider>
+                                      <NotificationsProvider>
+                                        <NavigationContainer>
+                                          <StatusBar style="dark" />
+                                          <RootNavigator />
+                                          {/* Mounted inside NavigationContainer
+                                              so the View Details button can
+                                              navigate; reads its queue off
+                                              AchievementsContext, so it fires
+                                              from anywhere a counter changes. */}
+                                          <AchievementUnlockSheet />
+                                        </NavigationContainer>
+                                      </NotificationsProvider>
+                                    </MoodCheckInProvider>
+                                  </RatePromptProvider>
+                                </OnboardingProvider>
+                              </AchievementsProvider>
+                            </ShareProvider>
+                            </PrayerBackgroundsProvider>
+                          </DailyVersesProvider>
+                            </PlanCompletionProvider>
+                            </PlansProvider>
+                            </PlanProfileProvider>
+                          </FeaturedPlansProvider>
+                        </TranslationsProvider>
+                      </ActivityProvider>
+                    </ReadChaptersProvider>
+                  </BookmarksProvider>
+                </HighlightsProvider>
+              </SavedVersesProvider>
+            </NotesProvider>
+          </PrayerProvider>
+        </AuthProvider>
+        </UILanguageProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#EDE8F4',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 32,
-  },
-  phone: {
-    width: 390,
-    height: 844,
-    borderRadius: 44,
-    overflow: 'hidden',
-    backgroundColor: '#FBF7F6',
-    position: 'relative',
-    shadowColor: 'rgba(150,100,180,0.22)',
-    shadowOffset: { width: 0, height: 40 },
-    shadowOpacity: 1,
-    shadowRadius: 90,
-    elevation: 30,
-  },
-  notch: {
-    position: 'absolute',
-    top: 0,
-    left: '50%',
-    marginLeft: -75,
-    width: 150,
-    height: 28,
-    backgroundColor: '#0a0a10',
-    borderBottomLeftRadius: 18,
-    borderBottomRightRadius: 18,
-    zIndex: 80,
-  },
-  statusBar: {
-    position: 'relative',
-    zIndex: 70,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 26,
-    paddingTop: 10,
-    height: 50,
-  },
-  statusTime: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1E1B2E',
-    letterSpacing: 0.2,
-  },
-  statusIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    opacity: 0.7,
-  },
-  statusIcon: {
-    fontSize: 10,
-    color: '#1E1B2E',
-  },
-  content: {
-    flex: 1,
-    overflow: 'hidden',
-    marginBottom: 0,
-  },
-});

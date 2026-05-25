@@ -1,204 +1,601 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Dimensions, Animated,
+  View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Dimensions,
+  KeyboardAvoidingView, Keyboard, Platform, Linking, Modal,
 } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Feather, FontAwesome5 } from '@expo/vector-icons';
-import { ROSE, LAV, TXT, TXTSUB } from '../constants/theme';
-import { FLOW_DATA } from '../constants/data';
+import { ImageBackground } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather, Ionicons } from '@expo/vector-icons';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import Svg, { Path } from 'react-native-svg';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withTiming, withDelay, withRepeat, withSequence,
+  Easing, SlideInDown, FadeIn, runOnJS, interpolateColor,
+} from 'react-native-reanimated';
+import { ROSE, LAV, TXT, TXTSUB, FONTS } from '../constants/theme';
+import { usePrayer } from '../state/PrayerContext';
+import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
+import { useNotes } from '../state/NotesContext';
+import { useActivity } from '../state/ActivityContext';
+import { useRatePrompt } from '../state/RatePromptContext';
+import { useDailyVerses } from '../state/DailyVersesContext';
+import { useTranslation } from '../state/TranslationsContext';
+import { useT } from '../i18n/useT';
+import { useOnboarding } from '../state/OnboardingContext';
+import { localizeReference } from '../services/parseReference';
+import { dailyLabels } from '../constants/dailyVersesLabels';
+import WeeklyProgressView from '../components/WeeklyProgressView';
+import RatePromptSheet from '../components/RatePromptSheet';
+import ShareVerseSheet from '../components/ShareVerseSheet';
+import VerseNoteSheet from '../components/VerseNoteSheet';
+import { useSavedVerses } from '../state/SavedVersesContext';
+import type { RootStackScreenProps } from '../navigation/types';
 
 const { width, height } = Dimensions.get('window');
-const PHONE_HEIGHT = 844;
+const SECTIONS = ['verse', 'meditation', 'action', 'prayer'];
 
-interface PrayerFlowProps {
-  morning: boolean;
-  visible: boolean;
-  onComplete: () => void;
-  onClose: () => void;
+function FlowPage({ children }: { children: React.ReactNode }) {
+  return <View style={[styles.flowPage, { height }]}>{children}</View>;
+}
+
+// Animated page indicator. Two shared values drive two independent animations
+// so a single change to `page` reads as one smooth motion instead of a stack
+// of step-changes:
+//   • `activeT`   — 0 (circle, 9 px tall) ↔ 1 (pill, 35 px tall)
+//   • `visitedT`  — 0 (translucent) ↔ 1 (white) for "have I been here yet?"
+// Going forward (page 0 → 1): the old dot eases down to a circle while
+// keeping its white color; the new dot fades in to white AND grows up to a
+// pill in parallel. Going backward, both animations reverse — no jumpy
+// color flash because color and shape live on separate timelines.
+const DOT_DURATION = 280;
+const DOT_EASING = Easing.out(Easing.cubic);
+function PageDot({ isActive, isPast }: { isActive: boolean; isPast: boolean }) {
+  const activeT  = useSharedValue(isActive ? 1 : 0);
+  const visitedT = useSharedValue(isActive || isPast ? 1 : 0);
+  useEffect(() => {
+    activeT.value  = withTiming(isActive ? 1 : 0,                 { duration: DOT_DURATION, easing: DOT_EASING });
+    visitedT.value = withTiming(isActive || isPast ? 1 : 0,       { duration: DOT_DURATION, easing: DOT_EASING });
+  }, [isActive, isPast]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    height: 9 + (35 - 9) * activeT.value,
+    backgroundColor: interpolateColor(visitedT.value, [0, 1], ['rgba(255,255,255,0.35)', '#ffffff']),
+  }));
+
+  return <Animated.View style={[styles.dot, animStyle]} />;
+}
+
+const WHEEL_ITEM_HEIGHT = 44;
+const WHEEL_VISIBLE = 5;
+
+function ScrollWheel<T>({ values, value, onChange, format }: {
+  values: T[];
+  value: T;
+  onChange: (v: T) => void;
+  format?: (v: T) => string;
+}) {
+  const idx = Math.max(0, values.indexOf(value));
+  const padding = ((WHEEL_VISIBLE - 1) / 2) * WHEEL_ITEM_HEIGHT;
+  const handleEnd = (e: { nativeEvent: { contentOffset: { y: number } } }) => {
+    const y = e.nativeEvent.contentOffset.y;
+    const newIdx = Math.max(0, Math.min(values.length - 1, Math.round(y / WHEEL_ITEM_HEIGHT)));
+    if (newIdx !== idx) onChange(values[newIdx]);
+  };
+  return (
+    <View style={{ flex: 1, height: WHEEL_ITEM_HEIGHT * WHEEL_VISIBLE }}>
+      <View pointerEvents="none" style={styles.wheelHighlight} />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        snapToInterval={WHEEL_ITEM_HEIGHT}
+        decelerationRate="fast"
+        contentContainerStyle={{ paddingTop: padding, paddingBottom: padding }}
+        contentOffset={{ x: 0, y: idx * WHEEL_ITEM_HEIGHT }}
+        onMomentumScrollEnd={handleEnd}
+        scrollEventThrottle={16}
+      >
+        {values.map((v, i) => (
+          <View key={i} style={styles.wheelItemBox}>
+            <Text style={[styles.wheelText, i === idx ? styles.wheelActive : styles.wheelInactive]}>
+              {format ? format(v) : String(v)}
+            </Text>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
 }
 
 function TimePickerSheet({ onConfirm, onClose }: { onConfirm: () => void; onClose: () => void }) {
-  const [hour, setHour] = useState(8);
-  const [minute, setMinute] = useState(0);
+  const t = useT();
+  const [hour, setHour] = useState<number>(8);
+  const [minute, setMinute] = useState<number>(0);
   const [ampm, setAmpm] = useState<'AM' | 'PM'>('AM');
 
-  const hours = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6];
-  const minutes = [0, 15, 30, 45];
-
-  const Wheel = ({ values, value, onChange, format }: {
-    values: any[];
-    value: any;
-    onChange: (v: any) => void;
-    format?: (v: any) => string;
-  }) => {
-    const idx = values.indexOf(value);
-    const items = [
-      values[(idx - 1 + values.length) % values.length],
-      values[idx],
-      values[(idx + 1) % values.length],
-    ];
-    return (
-      <View style={{ flex: 1, alignItems: 'center' }}>
-        {items.map((v, i) => (
-          <TouchableOpacity key={i} onPress={() => i !== 1 && onChange(v)} style={styles.wheelItem}>
-            <Text style={[styles.wheelText, i === 1 ? styles.wheelActive : styles.wheelInactive]}>
-              {format ? format(v) : String(v)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    );
-  };
+  const hours = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  const minutes = Array.from({ length: 60 }, (_, i) => i);
+  const periods: ('AM' | 'PM')[] = ['AM', 'PM'];
 
   return (
     <View style={styles.sheet}>
       <View style={styles.sheetHandle} />
-      <Text style={styles.sheetTitle}>What time do you want to be reminded?</Text>
+      <Text style={styles.sheetTitle}>{t('prayerFlow.time.title')}</Text>
       <View style={styles.wheelRow}>
-        <Wheel values={hours} value={hour} onChange={setHour} />
+        <ScrollWheel values={hours} value={hour} onChange={setHour} />
         <Text style={styles.wheelColon}>:</Text>
-        <Wheel values={minutes} value={minute} onChange={setMinute}
+        <ScrollWheel values={minutes} value={minute} onChange={setMinute}
           format={v => String(v).padStart(2, '0')} />
-        <Wheel values={['AM', 'PM']} value={ampm} onChange={setAmpm} />
+        <ScrollWheel values={periods} value={ampm} onChange={setAmpm} />
       </View>
       <View style={styles.sheetBtns}>
         <TouchableOpacity onPress={onClose} style={styles.sheetBtnBack}>
-          <Text style={[styles.sheetBtnText, { color: TXTSUB }]}>Back</Text>
+          <Text style={[styles.sheetBtnText, { color: TXTSUB }]}>{t('prayerFlow.time.back')}</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={onConfirm} style={[styles.sheetBtnConfirm, { backgroundColor: ROSE }]}>
-          <Text style={[styles.sheetBtnText, { color: '#fff', fontWeight: '700' }]}>Confirm</Text>
+          <Text style={[styles.sheetBtnText, { color: '#fff', fontWeight: '700' }]}>{t('prayerFlow.time.confirm')}</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-export default function PrayerFlow({ morning, visible, onComplete, onClose }: PrayerFlowProps) {
-  const data = morning ? FLOW_DATA.morning : FLOW_DATA.evening;
+// Deterministic daily count for "N prayed with you today" — the number is
+// stable within a calendar day but shifts between roughly 150k and 250k
+// across days, so it feels alive without ever being a hard-coded literal.
+function prayedTodayCount(): number {
+  const d = new Date();
+  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  const variation = Math.floor(Math.abs(Math.sin(seed)) * 100000);
+  return 150000 + variation;
+}
+
+function formatThousands(n: number): string {
+  return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+// Side-view praying-hands silhouette per user redesign. Two palms together
+// seen from the side read as a single curved profile — pointed at the top
+// (fingertips meeting), bulging gently through the palm/knuckle area,
+// tapering to a narrow wrist with a soft rounded cuff. No fingertip arches,
+// no thumb bump, no left/right mirror — one iconic shape, much cleaner than
+// the previous four-fingertip top-down view.
+const HAND_PATH =
+  'M32 4 ' +
+  // Left side: top tip down to palm bulge
+  'C26 6, 20 14, 18 28 ' +
+  'C14 50, 10 78, 14 110 ' +
+  // Continuing left side: taper to wrist
+  'C16 130, 20 150, 22 168 ' +
+  'L22 184 ' +
+  // Rounded cuff (bottom)
+  'C22 190, 26 192, 32 192 ' +
+  'C38 192, 42 190, 42 184 ' +
+  'L42 168 ' +
+  // Right side: wrist back up to palm bulge
+  'C44 150, 48 130, 50 110 ' +
+  'C54 78, 50 50, 46 28 ' +
+  'C44 14, 38 6, 32 4 ' +
+  'Z';
+
+function PrayingHand() {
+  return (
+    <Svg width={64} height={196} viewBox="0 0 64 196">
+      <Path d={HAND_PATH} fill="#FFFFFF" opacity={0.95} />
+      {/* Subtle wrist cuff line — keeps the bottom from reading as a sealed bag */}
+      <Path d="M22 172 L42 172" stroke="rgba(0,0,0,0.10)" strokeWidth={1.2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+// 4-point sparkle star
+function Sparkle({ size = 18 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M12 0 C12.6 8, 16 11.4, 24 12 C16 12.6, 12.6 16, 12 24 C11.4 16, 8 12.6, 0 12 C8 11.4, 11.4 8, 12 0 Z"
+        fill="#FFFFFF"
+      />
+    </Svg>
+  );
+}
+
+export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'PrayerFlow'>) {
+  const insets = useSafeAreaInsets();
+  const t = useT();
+  const { markDone, mDone, eDone, everPrayed } = usePrayer();
+  const { addNote } = useNotes();
+  const { markToday } = useActivity();
+  const ratePrompt = useRatePrompt();
+  const { notifRationaleShown, markNotifRationaleShown } = useOnboarding();
+  const { kind } = route.params;
+  const morning = kind === 'morning';
+  // Capture whether this slot was already completed BEFORE this flow started.
+  // If so, this is a re-do and the celebration screens (weekly progress + set
+  // reminder sheet) are skipped — the user just wanted to revisit the prayer.
+  const isRedoRef = useRef<boolean>(morning ? mDone : eDone);
+  // Capture whether this is the user's first-ever prayer of any kind. We
+  // freeze the value at flow mount so markDone (which fires inside the flow)
+  // doesn't flip it before we get to the Continue branch.
+  const isFirstEverRef = useRef<boolean>(!everPrayed && !notifRationaleShown);
+  const { current: translation } = useTranslation();
+  const prayerBg = usePrayerBackgrounds();
+  // Daily prayer background image (slot-specific). Used as the backdrop for
+  // ShareVerseSheet so the verse card matches what the user was looking at
+  // before opening share.
+  const bgImage = prayerBg.imageFor(morning ? 'morning' : 'evening');
+  const { getVerse, todayDay } = useDailyVerses();
+  const labels = dailyLabels(translation.code);
+  // Pull today's verse for the segment we entered with. Bundled fallback
+  // covers the first 3 days offline; the CDN file expands to 60 once cached.
+  const dailyVerse = getVerse(todayDay, morning ? 'morning' : 'evening');
+  // The corpus stores English book names; localize for the active translation
+  // so Chinese / Spanish / Portuguese / etc. readers see "創世記 1:2" instead
+  // of "Genesis 1:2" under the daily-verse heading.
+  const verseRef = dailyVerse?.reference.full_reference
+    ? localizeReference(translation.code, dailyVerse.reference.full_reference)
+    : '';
+  const verseText = dailyVerse?.modernText || '';
+
+  // Verse action-row state — same trio of affordances as the home verse
+  // card (Save / Notes / Share). The Save toggle mirrors the home card's
+  // saved-list source, so the verse stays saved whether the user heart-ed
+  // it from the home screen or here.
+  const { verses: savedVerses, addVerse, removeVerse, hasVerse } = useSavedVerses();
+  const verseIsSaved = !!verseRef && hasVerse(verseRef);
+  const toggleVerseSaved = () => {
+    if (!verseRef || !verseText) return;
+    if (verseIsSaved) {
+      const existing = savedVerses.find(s => s.ref === verseRef);
+      if (existing) removeVerse(existing.id);
+    } else {
+      addVerse(verseRef, verseText);
+    }
+  };
+  const [showVerseShare, setShowVerseShare] = useState(false);
+  const [showVerseNote, setShowVerseNote] = useState(false);
+  const meditationParas = (dailyVerse?.meditation || '').split('\n\n').filter(Boolean);
+  const actionBody = dailyVerse?.actionStep || '';
+  const prayerBody = dailyVerse?.prayer || '';
+  // Keep mixed-case so the label matches the PrayerScreen hero-card label
+  // ("Verse of the Day" — heroLabel) exactly. Meditation / action / prayer
+  // captions stay uppercased: they're flow-specific section headers, not
+  // mirrors of a card label.
+  const verseCaption = morning ? labels.verseOfDay : labels.verseOfNight;
+  // Title-case (matches the source labels exactly) per user — no more
+  // .toUpperCase(), so "Reflection" / "Today's Practice" / "Closing Prayer"
+  // render as authored.
+  const meditationCaption = labels.meditationTitle;
+  const actionCaption = morning ? labels.actionTitleMorning : labels.actionTitleEvening;
+  const prayerCaption = labels.prayerTitle;
   const colors = morning
     ? (['#C2547A', '#7B2255', '#2D0A1A'] as const)
     : (['#5B3A9E', '#2D1660', '#100525'] as const);
-  const [page, setPage] = useState(0);
+  // Dark scrim laid over the photo backdrop so the white verse text + chrome
+  // stays legible regardless of how bright the image is. Two stops so the
+  // bottom half (where action labels sit) reads cleanly even on near-white
+  // skies. Skipped entirely when no image is available — the gradient
+  // fallback below carries enough contrast on its own.
+  const scrimColors = morning
+    ? (['rgba(123,34,85,0.35)', 'rgba(45,10,26,0.65)'] as const)
+    : (['rgba(45,22,96,0.40)', 'rgba(16,5,37,0.70)'] as const);
+  // Background-music source for this slot. `audioFor` returns either a
+  // local cached `file://` URI (prefetched on app launch via
+  // PrayerBackgroundsContext) or null when no audio is available yet.
+  // We pass the source straight to `useAudioPlayer`; on null it leaves the
+  // player idle and `toggleMusic` becomes a no-op.
+  const audioSource = prayerBg.audioFor(morning ? 'morning' : 'evening');
+  const audioPlayer = useAudioPlayer(audioSource ?? null);
+  const audioStatus = useAudioPlayerStatus(audioPlayer);
+  // Auto-loop + auto-play. Setting `loop` on every render is safe — it's
+  // idempotent — and covers the case where the player swaps source on
+  // morning↔evening toggle. We only nudge `play()` when the source first
+  // becomes available; the user's toggleMusic action below takes over from
+  // there. Pause on unmount so the music doesn't follow the user to the
+  // congrats screen.
+  useEffect(() => {
+    try { audioPlayer.loop = true; } catch {}
+  }, [audioPlayer]);
+  useEffect(() => {
+    if (!audioSource) return;
+    try { audioPlayer.play(); } catch {}
+  }, [audioSource, audioPlayer]);
+  useEffect(() => () => {
+    try { if (audioPlayer.playing) audioPlayer.pause(); } catch {}
+  }, [audioPlayer]);
+  const toggleMusic = () => {
+    try {
+      if (audioStatus.playing) audioPlayer.pause();
+      else audioPlayer.play();
+    } catch {}
+  };
   const [amened, setAmened] = useState(false);
+  const [showWeekly, setShowWeekly] = useState(false);
+  const [showNotifRationale, setShowNotifRationale] = useState(false);
   const [showSheet, setShowSheet] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showNoteSheet, setShowNoteSheet] = useState(false);
+  const [showRatePrompt, setShowRatePrompt] = useState(false);
+  const [noteText, setNoteText] = useState('');
+  const [page, setPage] = useState(0);
+  const [buttonReady, setButtonReady] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
-  const SECTIONS = ['verse', 'meditation', 'action', 'prayer'];
-
-  // Slide-up entrance animation
-  const slideY = useRef(new Animated.Value(PHONE_HEIGHT)).current;
+  // Each page that can overflow has its own inner ScrollView. Reset whichever
+  // one is no longer active so swiping back into it lands on its caption,
+  // not on whatever scroll offset the user last left there.
+  const meditationScrollRef = useRef<ScrollView>(null);
+  const actionScrollRef = useRef<ScrollView>(null);
+  const prayerScrollRef = useRef<ScrollView>(null);
   useEffect(() => {
-    if (visible) {
-      slideY.setValue(PHONE_HEIGHT);
-      Animated.spring(slideY, {
-        toValue: 0,
-        tension: 62,
-        friction: 12,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [visible]);
-
-  // Amen screen animations
-  const amenFade = useRef(new Animated.Value(0)).current;
-  const amenHandsY = useRef(new Animated.Value(40)).current;
-  const farewell1 = useRef(new Animated.Value(0)).current;
-  const farewell2 = useRef(new Animated.Value(0)).current;
-  const farewell3 = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (amened) {
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(amenFade, { toValue: 1, duration: 600, useNativeDriver: true }),
-          Animated.spring(amenHandsY, { toValue: 0, tension: 55, friction: 10, useNativeDriver: true }),
-        ]),
-        Animated.stagger(160, [
-          Animated.timing(farewell1, { toValue: 1, duration: 420, useNativeDriver: true }),
-          Animated.timing(farewell2, { toValue: 1, duration: 420, useNativeDriver: true }),
-          Animated.timing(farewell3, { toValue: 1, duration: 420, useNativeDriver: true }),
-        ]),
-      ]).start();
-    }
-  }, [amened]);
-
-  // Sheet slide-up
-  const sheetY = useRef(new Animated.Value(300)).current;
-  useEffect(() => {
-    if (showSheet) {
-      sheetY.setValue(300);
-      Animated.spring(sheetY, {
-        toValue: 0,
-        tension: 65,
-        friction: 12,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [showSheet]);
+    if (page !== 1) meditationScrollRef.current?.scrollTo({ y: 0, animated: false });
+    if (page !== 2) actionScrollRef.current?.scrollTo({ y: 0, animated: false });
+    if (page !== 3) prayerScrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [page]);
 
   const handleScroll = (e: any) => {
     const idx = Math.round(e.nativeEvent.contentOffset.y / height);
     if (idx !== page) setPage(idx);
   };
 
+  // Closing scene timing: hands move in, then 8 sparkles twinkle continuously
+  // for ~4s (6 cycles × ~700ms each) before fading out. Closing text appears
+  // in two phases: heading (0.7s) → 0.8s breathing pause → Continue button
+  // (0.5s). The "In Jesus' name" middle line was removed per user (2026-05-22)
+  // and its old 1.5s of timing (GAP_1 + T_JESUS + GAP_2) collapsed to 0.8s —
+  // long enough for the heading to settle but tight enough that there isn't
+  // dead air now that nothing fills the gap.
+  const HAND_CLOSE = 700;
+  const TWINKLE_HALF = 350;          // up-time = down-time of one twinkle pulse
+  const TWINKLE_LOOPS = 6;            // 6 × 700ms ≈ 4.2s of twinkling
+  const T_HEAD = 700;
+  const GAP_AFTER_HEAD = 800;
+  const T_BTN = 500;
+
+  const handsOpacity = useSharedValue(0);
+  const star1 = useSharedValue(0);
+  const star2 = useSharedValue(0);
+  const star3 = useSharedValue(0);
+  const star4 = useSharedValue(0);
+  const star5 = useSharedValue(0);
+  const star6 = useSharedValue(0);
+  const star7 = useSharedValue(0);
+  const star8 = useSharedValue(0);
+  const headingOpacity = useSharedValue(0);
+  const buttonOpacity = useSharedValue(0);
+
+  // Music icon spin
+  const musicSpin = useSharedValue(0);
+  useEffect(() => {
+    musicSpin.value = withRepeat(
+      withTiming(360, { duration: 9000, easing: Easing.linear }),
+      -1,
+      false
+    );
+  }, [musicSpin]);
+  const musicSpinStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${musicSpin.value}deg` }],
+  }));
+
+  // Page text slide-in. The off-page content sits 110 px below its resting
+  // position with opacity 0; on page-snap it eases up to translateY 0,
+  // opacity 1 over 500 ms (per user "持续 0.5s"). Larger magnitude than the
+  // previous 60 px makes the motion clearly visible instead of feeling like
+  // a hard cut, while `Easing.out(Easing.cubic)` keeps the arrival soft.
+  const PAGE_TY = 110;
+  const PAGE_DURATION = 500;
+  const pageProgress = useSharedValue(0);
+  useEffect(() => {
+    pageProgress.value = withTiming(page, { duration: PAGE_DURATION, easing: Easing.out(Easing.cubic) });
+  }, [page, pageProgress]);
+  const verseAnim = useAnimatedStyle(() => {
+    const dist = Math.abs(pageProgress.value - 0);
+    const ty = Math.min(PAGE_TY, dist * PAGE_TY);
+    return { transform: [{ translateY: ty }], opacity: 1 - ty / PAGE_TY };
+  });
+  const meditationAnim = useAnimatedStyle(() => {
+    const dist = Math.abs(pageProgress.value - 1);
+    const ty = Math.min(PAGE_TY, dist * PAGE_TY);
+    return { transform: [{ translateY: ty }], opacity: 1 - ty / PAGE_TY };
+  });
+  const actionAnim = useAnimatedStyle(() => {
+    const dist = Math.abs(pageProgress.value - 2);
+    const ty = Math.min(PAGE_TY, dist * PAGE_TY);
+    return { transform: [{ translateY: ty }], opacity: 1 - ty / PAGE_TY };
+  });
+  const prayerAnim = useAnimatedStyle(() => {
+    const dist = Math.abs(pageProgress.value - 3);
+    const ty = Math.min(PAGE_TY, dist * PAGE_TY);
+    return { transform: [{ translateY: ty }], opacity: 1 - ty / PAGE_TY };
+  });
+
+  useEffect(() => {
+    if (!amened) return;
+    // Single side-view praying-hand silhouette fades in from 0 → 1 opacity.
+    handsOpacity.value = withTiming(1, { duration: HAND_CLOSE, easing: Easing.out(Easing.cubic) });
+
+    // 8 sparkles: each does TWINKLE_LOOPS in/out cycles, then settles at
+    // full opacity per user — sparkles must STAY visible after twinkling,
+    // not fade away (was withTiming(0, …)).
+    const twinkleSeq = () => withSequence(
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: TWINKLE_HALF, easing: Easing.out(Easing.cubic) }),
+          withTiming(0.35, { duration: TWINKLE_HALF, easing: Easing.in(Easing.cubic) }),
+        ),
+        TWINKLE_LOOPS,
+        false,
+      ),
+      withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }),
+    );
+    const stars = [star1, star2, star3, star4, star5, star6, star7, star8];
+    const offsets = [0, 90, 180, 60, 150, 240, 30, 210];
+    stars.forEach((sv, i) => { sv.value = withDelay(HAND_CLOSE + offsets[i], twinkleSeq()); });
+
+    // Phased fade-in: heading 0.7s → 0.8s breathing pause → button 0.5s.
+    headingOpacity.value = withDelay(HAND_CLOSE,
+      withTiming(1, { duration: T_HEAD, easing: Easing.out(Easing.cubic) }));
+    buttonOpacity.value = withDelay(HAND_CLOSE + T_HEAD + GAP_AFTER_HEAD,
+      withTiming(1, { duration: T_BTN, easing: Easing.out(Easing.cubic) }));
+
+    // Lock in "this prayer is done" immediately so a force-close still counts.
+    markDone(kind);
+    markToday();
+
+    // Enable the Continue button only once it's visible
+    const btnTimer = setTimeout(
+      () => setButtonReady(true),
+      HAND_CLOSE + T_HEAD + GAP_AFTER_HEAD,
+    );
+    return () => clearTimeout(btnTimer);
+  }, [amened]);
+
+  const handsContainerStyle = useAnimatedStyle(() => ({ opacity: handsOpacity.value }));
+  const star1Style = useAnimatedStyle(() => ({ opacity: star1.value, transform: [{ scale: 0.6 + star1.value * 0.5 }] }));
+  const star2Style = useAnimatedStyle(() => ({ opacity: star2.value, transform: [{ scale: 0.6 + star2.value * 0.5 }] }));
+  const star3Style = useAnimatedStyle(() => ({ opacity: star3.value, transform: [{ scale: 0.6 + star3.value * 0.5 }] }));
+  const star4Style = useAnimatedStyle(() => ({ opacity: star4.value, transform: [{ scale: 0.6 + star4.value * 0.5 }] }));
+  const star5Style = useAnimatedStyle(() => ({ opacity: star5.value, transform: [{ scale: 0.6 + star5.value * 0.5 }] }));
+  const star6Style = useAnimatedStyle(() => ({ opacity: star6.value, transform: [{ scale: 0.6 + star6.value * 0.5 }] }));
+  const star7Style = useAnimatedStyle(() => ({ opacity: star7.value, transform: [{ scale: 0.6 + star7.value * 0.5 }] }));
+  const star8Style = useAnimatedStyle(() => ({ opacity: star8.value, transform: [{ scale: 0.6 + star8.value * 0.5 }] }));
+  const headingStyle = useAnimatedStyle(() => ({ opacity: headingOpacity.value }));
+  const buttonStyle = useAnimatedStyle(() => ({ opacity: buttonOpacity.value }));
+
   const handleAmen = () => {
     setAmened(true);
-    setTimeout(() => setShowSheet(true), 2200);
+  };
+
+  const closeFlow = () => navigation.goBack();
+
+  // End-of-flow gate: show the rate prompt if the cadence rules say we
+  // should, otherwise dismiss the prayer flow.
+  const finishFlow = () => {
+    if (ratePrompt.shouldAsk()) {
+      ratePrompt.markShown();
+      setShowRatePrompt(true);
+    } else {
+      navigation.goBack();
+    }
+  };
+
+  const handleWeeklyOpenReminder = () => {
+    setShowWeekly(false);
+    setTimeout(() => setShowSheet(true), 200);
+  };
+
+  const handleWeeklyBack = () => {
+    setShowWeekly(false);
+    setTimeout(finishFlow, 200);
   };
 
   const handleSheetClose = () => {
     setShowSheet(false);
-    setTimeout(() => {
-      onComplete();
-      setAmened(false);
-      setPage(0);
-      amenFade.setValue(0);
-      amenHandsY.setValue(40);
-      farewell1.setValue(0);
-      farewell2.setValue(0);
-      farewell3.setValue(0);
-    }, 280);
+    setTimeout(finishFlow, 280);
   };
 
-  const makeFarewell = (anim: Animated.Value) => ({
-    opacity: anim,
-    transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
-  });
+  const handleRatePromptClose = () => {
+    setShowRatePrompt(false);
+    setTimeout(() => navigation.goBack(), 200);
+  };
 
-  if (!visible) return null;
+  const closeNoteSheet = () => {
+    Keyboard.dismiss();
+    setNoteText('');
+    setShowNoteSheet(false);
+  };
+
+  const saveNote = () => {
+    Keyboard.dismiss();
+    addNote(
+      noteText,
+      verseRef ? { ref: verseRef, text: verseText } : undefined,
+      'reflection',
+    );
+    setNoteText('');
+    setShowNoteSheet(false);
+  };
+
+  // Swipe-down gesture for note sheet. The shared value persists across
+  // mounts; if a previous close left it animated off-screen at translateY
+  // 800, the next open would render the sheet below the viewport. Reset it
+  // synchronously in `openNoteSheet` BEFORE flipping the visibility flag
+  // so the sheet's first frame is always at translateY 0.
+  const noteDragY = useSharedValue(0);
+  const openNoteSheet = () => {
+    noteDragY.value = 0;
+    setShowNoteSheet(true);
+  };
+  const notePan = Gesture.Pan()
+    .activeOffsetY(12)
+    .onUpdate((e) => {
+      'worklet';
+      if (e.translationY > 0) noteDragY.value = e.translationY;
+    })
+    .onEnd((e) => {
+      'worklet';
+      if (e.translationY > 120 || e.velocityY > 800) {
+        noteDragY.value = withTiming(800, { duration: 560 }, (f) => {
+          if (f) runOnJS(closeNoteSheet)();
+        });
+      } else {
+        noteDragY.value = withTiming(0, { duration: 480 });
+      }
+    });
+  const noteSheetAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: noteDragY.value }],
+  }));
 
   return (
-    <Animated.View style={[styles.container, StyleSheet.absoluteFillObject, { transform: [{ translateY: slideY }] }]}>
-      <LinearGradient colors={colors} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={StyleSheet.absoluteFillObject} />
+    <View style={styles.container}>
+      {/* Backdrop — today's prayer-bg photo (same image as the home verse
+          card) with a dark gradient scrim on top so chrome + verse text
+          stay legible. Falls back to the brand gradient when the manifest
+          hasn't resolved (offline first-launch). */}
+      {bgImage ? (
+        <ImageBackground source={bgImage} style={StyleSheet.absoluteFillObject} resizeMode="cover">
+          <LinearGradient
+            colors={scrimColors}
+            start={{ x: 0.2, y: 0 }}
+            end={{ x: 0.8, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+          />
+        </ImageBackground>
+      ) : (
+        <LinearGradient colors={colors} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={StyleSheet.absoluteFillObject} />
+      )}
 
-      {/* Top chrome */}
       {!amened && (
-        <View style={styles.topChrome}>
-          <TouchableOpacity onPress={onClose} style={styles.chromeBtn}>
-            <Feather name="x" size={16} color="#fff" />
+        <View style={[styles.topChrome, { top: insets.top + 8 }]}>
+          <TouchableOpacity onPress={closeFlow} style={styles.chromeBtn}>
+            <Feather name="x" size={20} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.chromeBtn}>
-            <Feather name="music" size={15} color="#fff" />
+          {/* Music icon doubles as the play/pause toggle for the daily
+              background track. The slow rotate keeps running while audio
+              plays (visual hint that music is active); it stops when the
+              user mutes. Strikethrough overlays the muted state.
+              Disabled when no source has loaded yet (offline first run). */}
+          <TouchableOpacity
+            onPress={toggleMusic}
+            style={[styles.chromeBtn, !audioSource && { opacity: 0.5 }]}
+            disabled={!audioSource}
+          >
+            <Animated.View style={audioStatus.playing ? musicSpinStyle : undefined}>
+              <Feather name={audioStatus.playing ? 'music' : 'volume-x'} size={21} color="#fff" />
+            </Animated.View>
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Progress indicator */}
       {!amened && (
         <View style={styles.progressDots}>
           {SECTIONS.map((_, i) => (
-            <View key={i} style={[
-              styles.dot,
-              { backgroundColor: i <= page ? '#fff' : 'rgba(255,255,255,0.35)' },
-              i === page && styles.dotActive,
-            ]} />
+            <PageDot key={i} isActive={i === page} isPast={i < page} />
           ))}
           <Text style={styles.pageCount}>{page + 1} / {SECTIONS.length}</Text>
         </View>
       )}
 
-      {/* Pages */}
       {!amened && (
         <ScrollView
           ref={scrollRef}
@@ -208,237 +605,896 @@ export default function PrayerFlow({ morning, visible, onComplete, onClose }: Pr
           scrollEventThrottle={16}
           style={StyleSheet.absoluteFillObject}
         >
-          {/* Page 1 — Verse */}
-          <View style={[styles.flowPage, { height }]}>
-            <View style={styles.pageContent}>
-              <Text style={styles.pageCaption}>{data.verse.label.toUpperCase()}</Text>
-              <Text style={styles.pageRef}>{data.verse.ref}</Text>
-              <Text style={styles.pageVerse}>"{data.verse.text}"</Text>
-            </View>
-          </View>
+          <FlowPage>
+            <Animated.View style={[styles.pageContent, verseAnim]}>
+              <Text style={styles.verseCaption}>{verseCaption}</Text>
+              <Text style={styles.pageRef}>{verseRef}</Text>
+              <Text style={styles.pageVerse}>{verseText}</Text>
+              {/* Save / Notes / Share — mirrors the home verse-card affordances.
+                  Lives inside the verse page so it scrolls away with the next
+                  page (it shouldn't follow the user into Meditation / etc.). */}
+              <View style={styles.verseActions}>
+                <TouchableOpacity onPress={toggleVerseSaved} style={styles.verseActionBtn} activeOpacity={0.7} hitSlop={8}>
+                  <Ionicons name={verseIsSaved ? 'heart' : 'heart-outline'} size={26} color="#FFFFFF" />
+                  <Text style={styles.verseActionLabel}>{t(verseIsSaved ? 'prayerFlow.verse.saved' : 'prayerFlow.verse.save')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowVerseNote(true)} style={styles.verseActionBtn} activeOpacity={0.7} hitSlop={8}>
+                  <Feather name="edit-2" size={24} color="#FFFFFF" />
+                  <Text style={styles.verseActionLabel}>{t('prayerFlow.verse.notes')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowVerseShare(true)} style={styles.verseActionBtn} activeOpacity={0.7} hitSlop={8}>
+                  <Feather name="share-2" size={24} color="#FFFFFF" />
+                  <Text style={styles.verseActionLabel}>{t('prayerFlow.verse.share')}</Text>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          </FlowPage>
 
-          {/* Page 2 — Meditation */}
-          <View style={[styles.flowPage, { height }]}>
-            <ScrollView showsVerticalScrollIndicator={false} style={styles.pageScroll}>
-              <View style={styles.pageContent}>
-                <Text style={styles.pageCaption}>MEDITATION</Text>
-                <Text style={styles.pageHeading}>{data.meditation.title}</Text>
-                {data.meditation.body.split('\n\n').map((p, i) => (
+          <FlowPage>
+            <ScrollView ref={meditationScrollRef} showsVerticalScrollIndicator={false} style={styles.pageScroll}>
+              <Animated.View style={[styles.pageContent, styles.deepPageOffset, styles.meditationContent, meditationAnim]}>
+                <Text style={[styles.pageCaption, styles.deepPageCaption]}>{meditationCaption}</Text>
+                {meditationParas.map((p, i) => (
                   <Text key={i} style={styles.pageBody}>{p}</Text>
                 ))}
-              </View>
+              </Animated.View>
             </ScrollView>
-          </View>
+          </FlowPage>
 
-          {/* Page 3 — Action */}
-          <View style={[styles.flowPage, { height }]}>
-            <ScrollView showsVerticalScrollIndicator={false} style={styles.pageScroll}>
-              <View style={styles.pageContent}>
-                <Text style={styles.pageCaption}>ACTION STEP</Text>
-                <Text style={styles.pageHeading}>{data.action.title}</Text>
-                <Text style={styles.pageBody}>{data.action.body}</Text>
-                <TouchableOpacity style={styles.reflectBtn}>
-                  <Feather name="edit-2" size={16} color="rgba(255,255,255,0.85)" />
-                  <Text style={styles.reflectText}>Write a reflection</Text>
+          <FlowPage>
+            <ScrollView ref={actionScrollRef} showsVerticalScrollIndicator={false} style={styles.pageScroll}>
+              <Animated.View style={[styles.pageContent, styles.deepPageOffset, styles.actionPagePad, actionAnim]}>
+                <Text style={[styles.pageCaption, styles.deepPageCaption]}>{actionCaption}</Text>
+                <Text style={styles.pageBody}>{actionBody}</Text>
+                <TouchableOpacity
+                  style={styles.reflectBtn}
+                  onPress={openNoteSheet}
+                  activeOpacity={0.9}
+                >
+                  <Feather name="edit-2" size={18} color={morning ? ROSE : LAV} />
+                  <Text style={[styles.reflectText, { color: morning ? ROSE : LAV }]}>{t('prayerFlow.writeReflection')}</Text>
                 </TouchableOpacity>
-              </View>
+              </Animated.View>
             </ScrollView>
-          </View>
+          </FlowPage>
 
-          {/* Page 4 — Prayer */}
-          <View style={[styles.flowPage, { height }]}>
-            <ScrollView showsVerticalScrollIndicator={false} style={styles.pageScroll}>
-              <View style={styles.pageContent}>
-                <Text style={styles.pageCaption}>PRAYER</Text>
-                <Text style={styles.pageHeading}>{data.prayer.title}</Text>
-                <Text style={[styles.pageBody, { fontStyle: 'italic' }]}>{data.prayer.body}</Text>
-                <TouchableOpacity onPress={handleAmen} style={styles.amenBtn}>
-                  <Text style={[styles.amenText, { color: morning ? '#7B2255' : '#2D1660' }]}>Amen</Text>
+          <FlowPage>
+            <ScrollView ref={prayerScrollRef} showsVerticalScrollIndicator={false} style={styles.pageScroll}>
+              <Animated.View style={[styles.pageContent, styles.deepPageOffset, prayerAnim]}>
+                <Text style={[styles.pageCaption, styles.deepPageCaption, styles.prayerCaption]}>{prayerCaption}</Text>
+                <Text style={[styles.pageBody, styles.prayerBody]}>{prayerBody}</Text>
+                <TouchableOpacity
+                  onPress={handleAmen}
+                  style={styles.amenBtn}
+                  activeOpacity={0.9}
+                >
+                  <Text style={[styles.amenText, { color: morning ? ROSE : LAV }]}>{t('prayerFlow.amen')}</Text>
                 </TouchableOpacity>
-                <Text style={styles.prayedCount}>187,881 prayed with you today</Text>
-              </View>
+                <Text style={styles.prayedCount}>{t('prayerFlow.prayedCount', { count: formatThousands(prayedTodayCount()) })}</Text>
+              </Animated.View>
             </ScrollView>
-          </View>
+          </FlowPage>
         </ScrollView>
       )}
 
-      {/* Amen closing screen */}
-      {amened && (
-        <Animated.View style={[styles.amenScreen, { opacity: amenFade }]}>
-          <TouchableOpacity onPress={onClose} style={[styles.chromeBtn, { position: 'absolute', top: 58, left: 18 }]}>
-            <Feather name="x" size={16} color="#fff" />
+      {amened && !showWeekly && !showNotifRationale && (
+        // Deep slot-tinted canvas per user — bright ROSE was too searing.
+        // Morning → deep rose (#B8336B), evening → deep purple (#3D2A6F).
+        <View style={[styles.amenScreen, { backgroundColor: morning ? '#B8336B' : '#3D2A6F' }]}>
+          <TouchableOpacity onPress={closeFlow} style={[styles.chromeBtn, { position: 'absolute', top: insets.top + 8, left: 19 }]}>
+            <Feather name="x" size={20} color="#fff" />
           </TouchableOpacity>
-          <Animated.View style={[styles.amenHands, { transform: [{ translateY: amenHandsY }] }]}>
-            <FontAwesome5 name="praying-hands" size={80} color="rgba(255,255,255,0.92)" />
+          <Animated.View style={[styles.amenHands, handsContainerStyle]}>
+            <View style={styles.handsStage}>
+              <PrayingHand />
+              <Animated.View style={[styles.starPos, { top: 4, left: 14 }, star1Style]}>
+                <Sparkle size={22} />
+              </Animated.View>
+              <Animated.View style={[styles.starPos, { top: -6, left: 70 }, star2Style]}>
+                <Sparkle size={12} />
+              </Animated.View>
+              <Animated.View style={[styles.starPos, { top: 6, right: 36 }, star3Style]}>
+                <Sparkle size={16} />
+              </Animated.View>
+              <Animated.View style={[styles.starPos, { top: -4, right: 4 }, star4Style]}>
+                <Sparkle size={20} />
+              </Animated.View>
+              <Animated.View style={[styles.starPos, { top: 70, left: 0 }, star5Style]}>
+                <Sparkle size={14} />
+              </Animated.View>
+              <Animated.View style={[styles.starPos, { top: 64, right: 0 }, star6Style]}>
+                <Sparkle size={18} />
+              </Animated.View>
+              <Animated.View style={[styles.starPos, { bottom: 6, left: 26 }, star7Style]}>
+                <Sparkle size={14} />
+              </Animated.View>
+              <Animated.View style={[styles.starPos, { bottom: 12, right: 22 }, star8Style]}>
+                <Sparkle size={12} />
+              </Animated.View>
+            </View>
           </Animated.View>
-          <Text style={styles.amenCaption}>CLOSING</Text>
-          <Text style={styles.amenHeading}>
-            We hope this prayer time encouraged you. Come back again soon.
-          </Text>
-          <Animated.Text style={[styles.amenFarewell, makeFarewell(farewell1)]}>In Jesus' name</Animated.Text>
-          <Animated.Text style={[styles.amenFarewell, makeFarewell(farewell2)]}>Thank you, Lord</Animated.Text>
-          <Animated.Text style={[styles.amenFarewell, makeFarewell(farewell3)]}>Bless us, O Lord</Animated.Text>
-        </Animated.View>
+          <Animated.Text style={[styles.amenHeading, headingStyle]}>
+            {t('prayerFlow.amenHeading')}
+          </Animated.Text>
+          <Animated.View
+            style={[styles.amenContinueWrap, buttonStyle]}
+            pointerEvents={buttonReady ? 'auto' : 'none'}
+          >
+            <TouchableOpacity
+              onPress={() => {
+                if (isRedoRef.current) {
+                  navigation.goBack();
+                } else if (isFirstEverRef.current) {
+                  // First-ever prayer (any kind) → onboarding rationale.
+                  setShowNotifRationale(true);
+                } else if (morning) {
+                  // Morning re-completion is not a "day done" moment,
+                  // so we skip the Weekly green screen and head home.
+                  navigation.goBack();
+                } else {
+                  // Evening prayer → Weekly progress + Set Reminder.
+                  setShowWeekly(true);
+                }
+              }}
+              activeOpacity={0.85}
+              style={styles.amenContinueBtn}
+            >
+              <Text style={[styles.amenContinueText, { color: morning ? ROSE : LAV }]}>
+                {t('prayerFlow.continue')}
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
       )}
 
-      {/* Notification sheet */}
-      {showSheet && (
-        <TouchableOpacity
+      {showWeekly && (
+        <View style={StyleSheet.absoluteFillObject}>
+          <WeeklyProgressView
+            morning={morning}
+            onOpenReminder={handleWeeklyOpenReminder}
+            onBack={handleWeeklyBack}
+          />
+        </View>
+      )}
+
+      {showNotifRationale && (
+        <View style={StyleSheet.absoluteFillObject}>
+          <NotifRationaleScreen
+            onDismiss={() => {
+              markNotifRationaleShown();
+              navigation.goBack();
+            }}
+          />
+        </View>
+      )}
+
+      {showRatePrompt && <RatePromptSheet onClose={handleRatePromptClose} />}
+
+      {/* Share-verse sheet — opened from the action row under the verse on
+          the first FlowPage. Receives the current prayer-bg image as the
+          card backdrop so every preview / capture uses the live photo
+          instead of the pink/lav gradient placeholder. */}
+      <Modal
+        visible={showVerseShare && !!verseRef && !!verseText}
+        transparent
+        animationType="none"
+        statusBarTranslucent
+        onRequestClose={() => setShowVerseShare(false)}
+      >
+        <ShareVerseSheet
+          reference={verseRef}
+          text={verseText}
+          bgSource={bgImage}
+          onClose={() => setShowVerseShare(false)}
+        />
+      </Modal>
+
+      {/* Verse-note sheet — separate from the in-flow reflection sheet
+          (`showNoteSheet` above) because it captures a thought tied to
+          THIS specific verse, not the closing reflection. */}
+      {showVerseNote && !!verseRef && !!verseText && (
+        <VerseNoteSheet
+          verseRef={verseRef}
+          verseText={verseText}
+          onClose={() => setShowVerseNote(false)}
+        />
+      )}
+
+      {showNoteSheet && (
+        // KAV must wrap the SHEET, not its inner content — with the sheet
+        // clipped to 92% height + overflow: hidden, padding inside the sheet
+        // pushes the Save button off the bottom edge. Wrapping outside lets
+        // the sheet itself shift up by the keyboard height (flex-end).
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.sheetOverlay}
-          activeOpacity={1}
-          onPress={() => !showTimePicker && handleSheetClose()}
         >
-          <Animated.View style={{ transform: [{ translateY: sheetY }] }}>
+          <Animated.View
+            entering={FadeIn.duration(300)}
+            style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.4)' }]}
+          >
+            <TouchableOpacity
+              style={StyleSheet.absoluteFillObject}
+              activeOpacity={1}
+              onPress={closeNoteSheet}
+            />
+          </Animated.View>
+          <GestureDetector gesture={notePan}>
+            <Animated.View
+              entering={SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic))}
+              style={[styles.noteSheet, noteSheetAnimStyle]}
+            >
+              <View style={[styles.noteSheetInner, { paddingBottom: Math.max(insets.bottom, 12) + 24 }]}>
+                <TouchableOpacity onPress={Keyboard.dismiss} activeOpacity={1} style={styles.noteHandleHit}>
+                  <View style={styles.sheetHandle} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={Keyboard.dismiss} activeOpacity={1}>
+                  <Text style={styles.noteSheetTitle}>{t('prayerFlow.note.title')}</Text>
+                </TouchableOpacity>
+                <TextInput
+                  value={noteText}
+                  onChangeText={setNoteText}
+                  placeholder={t('prayerFlow.note.placeholder')}
+                  placeholderTextColor={TXTSUB}
+                  multiline
+                  style={styles.noteInput}
+                  autoFocus
+                  textAlignVertical="top"
+                />
+                <View style={styles.sheetBtns}>
+                  <TouchableOpacity onPress={closeNoteSheet} style={[styles.sheetBtnBack, styles.reflectionBtn]}>
+                    <Text style={[styles.sheetBtnText, styles.reflectionBtnText, { color: TXTSUB }]}>{t('prayerFlow.note.cancel')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={saveNote} style={[styles.sheetBtnConfirm, styles.reflectionBtn, { backgroundColor: morning ? ROSE : LAV }]}>
+                    <Text style={[styles.sheetBtnText, styles.reflectionBtnText, { color: '#fff', fontWeight: '700' }]}>{t('prayerFlow.note.save')}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Animated.View>
+          </GestureDetector>
+        </KeyboardAvoidingView>
+      )}
+
+      {showSheet && (
+        <View style={styles.sheetOverlay}>
+          <Animated.View
+            entering={FadeIn.duration(300)}
+            style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.4)' }]}
+          >
+            <TouchableOpacity
+              style={StyleSheet.absoluteFillObject}
+              activeOpacity={1}
+              onPress={() => !showTimePicker && handleSheetClose()}
+            />
+          </Animated.View>
+          <Animated.View entering={SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic))}>
             {!showTimePicker ? (
-              <View style={styles.sheet}>
+              <View style={[styles.sheet, styles.habitSheet]}>
                 <View style={styles.sheetHandle} />
-                <Text style={styles.sheetHeading}>Make Prayer a Habit</Text>
-                <Text style={styles.sheetDesc}>Get a daily reminder to spend time in prayer.</Text>
+                <Text style={styles.sheetHeading}>{t('prayerFlow.habit.title')}</Text>
+                <Text style={styles.sheetDesc}>{t('prayerFlow.habit.desc')}</Text>
                 <TouchableOpacity
                   onPress={() => setShowTimePicker(true)}
                   style={[styles.setTimeBtn, { backgroundColor: 'rgba(232,97,154,0.10)' }]}
                 >
-                  <Text style={[styles.setTimeText, { color: ROSE }]}>Set Time</Text>
+                  <Text style={[styles.setTimeText, { color: ROSE }]}>{t('prayerFlow.habit.setTime')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={handleSheetClose}>
-                  <Text style={styles.notNowText}>Not now</Text>
+                  <Text style={styles.notNowText}>{t('prayerFlow.habit.notNow')}</Text>
                 </TouchableOpacity>
               </View>
             ) : (
               <TimePickerSheet onConfirm={handleSheetClose} onClose={() => setShowTimePicker(false)} />
             )}
           </Animated.View>
-        </TouchableOpacity>
+        </View>
       )}
-    </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { zIndex: 300 },
+  container: {
+    flex: 1,
+  },
   topChrome: {
     position: 'absolute',
-    top: 58, left: 18, right: 18,
+    left: 19,
+    right: 19,
     zIndex: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   chromeBtn: {
-    width: 34, height: 34, borderRadius: 17,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(0,0,0,0.32)',
-    alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  flowPage: {
+    width,
+    justifyContent: 'center',
+  },
+  pageScroll: {
+    flex: 1,
   },
   progressDots: {
-    position: 'absolute', right: 22, bottom: 32,
-    zIndex: 10, alignItems: 'center', gap: 8,
+    position: 'absolute',
+    right: 24,
+    bottom: 37,
+    zIndex: 10,
+    alignItems: 'center',
+    gap: 9,
   },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  dotActive: { width: 14, height: 14, borderRadius: 7 },
+  // Base shape for every page indicator. Height + backgroundColor are driven
+  // by the animated style inside <PageDot> — 9 px circle when inactive, ~35 px
+  // pill when active. borderRadius = w/2 keeps the pill ends rounded at any
+  // height, so the shape interpolates cleanly between circle and capsule.
+  dot: {
+    width: 9,
+    borderRadius: 4.5,
+  },
   pageCount: {
-    marginTop: 10, fontSize: 9.5, letterSpacing: 1.4,
-    fontWeight: '600', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase',
+    marginTop: 12,
+    fontSize: 10.5,
+    letterSpacing: 1.4,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.7)',
+    textTransform: 'uppercase',
   },
-  flowPage: { width, justifyContent: 'center' },
-  pageScroll: { flex: 1 },
-  pageContent: { paddingHorizontal: 26, paddingVertical: 100, justifyContent: 'center' },
+  pageContent: {
+    paddingHorizontal: 28,
+    paddingTop: 0,                                                              // 135 → 105 → 75 → 40 → 10 → 0 per user — verse block flush with the top chrome
+    paddingBottom: 115,
+    justifyContent: 'center',
+  },
+  // Pushes the caption further down on the meditation / action / prayer
+  // pages so the title doesn't crowd the top edge.
+  deepPageOffset: {
+    paddingTop: 175,                                                            // 185 → 175 (-10 px per user) — Reflection / Action / Prayer titles sit 10 px closer to the top
+  },
+  // Today's / Tonight's Practice (action page) only — title sits +30 px
+  // lower than the other two deep pages. Font is now Lato across all three
+  // deep pages, so no font override needed here anymore.
+  actionPagePad: {
+    paddingTop: 205,                                                            // deepPageOffset 175 + 30 (per user)
+  },
+  // Closing Prayer body only — back to Merriweather per user so the prayer
+  // text reads in the same warm serif voice as the Bible reader's body
+  // copy, while Reflection + Today's Practice stay on Lato. Line-height
+  // also +10 % vs. the shared deep-page rhythm (30 → 33) for slightly more
+  // breathing room befitting the closing prayer's contemplative tone.
+  prayerBody: {
+    fontFamily: FONTS.merriweather,
+    fontSize: 18.3,                                                             // 19 → 20.33 → 18.3 (-10 % this round per user) — Closing Prayer body only
+    lineHeight: 29.7,                                                           // 33 → 29.7 (proportional to -10 % fontSize so line rhythm stays balanced)
+  },
+  // Closing Prayer title only — Lora bold per user (other two deep pages
+  // stay on Lato). Weight 600 sits just under the Lora_700Bold cut so
+  // Android keeps the custom face instead of falling back to system sans.
+  prayerCaption: {
+    fontFamily: FONTS.loraBold,
+    fontWeight: '600',
+  },
+  meditationContent: {
+    paddingBottom: 280,
+  },
   pageCaption: {
-    fontSize: 11, letterSpacing: 2.4, textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.65)', fontWeight: '600', marginBottom: 8,
+    fontSize: 28.6,                                                             // 15 → 19.5 → 20.48 → 24 → 26 → 28.6 (+10 % per user)
+    // letterSpacing + textTransform removed — captions are now title-case per
+    // user ("Reflection" / "Today's Practice" / "Closing Prayer"), and the
+    // wide tracking only made sense paired with the all-caps look.
+    color: '#FFFFFF',                                                           // pure white per user (deep pages now sit on the photo bg, not the pink canvas)
+    fontFamily: FONTS.latoBold,                                                 // Reflection / Action / Prayer titles unified to Lato per user (was loraBold)
+    fontWeight: '600',
+    marginBottom: 9,
+  },
+  // Extra breathing room below the caption on Reflection / Tonight's Practice
+  // / Closing pages — gives the title some space before the body copy.
+  deepPageCaption: {
+    marginBottom: 29,                                                           // +20 from 9
+  },
+  // ─── Verse page typography — mirrors PrayerScreen's hero-card text styles
+  // (heroLabel / heroRef / heroText) so the verse flow reads as a continuation
+  // of the card the user just tapped. All sizes scaled +15 % per user; the
+  // label↔ref and ref↔body spacings are also taken from the card (heroLabel
+  // marginBottom = 4 → 4.6; heroBody paddingTop = 24 → 27.6) so the rhythm
+  // matches too. Stays a separate style from `pageCaption` so the deep pages
+  // (meditation / action / prayer) keep their existing uppercase + tracked
+  // section-header look.
+  verseCaption: {
+    fontSize: 18.4,                                                             // 16.0 → 18.4 (+15 % per user)
+    color: 'rgba(255,255,255,0.65)',
+    marginBottom: 7.68,                                                         // 9.6 → 7.68 (-20 % per user) — tighter caption ↔ ref pairing
+    fontFamily: FONTS.lato,
   },
   pageRef: {
-    color: 'rgba(255,255,255,0.85)', fontWeight: '600',
-    fontSize: 20, letterSpacing: 0.3, marginBottom: 26,
+    fontSize: 23.38,                                                            // heroRef 20.33 × 1.15
+    fontWeight: '700',                                                          // matches heroRef
+    color: '#fff',                                                              // matches heroRef
+    letterSpacing: 0.3,                                                         // matches heroRef
+    marginBottom: 27.6,                                                         // card heroBody.paddingTop 24 × 1.15
   },
-  pageVerse: { fontSize: 20, lineHeight: 30, color: '#fff' },
-  pageHeading: {
-    fontSize: 22, fontWeight: '500', color: '#fff',
-    lineHeight: 28, marginBottom: 18,
+  pageVerse: {
+    fontFamily: FONTS.merriweather,                                             // matches heroText
+    fontSize: 23.09,                                                            // 20.99 → 23.09 (+10 % per user)
+    lineHeight: 37.58,                                                          // 34.16 → 37.58 (+10 % proportional, keeps the verse's line rhythm)
+    color: 'rgba(255,255,255,0.96)',                                            // matches heroText
+  },
+  // Save / Notes / Share row under the verse, mirroring the home-screen
+  // verse-card affordances. White icons + labels because the verse page
+  // sits on the photo bg (with a dark scrim underneath, so white reads).
+  verseActions: {
+    flexDirection: 'row',
+    gap: 36,
+    marginTop: 58,                                                              // 28 → 58 (+30) per user — more breathing room between the verse copy and the Save / Notes / Share row
+    alignItems: 'center',
+  },
+  verseActionBtn: {
+    alignItems: 'center',
+    gap: 6,
+  },
+  verseActionLabel: {
+    fontSize: 13,
+    color: '#FFFFFF',
+    fontFamily: FONTS.lato,
+    letterSpacing: 0.2,
   },
   pageBody: {
-    fontSize: 16, lineHeight: 27,
-    color: 'rgba(255,255,255,0.88)', marginBottom: 16,
+    fontSize: 19,                                                               // per user
+    lineHeight: 30,                                                             // per user
+    color: '#FFFFFF',                                                           // pure white per user — deep pages back on the photo bg
+    marginBottom: 36,                                                           // 18 → 36 (doubled per user) — more breathing room between meditation / action / prayer paragraphs
+    fontFamily: FONTS.lato,                                                     // Reflection / Action / Prayer body unified to Lato per user (was Merriweather)
   },
+  // Mirrors PrayerScreen's `startBtn` for height/radius/text — but stays
+  // content-hugging (alignSelf 'flex-start') per user, not stretched to the
+  // full column. The pencil icon + label color are set inline by the
+  // consumer (ROSE for morning, LAV for evening) — per user the button is
+  // now white-on-tinted-text instead of tinted-on-white.
   reflectBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 20, padding: 12, paddingHorizontal: 18, marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+    gap: 10,
+    height: 51.77,                                                              // 47.06 → 51.77 (+10 % per user)
+    borderRadius: 24.39,                                                        // matches startBtn (auto-caps to capsule since > h/2)
+    paddingHorizontal: 22,                                                      // breathing room around the icon + label since the pill no longer stretches
+    marginTop: 62,                                                              // section spacing kept
+    backgroundColor: '#FFFFFF',
   },
-  reflectText: { fontSize: 14, color: 'rgba(255,255,255,0.85)', fontWeight: '500' },
+  reflectText: {
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    // color set inline (morning → ROSE / evening → LAV)
+  },
+  // Closing AMEN button. Mirrors startBtn for radius / stretch / text
+  // weight / tracking, with -10 % height per user. Per user now: white
+  // background with the slot's accent color (ROSE morning / LAV evening)
+  // for the label — set inline by the consumer.
   amenBtn: {
-    width: '100%', backgroundColor: 'rgba(255,255,255,0.95)',
-    borderRadius: 30, paddingVertical: 14,
-    alignItems: 'center', marginTop: 32,
+    alignSelf: 'stretch',
+    height: 48.71,                                                              // startBtn 47.06 × 1.15 → 54.12 → 48.71 (-10 % per user)
+    borderRadius: 24.39,                                                        // matches startBtn
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 45,                                                              // 100 → 85 → 60 → 45 per user
+    backgroundColor: '#FFFFFF',
   },
-  amenText: { fontSize: 16, fontWeight: '700', letterSpacing: 0.8 },
+  amenText: {
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    // color set inline (morning → ROSE / evening → LAV)
+  },
+  amenContinueWrap: {
+    marginTop: 36,
+    alignItems: 'center',
+  },
+  amenContinueBtn: {
+    // Aligned to PrayerScreen.startBtn per user — same height + radius as the
+    // primary CTA on the home screen so the action feels familiar.
+    paddingHorizontal: 44,                                                       // kept so the button hugs the "Continue" label with breathing room (parent centers it; no alignSelf:'stretch')
+    height: 49.41,
+    borderRadius: 17.07,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.95)',
+  },
+  amenContinueText: {
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
   prayedCount: {
-    fontSize: 11.5, color: 'rgba(255,255,255,0.55)',
-    textAlign: 'center', marginTop: 14,
+    fontSize: 13.38,                                                            // 12.5 → 13.38 (+7 % per user)
+    color: 'rgba(255,255,255,0.55)',                                             // white @ 55 % — deep pages back on the photo bg
+    textAlign: 'center',
+    marginTop: 11,                                                              // 16 → 11 (-5 px per user) — closer to the AMEN button above
+    fontFamily: FONTS.lato,                                                     // switched to Lato per user
   },
   amenScreen: {
-    flex: 1, paddingHorizontal: 28,
-    paddingTop: 100, paddingBottom: 200, justifyContent: 'flex-end',
+    flex: 1,
+    // backgroundColor supplied inline (morning → deep rose, evening → deep purple)
+    paddingHorizontal: 30,
+    paddingTop: 115,
+    paddingBottom: 230,
+    justifyContent: 'flex-end',
   },
-  amenHands: { alignItems: 'center', marginBottom: 32 },
-  amenCaption: {
-    fontSize: 11, letterSpacing: 2.4, textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.65)', fontWeight: '600', marginBottom: 16,
+  amenHands: {
+    alignItems: 'center',
+    marginBottom: 37,
+  },
+  handsStage: {
+    width: 280,
+    height: 200,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  starPos: {
+    position: 'absolute',
   },
   amenHeading: {
-    fontSize: 30, fontWeight: '600', color: '#fff',
-    lineHeight: 36, marginBottom: 24,
+    fontSize: 22.1,                                                             // 26 → 22.1 (-15 % per user)
+    fontWeight: '600',                                                          // project rule: loraBold + 600 (700 → Android system sans)
+    color: '#fff',
+    lineHeight: 26.3,                                                           // 31 → 26.3 (proportional to fontSize change, ~1.19× ratio preserved)
+    marginBottom: 28,
+    marginHorizontal: 30,                                                       // +30 px each side per user — narrows the line so it doesn't crowd the edges
+    textAlign: 'center',
+    fontFamily: FONTS.loraBold,                                                 // Lora per user
   },
-  amenFarewell: {
-    fontSize: 18, fontStyle: 'italic',
-    color: 'rgba(255,255,255,0.85)', lineHeight: 29,
-  },
+  // `amenFarewell` style removed — the "In Jesus' name" line it backed was
+  // dropped 2026-05-22 per user. Don't restore without auditing the closing-
+  // scene timing (`GAP_AFTER_HEAD` collapsed the old GAP_1/T_JESUS/GAP_2).
   sheetOverlay: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'transparent',
     justifyContent: 'flex-end',
+    zIndex: 20,
   },
   sheet: {
     backgroundColor: '#fff',
-    borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    padding: 24, paddingBottom: 40,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 26,
+    paddingBottom: 46,
+  },
+  habitSheet: {
+    paddingTop: 75,
+    paddingBottom: 105,
   },
   sheetHandle: {
-    width: 36, height: 4, borderRadius: 2,
+    width: 49,                                                                  // 39 → 49 (+10 px per user)
+    height: 4.5,                                                                // 5 → 4.5 (-10 % per user)
+    borderRadius: 2,
     backgroundColor: 'rgba(0,0,0,0.16)',
-    alignSelf: 'center', marginBottom: 22,
+    alignSelf: 'center',
+    marginTop: -7,                                                              // sits 7 px closer to sheet top per user
+    marginBottom: 25,
   },
   sheetHeading: {
-    textAlign: 'center', fontSize: 18, fontWeight: '700',
-    color: TXT, marginBottom: 10,
+    textAlign: 'center',
+    fontSize: 21,
+    fontWeight: '700',
+    color: TXT,
+    marginBottom: 12,
   },
   sheetDesc: {
-    textAlign: 'center', fontSize: 14, color: TXTSUB,
-    lineHeight: 21, marginBottom: 22, paddingHorizontal: 12,
+    textAlign: 'center',
+    fontSize: 17,
+    color: TXTSUB,
+    lineHeight: 25,
+    marginBottom: 25,
+    paddingHorizontal: 13,
   },
-  sheetTitle: { fontSize: 17, fontWeight: '700', color: TXT, marginBottom: 18 },
+  sheetTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: TXT,
+    marginBottom: 21,
+  },
+  noteSheet: {
+    height: '92%',
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
+  },
+  noteSheetInner: {
+    flex: 1,
+    paddingHorizontal: 26,
+    paddingTop: 6,
+    // paddingBottom is set inline via insets so it adapts per device.
+  },
+  noteHandleHit: {
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  noteSheetTitle: {
+    fontSize: 22,
+    fontWeight: '600',                                                           // Lora_700Bold paired with weight 600 (project rule — 700 makes Android fall back to system bold sans)
+    color: TXT,
+    marginTop: -15,                                                              // -15 px gap to the drag handle above per user
+    marginBottom: 21,
+    fontFamily: FONTS.loraBold,
+  },
+  noteInput: {
+    flex: 1,
+    fontSize: 17,
+    lineHeight: 25,
+    color: TXT,
+    backgroundColor: 'rgba(30,27,46,0.04)',
+    borderRadius: 14,
+    padding: 16,
+    textAlignVertical: 'top',
+    marginBottom: 18,
+  },
   setTimeBtn: {
-    alignSelf: 'center', paddingHorizontal: 38,
-    paddingVertical: 13, borderRadius: 24, marginBottom: 14,
+    alignSelf: 'center',
+    paddingHorizontal: 41,
+    paddingVertical: 15,
+    borderRadius: 26,
+    marginBottom: 16,
   },
-  setTimeText: { fontSize: 15, fontWeight: '600' },
-  notNowText: { textAlign: 'center', color: TXTSUB, fontSize: 14 },
+  setTimeText: { fontSize: 18, fontWeight: '600' },
+  notNowText: {
+    textAlign: 'center',
+    color: TXTSUB,
+    fontSize: 17,
+  },
   wheelRow: {
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'center', gap: 8, marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 9,
+    marginBottom: 14,
   },
-  wheelItem: { paddingVertical: 8, alignItems: 'center' },
-  wheelText: { fontSize: 18 },
-  wheelActive: { fontSize: 24, fontWeight: '700', color: TXT },
-  wheelInactive: { color: 'rgba(30,27,46,0.30)' },
-  wheelColon: { fontSize: 22, fontWeight: '700', color: TXT },
-  sheetBtns: { flexDirection: 'row', gap: 10, marginTop: 22 },
+  wheelItemBox: {
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wheelHighlight: {
+    position: 'absolute',
+    top: 88,
+    left: 0,
+    right: 0,
+    height: 44,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(30,27,46,0.10)',
+    zIndex: 1,
+  },
+  wheelText: { fontSize: 17 },
+  wheelActive: {
+    fontSize: 21,
+    fontWeight: '700',
+    color: TXT,
+  },
+  wheelInactive: {
+    color: 'rgba(30,27,46,0.30)',
+  },
+  wheelColon: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: TXT,
+  },
+  sheetBtns: {
+    flexDirection: 'row',
+    gap: 11,
+    marginTop: 25,
+  },
   sheetBtnBack: {
-    flex: 1, paddingVertical: 13,
+    flex: 1,
+    paddingVertical: 15,
     backgroundColor: 'rgba(30,27,46,0.05)',
-    borderRadius: 22, alignItems: 'center',
+    borderRadius: 24,
+    alignItems: 'center',
   },
-  sheetBtnConfirm: { flex: 2, paddingVertical: 13, borderRadius: 22, alignItems: 'center' },
-  sheetBtnText: { fontSize: 14, fontWeight: '600' },
+  sheetBtnConfirm: {
+    flex: 2,
+    paddingVertical: 15,
+    borderRadius: 24,
+    alignItems: 'center',
+  },
+  sheetBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  reflectionBtnText: { fontSize: 17 },
+  // Localized to the Write-a-reflection sheet only — shared sheetBtnBack /
+  // sheetBtnConfirm have paddingVertical 15 across other sheets; we shrink
+  // by 10 % here per user without affecting the time-picker sheet.
+  reflectionBtn: { paddingVertical: 13.5 },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NotifRationale — one-time post-Amen onboarding moment for first-prayer users.
+// White-pink palette matching the app shell (NOT the dark hero gradient of the
+// onboarding cover). Layout mirrors the Gentler Streak reference: heading
+// top-left, body paragraph below, a phone mockup centered, two buttons row at
+// the bottom (Skip / Allow notifications).
+// ─────────────────────────────────────────────────────────────────────────────
+
+function NotifRationaleScreen({ onDismiss }: { onDismiss: () => void }) {
+  const insets = useSafeAreaInsets();
+  const t = useT();
+
+  const requestPermission = async () => {
+    try {
+      let perm = await Notifications.getPermissionsAsync();
+      if (!perm.granted && perm.canAskAgain) {
+        perm = await Notifications.requestPermissionsAsync();
+      }
+      if (!perm.granted && Platform.OS !== 'web') {
+        // Permanently denied — surface Settings so the user can flip it
+        // there. We still dismiss either way so they aren't stuck.
+        Linking.openSettings().catch(() => {});
+      }
+    } catch {
+      // Notifications API can throw on some sims/unsupported runtimes.
+    } finally {
+      onDismiss();
+    }
+  };
+
+  return (
+    <View style={[rationaleStyles.root, { paddingTop: insets.top + 28 }]}>
+      <Animated.View entering={FadeIn.duration(360)}>
+        <Text style={rationaleStyles.heading}>{t('prayerFlow.notif.heading')}</Text>
+      </Animated.View>
+
+      <Animated.View entering={FadeIn.duration(360).delay(200)}>
+        <Text style={rationaleStyles.body}>
+          {t('prayerFlow.notif.body')}
+        </Text>
+      </Animated.View>
+
+      <Animated.View entering={FadeIn.duration(360).delay(400)} style={rationaleStyles.mockupWrap}>
+        <PhoneMockup />
+      </Animated.View>
+
+      <Animated.View
+        entering={FadeIn.duration(360).delay(700)}
+        style={[rationaleStyles.ctaRow, { paddingBottom: Math.max(insets.bottom, 12) + 24 }]}
+      >
+        <TouchableOpacity onPress={onDismiss} activeOpacity={0.85} style={rationaleStyles.skipBtn}>
+          <Text style={rationaleStyles.skipText}>{t('prayerFlow.notif.skip')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={requestPermission} activeOpacity={0.9} style={rationaleStyles.allowBtn}>
+          <Text style={rationaleStyles.allowText}>{t('prayerFlow.notif.allow')}</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
+  );
+}
+
+// Tilted phone mockup with a HerBible push notification + faux home-screen
+// grid. ~280×360 viewBox; everything tinted with the rose palette so it
+// reads as a HerBible screenshot, not a generic phone.
+function PhoneMockup() {
+  return (
+    <Svg width={280} height={360} viewBox="0 0 280 360">
+      {/* Soft drop shadow under the phone */}
+      <Path
+        d="M70 350 Q140 372 210 350 L200 348 Q140 358 80 348 Z"
+        fill="rgba(232,97,154,0.10)"
+      />
+      {/* Phone outer frame, slightly tilted */}
+      <Path
+        d="M88 36 Q88 28 96 28 L208 28 Q216 28 216 36 L216 320 Q216 328 208 328 L96 328 Q88 328 88 320 Z"
+        fill="#FFFFFF"
+        stroke="#E8DDE8"
+        strokeWidth={1.5}
+      />
+      {/* Subtle pink-peach gradient fill on the phone screen */}
+      <Path
+        d="M94 50 L210 50 L210 320 Q210 326 204 326 L100 326 Q94 326 94 320 Z"
+        fill="rgba(249,168,201,0.18)"
+      />
+      <Path
+        d="M94 130 L210 130 L210 320 Q210 326 204 326 L100 326 Q94 326 94 320 Z"
+        fill="rgba(196,181,253,0.18)"
+      />
+
+      {/* Notification card near the top */}
+      <Path
+        d="M104 78 Q104 70 112 70 L200 70 Q208 70 208 78 L208 122 Q208 130 200 130 L112 130 Q104 130 104 122 Z"
+        fill="#FFFFFF"
+        stroke="rgba(30,27,46,0.06)"
+        strokeWidth={1}
+      />
+      {/* App icon dot in the notification */}
+      <Path d="M118 88 Q118 84 122 84 L130 84 Q134 84 134 88 L134 96 Q134 100 130 100 L122 100 Q118 100 118 96 Z" fill={ROSE} />
+
+      {/* Faux home-screen icon grid below the notification. Phone screen is
+          x=94..210, so a 4-col grid with 22-wide icons + 6 px gap fits at
+          x = 106 / 134 / 162 / 190 (last icon ends at 212 — flush right). */}
+      {[170, 210, 250].flatMap(y =>
+        [106, 134, 162, 190].map(x => {
+          const isHero = x === 162 && y === 210;
+          const r = 4;
+          const w = 22;
+          const path = `M${x} ${y + r} Q${x} ${y} ${x + r} ${y} L${x + w - r} ${y} Q${x + w} ${y} ${x + w} ${y + r} L${x + w} ${y + w - r} Q${x + w} ${y + w} ${x + w - r} ${y + w} L${x + r} ${y + w} Q${x} ${y + w} ${x} ${y + w - r} Z`;
+          return isHero ? (
+            <Path key={`${x}-${y}`} d={path} fill="#FFFFFF" stroke={ROSE} strokeWidth={1.6} />
+          ) : (
+            <Path key={`${x}-${y}`} d={path} fill="rgba(255,255,255,0.70)" />
+          );
+        }),
+      )}
+      {/* Rose dot inside the highlighted icon (HerBible glyph stand-in) */}
+      <Path
+        d="M167 215 Q167 213 169 213 L177 213 Q179 213 179 215 L179 227 Q179 229 177 229 L169 229 Q167 229 167 227 Z"
+        fill={ROSE}
+      />
+    </Svg>
+  );
+}
+
+const rationaleStyles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: '#FBF7F6',
+    paddingHorizontal: 24,
+  },
+  heading: {
+    fontSize: 32,
+    fontFamily: FONTS.loraBold,                                                  // Lora bold per user; weight 600 per project rule (700 + loraBold falls back to system sans on Android)
+    fontWeight: '600',
+    color: TXT,
+    letterSpacing: -0.4,
+    marginBottom: 14,
+  },
+  body: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: TXTSUB,
+    marginBottom: 20,
+  },
+  mockupWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ctaRow: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingTop: 6,
+  },
+  // Both CTAs share PrayerScreen.startBtn's height (49.41) + radius (17.07)
+  // per user — keeps the primary-action "feel" identical across the app.
+  // Flex ratio (1 : 2) makes Allow visually dominant as the recommended path.
+  skipBtn: {
+    flex: 1,
+    height: 49.41,
+    borderRadius: 17.07,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(30,27,46,0.08)',
+  },
+  skipText: { fontSize: 16, fontWeight: '700', color: TXT, letterSpacing: 0.3 },
+  allowBtn: {
+    flex: 2,
+    height: 49.41,
+    borderRadius: 17.07,
+    backgroundColor: ROSE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: ROSE,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    elevation: 4,
+  },
+  allowText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF', letterSpacing: 0.3 },
 });

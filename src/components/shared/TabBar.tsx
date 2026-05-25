@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import Svg, { Path, Circle, Rect, Line, Polyline } from 'react-native-svg';
+import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { ROSE, LAV, TXTSUB } from '../../constants/theme';
-
-type TabId = 'prayer' | 'bible' | 'plan' | 'profile';
+import { useT } from '../../i18n/useT';
+import type { TabId } from '../../navigation/types';
 
 function PrayerTabIcon({ active }: { active: boolean }) {
   const color = active ? ROSE : TXTSUB;
@@ -51,43 +53,51 @@ function ProfileTabIcon({ active }: { active: boolean }) {
   );
 }
 
-const TABS = [
-  { id: 'prayer' as TabId, label: 'Prayer', Icon: PrayerTabIcon },
-  { id: 'bible' as TabId, label: 'Bible', Icon: BibleTabIcon },
-  { id: 'plan' as TabId, label: 'Plan', Icon: PlanTabIcon },
-  { id: 'profile' as TabId, label: 'Profile', Icon: ProfileTabIcon },
+// Labels resolved at render time so they react to the UI language toggle.
+const TABS: { id: TabId; labelKey: string; Icon: React.FC<{ active: boolean }> }[] = [
+  { id: 'prayer',  labelKey: 'nav.tab.prayer',  Icon: PrayerTabIcon  },
+  { id: 'bible',   labelKey: 'nav.tab.bible',   Icon: BibleTabIcon   },
+  { id: 'plan',    labelKey: 'nav.tab.plan',    Icon: PlanTabIcon    },
+  { id: 'profile', labelKey: 'nav.tab.profile', Icon: ProfileTabIcon },
 ];
 
-interface TabBarProps {
-  active: TabId;
-  onChange: (tab: TabId) => void;
-}
+export default function TabBar({ state, navigation }: BottomTabBarProps) {
+  const insets = useSafeAreaInsets();
+  const t = useT();
+  const active = state.routes[state.index].name as TabId;
 
-export default function TabBar({ active, onChange }: TabBarProps) {
   return (
-    <View style={styles.container}>
-      {TABS.map(({ id, label, Icon }) => {
+    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 11) }]}>
+      {TABS.map(({ id, labelKey, Icon }) => {
+        const label = t(labelKey);
         const isActive = id === active;
         return (
           <TouchableOpacity
             key={id}
-            onPress={() => onChange(id)}
+            onPress={() => navigation.navigate(id)}
             style={styles.tab}
             activeOpacity={0.7}
           >
-            <View style={{ transform: [{ scale: isActive ? 1.12 : 1 }] }}>
-              <Icon active={isActive} />
+            {/* Fixed-size icon slot decouples per-icon SVG dimensions
+                (prayer is 30×27, bible 26×25, etc.) from the row's layout.
+                The 1.12 scale on active is a visual-only transform, so it
+                doesn't bleed into measured height. */}
+            <View style={styles.iconSlot}>
+              <View style={{ transform: [{ scale: isActive ? 1.12 : 1 }] }}>
+                <Icon active={isActive} />
+              </View>
             </View>
             <Text style={[styles.label, { color: isActive ? ROSE : TXTSUB, fontWeight: isActive ? '700' : '500' }]}>
               {label}
             </Text>
-            {isActive && (
-              <LinearGradient
-                colors={[ROSE, LAV]}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                style={styles.activeBar}
-              />
-            )}
+            {/* The bar is always rendered; opacity hides it on inactive
+                tabs. Conditional render previously left the inactive tabs
+                5 px shorter, so the bar height changed when switching. */}
+            <LinearGradient
+              colors={[ROSE, LAV]}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              style={[styles.activeBar, !isActive && { opacity: 0 }]}
+            />
           </TouchableOpacity>
         );
       })}
@@ -97,17 +107,11 @@ export default function TabBar({ active, onChange }: TabBarProps) {
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(255,255,255,0.82)',
+    backgroundColor: 'rgba(255,255,255,0.92)',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.95)',
     flexDirection: 'row',
-    paddingBottom: 20,
     paddingTop: 6,
-    zIndex: 50,
   },
   tab: {
     flex: 1,
@@ -115,6 +119,13 @@ const styles = StyleSheet.create({
     gap: 3,
     paddingTop: 6,
     paddingHorizontal: 4,
+  },
+  // Fixed-size icon container so per-icon SVG dimensions don't shift row
+  // layout. 30 covers the tallest icon (prayer 27 + the 1.12 active scale).
+  iconSlot: {
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   label: {
     fontSize: 10,

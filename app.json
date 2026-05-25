@@ -2,6 +2,7 @@
   "expo": {
     "name": "HerBibleApp",
     "slug": "HerBibleApp",
+    "scheme": "herbible",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -10,21 +11,105 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#FBF7F6"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.holy.bible.kjv.audio.prayer",
+      "buildNumber": "1",
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": [
+          "fb",
+          "fbapi",
+          "fb-messenger",
+          "instagram",
+          "instagram-stories",
+          "whatsapp"
+        ]
+      }
     },
     "android": {
+      "package": "com.holy.bible.kjv.audio.prayer",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#F44F7B"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.POST_NOTIFICATIONS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "./plugins/withAndroidPackageQueries.js",
+      "expo-font",
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Her Bible needs access to your photos so you can pick a profile picture. We only use the photo you select — nothing else is read or uploaded.",
+          "cameraPermission": "Her Bible needs access to your camera so you can take a profile picture. We only use the photo you take — nothing else is captured."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Her Bible needs permission to save verse images to your photo library so you can keep or share them later.",
+          "savePhotosPermission": "Her Bible needs permission to save verse images to your photo library so you can keep or share them later.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/adaptive-icon.png",
+          "color": "#E8619A"
+        }
+      ],
+      "expo-apple-authentication",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "verseOfDay",
+              "label": "Her Bible — Verse of the Day",
+              "description": "A daily verse on your home screen.",
+              "minWidth": "180dp",
+              "minHeight": "100dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "maxResizeWidth": "320dp",
+              "maxResizeHeight": "180dp",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 21600000
+            }
+          ]
+        }
+      ],
+      "expo-audio",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35
+          }
+        }
+      ],
+      "./plugins/withAsyncStorageMaxSize.js"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "098a8f35-7f65-4e4b-8263-da7af4173750"
+      }
+    },
+    "owner": "sangchy1972"
   }
 }

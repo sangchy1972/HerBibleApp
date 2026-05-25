@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { ROSE, LAV, TXT, TXTSUB } from '../../constants/theme';
+import FireFlame from './FireFlame';
 
 interface DayCircleProps {
   label: string;
@@ -22,7 +23,7 @@ export default function DayCircle({ label, done, half, isToday, morning }: DayCi
       </Text>
       <View style={styles.circle}>
         {isActive ? (
-          <Text style={[styles.flame, { opacity: half ? 0.7 : 1 }]}>🔥</Text>
+          <FireFlame size={SZ} opacity={half ? 0.7 : 1} />
         ) : (
           <Svg width={SZ} height={SZ} viewBox={`0 0 ${SZ} ${SZ}`}>
             <Circle

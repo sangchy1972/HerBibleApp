@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
@@ -63,10 +63,22 @@ export default function PlanVerseRead({ route, navigation }: RootStackScreenProp
   const bookName = localizeBookName(translation.code, focus.bookSlug, englishBookName(focus.bookSlug));
   const headerTitle = `${bookName} ${focus.chapter}`;
 
-  // Partition the chapter once per render so the JSX below stays readable.
-  const preFocus  = chapter ? chapter.verses.filter(v => v.verse < focus.verseStart) : [];
-  const inFocus   = chapter ? chapter.verses.filter(v => v.verse >= focus.verseStart && v.verse <= focus.verseEnd) : [];
-  const postFocus = chapter ? chapter.verses.filter(v => v.verse > focus.verseEnd) : [];
+  // Partition the chapter so the JSX below stays readable. Memoized so
+  // the three .filter() passes only run when the chapter or focus range
+  // actually changes — parent re-renders (e.g. from a sibling state
+  // update) don't trigger a re-partition of every verse.
+  const { preFocus, inFocus, postFocus } = useMemo(() => {
+    if (!chapter) return { preFocus: [], inFocus: [], postFocus: [] };
+    const pre: typeof chapter.verses = [];
+    const inF: typeof chapter.verses = [];
+    const post: typeof chapter.verses = [];
+    for (const v of chapter.verses) {
+      if (v.verse < focus.verseStart) pre.push(v);
+      else if (v.verse <= focus.verseEnd) inF.push(v);
+      else post.push(v);
+    }
+    return { preFocus: pre, inFocus: inF, postFocus: post };
+  }, [chapter, focus.verseStart, focus.verseEnd]);
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 8 }]}>

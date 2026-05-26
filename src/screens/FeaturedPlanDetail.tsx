@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
@@ -6,7 +6,9 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { TXT, TXTSUB } from '../constants/theme';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import { usePlanCompletion } from '../state/PlanCompletionContext';
+import { useTranslation } from '../state/TranslationsContext';
 import { bookCodeToSlug, parseVerseRange } from '../constants/bibleBookCode';
+import { fetchChapter } from '../services/bibleService';
 import type { FullPlan, PlanSection, PlanVerseRef } from '../services/featuredPlansService';
 import type { RootStackScreenProps } from '../navigation/types';
 import { detailStyles as ds } from './planDetailStyles';
@@ -31,6 +33,7 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
   const { slug } = route.params;
   const { getSummary, loadPlan, loadedPlans } = useFeaturedPlans();
   const { isDayComplete } = usePlanCompletion();
+  const { current: translation } = useTranslation();
   const summary = getSummary(slug);
 
   // Lazy-fetch the full plan body (sections, walk titles, verse_wall) once;
@@ -41,6 +44,40 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
     if (plan) return;
     loadPlan(slug).then(setPlan).catch(() => setLoadError(true));
   }, [slug, plan, loadPlan]);
+
+  // Warm the per-chapter fetchChapter cache for every verse_wall reference
+  // the moment the plan body lands. PlanDayWalk re-uses the SAME cache key
+  // (`bible:ch:<CACHE_TAG>:<code>:<slug>:<n>`), so by the time the user
+  // taps "Start Reading Plan" the chapters are already on disk and the
+  // verse-wall page renders without a spinner. Cost: N parallel CDN
+  // requests (typically 5–10 per plan), all backgrounded; benefit: the
+  // single most-complained-about wait in the app disappears.
+  useEffect(() => {
+    if (!plan) return;
+    const seen = new Set<string>();
+    const refs: { bookSlug: string; chapter: number }[] = [];
+    for (const day of plan.days) {
+      for (const section of day.sections) {
+        const verses: PlanVerseRef[] = section.type === 'verse_wall'
+          ? section.verses
+          : section.type === 'scripture_focus' ? [section.verse] : [];
+        for (const v of verses) {
+          const bookSlug = bookCodeToSlug(v.bookCode);
+          if (!bookSlug) continue;
+          const key = `${bookSlug}:${v.chapter}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          refs.push({ bookSlug, chapter: v.chapter });
+        }
+      }
+    }
+    // Best-effort, fully detached — failures are silent because the user
+    // path doesn't depend on the warm-up succeeding (PlanDayWalk's own
+    // useEffect re-fetches and renders the chapter-load-error state).
+    for (const { bookSlug, chapter } of refs) {
+      fetchChapter(translation.code, translation.source, bookSlug, chapter).catch(() => {});
+    }
+  }, [plan, translation.code, translation.source]);
 
   const [activeIdx, setActiveIdx] = useState(0);
 
@@ -66,20 +103,29 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
   // Day cells: number, today-anchored date label, walk title (from full plan
   // when loaded), verses (verse_wall display strings + their ref payload for
   // Bible-jump). Falls back to "Day N" label until plan body is in.
-  const today = new Date();
-  const days = Array.from({ length: summary.duration }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    const content = plan?.days.find(x => x.day === i + 1);
-    const verseWall = content?.sections.find(s => s.type === 'verse_wall') as
-      Extract<PlanSection, { type: 'verse_wall' }> | undefined;
-    return {
-      n: i + 1,
-      label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      walk: content?.title || `Day ${i + 1}`,
-      verses: (verseWall?.verses || []) as PlanVerseRef[],
-    };
-  });
+  //
+  // Memoized so the N×forEach/.find()/Date()/.toLocaleDateString() chain
+  // doesn't re-run on every parent re-render — only when the duration
+  // changes or the plan body arrives. `today` is intentionally NOT a
+  // dependency: if the user keeps the screen open across midnight, the
+  // labels staying on yesterday's date strip is acceptable (and avoids a
+  // 30 ms recompute every render to chase a once-a-day edge case).
+  const days = useMemo(() => {
+    const today = new Date();
+    return Array.from({ length: summary.duration }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      const content = plan?.days.find(x => x.day === i + 1);
+      const verseWall = content?.sections.find(s => s.type === 'verse_wall') as
+        Extract<PlanSection, { type: 'verse_wall' }> | undefined;
+      return {
+        n: i + 1,
+        label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        walk: content?.title || `Day ${i + 1}`,
+        verses: (verseWall?.verses || []) as PlanVerseRef[],
+      };
+    });
+  }, [summary.duration, plan]);
   const cur = days[activeIdx];
 
   const startActiveDay = () => navigation.navigate('PlanDayWalk', { slug, day: cur.n });

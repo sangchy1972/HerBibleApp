@@ -32,7 +32,7 @@ import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { bibleAudioUrl } from '../constants/bibleAudioCdn';
 import { loadTimestamps, verseAtTime, type ChapterTimestamps } from '../services/bibleAudioService';
 import { adjustFocus } from '../constants/versification';
-import { HL_COLORS } from '../constants/highlightColors';
+import { HL_COLORS, getHighlightColor } from '../constants/highlightColors';
 import type { BibleFocus, TabParamList } from '../navigation/types';
 
 // Reader font picker — Merriweather sits first per user; Source Serif 4
@@ -99,11 +99,18 @@ function BookDrawer({ onClose, books, currentSlug, currentChapter, onPick }: {
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
   const [testament, setTestament] = useState<'OT' | 'NT'>(currentIdx >= 39 ? 'NT' : 'OT');
 
-  const otBooks = books.slice(0, 39);
-  const ntBooks = books.slice(39, 66);
+  // OT/NT slices memoized so they only re-allocate when the book index
+  // changes (which only happens on translation switch). `visibleBooks` is
+  // intentionally derived directly from `testament` toggle below so the
+  // tab flip is instant without re-running the slice.
+  const otBooks = useMemo(() => books.slice(0, 39), [books]);
+  const ntBooks = useMemo(() => books.slice(39, 66), [books]);
   const visibleBooks = testament === 'OT' ? otBooks : ntBooks;
   const baseIdx = testament === 'OT' ? 0 : 39;
-  const expandedBook = books.find(b => b.slug === expandedSlug) || null;
+  const expandedBook = useMemo(
+    () => books.find(b => b.slug === expandedSlug) || null,
+    [books, expandedSlug],
+  );
 
   // Sliding-pill animation for OT / NT (mirrors PrayerScreen morning/evening toggle)
   const tabProgress = useSharedValue(testament === 'OT' ? 0 : 1);
@@ -1272,7 +1279,10 @@ export default function BibleScreen() {
 
         {verses.map((v, i) => {
           const hl = getColor(translation.code, bookSlug, chapter, v.verse);
-          const hlColor = hl ? HL_COLORS.find(c => c.name === hl)?.bg : undefined;
+          // Map-backed O(1) lookup via getHighlightColor — replaces a
+          // per-verse .find() that was O(N) every render. Same change
+          // applied in PlanDayWalk's verse-page renderer.
+          const hlColor = getHighlightColor(hl)?.bg;
           const isSel = selVerse === i;
           // True when the audio narration is currently inside this verse
           // (per the timestamps file). Triggers a soft ROSE tint that walks

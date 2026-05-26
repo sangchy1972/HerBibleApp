@@ -126,13 +126,20 @@ function highlightSwatch(name: string): string {
 }
 
 function MonthGrid({ year, month, activeSet }: { year: number; month: number; activeSet: Set<string> }) {
-  const firstDay = new Date(year, month, 1).getDay();        // 0=Sun
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  // Cell layout only depends on year/month — memoize so the loop doesn't
+  // re-run every time the parent re-renders (e.g. when activeSet flips
+  // for a different month). With 12 months in the calendar sheet this
+  // saves ~12 × (firstDay + daysInMonth) push() calls per render.
+  const cells = useMemo(() => {
+    const firstDay = new Date(year, month, 1).getDay();   // 0=Sun
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const out: (number | null)[] = [];
+    for (let i = 0; i < firstDay; i++) out.push(null);
+    for (let d = 1; d <= daysInMonth; d++) out.push(d);
+    while (out.length % 7 !== 0) out.push(null);
+    return out;
+  }, [year, month]);
   const today = new Date();
-  const cells: (number | null)[] = [];
-  for (let i = 0; i < firstDay; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-  while (cells.length % 7 !== 0) cells.push(null);
   return (
     <View style={{ marginBottom: 28 }}>
       <Text style={styles.calMonthTitle}>{MONTH_NAMES[month]} {year}</Text>

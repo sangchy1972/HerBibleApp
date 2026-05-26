@@ -20,7 +20,7 @@ import { bibleAudioUrl } from '../constants/bibleAudioCdn';
 import { fetchChapter, type Chapter, type Verse } from '../services/bibleService';
 import VerseNoteSheet from '../components/VerseNoteSheet';
 import ShareVerseSheet from '../components/ShareVerseSheet';
-import { HL_COLORS } from '../constants/highlightColors';
+import { HL_COLORS, getHighlightColor } from '../constants/highlightColors';
 import type { FullPlan, PlanSection, PlanVerseRef } from '../services/featuredPlansService';
 import type { RootStackScreenProps } from '../navigation/types';
 import { useT } from '../i18n/useT';
@@ -583,7 +583,11 @@ function VersePage({
       {chapterData.verses.map((v: Verse) => {
         const inRange = v.verse >= verseStart && v.verse <= verseEnd;
         const hl = getColor(translationCode, bookSlug, chapter, v.verse);
-        const hlColor = hl ? HL_COLORS.find(c => c.name === hl)?.bg : undefined;
+        // Map-backed O(1) lookup via getHighlightColor — replaces a per-
+        // verse .find() that was O(N=5) every render. Tiny win per verse,
+        // but with 30+ verses in long chapters and re-renders on scroll,
+        // measurable. Same change applied in BibleScreen.tsx.
+        const hlColor = getHighlightColor(hl)?.bg;
         return (
           <View
             key={v.verse}

@@ -108,19 +108,23 @@ function PlanDetail({ plan, onBack }: { plan: Plan; onBack: () => void }) {
   const { markToday } = useActivity();
   useEffect(() => { markToday(); }, [markToday]);
   const [activeDay, setActiveDay] = useState(0);
-  const today = new Date();
-  const days = Array.from({ length: plan.days }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    const sched = plan.schedule && plan.schedule[i]
-      ? plan.schedule[i]
-      : { walk: `Day ${i + 1}`, verses: [] };
-    return {
-      n: i + 1,
-      label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      ...sched,
-    };
-  });
+  // Memoized so the N×forEach + Date()/.toLocaleDateString() chain only
+  // re-runs when the plan changes (parent re-renders are a no-op).
+  const days = useMemo(() => {
+    const today = new Date();
+    return Array.from({ length: plan.days }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      const sched = plan.schedule && plan.schedule[i]
+        ? plan.schedule[i]
+        : { walk: `Day ${i + 1}`, verses: [] };
+      return {
+        n: i + 1,
+        label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        ...sched,
+      };
+    });
+  }, [plan]);
   const cur = days[activeDay];
 
   // Phased fade-in on each section after the page mounts. Walks the eye from

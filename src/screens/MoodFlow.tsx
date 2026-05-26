@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,9 +23,10 @@ export default function MoodFlow({ navigation }: RootStackScreenProps<'MoodFlow'
   const insets = useSafeAreaInsets();
   const { todayMood, recordPick } = useMoodCheckIn();
   const { lang } = useUILanguage();
-  // Localized fact list re-resolves on lang switch — the user can change
-  // UI language and see the deck flip to that language's facts.
-  const funFacts = getFunFacts(lang);
+  // Localized fact list, memoized so the array reference is stable across
+  // re-renders. Re-resolves only on lang switch — that's the only time
+  // the user expects the deck to flip to a different language.
+  const funFacts = useMemo(() => getFunFacts(lang), [lang]);
   const [step, setStep] = useState<Step>(todayMood ? 'calendar' : 'pick');
   const [factIdx, setFactIdx] = useState(() => Math.floor(Math.random() * funFacts.length));
   const mood: Mood | null = todayMood ?? null;

@@ -8,6 +8,7 @@ import MoodEmoji, { MOOD_LIST, MOOD_LABEL, type Mood } from '../components/MoodE
 import MoodCalendar from '../components/MoodCalendar';
 import { getMoodVerse, getFunFacts, type FunFact } from '../constants/moodContent';
 import { useUILanguage } from '../state/UILanguageContext';
+import { localeFor } from '../i18n/locale';
 import { useMoodCheckIn } from '../state/MoodCheckInContext';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { ROSE, TXT, TXTSUB, FONTS, SERIF_BODY } from '../constants/theme';
@@ -122,7 +123,7 @@ function VerseStep({ mood, onClose }: { mood: Mood; onClose: () => void }) {
   const { lang } = useUILanguage();
   const v = getMoodVerse(mood, lang);
   const today = new Date();
-  const dateStr = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const dateStr = today.toLocaleDateString(localeFor(lang), { month: 'short', day: 'numeric', year: 'numeric' });
   // Pick the same prayer-bg image library the home verse card uses, so the
   // mood card carries an actual photo backdrop instead of a brown gradient.
   // Slot is time-of-day based — keeps the card feeling situated in the

@@ -16,6 +16,8 @@ import { Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { PLAN_COVER_CDN_BASE } from '../constants/plansApi';
 import { useT } from '../i18n/useT';
+import { localeFor } from '../i18n/locale';
+import { useUILanguage } from '../state/UILanguageContext';
 
 // Corpus-backed plan detail screen. Layout mirrors the demo PlanDetail
 // (the "Identity in Christ" placeholder inside PlanScreen.tsx) byte-for-
@@ -34,6 +36,7 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
   const { getSummary, loadPlan, loadedPlans } = useFeaturedPlans();
   const { isDayComplete } = usePlanCompletion();
   const { current: translation } = useTranslation();
+  const { lang: uiLang } = useUILanguage();
   const summary = getSummary(slug);
 
   // Lazy-fetch the full plan body (sections, walk titles, verse_wall) once;
@@ -112,6 +115,7 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
   // 30 ms recompute every render to chase a once-a-day edge case).
   const days = useMemo(() => {
     const today = new Date();
+    const locale = localeFor(uiLang);
     return Array.from({ length: summary.duration }, (_, i) => {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
@@ -120,12 +124,15 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
         Extract<PlanSection, { type: 'verse_wall' }> | undefined;
       return {
         n: i + 1,
-        label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        // Locale-aware date label. Was hardcoded 'en-US' which made
+        // "May 26" leak into every UI language. Now follows uiLang —
+        // zh-CN renders "5月26日", de-DE "26. Mai", etc.
+        label: d.toLocaleDateString(locale, { month: 'short', day: 'numeric' }),
         walk: content?.title || `Day ${i + 1}`,
         verses: (verseWall?.verses || []) as PlanVerseRef[],
       };
     });
-  }, [summary.duration, plan]);
+  }, [summary.duration, plan, uiLang]);
   const cur = days[activeIdx];
 
   const startActiveDay = () => navigation.navigate('PlanDayWalk', { slug, day: cur.n });
@@ -153,13 +160,22 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
           </TouchableOpacity>
         </View>
         <Text style={ds.title}>{summary.title}</Text>
-        {/* Plan meta line — "N days · M min/day". Replaces the old
-            in-card "time badge" that only showed minutes per day; surfacing
-            both numbers up here means the user sees the commitment before
-            scrolling. */}
+        {/* Plan meta line — "N days · M min/day", localized via plan.metaLine.
+            The day count itself is pre-formatted through plan.dayCount.*
+            (handles singular/plural per language); minutes are passed as an
+            integer placeholder. Falls back to a days-only string when the
+            plan JSON doesn't carry an estimated_minutes_per_day. */}
         <Text style={ds.planInfo}>
-          {summary.duration} {summary.duration === 1 ? 'day' : 'days'}
-          {summary.minutes ? `  ·  ${summary.minutes} min/day` : ''}
+          {summary.minutes
+            ? t('plan.metaLine', {
+                days: summary.duration === 1
+                  ? t('plan.dayCount.one')
+                  : t('plan.dayCount.other', { n: summary.duration }),
+                min: summary.minutes,
+              })
+            : (summary.duration === 1
+                ? t('plan.dayCount.one')
+                : t('plan.dayCount.other', { n: summary.duration }))}
         </Text>
       </Animated.View>
 

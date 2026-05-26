@@ -4,12 +4,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { ROSE, TXT, TXTSUB, P } from '../constants/theme';
 import { useNotes } from '../state/NotesContext';
+import { useUILanguage, type UILanguageCode } from '../state/UILanguageContext';
+import { localeFor } from '../i18n/locale';
 import type { RootStackScreenProps } from '../navigation/types';
 import { useT } from '../i18n/useT';
 
-const formatDate = (iso: string) => {
+const formatDate = (iso: string, lang: UILanguageCode) => {
   try {
-    return new Date(iso).toLocaleDateString('en-US', {
+    return new Date(iso).toLocaleDateString(localeFor(lang), {
       weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
     });
   } catch { return ''; }
@@ -17,6 +19,7 @@ const formatDate = (iso: string) => {
 
 export default function ReflectionsScreen({ navigation }: RootStackScreenProps<'Reflections'>) {
   const t = useT();
+  const { lang } = useUILanguage();
   const insets = useSafeAreaInsets();
   const { notes } = useNotes();
 
@@ -48,7 +51,7 @@ export default function ReflectionsScreen({ navigation }: RootStackScreenProps<'
         >
           {reflections.map(r => (
             <View key={r.id} style={styles.card}>
-              <Text style={styles.date}>{formatDate(r.savedAt)}</Text>
+              <Text style={styles.date}>{formatDate(r.savedAt, lang)}</Text>
               {r.verseRef && (
                 <View style={styles.versePreview}>
                   <Text style={styles.verseRef}>{r.verseRef}</Text>

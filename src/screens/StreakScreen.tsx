@@ -5,6 +5,8 @@ import { Feather } from '@expo/vector-icons';
 import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { DAYS } from '../constants/data';
 import { useT } from '../i18n/useT';
+import { useUILanguage, type UILanguageCode } from '../state/UILanguageContext';
+import { localeFor } from '../i18n/locale';
 
 // Lato — non-title body sans. Two weights bundled (400 / 700); prior
 // Medium (500) usages collapse onto Regular.
@@ -20,11 +22,11 @@ function splitDate(s: string): string {
 }
 
 // Format an ISO 'YYYY-MM-DD' as "Mon DD, YYYY"; em-dash when no streak yet.
-function formatStreakStart(iso: string | null): string {
+function formatStreakStart(iso: string | null, lang: UILanguageCode): string {
   if (!iso) return '—';
   const [y, m, d] = iso.split('-').map(Number);
   if (!y || !m || !d) return iso;
-  return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+  return new Date(y, m - 1, d).toLocaleDateString(localeFor(lang), {
     month: 'short', day: 'numeric', year: 'numeric',
   });
 }
@@ -55,6 +57,7 @@ function flameSizeForLevel(level: number) {
 export default function StreakScreen({ navigation }: RootStackScreenProps<'Streak'>) {
   const insets = useSafeAreaInsets();
   const t = useT();
+  const { lang } = useUILanguage();
   const { mDone, eDone, totalComplete, maxStreak, firstCompleteDate, wasCompleteOn } = usePrayer();
   const [info, setInfo] = useState(false);
   // Headline number = total days at 100 % progress. Flame level scales with it.
@@ -134,7 +137,7 @@ export default function StreakScreen({ navigation }: RootStackScreenProps<'Strea
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
             <View style={styles.statValueWrap}>
-              <Text style={styles.statValueDate}>{splitDate(formatStreakStart(firstCompleteDate))}</Text>
+              <Text style={styles.statValueDate}>{splitDate(formatStreakStart(firstCompleteDate, lang))}</Text>
             </View>
             <Text style={styles.statLabel}>{t('streak.stat.started')}</Text>
           </View>

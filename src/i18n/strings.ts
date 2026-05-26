@@ -799,6 +799,7 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'profile.photo.permission.body': '请在「设置」中允许访问相册，以更换你的头像。',
     'plan.completed': '我刚刚在 Her Bible 完成了「{title}」',
     'plan.daysProgress': '已完成 {completed} / {total} 天',
+    'plan.metaLine': '{days}  ·  每天 {min} 分钟',
   },
   'zh-Hant': {
     'prayer.greeting.morningCap': '早安',
@@ -1561,6 +1562,7 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'profile.photo.permission.body': '請在「設定」中允許存取相簿，以更換你的頭像。',
     'plan.completed': '我剛剛在 Her Bible 完成了「{title}」',
     'plan.daysProgress': '已完成 {completed} / {total} 天',
+    'plan.metaLine': '{days}  ·  每天 {min} 分鐘',
   },
   'de': {
     'prayer.greeting.morningCap': 'Guten Morgen',
@@ -2323,6 +2325,7 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'profile.photo.permission.body': 'Erlaube den Zugriff auf Fotos in den Einstellungen, um dein Profilbild zu ändern.',
     'plan.completed': 'Ich habe gerade „{title}" in Her Bible abgeschlossen',
     'plan.daysProgress': '{completed} von {total} Tagen geschafft',
+    'plan.metaLine': '{days}  ·  {min} Min/Tag',
   },
   'fr': {
     'prayer.greeting.morningCap': 'Bonjour',
@@ -3089,6 +3092,7 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'profile.photo.permission.body': 'Autorise l\'accès aux Photos dans les Réglages pour changer ta photo de profil.',
     'plan.completed': 'Je viens de terminer « {title} » sur Her Bible',
     'plan.daysProgress': '{completed} jours sur {total} terminés',
+    'plan.metaLine': '{days}  ·  {min} min/jour',
   },
   'es': {
     'prayer.greeting.morningCap': 'Buenos días',
@@ -3851,6 +3855,7 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'profile.photo.permission.body': 'Permite el acceso a Fotos en Ajustes para cambiar tu foto de perfil.',
     'plan.completed': 'Acabo de terminar «{title}» en Her Bible',
     'plan.daysProgress': '{completed} de {total} días completados',
+    'plan.metaLine': '{days}  ·  {min} min/día',
   },
   'pt': {
     'prayer.greeting.morningCap': 'Bom dia',
@@ -4613,5 +4618,6 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'profile.photo.permission.body': 'Permita o acesso a Fotos nos Ajustes para alterar sua foto de perfil.',
     'plan.completed': 'Acabei de concluir "{title}" no Her Bible',
     'plan.daysProgress': '{completed} de {total} dias concluídos',
+    'plan.metaLine': '{days}  ·  {min} min/dia',
   },
 };

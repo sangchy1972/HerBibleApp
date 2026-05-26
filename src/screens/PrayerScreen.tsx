@@ -38,6 +38,8 @@ import { useT } from '../i18n/useT';
 import ShareVerseSheet from '../components/ShareVerseSheet';
 import TabSection from '../components/shared/TabSection';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
+import { useUILanguage } from '../state/UILanguageContext';
+import { localeFor } from '../i18n/locale';
 import type { TabScreenProps } from '../navigation/types';
 
 const NOTO_REG = 'NotoSansSC_400Regular';
@@ -539,7 +541,8 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
     return () => clearInterval(id);
   }, []);
   const today = now;
-  const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  const { lang } = useUILanguage();
+  const dateStr = today.toLocaleDateString(localeFor(lang), { weekday: 'long', month: 'short', day: 'numeric' });
 
   // ── Slot rules ───────────────────────────────────────────────────────────
   // Morning window opens at 06:00, closes (effectively) when evening opens.

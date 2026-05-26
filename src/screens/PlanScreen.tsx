@@ -20,6 +20,8 @@ import type { RootStackParamList, TabParamList } from '../navigation/types';
 import { detailStyles as ds } from './planDetailStyles';
 import TabSection from '../components/shared/TabSection';
 import { useT } from '../i18n/useT';
+import { useUILanguage } from '../state/UILanguageContext';
+import { localeFor } from '../i18n/locale';
 
 type Plan = typeof PLANS_EXPLORE[0];
 
@@ -104,6 +106,7 @@ function PlanRow({ plan, onPress }: { plan: Plan; onPress: () => void }) {
 
 function PlanDetail({ plan, onBack }: { plan: Plan; onBack: () => void }) {
   const t = useT();
+  const { lang } = useUILanguage();
   const insets = useSafeAreaInsets();
   const { markToday } = useActivity();
   useEffect(() => { markToday(); }, [markToday]);
@@ -120,11 +123,11 @@ function PlanDetail({ plan, onBack }: { plan: Plan; onBack: () => void }) {
         : { walk: `Day ${i + 1}`, verses: [] };
       return {
         n: i + 1,
-        label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        label: d.toLocaleDateString(localeFor(lang), { month: 'short', day: 'numeric' }),
         ...sched,
       };
     });
-  }, [plan]);
+  }, [plan, lang]);
   const cur = days[activeDay];
 
   // Phased fade-in on each section after the page mounts. Walks the eye from

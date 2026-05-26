@@ -3,7 +3,9 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import MoodEmoji from './MoodEmoji';
 import { useMoodCheckIn } from '../state/MoodCheckInContext';
+import { useUILanguage } from '../state/UILanguageContext';
 import { useT } from '../i18n/useT';
+import { localeFor } from '../i18n/locale';
 import { ROSE, TXT, TXTSUB, FONTS, SERIF_HEADING } from '../constants/theme';
 
 // i18n keys for the weekday column headers (Sun → Sat). Resolved per render
@@ -52,9 +54,10 @@ interface Props {
 
 export default function MoodCalendar({ headline }: Props) {
   const t = useT();
+  const { lang } = useUILanguage();
   const { picks, totalCheckIns } = useMoodCheckIn();
   const [cursor, setCursor] = useState(() => new Date());
-  const monthLabel = cursor.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const monthLabel = cursor.toLocaleDateString(localeFor(lang), { month: 'long', year: 'numeric' });
   const grid = monthGrid(cursor);
   const today = new Date();
   const todayKey = isoKey(today);

@@ -6,9 +6,11 @@ import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { ROSE, TXT, TXTSUB, P, FONTS, SERIF_BODY } from '../constants/theme';
 import { useDailyVerses } from '../state/DailyVersesContext';
 import { useTranslation } from '../state/TranslationsContext';
+import { useUILanguage, type UILanguageCode } from '../state/UILanguageContext';
 import { localizeReference } from '../services/parseReference';
 import ShareVerseSheet from '../components/ShareVerseSheet';
 import { useT } from '../i18n/useT';
+import { localeFor } from '../i18n/locale';
 import type { RootStackScreenProps } from '../navigation/types';
 
 // How many calendar days back to show. 14 covers two weeks of morning + night
@@ -52,11 +54,11 @@ function ShareGlyph({ color }: { color: string }) {
   );
 }
 
-function dateLabel(offset: number, d: Date, t: (k: string, p?: Record<string, string | number>) => string): string {
+function dateLabel(offset: number, d: Date, t: (k: string, p?: Record<string, string | number>) => string, lang: UILanguageCode): string {
   if (offset === 0) return t('pastVerses.today');
   if (offset === 1) return t('pastVerses.yesterday');
-  if (offset < 7) return d.toLocaleDateString('en-US', { weekday: 'short' });
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (offset < 7) return d.toLocaleDateString(localeFor(lang), { weekday: 'short' });
+  return d.toLocaleDateString(localeFor(lang), { month: 'short', day: 'numeric' });
 }
 
 interface Row {
@@ -72,6 +74,7 @@ interface Row {
 export default function PastVersesScreen({ navigation }: RootStackScreenProps<'PastVerses'>) {
   const insets = useSafeAreaInsets();
   const t = useT();
+  const { lang } = useUILanguage();
   const { getVerse, todayDay } = useDailyVerses();
   const { current: translation } = useTranslation();
   const [shareTarget, setShareTarget] = useState<Row | null>(null);
@@ -83,7 +86,7 @@ export default function PastVersesScreen({ navigation }: RootStackScreenProps<'P
       const d = new Date(today);
       d.setDate(today.getDate() - i);
       const dayOfCycle = todayDay - i;             // getVerse handles negative values via modulus
-      const label = dateLabel(i, d, t);
+      const label = dateLabel(i, d, t, lang);
       for (const seg of ['morning', 'evening'] as const) {
         const v = getVerse(dayOfCycle, seg);
         if (!v) continue;
@@ -100,7 +103,7 @@ export default function PastVersesScreen({ navigation }: RootStackScreenProps<'P
       }
     }
     return out;
-  }, [getVerse, todayDay, translation.code, t]);
+  }, [getVerse, todayDay, translation.code, t, lang]);
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 8 }]}>

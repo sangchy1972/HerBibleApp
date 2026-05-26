@@ -898,6 +898,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'plan.dayDone.shareMessage':     { en: 'Day {day} of "{title}" done — {remaining} {dayWord} to go in Her Bible.', context: 'Share-sheet message after completing a plan day. {day} = day completed, {title} = plan title (un-translated), {remaining} = days left, {dayWord} = pluralized "day"/"days" already localized. Sentence is what gets shared to social / messaging apps.' },
   'plan.completed':                { en: 'I just finished "{title}" in Her Bible',                context: 'Share-sheet message when the user completes the FINAL day of a plan. {title} = plan title. Emoji (🙏) appended at the call site.' },
   'plan.daysProgress':             { en: '{completed} of {total} days complete',                  context: 'Subtitle under the PlanDayDone progress bar. Shows total plan progress so far. {completed} and {total} are integers.' },
+  'plan.metaLine':                 { en: '{days}  ·  {min} min/day',                              context: 'Plan-detail meta line right under the title. {days} is pre-formatted via plan.dayCount.* (handles singular/plural). {min} is minutes/day as an integer.' },
 
   // ProfileScreen photo permission alert
   'profile.photo.permission.title': { en: 'Photo access is off',                                   context: 'Alert title when user tries to set a profile photo without photo-library access.' },

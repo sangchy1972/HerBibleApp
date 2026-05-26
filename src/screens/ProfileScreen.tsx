@@ -19,6 +19,7 @@ import { ROSE, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { getHighlightColor } from '../constants/highlightColors';
 import { TRANSLATIONS, useTranslation, type LanguageCode } from '../state/TranslationsContext';
 import { useUILanguage, UI_LANGUAGES, type UILanguageCode } from '../state/UILanguageContext';
+import { localeFor } from '../i18n/locale';
 import { useT } from '../i18n/useT';
 import { useAuth } from '../state/AuthContext';
 import { useSavedVerses } from '../state/SavedVersesContext';
@@ -111,9 +112,9 @@ function dateKey(y: number, m: number, d: number) {
   return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
 
-function formatNoteDate(iso: string): string {
+function formatNoteDate(iso: string, lang: UILanguageCode): string {
   try {
-    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return new Date(iso).toLocaleDateString(localeFor(lang), { month: 'short', day: 'numeric' });
   } catch { return ''; }
 }
 
@@ -947,7 +948,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
                       >
                         {n.verseRef && <Text style={styles.savedSheetRef}>{n.verseRef}</Text>}
                         <Text style={styles.savedSheetText}>{n.text}</Text>
-                        <Text style={styles.metaSmall}>{formatNoteDate(n.savedAt)}</Text>
+                        <Text style={styles.metaSmall}>{formatNoteDate(n.savedAt, uiLang)}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity onPress={() => removeNote(n.id)} hitSlop={10} style={{ paddingLeft: 8 }}>
                         <Feather name="trash-2" size={20} color={TXTSUB} />
@@ -997,7 +998,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
                         activeOpacity={0.85}
                       >
                         <Text style={styles.savedSheetText}>{b.bookTitle} {b.chapter}</Text>
-                        <Text style={styles.metaSmall}>{formatNoteDate(b.savedAt)}</Text>
+                        <Text style={styles.metaSmall}>{formatNoteDate(b.savedAt, uiLang)}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity onPress={() => removeBookmark(b.id)} hitSlop={10} style={{ paddingLeft: 8 }}>
                         <Feather name="trash-2" size={20} color={TXTSUB} />
@@ -1096,7 +1097,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
                     >
                       {r.verseRef && <Text style={styles.savedSheetRef}>{r.verseRef}</Text>}
                       <Text style={styles.savedSheetText}>{r.text}</Text>
-                      <Text style={styles.metaSmall}>{formatNoteDate(r.savedAt)}</Text>
+                      <Text style={styles.metaSmall}>{formatNoteDate(r.savedAt, uiLang)}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => removeNote(r.id)} hitSlop={10} style={{ paddingLeft: 8 }}>
                       <Feather name="trash-2" size={20} color={TXTSUB} />

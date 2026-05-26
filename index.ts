@@ -1,3 +1,9 @@
+// MUST be the very first import — patches Hermes's incomplete Intl impl
+// with full CLDR locale data for all 7 UI languages before any module
+// has a chance to call `toLocaleDateString` or `new Intl.DateTimeFormat`.
+// See src/i18n/intlPolyfill.ts for the why.
+import './src/i18n/intlPolyfill';
+
 import { registerRootComponent } from 'expo';
 import { Platform } from 'react-native';
 import { registerWidgetTaskHandler } from 'react-native-android-widget';

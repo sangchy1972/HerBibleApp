@@ -53,6 +53,7 @@ import { PlanProfileProvider } from './src/state/PlanProfileContext';
 import { PlansProvider } from './src/state/PlansContext';
 import { PlanCompletionProvider } from './src/state/PlanCompletionContext';
 import AchievementUnlockSheet from './src/components/AchievementUnlockSheet';
+import DeepLinkHandler from './src/navigation/DeepLinkHandler';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -107,6 +108,12 @@ export default function App() {
                                               AchievementsContext, so it fires
                                               from anywhere a counter changes. */}
                                           <AchievementUnlockSheet />
+                                          {/* Routes notification taps + widget
+                                              deep-link URLs to the right
+                                              destination screen. Must sit
+                                              inside NavigationContainer so it
+                                              can call navigate(). */}
+                                          <DeepLinkHandler />
                                         </NavigationContainer>
                                       </NotificationsProvider>
                                     </MoodCheckInProvider>

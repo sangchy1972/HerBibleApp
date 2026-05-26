@@ -161,14 +161,22 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     if (Platform.OS !== 'android') return;
     Notifications.setNotificationChannelAsync(ANDROID_CHANNEL, {
       name: lookupString('notif.channel.name', lang),
-      // DEFAULT (not HIGH) per retention research: HIGH = heads-up
-      // notification (slides down with sound/vibration), which users
-      // find intrusive for non-urgent devotional reminders and is a
-      // leading reason for uninstalls in this app category. Bump back
-      // to HIGH only if metrics show users miss the notifications.
-      importance: Notifications.AndroidImportance.DEFAULT,
+      // HIGH = heads-up notification (slides down from the top of the
+      // screen with sound + vibration, tappable to open the app). For a
+      // devotional reminder the user explicitly opted into a specific
+      // time slot, the heads-up presentation IS the value — a silent
+      // shade-only entry gets missed and the reminder may as well not
+      // exist. Users who find it intrusive can downgrade per-channel
+      // priority in system Settings without uninstalling.
+      importance: Notifications.AndroidImportance.HIGH,
       lightColor: BRAND_ROSE,
       sound: 'default',
+      // Without explicit vibration, HIGH channels still fire the
+      // device's default vibration pattern — opt-in here to make sure
+      // the heads-up presentation isn't suppressed by OEM defaults that
+      // sometimes drop banners when vibration is unset.
+      vibrationPattern: [0, 250, 250, 250],
+      enableVibrate: true,
     }).catch(err => { if (__DEV__) console.warn('[notifications] channel setup failed:', err); });
   }, [lang]);
 
@@ -224,15 +232,57 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
-// Extracted so `setEnabled` stays a one-liner and the permission flow is
-// independently testable / reusable (e.g. for an in-app onboarding prompt).
+// Permission gate. Two distinct paths:
+//
+//   (1) Permission not yet asked (canAskAgain === true):
+//       Google Play policy requires an in-app rationale BEFORE the OS
+//       permission prompt for sensitive permissions. We show a localized
+//       Alert explaining WHY we need notifications, gated by the user's
+//       active opt-in (they tapped the morning-reminder toggle), with a
+//       "Continue" button that fires the OS prompt. If they dismiss the
+//       rationale, we never call requestPermissionsAsync — that satisfies
+//       Play's "transparency before request" guideline.
+//
+//   (2) Permission denied permanently (canAskAgain === false):
+//       OS won't show the system prompt anymore. Fall back to a localized
+//       alert with a deep-link to system Settings so the user can flip
+//       the permission manually.
+//
+// Either path returns a boolean — true only when the OS actually granted
+// permission, so the calling toggle stays OFF on any decline path.
 async function ensureNotificationPermission(lang: UILanguageCode): Promise<boolean> {
   const current = await Notifications.getPermissionsAsync();
   if (current.granted) return true;
+
+  // Path 1: fresh prompt. Show rationale, await user consent, then OS prompt.
   if (current.canAskAgain) {
+    const userAgreed = await new Promise<boolean>((resolve) => {
+      Alert.alert(
+        lookupString('notif.permission.title', lang),
+        lookupString('notif.permission.body', lang),
+        [
+          {
+            text: lookupString('common.cancel', lang),
+            style: 'cancel',
+            onPress: () => resolve(false),
+          },
+          {
+            text: lookupString('common.continue', lang),
+            onPress: () => resolve(true),
+          },
+        ],
+        // iOS dismissal via tap-outside / hardware back resolves to false
+        // — `cancelable` doesn't apply on iOS but the explicit handler
+        // covers both platforms.
+        { cancelable: true, onDismiss: () => resolve(false) },
+      );
+    });
+    if (!userAgreed) return false;
     const next = await Notifications.requestPermissionsAsync();
     return next.granted;
   }
+
+  // Path 2: permanently denied — deep-link to Settings.
   Alert.alert(
     lookupString('notif.permission.title', lang),
     lookupString('notif.permission.body', lang),

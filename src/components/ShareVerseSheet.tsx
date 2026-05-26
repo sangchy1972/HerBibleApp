@@ -198,10 +198,10 @@ export default function ShareVerseSheet({ reference, text, onClose, bgSource }: 
       // still pick a destination.
       try {
         const url = await captureCard();
-        await Sharing.shareAsync(url, { mimeType: CAPTURE_MIME, dialogTitle: `Share to ${cfg.label}` });
+        await Sharing.shareAsync(url, { mimeType: CAPTURE_MIME, dialogTitle: t('shareVerse.appShare.dialogTitle', { app: cfg.label }) });
         recordShare();
       } catch {
-        Alert.alert('Could not share', msg);
+        Alert.alert(t('error.couldNotShare'), msg);
       }
     } finally {
       setBusy(false);
@@ -227,19 +227,19 @@ export default function ShareVerseSheet({ reference, text, onClose, bgSource }: 
       }
       if (!granted) {
         Alert.alert(
-          'Photo access needed',
-          'Allow access to Photos in Settings so we can save the verse card.',
+          t('shareVerse.alert.photoNeeded.title'),
+          t('shareVerse.alert.photoNeeded.body'),
           [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Open Settings', onPress: () => Linking.openSettings().catch(() => {}) },
+            { text: t('common.cancel'), style: 'cancel' },
+            { text: t('common.openSettings'), onPress: () => Linking.openSettings().catch(() => {}) },
           ],
         );
         return;
       }
       await MediaLibrary.saveToLibraryAsync(url);
-      showToast('Saved to Photos');
+      showToast(t('shareVerse.saveAlert.title'));
     } catch (e) {
-      Alert.alert('Could not save', e instanceof Error ? e.message : 'Please try again.');
+      Alert.alert(t('error.couldNotSave'), e instanceof Error ? e.message : t('common.tryAgain'));
     } finally {
       setBusy(false);
     }
@@ -255,15 +255,15 @@ export default function ShareVerseSheet({ reference, text, onClose, bgSource }: 
     try {
       const url = await captureCard();
       if (!(await Sharing.isAvailableAsync())) {
-        Alert.alert('Sharing unavailable', 'This device cannot open the share sheet.');
+        Alert.alert(t('shareVerse.alert.shareUnavail.title'), t('shareVerse.alert.shareUnavail.body'));
         return;
       }
-      await Sharing.shareAsync(url, { mimeType: CAPTURE_MIME, dialogTitle: 'Share verse' });
+      await Sharing.shareAsync(url, { mimeType: CAPTURE_MIME, dialogTitle: t('shareVerse.share.dialogTitle') });
       recordShare();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       if (/cancel|dismiss/i.test(msg)) return;
-      Alert.alert('Could not share', msg);
+      Alert.alert(t('error.couldNotShare'), msg);
     } finally {
       setBusy(false);
     }

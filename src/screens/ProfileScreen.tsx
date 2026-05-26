@@ -359,11 +359,11 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
     }
     if (!perm.granted) {
       Alert.alert(
-        'Photo access is off',
-        'You’ve previously denied photo access. Open Settings to grant access, then come back to pick a picture.',
+        t('profile.photo.permission.title'),
+        t('profile.photo.permission.body'),
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: t('common.openSettings'), onPress: () => Linking.openSettings() },
         ],
       );
       return;

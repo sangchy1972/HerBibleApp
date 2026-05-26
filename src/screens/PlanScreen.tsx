@@ -413,7 +413,7 @@ export default function PlanScreen() {
                           radius={7}
                         />
                         <View style={styles.planMeta}>
-                          <Text style={styles.planDays}>Day {done} of {total}</Text>
+                          <Text style={styles.planDays}>{t('plan.row.dayOfTotal', { n: done, total })}</Text>
                           <Text style={styles.planTitle} numberOfLines={2}>{p.title}</Text>
                           <View style={styles.progressTrack}>
                             <View style={[styles.progressFill, { width: `${pct}%`, backgroundColor: ROSE }]} />
@@ -423,7 +423,7 @@ export default function PlanScreen() {
                           onPress={() => openCorpusPlan(p.slug)}
                           style={[styles.startBtn, { backgroundColor: ROSE }]}
                         >
-                          <Text style={[styles.startBtnText, { color: '#fff' }]}>Continue</Text>
+                          <Text style={[styles.startBtnText, { color: '#fff' }]}>{t('plan.continue')}</Text>
                         </TouchableOpacity>
                       </TouchableOpacity>
                     );
@@ -542,11 +542,11 @@ export default function PlanScreen() {
                         </View>
                       </View>
                       <View style={styles.planMeta}>
-                        <Text style={styles.planDays}>{p.duration_days} Days · {dateStr}</Text>
+                        <Text style={styles.planDays}>{t('plan.row.daysLabel', { n: p.duration_days })} · {dateStr}</Text>
                         <Text style={styles.planTitle} numberOfLines={2}>{p.title}</Text>
                       </View>
                       <TouchableOpacity onPress={() => openCorpusPlan(p.slug)} style={styles.startBtn}>
-                        <Text style={styles.startBtnText}>Review</Text>
+                        <Text style={styles.startBtnText}>{t('plan.review')}</Text>
                       </TouchableOpacity>
                     </TouchableOpacity>
                   );

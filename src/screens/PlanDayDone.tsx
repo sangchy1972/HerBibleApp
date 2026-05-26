@@ -36,11 +36,14 @@ export default function PlanDayDone({ route, navigation }: RootStackScreenProps<
   const onShare = () => {
     if (!summary) return;
     const remaining = Math.max(0, summary.duration - progress.completed);
-    Share.share({
-      message: remaining > 0
-        ? `Day ${day} of "${summary.title}" done — ${remaining} ${remaining === 1 ? 'day' : 'days'} to go in HerBibleApp.`
-        : `I just finished "${summary.title}" in HerBibleApp 🙏`,
-    }).catch(() => {});
+    const dayWord = remaining === 1 ? t('prayer.streak.day') : t('prayer.streak.days');
+    // Two share paths: the "still some days left" line (localized template
+    // with placeholders), and the "all done — celebration" line. Both end
+    // with the brand mark so the recipient knows where it came from.
+    const message = remaining > 0
+      ? t('plan.dayDone.shareMessage', { day, title: summary.title, remaining, dayWord })
+      : `${t('plan.completed', { title: summary.title })} 🙏`;
+    Share.share({ message }).catch(() => {});
   };
 
   // Lands on this plan's FeaturedPlanDetail (already in the stack underneath
@@ -66,7 +69,7 @@ export default function PlanDayDone({ route, navigation }: RootStackScreenProps<
         </Animated.View>
 
         <Animated.Text entering={FadeIn.delay(420).duration(360)} style={styles.heading}>
-          Day {day} of {summary?.duration || '?'}
+          {t('plan.row.dayOfTotal', { n: day, total: summary?.duration || '?' })}
         </Animated.Text>
 
         {!!summary && (
@@ -79,7 +82,7 @@ export default function PlanDayDone({ route, navigation }: RootStackScreenProps<
           <Animated.View style={[styles.progressFill, progressStyle, { backgroundColor: ROSE }]} />
         </Animated.View>
         <Animated.Text entering={FadeIn.delay(700).duration(360)} style={styles.progressText}>
-          {progress.completed} of {progress.total || '?'} days complete
+          {t('plan.daysProgress', { completed: progress.completed, total: progress.total || '?' })}
         </Animated.Text>
 
         <Animated.View entering={FadeIn.delay(900).duration(360)} style={styles.ctaWrap}>

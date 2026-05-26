@@ -18,12 +18,31 @@ interface Plan {
 }
 
 // Real prices come from the StoreKit / Play Billing product IDs. These are
-// just display strings until the IAP layer is wired up.
-const PLANS: Plan[] = [
-  { id: 'lifetime', label: 'Lifetime',  priceLine: 'NT$670 one-time payment',  bestValue: true, hint: 'Pay once · keep forever' },
-  { id: 'annual',   label: 'Annual',    priceLine: 'NT$420 / year',  hint: 'Save 58%' },
-  { id: 'monthly',  label: 'Monthly',   priceLine: 'NT$84 / month' },
+// just display strings until the IAP layer is wired up. Prices are
+// region-fixed (NT$) for now — they'll come from the store metadata once
+// IAP is wired, with no need for ad-hoc translation.
+//
+// `labelKey` / `hintKey` are i18n keys consumed at render time so the
+// plan tier renders in the active UI language.
+type PlanRow = {
+  id: PlanId;
+  labelKey: string;
+  priceKey: string;
+  hintKey?: string;
+  bestValue?: boolean;
+  pct?: number; // for annual.hint {pct} substitution
+};
+const PLANS: PlanRow[] = [
+  { id: 'lifetime', labelKey: 'paywall.plan.lifetime', priceKey: 'paywall.plan.lifetime.priceLine', hintKey: 'paywall.plan.lifetime.hint', bestValue: true },
+  { id: 'annual',   labelKey: 'paywall.plan.annual',   priceKey: 'paywall.plan.annual.priceLine',   hintKey: 'paywall.plan.annual.hint',   pct: 58 },
+  { id: 'monthly',  labelKey: 'paywall.plan.monthly',  priceKey: 'paywall.plan.monthly.priceLine' },
 ];
+
+const PRICES: Record<PlanId, string> = {
+  lifetime: 'NT$670',
+  annual:   'NT$420',
+  monthly:  'NT$84',
+};
 
 export default function RemoveAdsScreen({ navigation }: RootStackScreenProps<'RemoveAds'>) {
   const t = useT();
@@ -38,15 +57,17 @@ export default function RemoveAdsScreen({ navigation }: RootStackScreenProps<'Re
     // CLIENT_TRANSIENT_ERROR`. Add the chosen lib (expo-iap when stable
     // for SDK 54, or react-native-iap behind an explicit init guard) at
     // the same time the real product IDs land.
-    const plan = PLANS.find(p => p.id === selected);
+    const row = PLANS.find(p => p.id === selected);
+    const planLabel = row ? t(row.labelKey) : '';
+    const priceLine = row ? t(row.priceKey, { price: PRICES[row.id], pct: row.pct ?? 0 }) : '';
     Alert.alert(
-      'Subscriptions coming soon',
-      `Once StoreKit / Play Billing is wired up, this will purchase the ${plan?.label} plan (${plan?.priceLine}).`,
+      t('paywall.alert.comingSoon.title'),
+      t('paywall.alert.comingSoon.body', { plan: planLabel, price: priceLine }),
     );
   };
 
   const onRestore = () => {
-    Alert.alert('Restore purchases', 'Once IAP is wired, this will restore any active subscription tied to your store account.');
+    Alert.alert(t('paywall.alert.restore.title'), t('paywall.alert.restore.body'));
   };
 
   return (
@@ -68,14 +89,11 @@ export default function RemoveAdsScreen({ navigation }: RootStackScreenProps<'Re
           <Logo size={64} />
           <Text style={styles.title}>{t('paywall.title')}</Text>
         </View>
-        <Text style={styles.body}>
-          Subscribe and turn off all in-app ads, unlock early access to new study tools,
-          and support the team building Her Bible.
-        </Text>
+        <Text style={styles.body}>{t('paywall.body')}</Text>
 
         <View style={styles.featureRow}>
-          <Feature label="No ads" />
-          <Feature label="Future features" />
+          <Feature label={t('paywall.feature.noAds')} />
+          <Feature label={t('paywall.feature.future')} />
         </View>
 
         <View style={styles.planList}>
@@ -91,23 +109,23 @@ export default function RemoveAdsScreen({ navigation }: RootStackScreenProps<'Re
               </View>
               <View style={{ flex: 1 }}>
                 <View style={styles.planHeaderRow}>
-                  <Text style={styles.planLabel}>{p.label}</Text>
+                  <Text style={styles.planLabel}>{t(p.labelKey)}</Text>
                   {p.bestValue && (
                     <View style={styles.badgeBest}>
                       <Text style={styles.badgeBestText}>{t('paywall.badge.bestValue')}</Text>
                     </View>
                   )}
                 </View>
-                <Text style={styles.planPrice}>{p.priceLine}</Text>
-                {p.hint && <Text style={styles.planHint}>{p.hint}</Text>}
+                <Text style={styles.planPrice}>{t(p.priceKey, { price: PRICES[p.id] })}</Text>
+                {p.hintKey && (
+                  <Text style={styles.planHint}>{t(p.hintKey, { pct: p.pct ?? 0 })}</Text>
+                )}
               </View>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text style={styles.disclaimer}>
-          Subscriptions auto-renew until cancelled. You can manage or cancel anytime from your store account.
-        </Text>
+        <Text style={styles.disclaimer}>{t('paywall.disclaimer')}</Text>
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>

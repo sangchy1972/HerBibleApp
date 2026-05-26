@@ -134,44 +134,67 @@ export default function SignInSheet({ onClose, onError }: Props) {
       </Animated.View>
       <Animated.View entering={SHEET_ENTERING} style={styles.sheet}>
         <View style={styles.handle} />
-        <Text style={styles.title}>Sign in to Her Bible</Text>
-        <Text style={styles.desc}>
-          Sync your highlights, notes, saved verses, and reading streak across devices.
-        </Text>
+        <Text style={styles.title}>{t('signIn.sheet.title')}</Text>
+        <Text style={styles.desc}>{t('signIn.sub')}</Text>
 
         {Platform.OS === 'ios' && (
           // Apple HIG requires Sign in with Apple to sit at-or-above any
           // other social sign-in option, so it leads the stack on iOS.
           <TouchableOpacity onPress={onApple} style={[styles.providerBtn, styles.providerBtnApple]} activeOpacity={0.85}>
             <AppleGlyph />
-            <Text style={[styles.providerText, { color: '#fff' }]}>Continue with Apple</Text>
+            <Text style={[styles.providerText, { color: '#fff' }]}>{t('signIn.apple')}</Text>
           </TouchableOpacity>
         )}
 
         <TouchableOpacity onPress={onGoogle} style={styles.providerBtn} activeOpacity={0.85}>
           <GoogleGlyph />
-          <Text style={styles.providerText}>Continue with Google</Text>
+          <Text style={styles.providerText}>{t('signIn.google')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={onFacebook} style={[styles.providerBtn, styles.providerBtnFb]} activeOpacity={0.85}>
           <FacebookGlyph />
-          <Text style={[styles.providerText, { color: '#fff' }]}>Continue with Facebook</Text>
+          <Text style={[styles.providerText, { color: '#fff' }]}>{t('signIn.facebook')}</Text>
         </TouchableOpacity>
 
-        <Text style={styles.legal}>
-          By continuing you agree to our{' '}
-          <Text style={styles.legalLink} onPress={() => Linking.openURL('https://example.com/terms')}>Terms</Text>
-          {' and '}
-          <Text style={styles.legalLink} onPress={() => Linking.openURL('https://example.com/privacy')}>Privacy Policy</Text>.
-          We only request your name, email, and profile picture.
-        </Text>
+        <LegalText
+          template={t('signIn.legal')}
+          termsLabel={t('signIn.legal.terms')}
+          privacyLabel={t('signIn.legal.privacy')}
+        />
 
         <TouchableOpacity onPress={onClose} hitSlop={10} style={styles.cancel}>
           <Feather name="x" size={18} color={TXTSUB} />
-          <Text style={styles.cancelText}>Not now</Text>
+          <Text style={styles.cancelText}>{t('signIn.notNow')}</Text>
         </TouchableOpacity>
       </Animated.View>
     </View>
+  );
+}
+
+// Render the legal sentence with clickable Terms / Privacy links inline.
+// The template comes from i18n (`signIn.legal`) and contains `{terms}` and
+// `{privacy}` tokens; we replace them with tappable <Text> spans so the
+// word order in each language survives translation. The data-scope
+// sentence ("We only request your name, email, and profile picture.") is
+// baked into the template itself — different languages place it at
+// different points in the paragraph, so a single key is cleaner than
+// splitting into two concatenated strings.
+function LegalText({
+  template, termsLabel, privacyLabel,
+}: {
+  template: string; termsLabel: string; privacyLabel: string;
+}) {
+  const openTerms = () => Linking.openURL('https://example.com/terms').catch(() => {});
+  const openPrivacy = () => Linking.openURL('https://example.com/privacy').catch(() => {});
+  const parts = template.split(/(\{terms\}|\{privacy\})/g);
+  return (
+    <Text style={styles.legal}>
+      {parts.map((p, i) => {
+        if (p === '{terms}') return <Text key={i} style={styles.legalLink} onPress={openTerms}>{termsLabel}</Text>;
+        if (p === '{privacy}') return <Text key={i} style={styles.legalLink} onPress={openPrivacy}>{privacyLabel}</Text>;
+        return p;
+      })}
+    </Text>
   );
 }
 

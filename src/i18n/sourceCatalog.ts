@@ -865,4 +865,41 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'reflections.empty':             { en: 'No reflections yet',                                    context: 'Empty-state text on ReflectionsScreen.' },
 
   'bible.explanation.title':       { en: 'Explanation',                                           context: 'Heading inside the Bible reader Explore card showing per-verse commentary.' },
+
+  // ─── Audit pass 3 (2026-05): sheets, alerts & paywall body ───────────────
+  // SignInSheet
+  'signIn.sub':                    { en: 'Sync your highlights, notes, saved verses, and reading streak across devices.', context: 'Subtitle paragraph in the sign-in bottom sheet. Explains the value of signing in.' },
+  'signIn.facebook':               { en: 'Continue with Facebook',                                context: 'Third social sign-in button in the SignInSheet. Verb phrase.' },
+  // signIn.legal, signIn.legal.terms, signIn.legal.privacy already defined
+  // earlier in this catalog with the data-scope sentence baked into the
+  // template. SignInSheet's LegalText component splits on {terms}/{privacy}
+  // and substitutes the link labels, so word order survives translation.
+  'signIn.notNow':                 { en: 'Not now',                                                context: 'Dismiss button at the bottom of the sign-in sheet. Polite refusal.' },
+
+  // ShareVerseSheet alerts
+  'shareVerse.alert.photoNeeded.title': { en: 'Photo access needed',                              context: 'Alert title when photo-library permission is required to save the card. Friendly, not alarming.' },
+  'shareVerse.alert.photoNeeded.body':  { en: 'Allow access to Photos in Settings so we can save the verse card.', context: 'Alert body explaining why the app needs photo-library access.' },
+  'shareVerse.alert.shareUnavail.title': { en: 'Sharing unavailable',                             context: 'Alert title when the device has no share-sheet capability.' },
+  'shareVerse.alert.shareUnavail.body':  { en: 'This device cannot open the share sheet.',        context: 'Alert body for shareVerse.alert.shareUnavail.title.' },
+  'shareVerse.appShare.dialogTitle': { en: 'Share to {app}',                                       context: 'Dialog title when sharing to a specific app (Facebook/Instagram/WhatsApp). {app} is the destination app name.' },
+  'shareVerse.share.dialogTitle':  { en: 'Share verse',                                            context: 'Dialog title for the generic system share-sheet.' },
+
+  // RemoveAdsScreen alerts (placeholders pre-IAP wire-up)
+  'paywall.alert.comingSoon.title': { en: 'Subscriptions coming soon',                            context: 'Placeholder alert title shown when the user taps Subscribe before StoreKit/Play Billing is wired.' },
+  'paywall.alert.comingSoon.body':  { en: 'Once StoreKit / Play Billing is wired up, this will purchase the {plan} plan ({price}).', context: 'Placeholder alert body. {plan} is the plan tier name, {price} is the price line.' },
+  'paywall.alert.restore.title':   { en: 'Restore purchases',                                     context: 'Placeholder alert title for the Restore button before IAP is wired.' },
+  'paywall.alert.restore.body':    { en: 'Once IAP is wired, this will restore any active subscription tied to your store account.', context: 'Placeholder alert body for the Restore button.' },
+
+  // PlanScreen inline plan-progress
+  'plan.continue':                 { en: 'Continue',                                              context: 'Verb. CTA on an in-progress plan row to resume reading. Distinct from common.continue (general).' },
+  'plan.review':                   { en: 'Review',                                                context: 'Verb. CTA on a completed plan row to look back through its days.' },
+
+  // PlanDayDone share template (localized once instead of per-fragment)
+  'plan.dayDone.shareMessage':     { en: 'Day {day} of "{title}" done — {remaining} {dayWord} to go in Her Bible.', context: 'Share-sheet message after completing a plan day. {day} = day completed, {title} = plan title (un-translated), {remaining} = days left, {dayWord} = pluralized "day"/"days" already localized. Sentence is what gets shared to social / messaging apps.' },
+  'plan.completed':                { en: 'I just finished "{title}" in Her Bible',                context: 'Share-sheet message when the user completes the FINAL day of a plan. {title} = plan title. Emoji (🙏) appended at the call site.' },
+  'plan.daysProgress':             { en: '{completed} of {total} days complete',                  context: 'Subtitle under the PlanDayDone progress bar. Shows total plan progress so far. {completed} and {total} are integers.' },
+
+  // ProfileScreen photo permission alert
+  'profile.photo.permission.title': { en: 'Photo access is off',                                   context: 'Alert title when user tries to set a profile photo without photo-library access.' },
+  'profile.photo.permission.body':  { en: 'Allow access to Photos in Settings to change your profile picture.', context: 'Alert body explaining how to grant photo access.' },
 };

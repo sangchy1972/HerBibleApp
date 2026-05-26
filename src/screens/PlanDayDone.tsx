@@ -8,11 +8,13 @@ import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import { usePlanCompletion } from '../state/PlanCompletionContext';
 import type { RootStackScreenProps } from '../navigation/types';
+import { useT } from '../i18n/useT';
 
 // Day-completion congrats. Plays the Lottie checkmark, shows progress, lets
 // the user share their progress or continue back to the plan detail.
 
 export default function PlanDayDone({ route, navigation }: RootStackScreenProps<'PlanDayDone'>) {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const { slug, day } = route.params;
   const { getSummary } = useFeaturedPlans();
@@ -83,10 +85,10 @@ export default function PlanDayDone({ route, navigation }: RootStackScreenProps<
         <Animated.View entering={FadeIn.delay(900).duration(360)} style={styles.ctaWrap}>
           <TouchableOpacity onPress={onShare} activeOpacity={0.9} style={styles.shareBtn}>
             <Feather name="share-2" size={18} color="#FFFFFF" />
-            <Text style={styles.shareBtnText}>Share progress</Text>
+            <Text style={styles.shareBtnText}>{t('plan.dayDone.shareProgress')}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={onContinue} activeOpacity={0.85} style={styles.continueBtn}>
-            <Text style={styles.continueBtnText}>Continue</Text>
+            <Text style={styles.continueBtnText}>{t('common.continue')}</Text>
           </TouchableOpacity>
         </Animated.View>
       </View>

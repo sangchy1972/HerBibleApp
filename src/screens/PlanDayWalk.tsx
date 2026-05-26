@@ -23,6 +23,7 @@ import ShareVerseSheet from '../components/ShareVerseSheet';
 import { HL_COLORS } from '../constants/highlightColors';
 import type { FullPlan, PlanSection, PlanVerseRef } from '../services/featuredPlansService';
 import type { RootStackScreenProps } from '../navigation/types';
+import { useT } from '../i18n/useT';
 
 // Daily reader for a single plan day. Each plan day is a sequence of
 // "pages" the user swipes through. Sections present in the day's content
@@ -534,6 +535,7 @@ function VersePage({
   getColor: (tr: string, b: string, ch: number, v: number) => string | undefined;
   onSelectVerse: (sv: SelectedVerse) => void;
 }) {
+  const t = useT();
   const [chapterData, setChapterData] = useState<Chapter | null>(null);
   const [loadErr, setLoadErr] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
@@ -559,7 +561,7 @@ function VersePage({
     return (
       <View style={[styles.pageScroll, { paddingTop: insetTop, paddingBottom: insetBottom, alignItems: 'center', justifyContent: 'center', flex: 1 }]}>
         <Feather name="cloud-off" size={42} color={TXTSUB} />
-        <Text style={styles.emptyText}>Couldn&rsquo;t load this chapter.</Text>
+        <Text style={styles.emptyText}>{t('plan.dayWalk.chapterLoadError')}</Text>
       </View>
     );
   }

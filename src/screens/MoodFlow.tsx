@@ -6,7 +6,8 @@ import { Feather } from '@expo/vector-icons';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import MoodEmoji, { MOOD_LIST, MOOD_LABEL, type Mood } from '../components/MoodEmoji';
 import MoodCalendar from '../components/MoodCalendar';
-import { MOOD_VERSES, FUN_FACTS } from '../constants/moodContent';
+import { getMoodVerse, getFunFacts, type FunFact } from '../constants/moodContent';
+import { useUILanguage } from '../state/UILanguageContext';
 import { useMoodCheckIn } from '../state/MoodCheckInContext';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { ROSE, TXT, TXTSUB, FONTS, SERIF_BODY } from '../constants/theme';
@@ -21,8 +22,12 @@ const TILE_W = (SCREEN_W - 16 * 2 - 12 * 2) / 3;       // 3 cols, 16 outer + 12 
 export default function MoodFlow({ navigation }: RootStackScreenProps<'MoodFlow'>) {
   const insets = useSafeAreaInsets();
   const { todayMood, recordPick } = useMoodCheckIn();
+  const { lang } = useUILanguage();
+  // Localized fact list re-resolves on lang switch — the user can change
+  // UI language and see the deck flip to that language's facts.
+  const funFacts = getFunFacts(lang);
   const [step, setStep] = useState<Step>(todayMood ? 'calendar' : 'pick');
-  const [factIdx, setFactIdx] = useState(() => Math.floor(Math.random() * FUN_FACTS.length));
+  const [factIdx, setFactIdx] = useState(() => Math.floor(Math.random() * funFacts.length));
   const mood: Mood | null = todayMood ?? null;
 
   const exit = () => navigation.goBack();
@@ -53,8 +58,8 @@ export default function MoodFlow({ navigation }: RootStackScreenProps<'MoodFlow'
       {step === 'calendar' && <CalendarStep onContinue={exit} />}
       {step === 'fact' && (
         <FactModal
-          fact={FUN_FACTS[factIdx]}
-          onShuffle={() => setFactIdx(i => (i + 1) % FUN_FACTS.length)}
+          fact={funFacts[factIdx]}
+          onShuffle={() => setFactIdx(i => (i + 1) % funFacts.length)}
           onShare={() => { /* hook into ShareVerseSheet later if needed */ }}
           onClose={() => setStep('calendar')}
         />
@@ -65,9 +70,10 @@ export default function MoodFlow({ navigation }: RootStackScreenProps<'MoodFlow'
 
 // ─── Step 1: Pick a mood ──────────────────────────────────────────────────────
 function PickStep({ onPick }: { onPick: (m: Mood) => void }) {
+  const t = useT();
   return (
     <Animated.View entering={FadeIn.duration(220)} style={styles.pickWrap}>
-      <Text style={styles.pickTitle}>How do you feel today?</Text>
+      <Text style={styles.pickTitle}>{t('mood.howFeel')}</Text>
       <View style={styles.grid}>
         {MOOD_LIST.map((m) => (
           <TouchableOpacity key={m} style={styles.tile} activeOpacity={0.85} onPress={() => onPick(m)}>
@@ -89,6 +95,7 @@ function PickStep({ onPick }: { onPick: (m: Mood) => void }) {
 // phones (no scroll, button clipped below the home indicator) — that
 // blocked them from finishing onboarding.
 function CalendarStep({ onContinue }: { onContinue: () => void }) {
+  const t = useT();
   const insets = useSafeAreaInsets();
   return (
     <View style={styles.calWrap}>
@@ -101,7 +108,7 @@ function CalendarStep({ onContinue }: { onContinue: () => void }) {
       </ScrollView>
       <View style={[styles.calFooter, { paddingBottom: insets.bottom + 14 }]}>
         <TouchableOpacity style={styles.calCta} onPress={onContinue} activeOpacity={0.9}>
-          <Text style={styles.calCtaText}>Done</Text>
+          <Text style={styles.calCtaText}>{t('common.done')}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -110,7 +117,9 @@ function CalendarStep({ onContinue }: { onContinue: () => void }) {
 
 // ─── Step 2: Verse for the chosen mood ───────────────────────────────────────
 function VerseStep({ mood, onClose }: { mood: Mood; onClose: () => void }) {
-  const v = MOOD_VERSES[mood];
+  const t = useT();
+  const { lang } = useUILanguage();
+  const v = getMoodVerse(mood, lang);
   const today = new Date();
   const dateStr = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   // Pick the same prayer-bg image library the home verse card uses, so the
@@ -154,7 +163,7 @@ function VerseStep({ mood, onClose }: { mood: Mood; onClose: () => void }) {
 
       <Animated.View entering={FadeIn.delay(1300).duration(500)} style={styles.verseCloseWrap}>
         <TouchableOpacity onPress={onClose} style={styles.verseCloseBtn} activeOpacity={0.9}>
-          <Text style={styles.verseCloseText}>Close</Text>
+          <Text style={styles.verseCloseText}>{t('prayerFlow.close')}</Text>
         </TouchableOpacity>
       </Animated.View>
     </View>
@@ -167,7 +176,7 @@ function VerseStep({ mood, onClose }: { mood: Mood; onClose: () => void }) {
 function FactModal({
   fact, onShuffle, onShare, onClose,
 }: {
-  fact: typeof FUN_FACTS[number];
+  fact: FunFact;
   onShuffle: () => void;
   onShare: () => void;
   onClose: () => void;
@@ -189,7 +198,7 @@ function FactModal({
         {fact.relatedRefs.length > 0 && (
           <>
             <Text style={styles.factSub}>{t('moodFlow.fact.related')}</Text>
-            {fact.relatedRefs.map(r => (
+            {fact.relatedRefs.map((r: string) => (
               <Text key={r} style={styles.factRef}>{r}</Text>
             ))}
           </>

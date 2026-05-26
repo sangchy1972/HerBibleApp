@@ -13,6 +13,7 @@ import { detailStyles as ds } from './planDetailStyles';
 import { Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { PLAN_COVER_CDN_BASE } from '../constants/plansApi';
+import { useT } from '../i18n/useT';
 
 // Corpus-backed plan detail screen. Layout mirrors the demo PlanDetail
 // (the "Identity in Christ" placeholder inside PlanScreen.tsx) byte-for-
@@ -25,6 +26,7 @@ import { PLAN_COVER_CDN_BASE } from '../constants/plansApi';
 // badge, walk row icon + caption, and the Start Reading Plan button.
 
 export default function FeaturedPlanDetail({ route, navigation }: RootStackScreenProps<'FeaturedPlanDetail'>) {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const { slug } = route.params;
   const { getSummary, loadPlan, loadedPlans } = useFeaturedPlans();
@@ -48,7 +50,7 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
         <TouchableOpacity onPress={() => navigation.goBack()} style={ds.backBtn} hitSlop={8}>
           <Feather name="chevron-left" size={22} color={TXT} />
         </TouchableOpacity>
-        <Text style={{ marginTop: 16, color: TXTSUB }}>Plan not found.</Text>
+        <Text style={{ marginTop: 16, color: TXTSUB }}>{t('plan.notFound')}</Text>
       </View>
     );
   }
@@ -148,7 +150,7 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
       </Animated.View>
 
       <Animated.View entering={FadeIn.delay(150).duration(260)}>{/* 420/420 → 150/260 */}
-        <Text style={ds.dailyPlanLabel}>Daily Plan</Text>
+        <Text style={ds.dailyPlanLabel}>{t('plan.dailyPlanLabel')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={ds.dayStrip} contentContainerStyle={ds.dayStripContent}>
           {days.map((d, i) => {
             const sel = i === activeIdx;
@@ -176,7 +178,7 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
       <Animated.View entering={FadeIn.delay(200).duration(260)}>{/* 560/420 → 200/260 */}
         <View style={ds.dayContent}>
           <View style={ds.dayHeader}>
-            <Text style={ds.dayTitle}>Day {cur.n} of {summary.duration}</Text>
+            <Text style={ds.dayTitle}>{t('plan.row.dayOfTotal', { n: cur.n, total: summary.duration })}</Text>
             <View style={[ds.timeBadge, { backgroundColor: `${ac}18` }]}>
               <Text style={[ds.timeBadgeText, { color: ac }]}>~{summary.minutes} MIN</Text>
             </View>
@@ -191,7 +193,7 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
           {loadError && (
             <View style={ds.errorCard}>
               <Feather name="cloud-off" size={20} color={TXTSUB} />
-              <Text style={ds.errorText}>Plan content failed to load. Pull to retry or check your connection.</Text>
+              <Text style={ds.errorText}>{t('plan.loadFailed')}</Text>
             </View>
           )}
 
@@ -202,7 +204,7 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
                   <Feather name="arrow-right" size={16} color={ac} />
                 </View>
                 <View style={ds.walkMeta}>
-                  <Text style={[ds.walkCaption, { color: ac }]}>DAILY WALK</Text>
+                  <Text style={[ds.walkCaption, { color: ac }]}>{t('plan.dailyWalkCaption')}</Text>
                   <Text style={ds.walkTitle} numberOfLines={2}>{cur.walk}</Text>
                 </View>
                 <Feather name="chevron-right" size={18} color={TXTSUB} />
@@ -229,7 +231,7 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
           disabled={!plan}
           activeOpacity={0.9}
         >
-          <Text style={ds.startReadingText}>Start Reading Plan</Text>
+          <Text style={ds.startReadingText}>{t('plan.startReading')}</Text>
         </TouchableOpacity>
       </Animated.View>
 

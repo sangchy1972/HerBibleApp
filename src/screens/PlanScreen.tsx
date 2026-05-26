@@ -39,6 +39,7 @@ function ImagePlaceholder({ ac, width = 136, height = 97, radius = 7 }: {       
 // Corpus-plan list row — same visual shape as PlanRow but reads PlanSummary
 // fields and uses the gradient cover instead of the demo color tint.
 function CorpusPlanRow({ plan, onPress }: { plan: PlanSummary; onPress: () => void }) {
+  const t = useT();
   return (
     <TouchableOpacity onPress={onPress} style={styles.planRow} activeOpacity={0.75}>
       <PlanCover
@@ -49,11 +50,11 @@ function CorpusPlanRow({ plan, onPress }: { plan: PlanSummary; onPress: () => vo
         radius={7}
       />
       <View style={styles.planMeta}>
-        <Text style={styles.planDays}>{plan.duration} Days</Text>
+        <Text style={styles.planDays}>{t('plan.row.daysLabel', { n: plan.duration })}</Text>
         <Text style={styles.planTitle} numberOfLines={2}>{plan.title}</Text>
       </View>
       <TouchableOpacity onPress={onPress} style={styles.startBtn}>
-        <Text style={styles.startBtnText}>Start</Text>
+        <Text style={styles.startBtnText}>{t('plan.startFallback')}</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -65,6 +66,7 @@ function CorpusCategorySection({ title, plans, onOpen, onSeeAll }: {
   onOpen: (slug: string) => void;
   onSeeAll?: () => void;
 }) {
+  const t = useT();
   if (plans.length === 0) return null;
   // No subtitle row — per user feedback the one-liner description under the
   // category title was visual noise; the title + plan covers below carry
@@ -74,7 +76,7 @@ function CorpusCategorySection({ title, plans, onOpen, onSeeAll }: {
       <View style={styles.catHeader}>
         <Text style={styles.catName}>{title}</Text>
         <TouchableOpacity onPress={onSeeAll} hitSlop={8}>
-          <Text style={[styles.seeAll, { color: ROSE }]}>See all ›</Text>
+          <Text style={[styles.seeAll, { color: ROSE }]}>{t('common.seeAll')} ›</Text>
         </TouchableOpacity>
       </View>
       {plans.map(p => (
@@ -85,21 +87,23 @@ function CorpusCategorySection({ title, plans, onOpen, onSeeAll }: {
 }
 
 function PlanRow({ plan, onPress }: { plan: Plan; onPress: () => void }) {
+  const t = useT();
   return (
     <TouchableOpacity onPress={onPress} style={styles.planRow} activeOpacity={0.75}>
       <ImagePlaceholder ac={plan.ac} />
       <View style={styles.planMeta}>
-        <Text style={styles.planDays}>{plan.days} Days</Text>
+        <Text style={styles.planDays}>{t('plan.row.daysLabel', { n: plan.days })}</Text>
         <Text style={styles.planTitle} numberOfLines={2}>{plan.title}</Text>
       </View>
       <TouchableOpacity onPress={onPress} style={styles.startBtn}>
-        <Text style={styles.startBtnText}>Start</Text>
+        <Text style={styles.startBtnText}>{t('plan.startFallback')}</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
 }
 
 function PlanDetail({ plan, onBack }: { plan: Plan; onBack: () => void }) {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const { markToday } = useActivity();
   useEffect(() => { markToday(); }, [markToday]);
@@ -152,7 +156,7 @@ function PlanDetail({ plan, onBack }: { plan: Plan; onBack: () => void }) {
       </Animated.View>
 
       <Animated.View entering={FadeIn.delay(420).duration(420)}>
-        <Text style={ds.dailyPlanLabel}>Daily Plan</Text>
+        <Text style={ds.dailyPlanLabel}>{t('plan.dailyPlanLabel')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={ds.dayStrip} contentContainerStyle={ds.dayStripContent}>
           {days.map((d, i) => {
             const sel = i === activeDay;
@@ -174,9 +178,9 @@ function PlanDetail({ plan, onBack }: { plan: Plan; onBack: () => void }) {
       <Animated.View entering={FadeIn.delay(560).duration(420)}>
         <View style={ds.dayContent}>
           <View style={ds.dayHeader}>
-            <Text style={ds.dayTitle}>Day {cur.n} of {plan.days}</Text>
+            <Text style={ds.dayTitle}>{t('plan.row.dayOfTotal', { n: cur.n, total: plan.days })}</Text>
             <View style={[ds.timeBadge, { backgroundColor: `${plan.ac}18` }]}>
-              <Text style={[ds.timeBadgeText, { color: plan.ac }]}>~8 MIN</Text>
+              <Text style={[ds.timeBadgeText, { color: plan.ac }]}>{t('plan.timeMinCaps', { min: 8 })}</Text>
             </View>
           </View>
 
@@ -185,7 +189,7 @@ function PlanDetail({ plan, onBack }: { plan: Plan; onBack: () => void }) {
               <Feather name="arrow-right" size={16} color={plan.ac} />
             </View>
             <View style={ds.walkMeta}>
-              <Text style={[ds.walkCaption, { color: plan.ac }]}>DAILY WALK</Text>
+              <Text style={[ds.walkCaption, { color: plan.ac }]}>{t('plan.dailyWalkCaption')}</Text>
               <Text style={ds.walkTitle}>{cur.walk}</Text>
             </View>
             <Feather name="chevron-right" size={18} color={TXTSUB} />
@@ -205,7 +209,7 @@ function PlanDetail({ plan, onBack }: { plan: Plan; onBack: () => void }) {
 
       <Animated.View entering={FadeIn.delay(720).duration(400)}>
         <TouchableOpacity style={[ds.startReadingBtn, { backgroundColor: plan.ac }]}>
-          <Text style={ds.startReadingText}>Start Reading Plan</Text>
+          <Text style={ds.startReadingText}>{t('plan.startReading')}</Text>
         </TouchableOpacity>
       </Animated.View>
 

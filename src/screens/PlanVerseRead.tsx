@@ -8,6 +8,7 @@ import { adjustFocus } from '../constants/versification';
 import { useTranslation } from '../state/TranslationsContext';
 import { localizeBookName, englishBookName } from '../constants/bibleBookNames';
 import type { RootStackScreenProps } from '../navigation/types';
+import { useT } from '../i18n/useT';
 
 // Slim chapter view used by the plan flow's "tap a verse to read it in
 // context" jump. Reuses fetchChapter + adjustFocus from the existing infra
@@ -24,6 +25,7 @@ import type { RootStackScreenProps } from '../navigation/types';
 const FOCUS_TOP_OFFSET = 80;
 
 export default function PlanVerseRead({ route, navigation }: RootStackScreenProps<'PlanVerseRead'>) {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const { focus: incoming } = route.params;
   const { current: translation } = useTranslation();
@@ -73,7 +75,7 @@ export default function PlanVerseRead({ route, navigation }: RootStackScreenProp
           <Feather name="chevron-left" size={26} color={TXT} />
         </TouchableOpacity>
         <View style={{ flex: 1, alignItems: 'center' }}>
-          <Text style={styles.headerSubtitle}>BACK TO PLAN</Text>
+          <Text style={styles.headerSubtitle}>{t('plan.verseRead.back')}</Text>
           <Text style={styles.headerTitle} numberOfLines={1}>{headerTitle}</Text>
         </View>
         <View style={styles.headerBtn} />
@@ -93,7 +95,7 @@ export default function PlanVerseRead({ route, navigation }: RootStackScreenProp
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
         >
-          <Text style={styles.chapterLabel}>CHAPTER {focus.chapter}</Text>
+          <Text style={styles.chapterLabel}>{t('plan.verseRead.chapter', { n: focus.chapter })}</Text>
 
           {preFocus.length > 0 && (
             <Text style={styles.chapterBody}>

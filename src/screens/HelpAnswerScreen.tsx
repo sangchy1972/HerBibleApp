@@ -25,7 +25,7 @@ export default function HelpAnswerScreen({ route, navigation }: RootStackScreenP
     // Defensive: never crash on a stale link.
     return (
       <View style={[styles.root, { paddingTop: insets.top + 16 }]}>
-        <Text style={styles.title}>Article not found</Text>
+        <Text style={styles.title}>{t('help.articleNotFound')}</Text>
       </View>
     );
   }
@@ -36,7 +36,7 @@ export default function HelpAnswerScreen({ route, navigation }: RootStackScreenP
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={10}>
           <Feather name="chevron-left" size={26} color={TXT} />
         </TouchableOpacity>
-        <Text style={styles.title}>Answer</Text>
+        <Text style={styles.title}>{t('help.answerLabel')}</Text>
         <View style={styles.backBtn} />
       </View>
       <View style={styles.divider} />
@@ -63,7 +63,7 @@ export default function HelpAnswerScreen({ route, navigation }: RootStackScreenP
         ))}
 
         <View style={styles.feedbackRow}>
-          <Text style={styles.feedbackPrompt}>Does this answer help?</Text>
+          <Text style={styles.feedbackPrompt}>{t('help.feedbackPrompt')}</Text>
           <View style={styles.feedbackBtns}>
             <TouchableOpacity
               onPress={() => setFeedback('down')}

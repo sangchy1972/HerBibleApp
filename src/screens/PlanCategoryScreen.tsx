@@ -128,7 +128,7 @@ export default function PlanCategoryScreen({ route, navigation }: RootStackScree
       {filteredPlans.length === 0 ? (
         <View style={styles.empty}>
           <Feather name="inbox" size={36} color={TXTSUB} />
-          <Text style={styles.emptyText}>No plans in this category yet.</Text>
+          <Text style={styles.emptyText}>{t('plan.category.empty')}</Text>
         </View>
       ) : (
         <FlatList
@@ -161,6 +161,7 @@ export default function PlanCategoryScreen({ route, navigation }: RootStackScree
 // only when the row's data changes (the memoized PlanCover absorbs the
 // per-frame churn).
 function PlanCategoryRow({ plan, onOpen }: { plan: PlanSummary; onOpen: (slug: string) => void }) {
+  const t = useT();
   const press = useCallback(() => onOpen(plan.slug), [onOpen, plan.slug]);
   return (
     <TouchableOpacity onPress={press} activeOpacity={0.75} style={styles.planRow}>
@@ -172,11 +173,11 @@ function PlanCategoryRow({ plan, onOpen }: { plan: PlanSummary; onOpen: (slug: s
         radius={7}
       />
       <View style={styles.planMeta}>
-        <Text style={styles.planDays}>{plan.duration} Days</Text>
+        <Text style={styles.planDays}>{t('plan.row.daysLabel', { n: plan.duration })}</Text>
         <Text style={styles.planTitle} numberOfLines={2}>{plan.title}</Text>
       </View>
       <TouchableOpacity onPress={press} style={styles.startBtn}>
-        <Text style={styles.startBtnText}>Start</Text>
+        <Text style={styles.startBtnText}>{t('plan.startFallback')}</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );

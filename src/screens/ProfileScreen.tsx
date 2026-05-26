@@ -657,7 +657,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
                 slash uses a ROSE-leaning warm red so the whole icon stays
                 inside the app's pink palette instead of clashing with a
                 pure-red prohibition glyph. */}
-            <Text style={styles.removeAdsAd}>AD</Text>
+            <Text style={styles.removeAdsAd}>{t('profile.adPlaceholder')}</Text>
             <View style={styles.removeAdsSlash} />
           </LinearGradient>
           <View style={styles.widgetBannerCopy}>
@@ -781,7 +781,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
 
       {/* Account — settings-style list of horizontal rows. */}
       <TabSection delay={180}>{/* 550 → 180 */}
-      <Text style={[styles.sectionTitle, { marginTop: 28, marginBottom: 14 }]}>Account</Text>
+      <Text style={[styles.sectionTitle, { marginTop: 28, marginBottom: 14 }]}>{t('profile.section.account')}</Text>
       <Glass style={styles.settingsCard}>
         <SettingRow icon="share-2"     label="Share Her Bible"  onPress={() => showToast('Share App coming soon')} />
         <TouchableOpacity
@@ -870,12 +870,8 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
                 <View style={styles.savedSheetEmptyIcon}>
                   <Feather name="heart" size={32} color={ROSE} />
                 </View>
-                <Text style={styles.savedSheetEmptyTitle}>No saved verses yet</Text>
-                <Text style={styles.savedSheetEmptyHint}>
-                  Open any chapter, tap a verse, and choose{' '}
-                  <Text style={{ fontWeight: '700', color: TXT }}>Save</Text>
-                  {' '}to keep it here.
-                </Text>
+                <Text style={styles.savedSheetEmptyTitle}>{t('profile.saved.empty')}</Text>
+                <Text style={styles.savedSheetEmptyHint}>{t('profile.saved.emptyHint')}</Text>
               </View>
             ) : (
               <>
@@ -912,16 +908,16 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
           <GestureDetector gesture={notesPan.gesture}>
           <Animated.View entering={SHEET_ENTERING} style={[styles.pickerSheet, styles.savedSheet, notesPan.sheetStyle]}>
             <View style={styles.sheetHandle} />
-            <Text style={styles.pickerTitle}>Notes · {notes.length}</Text>
+            <Text style={styles.pickerTitle}>{t('profile.notes.label', { n: notes.length })}</Text>
             {notes.length === 0 ? (
               <View style={styles.savedSheetEmpty}>
                 <View style={styles.savedSheetEmptyIcon}>
                   <Feather name="edit-2" size={28} color={ROSE} />
                 </View>
-                <Text style={styles.savedSheetEmptyTitle}>No notes yet</Text>
+                <Text style={styles.savedSheetEmptyTitle}>{t('profile.notes.empty')}</Text>
                 <Text style={styles.savedSheetEmptyHint}>
                   Open any chapter, tap a verse, choose{' '}
-                  <Text style={{ fontWeight: '700', color: TXT }}>Note</Text>
+                  <Text style={{ fontWeight: '700', color: TXT }}>{t('profile.notes.wordLabel')}</Text>
                   {' '}and write what God is speaking to you.
                 </Text>
               </View>
@@ -965,13 +961,13 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
           <GestureDetector gesture={bookmarksPan.gesture}>
           <Animated.View entering={SHEET_ENTERING} style={[styles.pickerSheet, styles.savedSheet, bookmarksPan.sheetStyle]}>
             <View style={styles.sheetHandle} />
-            <Text style={styles.pickerTitle}>Bookmarks · {bookmarksCount}</Text>
+            <Text style={styles.pickerTitle}>{t('profile.bookmarks.label', { n: bookmarksCount })}</Text>
             {bookmarks.length === 0 ? (
               <View style={styles.savedSheetEmpty}>
                 <View style={styles.savedSheetEmptyIcon}>
                   <Feather name="bookmark" size={28} color={ROSE} />
                 </View>
-                <Text style={styles.savedSheetEmptyTitle}>No bookmarks yet</Text>
+                <Text style={styles.savedSheetEmptyTitle}>{t('profile.bookmarks.empty')}</Text>
                 <Text style={styles.savedSheetEmptyHint}>
                   Open any chapter and tap the bookmark icon in the header to save it here.
                 </Text>
@@ -1015,13 +1011,13 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
           <GestureDetector gesture={highlightsPan.gesture}>
           <Animated.View entering={SHEET_ENTERING} style={[styles.pickerSheet, styles.savedSheet, highlightsPan.sheetStyle]}>
             <View style={styles.sheetHandle} />
-            <Text style={styles.pickerTitle}>Highlights · {highlightsCount}</Text>
+            <Text style={styles.pickerTitle}>{t('profile.highlights.label', { n: highlightsCount })}</Text>
             {highlightList.length === 0 ? (
               <View style={styles.savedSheetEmpty}>
                 <View style={styles.savedSheetEmptyIcon}>
                   <Feather name="type" size={28} color={ROSE} />
                 </View>
-                <Text style={styles.savedSheetEmptyTitle}>No highlights yet</Text>
+                <Text style={styles.savedSheetEmptyTitle}>{t('profile.highlights.empty')}</Text>
                 <Text style={styles.savedSheetEmptyHint}>
                   Tap a verse while reading and pick a colour dot to highlight it.
                 </Text>

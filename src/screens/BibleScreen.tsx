@@ -1337,7 +1337,7 @@ export default function BibleScreen() {
               {exploreIdx === i && (
                 <View style={styles.explainInline}>
                   <View style={styles.explainHeader}>
-                    <Text style={styles.explainLabel}>Explanation</Text>
+                    <Text style={styles.explainLabel}>{t('bible.explanation.title')}</Text>
                     <TouchableOpacity onPress={() => setExploreIdx(null)} hitSlop={10}>
                       <Feather name="x" size={18} color={TXTSUB} />
                     </TouchableOpacity>

@@ -5,6 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import { ROSE, TXT, TXTSUB, P } from '../constants/theme';
 import { useNotes } from '../state/NotesContext';
 import type { RootStackScreenProps } from '../navigation/types';
+import { useT } from '../i18n/useT';
 
 const formatDate = (iso: string) => {
   try {
@@ -15,6 +16,7 @@ const formatDate = (iso: string) => {
 };
 
 export default function ReflectionsScreen({ navigation }: RootStackScreenProps<'Reflections'>) {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const { notes } = useNotes();
 
@@ -26,7 +28,7 @@ export default function ReflectionsScreen({ navigation }: RootStackScreenProps<'
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={10}>
           <Feather name="chevron-left" size={26} color={TXT} />
         </TouchableOpacity>
-        <Text style={styles.title}>My Reflections</Text>
+        <Text style={styles.title}>{t('reflections.title')}</Text>
         <View style={styles.backBtn} />
       </View>
       <View style={styles.divider} />
@@ -34,7 +36,7 @@ export default function ReflectionsScreen({ navigation }: RootStackScreenProps<'
       {reflections.length === 0 ? (
         <View style={styles.empty}>
           <Feather name="edit-3" size={36} color={TXTSUB} />
-          <Text style={styles.emptyTitle}>No reflections yet</Text>
+          <Text style={styles.emptyTitle}>{t('reflections.empty')}</Text>
           <Text style={styles.emptyHint}>
             After your morning or evening prayer, tap "Write a reflection" — what you save will live here.
           </Text>

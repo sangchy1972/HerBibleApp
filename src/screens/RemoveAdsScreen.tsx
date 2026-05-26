@@ -5,6 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import Logo from '../components/shared/Logo';
 import type { RootStackScreenProps } from '../navigation/types';
+import { useT } from '../i18n/useT';
 
 type PlanId = 'lifetime' | 'annual' | 'monthly';
 
@@ -25,6 +26,7 @@ const PLANS: Plan[] = [
 ];
 
 export default function RemoveAdsScreen({ navigation }: RootStackScreenProps<'RemoveAds'>) {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState<PlanId>('lifetime');
 
@@ -54,7 +56,7 @@ export default function RemoveAdsScreen({ navigation }: RootStackScreenProps<'Re
           <Feather name="x" size={20} color={TXT} />
         </TouchableOpacity>
         <TouchableOpacity onPress={onRestore} hitSlop={10}>
-          <Text style={styles.restore}>Restore</Text>
+          <Text style={styles.restore}>{t('common.restore')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -64,7 +66,7 @@ export default function RemoveAdsScreen({ navigation }: RootStackScreenProps<'Re
       >
         <View style={styles.titleRow}>
           <Logo size={64} />
-          <Text style={styles.title}>Reading without distractions</Text>
+          <Text style={styles.title}>{t('paywall.title')}</Text>
         </View>
         <Text style={styles.body}>
           Subscribe and turn off all in-app ads, unlock early access to new study tools,
@@ -92,7 +94,7 @@ export default function RemoveAdsScreen({ navigation }: RootStackScreenProps<'Re
                   <Text style={styles.planLabel}>{p.label}</Text>
                   {p.bestValue && (
                     <View style={styles.badgeBest}>
-                      <Text style={styles.badgeBestText}>Best value</Text>
+                      <Text style={styles.badgeBestText}>{t('paywall.badge.bestValue')}</Text>
                     </View>
                   )}
                 </View>
@@ -110,12 +112,12 @@ export default function RemoveAdsScreen({ navigation }: RootStackScreenProps<'Re
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <TouchableOpacity onPress={onSubscribe} activeOpacity={0.85} style={styles.cta}>
-          <Text style={styles.ctaText}>Continue</Text>
+          <Text style={styles.ctaText}>{t('common.continue')}</Text>
         </TouchableOpacity>
         <View style={styles.legalRow}>
-          <TouchableOpacity onPress={() => Linking.openURL('https://example.com/terms')}><Text style={styles.legal}>Terms</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => Linking.openURL('https://example.com/terms')}><Text style={styles.legal}>{t('paywall.terms')}</Text></TouchableOpacity>
           <Text style={styles.legalSep}>·</Text>
-          <TouchableOpacity onPress={() => Linking.openURL('https://example.com/privacy')}><Text style={styles.legal}>Privacy</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => Linking.openURL('https://example.com/privacy')}><Text style={styles.legal}>{t('paywall.privacy')}</Text></TouchableOpacity>
         </View>
       </View>
     </View>

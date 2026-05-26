@@ -75,9 +75,14 @@ export async function fetchChapter(code: string, baseUrl: string, slug: string, 
 // dedicated key prefix so a future invalidation of bible-only data (e.g.
 // the zh-Hant whitespace fix) doesn't blow away the commentary cache.
 //
-// We hard-throw on 404 (per the plan: every KJV verse has a Tyndale or
-// Claude-written entry, so a miss means data corruption or wrong slug —
-// the caller surfaces this as the "error" state, not "missing").
+// EN fallback: only English commentary exists on the corpus mirror today.
+// Non-`en` readers (和合本 / Lutherbibel / LSG / Reina-Valera / Almeida)
+// would otherwise hit 404 → "Network error" in the Explore card. We
+// transparently retry against `commentary/en/...` on 404 so every reader
+// sees the Tyndale notes. When a localised commentary ships later,
+// CORPUS_COMMIT bumps, the AsyncStorage cache invalidates (keys are
+// hashed under CACHE_TAG), and the same fetch path naturally picks up
+// the new file — no further code change needed.
 const commentaryKey = (lang: string, slug: string, ch: number) =>
   `bible:commentary:${CACHE_TAG}:${lang}:${slug}:${ch}`;
 
@@ -85,9 +90,27 @@ export async function fetchCommentaryChapter(cdnRoot: string, lang: string, slug
   const key = commentaryKey(lang, slug, chapter);
   const cached = await AsyncStorage.getItem(key);
   if (cached) return JSON.parse(cached) as Chapter;
-  const data = await fetchJson<Chapter>(`${cdnRoot}/commentary/${lang}/books/${slug}/chapters/${chapter}.json`);
+  const data = await fetchCommentaryWithFallback(cdnRoot, lang, slug, chapter);
   await AsyncStorage.setItem(key, JSON.stringify(data));
   return data;
+}
+
+async function fetchCommentaryWithFallback(
+  cdnRoot: string, lang: string, slug: string, chapter: number,
+): Promise<Chapter> {
+  const primary = `${cdnRoot}/commentary/${lang}/books/${slug}/chapters/${chapter}.json`;
+  const res = await fetch(primary);
+  if (res.ok) return (await res.json()) as Chapter;
+  // Non-EN → 404 → retry against the English file. EN → 404 is a real
+  // corruption signal (every KJV verse has a Tyndale or Claude-written
+  // entry); let the caller render the "error" state.
+  if (res.status === 404 && lang !== 'en') {
+    const fallback = `${cdnRoot}/commentary/en/books/${slug}/chapters/${chapter}.json`;
+    const r2 = await fetch(fallback);
+    if (!r2.ok) throw new Error(`HTTP ${r2.status} for ${fallback}`);
+    return (await r2.json()) as Chapter;
+  }
+  throw new Error(`HTTP ${res.status} for ${primary}`);
 }
 
 export interface VerseHit {

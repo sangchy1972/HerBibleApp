@@ -100,14 +100,21 @@ export function DailyVersesProvider({ children }: { children: React.ReactNode })
       try {
         const cached = await getCachedDailyVerses(lang);
         if (!cancelled && cached && cached.length > 0) setVerses(cached);
-      } catch {
-        // ignore — bundled stays in place
+      } catch (e) {
+        // Bundled fallback stays in place — surface the failure so a
+        // mis-pinned `DAILY_VERSES_COMMIT` or a corrupt cache shows up
+        // in `npx expo start` logs instead of silently shipping the
+        // 3-day bundled cycle to every device.
+        if (__DEV__) console.warn(`[DailyVerses] cache read failed for "${lang}":`, e);
       }
       try {
         const fresh = await fetchAndCacheDailyVerses(lang);
         if (!cancelled && fresh.length > 0) setVerses(fresh);
-      } catch {
-        // ignore — cached or bundled stays in place
+      } catch (e) {
+        // Same as above — most likely cause is `DAILY_VERSES_COMMIT`
+        // pointing at a placeholder (the CDN URL builds with the
+        // commit, so a stale SHA → every fetch 404s).
+        if (__DEV__) console.warn(`[DailyVerses] CDN fetch failed for "${lang}":`, e);
       }
     })();
     return () => { cancelled = true; };

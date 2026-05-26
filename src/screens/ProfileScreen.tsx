@@ -16,6 +16,7 @@ import * as ImagePicker from 'expo-image-picker';
 import Glass from '../components/shared/Glass';
 import Logo from '../components/shared/Logo';
 import { ROSE, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
+import { getHighlightColor } from '../constants/highlightColors';
 import { TRANSLATIONS, useTranslation, type LanguageCode } from '../state/TranslationsContext';
 import { useUILanguage, UI_LANGUAGES, type UILanguageCode } from '../state/UILanguageContext';
 import { useT } from '../i18n/useT';
@@ -116,16 +117,12 @@ function formatNoteDate(iso: string): string {
   } catch { return ''; }
 }
 
-// Mirror of HL_COLORS in BibleScreen — keeps the swatch consistent across screens.
+// Swatch lookup hits the shared HL_COLORS table — was previously a
+// hardcoded switch with hex codes copy-pasted from BibleScreen, which
+// silently went stale every time the palette was tweaked. Sixth color
+// added in highlightColors.ts → Profile picks it up automatically.
 function highlightSwatch(name: string): string {
-  switch (name) {
-    case 'rose':  return '#F5C2D5';
-    case 'lav':   return '#CBC0E8';
-    case 'amber': return '#F4DD9E';
-    case 'sage':  return '#BAE0C6';
-    case 'sky':   return '#B8D2EE';
-    default:      return '#999999';
-  }
+  return getHighlightColor(name)?.dot ?? '#999999';
 }
 
 function MonthGrid({ year, month, activeSet }: { year: number; month: number; activeSet: Set<string> }) {

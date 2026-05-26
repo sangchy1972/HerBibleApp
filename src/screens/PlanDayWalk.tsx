@@ -20,6 +20,7 @@ import { bibleAudioUrl } from '../constants/bibleAudioCdn';
 import { fetchChapter, type Chapter, type Verse } from '../services/bibleService';
 import VerseNoteSheet from '../components/VerseNoteSheet';
 import ShareVerseSheet from '../components/ShareVerseSheet';
+import { HL_COLORS } from '../constants/highlightColors';
 import type { FullPlan, PlanSection, PlanVerseRef } from '../services/featuredPlansService';
 import type { RootStackScreenProps } from '../navigation/types';
 
@@ -50,13 +51,7 @@ import type { RootStackScreenProps } from '../navigation/types';
 //     HighlightsContext / SavedVersesContext the Bible reader uses, so
 //     highlights set here also show up in the standalone reader.
 
-const HL_COLORS = [
-  { name: 'rose',  bg: 'rgba(245,194,213,0.55)', dot: '#F5C2D5' },
-  { name: 'lav',   bg: 'rgba(203,192,232,0.55)', dot: '#CBC0E8' },
-  { name: 'amber', bg: 'rgba(244,221,158,0.55)', dot: '#F4DD9E' },
-  { name: 'sage',  bg: 'rgba(186,224,198,0.55)', dot: '#BAE0C6' },
-  { name: 'sky',   bg: 'rgba(184,210,238,0.55)', dot: '#B8D2EE' },
-];
+// HL_COLORS imported from the shared module — see constants/highlightColors.ts.
 
 type Page =
   | { kind: 'scripture_focus'; section: Extract<PlanSection, { type: 'scripture_focus' }> }

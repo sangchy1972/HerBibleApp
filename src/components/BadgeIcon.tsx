@@ -1,17 +1,25 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import type { BadgeRarity } from '../constants/achievements';
 import { BADGE_IMAGES } from '../constants/badgeImages';
 
-// Per-rarity color tint for the placeholder circle. Once a PNG override is
-// registered for a badge, the PNG fully replaces the placeholder — including
-// any frame, glyph, or color — and these tints stop being visible for it.
-const RARITY: Record<BadgeRarity, { tint: string; glyph: string }> = {
-  common:    { tint: '#C4A882', glyph: '#8B6040' },
-  rare:      { tint: '#5090C0', glyph: '#2E5E88' },
-  epic:      { tint: '#9050C8', glyph: '#5E2A88' },
-  legendary: { tint: '#D4922A', glyph: '#8C5808' },
+// Per-rarity palette. The placeholder now renders as a filled medallion
+// (two-stop gradient bg + white glyph + thin highlight ring at the top),
+// so each tier reads as an intentional design rather than a "missing
+// image" fallback. Tone choices:
+//   • common    — warm sand → caramel (humble, grounded)
+//   • rare      — sky → ocean (fresh, hopeful)
+//   • epic      — lilac → plum (reflective, mystical)
+//   • legendary — gold → bronze (celebratory, the brightest tier)
+// Once a PNG override is registered for a badge, the PNG fully replaces
+// this medallion — these gradients are only seen on un-arted badges.
+const RARITY: Record<BadgeRarity, { grad: [string, string]; ring: string }> = {
+  common:    { grad: ['#D9BB91', '#9E7A52'], ring: 'rgba(255,255,255,0.45)' },
+  rare:      { grad: ['#7AB6E0', '#3B6DA0'], ring: 'rgba(255,255,255,0.50)' },
+  epic:      { grad: ['#B79CE4', '#6F4AB0'], ring: 'rgba(255,255,255,0.50)' },
+  legendary: { grad: ['#F2C661', '#B57215'], ring: 'rgba(255,255,255,0.55)' },
 };
 
 interface Props {
@@ -64,28 +72,50 @@ export default function BadgeIcon({
           )}
         </View>
       ) : (
+        // Designed medallion fallback — filled gradient body + white
+        // glyph + a soft highlight arc at the top so it reads as a real
+        // badge silhouette, not an empty placeholder circle. Sized + tinted
+        // by rarity. Locked variant desaturates to a neutral gray gradient
+        // and dims the glyph; earned variant fully colored.
         <View
           style={[
             styles.placeholder,
-            {
-              width: size,
-              height: size,
-              borderRadius: size / 2,
-              backgroundColor: locked ? '#EDE9E5' : `${palette.tint}1F`,
-              borderColor: locked ? '#C8C2BE' : palette.tint,
-            },
+            { width: size, height: size, borderRadius: size / 2 },
           ]}
         >
+          <LinearGradient
+            colors={locked ? ['#D9D5D0', '#A09995'] : palette.grad}
+            start={{ x: 0.3, y: 0 }}
+            end={{ x: 0.7, y: 1 }}
+            style={[StyleSheet.absoluteFillObject, { borderRadius: size / 2 }]}
+          />
+          {/* Top-half highlight ring — a thin lighter arc that reads as
+              specular light catching the medallion edge. Pure cosmetic. */}
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: size * 0.04, left: size * 0.04, right: size * 0.04,
+              height: size * 0.46,
+              borderTopLeftRadius: size / 2,
+              borderTopRightRadius: size / 2,
+              borderTopWidth: 1,
+              borderLeftWidth: 1,
+              borderRightWidth: 1,
+              borderColor: locked ? 'rgba(255,255,255,0.20)' : palette.ring,
+            }}
+          />
           <Feather
             name={iconName}
-            size={Math.round(size * 0.42)}
-            color={locked ? '#9C9690' : palette.glyph}
+            size={Math.round(size * 0.5)}
+            color={locked ? 'rgba(255,255,255,0.55)' : '#fff'}
+            style={{ marginBottom: label ? 2 : 0 }}
           />
           {label ? (
             <Text
               style={[
                 styles.label,
-                { color: locked ? '#9C9690' : palette.glyph, fontSize: Math.max(9, size * 0.13) },
+                { color: '#fff', opacity: locked ? 0.55 : 1, fontSize: Math.max(9, size * 0.13) },
               ]}
               numberOfLines={1}
             >
@@ -117,9 +147,16 @@ const styles = StyleSheet.create({
   placeholder: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
+    overflow: 'hidden',
+    // Subtle drop shadow lifts the medallion off the page so the
+    // collection grid reads as physical chips rather than flat dots.
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  label: { fontWeight: '800', marginTop: 2, letterSpacing: 0.5 },
+  label: { fontWeight: '800', marginTop: 2, letterSpacing: 0.5, textShadowColor: 'rgba(0,0,0,0.25)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 },
   countBadge: {
     position: 'absolute',
     top: 0,

@@ -8,8 +8,8 @@ interface State {
   // PlanScreen and FeaturedPlanDetail can read it without any await.
   summary: PlanSummary[];
   // Plans whose full body has been fetched + cached this session, keyed by
-  // slug. Lets PlanDayWalk / PlanDayVerses consume them synchronously after
-  // the first await on tap.
+  // slug. Lets PlanDayWalk consume them synchronously after the first
+  // await on tap.
   loadedPlans: Record<string, FullPlan>;
   // Async lazy-fetch of a full plan's body. Cache-first.
   loadPlan: (slug: string) => Promise<FullPlan>;

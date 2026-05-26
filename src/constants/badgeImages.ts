@@ -1,13 +1,16 @@
 import type { ImageSourcePropType } from 'react-native';
 
-// Originally a map of badge id → require()'d PNG (44 entries). The PNG
-// files lived in `assets/badges/` and were lost when a worktree was
-// deleted (never committed). Per the original file's own comment:
+// Per-badge PNG overrides. When an entry exists for a badge id, BadgeIcon
+// renders that PNG; otherwise it renders the per-rarity gradient medallion
+// fallback (see RARITY in components/BadgeIcon.tsx).
 //
-//   "Optional PNG override per badge id... BadgeIcon render[s] the image
-//   instead of the Feather-icon placeholder."
-//
-// So leaving the map empty is the documented graceful path — every badge
-// falls back to its Feather-icon placeholder until the PNG inventory is
-// restored.
+// **v1 decision (2026-05): ship without per-badge PNGs.** The gradient
+// medallions (two-stop filled body + highlight arc + white Feather glyph
+// + soft drop shadow) were redesigned to read as intentional art, not a
+// "missing image" placeholder, so every tier looks finished even with
+// this map empty. Per-rarity palette communicates value progression
+// (sand→caramel / sky→ocean / lilac→plum / gold→bronze) and the Feather
+// glyph carries each badge's identity. Bespoke per-badge art can be
+// layered in post-launch by populating this map — no BadgeIcon changes
+// needed; the PNG branch automatically takes over per id.
 export const BADGE_IMAGES: Record<string, ImageSourcePropType> = {};

@@ -32,6 +32,7 @@ import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { bibleAudioUrl } from '../constants/bibleAudioCdn';
 import { loadTimestamps, verseAtTime, type ChapterTimestamps } from '../services/bibleAudioService';
 import { adjustFocus } from '../constants/versification';
+import { HL_COLORS } from '../constants/highlightColors';
 import type { BibleFocus, TabParamList } from '../navigation/types';
 
 // Reader font picker — Merriweather sits first per user; Source Serif 4
@@ -54,13 +55,9 @@ function ymdLocal(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-const HL_COLORS = [
-  { name: 'rose', bg: 'rgba(245,194,213,0.55)', dot: '#F5C2D5' },
-  { name: 'lav', bg: 'rgba(203,192,232,0.55)', dot: '#CBC0E8' },
-  { name: 'amber', bg: 'rgba(244,221,158,0.55)', dot: '#F4DD9E' },
-  { name: 'sage', bg: 'rgba(186,224,198,0.55)', dot: '#BAE0C6' },
-  { name: 'sky', bg: 'rgba(184,210,238,0.55)', dot: '#B8D2EE' },
-];
+// HL_COLORS pulled from the shared module — was previously inlined here
+// AND in PlanDayWalk + ProfileScreen, so a sixth color or a tint change
+// required edits in three places. Now imported via top-of-file import.
 
 const TOOLBAR_ACTIONS = [
   { label: 'Save', icon: 'heart' },     // matches the "Saved" stat tile + Saved Verses section in Profile

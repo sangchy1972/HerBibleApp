@@ -19,7 +19,7 @@ import PastVersesScreen from '../screens/PastVersesScreen';
 import FeaturedPlanDetail from '../screens/FeaturedPlanDetail';
 import PlanCategoryScreen from '../screens/PlanCategoryScreen';
 import PlanDayWalk from '../screens/PlanDayWalk';
-import PlanDayVerses from '../screens/PlanDayVerses';
+// PlanDayVerses removed — verse_wall pages now live inline inside PlanDayWalk.
 import PlanVerseRead from '../screens/PlanVerseRead';
 import PlanDayDone from '../screens/PlanDayDone';
 import { useOnboarding } from '../state/OnboardingContext';
@@ -117,11 +117,6 @@ export default function RootNavigator() {
       <Stack.Screen
         name="PlanDayWalk"
         component={PlanDayWalk}
-        options={{ animation: 'slide_from_right', animationDuration: 240 }}
-      />
-      <Stack.Screen
-        name="PlanDayVerses"
-        component={PlanDayVerses}
         options={{ animation: 'slide_from_right', animationDuration: 240 }}
       />
       <Stack.Screen

@@ -10,7 +10,7 @@ import type { LanguageCode } from '../state/TranslationsContext';
 const cacheKey = (lang: LanguageCode, slug: string) =>
   `featured-plans:${PLANS_SUMMARY_VERSION}:${lang}:${slug}`;
 
-// Slim TS types matching what consumers (PlanDayWalk, PlanDayVerses) read.
+// Slim TS types matching what PlanDayWalk reads.
 // Anything unused (audience, tags, version, etc.) is dropped at parse time.
 export interface PlanVerseRef {
   display: string;       // "Philippians 4:6-8"

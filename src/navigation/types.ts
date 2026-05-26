@@ -45,7 +45,10 @@ export type RootStackParamList = {
   FeaturedPlanDetail: { slug: string };
   PlanCategory: { primary: string; secondary?: string; title: string };
   PlanDayWalk: { slug: string; day: number };
-  PlanDayVerses: { slug: string; day: number };
+  // PlanDayVerses route retired — the verse_wall now renders as inline
+  // pages inside PlanDayWalk (one page per verse_wall verse, per the
+  // Jan 2026 redesign). Removed from the param list to prevent code
+  // accidentally navigating to a dead screen.
   PlanVerseRead: { focus: BibleFocus; planSlug: string; day: number };
   PlanDayDone: { slug: string; day: number };
 };

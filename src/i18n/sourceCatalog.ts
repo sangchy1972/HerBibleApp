@@ -881,6 +881,10 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'reminder.subtitle':             { en: 'Experience daily blessings by turning on the reminder',  context: 'Subtitle under reminder.title — invites the user to enable daily notification reminders.' },
   'reminder.skip':                 { en: 'Skip',                                                  context: 'Top-right link on the reminder opt-in screen — the only way to dismiss without enabling notifications.' },
 
+  // ─── Full-screen Bible audio player ──────────────────────────────────────
+  'bibleAudio.playing':            { en: 'Playing',                                               context: 'Top-bar title of the full-screen Bible narration player.' },
+  'bibleAudio.read':               { en: 'Read',                                                  context: 'Button on the audio player that returns to the scrolling Bible text for the chapter being narrated.' },
+
   // ─── Audit pass 3 (2026-05): sheets, alerts & paywall body ───────────────
   // SignInSheet
   'signIn.sub':                    { en: 'Sync your highlights, notes, saved verses, and reading streak across devices.', context: 'Subtitle paragraph in the sign-in bottom sheet. Explains the value of signing in.' },

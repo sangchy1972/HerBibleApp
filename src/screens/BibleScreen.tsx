@@ -31,6 +31,7 @@ import { CORPUS_CDN_ROOT } from '../constants/corpus';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { bibleAudioUrl } from '../constants/bibleAudioCdn';
 import { loadTimestamps, verseAtTime, type ChapterTimestamps } from '../services/bibleAudioService';
+import BibleAudioPlayer from '../components/BibleAudioPlayer';
 import { adjustFocus } from '../constants/versification';
 import { HL_COLORS, getHighlightColor } from '../constants/highlightColors';
 import type { BibleFocus, TabParamList } from '../navigation/types';
@@ -1206,10 +1207,20 @@ export default function BibleScreen() {
     toastTimerRef.current = setTimeout(() => setToast(null), opts.ms ?? 1400);
   };
   useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); }, []);
-  const toggleAudio = () => {
-    if (audioStatus.playing) audioPlayer.pause();
-    else audioPlayer.play();
+  // Full-screen audio player (the pink listen button opens it). Reuses this
+  // screen's audioPlayer so opening doesn't restart/duplicate playback, and
+  // closing leaves audio running (karaoke highlight continues here).
+  const [showPlayer, setShowPlayer] = useState(false);
+  const openPlayer = () => {
+    setShowPlayer(true);
+    if (!audioStatus.playing) { try { audioPlayer.play(); } catch {} }
   };
+  // Player verse-nav at a chapter boundary advances the chapter AND flags it
+  // to auto-resume — the chapter-change effect below pauses on the swap, and
+  // the resume effect re-plays once the new chapter's source is in.
+  const resumeOnChapterLoadRef = useRef(false);
+  const playerPrevChapter = () => { resumeOnChapterLoadRef.current = true; goToPrevChapter(); };
+  const playerNextChapter = () => { resumeOnChapterLoadRef.current = true; goToNextChapter(); };
 
   // Pause the narration when the user navigates to a different chapter.
   // Without this the previous chapter's audio keeps playing in the
@@ -1221,6 +1232,17 @@ export default function BibleScreen() {
     // Intentional: react to slug/chapter changes only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookSlug, chapter, translation.code]);
+
+  // Auto-resume after a player-initiated chapter crossing. Runs AFTER the
+  // pause effect above (definition order) on the same chapter change, so the
+  // net result is: pause the old, then play the new. play() before the new
+  // source finishes loading is fine — expo-audio starts it once ready.
+  useEffect(() => {
+    if (!resumeOnChapterLoadRef.current) return;
+    resumeOnChapterLoadRef.current = false;
+    try { audioPlayer.play(); } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookSlug, chapter]);
 
   return (
     <View style={[styles.container, { backgroundColor: TH.bg === 'transparent' ? '#FBF7F6' : TH.bg }]}>
@@ -1557,13 +1579,27 @@ export default function BibleScreen() {
         <Feather name="chevron-right" size={22} color={canNext ? TH.txt : 'rgba(30,27,46,0.25)'} />
       </TouchableOpacity>
 
-      {/* Floating audio button */}
-      <TouchableOpacity onPress={toggleAudio} style={styles.audioBtn} activeOpacity={0.85}>
-        {audioPlaying
-          ? <Feather name="pause" size={26} color="#fff" />
-          : <Feather name="headphones" size={26} color="#fff" />
-        }
+      {/* Floating audio button → opens the full-screen player. A small filled
+          dot when audio is already playing hints "now playing" without
+          turning this into a pause toggle (pause lives in the player). */}
+      <TouchableOpacity onPress={openPlayer} style={styles.audioBtn} activeOpacity={0.85}>
+        <Feather name="headphones" size={26} color="#fff" />
+        {audioPlaying && <View style={styles.audioBtnPlayingDot} />}
       </TouchableOpacity>
+
+      {/* Full-screen narration player (Modal — covers the tab bar). */}
+      <BibleAudioPlayer
+        visible={showPlayer}
+        bookName={currentBook?.name || bookSlug}
+        chapter={chapter}
+        player={audioPlayer}
+        status={audioStatus}
+        timestamps={audioTimestamps}
+        onClose={() => setShowPlayer(false)}
+        onPrevChapter={playerPrevChapter}
+        onNextChapter={playerNextChapter}
+        onQueue={() => { setShowPlayer(false); setDrawer(true); }}
+      />
 
       {/* Drawers/overlays */}
       {drawer && (
@@ -1915,6 +1951,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 40,
+  },
+  // "Now playing" hint on the listen button — small white dot, top-right.
+  audioBtnPlayingDot: {
+    position: 'absolute',
+    top: 9,
+    right: 9,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#fff',
   },
   drawerOverlay: {
     ...StyleSheet.absoluteFillObject,

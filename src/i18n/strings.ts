@@ -779,6 +779,8 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reminder.title': '跟随祂',
     'reminder.subtitle': '开启提醒，每日领受祝福',
     'reminder.skip': '跳过',
+    'bibleAudio.playing': '播放中',
+    'bibleAudio.read': '阅读',
 
     // Audit pass 3 (2026-05): sheets, alerts & paywall body
     'signIn.sub': '在多个设备间同步你的高亮、笔记、收藏的经文和阅读连续记录。',
@@ -1555,6 +1557,8 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reminder.title': '跟隨祂',
     'reminder.subtitle': '開啟提醒，每日領受祝福',
     'reminder.skip': '跳過',
+    'bibleAudio.playing': '播放中',
+    'bibleAudio.read': '閱讀',
 
     // Audit pass 3 (2026-05): sheets, alerts & paywall body
     'signIn.sub': '在多個裝置間同步你的螢光標記、筆記、收藏的經文與閱讀連續紀錄。',
@@ -2331,6 +2335,8 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reminder.title': 'Folge Ihm',
     'reminder.subtitle': 'Erlebe täglichen Segen — aktiviere die Erinnerung',
     'reminder.skip': 'Überspringen',
+    'bibleAudio.playing': 'Wird abgespielt',
+    'bibleAudio.read': 'Lesen',
 
     // Audit pass 3 (2026-05): sheets, alerts & paywall body
     'signIn.sub': 'Synchronisiere deine Markierungen, Notizen, gemerkten Verse und deine Lese-Serie über mehrere Geräte hinweg.',
@@ -3111,6 +3117,8 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reminder.title': 'Suis-le',
     'reminder.subtitle': 'Reçois des bénédictions chaque jour en activant le rappel',
     'reminder.skip': 'Passer',
+    'bibleAudio.playing': 'Lecture',
+    'bibleAudio.read': 'Lire',
 
     // Audit pass 3 (2026-05): sheets, alerts & paywall body
     'signIn.sub': 'Synchronise tes surlignages, notes, versets gardés et ta série de lecture sur tous tes appareils.',
@@ -3887,6 +3895,8 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reminder.title': 'Síguelo',
     'reminder.subtitle': 'Recibe bendiciones cada día activando el recordatorio',
     'reminder.skip': 'Omitir',
+    'bibleAudio.playing': 'Reproduciendo',
+    'bibleAudio.read': 'Leer',
 
     // Audit pass 3 (2026-05): sheets, alerts & paywall body
     'signIn.sub': 'Sincroniza tus resaltados, notas, versículos guardados y tu racha de lectura entre dispositivos.',
@@ -4663,6 +4673,8 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reminder.title': 'Siga-O',
     'reminder.subtitle': 'Receba bênçãos diárias ativando o lembrete',
     'reminder.skip': 'Pular',
+    'bibleAudio.playing': 'Tocando',
+    'bibleAudio.read': 'Ler',
 
     // Audit pass 3 (2026-05): sheets, alerts & paywall body
     'signIn.sub': 'Sincronize seus destaques, notas, versículos salvos e sua sequência de leitura entre dispositivos.',

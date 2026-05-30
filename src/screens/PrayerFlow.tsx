@@ -4,7 +4,7 @@ import {
   KeyboardAvoidingView, Keyboard, Platform, Linking, Modal,
 } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ImageBackground } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -337,19 +337,34 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   }, [page]);
 
   // ── Daily-verse "listen / 导读" narration (English only) ────────────────
-  // A SECOND, independent audio player layered over the background music:
-  // tapping Listen reads the four prayer-flow steps aloud (Google TTS), and
-  // each clip finishing auto-advances to the next page + plays the next
-  // clip — a hands-free, continuous read-through. The bg music keeps playing
-  // throughout; they're separate players with separate top-bar controls.
+  // A SECOND, independent audio player layered over the looping background
+  // music: tapping Listen reads the four prayer-flow steps aloud (Google
+  // TTS). The model is PAGE-DRIVEN — the clip that plays always matches the
+  // currently-visible page:
+  //   • a clip finishing auto-advances to the next page + plays its clip
+  //     (hands-free continuous read-through), and
+  //   • a manual swipe (forward OR back) re-points the narration to the
+  //     landed page and plays that clip from the top.
+  // Pause/resume keeps position (same page); changing page restarts the new
+  // page's clip from 0. The bg music keeps playing throughout — separate
+  // players, separate controls.
   const { lang: uiLang } = useUILanguage();
   const listenLangOk = uiLang === DAILY_VERSE_AUDIO_LANG;
   const [listenOn, setListenOn] = useState(false);
+  // Audio cursor — the page whose clip the narrator is on. Converges to the
+  // settled page (never drives an animated scroll except on auto-advance).
   const [listenStep, setListenStep] = useState(0);
   const [readUris, setReadUris] = useState<string[] | null>(null);
-  // Guards the auto-advance so a re-render that re-surfaces didJustFinish
-  // for the same step can't double-skip a page.
+  // Guards auto-advance so a re-surfaced didJustFinish for the same step
+  // can't double-skip a page.
   const advancedFromRef = useRef(-1);
+
+  // One-time audio session setup: play through the iOS silent switch and
+  // mix (so our two players — bg music + narration — coexist instead of
+  // one ducking the other). Set once at mount, never per-clip.
+  useEffect(() => {
+    setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers' }).catch(() => {});
+  }, []);
 
   // Resolve + download today's narration on mount (English only). keepIds =
   // today's morning + evening so doing one slot's flow doesn't prune the
@@ -369,22 +384,29 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     return () => { alive = false; };
   }, [listenLangOk, dailyVerse]);
 
-  // Memoized so the player isn't rebuilt every render — only when the active
-  // step's URI actually changes.
+  // Source is keyed on the cursor (NOT on listenOn) so pausing keeps the
+  // clip mounted at its position — resume continues mid-clip. Changing the
+  // cursor swaps the source, which restarts the new page's clip from 0.
   const readSource = useMemo(
-    () => (listenOn && readUris ? { uri: readUris[listenStep] } : null),
-    [listenOn, readUris, listenStep],
+    () => (readUris ? { uri: readUris[listenStep] } : null),
+    [readUris, listenStep],
   );
   const readPlayer = useAudioPlayer(readSource);
   const readStatus = useAudioPlayerStatus(readPlayer);
 
-  // Play whenever the active step's source is (re)set while listening.
+  // Play/pause follows `listenOn`; also (re)plays when the cursor moves to a
+  // new clip while listening. Pausing (listenOn=false) holds position so a
+  // resume on the same page continues where it left off.
   useEffect(() => {
-    if (!listenOn || !readUris) return;
-    try { readPlayer.play(); } catch {}
+    if (!readUris) return;
+    try {
+      if (listenOn) readPlayer.play();
+      else readPlayer.pause();
+    } catch {}
   }, [listenOn, listenStep, readUris, readPlayer]);
 
-  // Auto-advance: a finished clip scrolls to + plays the next step.
+  // Auto-advance: a finished clip scrolls to + plays the next step. Stops
+  // (without auto-Amen) after the closing prayer.
   useEffect(() => {
     if (!listenOn || !readStatus?.didJustFinish) return;
     if (advancedFromRef.current === listenStep) return;
@@ -399,29 +421,54 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     }
   }, [readStatus?.didJustFinish, listenOn, listenStep]);
 
-  // Stop narration if the user leaves the flow.
+  // Tapping Amen ends the flow — make sure narration stops before the
+  // congrats scene (the topbar Listen button is already hidden by !amened).
+  useEffect(() => {
+    if (amened && listenOn) setListenOn(false);
+  }, [amened, listenOn]);
+
+  // Stop narration if the user leaves the flow (unconditional — covers the
+  // case where the status snapshot says paused but native is mid-buffer).
   useEffect(() => () => {
-    try { if (readPlayer.playing) readPlayer.pause(); } catch {}
+    try { readPlayer.pause(); } catch {}
   }, [readPlayer]);
 
   const toggleListen = () => {
     if (!readUris) return;
     if (listenOn) {
-      try { readPlayer.pause(); } catch {}
-      setListenOn(false);
+      setListenOn(false);            // effect pauses; position kept for resume
     } else {
-      // Start from whatever page the user is on; reset the advance guard so
-      // the first clip's finish is honoured.
+      // Start/resume from the page the user is on. If they swiped while
+      // paused, jump the cursor to the current page (new clip from 0); if
+      // they're still on the same page, resume from where it paused.
       advancedFromRef.current = -1;
-      setListenStep(page);
-      scrollRef.current?.scrollTo({ y: height * page, animated: true });
+      if (listenStep !== page) {
+        setListenStep(page);
+        scrollRef.current?.scrollTo({ y: height * page, animated: true });
+      }
       setListenOn(true);             // the play effect picks it up
     }
   };
 
+  // Visual page (dots / inner-scroll reset) follows the finger in real time.
   const handleScroll = (e: any) => {
     const idx = Math.round(e.nativeEvent.contentOffset.y / height);
     if (idx !== page) setPage(idx);
+  };
+
+  // Audio reacts only to the SETTLED page (momentum end), never mid-swipe —
+  // so a fast multi-page flick lands on one clip, not a stutter of half-
+  // started ones. While listening, a manual swipe re-points the narration
+  // to the landed page and plays it from the top. (Our own auto-advance
+  // scroll lands on a page whose cursor is already set, so this is a no-op
+  // for it — no feedback loop.)
+  const handleMomentumEnd = (e: any) => {
+    const landed = Math.round(e.nativeEvent.contentOffset.y / height);
+    if (landed !== page) setPage(landed);
+    if (listenOn && landed !== listenStep) {
+      advancedFromRef.current = -1;  // fresh clip — let its finish advance
+      setListenStep(landed);
+    }
   };
 
   // Closing scene timing: hands move in, then 8 sparkles twinkle continuously
@@ -705,6 +752,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
           pagingEnabled
           showsVerticalScrollIndicator={false}
           onScroll={handleScroll}
+          onMomentumScrollEnd={handleMomentumEnd}
           scrollEventThrottle={16}
           style={StyleSheet.absoluteFillObject}
         >

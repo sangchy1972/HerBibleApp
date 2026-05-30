@@ -89,6 +89,16 @@ async function downloadIfMissing(url: string, target: File): Promise<boolean> {
 // Returns the four local `file://` URIs in page order, or the remote URLs
 // for any step whose download failed (so playback still works, just
 // streamed). Returns null if the manifest can't supply the verse.
+// IMPORTANT — stream-first, cache-in-background. This resolves IMMEDIATELY
+// (no awaiting downloads), so the Listen button enables the instant the
+// manifest is read instead of staying greyed-out for the seconds it takes
+// to pull 4 clips (and indefinitely if a download stalled). For each step:
+//   • already cached → return the local file:// URI (instant, offline),
+//   • not cached     → return the REMOTE URL (streams right away) AND kick
+//                      off a background download so the next session plays
+//                      from disk.
+// The "download today, prune yesterday" behaviour still happens — just
+// off the critical path.
 export async function prepareVerseAudio(
   verseId: string,
   keepVerseIds: string[],
@@ -100,21 +110,32 @@ export async function prepareVerseAudio(
 
   const dir = verseDir(verseId);
   const resolved: string[] = [];
+  const pending: { url: string; target: File }[] = [];
   for (let i = 0; i < urls.length; i++) {
     const url = urls[i];
     const fn = url.split('/').pop() || `step_${i}.mp3`;
     let local: File | null = null;
     try { local = dir ? new File(dir, fn) : null; } catch { local = null; }
-    if (local && (await downloadIfMissing(url, local))) {
-      resolved.push(local.uri);
+    if (local && local.exists) {
+      resolved.push(local.uri);          // cached → play from disk
     } else {
-      resolved.push(url);          // stream fallback
+      resolved.push(url);                // not cached → stream now…
+      if (local) pending.push({ url, target: local });  // …and cache in bg
     }
   }
 
-  // Prune yesterday's (and any non-today) verse caches now that today's
-  // files are safely on disk.
-  pruneOtherVerses(new Set(keepVerseIds.length ? keepVerseIds : [verseId]));
+  const keep = new Set(keepVerseIds.length ? keepVerseIds : [verseId]);
+  if (pending.length) {
+    // Fire-and-forget: download the uncached clips, then prune old verses.
+    void (async () => {
+      for (const { url, target } of pending) {
+        await downloadIfMissing(url, target).catch(() => {});
+      }
+      pruneOtherVerses(keep);
+    })();
+  } else {
+    pruneOtherVerses(keep);
+  }
   return resolved;
 }
 

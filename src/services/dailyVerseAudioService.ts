@@ -1,53 +1,30 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { File, Directory, Paths } from 'expo-file-system';
 import {
-  DAILY_VERSE_AUDIO_MANIFEST_URL,
   DAILY_VERSE_AUDIO_STEPS,
   dailyVerseAudioUrl,
   type DailyVerseAudioManifest,
 } from '../constants/dailyVerseAudioCdn';
+import { DAILY_VERSE_AUDIO_MANIFEST } from '../constants/dailyVerseAudioManifest';
 
-// Daily-verse narration audio: manifest fetch + day-scoped local cache.
+// Daily-verse narration audio: bundled filename map + day-scoped local cache.
 //
-// "Download today, delete yesterday" per product spec — at most the
-// current day's verse audio (4 files per slot) lives on disk; everything
-// older is pruned the moment a new verse's files land, so the device
-// footprint stays at ~2-4 MB instead of growing 480 files deep.
+// The verseId→filename map is bundled (constants/dailyVerseAudioManifest.ts)
+// — tiny + static, so it needs no network round-trip; only the audio bytes
+// are pulled on demand.
+//
+// "Download today, delete yesterday" per product spec — at most the current
+// day's verse audio (4 files per slot) lives on disk; everything older is
+// pruned the moment a new verse's files land, so the device footprint stays
+// at ~2-4 MB instead of growing 480 files deep.
 
-const MANIFEST_STORAGE_KEY = 'dailyverse-audio:manifest:v1';
 const AUDIO_CACHE_SUBDIR = 'dailyverse-audio';
 
-// Module-level memo so repeated PrayerFlow mounts don't re-hit storage.
-let _manifest: DailyVerseAudioManifest | null = null;
-
-// Hydrate the manifest: memo → AsyncStorage → network (stale-while-
-// revalidate). Returns null only when there's no cached copy AND the
-// network fetch fails — in which case the listen button stays disabled.
+// Returns the bundled manifest, or null while it's still the empty
+// placeholder (no audio recorded/mapped yet) so the listen button stays
+// disabled instead of pointing at nonexistent files.
 export async function loadManifest(): Promise<DailyVerseAudioManifest | null> {
-  if (_manifest) return _manifest;
-  try {
-    const raw = await AsyncStorage.getItem(MANIFEST_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as DailyVerseAudioManifest;
-      if (parsed?.version === 1) _manifest = parsed;
-    }
-  } catch { /* fall through to network */ }
-
-  // Always revalidate in the background; if we had no cached copy, this is
-  // the only way to get one, so await it. If we did, we still await but the
-  // memo above already short-circuits future calls within the session.
-  try {
-    const res = await fetch(DAILY_VERSE_AUDIO_MANIFEST_URL, { cache: 'no-cache' });
-    if (res.ok) {
-      const fresh = (await res.json()) as DailyVerseAudioManifest;
-      if (fresh?.version === 1 && fresh.verses) {
-        _manifest = fresh;
-        AsyncStorage.setItem(MANIFEST_STORAGE_KEY, JSON.stringify(fresh)).catch(() => {});
-      }
-    }
-  } catch { /* keep whatever the cache gave us */ }
-
-  return _manifest;
+  const m = DAILY_VERSE_AUDIO_MANIFEST;
+  return m.verses && Object.keys(m.verses).length > 0 ? m : null;
 }
 
 // The four remote URLs for a verse, in prayer-flow PAGE ORDER

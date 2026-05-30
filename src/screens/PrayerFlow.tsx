@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Dimensions,
   KeyboardAvoidingView, Keyboard, Platform, Linking, Modal,
@@ -32,6 +32,9 @@ import RatePromptSheet from '../components/RatePromptSheet';
 import ShareVerseSheet from '../components/ShareVerseSheet';
 import VerseNoteSheet from '../components/VerseNoteSheet';
 import { useSavedVerses } from '../state/SavedVersesContext';
+import { useUILanguage } from '../state/UILanguageContext';
+import { prepareVerseAudio, verseIdFor } from '../services/dailyVerseAudioService';
+import { DAILY_VERSE_AUDIO_LANG } from '../constants/dailyVerseAudioCdn';
 import type { RootStackScreenProps } from '../navigation/types';
 
 const { width, height } = Dimensions.get('window');
@@ -333,6 +336,89 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     if (page !== 3) prayerScrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [page]);
 
+  // ── Daily-verse "listen / 导读" narration (English only) ────────────────
+  // A SECOND, independent audio player layered over the background music:
+  // tapping Listen reads the four prayer-flow steps aloud (Google TTS), and
+  // each clip finishing auto-advances to the next page + plays the next
+  // clip — a hands-free, continuous read-through. The bg music keeps playing
+  // throughout; they're separate players with separate top-bar controls.
+  const { lang: uiLang } = useUILanguage();
+  const listenLangOk = uiLang === DAILY_VERSE_AUDIO_LANG;
+  const [listenOn, setListenOn] = useState(false);
+  const [listenStep, setListenStep] = useState(0);
+  const [readUris, setReadUris] = useState<string[] | null>(null);
+  // Guards the auto-advance so a re-render that re-surfaces didJustFinish
+  // for the same step can't double-skip a page.
+  const advancedFromRef = useRef(-1);
+
+  // Resolve + download today's narration on mount (English only). keepIds =
+  // today's morning + evening so doing one slot's flow doesn't prune the
+  // other's cached files; everything older than today is pruned inside
+  // prepareVerseAudio so the device never accumulates stale audio.
+  useEffect(() => {
+    if (!listenLangOk || !dailyVerse) { setReadUris(null); return; }
+    let alive = true;
+    const id = verseIdFor(dailyVerse.day, dailyVerse.segment);
+    const keep = [
+      verseIdFor(dailyVerse.day, 'morning'),
+      verseIdFor(dailyVerse.day, 'evening'),
+    ];
+    prepareVerseAudio(id, keep)
+      .then(uris => { if (alive) setReadUris(uris); })
+      .catch(() => { if (alive) setReadUris(null); });
+    return () => { alive = false; };
+  }, [listenLangOk, dailyVerse]);
+
+  // Memoized so the player isn't rebuilt every render — only when the active
+  // step's URI actually changes.
+  const readSource = useMemo(
+    () => (listenOn && readUris ? { uri: readUris[listenStep] } : null),
+    [listenOn, readUris, listenStep],
+  );
+  const readPlayer = useAudioPlayer(readSource);
+  const readStatus = useAudioPlayerStatus(readPlayer);
+
+  // Play whenever the active step's source is (re)set while listening.
+  useEffect(() => {
+    if (!listenOn || !readUris) return;
+    try { readPlayer.play(); } catch {}
+  }, [listenOn, listenStep, readUris, readPlayer]);
+
+  // Auto-advance: a finished clip scrolls to + plays the next step.
+  useEffect(() => {
+    if (!listenOn || !readStatus?.didJustFinish) return;
+    if (advancedFromRef.current === listenStep) return;
+    advancedFromRef.current = listenStep;
+    if (listenStep < SECTIONS.length - 1) {
+      const next = listenStep + 1;
+      setListenStep(next);
+      setPage(next);
+      scrollRef.current?.scrollTo({ y: height * next, animated: true });
+    } else {
+      setListenOn(false);            // finished the closing prayer — stop
+    }
+  }, [readStatus?.didJustFinish, listenOn, listenStep]);
+
+  // Stop narration if the user leaves the flow.
+  useEffect(() => () => {
+    try { if (readPlayer.playing) readPlayer.pause(); } catch {}
+  }, [readPlayer]);
+
+  const toggleListen = () => {
+    if (!readUris) return;
+    if (listenOn) {
+      try { readPlayer.pause(); } catch {}
+      setListenOn(false);
+    } else {
+      // Start from whatever page the user is on; reset the advance guard so
+      // the first clip's finish is honoured.
+      advancedFromRef.current = -1;
+      setListenStep(page);
+      scrollRef.current?.scrollTo({ y: height * page, animated: true });
+      setListenOn(true);             // the play effect picks it up
+    }
+  };
+
   const handleScroll = (e: any) => {
     const idx = Math.round(e.nativeEvent.contentOffset.y / height);
     if (idx !== page) setPage(idx);
@@ -570,20 +656,37 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
           <TouchableOpacity onPress={closeFlow} style={styles.chromeBtn}>
             <Feather name="x" size={20} color="#fff" />
           </TouchableOpacity>
-          {/* Music icon doubles as the play/pause toggle for the daily
-              background track. The slow rotate keeps running while audio
-              plays (visual hint that music is active); it stops when the
-              user mutes. Strikethrough overlays the muted state.
-              Disabled when no source has loaded yet (offline first run). */}
-          <TouchableOpacity
-            onPress={toggleMusic}
-            style={[styles.chromeBtn, !audioSource && { opacity: 0.5 }]}
-            disabled={!audioSource}
-          >
-            <Animated.View style={audioStatus.playing ? musicSpinStyle : undefined}>
-              <Feather name={audioStatus.playing ? 'music' : 'volume-x'} size={21} color="#fff" />
-            </Animated.View>
-          </TouchableOpacity>
+          {/* Right-side control cluster: bg-music toggle + Listen narration.
+              Grouped so the close X stays pinned left while these sit
+              together on the right (topChrome is space-between). */}
+          <View style={styles.chromeRight}>
+            {/* Music icon doubles as the play/pause toggle for the daily
+                background track. The slow rotate keeps running while audio
+                plays; it stops when the user mutes. Disabled when no source
+                has loaded yet (offline first run). */}
+            <TouchableOpacity
+              onPress={toggleMusic}
+              style={[styles.chromeBtn, !audioSource && { opacity: 0.5 }]}
+              disabled={!audioSource}
+            >
+              <Animated.View style={audioStatus.playing ? musicSpinStyle : undefined}>
+                <Feather name={audioStatus.playing ? 'music' : 'volume-x'} size={21} color="#fff" />
+              </Animated.View>
+            </TouchableOpacity>
+            {/* Listen / 导读 — TTS read-through of the 4 steps, separate from
+                the bg-music control (they play simultaneously). Shown only
+                when narration exists for the active language (English today).
+                Disabled until today's audio has resolved. */}
+            {listenLangOk && (
+              <TouchableOpacity
+                onPress={toggleListen}
+                style={[styles.chromeBtn, !readUris && { opacity: 0.5 }]}
+                disabled={!readUris}
+              >
+                <Feather name={listenOn ? 'pause' : 'headphones'} size={20} color="#fff" />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       )}
 
@@ -896,6 +999,11 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  chromeRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   topChrome: {
     position: 'absolute',

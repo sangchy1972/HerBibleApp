@@ -782,7 +782,18 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
           </FlowPage>
 
           <FlowPage>
-            <ScrollView ref={meditationScrollRef} showsVerticalScrollIndicator={false} style={styles.pageScroll}>
+            {/* nestedScrollEnabled — without it, Android's outer vertical
+                pager swallows the drag and this inner ScrollView never
+                scrolls, so long reflections get clipped + unreachable.
+                contentContainerStyle flexGrow:1 lets short content sit and
+                long content scroll. */}
+            <ScrollView
+              ref={meditationScrollRef}
+              showsVerticalScrollIndicator={false}
+              nestedScrollEnabled
+              style={styles.pageScroll}
+              contentContainerStyle={styles.pageScrollContent}
+            >
               <Animated.View style={[styles.pageContent, styles.deepPageOffset, styles.meditationContent, meditationAnim]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption]}>{meditationCaption}</Text>
                 {meditationParas.map((p, i) => (
@@ -793,7 +804,13 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
           </FlowPage>
 
           <FlowPage>
-            <ScrollView ref={actionScrollRef} showsVerticalScrollIndicator={false} style={styles.pageScroll}>
+            <ScrollView
+              ref={actionScrollRef}
+              showsVerticalScrollIndicator={false}
+              nestedScrollEnabled
+              style={styles.pageScroll}
+              contentContainerStyle={styles.pageScrollContent}
+            >
               <Animated.View style={[styles.pageContent, styles.deepPageOffset, styles.actionPagePad, actionAnim]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption]}>{actionCaption}</Text>
                 <Text style={styles.pageBody}>{actionBody}</Text>
@@ -810,8 +827,14 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
           </FlowPage>
 
           <FlowPage>
-            <ScrollView ref={prayerScrollRef} showsVerticalScrollIndicator={false} style={styles.pageScroll}>
-              <Animated.View style={[styles.pageContent, styles.deepPageOffset, prayerAnim]}>
+            <ScrollView
+              ref={prayerScrollRef}
+              showsVerticalScrollIndicator={false}
+              nestedScrollEnabled
+              style={styles.pageScroll}
+              contentContainerStyle={styles.pageScrollContent}
+            >
+              <Animated.View style={[styles.pageContent, styles.deepPageOffset, styles.prayerPagePad, prayerAnim]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption, styles.prayerCaption]}>{prayerCaption}</Text>
                 <Text style={[styles.pageBody, styles.prayerBody]}>{prayerBody}</Text>
                 <TouchableOpacity
@@ -1077,6 +1100,12 @@ const styles = StyleSheet.create({
   pageScroll: {
     flex: 1,
   },
+  // flexGrow:1 makes short pages fill the viewport (so the top-offset title
+  // sits where intended) while long pages grow past it and scroll. Pairs
+  // with nestedScrollEnabled on the inner ScrollViews.
+  pageScrollContent: {
+    flexGrow: 1,
+  },
   progressDots: {
     position: 'absolute',
     right: 24,
@@ -1137,6 +1166,12 @@ const styles = StyleSheet.create({
   },
   meditationContent: {
     paddingBottom: 280,
+  },
+  // Closing Prayer page — extra bottom room so the long prayer text, the
+  // Amen button, and the prayed-count line all clear the bottom edge + the
+  // page-dot cluster when scrolled to the end.
+  prayerPagePad: {
+    paddingBottom: 160,
   },
   pageCaption: {
     fontSize: 28.6,                                                             // 15 → 19.5 → 20.48 → 24 → 26 → 28.6 (+10 % per user)

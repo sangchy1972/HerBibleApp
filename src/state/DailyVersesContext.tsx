@@ -7,7 +7,8 @@ import {
   type FullDailyVerse,
 } from '../services/dailyVersesService';
 import { BUNDLED_COVERAGE_DAYS } from '../constants/dailyVersesBundled';
-import { useTranslation, type LanguageCode } from './TranslationsContext';
+import { type LanguageCode } from './TranslationsContext';
+import { useUILanguage } from './UILanguageContext';
 import { useCurrentDayYmd } from '../hooks/useCurrentDayYmd';
 
 interface DailyVersesState {
@@ -40,8 +41,19 @@ function daysBetween(fromYmd: string, toYmd: string): number {
 }
 
 export function DailyVersesProvider({ children }: { children: React.ReactNode }) {
-  const { current: translation } = useTranslation();
-  const lang = translation.code as LanguageCode;
+  // Daily verses follow the UI LANGUAGE (= device language on first launch
+  // via UILanguageContext.detectSystemLanguage), NOT the active Bible
+  // translation. Previously this read `useTranslation().current.code`,
+  // which conflated the two — a zh-Hans user whose Bible was still on KJV
+  // (en) saw the entire Prayer flow (verse text, meditation, action step,
+  // closing prayer) in English while the rest of the app was Chinese. The
+  // per-language CDN files carry the verse translation AND all devotional
+  // content keyed by the same lang code, so a single UI-language switch
+  // localizes the whole prayer experience in one go — exactly the
+  // "detect the device language, pull that language's verses + content"
+  // behavior the product calls for.
+  const { lang: uiLang } = useUILanguage();
+  const lang = uiLang as LanguageCode;
 
   // Bundled is the synchronous baseline — always available, no network. The
   // cached/CDN payload replaces it once it loads. Both share the same shape.

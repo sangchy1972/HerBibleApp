@@ -358,6 +358,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // Guards auto-advance so a re-surfaced didJustFinish for the same step
   // can't double-skip a page.
   const advancedFromRef = useRef(-1);
+  // Mirror of listenStep read INSIDE the advance effect, so that effect
+  // doesn't need listenStep as a dependency (see the advance effect below).
+  const listenStepRef = useRef(0);
+  useEffect(() => { listenStepRef.current = listenStep; }, [listenStep]);
 
   // One-time audio session setup: play through the iOS silent switch and
   // mix (so our two players — bg music + narration — coexist instead of
@@ -366,23 +370,29 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers' }).catch(() => {});
   }, []);
 
-  // Resolve + download today's narration on mount (English only). keepIds =
-  // today's morning + evening so doing one slot's flow doesn't prune the
-  // other's cached files; everything older than today is pruned inside
-  // prepareVerseAudio so the device never accumulates stale audio.
+  // The verse to narrate, as a STABLE string id + day number. Keying the
+  // load effect on these primitives (not the dailyVerse OBJECT) is critical:
+  // DailyVersesContext swaps its `verses` array bundled→cache→CDN, which
+  // hands back a fresh dailyVerse reference with the SAME content. If the
+  // effect depended on that object it would re-run mid-listen, re-set
+  // readUris, swap the audio source, and CUT OFF the playing clip. Keying on
+  // verseId/verseDay re-runs only when the verse genuinely changes.
+  const verseId = (listenLangOk && dailyVerse) ? verseIdFor(dailyVerse.day, dailyVerse.segment) : null;
+  const verseDay = dailyVerse?.day ?? null;
+
+  // Resolve + download today's narration. keepIds = today's morning + evening
+  // so doing one slot's flow doesn't prune the other's cached files;
+  // everything older than today is pruned inside prepareVerseAudio so the
+  // device never accumulates stale audio.
   useEffect(() => {
-    if (!listenLangOk || !dailyVerse) { setReadUris(null); return; }
+    if (!verseId || verseDay == null) { setReadUris(null); return; }
     let alive = true;
-    const id = verseIdFor(dailyVerse.day, dailyVerse.segment);
-    const keep = [
-      verseIdFor(dailyVerse.day, 'morning'),
-      verseIdFor(dailyVerse.day, 'evening'),
-    ];
-    prepareVerseAudio(id, keep)
+    const keep = [verseIdFor(verseDay, 'morning'), verseIdFor(verseDay, 'evening')];
+    prepareVerseAudio(verseId, keep)
       .then(uris => { if (alive) setReadUris(uris); })
       .catch(() => { if (alive) setReadUris(null); });
     return () => { alive = false; };
-  }, [listenLangOk, dailyVerse]);
+  }, [verseId, verseDay]);
 
   // Source is keyed on the cursor (NOT on listenOn) so pausing keeps the
   // clip mounted at its position — resume continues mid-clip. Changing the
@@ -407,19 +417,28 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
 
   // Auto-advance: a finished clip scrolls to + plays the next step. Stops
   // (without auto-Amen) after the closing prayer.
+  //
+  // Reads the current step from listenStepRef and DOES NOT list listenStep
+  // as a dependency. That matters: if listenStep were a dep, advancing it
+  // would re-run this effect while readStatus.didJustFinish is still true
+  // from the clip that just ended (the new source hasn't loaded yet) — and
+  // it would advance AGAIN, skipping the next clip (that's why Reflection,
+  // the step right after the first finish, was getting silently skipped).
+  // With the ref, this only fires on a real didJustFinish transition.
   useEffect(() => {
     if (!listenOn || !readStatus?.didJustFinish) return;
-    if (advancedFromRef.current === listenStep) return;
-    advancedFromRef.current = listenStep;
-    if (listenStep < SECTIONS.length - 1) {
-      const next = listenStep + 1;
+    const cur = listenStepRef.current;
+    if (advancedFromRef.current === cur) return;
+    advancedFromRef.current = cur;
+    if (cur < SECTIONS.length - 1) {
+      const next = cur + 1;
       setListenStep(next);
       setPage(next);
       scrollRef.current?.scrollTo({ y: height * next, animated: true });
     } else {
       setListenOn(false);            // finished the closing prayer — stop
     }
-  }, [readStatus?.didJustFinish, listenOn, listenStep]);
+  }, [readStatus?.didJustFinish, listenOn]);
 
   // Tapping Amen ends the flow — make sure narration stops before the
   // congrats scene (the topbar Listen button is already hidden by !amened).

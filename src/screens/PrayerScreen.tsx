@@ -245,8 +245,12 @@ function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTa
   // so the verse text + action labels stay legible while the photo still
   // reads as the dominant background — matches the target moon/sunrise
   // composition. Morning/evening keep their tonal tint via tinted ends.
+  // Morning veil per user: +50% transparency (alpha halved 0.20→0.10 /
+  // 0.55→0.28) and the bright magenta-pink top darkened toward a blackish
+  // wine-pink (123,34,85 → 68,19,47) so it reads as a subtle warm shadow,
+  // not a pink wash over the photo. Evening tint unchanged.
   const colors = morning
-    ? (['rgba(123,34,85,0.20)', 'rgba(45,10,26,0.55)'] as const)
+    ? (['rgba(68,19,47,0.10)', 'rgba(30,8,18,0.28)'] as const)
     : (['rgba(45,22,96,0.20)', 'rgba(16,5,37,0.55)'] as const);
   const iconColor = 'rgba(255,255,255,0.92)';
 

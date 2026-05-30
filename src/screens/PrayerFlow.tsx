@@ -727,10 +727,13 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             {listenLangOk && (
               <TouchableOpacity
                 onPress={toggleListen}
-                style={[styles.chromeBtn, !readUris && { opacity: 0.5 }]}
+                style={[styles.chromeBtn, styles.chromeBtnWhite, !readUris && { opacity: 0.5 }]}
                 disabled={!readUris}
               >
-                <Feather name={listenOn ? 'pause' : 'headphones'} size={20} color="#fff" />
+                {/* White button → dark icon (slot tint) so it reads on the
+                    light fill, distinguishing the narration control from the
+                    dark close/music buttons beside it. */}
+                <Feather name={listenOn ? 'pause' : 'headphones'} size={20} color={morning ? ROSE : LAV} />
               </TouchableOpacity>
             )}
           </View>
@@ -1092,6 +1095,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.32)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // White-fill variant for the Listen button — a soft shadow lifts it off
+  // the photo so the light circle doesn't wash out against bright sky.
+  chromeBtnWhite: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.18,
+    shadowRadius: 3,
+    elevation: 3,
   },
   flowPage: {
     width,

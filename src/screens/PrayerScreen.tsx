@@ -1094,11 +1094,13 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.lora,
   },
   greetText: {
-    fontSize: 24.77,                                                            // 26 → 23.15 → 24.77 (per user)
+    fontSize: 23.04,                                                            // 24.77 → 23.04 (-7 % per user)
     fontWeight: '500',
     color: TXT,
     fontFamily: FONTS.loraBold,
     marginLeft: -3,                                                              // -3 px on this line only — parent wrapper marginLeft 8 stays for the date above
+    marginTop: -3,                                                              // -3 px leading per user — tightens the gap below the date
+    marginBottom: 2,                                                            // +2 px trailing per user — opens the gap above "Today's Progress"
   },
   // Header row — `gap: 0` and `avatar.marginLeft: -3` makes the pink avatar
   // circle sit ~3 px over the streak badge's right edge (about 5 % of the

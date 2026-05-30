@@ -1,32 +1,34 @@
-// Where the full per-language daily-verses files live: Cloudflare R2,
-// served directly from the dedicated `herbible-verses-7languages` bucket
-// via its custom domain `verses.everlandapps.com` (zero egress, no Worker
-// in front — daily verses are free core content, so a Worker would just
-// add request cost for nothing). The dedicated bucket keeps naming
-// consistent with herbible-audio-7languages / herbible-plans-7languages.
+// Daily verses are served by the SAME attested Worker as plans
+// (plans.everlandapps.com), reading from a PRIVATE
+// herbible-verses-7languages R2 bucket (public access disabled). Access
+// requires a device-attestation Bearer token — the same gate plans use —
+// so the content can't be trivially scraped from a public URL.
 //
-// Cache-busting uses a **path-version segment** (`/v1/`), NOT a query
-// param: Cloudflare keys its edge cache on the full URL, so bumping the
-// version points every request at a brand-new path → guaranteed-fresh
-// edge cache with no manual purge. The same version string also tags the
-// device-local AsyncStorage cache (see dailyVersesService.CACHE_TAG), so
-// a bump invalidates every device's copy too.
+// Unlike plans (AES-encrypted at rest), verse files are plaintext JSON in
+// the bucket: they're free core content, and keeping them plaintext lets
+// them be drag-drop uploaded without an encryption step. The protection
+// is attestation + private bucket, not at-rest encryption.
 //
-// Publish steps (one-time, then on every content update):
-//   1. Generate slim CDN files:  node scripts/gen_cdn_verses.mjs ./_incoming_verses ./_cdn_ready
-//   2. Upload:  ./scripts/upload_daily_verses_r2.sh
-//      (puts the seven files at  <VERSION>/verses_<lang>.json  in the bucket)
-//   3. If the content changed (not just a first publish), bump
-//      DAILY_VERSES_VERSION below to the new /vN/ folder.
-//   4. The next app launch picks up the new files and refreshes its cache.
+// The Worker route is `/v1/verses/<lang>.json`; the client reaches it via
+// authedFetch (see dailyVersesService). DAILY_VERSES_VERSION no longer
+// lives in the URL (the Worker + R2 ETags handle HTTP cache freshness) —
+// it survives only as the local AsyncStorage cache tag, so bumping it
+// forces every device to re-parse after a shape change.
+//
+// Publish steps (drag-drop, no encryption):
+//   1. node scripts/gen_cdn_verses.mjs ./_incoming_verses ./_cdn_ready
+//   2. Upload the seven _cdn_ready/verses_<lang>.json to the ROOT of the
+//      herbible-verses-7languages bucket (drag-drop in the R2 dashboard,
+//      or ./scripts/upload_daily_verses_r2.sh).
+//   3. Bump DAILY_VERSES_VERSION below only if the JSON SHAPE changed
+//      (not for routine content edits — ETag handles those).
 
-export const DAILY_VERSES_BASE = 'https://verses.everlandapps.com';
+import { PLANS_API_BASE } from './plansApi';
 
-// Content version. Lives in the URL path AND doubles as the local
-// cache-key tag. Bump (v1 → v2 → …) whenever you republish updated files
-// under a new /vN/ folder on R2.
+// Local AsyncStorage cache tag. Bump on a schema/shape change to discard
+// every device's stale parsed copy. Not part of the URL anymore.
 export const DAILY_VERSES_VERSION = 'v1';
 
 export function dailyVersesUrl(lang: string): string {
-  return `${DAILY_VERSES_BASE}/${DAILY_VERSES_VERSION}/verses_${lang}.json`;
+  return `${PLANS_API_BASE}/v1/verses/${lang}.json`;
 }

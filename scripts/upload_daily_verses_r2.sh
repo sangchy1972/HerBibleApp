@@ -19,11 +19,14 @@
 # content under a new /vN/ folder.
 set -euo pipefail
 
+# NOTE: verses are now served through the attested plans Worker
+# (plans.everlandapps.com/v1/verses/<lang>.json), reading plaintext files
+# from the ROOT of this private bucket. There is NO public custom domain
+# and NO version folder — the Worker reads key `verses_<lang>.json`
+# directly, and content freshness is handled by R2 ETags.
 WRANGLER="${HOME}/claude_herbible_plan/workers/herbible-plans-7languages/node_modules/.bin/wrangler"
 BUCKET="herbible-verses-7languages"
-VERSION="v1"
 SRC_DIR="$(cd "$(dirname "$0")/.." && pwd)/_cdn_ready"
-DOMAIN="verses.everlandapps.com"
 
 LANGS=(en zh-Hans zh-Hant de fr es pt)
 
@@ -39,10 +42,10 @@ if [ ! -d "$SRC_DIR" ]; then
   exit 1
 fi
 
-echo "Uploading 7 files to ${BUCKET}/${VERSION}/ ..."
+echo "Uploading 7 files to the ROOT of ${BUCKET} ..."
 for lang in "${LANGS[@]}"; do
   file="${SRC_DIR}/verses_${lang}.json"
-  key="${VERSION}/verses_${lang}.json"
+  key="verses_${lang}.json"
   if [ ! -f "$file" ]; then
     echo "  ! skip ${lang} — missing $file" >&2
     continue
@@ -55,10 +58,8 @@ for lang in "${LANGS[@]}"; do
 done
 
 echo ""
-echo "Done. Verify all 7 return 200 + valid JSON:"
-for lang in "${LANGS[@]}"; do
-  echo "  curl -sI https://${DOMAIN}/${VERSION}/verses_${lang}.json | head -1"
-done
-echo ""
-echo "Quick structural check (English):"
-echo "  curl -s https://${DOMAIN}/${VERSION}/verses_en.json | python3 -c 'import sys,json;d=json.load(sys.stdin);print(\"total\",d[\"meta\"][\"total_verses\"],\"verses\",len(d[\"verses\"]))'"
+echo "Done. The bucket is PRIVATE — verify through the attested Worker, not"
+echo "a public URL. Quickest check: open the app and confirm the prayer"
+echo "card shows day-N content past day 3 (the bundle only covers 1-3)."
+echo "Or, with a valid Bearer token:"
+echo "  curl -s -H 'Authorization: Bearer <JWT>' https://plans.everlandapps.com/v1/verses/en.json | head -c 200"

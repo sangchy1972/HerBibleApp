@@ -972,7 +972,10 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           the home screen reads as a consistent stack of cards. Progress is
           shown as percentage + filled track on the right of the % — the
           track is `flex: 1` so it always spans the remaining width. */}
-      <View style={styles.section}>
+      {/* paddingTop 14 → 19 (+5 px per user) — extra leading before the
+          "Bible Reading Progress" heading only; the shared sectionTitle
+          style stays untouched so "Plans In Progress" above is unaffected. */}
+      <View style={[styles.section, { paddingTop: 19 }]}>
         <Text style={styles.sectionTitle}>{t('prayer.section.bibleProgress')}</Text>
         <TouchableOpacity
           onPress={() => navigation.navigate('Tabs', { screen: 'bible' })}
@@ -1084,10 +1087,10 @@ const styles = StyleSheet.create({
     paddingBottom: 5,
   },
   dateText: {
-    fontSize: 12.10,
+    fontSize: 11.50,                                                            // 12.10 → 11.50 (-5 % per user)
     color: TXTSUB,
     letterSpacing: 1.8,
-    marginBottom: -2,                                                           // 1 → -2 (-3 px per user) — closes the gap to the greeting below
+    marginBottom: -5,                                                           // -2 → -5 (-3 px per user) — closes the gap to the greeting below further
     fontFamily: FONTS.lora,
   },
   greetText: {
@@ -1146,7 +1149,7 @@ const styles = StyleSheet.create({
   avatarText: { fontSize: 18, fontWeight: '700', color: '#fff' },
   progressSection: {
     paddingHorizontal: P + 6,
-    paddingTop: 14,
+    paddingTop: 9,                                                               // 14 → 9 (-5 px per user — "Today's Progress" leading gap)
     marginTop: 0,                                                                // 7 → 0 — closes the 5 px ask for "Today's Progress" gap and the 2 px ask for "Good Evening" gap below it in one shot
     marginBottom: 10,
   },
@@ -1154,7 +1157,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 9,
+    marginBottom: 6,                                                            // 9 → 6 (-3 px per user — gap between "Today's Progress" label and the bar)
   },
   // Today's Progress row — Lora 600 across both the label and the
   // percentage. Project rule: `FONTS.loraBold` always pairs with
@@ -1242,14 +1245,14 @@ const styles = StyleSheet.create({
     left: 2,
     borderRadius: 15,
   },
-  // Inner pill +10 % height per user — paddingVertical 7 → 8.5 (1.5 px both
-  // sides) widens the button vertically; the indicator (top/bottom/left: 2)
-  // tracks it because it's absolute-positioned inside the same container.
-  // The outer white frame grows by the same 3 px so the pink/lav chip stays
-  // vertically centered inside it.
+  // Inner pill height: paddingVertical 8.5 → 7.5 (-1 px both sides = -2 px
+  // total), which shrinks the outer white frame's height by ~5 % per user.
+  // The indicator chip (top/bottom/left: 2) tracks it because it's
+  // absolute-positioned inside the same container, so the pink/lav chip
+  // stays vertically centered inside the smaller frame.
   toggleBtn: {
     flex: 1,
-    paddingVertical: 8.5,
+    paddingVertical: 7.5,
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1356,7 +1359,7 @@ const styles = StyleSheet.create({
   // each side, leaving it 2 × P narrower than the card (the previous
   // mismatch the design called out).
   startBtn: {
-    marginTop: 17.8,                    // 16 → 12.8 → 17.8 (+5 px per user — card ↔ Start CTA gap)
+    marginTop: 13.8,                    // 17.8 → 13.8 (-4 px per user — card ↔ Start CTA gap)
     marginBottom: 10,
     height: 49.41,                      // 47.06 → 49.41 (+5 % per user)
     borderRadius: 17.07,                // 24.39 → 17.07 (-30 % per user)

@@ -1,11 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BUNDLED_DAILY_VERSES, type DailyVerse } from '../constants/dailyVersesBundled';
-import { DAILY_VERSES_COMMIT, dailyVersesUrl } from '../constants/dailyVersesCdn';
+import { DAILY_VERSES_VERSION, dailyVersesUrl } from '../constants/dailyVersesCdn';
 import type { LanguageCode } from '../state/TranslationsContext';
 
-// Cache keys are scoped by the pinned commit so a content republish
-// (bumping DAILY_VERSES_COMMIT) auto-invalidates every device's cache.
-const CACHE_TAG = DAILY_VERSES_COMMIT.slice(0, 8);
+// Cache keys are scoped by the content version so a republish (bumping
+// DAILY_VERSES_VERSION → a new /vN/ R2 path) auto-invalidates every
+// device's local cache.
+const CACHE_TAG = DAILY_VERSES_VERSION;
 const cacheKey = (lang: LanguageCode) => `daily-verses:${CACHE_TAG}:${lang}`;
 
 // Same shape we hand the rest of the app — slimmed down from the upstream JSON

@@ -48,3 +48,7 @@ yarn-error.*
 
 # local-only Gradle CN mirror init script
 android/cn-mirrors.init.gradle
+
+# Daily-verse staging (not committed — CDN files go to pd-text-corpus repo)
+_incoming_verses/
+_cdn_ready/

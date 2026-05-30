@@ -776,6 +776,9 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reflections.empty': '尚未写下任何默想',
     'bible.explanation.title': '解释',
     'profile.saved.emptyHint': '打开任意章节，点按一节经文，再选「收藏」即可将其保留在这里。',
+    'reminder.title': '跟随祂',
+    'reminder.subtitle': '开启提醒，每日领受祝福',
+    'reminder.skip': '跳过',
 
     // Audit pass 3 (2026-05): sheets, alerts & paywall body
     'signIn.sub': '在多个设备间同步你的高亮、笔记、收藏的经文和阅读连续记录。',
@@ -1549,6 +1552,9 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reflections.empty': '尚未寫下任何默想',
     'bible.explanation.title': '解釋',
     'profile.saved.emptyHint': '開啟任一章節，輕點一節經文，再選「收藏」即可將其保留在這裡。',
+    'reminder.title': '跟隨祂',
+    'reminder.subtitle': '開啟提醒，每日領受祝福',
+    'reminder.skip': '跳過',
 
     // Audit pass 3 (2026-05): sheets, alerts & paywall body
     'signIn.sub': '在多個裝置間同步你的螢光標記、筆記、收藏的經文與閱讀連續紀錄。',
@@ -2322,6 +2328,9 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reflections.empty': 'Noch keine Betrachtungen',
     'bible.explanation.title': 'Erklärung',
     'profile.saved.emptyHint': 'Öffne ein beliebiges Kapitel, tippe auf einen Vers und wähle „Merken", um ihn hier zu behalten.',
+    'reminder.title': 'Folge Ihm',
+    'reminder.subtitle': 'Erlebe täglichen Segen — aktiviere die Erinnerung',
+    'reminder.skip': 'Überspringen',
 
     // Audit pass 3 (2026-05): sheets, alerts & paywall body
     'signIn.sub': 'Synchronisiere deine Markierungen, Notizen, gemerkten Verse und deine Lese-Serie über mehrere Geräte hinweg.',
@@ -3099,6 +3108,9 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reflections.empty': 'Aucune méditation pour l\'instant',
     'bible.explanation.title': 'Explication',
     'profile.saved.emptyHint': 'Ouvre n\'importe quel chapitre, touche un verset et choisis « Garder » pour le conserver ici.',
+    'reminder.title': 'Suis-le',
+    'reminder.subtitle': 'Reçois des bénédictions chaque jour en activant le rappel',
+    'reminder.skip': 'Passer',
 
     // Audit pass 3 (2026-05): sheets, alerts & paywall body
     'signIn.sub': 'Synchronise tes surlignages, notes, versets gardés et ta série de lecture sur tous tes appareils.',
@@ -3872,6 +3884,9 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reflections.empty': 'Aún no hay reflexiones',
     'bible.explanation.title': 'Explicación',
     'profile.saved.emptyHint': 'Abre cualquier capítulo, toca un versículo y elige «Guardar» para conservarlo aquí.',
+    'reminder.title': 'Síguelo',
+    'reminder.subtitle': 'Recibe bendiciones cada día activando el recordatorio',
+    'reminder.skip': 'Omitir',
 
     // Audit pass 3 (2026-05): sheets, alerts & paywall body
     'signIn.sub': 'Sincroniza tus resaltados, notas, versículos guardados y tu racha de lectura entre dispositivos.',
@@ -4645,6 +4660,9 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reflections.empty': 'Ainda não há reflexões',
     'bible.explanation.title': 'Explicação',
     'profile.saved.emptyHint': 'Abra qualquer capítulo, toque em um versículo e escolha "Salvar" para mantê-lo aqui.',
+    'reminder.title': 'Siga-O',
+    'reminder.subtitle': 'Receba bênçãos diárias ativando o lembrete',
+    'reminder.skip': 'Pular',
 
     // Audit pass 3 (2026-05): sheets, alerts & paywall body
     'signIn.sub': 'Sincronize seus destaques, notas, versículos salvos e sua sequência de leitura entre dispositivos.',

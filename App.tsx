@@ -44,6 +44,7 @@ import { OnboardingProvider } from './src/state/OnboardingContext';
 import { RatePromptProvider } from './src/state/RatePromptContext';
 import { MoodCheckInProvider } from './src/state/MoodCheckInContext';
 import { NotificationsProvider } from './src/state/NotificationsContext';
+import { ReminderInterstitialProvider } from './src/state/ReminderInterstitialContext';
 import { DailyVersesProvider } from './src/state/DailyVersesContext';
 import { PrayerBackgroundsProvider } from './src/state/PrayerBackgroundsContext';
 import { ShareProvider } from './src/state/ShareContext';
@@ -99,6 +100,7 @@ export default function App() {
                                   <RatePromptProvider>
                                     <MoodCheckInProvider>
                                       <NotificationsProvider>
+                                        <ReminderInterstitialProvider>
                                         <NavigationContainer>
                                           <StatusBar style="dark" />
                                           <RootNavigator />
@@ -115,6 +117,7 @@ export default function App() {
                                               can call navigate(). */}
                                           <DeepLinkHandler />
                                         </NavigationContainer>
+                                        </ReminderInterstitialProvider>
                                       </NotificationsProvider>
                                     </MoodCheckInProvider>
                                   </RatePromptProvider>

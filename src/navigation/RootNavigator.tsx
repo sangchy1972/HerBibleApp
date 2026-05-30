@@ -22,16 +22,28 @@ import PlanDayWalk from '../screens/PlanDayWalk';
 // PlanDayVerses removed — verse_wall pages now live inline inside PlanDayWalk.
 import PlanVerseRead from '../screens/PlanVerseRead';
 import PlanDayDone from '../screens/PlanDayDone';
+import FollowHimScreen from '../screens/FollowHimScreen';
 import { useOnboarding } from '../state/OnboardingContext';
+import { useReminderInterstitial } from '../state/ReminderInterstitialContext';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
   const { ready, done } = useOnboarding();
-  if (!ready) return null;       // brief AsyncStorage read; splash stays up
+  const reminder = useReminderInterstitial();
+  // Gate on BOTH ready flags so we never flash the main tabs and then snap
+  // to the interstitial — splash holds until we know which to show.
+  if (!ready || !reminder.ready) return null;
 
   if (!done) return <OnboardingScreen />;
+
+  // Returning user (day 2+), notifications still off, not yet shown today →
+  // the full-screen "Follow Him" opt-in. Only Skip/Continue dismiss it
+  // (markShownToday flips shouldShow false → re-render into the tabs).
+  if (reminder.shouldShow) {
+    return <FollowHimScreen onDone={reminder.markShownToday} />;
+  }
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

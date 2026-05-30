@@ -131,6 +131,14 @@ interface NotificationsState {
   /** Returns true when the toggle actually flipped — false if permission denial blocked it. */
   setEnabled: (key: NotifKey, value: boolean) => Promise<boolean>;
   setSchedule: (key: NotifKey, hour: number, minute: number) => void;
+  /**
+   * Fires the OS permission prompt DIRECTLY (no in-app rationale Alert) and,
+   * on grant, turns on the default morning + evening reminders. For surfaces
+   * that are themselves the rationale — e.g. the full-screen "Follow Him"
+   * opt-in — so the user doesn't get a rationale-on-a-rationale. Returns
+   * whether permission ended up granted.
+   */
+  requestPermissionAndEnableDefaults: () => Promise<boolean>;
 }
 
 const Ctx = createContext<NotificationsState | null>(null);
@@ -222,12 +230,38 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     persist({ ...settings, [key]: { ...settings[key], hour, minute } });
   }, [settings, persist]);
 
+  const requestPermissionAndEnableDefaults = useCallback(async (): Promise<boolean> => {
+    // Direct OS prompt — the calling surface (e.g. the "Follow Him" screen)
+    // already explains why, so we skip ensureNotificationPermission's
+    // in-app rationale Alert. On a fresh device this shows the system
+    // dialog; if permanently denied, getPermissionsAsync().granted stays
+    // false and we just return false (the screen still dismisses).
+    const current = await Notifications.getPermissionsAsync();
+    let granted = current.granted;
+    if (!granted && current.canAskAgain) {
+      const next = await Notifications.requestPermissionsAsync();
+      granted = next.granted;
+    }
+    if (granted) {
+      // Turn on the two daily reminders so the opt-in delivers value
+      // immediately; the sync effect schedules them off this state change.
+      // (Evening reminder's key is `night`.)
+      persist({
+        ...settings,
+        morning: { ...settings.morning, enabled: true },
+        night: { ...settings.night, enabled: true },
+      });
+    }
+    return granted;
+  }, [settings, persist]);
+
   const value = useMemo<NotificationsState>(() => ({
     ready,
     settings,
     setEnabled,
     setSchedule,
-  }), [ready, settings, setEnabled, setSchedule]);
+    requestPermissionAndEnableDefaults,
+  }), [ready, settings, setEnabled, setSchedule, requestPermissionAndEnableDefaults]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

@@ -876,6 +876,11 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
 
   'bible.explanation.title':       { en: 'Explanation',                                           context: 'Heading inside the Bible reader Explore card showing per-verse commentary.' },
 
+  // ─── "Follow Him" returning-user notification opt-in interstitial ────────
+  'reminder.title':                { en: 'Follow Him',                                            context: 'Large title on the full-screen reminder opt-in shown to returning users. "Him" = God/Jesus (capitalized, reverent).' },
+  'reminder.subtitle':             { en: 'Experience daily blessings by turning on the reminder',  context: 'Subtitle under reminder.title — invites the user to enable daily notification reminders.' },
+  'reminder.skip':                 { en: 'Skip',                                                  context: 'Top-right link on the reminder opt-in screen — the only way to dismiss without enabling notifications.' },
+
   // ─── Audit pass 3 (2026-05): sheets, alerts & paywall body ───────────────
   // SignInSheet
   'signIn.sub':                    { en: 'Sync your highlights, notes, saved verses, and reading streak across devices.', context: 'Subtitle paragraph in the sign-in bottom sheet. Explains the value of signing in.' },

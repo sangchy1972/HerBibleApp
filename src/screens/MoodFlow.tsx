@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import MoodEmoji, { MOOD_LIST, MOOD_LABEL, type Mood } from '../components/MoodEmoji';
+import MoodEmoji, { MOOD_LIST, type Mood } from '../components/MoodEmoji';
 import MoodCalendar from '../components/MoodCalendar';
 import { getMoodVerse, getFunFacts, type FunFact } from '../constants/moodContent';
 import { useUILanguage } from '../state/UILanguageContext';
@@ -18,7 +18,14 @@ import { useT } from '../i18n/useT';
 type Step = 'pick' | 'verse' | 'calendar' | 'fact';
 
 const SCREEN_W = Dimensions.get('window').width;
-const TILE_W = (SCREEN_W - 16 * 2 - 12 * 2) / 3;       // 3 cols, 16 outer + 12 gap
+// Tiles deliberately shrunk to ~90% of the natural 3-col-fit-width.
+// The 0.9 multiplier shaves ~10% off both card width AND emoji size (emoji
+// inherits from TILE_W via `TILE_W * 0.62`). Extra horizontal space lands
+// as outer padding on the grid wrap so the row stays centered without
+// changing the inter-card gap — the visual hierarchy gets a bit more
+// breathing room while keeping the 3×3 layout intact.
+const TILE_W = ((SCREEN_W - 16 * 2 - 12 * 2) / 3) * 0.9;
+const GRID_OUTER_PAD = (SCREEN_W - (TILE_W * 3 + 12 * 2)) / 2;
 
 export default function MoodFlow({ navigation }: RootStackScreenProps<'MoodFlow'>) {
   const insets = useSafeAreaInsets();
@@ -82,7 +89,7 @@ function PickStep({ onPick }: { onPick: (m: Mood) => void }) {
             <View style={styles.tileFace}>
               <MoodEmoji mood={m} size={TILE_W * 0.62} />
             </View>
-            <Text style={styles.tileLabel}>{MOOD_LABEL[m]}</Text>
+            <Text style={styles.tileLabel}>{t(`mood.label.${m}`)}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -142,7 +149,7 @@ function VerseStep({ mood, onClose }: { mood: Mood; onClose: () => void }) {
     <View style={styles.verseWrap}>
       <Animated.View entering={FadeIn.duration(500)}>
         <Text style={styles.verseHeaderTitle}>
-          When you feel {MOOD_LABEL[mood]}, God&rsquo;s words for you.
+          {t('mood.verseHeading', { mood: t(`mood.label.${mood}`).toLowerCase() })}
         </Text>
       </Animated.View>
 
@@ -237,8 +244,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(30,27,46,0.06)',
   },
 
-  // Pick step
-  pickWrap: { flex: 1, paddingHorizontal: 16, paddingTop: 36 },
+  // Pick step. GRID_OUTER_PAD recalculates whenever TILE_W changes so the
+  // 3×3 grid stays horizontally centered after the 10% shrink — gap
+  // between tiles is unchanged, the extra width lands on the outside.
+  pickWrap: { flex: 1, paddingHorizontal: GRID_OUTER_PAD, paddingTop: 36 },
   pickTitle: {
     fontSize: 28,
     fontWeight: '700',

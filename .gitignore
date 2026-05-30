@@ -42,3 +42,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# local Temurin JDK 17 (toolchain for local Android builds)
+/.jdk17
+
+# local-only Gradle CN mirror init script
+android/cn-mirrors.init.gradle

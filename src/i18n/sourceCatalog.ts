@@ -855,6 +855,16 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'profile.highlights.empty':      { en: 'No highlights yet',                                     context: 'Empty-state text inside the Highlights sheet.' },
 
   'mood.howFeel':                  { en: 'How do you feel today?',                                context: 'Prompt at the top of the MoodFlow first step. Direct, conversational tone.' },
+  'mood.label.angry':              { en: 'Angry',                                                 context: 'Mood-picker tile label for the "angry" emotion. Single adjective.' },
+  'mood.label.weak':               { en: 'Weak',                                                  context: 'Mood-picker tile label for "weak/tired" emotion. Single adjective.' },
+  'mood.label.anxious':            { en: 'Anxious',                                               context: 'Mood-picker tile label for "anxious/worried" emotion.' },
+  'mood.label.fearful':            { en: 'Fearful',                                               context: 'Mood-picker tile label for "fearful/scared" emotion.' },
+  'mood.label.faithful':           { en: 'Faithful',                                              context: 'Mood-picker tile label for "faithful/trusting" emotion. Devotional adjective — the user is feeling steady in faith.' },
+  'mood.label.sad':                { en: 'Sad',                                                   context: 'Mood-picker tile label for "sad" emotion.' },
+  'mood.label.calm':               { en: 'Calm',                                                  context: 'Mood-picker tile label for "calm/peaceful" emotion.' },
+  'mood.label.happy':              { en: 'Happy',                                                 context: 'Mood-picker tile label for "happy/joyful" emotion.' },
+  'mood.label.blessed':            { en: 'Blessed',                                               context: 'Mood-picker tile label for "blessed/grateful" emotion. Strong devotional connotation.' },
+  'mood.verseHeading':             { en: 'When you feel {mood}, God\'s words for you.',           context: 'Heading above the verse card on MoodFlow VerseStep. {mood} is the localized mood label (e.g. "calm"/"安宁"/"calme"). The sentence frames the verse as Gods response to how the user feels right now.' },
 
   'help.articleNotFound':          { en: 'Article not found',                                     context: 'Empty-state title on HelpAnswerScreen when the slug doesnt resolve.' },
   'help.answerLabel':              { en: 'Answer',                                                context: 'Heading above the help-answer body. Noun.' },

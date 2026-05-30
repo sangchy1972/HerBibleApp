@@ -563,7 +563,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'plan.error.title':              { en: "Can't load plans right now", context: 'Plan tab error block title when CDN fetch fails.' },
   'plan.error.desc':               { en: 'Please check your connection and try again.', context: 'Plan tab error block body.' },
   'plan.loading':                  { en: 'Loading plans…', context: 'Plan tab loading message.' },
-  'plan.section.inProgress':       { en: 'IN PROGRESS',   context: 'Uppercase eyebrow over the In Progress plans list in the Current tab.' },
+  'plan.section.inProgress':       { en: 'In progress',   context: 'Section heading over the In Progress plans list in the Current tab. Sentence case (only the first letter capitalised), same serif section-title treatment as "Featured" / "How Are You Feeling Today?".' },
   'plan.section.saved':            { en: 'SAVED',          context: 'Uppercase eyebrow over the Saved plans list in the Current tab.' },
   'plan.subtab.all':               { en: 'All',           context: 'First pill on PlanCategoryScreen sub-tab strip — shows every plan in this primary category.' },
 

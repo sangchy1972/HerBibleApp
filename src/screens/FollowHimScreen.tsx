@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ImageBackground, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,13 +12,20 @@ import { useNotifications } from '../state/NotificationsContext';
 // enabling notifications — Continue fires the OS permission prompt directly
 // (this screen is itself the rationale) and turns on the daily reminders.
 //
-// Background image: drop the compressed photo at assets/follow_him.webp and
-// set BG_IMAGE to its require() — the layout already supports it. Until
-// then a green→dark gradient stands in (evokes the hillside photo) so the
-// flow is testable.
-const BG_IMAGE: any = null; // = require('../../assets/follow_him.webp')
+// Two bundled backgrounds (woman in a field facing the horizon), each ~80 KB
+// webp with the source watermark cropped off. Picked by the wall-clock hour:
+// the bright-sunrise frame in the daytime window, the dusk frame otherwise.
+const BG_DAY = require('../../assets/follow_him_day.webp');
+const BG_NIGHT = require('../../assets/follow_him_night.webp');
 
-const PLACEHOLDER_GRADIENT = ['#3E5C34', '#243A1F', '#0E140B'] as const;
+// Daytime = [DAY_START, DAY_END). One-line cutoff — tweak to taste.
+const DAY_START = 3;   // 03:00
+const DAY_END = 18;    // 18:00 (6 pm)
+function pickBackground(): number {
+  const h = new Date().getHours();
+  return h >= DAY_START && h < DAY_END ? BG_DAY : BG_NIGHT;
+}
+
 const BTN_TAN = '#C9A36F';
 
 interface Props {
@@ -32,6 +39,9 @@ export default function FollowHimScreen({ onDone }: Props) {
   const t = useT();
   const { requestPermissionAndEnableDefaults } = useNotifications();
   const [busy, setBusy] = useState(false);
+  // Resolved once at mount — the screen shows for a single sitting, so it
+  // doesn't need to react to the hour ticking over mid-view.
+  const bg = useMemo(() => pickBackground(), []);
 
   const onContinue = async () => {
     if (busy) return;
@@ -78,14 +88,10 @@ export default function FollowHimScreen({ onDone }: Props) {
     </>
   );
 
-  return BG_IMAGE ? (
-    <ImageBackground source={BG_IMAGE} style={styles.root} resizeMode="cover">
+  return (
+    <ImageBackground source={bg} style={styles.root} resizeMode="cover">
       {Body}
     </ImageBackground>
-  ) : (
-    <LinearGradient colors={PLACEHOLDER_GRADIENT} style={styles.root}>
-      {Body}
-    </LinearGradient>
   );
 }
 

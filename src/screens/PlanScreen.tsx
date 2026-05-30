@@ -415,8 +415,8 @@ export default function PlanScreen() {
                         <PlanCover
                           slug={p.slug}
                           gradient={[p.colorPrimary, p.colorSecondary]}
-                          width={136}
-                          height={97}
+                          width={116}
+                          height={82}
                           radius={7}
                         />
                         <View style={styles.planMeta}>
@@ -441,7 +441,7 @@ export default function PlanScreen() {
                   <Text style={styles.emptyTitle}>{t('plan.empty.notStarted.title')}</Text>
                   <Text style={styles.emptyDesc}>{t('plan.empty.notStarted.desc')}</Text>
                   <TouchableOpacity onPress={() => setTab('explore')} style={[styles.exploreCta, { backgroundColor: ROSE }]}>
-                    <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>{t('plan.empty.notStarted.cta')}</Text>
+                    <Text style={{ color: '#fff', fontSize: 15.1, fontWeight: '600' }}>{t('plan.empty.notStarted.cta')}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -482,27 +482,34 @@ export default function PlanScreen() {
               </ScrollView>
 
               {/* HOW ARE YOU FEELING TODAY? — 9 curated mood pills in two
-                  rows (5 + 4). The number of tags is fixed by EMOTION_TAGS
-                  (palette + ordering pinned in plansApi.ts); the layout
-                  arrangement here is what makes the strip read as a
-                  compact 2-line grid rather than a horizontal scroll. */}
+                  rows (5 + 4), pinned in EMOTION_TAGS (plansApi.ts). The strip
+                  scrolls HORIZONTALLY: each pill sizes to its own label (no
+                  flex:1, no numberOfLines truncation), so the full word always
+                  reads — the old fixed 5-up grid squashed them to "WE…/FE…". */}
               <Text style={styles.bigSectionLabel}>{t('plansMeta.section.emotions')}</Text>
-              <View style={[styles.emotionGrid, { marginBottom: 28 }]}>
-                {[EMOTION_TAGS.slice(0, 5), EMOTION_TAGS.slice(5)].map((row, ri) => (
-                  <View key={ri} style={styles.emotionRow}>
-                    {row.map(tag => (
-                      <TouchableOpacity
-                        key={tag.secondary}
-                        activeOpacity={0.85}
-                        onPress={() => navigation.navigate('PlanCategory', { primary: 'emotions', secondary: tag.secondary, title: t(tag.label) })}
-                        style={[styles.emotionTag, { backgroundColor: tag.color, flex: 1 }]}
-                      >
-                        <Text style={styles.emotionLabel} numberOfLines={1}>{t(tag.label)}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                ))}
-              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ marginBottom: 28 }}
+                contentContainerStyle={styles.emotionScrollContent}
+              >
+                <View style={styles.emotionGrid}>
+                  {[EMOTION_TAGS.slice(0, 5), EMOTION_TAGS.slice(5)].map((row, ri) => (
+                    <View key={ri} style={styles.emotionRow}>
+                      {row.map(tag => (
+                        <TouchableOpacity
+                          key={tag.secondary}
+                          activeOpacity={0.85}
+                          onPress={() => navigation.navigate('PlanCategory', { primary: 'emotions', secondary: tag.secondary, title: t(tag.label) })}
+                          style={[styles.emotionTag, { backgroundColor: tag.color }]}
+                        >
+                          <Text style={styles.emotionLabel}>{t(tag.label)}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  ))}
+                </View>
+              </ScrollView>
 
               {/* The four non-emotion sections, driven by the centralized
                   PLAN_SECTIONS list. No one-liner under the title per user —
@@ -563,7 +570,7 @@ export default function PlanScreen() {
                   <Text style={styles.emptyTitle}>{t('plan.empty.completed.title')}</Text>
                   <Text style={styles.emptyDesc}>{t('plan.empty.completed.desc')}</Text>
                   <TouchableOpacity onPress={() => setTab('explore')} style={[styles.exploreCta, { backgroundColor: ROSE }]}>
-                    <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>{t('plan.empty.completed.cta')}</Text>
+                    <Text style={{ color: '#fff', fontSize: 15.1, fontWeight: '600' }}>{t('plan.empty.completed.cta')}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -708,9 +715,9 @@ const styles = StyleSheet.create({
   featuredTag: {
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(0,0,0,0.45)',
-    borderRadius: 6,
+    borderRadius: 7.8,                                                          // +30 % (was 6)
     paddingHorizontal: 10,
-    paddingVertical: 2,
+    paddingVertical: 4,                                                         // +20 % taller (was 2)
   },
   featuredTagText: {
     fontSize: 10,
@@ -720,11 +727,13 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   featuredTitle: {
-    fontSize: 17,
+    fontSize: 17.9,                                                            // +5 % (was 17)
     fontWeight: '600',
     fontFamily: FONTS.loraBold,
     color: '#fff',
     lineHeight: 22,
+    marginBottom: -3,                                                          // pull 3 px closer to the card bottom
+
     // Drop shadow so the title stays legible over high-key cover images.
     textShadowColor: 'rgba(0,0,0,0.45)',
     textShadowOffset: { width: 0, height: 1 },
@@ -732,13 +741,15 @@ const styles = StyleSheet.create({
   },
   emotionStrip: { marginBottom: 30 },
   emotionContent: { paddingBottom: 6 },
+  // Right breathing room at the end of the horizontal strip.
+  emotionScrollContent: { paddingRight: 4 },
   emotionGrid: { flexDirection: 'column', gap: 10 },
   emotionRow: { flexDirection: 'row', gap: 11 },
   emotionTag: {
     paddingHorizontal: 22,
-    paddingVertical: 15,
-    minHeight: 56,                                                              // +15 % vs the old ~48 px
-    borderRadius: 12,
+    paddingVertical: 12,                                                        // -20 % height (was 15)
+    minHeight: 45,                                                             // -20 % (was 56)
+    borderRadius: 14.4,                                                         // +20 % (was 12)
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -765,8 +776,8 @@ const styles = StyleSheet.create({
   seeAll: { fontSize: 15.4, fontFamily: FONTS.lato },                          // +10 %
   catDesc: { fontSize: 14.3, fontFamily: FONTS.lato, color: TXTSUB, marginBottom: 14 },  // +10 %
   emptyHint: { textAlign: 'center', paddingVertical: 23, alignItems: 'center' },
-  emptyTitle: { fontSize: 15, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT, marginBottom: 5 },
-  emptyDesc: { fontSize: 14, fontFamily: FONTS.lato, color: TXTSUB, textAlign: 'center' },
+  emptyTitle: { fontSize: 16.2, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT, marginBottom: 5 },   // +8 % (was 15)
+  emptyDesc: { fontSize: 15.1, fontFamily: FONTS.lato, color: TXTSUB, textAlign: 'center' },                    // +8 % (was 14)
   exploreCta: {
     marginTop: 16,
     paddingHorizontal: 26,

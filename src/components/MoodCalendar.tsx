@@ -24,13 +24,28 @@ function isoKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function ordinal(n: number): string {
+function ordinalEn(n: number): string {
   if (n >= 11 && n <= 13) return `${n}th`;
   switch (n % 10) {
     case 1: return `${n}st`;
     case 2: return `${n}nd`;
     case 3: return `${n}rd`;
     default: return `${n}th`;
+  }
+}
+
+// Per-language ordinal for the "{ordinal} check-in" headline. Each locale's
+// `moodFlow.calendar.headline` string embeds {ordinal}, so we format the number
+// the way that language writes ordinals (en "5th", de "5.", fr "5e", es "5.º",
+// pt "5º"); Chinese uses 第 N 次 so the plain digit is correct there.
+function ordinalFor(lang: string, n: number): string {
+  switch (lang) {
+    case 'en': return ordinalEn(n);
+    case 'de': return `${n}.`;
+    case 'fr': return n === 1 ? '1re' : `${n}e`;
+    case 'es': return `${n}.º`;
+    case 'pt': return `${n}º`;
+    default:   return String(n);            // zh-Hans / zh-Hant
   }
 }
 
@@ -59,6 +74,12 @@ export default function MoodCalendar({ headline }: Props) {
   const [cursor, setCursor] = useState(() => new Date());
   const monthLabel = cursor.toLocaleDateString(localeFor(lang), { month: 'long', year: 'numeric' });
   const grid = monthGrid(cursor);
+  // Chunk into explicit 7-day rows. Rendering each week as its own row of
+  // flex:1 cells guarantees exactly 7 columns — the old single flex-wrap grid
+  // used width:(100/7)% cells, which round UP on-device and overflow 100 %, so
+  // the 7th (Saturday) cell wrapped and every row showed only 6 days.
+  const weeks: (Cell | null)[][] = [];
+  for (let i = 0; i < grid.length; i += 7) weeks.push(grid.slice(i, i + 7));
   const today = new Date();
   const todayKey = isoKey(today);
   const todayMood = picks[todayKey];
@@ -67,7 +88,7 @@ export default function MoodCalendar({ headline }: Props) {
     setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + delta, 1));
   };
 
-  const headlineText = headline ?? `You've completed\nyour ${ordinal(totalCheckIns)} check-in.`;
+  const headlineText = headline ?? t('moodFlow.calendar.headline', { ordinal: ordinalFor(lang, totalCheckIns) });
 
   return (
     <View>
@@ -92,29 +113,33 @@ export default function MoodCalendar({ headline }: Props) {
       </View>
 
       <View style={styles.grid}>
-        {grid.map((cell, i) => {
-          if (!cell) return <View key={i} style={styles.cell} />;
-          const key = isoKey(cell.date);
-          const isToday = key === todayKey;
-          // Light gray for days the user hasn't reached yet (strictly after
-          // today) — visually demotes them so the eye lands on the present.
-          const isFuture = cell.date > today && !isToday;
-          const cellMood = picks[key];
-          return (
-            <View key={i} style={styles.cell}>
-              <View style={styles.bubble}>
-                {cellMood ? <MoodEmoji mood={cellMood} size={24} /> : null}
-              </View>
-              <View style={[styles.numWrap, isToday && styles.numToday]}>
-                <Text style={[
-                  styles.num,
-                  isToday && { color: '#FFFFFF', fontWeight: '700' },
-                  isFuture && styles.numFuture,
-                ]}>{cell.day}</Text>
-              </View>
-            </View>
-          );
-        })}
+        {weeks.map((week, wi) => (
+          <View key={wi} style={styles.weekRow}>
+            {week.map((cell, ci) => {
+              if (!cell) return <View key={ci} style={styles.cell} />;
+              const key = isoKey(cell.date);
+              const isToday = key === todayKey;
+              // Light gray for days the user hasn't reached yet (strictly after
+              // today) — visually demotes them so the eye lands on the present.
+              const isFuture = cell.date > today && !isToday;
+              const cellMood = picks[key];
+              return (
+                <View key={ci} style={styles.cell}>
+                  <View style={styles.bubble}>
+                    {cellMood ? <MoodEmoji mood={cellMood} size={24} /> : null}
+                  </View>
+                  <View style={[styles.numWrap, isToday && styles.numToday]}>
+                    <Text style={[
+                      styles.num,
+                      isToday && { color: '#FFFFFF', fontWeight: '700' },
+                      isFuture && styles.numFuture,
+                    ]}>{cell.day}</Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        ))}
       </View>
       {/* "Your mood on this day is" card removed per user — the emojis on
           the calendar already convey the same information, so the panel was
@@ -174,8 +199,11 @@ const styles = StyleSheet.create({
     color: TXTSUB,
     letterSpacing: 1,
   },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 2 },
-  cell: { width: `${100 / 7}%`, alignItems: 'center', paddingVertical: 2 },
+  grid: { marginTop: 2 },
+  weekRow: { flexDirection: 'row' },
+  // flex:1 → each row splits into exactly 7 equal columns, aligned 1:1 with the
+  // flex:1 weekday headers above (no sub-pixel overflow / wrapping).
+  cell: { flex: 1, alignItems: 'center', paddingVertical: 2 },
   bubble: {
     width: 26, height: 26,
     alignItems: 'center', justifyContent: 'center',

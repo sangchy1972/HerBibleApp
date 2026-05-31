@@ -3,6 +3,13 @@ export const LAV = '#866BC0';
 export const TXT = '#1E1B2E';
 export const TXTSUB = 'rgba(30,27,46,0.50)';
 export const BG = '#FBF7F6';
+// Canonical app screen background. Pinned to React Navigation v7's default
+// scene colour (rgb(242,242,242)) — the exact neutral grey the Prayer / Plan /
+// Profile tabs already render — and fed into both the NavigationContainer theme
+// (App.tsx) and the Bible reader's "default" theme so every screen shares one
+// color code. (The reader previously used a warm #F0EEEB that read yellowish
+// next to these.)
+export const SCREEN_BG = '#F2F2F2';
 export const P = 17; // horizontal padding
 
 // `serif*` aliases all map to **Source Serif 4 Variable** — the same

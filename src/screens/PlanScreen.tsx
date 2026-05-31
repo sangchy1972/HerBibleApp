@@ -14,7 +14,7 @@ import { useActivity } from '../state/ActivityContext';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import { usePlanCompletion } from '../state/PlanCompletionContext';
 import { PLAN_SECTIONS, PLAN_SECTION_LABELS, EMOTION_TAGS, type PlanSectionId } from '../constants/plansApi';
-import PlanCover from '../components/PlanCover';
+import PlanCover, { PLAN_ROW_COVER } from '../components/PlanCover';
 import type { PlanSummary } from '../constants/featuredPlansSummary';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
 import { detailStyles as ds } from './planDetailStyles';
@@ -28,7 +28,7 @@ type Plan = typeof PLANS_EXPLORE[0];
 const TABS = ['current', 'explore', 'completed'] as const;
 type TabId = typeof TABS[number];
 
-function ImagePlaceholder({ ac, width = 136, height = 97, radius = 7 }: {                  // +10 % from 124×88
+function ImagePlaceholder({ ac, width = PLAN_ROW_COVER.width, height = PLAN_ROW_COVER.height, radius = PLAN_ROW_COVER.radius }: {
   ac: string; width?: number; height?: number; radius?: number;
 }) {
   return (
@@ -47,9 +47,7 @@ function CorpusPlanRow({ plan, onPress }: { plan: PlanSummary; onPress: () => vo
       <PlanCover
         slug={plan.slug}
         gradient={[plan.colorPrimary, plan.colorSecondary]}
-        width={136}
-        height={97}
-        radius={7}
+        {...PLAN_ROW_COVER}
       />
       <View style={styles.planMeta}>
         <Text style={styles.planDays}>{t('plan.row.daysLabel', { n: plan.duration })}</Text>
@@ -415,9 +413,7 @@ export default function PlanScreen() {
                         <PlanCover
                           slug={p.slug}
                           gradient={[p.colorPrimary, p.colorSecondary]}
-                          width={116}
-                          height={82}
-                          radius={7}
+                          {...PLAN_ROW_COVER}
                         />
                         <View style={styles.planMeta}>
                           <Text style={styles.planDays}>{t('plan.row.dayOfTotal', { n: done, total })}</Text>
@@ -426,11 +422,17 @@ export default function PlanScreen() {
                             <View style={[styles.progressFill, { width: `${pct}%`, backgroundColor: ROSE }]} />
                           </View>
                         </View>
+                        {/* Continue affordance is a compact chevron, not a
+                            pill — the labelled button crowded the title out of
+                            its two lines. The whole row is already tappable. */}
                         <TouchableOpacity
                           onPress={() => openCorpusPlan(p.slug)}
-                          style={[styles.startBtn, { backgroundColor: ROSE }]}
+                          style={styles.continueArrow}
+                          hitSlop={10}
+                          accessibilityRole="button"
+                          accessibilityLabel={t('plan.continue')}
                         >
-                          <Text style={[styles.startBtnText, { color: '#fff' }]}>{t('plan.continue')}</Text>
+                          <Feather name="chevron-right" size={26} color={ROSE} />
                         </TouchableOpacity>
                       </TouchableOpacity>
                     );
@@ -473,7 +475,7 @@ export default function PlanScreen() {
                     />
                     <View style={styles.featuredOverlay}>
                       <View style={styles.featuredTag}>
-                        <Text style={styles.featuredTagText}>{(plan.duration === 1 ? t('plan.dayCount.one') : t('plan.dayCount.other', { n: plan.duration })).toUpperCase()}</Text>
+                        <Text style={styles.featuredTagText}>{plan.duration === 1 ? t('plan.dayCount.one') : t('plan.dayCount.other', { n: plan.duration })}</Text>
                       </View>
                       <Text style={styles.featuredTitle} numberOfLines={2}>{plan.title}</Text>
                     </View>
@@ -486,7 +488,7 @@ export default function PlanScreen() {
                   scrolls HORIZONTALLY: each pill sizes to its own label (no
                   flex:1, no numberOfLines truncation), so the full word always
                   reads — the old fixed 5-up grid squashed them to "WE…/FE…". */}
-              <Text style={styles.bigSectionLabel}>{t('plansMeta.section.emotions')}</Text>
+              <Text style={[styles.bigSectionLabel, { marginTop: -7 }]}>{t('plansMeta.section.emotions')}</Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -547,9 +549,7 @@ export default function PlanScreen() {
                         <PlanCover
                           slug={p.slug}
                           gradient={[p.colorPrimary, p.colorSecondary]}
-                          width={136}
-                          height={97}
-                          radius={7}
+                          {...PLAN_ROW_COVER}
                         />
                         <View style={styles.checkBadge}>
                           <Feather name="check" size={12} color="#fff" />
@@ -680,9 +680,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 19,
     paddingVertical: 9,
     borderRadius: 19,
-    backgroundColor: 'rgba(30,27,46,0.06)',
+    backgroundColor: ROSE,                                                      // app accent (primary action) per user — was grey
   },
-  startBtnText: { fontSize: 14, fontWeight: '700', fontFamily: FONTS.latoBold, color: TXT },
+  startBtnText: { fontSize: 14, fontWeight: '700', fontFamily: FONTS.latoBold, color: '#fff' },
+  // Compact "continue" affordance for in-progress rows — replaces the wide
+  // pill button so the plan title keeps its two full lines.
+  continueArrow: { flexShrink: 0, paddingLeft: 8, paddingVertical: 8, alignItems: 'center', justifyContent: 'center' },
   checkBadge: {
     position: 'absolute',
     top: 6,
@@ -715,9 +718,9 @@ const styles = StyleSheet.create({
   featuredTag: {
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(0,0,0,0.45)',
-    borderRadius: 7.8,                                                          // +30 % (was 6)
+    borderRadius: 10.1,                                                         // +30 % more (was 7.8)
     paddingHorizontal: 10,
-    paddingVertical: 4,                                                         // +20 % taller (was 2)
+    paddingVertical: 4.4,                                                       // +10 % more (was 4)
   },
   featuredTagText: {
     fontSize: 10,
@@ -727,9 +730,9 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   featuredTitle: {
-    fontSize: 17.9,                                                            // +5 % (was 17)
-    fontWeight: '600',
-    fontFamily: FONTS.loraBold,
+    fontSize: 16.6,                                                            // -7 % (was 17.9)
+    fontWeight: '400',                                                         // regular per user (loraBold→lora, since loraBold must pair with 600)
+    fontFamily: FONTS.lora,
     color: '#fff',
     lineHeight: 22,
     marginBottom: -3,                                                          // pull 3 px closer to the card bottom
@@ -746,19 +749,19 @@ const styles = StyleSheet.create({
   emotionGrid: { flexDirection: 'column', gap: 10 },
   emotionRow: { flexDirection: 'row', gap: 11 },
   emotionTag: {
-    paddingHorizontal: 22,
-    paddingVertical: 12,                                                        // -20 % height (was 15)
-    minHeight: 45,                                                             // -20 % (was 56)
-    borderRadius: 14.4,                                                         // +20 % (was 12)
+    paddingHorizontal: 20,
+    paddingVertical: 10.8,                                                      // -10 % more (was 12)
+    minHeight: 40,                                                            // -10 % more (was 45)
+    borderRadius: 18,                                                          // +25 % more (was 14.4) — near pill
     alignItems: 'center',
     justifyContent: 'center',
   },
   emotionLabel: {
-    fontSize: 14,                                                               // +10 % from 12.5
+    fontSize: 12.6,                                                            // -10 % (was 14)
     fontWeight: '800',
     fontFamily: FONTS.latoBold,
     color: '#fff',
-    letterSpacing: 1.4,
+    letterSpacing: 1.2,
   },
   // 30 → 25 — the -5 between consecutive category sections lets Personal
   // Growth, Roles & Identity, and Life Seasons sit a touch closer to the
@@ -773,13 +776,13 @@ const styles = StyleSheet.create({
   },
   // catName matches the unified section title (20). Was 21 (-5 % per spec).
   catName: { fontSize: 20, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT },
-  seeAll: { fontSize: 15.4, fontFamily: FONTS.lato },                          // +10 %
+  seeAll: { fontSize: 15.4, fontWeight: '700', fontFamily: FONTS.latoBold },   // bold per user
   catDesc: { fontSize: 14.3, fontFamily: FONTS.lato, color: TXTSUB, marginBottom: 14 },  // +10 %
   emptyHint: { textAlign: 'center', paddingVertical: 23, alignItems: 'center' },
-  emptyTitle: { fontSize: 16.2, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT, marginBottom: 5 },   // +8 % (was 15)
-  emptyDesc: { fontSize: 15.1, fontFamily: FONTS.lato, color: TXTSUB, textAlign: 'center' },                    // +8 % (was 14)
+  emptyTitle: { fontSize: 17.3, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT, marginBottom: 5 },   // +8 % then +7 % (was 15)
+  emptyDesc: { fontSize: 16.2, fontFamily: FONTS.lato, color: TXTSUB, textAlign: 'center' },                    // +8 % then +7 % (was 14)
   exploreCta: {
-    marginTop: 16,
+    marginTop: 21,                                                             // +5 px per user (was 16)
     paddingHorizontal: 26,
     paddingVertical: 12,
     borderRadius: 11,

@@ -18,6 +18,12 @@ type CoverShape =
   | null
   | undefined;
 
+// Unified plan-row cover dimensions. Shared across every list row — the Plan
+// tab's Current / Explore / Completed sections AND the See-All category screen
+// (PlanCategoryScreen) — so a plan thumbnail reads identically wherever it
+// appears. Spread onto <PlanCover {...PLAN_ROW_COVER} />.
+export const PLAN_ROW_COVER = { width: 118, height: 83, radius: 7 } as const;
+
 interface Props {
   /** Optional cover record (bundled summary uses string; CDN summary uses object). */
   cover?: CoverShape;

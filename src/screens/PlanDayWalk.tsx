@@ -4,8 +4,9 @@ import {
   useWindowDimensions, Platform, type NativeSyntheticEvent, type NativeScrollEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, Easing, useSharedValue, useAnimatedStyle, withTiming, type SharedValue } from 'react-native-reanimated';
 import * as Clipboard from 'expo-clipboard';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { ROSE, LAV, TXT, TXTSUB, P, FONTS, SERIF_BODY } from '../constants/theme';
@@ -17,7 +18,8 @@ import { useSavedVerses } from '../state/SavedVersesContext';
 import { bookCodeToSlug, parseVerseRange } from '../constants/bibleBookCode';
 import { localizeBookName } from '../constants/bibleBookNames';
 import { bibleAudioUrl } from '../constants/bibleAudioCdn';
-import { fetchChapter, type Chapter, type Verse } from '../services/bibleService';
+import { fetchChapter, fetchCommentaryChapter, type Chapter, type Verse } from '../services/bibleService';
+import { CORPUS_CDN_ROOT } from '../constants/corpus';
 import VerseNoteSheet from '../components/VerseNoteSheet';
 import ShareVerseSheet from '../components/ShareVerseSheet';
 import { HL_COLORS, getHighlightColor } from '../constants/highlightColors';
@@ -66,6 +68,8 @@ interface SelectedVerse {
   chapter: number;
   verse: number;
   text: string;
+  anchorY?: number;   // window-Y of the tapped verse — popup anchors to it
+  anchorH?: number;   // tapped verse height
 }
 
 export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<'PlanDayWalk'>) {
@@ -80,6 +84,25 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
 
   const [plan, setPlan] = useState<FullPlan | null>(loadedPlans[slug] || null);
   const [error, setError] = useState<string | null>(null);
+
+  // Mirror the user's Bible-reader typography (size / line-height / paragraph
+  // spacing) so plan reading copy matches the reader exactly. Font face is
+  // pinned to Merriweather per design. Defaults match the reader's new-user
+  // defaults (18 / 1.8 / 24).
+  const [readPrefs, setReadPrefs] = useState({ fontSize: 18, lineH: 1.8, paragraphSpacing: 24 });
+  useEffect(() => {
+    AsyncStorage.getItem('bible:reader-settings:v1').then(raw => {
+      if (!raw) return;
+      try {
+        const s = JSON.parse(raw);
+        setReadPrefs(p => ({
+          fontSize: typeof s.fontSize === 'number' ? s.fontSize : p.fontSize,
+          lineH: typeof s.lineH === 'number' ? s.lineH : p.lineH,
+          paragraphSpacing: typeof s.paragraphSpacing === 'number' ? s.paragraphSpacing : p.paragraphSpacing,
+        }));
+      } catch { /* keep defaults */ }
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (plan) return;
@@ -130,9 +153,9 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
     return null;
   }, [pages]);
 
-  const audioSrc = anchorChapter
-    ? bibleAudioUrl(translation.code, anchorChapter.bookSlug, anchorChapter.chapter)
-    : '';
+  // Narration isn't wired in the plan reader yet (the play button was removed),
+  // so don't load any audio — avoids a 404 fetch on every open.
+  const audioSrc = '';
   const audioPlayer = useAudioPlayer(audioSrc || null);
   const audioStatus = useAudioPlayerStatus(audioPlayer);
   useEffect(() => () => {
@@ -144,7 +167,7 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
   };
 
   // Pager state
-  const { width: winWidth } = useWindowDimensions();
+  const { width: winWidth, height: winHeight } = useWindowDimensions();
   const scrollRef = useRef<ScrollView>(null);
   const [page, setPage] = useState(0);
   const goTo = (i: number) => {
@@ -157,6 +180,7 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
     if (i !== page) {
       setPage(i);
       setSelected(null);                                                          // drop verse popup on page change
+      setExploreTarget(null);                                                     // and close any open Explore card
     }
   };
 
@@ -164,6 +188,9 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
   // the verse_wall page index so user can tap any visible verse on a
   // verse page, not just the focused one.
   const [selected, setSelected] = useState<SelectedVerse | null>(null);
+  // Verse whose inline Explore commentary is open (mirrors the Bible reader:
+  // Explore expands a CDN-fetched explanation in place rather than navigating).
+  const [exploreTarget, setExploreTarget] = useState<{ bookSlug: string; chapter: number; verse: number } | null>(null);
   const [noteVerse, setNoteVerse] = useState<{ ref: string; text: string } | null>(null);
   const [shareVerse, setShareVerse] = useState<{ ref: string; text: string } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -184,8 +211,9 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
     }
   };
   const onPrev = () => {
+    // First page → no-op. The left chevron is disabled + greyed there; it must
+    // NOT double as a "return" button (the X close button is the way out).
     if (page > 0) goTo(page - 1);
-    else navigation.goBack();
   };
 
   // Current page's chapter:verse reference for the bottom pill label.
@@ -234,7 +262,7 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
       <View style={{ paddingTop: insets.top + 10, paddingHorizontal: P }}>
         <ProgressBar count={pages.length} index={page} />
       </View>
-      <CloseBtn onPress={() => navigation.goBack()} top={insets.top + 14} />
+      <CloseBtn onPress={() => navigation.goBack()} top={insets.top + 24} />{/* +10 px lower so it clears the progress bar */}
 
       <ScrollView
         ref={scrollRef}
@@ -251,6 +279,10 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
               page={p}
               dayTitle={dayContent.title}
               isFirstPage={i === 0}
+              active={i === page}
+              readPrefs={readPrefs}
+              exploreTarget={exploreTarget}
+              onCloseExplore={() => setExploreTarget(null)}
               insetTop={20}
               insetBottom={insets.bottom + 110}
               translationCode={translation.code}
@@ -262,13 +294,26 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
         ))}
       </ScrollView>
 
-      {/* Verse popup — fixed near the bottom above the nav bar so it never
-          covers the verse being acted on. */}
-      {selected && (
+      {/* Verse popup — anchored to the tapped verse (like the Bible reader):
+          sits just below it, or flips above when that'd collide with the nav
+          bar. Falls back to a fixed bottom slot if no anchor was measured. */}
+      {selected && (() => {
+        const POPUP_H = 168;                            // approx height (color row + actions)
+        const navZone = insets.bottom + 88;             // bottom bar + breathing room
+        const minTop = insets.top + 52;                 // clear the progress bar + close
+        let top: number | null = null;
+        if (selected.anchorY != null) {
+          const below = selected.anchorY + (selected.anchorH ?? 24) + 8;
+          top = (below + POPUP_H <= winHeight - navZone)
+            ? below                                       // room below the verse
+            : selected.anchorY - POPUP_H - 8;             // else flip above
+          top = Math.max(minTop, Math.min(top, winHeight - navZone - POPUP_H));
+        }
+        return (
         <Animated.View
           entering={FadeIn.duration(160)}
           exiting={FadeOut.duration(160)}
-          style={[styles.popup, { bottom: insets.bottom + 78 }]}
+          style={[styles.popup, top != null ? { top } : { bottom: insets.bottom + 78 }]}
         >
           <View style={styles.colorRow}>
             {HL_COLORS.map(c => {
@@ -329,19 +374,9 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
                     setSelected(null);
                   } },
                 { key: 'Explore', icon: 'zoom-in' as const, onPress: () => {
-                    // Pass the user through to the full Bible reader where
-                    // Explore opens its inline commentary card — duplicating
-                    // that flow here would mean porting fetchCommentaryChapter.
-                    navigation.navigate('PlanVerseRead', {
-                      focus: {
-                        bookSlug: selected.bookSlug,
-                        chapter: selected.chapter,
-                        verseStart: selected.verse,
-                        verseEnd: selected.verse,
-                      },
-                      planSlug: slug,
-                      day,
-                    });
+                    // Expand the CDN-fetched explanation INLINE (same flow as
+                    // the Bible reader) instead of navigating to another screen.
+                    setExploreTarget({ bookSlug: selected.bookSlug, chapter: selected.chapter, verse: selected.verse });
                     setSelected(null);
                   } },
               ];
@@ -358,29 +393,25 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
             })()}
           </View>
         </Animated.View>
-      )}
+        );
+      })()}
 
-      {/* Bottom: round play button + chapter:verse pill with prev/next */}
-      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 8 }]}>
-        <TouchableOpacity
-          onPress={toggleAudio}
-          activeOpacity={0.8}
-          disabled={!anchorChapter}
-          style={[styles.playBtn, !anchorChapter && { opacity: 0.4 }]}
-          hitSlop={8}
-        >
-          <Feather name={audioStatus.playing ? 'pause' : 'play'} size={18} color={TXT} />
-        </TouchableOpacity>
-
+      {/* Bottom: white pill (back chevron + chapter:verse) + a SEPARATE round
+          next button to its right (independent of the pill, per user). The
+          play button was removed — no narration audio is wired yet. */}
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 13 }]}>
         <View style={styles.pillNav}>
-          <TouchableOpacity onPress={onPrev} style={styles.pillNavBtn} hitSlop={6}>
-            <Feather name="chevron-left" size={20} color={TXT} />
+          <TouchableOpacity onPress={onPrev} disabled={page === 0} style={styles.pillNavBtn} hitSlop={6}>
+            {/* First page → greyed + disabled (can't go back a page). */}
+            <Feather name="chevron-left" size={20} color={page === 0 ? 'rgba(30,27,46,0.25)' : TXT} />
           </TouchableOpacity>
           <Text style={styles.pillRef} numberOfLines={1}>{currentRef}</Text>
-          <TouchableOpacity onPress={onNext} style={[styles.pillNavBtn, styles.pillNavBtnNext]} hitSlop={6}>
-            <Feather name={isLast ? 'check' : 'chevron-right'} size={20} color="#fff" />
-          </TouchableOpacity>
+          {/* Spacer matching the chevron width so the label stays centered. */}
+          <View style={styles.pillNavBtn} pointerEvents="none" />
         </View>
+        <TouchableOpacity onPress={onNext} style={styles.nextBtn} hitSlop={8} activeOpacity={0.85}>
+          <Feather name={isLast ? 'check' : 'chevron-right'} size={22} color="#fff" />
+        </TouchableOpacity>
       </View>
 
       {/* Note + Share sheets — same components the Bible reader uses, so
@@ -453,13 +484,31 @@ function CloseBtn({ onPress, top }: { onPress: () => void; top: number }) {
 // prayer) or a verse page — which fetches the chapter so it can render
 // the surrounding context dimmed, focus the target range, and surface
 // the same tap-popup the Bible reader has.
+interface ReadPrefs { fontSize: number; lineH: number; paragraphSpacing: number; }
+
+// Staggered fade + slide-up wrapper. All wrappers share one `anim` (0→1 over
+// 0.6 s); each starts a little later by `index` so the blocks reveal top-to-
+// bottom, sliding up into place. Used to animate a page on entry / page switch.
+function Stagger({ anim, index, style, children }: { anim: SharedValue<number>; index: number; style?: any; children: React.ReactNode }) {
+  const st = useAnimatedStyle(() => {
+    const start = Math.min(0.55, index * 0.1);
+    const local = Math.max(0, Math.min(1, (anim.value - start) / Math.max(0.001, 1 - start)));
+    return { opacity: local, transform: [{ translateY: (1 - local) * 16 }] };
+  });
+  return <Animated.View style={[style, st]}>{children}</Animated.View>;
+}
+
 function PageContent({
-  page, dayTitle, isFirstPage, insetTop, insetBottom,
+  page, dayTitle, isFirstPage, active, readPrefs, exploreTarget, onCloseExplore, insetTop, insetBottom,
   translationCode, translationSource, getColor, onSelectVerse,
 }: {
   page: Page;
   dayTitle: string;
   isFirstPage: boolean;
+  active: boolean;
+  readPrefs: ReadPrefs;
+  exploreTarget: { bookSlug: string; chapter: number; verse: number } | null;
+  onCloseExplore: () => void;
   insetTop: number;
   insetBottom: number;
   translationCode: string;
@@ -467,6 +516,19 @@ function PageContent({
   getColor: (tr: string, b: string, ch: number, v: number) => string | undefined;
   onSelectVerse: (sv: SelectedVerse) => void;
 }) {
+  // Replays the staggered entrance every time this page becomes the active one
+  // (initial mount + each swipe to it). 0.6 s total per user.
+  const anim = useSharedValue(0);
+  useEffect(() => {
+    if (active) {
+      anim.value = 0;
+      anim.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
+    }
+  }, [active, anim]);
+  const base = isFirstPage ? 1 : 0;          // dayTitle occupies stagger slot 0 on the first page
+  // Body copy mirrors the Bible reader's typography, in Merriweather.
+  const bodyType = { fontFamily: FONTS.merriweather, fontSize: readPrefs.fontSize, lineHeight: readPrefs.fontSize * readPrefs.lineH };
+
   if (page.kind === 'scripture_focus') {
     const v = page.section.verse;
     const bookSlug = bookCodeToSlug(v.bookCode);
@@ -477,24 +539,26 @@ function PageContent({
     };
     return (
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.pageScroll, { paddingTop: insetTop, paddingBottom: insetBottom }]}>
-        {isFirstPage && <Text style={styles.dayTitle}>{dayTitle}</Text>}
-        <Text style={styles.sectionCaption}>{page.section.heading.toUpperCase()}</Text>
-        <Text style={styles.verseRef}>{v.display}</Text>
-        <TouchableOpacity activeOpacity={0.85} onPress={onTap}>
-          <Text style={styles.verseBodyLarge}>&ldquo;{v.text}&rdquo;</Text>
-        </TouchableOpacity>
+        {isFirstPage && <Stagger anim={anim} index={0}><Text style={styles.dayTitle}>{dayTitle}</Text></Stagger>}
+        <Stagger anim={anim} index={base}><Text style={styles.sectionCaption}>{page.section.heading.toUpperCase()}</Text></Stagger>
+        <Stagger anim={anim} index={base + 1}><Text style={styles.verseRef}>{v.display}</Text></Stagger>
+        <Stagger anim={anim} index={base + 2}>
+          <TouchableOpacity activeOpacity={0.85} onPress={onTap}>
+            <Text style={[styles.verseBodyLarge, bodyType]}>&ldquo;{v.text}&rdquo;</Text>
+          </TouchableOpacity>
+        </Stagger>
       </ScrollView>
     );
   }
   if (page.kind === 'teaching') {
     return (
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.pageScroll, { paddingTop: insetTop, paddingBottom: insetBottom }]}>
-        {isFirstPage && <Text style={styles.dayTitle}>{dayTitle}</Text>}
-        <Text style={[styles.sectionCaption, styles.captionWide]}>{page.section.heading.toUpperCase()}</Text>
+        {isFirstPage && <Stagger anim={anim} index={0}><Text style={styles.dayTitle}>{dayTitle}</Text></Stagger>}
+        <Stagger anim={anim} index={base}><Text style={[styles.sectionCaption, styles.captionWide]}>{page.section.heading.toUpperCase()}</Text></Stagger>
         {page.section.paragraphs.map((para, i) => (
-          <Text key={i} style={[styles.paragraph, i > 0 && { marginTop: 16 }]}>
-            {renderMarkdownBolds(para)}
-          </Text>
+          <Stagger key={i} anim={anim} index={base + 1 + i} style={i > 0 ? { marginTop: readPrefs.paragraphSpacing } : undefined}>
+            <Text style={[styles.paragraph, bodyType]}>{renderMarkdownBolds(para)}</Text>
+          </Stagger>
         ))}
       </ScrollView>
     );
@@ -502,9 +566,9 @@ function PageContent({
   if (page.kind === 'prayer') {
     return (
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.pageScroll, { paddingTop: insetTop, paddingBottom: insetBottom }]}>
-        {isFirstPage && <Text style={styles.dayTitle}>{dayTitle}</Text>}
-        <Text style={[styles.sectionCaption, styles.captionWide]}>{page.section.heading.toUpperCase()}</Text>
-        <Text style={styles.prayerBody}>{page.section.body}</Text>
+        {isFirstPage && <Stagger anim={anim} index={0}><Text style={styles.dayTitle}>{dayTitle}</Text></Stagger>}
+        <Stagger anim={anim} index={base}><Text style={[styles.sectionCaption, styles.captionWide]}>{page.section.heading.toUpperCase()}</Text></Stagger>
+        <Stagger anim={anim} index={base + 1}><Text style={[styles.prayerBody, bodyType]}>{page.section.body}</Text></Stagger>
       </ScrollView>
     );
   }
@@ -517,6 +581,9 @@ function PageContent({
       verseEnd={page.verseEnd}
       translationCode={translationCode}
       translationSource={translationSource}
+      readPrefs={readPrefs}
+      exploreTarget={exploreTarget}
+      onCloseExplore={onCloseExplore}
       insetTop={insetTop}
       insetBottom={insetBottom}
       getColor={getColor}
@@ -527,10 +594,14 @@ function PageContent({
 
 function VersePage({
   bookSlug, chapter, verseStart, verseEnd,
-  translationCode, translationSource, insetTop, insetBottom, getColor, onSelectVerse,
+  translationCode, translationSource, readPrefs, exploreTarget, onCloseExplore,
+  insetTop, insetBottom, getColor, onSelectVerse,
 }: {
   bookSlug: string; chapter: number; verseStart: number; verseEnd: number;
   translationCode: string; translationSource: string;
+  readPrefs: ReadPrefs;
+  exploreTarget: { bookSlug: string; chapter: number; verse: number } | null;
+  onCloseExplore: () => void;
   insetTop: number; insetBottom: number;
   getColor: (tr: string, b: string, ch: number, v: number) => string | undefined;
   onSelectVerse: (sv: SelectedVerse) => void;
@@ -540,6 +611,9 @@ function VersePage({
   const [loadErr, setLoadErr] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const focusYRef = useRef<number | null>(null);
+  // Per-verse view refs so the popup can anchor to the exact verse the user
+  // tapped (window coords via measureInWindow), like the Bible reader.
+  const verseRefs = useRef<Record<number, View | null>>({});
 
   useEffect(() => {
     let alive = true;
@@ -549,6 +623,33 @@ function VersePage({
     return () => { alive = false; };
   }, [translationCode, translationSource, bookSlug, chapter]);
 
+  // Inline Explore commentary — SAME CDN endpoint + AsyncStorage cache + 5 s
+  // timeout as the Bible reader (fetchCommentaryChapter). Only this VersePage's
+  // chapter fetches, and only when its verse is the Explore target.
+  const exploreMatch = !!exploreTarget && exploreTarget.bookSlug === bookSlug && exploreTarget.chapter === chapter;
+  const [commentaryState, setCommentaryState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [commentaryByVerse, setCommentaryByVerse] = useState<Record<number, string>>({});
+  const loadedKey = useRef<string | null>(null);
+  const commentaryKey = `${translationCode}:${bookSlug}:${chapter}`;
+  useEffect(() => {
+    if (!exploreMatch) return;
+    if (loadedKey.current === commentaryKey && commentaryState === 'ready') return;
+    let cancelled = false;
+    setCommentaryState('loading');
+    const timeout = new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000));
+    Promise.race([fetchCommentaryChapter(CORPUS_CDN_ROOT, translationCode, bookSlug, chapter), timeout])
+      .then((data) => {
+        if (cancelled) return;
+        const lookup: Record<number, string> = {};
+        for (const vv of (data as Chapter).verses) lookup[vv.verse] = vv.text;
+        setCommentaryByVerse(lookup);
+        loadedKey.current = commentaryKey;
+        setCommentaryState('ready');
+      })
+      .catch(() => { if (!cancelled) setCommentaryState('error'); });
+    return () => { cancelled = true; };
+  }, [exploreMatch, commentaryKey, translationCode, bookSlug, chapter]);
+
   // `Chapter` doesn't carry the book display name (just the verses), so
   // we fall back to the slug as the English title and let `localizeBookName`
   // override it per UI language.
@@ -556,6 +657,9 @@ function VersePage({
     () => localizeBookName(translationCode, bookSlug, prettifySlug(bookSlug)),
     [translationCode, bookSlug],
   );
+
+  // Verse body matches the Bible reader: Merriweather at the reader's size + line-height.
+  const bodyType = { fontFamily: FONTS.merriweather, fontSize: readPrefs.fontSize, lineHeight: readPrefs.fontSize * readPrefs.lineH };
 
   if (loadErr) {
     return (
@@ -591,6 +695,7 @@ function VersePage({
         return (
           <View
             key={v.verse}
+            ref={(r) => { verseRefs.current[v.verse] = r; }}
             onLayout={inRange && v.verse === verseStart
               ? (e) => {
                   if (focusYRef.current == null) {
@@ -605,10 +710,20 @@ function VersePage({
           >
             <TouchableOpacity
               activeOpacity={0.7}
-              onPress={() => onSelectVerse({ bookSlug, bookTitle, chapter, verse: v.verse, text: v.text })}
+              onPress={() => {
+                const sel = { bookSlug, bookTitle, chapter, verse: v.verse, text: v.text };
+                const node = verseRefs.current[v.verse];
+                if (node && typeof node.measureInWindow === 'function') {
+                  node.measureInWindow((_x: number, y: number, _w: number, h: number) =>
+                    onSelectVerse({ ...sel, anchorY: y, anchorH: h }));
+                } else {
+                  onSelectVerse(sel);
+                }
+              }}
             >
               <Text style={[
                 styles.bibleVerse,
+                bodyType,                                                           // Merriweather @ reader size/line-height
                 { color: inRange ? TXT : 'rgba(30,27,46,0.35)' },                  // dim verses outside the focus range
                 hlColor ? { backgroundColor: hlColor, borderRadius: 6 } : null,
               ]}>
@@ -616,6 +731,42 @@ function VersePage({
                 {v.text}
               </Text>
             </TouchableOpacity>
+
+            {/* Inline Explore card — expands under the tapped verse (no nav),
+                same look + CDN flow as the Bible reader. */}
+            {exploreMatch && exploreTarget!.verse === v.verse && (
+              <View style={styles.explainInline}>
+                <View style={styles.explainHeader}>
+                  <Text style={styles.explainLabel}>{t('bible.explanation.title')}</Text>
+                  <TouchableOpacity onPress={onCloseExplore} hitSlop={10}>
+                    <Feather name="x" size={18} color={TXTSUB} />
+                  </TouchableOpacity>
+                </View>
+                {commentaryState === 'loading' && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 }}>
+                    <ActivityIndicator size="small" color={ROSE} />
+                    <Text style={{ fontFamily: FONTS.merriweather, fontSize: readPrefs.fontSize - 2, color: TXTSUB }}>
+                      {t('bible.explanation.loading')}
+                    </Text>
+                  </View>
+                )}
+                {commentaryState === 'error' && (
+                  <Text style={{ fontFamily: FONTS.merriweather, fontSize: readPrefs.fontSize - 2, color: TXTSUB }}>
+                    {t('bible.explanation.error')}
+                  </Text>
+                )}
+                {commentaryState === 'ready' && (
+                  <Text style={{
+                    fontFamily: FONTS.merriweather,
+                    fontSize: readPrefs.fontSize - 1,
+                    lineHeight: (readPrefs.fontSize - 1) * readPrefs.lineH,
+                    color: ROSE,
+                  }}>
+                    {commentaryByVerse[v.verse] || t('bible.explanation.none')}
+                  </Text>
+                )}
+              </View>
+            )}
           </View>
         );
       })}
@@ -672,14 +823,14 @@ const styles = StyleSheet.create({
   // Page content
   pageScroll: { paddingHorizontal: P + 4 },
   dayTitle: {
-    fontFamily: FONTS.sansBold, fontSize: 25, fontWeight: '700', color: TXT,
-    lineHeight: 32, letterSpacing: 0.2, marginBottom: 12,
+    fontFamily: FONTS.loraBold, fontSize: 25, fontWeight: '600', color: TXT,    // Lora 600 per user (loraBold pairs with 600, not 700)
+    lineHeight: 33, letterSpacing: 0.2, marginTop: 15, marginBottom: 22,         // +15 px before, +10 px after (12 → 22) per user
   },
   sectionCaption: {
     fontSize: 13.5, fontWeight: '800', fontFamily: FONTS.latoBold, color: ROSE,
     letterSpacing: 1.6, marginBottom: 12,
   },
-  captionWide: { marginBottom: 22 },
+  captionWide: { fontSize: 15.5, marginTop: 20, marginBottom: 22 },             // +15 % font (13.5→15.5) + 20 px top per user (teaching/prayer headings)
   verseRef: { fontSize: 18.4, fontWeight: '700', fontFamily: FONTS.loraBold, color: ROSE, marginBottom: 26, letterSpacing: 0.4 },
   verseBodyLarge: {
     fontFamily: FONTS.serif, fontVariationSettings: SERIF_BODY,
@@ -704,6 +855,19 @@ const styles = StyleSheet.create({
   bibleVerseNum: {
     fontWeight: '700', fontFamily: FONTS.latoBold, fontSize: 14,
   },
+
+  // Inline Explore commentary card — mirrors BibleScreen.styles.explainInline.
+  explainInline: {
+    marginTop: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderLeftWidth: 3,
+    borderLeftColor: ROSE,
+    backgroundColor: 'rgba(232,97,154,0.06)',
+    borderRadius: 8,
+  },
+  explainHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+  explainLabel: { fontSize: 12, fontWeight: '700', color: TXTSUB, letterSpacing: 1.4, textTransform: 'uppercase' },
 
   // Popup
   popup: {
@@ -746,18 +910,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: 23,
-    height: 46,
-    paddingLeft: 8, paddingRight: 6,
+    borderRadius: 25.5,
+    height: 51,                                                                 // 46 → 51 (+10 % per user)
+    paddingHorizontal: 8,
     shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 3,
   },
   pillNavBtn: {
     width: 34, height: 34, borderRadius: 17,
     alignItems: 'center', justifyContent: 'center',
   },
-  pillNavBtnNext: {
+  // Standalone next button, OUTSIDE the pill (right of it) per user — same
+  // height as the pill so the two read as a balanced pair.
+  nextBtn: {
+    width: 51, height: 51, borderRadius: 25.5,
     backgroundColor: ROSE,
-    shadowColor: ROSE, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 2,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: ROSE, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 3,
   },
   pillRef: {
     flex: 1, textAlign: 'center',

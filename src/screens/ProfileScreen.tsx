@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import FireFlame from '../components/shared/FireFlame';
 import Animated, {
-  SlideInDown, SlideInUp, FadeIn, FadeOut, Easing,
+  FadeIn, FadeOut, Easing,
   useSharedValue, useAnimatedStyle, withTiming, runOnJS,
 } from 'react-native-reanimated';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
@@ -17,7 +17,7 @@ import Glass from '../components/shared/Glass';
 import Logo from '../components/shared/Logo';
 import { ROSE, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { getHighlightColor } from '../constants/highlightColors';
-import { TRANSLATIONS, useTranslation, type LanguageCode } from '../state/TranslationsContext';
+import { TRANSLATIONS, useTranslation } from '../state/TranslationsContext';
 import { useUILanguage, UI_LANGUAGES, type UILanguageCode } from '../state/UILanguageContext';
 import { localeFor } from '../i18n/locale';
 import { useT } from '../i18n/useT';
@@ -35,7 +35,7 @@ import { ACHIEVEMENTS } from '../constants/achievements';
 import SignInSheet from '../components/SignInSheet';
 import VerseNoteSheet from '../components/VerseNoteSheet';
 import { NotesTile } from '../components/ProfileTiles';
-import { downloadFullTranslation, getDownloadState, type DownloadState } from '../services/bibleService';
+import { getDownloadState, type DownloadState } from '../services/bibleService';
 import type { TabScreenProps } from '../navigation/types';
 
 type FeatherIcon = keyof typeof Feather.glyphMap;
@@ -178,9 +178,26 @@ function MonthGrid({ year, month, activeSet }: { year: number; month: number; ac
 // Returns the gesture and the style to apply to the sheet's outer Animated.View.
 // Resets translateY whenever `visible` flips on so a previously-dismissed sheet
 // re-opens at its natural position.
+// Off-screen distance the sheet starts/exits at. Larger than any sheet height
+// so it's fully below the screen edge before sliding up.
+const SHEET_OFFSET = 1000;
+
 function useSheetPan(onClose: () => void, visible: boolean) {
-  const dragY = useSharedValue(0);
-  useEffect(() => { if (visible) dragY.value = 0; }, [visible, dragY]);
+  const dragY = useSharedValue(SHEET_OFFSET);
+  // The slide-IN is driven by this shared value too — NOT a reanimated
+  // `entering` layout animation. A shared SlideInDown builder reused across
+  // remounts intermittently failed to replay, leaving the sheet parked
+  // off-screen under the backdrop (the "every-other-tap nothing appears" bug).
+  // Driving translateY ourselves replays reliably every open and always
+  // resets, so the bug can't recur.
+  useEffect(() => {
+    if (visible) {
+      dragY.value = SHEET_OFFSET;
+      dragY.value = withTiming(0, { duration: 360, easing: Easing.out(Easing.cubic) });
+    } else {
+      dragY.value = SHEET_OFFSET;          // park off-screen, ready for the next open
+    }
+  }, [visible, dragY]);
   const pan = Gesture.Pan()
     .activeOffsetY(12)
     .onUpdate((e) => {
@@ -190,7 +207,7 @@ function useSheetPan(onClose: () => void, visible: boolean) {
     .onEnd((e) => {
       'worklet';
       if (e.translationY > 120 || e.velocityY > 800) {
-        dragY.value = withTiming(800, { duration: 280 }, (f) => { if (f) runOnJS(onClose)(); });
+        dragY.value = withTiming(SHEET_OFFSET, { duration: 280 }, (f) => { if (f) runOnJS(onClose)(); });
       } else {
         dragY.value = withTiming(0, { duration: 240 });
       }
@@ -210,7 +227,6 @@ function SheetBackdrop({ onClose }: { onClose: () => void }) {
   );
 }
 
-const SHEET_ENTERING = SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic));
 
 function CalendarSheet({ activityDates, onClose }: { activityDates: Set<string>; onClose: () => void }) {
   const t = useT();
@@ -228,7 +244,7 @@ function CalendarSheet({ activityDates, onClose }: { activityDates: Set<string>;
     <View style={styles.pickerOverlay}>
       <SheetBackdrop onClose={onClose} />
       <GestureDetector gesture={pan.gesture}>
-        <Animated.View entering={SHEET_ENTERING} style={[styles.pickerSheet, { maxHeight: '88%' }, pan.sheetStyle]}>
+        <Animated.View style={[styles.pickerSheet, { maxHeight: '88%' }, pan.sheetStyle]}>
           <View style={styles.sheetHandle} />
           <Text style={[styles.pickerTitle, styles.calSheetTitle]}>{t('profile.stats.daysRead')} · {activityDates.size}</Text>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
@@ -258,7 +274,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
   const { notes, removeNote } = useNotes();
   const { totalCheckIns } = useMoodCheckIn();
   const { earned, earnedCount } = useAchievements();
-  const { current: currentTranslation, setTranslation } = useTranslation();
+  const { current: currentTranslation, pending: dlPending, setTranslation, pauseDownload, resumeDownload } = useTranslation();
   const { lang: uiLang, meta: uiMeta, setLang: setUILang } = useUILanguage();
   const t = useT();
   const [showTranslationPicker, setShowTranslationPicker] = useState(false);
@@ -394,102 +410,42 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
     setShowEditNameSheet(false);
   };
 
-  const pickTranslation = (code: LanguageCode) => {
-    const tr = TRANSLATIONS.find(x => x.code === code);
-    if (!tr) return;
-    // Re-tapping the active translation just dismisses the sheet.
-    if (code === currentTranslation.code) {
-      setShowTranslationPicker(false);
-      return;
-    }
-    // Block the switch unless the full Bible has been cached locally.
-    // Per-chapter on-demand fetching works in dev, but in production users
-    // expect "switching" to mean their device actually has the content.
-    const dl = dlStates[code];
-    if (dl?.status !== 'complete') {
-      showToast(t('sheet.langBible.toast.downloadFirst', { name: tr.nativeName }), 2400);
-      return;
-    }
-    setTranslation(code);
-    setShowTranslationPicker(false);
-    showToast(t('sheet.langBible.toast.switched', { name: tr.nativeName }));
-  };
-
-  // Picking a new UI language: persist it (drives plans CDN + all chrome
-  // strings) and offer to switch the Bible-reading translation to match.
-  // The two are intentionally decoupled — power users can read the KJV
-  // while their UI is Português, for example.
+  // Picking a UI language. The Bible version now FOLLOWS the UI language
+  // (we assume a zh reader doesn't want an English UI over a Chinese Bible),
+  // so we switch both at once — no "Switch Bible?" confirm dialog. If the
+  // matching Bible isn't cached yet, `setTranslation` downloads it in the
+  // background and auto-swaps the reader when it completes; we just post a
+  // heads-up that the download started (it uses mobile data).
   const pickLanguage = (code: UILanguageCode) => {
     if (code === uiLang) return;
     setUILang(code);
-    const matchingBible = TRANSLATIONS.find(x => x.code === code);
-    // Only prompt when the Bible doesn't already match — avoids a noisy
-    // confirm when UI and Bible were already in lockstep.
-    if (!matchingBible || matchingBible.code === currentTranslation.code) return;
-    const uiMetaForCode = UI_LANGUAGES.find(l => l.code === code);
-    Alert.alert(
-      t('sheet.langBible.switchPrompt.title', { name: matchingBible.nativeName }),
-      t('sheet.langBible.switchPrompt.body', {
-        ui: uiMetaForCode?.nativeName ?? code,
-        bible: matchingBible.edition,
-      }),
-      [
-        { text: t('sheet.langBible.switchPrompt.keep'), style: 'cancel' },
-        {
-          text: t('sheet.langBible.switchPrompt.switch'),
-          onPress: () => {
-            const dl = dlStates[code];
-            if (dl?.status === 'complete') {
-              setTranslation(code);
-              showToast(t('sheet.langBible.toast.switched', { name: matchingBible.nativeName }));
-            } else {
-              // Kick off download; Bible stays on current until it lands.
-              startDownload(code);
-              showToast(t('sheet.langBible.toast.downloadFirst', { name: matchingBible.nativeName }), 2400);
-            }
-          },
-        },
-      ],
-    );
+    const tr = TRANSLATIONS.find(x => x.code === code);
+    if (!tr) return;
+    setTranslation(code);
+    if (dlStates[code]?.status !== 'complete' && code !== currentTranslation.code) {
+      showToast(t('sheet.langBible.toast.bibleDownloading', { name: tr.nativeName }), 3800);
+    }
   };
 
-  // Per-translation download state tracking
+  // Download status per translation — loaded once on mount so the version row
+  // can show "Downloaded / available offline" without re-querying. Live
+  // progress while a switch is downloading comes from the context's `pending`.
   const [dlStates, setDlStates] = useState<Record<string, DownloadState>>({});
-  const dlAbortRef = useRef<Record<string, AbortController>>({});
-
   useEffect(() => {
-    // Load existing download status for all translations on mount
     Promise.all(
       TRANSLATIONS.map(tr => getDownloadState(tr.code).then(s => [tr.code, s] as const))
     ).then(entries => setDlStates(Object.fromEntries(entries)));
   }, []);
-
-  const [activeCodes, setActiveCodes] = useState<Set<string>>(new Set());
-
-  const startDownload = (code: LanguageCode) => {
-    const t = TRANSLATIONS.find(x => x.code === code);
-    if (!t) return;
-    if (activeCodes.has(code)) return;
-    const ctl = new AbortController();
-    dlAbortRef.current[code] = ctl;
-    setActiveCodes(prev => { const n = new Set(prev); n.add(code); return n; });
-    setDlStates(prev => ({
-      ...prev,
-      [code]: { status: 'in-progress', fetched: prev[code]?.fetched || 0, total: prev[code]?.total || 0, updatedAt: new Date().toISOString() },
-    }));
-    downloadFullTranslation(code, t.source, (fetched, total) => {
-      setDlStates(prev => ({ ...prev, [code]: { status: 'in-progress', fetched, total, updatedAt: new Date().toISOString() } }));
-    }, ctl.signal).then(final => {
-      setDlStates(prev => ({ ...prev, [code]: final }));
-      setActiveCodes(prev => { const n = new Set(prev); n.delete(code); return n; });
-    });
-  };
-
-  const pauseDownload = (code: LanguageCode) => {
-    const ctl = dlAbortRef.current[code];
-    if (ctl) ctl.abort();
-    setActiveCodes(prev => { const n = new Set(prev); n.delete(code); return n; });
-  };
+  // Reflect a completed background download into dlStates so the row flips to
+  // the "downloaded" state once the context finishes + clears `pending`.
+  const prevPendingRef = useRef<string | null>(null);
+  useEffect(() => {
+    const prev = prevPendingRef.current;
+    if (prev && !dlPending) {
+      getDownloadState(prev).then(s => setDlStates(p => ({ ...p, [prev]: s })));
+    }
+    prevPendingRef.current = dlPending?.code ?? null;
+  }, [dlPending]);
 
   // Swipe-down-to-dismiss for the Bible-versions sheet.
   const transPan = useSheetPan(() => setShowTranslationPicker(false), showTranslationPicker);
@@ -499,6 +455,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
   const bookmarksPan = useSheetPan(() => setShowBookmarksSheet(false), showBookmarksSheet);
   const highlightsPan = useSheetPan(() => setShowHighlightsSheet(false), showHighlightsSheet);
   const reflectionsPan = useSheetPan(() => setShowReflectionsSheet(false), showReflectionsSheet);
+  const editNamePan = useSheetPan(() => setShowEditNameSheet(false), showEditNameSheet);
 
   // Highlights are stored as { id → Highlight }; produce a sortable array for the sheet.
   const highlightList = useMemo(
@@ -847,7 +804,8 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
       {showEditNameSheet && (
         <View style={styles.pickerOverlay}>
           <SheetBackdrop onClose={() => setShowEditNameSheet(false)} />
-          <Animated.View entering={SHEET_ENTERING} style={styles.pickerSheet}>
+          <GestureDetector gesture={editNamePan.gesture}>
+          <Animated.View style={[styles.pickerSheet, editNamePan.sheetStyle]}>
             <View style={styles.sheetHandle} />
             <Text style={styles.pickerTitle}>{t('profile.editName.title')}</Text>
             <TextInput
@@ -863,6 +821,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
               <Text style={styles.signInBtnText}>{t('profile.editName.save')}</Text>
             </TouchableOpacity>
           </Animated.View>
+          </GestureDetector>
         </View>
       )}
 
@@ -870,7 +829,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
         <View style={styles.pickerOverlay}>
           <SheetBackdrop onClose={() => setShowSavedSheet(false)} />
           <GestureDetector gesture={savedPan.gesture}>
-          <Animated.View entering={SHEET_ENTERING} style={[styles.pickerSheet, styles.savedSheet, savedPan.sheetStyle]}>
+          <Animated.View style={[styles.pickerSheet, styles.savedSheet, savedPan.sheetStyle]}>
             <View style={styles.sheetHandle} />
             <Text style={styles.pickerTitle}>{t('profile.savedSheet.title', { n: savedVerses.length })}</Text>
             {savedVerses.length === 0 ? (
@@ -914,7 +873,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
         <View style={styles.pickerOverlay}>
           <SheetBackdrop onClose={() => setShowNotesSheet(false)} />
           <GestureDetector gesture={notesPan.gesture}>
-          <Animated.View entering={SHEET_ENTERING} style={[styles.pickerSheet, styles.savedSheet, notesPan.sheetStyle]}>
+          <Animated.View style={[styles.pickerSheet, styles.savedSheet, notesPan.sheetStyle]}>
             <View style={styles.sheetHandle} />
             <Text style={styles.pickerTitle}>{t('profile.notes.label', { n: notes.length })}</Text>
             {notes.length === 0 ? (
@@ -967,7 +926,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
         <View style={styles.pickerOverlay}>
           <SheetBackdrop onClose={() => setShowBookmarksSheet(false)} />
           <GestureDetector gesture={bookmarksPan.gesture}>
-          <Animated.View entering={SHEET_ENTERING} style={[styles.pickerSheet, styles.savedSheet, bookmarksPan.sheetStyle]}>
+          <Animated.View style={[styles.pickerSheet, styles.savedSheet, bookmarksPan.sheetStyle]}>
             <View style={styles.sheetHandle} />
             <Text style={styles.pickerTitle}>{t('profile.bookmarks.label', { n: bookmarksCount })}</Text>
             {bookmarks.length === 0 ? (
@@ -1017,7 +976,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
         <View style={styles.pickerOverlay}>
           <SheetBackdrop onClose={() => setShowHighlightsSheet(false)} />
           <GestureDetector gesture={highlightsPan.gesture}>
-          <Animated.View entering={SHEET_ENTERING} style={[styles.pickerSheet, styles.savedSheet, highlightsPan.sheetStyle]}>
+          <Animated.View style={[styles.pickerSheet, styles.savedSheet, highlightsPan.sheetStyle]}>
             <View style={styles.sheetHandle} />
             <Text style={styles.pickerTitle}>{t('profile.highlights.label', { n: highlightsCount })}</Text>
             {highlightList.length === 0 ? (
@@ -1075,7 +1034,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
         <View style={styles.pickerOverlay}>
           <SheetBackdrop onClose={() => setShowReflectionsSheet(false)} />
           <GestureDetector gesture={reflectionsPan.gesture}>
-          <Animated.View entering={SHEET_ENTERING} style={[styles.pickerSheet, styles.savedSheet, reflectionsPan.sheetStyle]}>
+          <Animated.View style={[styles.pickerSheet, styles.savedSheet, reflectionsPan.sheetStyle]}>
             <View style={styles.sheetHandle} />
             <Text style={styles.pickerTitle}>{t('profile.reflectionsSheet.title', { n: reflections.length })}</Text>
             {reflections.length === 0 ? (
@@ -1119,7 +1078,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
               renders taller than the screen and the handle gets pushed above
               the status bar where it can't be reached for swipe-dismiss.
               See feedback_sheet_swipe_dismiss.md. */}
-          <Animated.View entering={SHEET_ENTERING} style={[styles.pickerSheet, { maxHeight: '88%' }, transPan.sheetStyle]}>
+          <Animated.View style={[styles.pickerSheet, { maxHeight: '88%' }, transPan.sheetStyle]}>
             <View style={styles.sheetHandle} />
             <Text style={[styles.pickerTitle, styles.translationSheetTitle]}>{t('sheet.langBible.title')}</Text>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 12 }}>
@@ -1159,66 +1118,63 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
                       );
                     })}
                   </View>
-                  <Text style={styles.langSectionHint}>{t('sheet.langBible.languageHint')}</Text>
                 </>
               )}
 
-              {/* Bible versions sub-section */}
+              {/* Bible version — there's exactly one: the edition for the
+                  selected UI language (the Bible follows the language). We show
+                  only that row instead of the whole list, with its download
+                  status + a pause/resume control so the user can stop the
+                  background download on mobile data and resume on Wi-Fi. */}
               <Text style={styles.bibleSubHeader}>{t('sheet.langBible.versionsHeader')}</Text>
-              <Text style={styles.translationSheetHint}>{t('sheet.langBible.versionsHint')}</Text>
 
-              {TRANSLATIONS.map((tr, i) => {
-                const active = tr.code === currentTranslation.code;
-                const isLast = i === TRANSLATIONS.length - 1;
-                const dl = dlStates[tr.code];
-                const pct = dl && dl.total > 0 ? Math.floor((dl.fetched / dl.total) * 100) : 0;
-                const downloaded = dl?.status === 'complete';
-                const selectable = active || downloaded;
+              {(() => {
+                const tr = TRANSLATIONS.find(x => x.code === uiLang) ?? currentTranslation;
+                const isPending = dlPending?.code === tr.code;
+                const isPaused = !!(isPending && dlPending?.paused);
+                const pct = isPending && dlPending && dlPending.total > 0
+                  ? Math.floor((dlPending.fetched / dlPending.total) * 100) : 0;
+                const downloaded = !isPending && dlStates[tr.code]?.status === 'complete';
                 return (
-                  <View
-                    key={tr.code}
-                    style={[styles.pickerRow, !isLast && styles.pickerRowBorder]}
-                  >
-                    <TouchableOpacity
-                      style={[{ flex: 1 }, !selectable && { opacity: 0.55 }]}
-                      onPress={() => pickTranslation(tr.code)}
-                      activeOpacity={0.85}
-                    >
-                      <Text style={[styles.translationPickerName, active && { color: ROSE, fontWeight: '700' }]}>
+                  <View style={styles.pickerRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.translationPickerName, { color: ROSE, fontWeight: '700' }]}>
                         {tr.nativeName}
                       </Text>
                       <Text style={styles.translationPickerEdition}>{tr.edition}</Text>
-                      {dl?.status === 'in-progress' && activeCodes.has(tr.code) && (
+                      {isPending && !isPaused && (
                         <Text style={styles.translationPickerProgress}>{t('sheet.langBible.downloading', { pct })}</Text>
                       )}
-                      {dl?.status === 'in-progress' && !activeCodes.has(tr.code) && (
+                      {isPaused && (
                         <Text style={styles.translationPickerProgress}>{t('sheet.langBible.paused', { pct })}</Text>
                       )}
                       {downloaded && (
-                        <Text style={styles.translationPickerComplete}>{t('sheet.langBible.downloaded')}</Text>
+                        <Text style={styles.translationPickerComplete}>{t('sheet.langBible.readyOffline')}</Text>
                       )}
-                      {!downloaded && dl?.status !== 'in-progress' && !active && (
-                        <Text style={styles.translationPickerLocked}>{t('sheet.langBible.downloadRequired')}</Text>
+                      {!downloaded && !isPending && (
+                        <Text style={styles.translationPickerProgress}>{t('sheet.langBible.downloadRequired')}</Text>
                       )}
-                    </TouchableOpacity>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                      {active && <Feather name="check" size={22} color={ROSE} />}
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
                       {downloaded ? (
                         <Feather name="check-circle" size={24} color="#7DB87D" />
-                      ) : activeCodes.has(tr.code) ? (
-                        <TouchableOpacity onPress={() => pauseDownload(tr.code)} hitSlop={10} style={styles.translationPickerDlBtn}>
-                          <Feather name="pause" size={18} color={ROSE} />
-                          <Text style={styles.translationPickerDlBtnPct}>{pct}%</Text>
+                      ) : isPaused ? (
+                        <TouchableOpacity onPress={resumeDownload} hitSlop={12} style={styles.translationPickerDlBtn}>
+                          <Feather name="play" size={22} color={ROSE} />
+                        </TouchableOpacity>
+                      ) : isPending ? (
+                        <TouchableOpacity onPress={pauseDownload} hitSlop={12} style={styles.translationPickerDlBtn}>
+                          <Feather name="pause" size={22} color={ROSE} />
                         </TouchableOpacity>
                       ) : (
-                        <TouchableOpacity onPress={() => startDownload(tr.code)} hitSlop={10} style={styles.translationPickerDlBtn}>
-                          <Feather name={dl?.status === 'in-progress' ? 'play' : 'download'} size={20} color={ROSE} />
+                        <TouchableOpacity onPress={() => setTranslation(tr.code)} hitSlop={12} style={styles.translationPickerDlBtn}>
+                          <Feather name="download" size={20} color={ROSE} />
                         </TouchableOpacity>
                       )}
                     </View>
                   </View>
                 );
-              })}
+              })()}
             </ScrollView>
           </Animated.View>
           </GestureDetector>

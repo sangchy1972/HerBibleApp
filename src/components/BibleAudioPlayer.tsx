@@ -4,6 +4,7 @@ import Slider from '@react-native-community/slider';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { ROSE, TXT, TXTSUB, FONTS } from '../constants/theme';
 import { useT } from '../i18n/useT';
 import { verseAtTime, type ChapterTimestamps } from '../services/bibleAudioService';
@@ -19,7 +20,7 @@ import { verseAtTime, type ChapterTimestamps } from '../services/bibleAudioServi
 // With no timestamps they degrade to chapter nav so the buttons never
 // dead-end.
 
-const { width } = Dimensions.get('window');
+const { width, height: SCREEN_H } = Dimensions.get('window');
 const COVER = Math.min(width - 120, 300);
 const SPEEDS = [1.0, 1.25, 1.5, 2.0, 0.75];
 
@@ -81,6 +82,20 @@ export default function BibleAudioPlayer({
     try { player.setPlaybackRate(SPEEDS[speedIdx]); } catch {}
   }, [player, speedIdx]);
 
+  // Slide-up entrance — driven manually (Modal animationType="none") so we
+  // control the duration. 600 ms ≈ 2× the native modal slide, per user ("too
+  // fast — slow it down by half").
+  const slideY = useSharedValue(SCREEN_H);
+  useEffect(() => {
+    if (visible) {
+      slideY.value = SCREEN_H;
+      slideY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) });
+    } else {
+      slideY.value = SCREEN_H;     // park below for the next open
+    }
+  }, [visible, slideY]);
+  const slideStyle = useAnimatedStyle(() => ({ transform: [{ translateY: slideY.value }] }));
+
   const cycleSpeed = () => setSpeedIdx(i => (i + 1) % SPEEDS.length);
   const togglePlay = () => { try { playing ? player.pause() : player.play(); } catch {} };
 
@@ -108,8 +123,8 @@ export default function BibleAudioPlayer({
   const onShare = () => { Share.share({ message: `${bookName} ${chapter}` }).catch(() => {}); };
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <View style={[styles.root, { paddingTop: insets.top }]}>
+    <Modal visible={visible} animationType="none" transparent onRequestClose={onClose} statusBarTranslucent>
+      <Animated.View style={[styles.root, { paddingTop: insets.top }, slideStyle]}>
         {/* Top bar */}
         <View style={styles.topbar}>
           <TouchableOpacity onPress={onClose} hitSlop={12} style={styles.topBtn}>
@@ -142,17 +157,30 @@ export default function BibleAudioPlayer({
           {/* Progress */}
           <View style={styles.progressWrap}>
             <Text style={styles.time}>{fmt(position)}</Text>
-            <Slider
-              style={styles.slider}
-              minimumValue={0}
-              maximumValue={duration || 1}
-              value={position}
-              minimumTrackTintColor={ROSE}
-              maximumTrackTintColor="rgba(30,27,46,0.15)"
-              thumbTintColor={ROSE}
-              onValueChange={(v) => { setSeeking(true); setSeekValue(v); }}
-              onSlidingComplete={(v) => { try { player.seekTo(v); } catch {} setSeeking(false); }}
-            />
+            <View style={styles.sliderWrap}>
+              {/* Light verse markers — one tick per verse at its start time,
+                  so the bar shows where each sentence begins (e.g. 24 nodes
+                  for a 24-verse chapter). */}
+              {duration > 0 && verses.length > 1 && (
+                <View style={styles.tickLayer} pointerEvents="none">
+                  {verses.map(v => {
+                    const frac = Math.max(0, Math.min(1, v.start / duration));
+                    return <View key={v.verse} style={[styles.tick, { left: `${frac * 100}%` }]} />;
+                  })}
+                </View>
+              )}
+              <Slider
+                style={styles.slider}
+                minimumValue={0}
+                maximumValue={duration || 1}
+                value={position}
+                minimumTrackTintColor={ROSE}
+                maximumTrackTintColor="rgba(30,27,46,0.15)"
+                thumbTintColor={ROSE}
+                onValueChange={(v) => { setSeeking(true); setSeekValue(v); }}
+                onSlidingComplete={(v) => { try { player.seekTo(v); } catch {} setSeeking(false); }}
+              />
+            </View>
           </View>
 
           {/* Transport */}
@@ -160,21 +188,24 @@ export default function BibleAudioPlayer({
             <TouchableOpacity onPress={cycleSpeed} hitSlop={10} style={styles.sideBtn}>
               <Text style={styles.speedText}>{SPEEDS[speedIdx]}x</Text>
             </TouchableOpacity>
+            {/* Prev/next move ONE VERSE (sentence), not a chapter — single
+                chevrons read as a small step, vs the skip-back/forward "track"
+                glyphs which felt like jumping chapters. */}
             <TouchableOpacity onPress={onPrev} hitSlop={10} style={styles.navBtn}>
-              <Feather name="skip-back" size={30} color={TXT} />
+              <Feather name="chevron-left" size={34} color={TXT} />
             </TouchableOpacity>
             <TouchableOpacity onPress={togglePlay} hitSlop={10} style={styles.playBtn} activeOpacity={0.85}>
               <Feather name={playing ? 'pause' : 'play'} size={30} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity onPress={onNext} hitSlop={10} style={styles.navBtn}>
-              <Feather name="skip-forward" size={30} color={TXT} />
+              <Feather name="chevron-right" size={34} color={TXT} />
             </TouchableOpacity>
             <TouchableOpacity onPress={onQueue} hitSlop={10} style={styles.sideBtn}>
               <Feather name="list" size={24} color={TXT} />
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </Animated.View>
     </Modal>
   );
 }
@@ -219,15 +250,29 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(30,27,46,0.4)',
   },
   readText: { fontSize: 16, fontWeight: '600', color: TXT, fontFamily: FONTS.lora },
-  progressWrap: { width: '100%', marginTop: 46 },
+  progressWrap: { width: '100%', marginTop: 46, marginHorizontal: -18 },        // -8 → -18 (another -10 px each side per user) — widens the progress bar
   time: { fontSize: 14, color: TXTSUB, fontFamily: FONTS.lato, marginLeft: 4 },
-  slider: { width: '100%', height: 40, marginTop: 2 },
+  sliderWrap: { width: '100%', height: 40, marginTop: 2, justifyContent: 'center' },
+  slider: { width: '100%', height: 40 },
+  // Verse markers layer — inset ~10 px each side to roughly match the slider's
+  // thumb track, so ticks line up with the fill.
+  tickLayer: { position: 'absolute', left: 10, right: 10, top: 0, bottom: 0 },
+  tick: {
+    position: 'absolute',
+    top: 17,
+    width: 2,
+    height: 6,
+    marginLeft: -1,
+    borderRadius: 1,
+    backgroundColor: 'rgba(30,27,46,0.25)',                                     // light/subtle node
+  },
   transport: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 18,
+    marginHorizontal: -20,                                                      // -10 → -20 (another -10 px each side per user) — spreads the 1x/prev/play/next/list row wider
     paddingBottom: 24,
   },
   sideBtn: { width: 56, alignItems: 'center', justifyContent: 'center' },

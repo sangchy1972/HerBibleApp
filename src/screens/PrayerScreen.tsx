@@ -51,11 +51,11 @@ const NOTO_BOLD = 'NotoSansSC_700Bold';
 // visually "tilted" because its tail anchored at bottom-left; swapped
 // for a clean symmetric `message-circle` shape so the icon row reads
 // as four evenly-weighted glyphs.
-const ACTION_ICON_SIZE = 20;
+const ACTION_ICON_SIZE = 18;                                                    // 20 → 18 (-10 % per user); strokes +50 % (1.7→2.55) for a heavier look
 
 function HeartIcon({ filled, color }: { filled?: boolean; color: string }) {
   return (
-    <Svg width={ACTION_ICON_SIZE} height={ACTION_ICON_SIZE} viewBox="0 0 24 24" fill={filled ? color : 'none'} stroke={color} strokeWidth={1.7}>
+    <Svg width={ACTION_ICON_SIZE} height={ACTION_ICON_SIZE} viewBox="0 0 24 24" fill={filled ? color : 'none'} stroke={color} strokeWidth={2.55}>
       <Path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
     </Svg>
   );
@@ -66,7 +66,7 @@ function CommentIcon({ color }: { color: string }) {
   // the bottom. Replaces the previous teardrop bubble whose corner-tail
   // gave the icon a tilted look in the user's screenshot.
   return (
-    <Svg width={ACTION_ICON_SIZE} height={ACTION_ICON_SIZE} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={ACTION_ICON_SIZE} height={ACTION_ICON_SIZE} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.55} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M4 5.5a2.5 2.5 0 0 1 2.5-2.5h11a2.5 2.5 0 0 1 2.5 2.5v9a2.5 2.5 0 0 1-2.5 2.5h-4.4L9 21v-3.5H6.5A2.5 2.5 0 0 1 4 15z" />
     </Svg>
   );
@@ -74,7 +74,7 @@ function CommentIcon({ color }: { color: string }) {
 
 function ShareIcon({ color }: { color: string }) {
   return (
-    <Svg width={ACTION_ICON_SIZE} height={ACTION_ICON_SIZE} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.7}>
+    <Svg width={ACTION_ICON_SIZE} height={ACTION_ICON_SIZE} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.55}>
       <Circle cx={18} cy={5} r={3} />
       <Circle cx={6} cy={12} r={3} />
       <Circle cx={18} cy={19} r={3} />
@@ -87,9 +87,9 @@ function ShareIcon({ color }: { color: string }) {
 function MoreIcon({ color }: { color: string }) {
   return (
     <Svg width={ACTION_ICON_SIZE} height={ACTION_ICON_SIZE} viewBox="0 0 24 24" fill={color} stroke="none">
-      <Circle cx={5} cy={12} r={1.6} />
-      <Circle cx={12} cy={12} r={1.6} />
-      <Circle cx={19} cy={12} r={1.6} />
+      <Circle cx={5} cy={12} r={2.4} />
+      <Circle cx={12} cy={12} r={2.4} />
+      <Circle cx={19} cy={12} r={2.4} />
     </Svg>
   );
 }
@@ -249,9 +249,12 @@ function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTa
   // 0.55→0.28) and the bright magenta-pink top darkened toward a blackish
   // wine-pink (123,34,85 → 68,19,47) so it reads as a subtle warm shadow,
   // not a pink wash over the photo. Evening tint unchanged.
+  // Matches PrayerFlow's reading-view scrim EXACTLY (same colors + alphas +
+  // gradient direction) per user, so the home card and the reading screen have
+  // an identical photo veil.
   const colors = morning
-    ? (['rgba(68,19,47,0.10)', 'rgba(30,8,18,0.28)'] as const)
-    : (['rgba(45,22,96,0.20)', 'rgba(16,5,37,0.55)'] as const);
+    ? (['rgba(123,34,85,0.35)', 'rgba(45,10,26,0.65)'] as const)
+    : (['rgba(45,22,96,0.40)', 'rgba(16,5,37,0.70)'] as const);
   const iconColor = 'rgba(255,255,255,0.92)';
 
   // Per-day social proof. Likes 1001 – 5000, comments 36 – 135. Different
@@ -280,15 +283,14 @@ function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTa
       true,
     );
   }, [pulse, pulseActive]);
-  // Asymmetric breath per user — more horizontal flex than vertical so the
-  // pill reads as gently squishing wider/narrower rather than the whole
-  // button puffing in/out uniformly. X follows `pulse` directly (0.92 ↔ 1.0,
-  // 8 % range); Y is derived in lockstep so it stays at 0.95 ↔ 1.0 (5 %
-  // range, ~60 % of X's magnitude). Timing + easing inherited from `pulse`,
-  // so the rhythm matches what was there before.
+  // Asymmetric breath per user — the horizontal stretch is clearly LARGER than
+  // the vertical so the pill reads as squishing wider/narrower, not puffing
+  // uniformly. X follows `pulse` directly (0.92 ↔ 1.0, 8 % range); Y is mapped
+  // to a much smaller 0.97 ↔ 1.0 (3 % range — ~⅜ of X's magnitude). Timing +
+  // easing inherited from `pulse`.
   const pulseStyle = useAnimatedStyle(() => {
     const px = pulse.value;
-    const py = 0.95 + (px - 0.92) * (0.05 / 0.08);                               // maps px∈[0.92,1] → py∈[0.95,1]
+    const py = 0.97 + (px - 0.92) * (0.03 / 0.08);                               // maps px∈[0.92,1] → py∈[0.97,1] (vertical amplitude ≪ horizontal)
     return { transform: [{ scaleX: px }, { scaleY: py }] };
   });
 
@@ -806,7 +808,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
         <View style={styles.headerRight}>
           <TouchableOpacity onPress={() => navigation.navigate('Streak')} style={styles.streakBadge}>
             <View style={styles.streakFlame}>
-              <FireFlame size={28} />
+              <FireFlame size={24} />{/* 28 → 24 (-15 % per user); chip unchanged, stays centered */}
             </View>
             <View ref={streakRef} collapsable={false}>
               <Animated.Text style={[styles.streakNum, streakNumStyle]}>{displayedStreak}</Animated.Text>
@@ -863,13 +865,8 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           style={styles.progressTrack}
           onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
         >
-          <Animated.View style={[styles.progressFill, progressFillStyle]}>
-            <LinearGradient
-              colors={['#F9A8C9', '#C4B5FD', '#9D7FE0']}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-              style={{ flex: 1, height: '100%' }}
-            />
-          </Animated.View>
+          {/* Solid theme pink (ROSE) per user — no gradient. */}
+          <Animated.View style={[styles.progressFill, progressFillStyle]} />
           <View style={styles.progressDivider} />
         </View>
       </View>
@@ -986,7 +983,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           activeOpacity={0.85}
           style={styles.continueRow}
         >
-          <LinearGradient colors={['#FDE4EF', '#F8C5DA']} style={styles.continueIcon}>
+          <LinearGradient colors={['#F6B5D0', '#EB8BB6']} style={styles.continueIcon}>
             <Feather name="book-open" size={42} color="#fff" />
           </LinearGradient>
           <View style={styles.continueMeta}>
@@ -1136,7 +1133,7 @@ const styles = StyleSheet.create({
   // offset pulled it slightly above the digit baseline; the new value
   // centers it visually with the number).
   streakFlame: { marginTop: -3 },
-  streakNum: { fontSize: 18.7, fontWeight: '700', color: TXT },
+  streakNum: { fontSize: 15.9, fontWeight: '700', color: TXT },                 // 18.7 → 15.9 (-15 % per user)
   // Avatar — stays 40×40 (user explicitly excluded the avatar from the
   // resize). `marginLeft: -3` overlaps the streak badge's right edge by
   // ~5 % of avatar width so the two chips read as a connected cluster
@@ -1156,8 +1153,8 @@ const styles = StyleSheet.create({
   progressSection: {
     paddingHorizontal: P + 6,
     paddingTop: 5,                                                               // → 5 (per user — "Today's Progress" leading gap)
-    marginTop: 0,                                                                // 7 → 0 — closes the 5 px ask for "Today's Progress" gap and the 2 px ask for "Good Evening" gap below it in one shot
-    marginBottom: 10,
+    marginTop: 5,                                                                // 0 → 5 (+5 px below "Good Morning" per user)
+    marginBottom: 6,                                                             // 10 → 6 (-4 px after the progress bar, per user)
   },
   progressHeader: {
     flexDirection: 'row',
@@ -1175,12 +1172,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: 'rgba(30,27,46,0.55)',
     letterSpacing: 1.2,
-    fontFamily: FONTS.loraBold,
+    fontFamily: FONTS.latoBold,                                                 // Lato 600 per user (latoBold + 600 — same pattern as the Morning/Evening toggle; Lato ships no distinct 600 face)
   },
   progressPct: {
     fontSize: 12.80,
     fontWeight: '600',
-    fontFamily: FONTS.loraBold,
+    fontFamily: FONTS.latoBold,                                                 // Lato 600 per user
     // TextInput needs explicit dimensions / padding-zero to match a Text node.
     minWidth: 44,
     textAlign: 'right',
@@ -1216,6 +1213,7 @@ const styles = StyleSheet.create({
     left: 0,
     bottom: 0,
     borderRadius: 7,
+    backgroundColor: ROSE,                                                      // solid theme pink (was a pink→lavender→purple gradient)
   },
   progressDivider: {
     position: 'absolute',
@@ -1236,7 +1234,8 @@ const styles = StyleSheet.create({
   toggle: {
     flexDirection: 'row',
     marginHorizontal: P,
-    marginTop: 10,                                                               // 17 → 10 (-7 px per user) — tightens the gap between the progress bar above and the Morning/Evening toggle
+    marginTop: 9,                                                                // 7 → 9 (+2 px before, per user)
+    marginBottom: -3,                                                            // -3 px after (pulls the hero card up), per user
     backgroundColor: 'rgba(255,255,255,0.55)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.90)',
@@ -1303,8 +1302,8 @@ const styles = StyleSheet.create({
   heroTop: {
     paddingTop: 22,
     paddingBottom: 0,
-    paddingLeft: 23,                                                            // 26 → 23 (-3)
-    paddingRight: 19,                                                            // was inherited from padding:22 → now 19 explicit (-3)
+    paddingLeft: 19,                                                            // 23 → 19 — aligns label/ref left edge with the verse body (heroBody paddingHorizontal: 19) per user
+    paddingRight: 19,                                                            // matches heroBody right padding too
   },
   heroLabel: {
     fontSize: 12.52,                                                            // 13.91 × 0.9 (-10 % per user, second round)
@@ -1332,13 +1331,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 19,                                                       // 22 → 19 (-3)
   },
   heroText: {
-    fontFamily: FONTS.serif,
-    fontVariationSettings: [
-      { axis: 'opsz', value: 35 },
-      { axis: 'wght', value: 500 },
-    ],
-    fontSize: 19.25,                                                             // 17.82 × 1.08 — verse body bumped +8 % per user. Affects both Verse of the Day + Verse of the Night cards (same hero component, slot toggle just swaps the photo)
-    lineHeight: 29.74,                                                           // 27.54 × 1.08 — line-height scales in step so wrapped verses keep their open rhythm
+    fontFamily: FONTS.merriweather,                                            // Merriweather per user — matches the reader body face
+    fontSize: 20.60,                                                             // 19.25 × 1.07 (+7 % per user). Affects both Verse of the Day + Verse of the Night cards (same hero component)
+    lineHeight: 31.82,                                                           // 29.74 × 1.07 — line-height scales in step so wrapped verses keep their open rhythm
     color: 'rgba(255,255,255,0.96)',
   },
   heroActions: {
@@ -1354,8 +1349,8 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   actionLabel: {
-    fontSize: 10.26,                                                             // 11.4 × 0.9 (-10 %)
-    fontWeight: '500',
+    fontSize: 11.17,                                                             // another +10 % (9.23→10.15→11.17) per user; icons unchanged
+    fontWeight: '700',                                                           // bolder per user (was 500)
     letterSpacing: 0.3,
   },
   // No `marginHorizontal` — the parent `section` already insets by P, so
@@ -1366,7 +1361,7 @@ const styles = StyleSheet.create({
   startBtn: {
     marginTop: 11,                      // → 11 (per user — card ↔ Start CTA gap)
     marginBottom: 10,
-    height: 49.41,                      // 47.06 → 49.41 (+5 % per user)
+    height: 46.94,                      // 49.41 → 46.94 (-5 % per user)
     borderRadius: 17.07,                // 24.39 → 17.07 (-30 % per user)
     alignSelf: 'stretch',
     alignItems: 'center',
@@ -1601,9 +1596,9 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   continueIcon: {
-    width: 52,                       // 48 → 52 to balance the taller card
-    height: 56,                      // 51 → 56
-    borderRadius: 13,
+    width: 92.15,                    // match PlanProgressCard's cover (92.15² ) so this card's
+    height: 92.15,                   // height equals the Plans-in-Progress card exactly
+    borderRadius: 10,                // match PlanProgressCard cover radius (was 13)
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -1613,7 +1608,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginTop: 6,
+    marginTop: 1,                                                               // -4 → 1 (+5 px per user) — the title↔bar gap was too cramped
   },
   continuePctSlot: {
     alignItems: 'flex-end',
@@ -1631,12 +1626,12 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     marginBottom: 2,
   },
-  continueTitle: {                   // card title ("Psalms · Chapter 23")
-    fontSize: 16,                                                               // 16 → 18 → 16 (per user)
+  continueTitle: {                   // card title ("Joshua · Chapter 12")
+    fontSize: 16,
     fontWeight: '600',
     color: TXT,
-    fontFamily: FONTS.loraBold,
-    marginBottom: 10,                                                           // 6 → 10, breathing room before the pct/bar group
+    fontFamily: FONTS.latoBold,                                                // Lato per user (was Lora); latoBold + 600 = the app's "Lato 600"
+    marginBottom: 0,
   },
   continueProgressTrack: {
     flex: 1,                                                                     // sits to the right of the % label and fills the remaining row width — without `flex: 1` the View collapsed to 0 px and the bar was invisible
@@ -1651,6 +1646,6 @@ const styles = StyleSheet.create({
   },
   continuePct: {                     // dynamic % badge — non-title
     fontSize: 14,                    // +10% from 13
-    fontFamily: NOTO_BOLD,
+    fontFamily: FONTS.latoBold,      // Lato per user (was Noto bold)
   },
 });

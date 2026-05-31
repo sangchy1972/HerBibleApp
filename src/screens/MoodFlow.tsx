@@ -97,30 +97,25 @@ function PickStep({ onPick }: { onPick: (m: Mood) => void }) {
   );
 }
 
-// ─── Step 3: Calendar review (placeholder) ──────────────────────────────────
-// Calendar step. ScrollView holds the calendar; Done CTA is pinned at the
-// bottom so it stays tappable no matter how tall the calendar grows or how
-// short the device is. The user could previously get stuck here on smaller
-// phones (no scroll, button clipped below the home indicator) — that
-// blocked them from finishing onboarding.
+// ─── Step 3: Calendar review ────────────────────────────────────────────────
+// Calendar step. The Done CTA sits INSIDE the scroll, 50 px below the calendar
+// (not pinned to the screen bottom — on tall phones the pinned button was a
+// long reach, and on short phones it clipped below the calendar). Everything
+// scrolls, so the button is always reachable regardless of device height.
 function CalendarStep({ onContinue }: { onContinue: () => void }) {
   const t = useT();
   const insets = useSafeAreaInsets();
   return (
-    <View style={styles.calWrap}>
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={styles.calScroll}
-        showsVerticalScrollIndicator={false}
-      >
-        <MoodCalendar />
-      </ScrollView>
-      <View style={[styles.calFooter, { paddingBottom: insets.bottom + 14 }]}>
-        <TouchableOpacity style={styles.calCta} onPress={onContinue} activeOpacity={0.9}>
-          <Text style={styles.calCtaText}>{t('common.done')}</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    <ScrollView
+      style={styles.calWrap}
+      contentContainerStyle={[styles.calScroll, { paddingBottom: insets.bottom + 24 }]}
+      showsVerticalScrollIndicator={false}
+    >
+      <MoodCalendar />
+      <TouchableOpacity style={styles.calCta} onPress={onContinue} activeOpacity={0.9}>
+        <Text style={styles.calCtaText}>{t('common.done')}</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 }
 
@@ -367,17 +362,14 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
-  // Calendar step — scrollable body + pinned Done CTA. The footer's
-  // paddingBottom adds the safe-area inset so the button sits clear of the
-  // Android nav bar / iOS home indicator on every device.
+  // Calendar step — everything lives in one scroll. calWrap is the ScrollView;
+  // calScroll its content container (bottom padding added inline w/ safe area).
   calWrap: { flex: 1, paddingHorizontal: 18, paddingTop: 4 },
-  calScroll: { paddingBottom: 18 },
-  calFooter: { paddingTop: 10 },
-  // Done CTA mirrors PrayerScreen.styles.startBtn 1:1 — same ROSE fill,
-  // same 49.41 px height, same 17.07 px radius, same alignSelf stretch +
-  // text treatment. Pinned at the bottom of the screen via the parent's
-  // flex column.
+  calScroll: { paddingTop: 4 },
+  // Done CTA mirrors PrayerScreen.styles.startBtn 1:1 (ROSE fill, 49.41 height,
+  // 17.07 radius, stretch). Sits 50 px below the calendar inside the scroll.
   calCta: {
+    marginTop: 50,
     backgroundColor: ROSE,
     height: 49.41,
     borderRadius: 17.07,

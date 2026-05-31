@@ -16,14 +16,17 @@ export interface UILanguageMeta {
   englishName: string;    // for analytics / debug
 }
 
+// Chip order per design: English, then the Latin-script languages
+// (Español / Português / Français / Deutsch), with the two Chinese scripts
+// moved to the end. UI_LANGUAGES[0] must stay 'en' (the default fallback).
 export const UI_LANGUAGES: UILanguageMeta[] = [
   { code: 'en',      nativeName: 'English',     englishName: 'English' },
-  { code: 'zh-Hans', nativeName: '简体中文',     englishName: 'Simplified Chinese' },
-  { code: 'zh-Hant', nativeName: '繁體中文',     englishName: 'Traditional Chinese' },
-  { code: 'pt',      nativeName: 'Português',   englishName: 'Portuguese' },
   { code: 'es',      nativeName: 'Español',     englishName: 'Spanish' },
+  { code: 'pt',      nativeName: 'Português',   englishName: 'Portuguese' },
   { code: 'fr',      nativeName: 'Français',    englishName: 'French' },
   { code: 'de',      nativeName: 'Deutsch',     englishName: 'German' },
+  { code: 'zh-Hans', nativeName: '简体中文',     englishName: 'Simplified Chinese' },
+  { code: 'zh-Hant', nativeName: '繁體中文',     englishName: 'Traditional Chinese' },
 ];
 
 const STORAGE_KEY = 'ui:lang:v1';

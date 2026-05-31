@@ -73,7 +73,9 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'sheet.langBible.languageHeader': { en: 'Language',                        context: 'Section header inside the sheet for the UI-language chip picker.' },
   'sheet.langBible.languageHint':   { en: 'This affects the entire app interface — labels, buttons, and reading copy.', context: 'Hint sentence under the Language section explaining the UI-language picker scope.' },
   'sheet.langBible.versionsHeader': { en: 'Bible versions',                  context: 'Section header inside the sheet for the Bible-translation list.' },
-  'sheet.langBible.versionsHint':   { en: 'Only fully-downloaded versions can be selected.', context: 'Hint sentence under the Bible-versions header.' },
+  'sheet.langBible.versionsHint':   { en: 'Your Bible version matches the app language and downloads automatically.', context: 'Hint under the Bible-versions header. The Bible version now follows the UI language (only the matching version is shown) and downloads on its own.' },
+  'sheet.langBible.readyOffline':   { en: 'Downloaded · available offline',   context: 'Status under the single Bible-version row when it is fully cached on the device.' },
+  'sheet.langBible.toast.bibleDownloading': { en: 'Downloading {name} — it uses mobile data and will appear in the Bible tab once finished.', context: 'Toast shown right after the user switches the app language to one whose Bible is not yet downloaded. {name} = Bible version native name. Mentions data use because the download is automatic.' },
   'sheet.langBible.downloaded':     { en: 'Downloaded · tap to switch',      context: 'Status label under a Bible version that is fully cached locally.' },
   'sheet.langBible.downloadRequired': { en: 'Download required to switch',   context: 'Status label under a Bible version that is not yet cached.' },
   'sheet.langBible.downloading':    { en: 'Downloading… {pct}%',             context: 'Progress label while downloading. {pct} is a 0-100 integer.' },
@@ -119,8 +121,8 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'plan.empty.title':        { en: 'Pick one from Explore',     context: 'Empty state hint when user has no active plans.' },
   'plan.dayN':               { en: 'Day {n}',                   context: 'Day label inside a plan. {n} is 1..N.' },
   'plan.minPerDay':          { en: '{min} min/day',             context: 'Plan duration suffix. {min} is a number.' },
-  'plan.dayCount.one':       { en: '1 day',                     context: 'Plan duration when length is exactly 1 day.' },
-  'plan.dayCount.other':     { en: '{n} days',                  context: 'Plan duration when length is 2+. {n} is the number.' },
+  'plan.dayCount.one':       { en: '1 Day',                     context: 'Plan duration when length is exactly 1 day. Title Case ("1 Day") — shown as a standalone UI label (featured-card chip, plan meta line, home card), not mid-sentence.' },
+  'plan.dayCount.other':     { en: '{n} Days',                  context: 'Plan duration when length is 2+. {n} is the number. Title Case ("3 Days") — standalone UI label. Other languages keep their natural lowercase day-noun grammar (e.g. fr "3 jours"); only EN title-cases.' },
 
   // ─── RemoveAds / paywall screen ──────────────────────────────────────────
   'paywall.title':           { en: 'Reading without distractions', context: 'Hero title on the paywall. Emphasizes calm, ad-free reading.' },
@@ -726,6 +728,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'bibleReader.markComplete':      { en: 'Mark as Complete', context: 'Button at the bottom of each chapter that promotes the chapter to "read".' },
   'bibleReader.chapterCompleted':  { en: 'Chapter completed', context: 'Disabled state of the Mark-as-Complete button once tapped.' },
   'bibleReader.toast.daysRead':    { en: 'Your days read +1', context: 'Toast when Mark-as-Complete fires the first chapter of the day.' },
+  'bibleReader.stillDownloading':  { en: '{name} is still downloading. This page will update automatically when it’s ready.', context: 'Notice shown in the Bible reader when the user opened it while the just-chosen language’s Bible is still downloading. {name} = Bible version native name. It auto-swaps in when the download completes.' },
   'bibleReader.toast.threeMinutes':{ en: '3 minutes of reading · counted toward Days Read', context: 'Toast after 3 minutes of dwell time crosses the threshold.' },
   'bibleReader.toast.bookmarkAdded': { en: 'Bookmark Added', context: 'Toast after the user bookmarks a chapter.' },
   'bibleReader.toast.audioComingSoon': { en: 'Audio coming soon for this translation', context: 'Toast when audio is not yet available for the active translation.' },
@@ -875,6 +878,9 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'reflections.empty':             { en: 'No reflections yet',                                    context: 'Empty-state text on ReflectionsScreen.' },
 
   'bible.explanation.title':       { en: 'Explanation',                                           context: 'Heading inside the Bible reader Explore card showing per-verse commentary.' },
+  'bible.explanation.loading':     { en: 'Loading explanation…',                                  context: 'Shown while the per-verse explanation is being fetched from the CDN (Explore card).' },
+  'bible.explanation.error':       { en: 'Network error. Please try again.',                      context: 'Shown when the per-verse explanation fails to load (Explore card).' },
+  'bible.explanation.none':        { en: 'No explanation available for this verse.',              context: 'Shown when the CDN has no explanation text for the selected verse (Explore card).' },
 
   // ─── "Follow Him" returning-user notification opt-in interstitial ────────
   'reminder.title':                { en: 'Follow Him',                                            context: 'Large title on the full-screen reminder opt-in shown to returning users. "Him" = God/Jesus (capitalized, reverent).' },

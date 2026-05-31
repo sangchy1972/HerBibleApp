@@ -14,8 +14,6 @@ import { useT } from '../i18n/useT';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const SHEET_ENTERING = SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic));
-
 interface Props {
   onClose: () => void;
   onError?: (msg: string) => void;
@@ -132,7 +130,11 @@ export default function SignInSheet({ onClose, onError }: Props) {
       >
         <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={onClose} />
       </Animated.View>
-      <Animated.View entering={SHEET_ENTERING} style={styles.sheet}>
+      {/* Inline (fresh) SlideInDown builder per render — NOT a shared
+          module-level instance. A reused builder fails to replay on
+          remount, leaving the sheet off-screen under the backdrop on
+          alternate opens (the bug fixed in ProfileScreen). */}
+      <Animated.View entering={SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic))} style={styles.sheet}>
         <View style={styles.handle} />
         <Text style={styles.title}>{t('signIn.sheet.title')}</Text>
         <Text style={styles.desc}>{t('signIn.sub')}</Text>

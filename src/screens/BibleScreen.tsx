@@ -13,9 +13,9 @@ import Animated, {
   interpolateColor, Easing,
   FadeIn, FadeOut, SlideInUp, SlideInDown,
 } from 'react-native-reanimated';
-import { ROSE, LAV, TXT, TXTSUB, P, FONTS, SERIF_BODY } from '../constants/theme';
+import { ROSE, LAV, TXT, TXTSUB, P, FONTS, SERIF_BODY, SCREEN_BG } from '../constants/theme';
 import { RECENT_SEARCHES } from '../constants/data';
-import { useTranslation } from '../state/TranslationsContext';
+import { useTranslation, TRANSLATIONS } from '../state/TranslationsContext';
 import { useT } from '../i18n/useT';
 import { useSavedVerses } from '../state/SavedVersesContext';
 import { useActivity } from '../state/ActivityContext';
@@ -427,7 +427,7 @@ function SearchOverlay({
 // pink); cream now sits at position 2 and the rest of the spectrum fills
 // the row.
 const THEME_OPTS = [
-  { id: 'default', color: '#F0EEEB' },
+  { id: 'default', color: SCREEN_BG },                                           // matches the app screen bg (Prayer/Plan/Profile) exactly
   { id: 'cream',   color: '#FAF6E8' },
   { id: 'rose',    color: '#FBEEEE' },
   { id: 'sage',    color: '#EAF1E6' },
@@ -558,19 +558,29 @@ function ReaderSheet({
           label={t('bibleReader.reader.lineHeight')}
           value={lineH}
           display={lineH.toFixed(2)}
-          min={1.3} max={2} step={0.05}
+          min={1.5} max={2} step={0.05}
           onChange={(v) => setLineH(parseFloat(v.toFixed(2)))}
         />
         <SliderRow
           label={t('bibleReader.reader.paragraphSpacing')}
           value={paragraphSpacing}
           display={`${Math.round(paragraphSpacing)}px`}
-          min={10} max={30} step={1}
+          min={12} max={30} step={1}
           onChange={setParagraphSpacing}
         />
 
         <Text style={styles.readerSectionLabel}>{t('bibleReader.reader.font')}</Text>
-        <View style={styles.fontPills}>
+        {/* Each chip is content-width (sized to its label) and the whole strip
+            scrolls horizontally — so the long "Merriweather" never gets
+            squeezed/shrunk to fit a fixed cell, and the row adapts to any
+            device width. Every label renders IN ITS OWN typeface so the user
+            previews the actual font before picking it. */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.fontPills}
+          contentContainerStyle={styles.fontPillsContent}
+        >
           {FONT_CHOICES.map(f => {
             const active = font === f;
             return (
@@ -581,17 +591,15 @@ function ReaderSheet({
                 activeOpacity={0.85}
               >
                 <Text
-                  style={[styles.fontPillText, { color: active ? '#fff' : TXT }]}
+                  style={[styles.fontPillText, { color: active ? '#fff' : TXT, fontFamily: FONT_FAMILY[f] }]}
                   numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.75}
                 >
                   {f}
                 </Text>
               </TouchableOpacity>
             );
           })}
-        </View>
+        </ScrollView>
 
         <Text style={styles.readerSectionLabel}>{t('bibleReader.reader.theme')}</Text>
         <View style={styles.themeRow}>
@@ -609,7 +617,7 @@ function ReaderSheet({
                 activeOpacity={0.85}
               >
                 {active && (
-                  <Feather name="check" size={16} color={t.id === 'dark' ? '#fff' : TXT} />
+                  <Feather name="check" size={14} color={t.id === 'dark' ? '#fff' : TXT} />
                 )}
               </TouchableOpacity>
             );
@@ -621,7 +629,7 @@ function ReaderSheet({
 }
 
 const THEMES: Record<string, { bg: string; txt: string; sub: string }> = {
-  default: { bg: '#F0EEEB', txt: TXT, sub: TXTSUB },                              // matches THEME_OPTS[0].color — picker swatch + rendered reader stay in sync
+  default: { bg: SCREEN_BG, txt: TXT, sub: TXTSUB },                              // SCREEN_BG — unified with the Prayer/Plan/Profile background; picker swatch (THEME_OPTS[0]) stays in sync
   cream: { bg: '#FAF6E8', txt: '#3A2E1F', sub: '#7A6A52' },
   rose: { bg: '#FBEEEE', txt: '#4A2530', sub: '#876672' },
   sage: { bg: '#EAF1E6', txt: '#26331F', sub: '#5C6B53' },
@@ -638,7 +646,11 @@ export default function BibleScreen() {
   const route = useRoute<RouteProp<TabParamList, 'bible'>>();
   const navigation = useNavigation();
   const t = useT();
-  const { current: translation } = useTranslation();
+  const { current: translation, pending: pendingDl } = useTranslation();
+  // Heads-up shown when the user opens the reader while the Bible for the
+  // newly-chosen language is still downloading — it auto-swaps in when ready.
+  const [dlNotice, setDlNotice] = useState<string | null>(null);
+  const dlNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { verses: savedList, addVerse, removeVerse, hasVerse } = useSavedVerses();
   const { markToday } = useActivity();
   const { setHighlight, getColor } = useHighlights();
@@ -755,6 +767,24 @@ export default function BibleScreen() {
       };
     }, []),
   );
+  // Reminder #2: opening the reader in the brief window AFTER choosing a new
+  // language but BEFORE its current chapter has been primed (so `translation`
+  // still points at the old language). Once the priority chapter lands the
+  // context swaps `current` → `pendingDl.code === translation.code` and this
+  // notice is suppressed (the page already shows the new language). The rest of
+  // the Bible keeps downloading silently in the background for offline use.
+  useFocusEffect(
+    React.useCallback(() => {
+      if (pendingDl && pendingDl.code !== translation.code) {
+        const name = TRANSLATIONS.find(x => x.code === pendingDl.code)?.nativeName ?? '';
+        setDlNotice(t('bibleReader.stillDownloading', { name }));
+        if (dlNoticeTimerRef.current) clearTimeout(dlNoticeTimerRef.current);
+        dlNoticeTimerRef.current = setTimeout(() => setDlNotice(null), 5000);
+      }
+      return undefined;
+    }, [pendingDl, translation.code, t]),
+  );
+  useEffect(() => () => { if (dlNoticeTimerRef.current) clearTimeout(dlNoticeTimerRef.current); }, []);
   // Auto-clear when the user navigates to a different chapter (drawer, search,
   // saved-verse jump), since the highlight no longer corresponds to anything
   // on screen.
@@ -770,9 +800,12 @@ export default function BibleScreen() {
   const [error, setError] = useState<string | null>(null);
   const [drawer, setDrawer] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [fontSize, setFontSize] = useState(25);            // 20 → 22 → 25 (+15 % on user feedback; chapter body felt small on iPhone)
-  const [lineH, setLineH] = useState(1.6);                 // 1.7 → 1.6 default per design
-  const [paragraphSpacing, setParagraphSpacing] = useState(20);
+  // New-user defaults per design: 18 px / 1.8 line-height / 24 px paragraph
+  // spacing. (Existing installs keep whatever they persisted — see hydration
+  // below; these initial values only apply on a fresh install.)
+  const [fontSize, setFontSize] = useState(18);
+  const [lineH, setLineH] = useState(1.8);
+  const [paragraphSpacing, setParagraphSpacing] = useState(24);
   // Merriweather is the default reader font — purpose-built for on-screen
   // reading (slab-influenced serif, generous x-height) and gives the Bible
   // body a warm, editorial feel out of the box. Users can still pick Serif
@@ -1246,6 +1279,12 @@ export default function BibleScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: TH.bg === 'transparent' ? '#FBF7F6' : TH.bg }]}>
+      {dlNotice && (
+        <View style={[styles.dlNotice, { bottom: insets.bottom + 78 }]} pointerEvents="none">
+          <Feather name="download" size={15} color="#fff" />
+          <Text style={styles.dlNoticeText}>{dlNotice}</Text>
+        </View>
+      )}
       {/* Pinned header */}
       <TabSection delay={0}>
       <View style={[styles.bibleHeader, {
@@ -1874,6 +1913,23 @@ const styles = StyleSheet.create({
     zIndex: 50,
   },
   toastText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600', letterSpacing: 0.3 },
+  // "Bible still downloading" heads-up — wider than a normal toast (two lines
+  // of copy), pinned above the tab bar, dark translucent pill.
+  dlNotice: {
+    position: 'absolute',
+    alignSelf: 'center',
+    left: 24,
+    right: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.78)',
+    zIndex: 60,
+  },
+  dlNoticeText: { flex: 1, color: '#FFFFFF', fontSize: 13.5, lineHeight: 19, fontFamily: FONTS.lato },
   // Soft white-card toast variant — matches the app's translucent Glass
   // pattern (rgba 0.92 + soft border) for in-context confirmations.
   softToast: {
@@ -2277,15 +2333,19 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   fontPills: {
-    flexDirection: 'row',
-    gap: 10,
     marginBottom: 22,
   },
+  fontPillsContent: {
+    gap: 10,
+    paddingRight: 4,                                                            // breathing room at the scroll end
+  },
+  // Content-width chips (no flex), height -15 % (paddingVertical 14 → 11.9).
   fontPill: {
-    flex: 1,
-    paddingVertical: 14,
+    paddingHorizontal: 20,
+    height: 23,                                                                // explicit 23 px per user (was ~28); text centers via align/justify
     borderRadius: 26,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   fontPillActive: {
     backgroundColor: ROSE,
@@ -2295,7 +2355,10 @@ const styles = StyleSheet.create({
   },
   fontPillText: {
     fontSize: 16,
-    fontWeight: '700',
+    // 400 to match the per-font *_400Regular files (FONT_FAMILY). Forcing 700
+    // here would make Android fail to find a bold variant and fall back to
+    // system sans — breaking the in-its-own-typeface preview (the Lora trap).
+    fontWeight: '400',
   },
   // Single row of 6 swatches (was 6 with flexWrap → dark sat alone on a
   // second line). Circle size reduced 52 → 44 + smaller gap so the full
@@ -2306,9 +2369,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   themeCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,                                                                 // slightly smaller per user (was 44)
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },

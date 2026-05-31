@@ -297,21 +297,26 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // becomes available; the user's toggleMusic action below takes over from
   // there. Pause on unmount so the music doesn't follow the user to the
   // congrats screen.
-  useEffect(() => {
-    try { audioPlayer.loop = true; } catch {}
-  }, [audioPlayer]);
+  // Explicit user intent for the bg music. A SINGLE effect drives the player
+  // from `musicOn` — so a stray re-render can no longer silently resume music
+  // the user turned off (the bug where the bg-music button "wouldn't turn
+  // off": the old auto-play effect re-fired and overrode the pause). Auto-on
+  // when a source is available.
+  const [musicOn, setMusicOn] = useState(true);
   useEffect(() => {
     if (!audioSource) return;
-    try { audioPlayer.play(); } catch {}
-  }, [audioSource, audioPlayer]);
+    try {
+      audioPlayer.loop = true;
+      if (musicOn) audioPlayer.play();
+      else audioPlayer.pause();
+    } catch {}
+  }, [musicOn, audioSource, audioPlayer]);
   useEffect(() => () => {
-    try { if (audioPlayer.playing) audioPlayer.pause(); } catch {}
+    try { audioPlayer.pause(); } catch {}
   }, [audioPlayer]);
   const toggleMusic = () => {
-    try {
-      if (audioStatus.playing) audioPlayer.pause();
-      else audioPlayer.play();
-    } catch {}
+    if (!audioSource) return;
+    setMusicOn(v => !v);
   };
   const [amened, setAmened] = useState(false);
   const [showWeekly, setShowWeekly] = useState(false);
@@ -735,8 +740,8 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               style={[styles.chromeBtn, !audioSource && { opacity: 0.5 }]}
               disabled={!audioSource}
             >
-              <Animated.View style={audioStatus.playing ? musicSpinStyle : undefined}>
-                <Feather name={audioStatus.playing ? 'music' : 'volume-x'} size={21} color="#fff" />
+              <Animated.View style={musicOn ? musicSpinStyle : undefined}>
+                <Feather name={musicOn ? 'music' : 'volume-x'} size={21} color="#fff" />
               </Animated.View>
             </TouchableOpacity>
             {/* Listen / 导读 — TTS read-through of the 4 steps, separate from

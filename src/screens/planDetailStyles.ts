@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { TXT, TXTSUB, P, FONTS, SERIF_BODY } from '../constants/theme';
+import { ROSE, TXT, TXTSUB, P, FONTS, SERIF_BODY } from '../constants/theme';
 
 // Single source of truth for the plan-detail page layout. Both the demo
 // PlanDetail (inline in PlanScreen.tsx, keyed off the placeholder
@@ -69,8 +69,8 @@ export const detailStyles = StyleSheet.create({
   // not to disrupt the day strip's visual rhythm; only renders for corpus
   // plans (the demo doesn't track completion).
   dayCheck: {
-    position: 'absolute', top: 4, right: 4,
-    width: 14, height: 14, borderRadius: 7,
+    position: 'absolute', top: 3, right: 3,
+    width: 18, height: 18, borderRadius: 9,                                     // 14 → 18 (enlarged per user)
     alignItems: 'center', justifyContent: 'center',
   },
   dayContent: { marginBottom: 18, marginTop: 15 },
@@ -80,9 +80,12 @@ export const detailStyles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 14,
   },
-  dayTitle: { fontSize: 18, fontWeight: '700', fontFamily: FONTS.loraBold, color: TXT },
-  timeBadge: { paddingHorizontal: 11, paddingVertical: 5, borderRadius: 11 },
-  timeBadgeText: { fontSize: 15, fontWeight: '700', fontFamily: FONTS.latoBold, letterSpacing: 0.5 },
+  // Identical to dailyPlanLabel (18 / 600 / loraBold) per user — "Day N of M"
+  // now matches the "Daily Plan" header exactly. (Also fixes the Lora-700
+  // Android fallback: loraBold must pair with 600, never 700.)
+  dayTitle: { fontSize: 18, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT },
+  timeBadge: { paddingHorizontal: 11, paddingVertical: 5, borderRadius: 15.4 }, // 11 → 15.4 (+40 % per user)
+  timeBadgeText: { fontSize: 15, fontWeight: '700', fontFamily: FONTS.latoBold, letterSpacing: 0.5 },  // Lato (latoBold)
   walkRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -146,4 +149,44 @@ export const detailStyles = StyleSheet.create({
     borderRadius: 13, marginBottom: 9,
   },
   errorText: { flex: 1, fontSize: 14, fontFamily: FONTS.lato, color: TXTSUB, lineHeight: 20 },
+
+  // "Not today's reading" confirm dialog — custom card (replaces the OS Alert)
+  // styled like an iOS-style sheet: dim backdrop, rounded white card, bold
+  // serif body, then a divided two-button row (No on the left, Yes on the right).
+  dialogOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(20,16,28,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 44,
+  },
+  dialogCard: {
+    width: '100%',
+    maxWidth: 320,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingTop: 26,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  dialogBody: {
+    fontSize: 18,
+    fontWeight: '600',                       // loraBold pairs with 600 (700 drops Lora on Android)
+    fontFamily: FONTS.loraBold,
+    color: TXT,
+    textAlign: 'center',
+    lineHeight: 25,
+    paddingHorizontal: 24,
+    marginBottom: 22,
+  },
+  dialogDivider: { height: 1, backgroundColor: 'rgba(30,27,46,0.12)' },
+  dialogActions: { flexDirection: 'row' },
+  dialogBtn: { flex: 1, paddingVertical: 15, alignItems: 'center', justifyContent: 'center' },
+  dialogVDivider: { width: 1, backgroundColor: 'rgba(30,27,46,0.12)' },
+  dialogBtnNo: { fontSize: 17, fontWeight: '600', color: TXTSUB, fontFamily: FONTS.lato },
+  dialogBtnYes: { fontSize: 17, fontWeight: '700', color: ROSE, fontFamily: FONTS.latoBold },
 });

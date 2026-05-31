@@ -3,8 +3,14 @@ import { StatusBar } from 'expo-status-bar';
 import { Text, TextInput } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
+import { SCREEN_BG } from './src/constants/theme';
+
+// Pin the navigator's scene background to our canonical SCREEN_BG (same value
+// as RN's implicit default, just made explicit) so the Prayer / Bible / Plan /
+// Profile tabs are guaranteed to share one exact background colour.
+const NAV_THEME = { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: SCREEN_BG } };
 
 // Global default font: Lato 400 Regular. Many Text/TextInput styles in
 // the app set `fontSize` and `fontWeight` but forget `fontFamily` — without
@@ -101,7 +107,7 @@ export default function App() {
                                     <MoodCheckInProvider>
                                       <NotificationsProvider>
                                         <ReminderInterstitialProvider>
-                                        <NavigationContainer>
+                                        <NavigationContainer theme={NAV_THEME}>
                                           <StatusBar style="dark" />
                                           <RootNavigator />
                                           {/* Mounted inside NavigationContainer

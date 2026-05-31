@@ -1,9 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { TXT, TXTSUB } from '../constants/theme';
+import { TXT, TXTSUB, ROSE } from '../constants/theme';
+
+// Unified plan accent. Per user: every plan uses the SAME palette — pink for
+// the selected / active state, green for completed days — instead of a
+// per-plan brown/blue/green accent. PLAN_DONE is the app's standard
+// "complete" green (matches the check badges elsewhere).
+const PLAN_DONE = '#7DB87D';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import { usePlanCompletion } from '../state/PlanCompletionContext';
 import { useTranslation } from '../state/TranslationsContext';
@@ -83,6 +89,8 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
   }, [plan, translation.code, translation.source]);
 
   const [activeIdx, setActiveIdx] = useState(0);
+  // Day pending an out-of-schedule read confirmation (null = dialog hidden).
+  const [confirmDay, setConfirmDay] = useState<number | null>(null);
 
   if (!summary) {
     return (
@@ -101,7 +109,9 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
   // matches the demo's hand-picked `plan.ac` (e.g., LAV `#9560C2`). Using the
   // pastel as button bg made the CTA read as "disabled" — verified on the
   // anger plan where `color_primary: #E0BCA0` produced a near-white button.
-  const ac = summary.colorSecondary;
+  // Unified pink accent for all plans (selected day, time badge, walk row,
+  // Start button). Completed days use PLAN_DONE green — see the day strip.
+  const ac = ROSE;
 
   // Day cells: number, today-anchored date label, walk title (from full plan
   // when loaded), verses (verse_wall display strings + their ref payload for
@@ -115,6 +125,7 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
   // 30 ms recompute every render to chase a once-a-day edge case).
   const days = useMemo(() => {
     const today = new Date();
+    const todayStr = today.toDateString();
     const locale = localeFor(uiLang);
     return Array.from({ length: summary.duration }, (_, i) => {
       const d = new Date(today);
@@ -128,14 +139,27 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
         // "May 26" leak into every UI language. Now follows uiLang —
         // zh-CN renders "5月26日", de-DE "26. Mai", etc.
         label: d.toLocaleDateString(locale, { month: 'short', day: 'numeric' }),
+        isToday: d.toDateString() === todayStr,
         walk: content?.title || `Day ${i + 1}`,
         verses: (verseWall?.verses || []) as PlanVerseRef[],
       };
     });
   }, [summary.duration, plan, uiLang]);
   const cur = days[activeIdx];
+  // The day whose calendar date is today = the reading the user is meant to do
+  // now. Opening any other day prompts a confirm (see startActiveDay).
+  const todayIdx = useMemo(() => days.findIndex(d => d.isToday), [days]);
 
-  const startActiveDay = () => navigation.navigate('PlanDayWalk', { slug, day: cur.n });
+  const goToDay = (n: number) => navigation.navigate('PlanDayWalk', { slug, day: n });
+  const startActiveDay = () => {
+    // Reading out of schedule → custom confirm dialog ("This is not today's
+    // reading…") instead of the OS Alert, so we control the look + button order.
+    if (todayIdx >= 0 && activeIdx !== todayIdx) {
+      setConfirmDay(cur.n);
+      return;
+    }
+    goToDay(cur.n);
+  };
 
   const onVerseTap = (v: PlanVerseRef) => {
     const bookSlug = bookCodeToSlug(v.bookCode);
@@ -149,6 +173,7 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
   };
 
   return (
+    <>
     <ScrollView
       showsVerticalScrollIndicator={false}
       contentContainerStyle={[ds.scroll, { paddingTop: insets.top + 8 }]}
@@ -217,18 +242,28 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
           {days.map((d, i) => {
             const sel = i === activeIdx;
             const done = isDayComplete(slug, d.n);
+            // Completed → GREEN (takes priority, even when it's the active day —
+            // per user). Selected-but-not-done → pink. Upcoming → white. A
+            // ROSE ring marks the active day when it's already green.
+            const filled = sel || done;
+            const bg = done ? PLAN_DONE : sel ? ROSE : 'rgba(255,255,255,0.7)';
+            const ring = sel && done;          // active + completed → pink outline so it still reads as selected
             return (
               <TouchableOpacity
                 key={i}
                 onPress={() => setActiveIdx(i)}
-                style={[ds.dayBtn, { backgroundColor: sel ? ac : 'rgba(255,255,255,0.7)', borderColor: sel ? 'transparent' : 'rgba(30,27,46,0.08)' }]}
+                style={[ds.dayBtn, {
+                  backgroundColor: bg,
+                  borderWidth: ring ? 2 : 1,
+                  borderColor: ring ? ROSE : (filled ? 'transparent' : 'rgba(30,27,46,0.08)'),
+                }]}
                 activeOpacity={0.8}
               >
-                <Text style={[ds.dayNum, { color: sel ? '#fff' : TXT }]}>{d.n}</Text>
-                <Text style={[ds.dayDate, { color: sel ? 'rgba(255,255,255,0.9)' : TXTSUB }]}>{d.label}</Text>
+                <Text style={[ds.dayNum, { color: filled ? '#fff' : TXT }]}>{d.n}</Text>
+                <Text style={[ds.dayDate, { color: filled ? 'rgba(255,255,255,0.9)' : TXTSUB }]}>{d.label}</Text>
                 {done && (
-                  <View style={[ds.dayCheck, { backgroundColor: sel ? 'rgba(255,255,255,0.9)' : ac }]}>
-                    <Feather name="check" size={9} color={sel ? ac : '#fff'} />
+                  <View style={[ds.dayCheck, { backgroundColor: 'rgba(255,255,255,0.95)' }]}>
+                    <MaterialCommunityIcons name="check-bold" size={12} color={PLAN_DONE} />
                   </View>
                 )}
               </TouchableOpacity>
@@ -242,7 +277,7 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
           <View style={ds.dayHeader}>
             <Text style={ds.dayTitle}>{t('plan.row.dayOfTotal', { n: cur.n, total: summary.duration })}</Text>
             <View style={[ds.timeBadge, { backgroundColor: `${ac}18` }]}>
-              <Text style={[ds.timeBadgeText, { color: ac }]}>~{summary.minutes} MIN</Text>
+              <Text style={[ds.timeBadgeText, { color: ac }]}>~{summary.minutes} min</Text>
             </View>
           </View>
 
@@ -299,5 +334,36 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
 
       <View style={{ height: 23 }} />
     </ScrollView>
+
+    {/* Custom "not today's reading" confirm — styled card (not the OS Alert),
+        with No on the LEFT and Yes on the RIGHT per user. */}
+    <Modal
+      visible={confirmDay != null}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={() => setConfirmDay(null)}
+    >
+      <View style={ds.dialogOverlay}>
+        <View style={ds.dialogCard}>
+          <Text style={ds.dialogBody}>{t('planDetail.dialog.body')}</Text>
+          <View style={ds.dialogDivider} />
+          <View style={ds.dialogActions}>
+            <TouchableOpacity style={ds.dialogBtn} activeOpacity={0.7} onPress={() => setConfirmDay(null)}>
+              <Text style={ds.dialogBtnNo}>{t('planDetail.dialog.no')}</Text>
+            </TouchableOpacity>
+            <View style={ds.dialogVDivider} />
+            <TouchableOpacity
+              style={ds.dialogBtn}
+              activeOpacity={0.7}
+              onPress={() => { const d = confirmDay; setConfirmDay(null); if (d != null) goToDay(d); }}
+            >
+              <Text style={ds.dialogBtnYes}>{t('planDetail.dialog.ok')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+    </>
   );
 }

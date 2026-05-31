@@ -7,7 +7,7 @@ import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import type { PlanSummary } from '../constants/featuredPlansSummary';
 import { useT } from '../i18n/useT';
 import { SUBTAB_ORDER, SUBTAB_OVERRIDE, type PlanSectionId } from '../constants/plansApi';
-import PlanCover from '../components/PlanCover';
+import PlanCover, { PLAN_ROW_COVER } from '../components/PlanCover';
 import type { RootStackScreenProps } from '../navigation/types';
 
 // Full-screen list for one (primary) bucket of the corpus. Organises plans
@@ -168,9 +168,7 @@ function PlanCategoryRow({ plan, onOpen }: { plan: PlanSummary; onOpen: (slug: s
       <PlanCover
         slug={plan.slug}
         gradient={[plan.colorPrimary, plan.colorSecondary]}
-        width={136}
-        height={97}
-        radius={7}
+        {...PLAN_ROW_COVER}
       />
       <View style={styles.planMeta}>
         <Text style={styles.planDays}>{t('plan.row.daysLabel', { n: plan.duration })}</Text>

@@ -1,16 +1,17 @@
 import type { ImageSourcePropType } from 'react-native';
 
-// Per-badge PNG overrides. When an entry exists for a badge id, BadgeIcon
-// renders that PNG; otherwise it renders the per-rarity gradient medallion
-// fallback (see RARITY in components/BadgeIcon.tsx).
+// BUNDLED per-badge PNG overrides — normally EMPTY.
 //
-// **v1 decision (2026-05): ship without per-badge PNGs.** The gradient
-// medallions (two-stop filled body + highlight arc + white Feather glyph
-// + soft drop shadow) were redesigned to read as intentional art, not a
-// "missing image" placeholder, so every tier looks finished even with
-// this map empty. Per-rarity palette communicates value progression
-// (sand→caramel / sky→ocean / lilac→plum / gold→bronze) and the Feather
-// glyph carries each badge's identity. Bespoke per-badge art can be
-// layered in post-launch by populating this map — no BadgeIcon changes
-// needed; the PNG branch automatically takes over per id.
+// Badge art is NOT shipped in the binary. It's pulled from the CDN on first
+// visit to the Achievement screen and cached on disk (see
+// state/BadgesContext.tsx + services/badgeImageService.ts); BadgeIcon reads
+// the cached file via useBadges(). Until art lands (or if offline / before
+// it's deployed), BadgeIcon renders the per-rarity gradient medallion
+// placeholder (two-stop body + highlight arc + white Feather glyph + soft
+// shadow) — every tier looks finished even with no PNG.
+//
+// This map is the highest-priority source: to bundle a specific badge in the
+// app binary (e.g. a hero badge that must show instantly offline before any
+// download), add `id → require(...)` here and it wins over the CDN copy.
+// Left empty by design.
 export const BADGE_IMAGES: Record<string, ImageSourcePropType> = {};

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
@@ -7,6 +7,7 @@ import BadgeIcon from '../components/BadgeIcon';
 import SignInSheet from '../components/SignInSheet';
 import { ACHIEVEMENTS, achievementUi, localizedAchievementName, localizedAchievementRule, type Achievement } from '../constants/achievements';
 import { useAchievements } from '../state/AchievementsContext';
+import { useBadges } from '../state/BadgesContext';
 import { useTranslation } from '../state/TranslationsContext';
 import { useAuth } from '../state/AuthContext';
 import { useT } from '../i18n/useT';
@@ -45,7 +46,12 @@ export default function AchievementScreen({ navigation }: RootStackScreenProps<'
   const insets = useSafeAreaInsets();
   const t = useT();
   const { earned } = useAchievements();
+  const { prefetchAll } = useBadges();
   const { current: translation } = useTranslation();
+
+  // First visit to this screen → pull all badge art from the CDN into the
+  // local cache (the binary ships without it). No-op once cached / per launch.
+  useEffect(() => { prefetchAll(); }, [prefetchAll]);
   const { user } = useAuth();
   const ui = achievementUi(translation.code);
   const [detail, setDetail] = useState<Achievement | null>(null);

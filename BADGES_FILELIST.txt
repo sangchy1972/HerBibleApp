@@ -1,0 +1,89 @@
+# Achievement Badge Art — file list (72 badges)
+
+Rename each transparent PNG to the FILENAME in the middle column.
+Rule: take the badge id, replace every "." with "-", add ".png".
+
+
+## PRAYER (8)
+  prayer-first.png              common     First Light
+  prayer-streak3.png            common     Three-Day Glow
+  prayer-streak7.png            rare       Seven-Day Radiance
+  prayer-streak14.png           rare       Fortnight Faithful
+  prayer-streak30.png           epic       A Month of Grace
+  prayer-streak90.png           epic       Three-Month Covenant
+  prayer-streak100.png          legendary  Hundred Days of Prayer
+  prayer-streak365.png          legendary  A Year of Devotion
+
+## SCRIPTURE (14)
+  scripture-first.png           common     First Page
+  scripture-read5.png           common     Seedling Faith
+  scripture-read10.png          rare       One in Ten
+  scripture-read25.png          rare       A Quarter Through
+  scripture-read50.png          epic       Halfway Home
+  scripture-read75.png          epic       Three Quarters
+  scripture-read100.png         legendary  The Whole Word
+  scripture-streak3.png         common     Three Reading Days
+  scripture-streak7.png         rare       Seven Scripture Days
+  scripture-streak30.png        epic       Month of the Word
+  scripture-books10.png         common     Ten Books
+  scripture-books20.png         rare       Twenty Books
+  scripture-books30.png         epic       Thirty Books
+  scripture-books50.png         legendary  Fifty Books
+
+## PLAN (14)
+  plan-first.png                common     First Step
+  plan-count2.png               common     Second Journey
+  plan-count3.png               rare       Three Journeys
+  plan-count7.png               epic       Seven Summits
+  plan-count10.png              epic       Ten Plans
+  plan-count12.png              epic       Twelve Paths
+  plan-count15.png              epic       Fifteen Chapters
+  plan-count20.png              epic       Twenty Plans
+  plan-count25.png              epic       Twenty-Five Steps
+  plan-count30.png              legendary  Plan Master
+  plan-speed3in7.png            rare       Three in a Week
+  plan-speed5in30.png           epic       Month in Full Bloom
+  plan-speed10in30.png          legendary  Devoted Learner
+  plan-deepRoots.png            rare       Deep Roots
+
+## NOTE (14)
+  note-first.png                common     First Reflection
+  note-count10.png              common     First Ten
+  note-count15.png              common     Two Weeks of Words
+  note-count20.png              rare       Twenty Notes
+  note-count25.png              rare       A Month of Words
+  note-count30.png              rare       Thirty Reflections
+  note-count40.png              rare       Forty Thoughts
+  note-count50.png              epic       Fifty Reflections
+  note-count75.png              epic       Faithful Pen
+  note-count100.png             epic       A Hundred Words
+  note-count150.png             epic       Living Word
+  note-count200.png             legendary  Two Hundred Notes
+  note-count250.png             legendary  Growing Library
+  note-count300.png             legendary  Three Hundred Notes
+
+## HIGHLIGHT (13)
+  highlight-first.png           common     First Highlight
+  highlight-count10.png         common     Ten Lights
+  highlight-count15.png         common     Illuminated
+  highlight-count20.png         rare       Twenty Highlights
+  highlight-count25.png         rare       Shining Verses
+  highlight-count30.png         rare       Thirty Rays
+  highlight-count40.png         rare       Forty Beams
+  highlight-count50.png         epic       Fifty Lights
+  highlight-count100.png        epic       Hundred Highlights
+  highlight-count150.png        epic       Radiant
+  highlight-count200.png        legendary  Two Hundred Stars
+  highlight-count250.png        legendary  Star-filled
+  highlight-count300.png        legendary  Three Hundred Stars
+
+## MILESTONE (9)
+  milestone-dawn7.png           rare       Dawn Devotion
+  milestone-triple.png          epic       Body, Soul & Spirit
+  milestone-share1.png          common     Share the Word
+  milestone-share3.png          rare       Faithful Sower
+  milestone-share5.png          epic       Light to the World
+  milestone-anniversary.png     epic       Anniversary Blessing
+  milestone-river30.png         legendary  River of Life
+  milestone-fullYear.png        legendary  A Full Year
+  milestone-crown.png           legendary  Crown of Grace

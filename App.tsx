@@ -55,6 +55,7 @@ import { DailyVersesProvider } from './src/state/DailyVersesContext';
 import { PrayerBackgroundsProvider } from './src/state/PrayerBackgroundsContext';
 import { ShareProvider } from './src/state/ShareContext';
 import { AchievementsProvider } from './src/state/AchievementsContext';
+import { BadgesProvider } from './src/state/BadgesContext';
 import { FeaturedPlansProvider } from './src/state/FeaturedPlansContext';
 import { PlanProfileProvider } from './src/state/PlanProfileContext';
 import { PlansProvider } from './src/state/PlansContext';
@@ -102,6 +103,7 @@ export default function App() {
                             <PrayerBackgroundsProvider>
                             <ShareProvider>
                               <AchievementsProvider>
+                                <BadgesProvider>
                                 <OnboardingProvider>
                                   <RatePromptProvider>
                                     <MoodCheckInProvider>
@@ -128,6 +130,7 @@ export default function App() {
                                     </MoodCheckInProvider>
                                   </RatePromptProvider>
                                 </OnboardingProvider>
+                                </BadgesProvider>
                               </AchievementsProvider>
                             </ShareProvider>
                             </PrayerBackgroundsProvider>

@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import type { BadgeRarity } from '../constants/achievements';
 import { BADGE_IMAGES } from '../constants/badgeImages';
+import { useBadges } from '../state/BadgesContext';
 
 // Per-rarity palette. The placeholder now renders as a filled medallion
 // (two-stop gradient bg + white glyph + thin highlight ring at the top),
@@ -41,7 +42,13 @@ interface Props {
 export default function BadgeIcon({
   id, iconKey, rarity, size = 88, locked = false, count = 1, label = null,
 }: Props) {
-  const png = id ? BADGE_IMAGES[id] : undefined;
+  // Art source, in priority order: a bundled override (BADGE_IMAGES, normally
+  // empty — the binary ships art-free) → the CDN-cached PNG on disk → none,
+  // in which case the gradient medallion placeholder renders.
+  const { badgeUri } = useBadges();
+  const bundled = id ? BADGE_IMAGES[id] : undefined;
+  const remoteUri = id ? badgeUri(id) : null;
+  const source = bundled ?? (remoteUri ? { uri: remoteUri } : undefined);
   const palette = RARITY[rarity];
   const iconName = (iconKey as keyof typeof Feather.glyphMap) in Feather.glyphMap
     ? (iconKey as keyof typeof Feather.glyphMap)
@@ -49,7 +56,7 @@ export default function BadgeIcon({
 
   return (
     <View style={[styles.wrap, { width: size, height: size }]}>
-      {png ? (
+      {source ? (
         // Locked rendering: 0.55 opacity (was 0.4 — a flat 0.4 multiplier
         // crushed pastel-palette badges like Anniversary Blessing or
         // Fifty Lights below the readability threshold while leaving
@@ -60,7 +67,7 @@ export default function BadgeIcon({
         // across hue families without killing the badge's identity.
         <View style={[styles.png, { width: size, height: size }]}>
           <Image
-            source={png}
+            source={source}
             style={{ width: size, height: size, opacity: locked ? 0.55 : 1 }}
             resizeMode="contain"
           />

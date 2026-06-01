@@ -45,3 +45,16 @@ export interface DailyVerseAudioManifest {
 export function dailyVerseAudioUrl(filename: string): string {
   return `${DAILY_VERSE_AUDIO_BASE}/${DAILY_VERSE_AUDIO_LANG}/${filename}`;
 }
+
+// Holiday-verse narration. Separate bucket prefix from the regular daily-verse
+// audio because the holiday verseIds (m_001…e_010 = holiday day index) COLLIDE
+// with the regular ones — same id, different audio — so they need a distinct
+// folder + manifest + on-device cache. English only, same as the regular set.
+//   <BASE>/en/<filename>, e.g.
+//   …/holiday_dailyverse_4steps_audio/en/m_009_christmas-day_morning_01_scripture.mp3
+export const HOLIDAY_VERSE_AUDIO_BASE =
+  'https://audio.everlandapps.com/holiday_dailyverse_4steps_audio';
+
+export function holidayVerseAudioUrl(filename: string): string {
+  return `${HOLIDAY_VERSE_AUDIO_BASE}/${DAILY_VERSE_AUDIO_LANG}/${filename}`;
+}

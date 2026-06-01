@@ -33,7 +33,7 @@ import ShareVerseSheet from '../components/ShareVerseSheet';
 import VerseNoteSheet from '../components/VerseNoteSheet';
 import { useSavedVerses } from '../state/SavedVersesContext';
 import { useUILanguage } from '../state/UILanguageContext';
-import { prepareVerseAudio, verseIdFor } from '../services/dailyVerseAudioService';
+import { prepareVerseAudio, prepareHolidayVerseAudio, verseIdFor } from '../services/dailyVerseAudioService';
 import { DAILY_VERSE_AUDIO_LANG } from '../constants/dailyVerseAudioCdn';
 import type { RootStackScreenProps } from '../navigation/types';
 
@@ -384,6 +384,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // verseId/verseDay re-runs only when the verse genuinely changes.
   const verseId = (listenLangOk && dailyVerse) ? verseIdFor(dailyVerse.day, dailyVerse.segment) : null;
   const verseDay = dailyVerse?.day ?? null;
+  // Holiday verses carry a `holidayId` and live in a SEPARATE audio
+  // folder/manifest (their m_NNN/e_NNN ids collide with the regular set), so
+  // route narration to the holiday pipeline when today's verse is a holiday.
+  const isHolidayVerse = !!dailyVerse && (dailyVerse as { holidayId?: string }).holidayId != null;
 
   // Resolve + download today's narration. keepIds = today's morning + evening
   // so doing one slot's flow doesn't prune the other's cached files;
@@ -393,11 +397,12 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     if (!verseId || verseDay == null) { setReadUris(null); return; }
     let alive = true;
     const keep = [verseIdFor(verseDay, 'morning'), verseIdFor(verseDay, 'evening')];
-    prepareVerseAudio(verseId, keep)
+    const prepare = isHolidayVerse ? prepareHolidayVerseAudio : prepareVerseAudio;
+    prepare(verseId, keep)
       .then(uris => { if (alive) setReadUris(uris); })
       .catch(() => { if (alive) setReadUris(null); });
     return () => { alive = false; };
-  }, [verseId, verseDay]);
+  }, [verseId, verseDay, isHolidayVerse]);
 
   // Source is keyed on the cursor (NOT on listenOn) so pausing keeps the
   // clip mounted at its position — resume continues mid-clip. Changing the

@@ -1333,8 +1333,8 @@ const styles = StyleSheet.create({
   },
   heroText: {
     fontFamily: FONTS.merriweather,                                            // Merriweather per user — matches the reader body face
-    fontSize: 20.60,                                                             // 19.25 × 1.07 (+7 % per user). Affects both Verse of the Day + Verse of the Night cards (same hero component)
-    lineHeight: 31.82,                                                           // 29.74 × 1.07 — line-height scales in step so wrapped verses keep their open rhythm
+    fontSize: 19.16,                                                             // 20.60 × 0.93 (-7 % per user). Affects both Verse of the Day + Verse of the Night cards (same hero component)
+    lineHeight: 29.59,                                                           // 31.82 × 0.93 — line-height scales in step so wrapped verses keep their open rhythm
     color: 'rgba(255,255,255,0.96)',
   },
   heroActions: {
@@ -1609,7 +1609,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginTop: 1,                                                               // -4 → 1 (+5 px per user) — the title↔bar gap was too cramped
+    marginTop: 6,                                                               // 1 → 6 (+5 px per user) — extra breathing room between title and bar
   },
   continuePctSlot: {
     alignItems: 'flex-end',
@@ -1636,6 +1636,7 @@ const styles = StyleSheet.create({
   },
   continueProgressTrack: {
     flex: 1,                                                                     // sits to the right of the % label and fills the remaining row width — without `flex: 1` the View collapsed to 0 px and the bar was invisible
+    marginRight: '10%',                                                          // trim the right end so the bar stops ~10% short of the card edge (per user) — shorter, less stretched
     height: 5,
     borderRadius: 4,
     backgroundColor: 'rgba(30,27,46,0.10)',

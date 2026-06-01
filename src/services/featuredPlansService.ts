@@ -112,19 +112,51 @@ export async function getCachedPlan(lang: LanguageCode, slug: string): Promise<F
   }
 }
 
-// Wraps a Worker GET with the session Bearer token, refreshing once on 401
-// (Worker rotated its signing secret since the cached token was minted).
-async function authedFetch(path: string): Promise<Response> {
-  const token = await getSessionToken();
-  const res = await fetch(`${PLANS_API_BASE}${path}`, {
-    headers: { Authorization: `Bearer ${token}` },
+// Hard ceiling on any single network leg (token mint OR plan GET). Without
+// this, a stalled connection — common on flaky / high-latency networks
+// reaching the CDN/Worker — leaves the detail screen's spinner turning forever
+// and the Start button permanently disabled. With it, the promise rejects in
+// bounded time so the caller can show a ret(r)yable error state instead.
+const PLAN_NET_TIMEOUT_MS = 12_000;
+
+// Reject a promise if it hasn't settled within `ms`. Used for the session-token
+// mint, which has no AbortController of its own.
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const id = setTimeout(() => reject(new Error(`timeout: ${label} after ${ms}ms`)), ms);
+    p.then(
+      v => { clearTimeout(id); resolve(v); },
+      e => { clearTimeout(id); reject(e); },
+    );
   });
+}
+
+// fetch() with an AbortController-backed timeout so a stalled socket aborts
+// instead of hanging indefinitely.
+async function fetchWithTimeout(url: string, init: RequestInit, ms: number): Promise<Response> {
+  const ctl = new AbortController();
+  const id = setTimeout(() => ctl.abort(), ms);
+  try {
+    return await fetch(url, { ...init, signal: ctl.signal });
+  } finally {
+    clearTimeout(id);
+  }
+}
+
+// Wraps a Worker GET with the session Bearer token, refreshing once on 401
+// (Worker rotated its signing secret since the cached token was minted). Every
+// leg is time-bounded (token mint + GET) so the whole call can't hang.
+async function authedFetch(path: string): Promise<Response> {
+  const token = await withTimeout(getSessionToken(), PLAN_NET_TIMEOUT_MS, 'session token');
+  const res = await fetchWithTimeout(`${PLANS_API_BASE}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }, PLAN_NET_TIMEOUT_MS);
   if (res.status !== 401) return res;
   await invalidateSessionToken();
-  const fresh = await getSessionToken();
-  return fetch(`${PLANS_API_BASE}${path}`, {
+  const fresh = await withTimeout(getSessionToken(), PLAN_NET_TIMEOUT_MS, 'session token refresh');
+  return fetchWithTimeout(`${PLANS_API_BASE}${path}`, {
     headers: { Authorization: `Bearer ${fresh}` },
-  });
+  }, PLAN_NET_TIMEOUT_MS);
 }
 
 export async function fetchAndCachePlan(lang: LanguageCode, slug: string): Promise<FullPlan> {

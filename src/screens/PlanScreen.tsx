@@ -261,7 +261,7 @@ export default function PlanScreen() {
   // bottom two category sections (Roles & Identity, Life Seasons). The
   // existing PLANS_EXPLORE demo data still feeds Walking with God +
   // Personal Growth; the two paths coexist.
-  const { summary, getSummary } = useFeaturedPlans();
+  const { summary, getSummary, loadPlan } = useFeaturedPlans();
   const { records: planRecords } = usePlanCompletion();
 
   // In-progress / completed plans — derived from PlanCompletionContext's
@@ -307,6 +307,26 @@ export default function PlanScreen() {
   const openCorpusPlan = (slug: string) =>
     navigation.navigate('FeaturedPlanDetail', { slug });
 
+  // Prefetch full plan bodies the moment the Plans tab mounts, for the plans the
+  // user is most likely to open next: the featured carousel + anything already
+  // in progress. The summary itself is bundled (instant), but the DETAIL screen
+  // otherwise fetches each plan's body from the CDN only on tap — which is what
+  // makes it sit on a spinner. Warming them here means loadPlan caches into
+  // FeaturedPlansContext, so the detail screen finds loadedPlans[slug] already
+  // populated and renders instantly. Best-effort + detached: failures are silent
+  // (the detail screen still fetches on demand, now with a timeout + retry).
+  // Guarded to run once per mount so the load-driven loadPlan identity change
+  // doesn't re-trigger it.
+  const prefetchedRef = useRef(false);
+  useEffect(() => {
+    if (prefetchedRef.current || summary.length === 0) return;
+    prefetchedRef.current = true;
+    const slugs = new Set<string>();
+    featuredPlans.forEach(p => slugs.add(p.slug));
+    inProgressPlanRows.forEach(p => slugs.add(p.slug));
+    slugs.forEach(slug => { loadPlan(slug).catch(() => {}); });
+  }, [summary, featuredPlans, inProgressPlanRows, loadPlan]);
+
   const tabIdx = TABS.indexOf(tab);
   const progress = useSharedValue(tabIdx);
   const tabsWidth = useSharedValue(0);
@@ -323,6 +343,11 @@ export default function PlanScreen() {
   useFocusEffect(
     useCallback(() => {
       setFadeKey(k => k + 1);
+      // Always land at the very top of the page on every (re)focus, per user —
+      // switching to the Plans tab must not preserve the previous scroll
+      // position. The ScrollView itself isn't remounted by fadeKey, so its
+      // offset has to be reset explicitly.
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
     }, []),
   );
 

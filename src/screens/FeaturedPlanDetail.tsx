@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -53,6 +53,14 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
     if (plan) return;
     loadPlan(slug).then(setPlan).catch(() => setLoadError(true));
   }, [slug, plan, loadPlan]);
+
+  // Tap-to-retry for the error card. loadPlan is bounded by a network timeout
+  // now, so a failed/slow fetch lands here instead of spinning forever; this
+  // gives the user a way out without leaving + re-entering the screen.
+  const retryLoad = useCallback(() => {
+    setLoadError(false);
+    loadPlan(slug).then(setPlan).catch(() => setLoadError(true));
+  }, [slug, loadPlan]);
 
   // Warm the per-chapter fetchChapter cache for every verse_wall reference
   // the moment the plan body lands. PlanDayWalk re-uses the SAME cache key
@@ -302,10 +310,10 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
             <View style={ds.loading}><ActivityIndicator color={ac} /></View>
           )}
           {loadError && (
-            <View style={ds.errorCard}>
-              <Feather name="cloud-off" size={20} color={TXTSUB} />
+            <TouchableOpacity style={ds.errorCard} onPress={retryLoad} activeOpacity={0.7}>
+              <Feather name="refresh-cw" size={20} color={ac} />
               <Text style={ds.errorText}>{t('plan.loadFailed')}</Text>
-            </View>
+            </TouchableOpacity>
           )}
 
           {plan && (

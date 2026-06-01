@@ -21,7 +21,7 @@ set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 WRANGLER="${HOME}/claude_herbible_plan/workers/herbible-plans-7languages/node_modules/.bin/wrangler"
-BUCKET="herbible-audio-7languages"          # custom domain: covers.everlandapps.com
+BUCKET="herbible-plans-7languages"          # custom domain: covers.everlandapps.com
 PREFIX="v1/badges"
 SRC="${1:-${HOME}/Desktop/badges}"
 

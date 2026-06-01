@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform, Dimensions } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform, Dimensions, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -17,8 +17,13 @@ export default function AddWidgetScreen({ navigation }: RootStackScreenProps<'Ad
   const insets = useSafeAreaInsets();
   const { getVerse, todayDay } = useDailyVerses();
   const t = useT();
+  // Pretty in-app confirmation BEFORE invoking the OS pin dialog — gives the
+  // user a heads-up that matches our UI (the system dialog that follows is the
+  // launcher's own, which is what keeps this Google-Play-compliant).
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const onInstall = async () => {
+    setConfirmOpen(false);
     // Day's verse — default to morning segment so a freshly pinned widget
     // never lands blank. Persisted to WIDGET_VERSE_KEY so the widget's task
     // handler can re-read it the next time Android renders the widget.
@@ -121,13 +126,34 @@ export default function AddWidgetScreen({ navigation }: RootStackScreenProps<'Ad
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-        <TouchableOpacity onPress={onInstall} activeOpacity={0.85} style={styles.installBtn}>
+        <TouchableOpacity onPress={() => setConfirmOpen(true)} activeOpacity={0.85} style={styles.installBtn}>
           <Text style={styles.installText}>{t('addWidget.installBtn')}</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={onLater} hitSlop={10} style={styles.laterBtn}>
           <Text style={styles.laterText}>{t('addWidget.laterBtn')}</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Confirm sheet — branded rationale before the OS pin dialog. */}
+      <Modal visible={confirmOpen} transparent animationType="fade" onRequestClose={() => setConfirmOpen(false)}>
+        <View style={styles.mOverlay}>
+          <View style={styles.mCard}>
+            <View style={styles.mIcon}>
+              <Feather name="grid" size={26} color={ROSE} />
+            </View>
+            <Text style={styles.mTitle}>{t('addWidget.confirm.title')}</Text>
+            <Text style={styles.mBody}>{t('addWidget.confirm.body')}</Text>
+            <View style={styles.mActions}>
+              <TouchableOpacity onPress={() => setConfirmOpen(false)} style={styles.mCancel} activeOpacity={0.8}>
+                <Text style={styles.mCancelText}>{t('addWidget.confirm.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={onInstall} style={styles.mAdd} activeOpacity={0.85}>
+                <Text style={styles.mAddText}>{t('addWidget.confirm.add')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -213,4 +239,66 @@ const styles = StyleSheet.create({
   installText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', letterSpacing: 0.3 },
   laterBtn: { paddingVertical: 12, alignItems: 'center' },
   laterText: { color: ROSE, fontSize: 16, fontWeight: '600' },
+
+  // Confirm modal — centered branded card.
+  mOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(20,12,24,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  mCard: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    paddingTop: 24,
+    paddingBottom: 16,
+    paddingHorizontal: 22,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  mIcon: {
+    width: 56, height: 56, borderRadius: 28,
+    backgroundColor: `${ROSE}16`,
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 14,
+  },
+  mTitle: {
+    fontSize: 20,
+    fontWeight: '600',                 // loraBold + 600 (never 700 on Android)
+    fontFamily: FONTS.loraBold,
+    color: TXT,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  mBody: {
+    fontSize: 14.5,
+    lineHeight: 21,
+    color: TXTSUB,
+    textAlign: 'center',
+    fontFamily: FONTS.lato,
+    marginBottom: 20,
+  },
+  mActions: { flexDirection: 'row', alignSelf: 'stretch', gap: 10 },
+  mCancel: {
+    flex: 1,
+    height: 46,
+    borderRadius: 23,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(30,27,46,0.06)',
+  },
+  mCancelText: { color: TXTSUB, fontSize: 15.5, fontWeight: '700', fontFamily: FONTS.latoBold },
+  mAdd: {
+    flex: 1,
+    height: 46,
+    borderRadius: 23,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: ROSE,
+  },
+  mAddText: { color: '#FFFFFF', fontSize: 15.5, fontWeight: '700', fontFamily: FONTS.latoBold },
 });

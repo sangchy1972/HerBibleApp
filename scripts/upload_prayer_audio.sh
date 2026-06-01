@@ -10,7 +10,10 @@
 set -euo pipefail
 
 WRANGLER="${HOME}/claude_herbible_plan/workers/herbible-plans-7languages/node_modules/.bin/wrangler"
-BUCKET="herbible-audio-7languages"
+# covers.everlandapps.com is bound to herbible-plans-7languages (NOT the audio
+# bucket — audio.everlandapps.com is the audio one). Prayer-bg files are served
+# from covers.everlandapps.com/backgrounds/, so they live in the plans bucket.
+BUCKET="herbible-plans-7languages"
 MORNING_SRC="${HOME}/Desktop/清晨-裁剪后"
 EVENING_SRC="${HOME}/Desktop/夜晚-剪裁后"
 

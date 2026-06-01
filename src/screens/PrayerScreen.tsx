@@ -39,6 +39,7 @@ import ShareVerseSheet from '../components/ShareVerseSheet';
 import TabSection from '../components/shared/TabSection';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useUILanguage } from '../state/UILanguageContext';
+import { useBadges } from '../state/BadgesContext';
 import { localeFor } from '../i18n/locale';
 import type { TabScreenProps } from '../navigation/types';
 
@@ -456,6 +457,11 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   // active consecutive run) here was the cause of "header shows 0, tap
   // shows 4" — the user has 4 lifetime complete days but no active streak.
   const { morning, setMorning, mDone, eDone, wasCompleteOn, totalComplete } = usePrayer();
+  // Warm the badge-art cache from the home screen — the earliest point in the
+  // app, so the CDN images are on disk well before the first badge is awarded
+  // (e.g. prayer.first on the first Amen). Idempotent + once-per-launch.
+  const { prefetchAll: prefetchBadges } = useBadges();
+  useEffect(() => { prefetchBadges(); }, [prefetchBadges]);
   const prayerBg = usePrayerBackgrounds();
   const { markToday } = useActivity();
   const { current: translation } = useTranslation();

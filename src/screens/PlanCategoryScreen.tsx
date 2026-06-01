@@ -189,7 +189,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: P, paddingBottom: 14,
   },
   headerBtn: { width: 40, height: 40, alignItems: 'flex-start', justifyContent: 'center' },
-  headerTitle: { flex: 1, fontSize: 20, fontWeight: '700', color: TXT, textAlign: 'center', paddingHorizontal: 8, fontFamily: FONTS.loraBold },
+  // Lora 600 (weight MUST be 600, never 700 — 700 makes Android drop Lora and
+  // fall back to system sans, which is why this header wasn't rendering Lora).
+  headerTitle: { flex: 1, fontSize: 20, fontWeight: '600', color: TXT, textAlign: 'center', paddingHorizontal: 8, fontFamily: FONTS.loraBold },
   divider: { height: 1, backgroundColor: 'rgba(30,27,46,0.08)' },
 
   // Wrapper View carries the vertical padding so each pill renders fully
@@ -206,11 +208,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(30,27,46,0.05)',
   },
   pillActive: { backgroundColor: ROSE },
-  pillText: { fontSize: 13, fontWeight: '600', color: TXTSUB, fontFamily: FONTS.latoBold },
+  pillText: { fontSize: 14, fontWeight: '700', color: TXTSUB, fontFamily: FONTS.latoBold },   // bolder + +8% per user (13→14)
   pillTextActive: { color: '#fff' },
 
   scroll: { paddingHorizontal: P, paddingTop: 4 },
-  subhead: { fontSize: 13, color: TXTSUB, fontWeight: '600', marginBottom: 8 },
+  subhead: { fontSize: 15, color: TXTSUB, fontWeight: '600', marginBottom: 8 },   // +15% per user (13→15)
 
   planRow: {
     flexDirection: 'row',
@@ -227,9 +229,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 19,
     paddingVertical: 9,
     borderRadius: 19,
-    backgroundColor: 'rgba(30,27,46,0.06)',
+    backgroundColor: ROSE,                 // pink Start buttons per user (was neutral gray)
   },
-  startBtnText: { fontSize: 14, fontWeight: '700', color: TXT, fontFamily: FONTS.latoBold },
+  startBtnText: { fontSize: 14, fontWeight: '700', color: '#fff', fontFamily: FONTS.latoBold },
 
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 36 },
   emptyText: { fontSize: 15, color: TXTSUB, textAlign: 'center' },

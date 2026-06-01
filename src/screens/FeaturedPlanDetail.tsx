@@ -40,7 +40,7 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
   const insets = useSafeAreaInsets();
   const { slug } = route.params;
   const { getSummary, loadPlan, loadedPlans } = useFeaturedPlans();
-  const { isDayComplete } = usePlanCompletion();
+  const { isDayComplete, records } = usePlanCompletion();
   const { current: translation } = useTranslation();
   const { lang: uiLang } = useUILanguage();
   const summary = getSummary(slug);
@@ -88,7 +88,9 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
     }
   }, [plan, translation.code, translation.source]);
 
-  const [activeIdx, setActiveIdx] = useState(0);
+  // null = no manual selection yet → fall back to the computed default day
+  // (first incomplete). A day tap sets it and pins the user's choice.
+  const [activeIdx, setActiveIdx] = useState<number | null>(null);
   // Day pending an out-of-schedule read confirmation (null = dialog hidden).
   const [confirmDay, setConfirmDay] = useState<number | null>(null);
 
@@ -113,39 +115,52 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
   // Start button). Completed days use PLAN_DONE green — see the day strip.
   const ac = ROSE;
 
-  // Day cells: number, today-anchored date label, walk title (from full plan
-  // when loaded), verses (verse_wall display strings + their ref payload for
-  // Bible-jump). Falls back to "Day N" label until plan body is in.
+  // Day cells: number, calendar date, walk title (from full plan when loaded),
+  // verses. The date strip is ANCHORED to the day the plan was started
+  // (firstStartedAt = when Day 1 was first completed): Day 1 keeps its real
+  // date and Day N = start + (N-1). So if you began yesterday, Day 1 reads
+  // yesterday's date and today is Day 2 — the strip no longer slides Day 1
+  // onto "today" every time you open it. Before the plan is started there's no
+  // record, so we anchor to today (a preview of the schedule from now).
   //
-  // Memoized so the N×forEach/.find()/Date()/.toLocaleDateString() chain
-  // doesn't re-run on every parent re-render — only when the duration
-  // changes or the plan body arrives. `today` is intentionally NOT a
-  // dependency: if the user keeps the screen open across midnight, the
-  // labels staying on yesterday's date strip is acceptable (and avoids a
-  // 30 ms recompute every render to chase a once-a-day edge case).
+  // Memoized so the per-day Date()/toLocaleDateString() chain doesn't re-run
+  // every render — only when the duration, plan body, language, or completion
+  // record (which moves the anchor + the "today" cell) changes.
   const days = useMemo(() => {
-    const today = new Date();
-    const todayStr = today.toDateString();
+    const startedAt = records[slug]?.firstStartedAt;
+    const anchor = startedAt ? new Date(startedAt) : new Date();
+    const todayStr = new Date().toDateString();
     const locale = localeFor(uiLang);
     return Array.from({ length: summary.duration }, (_, i) => {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
+      const d = new Date(anchor);
+      d.setDate(anchor.getDate() + i);
       const content = plan?.days.find(x => x.day === i + 1);
       const verseWall = content?.sections.find(s => s.type === 'verse_wall') as
         Extract<PlanSection, { type: 'verse_wall' }> | undefined;
       return {
         n: i + 1,
-        // Locale-aware date label. Was hardcoded 'en-US' which made
-        // "May 26" leak into every UI language. Now follows uiLang —
-        // zh-CN renders "5月26日", de-DE "26. Mai", etc.
+        // Locale-aware date label (zh-CN "5月26日", de-DE "26. Mai", …).
         label: d.toLocaleDateString(locale, { month: 'short', day: 'numeric' }),
         isToday: d.toDateString() === todayStr,
         walk: content?.title || `Day ${i + 1}`,
         verses: (verseWall?.verses || []) as PlanVerseRef[],
       };
     });
-  }, [summary.duration, plan, uiLang]);
-  const cur = days[activeIdx];
+  }, [summary.duration, plan, uiLang, records, slug]);
+
+  // Default selected day = first day not yet completed, so a returning user
+  // lands on the reading they owe next (Day 1 done → Day 2), not always Day 1.
+  // Once every day is done, falls back to the last day. A manual tap
+  // (activeIdx) overrides; until then selIdx tracks this as the record hydrates.
+  const defaultIdx = useMemo(() => {
+    const done = records[slug]?.completedDays || [];
+    for (let i = 0; i < summary.duration; i++) {
+      if (!done.includes(i + 1)) return i;
+    }
+    return Math.max(0, summary.duration - 1);
+  }, [records, slug, summary.duration]);
+  const selIdx = activeIdx ?? defaultIdx;
+  const cur = days[selIdx];
   // The day whose calendar date is today = the reading the user is meant to do
   // now. Opening any other day prompts a confirm (see startActiveDay).
   const todayIdx = useMemo(() => days.findIndex(d => d.isToday), [days]);
@@ -154,7 +169,7 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
   const startActiveDay = () => {
     // Reading out of schedule → custom confirm dialog ("This is not today's
     // reading…") instead of the OS Alert, so we control the look + button order.
-    if (todayIdx >= 0 && activeIdx !== todayIdx) {
+    if (todayIdx >= 0 && selIdx !== todayIdx) {
       setConfirmDay(cur.n);
       return;
     }
@@ -240,22 +255,21 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
         <Text style={ds.dailyPlanLabel}>{t('plan.dailyPlanLabel')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={ds.dayStrip} contentContainerStyle={ds.dayStripContent}>
           {days.map((d, i) => {
-            const sel = i === activeIdx;
+            const sel = i === selIdx;
             const done = isDayComplete(slug, d.n);
-            // Completed → GREEN (takes priority, even when it's the active day —
-            // per user). Selected-but-not-done → pink. Upcoming → white. A
-            // ROSE ring marks the active day when it's already green.
+            // Completed → GREEN, full stop — no selection ring even when it's the
+            // active day (per user: "done is done, just show green"). Selected-
+            // but-not-done → pink. Upcoming → white with a hairline border.
             const filled = sel || done;
             const bg = done ? PLAN_DONE : sel ? ROSE : 'rgba(255,255,255,0.7)';
-            const ring = sel && done;          // active + completed → pink outline so it still reads as selected
             return (
               <TouchableOpacity
                 key={i}
                 onPress={() => setActiveIdx(i)}
                 style={[ds.dayBtn, {
                   backgroundColor: bg,
-                  borderWidth: ring ? 2 : 1,
-                  borderColor: ring ? ROSE : (filled ? 'transparent' : 'rgba(30,27,46,0.08)'),
+                  borderWidth: 1,
+                  borderColor: filled ? 'transparent' : 'rgba(30,27,46,0.08)',
                 }]}
                 activeOpacity={0.8}
               >

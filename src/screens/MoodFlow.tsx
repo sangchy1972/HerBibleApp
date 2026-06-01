@@ -3,15 +3,15 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions, Image
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import MoodEmoji, { MOOD_LIST, type Mood } from '../components/MoodEmoji';
-import MoodCalendar from '../components/MoodCalendar';
+import MoodCalendar, { ordinalFor } from '../components/MoodCalendar';
 import { getMoodVerse, getFunFacts, type FunFact } from '../constants/moodContent';
 import { useUILanguage } from '../state/UILanguageContext';
 import { localeFor } from '../i18n/locale';
 import { useMoodCheckIn } from '../state/MoodCheckInContext';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
-import { ROSE, TXT, TXTSUB, FONTS, SERIF_BODY } from '../constants/theme';
+import { ROSE, TXT, TXTSUB, FONTS } from '../constants/theme';
 import type { RootStackScreenProps } from '../navigation/types';
 import { useT } from '../i18n/useT';
 
@@ -105,16 +105,34 @@ function PickStep({ onPick }: { onPick: (m: Mood) => void }) {
 function CalendarStep({ onContinue }: { onContinue: () => void }) {
   const t = useT();
   const insets = useSafeAreaInsets();
+  const { lang } = useUILanguage();
+  const { totalCheckIns } = useMoodCheckIn();
+  // Title renders here (not inside MoodCalendar) so it can match the verse
+  // page's title 1:1 and animate independently. "Well Done!" leads, then the
+  // existing two-line headline.
+  const title =
+    `${t('moodFlow.calendar.wellDone')}\n` +
+    t('moodFlow.calendar.headline', { ordinal: ordinalFor(lang, totalCheckIns) });
+
+  // Silky sequential reveal, ~0.7 s total: title → calendar → button, each a
+  // 300 ms fade-and-rise staggered 200 ms apart (last ends at 700 ms).
   return (
     <ScrollView
       style={styles.calWrap}
       contentContainerStyle={[styles.calScroll, { paddingBottom: insets.bottom + 24 }]}
       showsVerticalScrollIndicator={false}
     >
-      <MoodCalendar />
-      <TouchableOpacity style={styles.calCta} onPress={onContinue} activeOpacity={0.9}>
-        <Text style={styles.calCtaText}>{t('common.done')}</Text>
-      </TouchableOpacity>
+      <Animated.View entering={FadeInDown.duration(300)}>
+        <Text style={styles.calTitle}>{title}</Text>
+      </Animated.View>
+      <Animated.View entering={FadeInDown.delay(200).duration(300)}>
+        <MoodCalendar showHeadline={false} />
+      </Animated.View>
+      <Animated.View entering={FadeInDown.delay(400).duration(300)}>
+        <TouchableOpacity style={styles.calCta} onPress={onContinue} activeOpacity={0.9}>
+          <Text style={styles.calCtaText}>{t('common.continue')}</Text>
+        </TouchableOpacity>
+      </Animated.View>
     </ScrollView>
   );
 }
@@ -288,23 +306,21 @@ const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 32,
     textAlign: 'center',
-    marginTop: 16,
+    marginTop: 36,                         // +20 px from top per user
     marginBottom: 50,                      // 50 px gap to the card below per user
   },
   // Photo card. Backdrop image is the same prayer-bg the home verse card
   // pulls from, with a dark scrim painted on top for text contrast. Height
-  // bumped per user — minHeight gives the card room to settle taller than
-  // the old brown rectangle while still letting tall verses expand it.
+  // is content-driven (no fixed minHeight) — the card hugs the verse plus
+  // its vertical padding, so short blessings don't leave a tall empty box.
   verseCardWrap: {
     marginBottom: 50,                      // 50 px gap to the Close button below per user
   },
   verseCard: {
     borderRadius: 14,
     overflow: 'hidden',
-    minHeight: 360,                        // was implicit ~270 — taller card per user
-    paddingVertical: 38,
+    paddingVertical: 32,
     paddingHorizontal: 26,
-    justifyContent: 'center',
     // Same shadow recipe as PrayerScreen.heroCard so the card lifts off
     // the page the same way the home verse card does.
     backgroundColor: '#2D0A1A',            // fallback while the photo loads
@@ -336,8 +352,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   verseText: {
-    fontFamily: FONTS.serif,
-    fontVariationSettings: SERIF_BODY,
+    fontFamily: FONTS.merriweather,
     fontSize: 17.82,
     lineHeight: 27.54,
     color: 'rgba(255,255,255,0.96)',
@@ -364,8 +379,21 @@ const styles = StyleSheet.create({
 
   // Calendar step — everything lives in one scroll. calWrap is the ScrollView;
   // calScroll its content container (bottom padding added inline w/ safe area).
-  calWrap: { flex: 1, paddingHorizontal: 18, paddingTop: 4 },
-  calScroll: { paddingTop: 4 },
+  calWrap: { flex: 1, paddingHorizontal: 18, paddingTop: 12 },
+  calScroll: { paddingTop: 0 },
+  // 1:1 with verseHeaderTitle (Lora 600 / 24 / 32 / marginTop 36) so this
+  // title sits at the same size + top position as the previous page's title.
+  // marginBottom 0 — the gap to the calendar is owned by monthRow's marginTop.
+  calTitle: {
+    fontFamily: FONTS.loraBold,
+    fontWeight: '600',
+    color: TXT,
+    fontSize: 24,
+    lineHeight: 32,
+    textAlign: 'center',
+    marginTop: 36,
+    marginBottom: 0,
+  },
   // Done CTA mirrors PrayerScreen.styles.startBtn 1:1 (ROSE fill, 49.41 height,
   // 17.07 radius, stretch). Sits 50 px below the calendar inside the scroll.
   calCta: {

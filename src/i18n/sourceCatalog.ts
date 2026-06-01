@@ -338,6 +338,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'moodFlow.fact.related':         { en: 'Related Verses', context: 'Sub-heading listing related Bible references.' },
   'moodFlow.fact.share':           { en: 'Share',          context: 'Modal action button — share the fact.' },
   'moodFlow.fact.close':           { en: 'Close',          context: 'Modal action button — close the fact modal.' },
+  'moodFlow.calendar.wellDone':    { en: 'Well Done!', context: 'Celebratory lead-in line above the mood-calendar headline (shown right after a check-in). Warm, congratulatory.' },
   'moodFlow.calendar.headline':    { en: "You've completed\nyour {ordinal} check-in.", context: 'Two-line headline on the mood calendar. {ordinal} is e.g. "3rd". Preserve the line break.' },
 
   // ─── Mood labels (the 9-mood picker) ─────────────────────────────────────

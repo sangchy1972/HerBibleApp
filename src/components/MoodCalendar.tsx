@@ -38,7 +38,7 @@ function ordinalEn(n: number): string {
 // `moodFlow.calendar.headline` string embeds {ordinal}, so we format the number
 // the way that language writes ordinals (en "5th", de "5.", fr "5e", es "5.º",
 // pt "5º"); Chinese uses 第 N 次 so the plain digit is correct there.
-function ordinalFor(lang: string, n: number): string {
+export function ordinalFor(lang: string, n: number): string {
   switch (lang) {
     case 'en': return ordinalEn(n);
     case 'de': return `${n}.`;
@@ -65,9 +65,12 @@ function monthGrid(cursor: Date): (Cell | null)[] {
 interface Props {
   /** Top headline. Defaults to "You have completed your N check-in." */
   headline?: string;
+  /** Render the built-in headline. MoodFlow renders its own animated title
+      above the calendar, so it passes false; MoodCalendarScreen keeps true. */
+  showHeadline?: boolean;
 }
 
-export default function MoodCalendar({ headline }: Props) {
+export default function MoodCalendar({ headline, showHeadline = true }: Props) {
   const t = useT();
   const { lang } = useUILanguage();
   const { picks, totalCheckIns } = useMoodCheckIn();
@@ -92,7 +95,7 @@ export default function MoodCalendar({ headline }: Props) {
 
   return (
     <View>
-      <Text style={styles.headline}>{headlineText}</Text>
+      {showHeadline ? <Text style={styles.headline}>{headlineText}</Text> : null}
 
       {/* Month label centered between the two arrows so the < / > buttons
           read as "previous month" / "next month" relative to it. */}
@@ -177,8 +180,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 18,
-    marginTop: 10,
-    marginBottom: 10,
+    marginTop: 15,                         // +5 above per user (screen felt cramped)
+    marginBottom: 15,                      // +5 below per user
   },
   monthNavBtn: {
     width: 36, height: 36, borderRadius: 18,

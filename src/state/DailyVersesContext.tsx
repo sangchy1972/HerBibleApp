@@ -4,9 +4,13 @@ import {
   fetchAndCacheDailyVerses,
   getBundledDailyVerses,
   getCachedDailyVerses,
+  fetchAndCacheHolidayVerses,
+  getCachedHolidayVerses,
   type FullDailyVerse,
+  type HolidayVerse,
 } from '../services/dailyVersesService';
 import { BUNDLED_COVERAGE_DAYS } from '../constants/dailyVersesBundled';
+import { holidayIdForYmd } from '../constants/holidayCalendar';
 import { type LanguageCode } from './TranslationsContext';
 import { useUILanguage } from './UILanguageContext';
 import { useCurrentDayYmd } from '../hooks/useCurrentDayYmd';
@@ -59,6 +63,11 @@ export function DailyVersesProvider({ children }: { children: React.ReactNode })
   // cached/CDN payload replaces it once it loads. Both share the same shape.
   const [verses, setVerses] = useState<FullDailyVerse[]>(() => getBundledDailyVerses(lang));
   const loadedLangRef = useRef<LanguageCode | null>(null);
+
+  // Holiday override set (CDN-only, no bundled fallback — an ordinary day
+  // never needs it). Empty until loaded; on a holiday with no entry loaded
+  // (offline / first run) we just fall through to the normal daily verse.
+  const [holidayVerses, setHolidayVerses] = useState<HolidayVerse[]>([]);
 
   // Coverage is whatever's currently loaded. Bundled covers 3 days; the full
   // CDN file covers 60. Cycling by `coverageDays` keeps the UI working past
@@ -132,8 +141,40 @@ export function DailyVersesProvider({ children }: { children: React.ReactNode })
     return () => { cancelled = true; };
   }, [lang]);
 
+  // Holiday overrides — same load shape (cache → CDN), per language. Reset on
+  // language switch so a stale-language holiday verse never leaks through.
+  useEffect(() => {
+    let cancelled = false;
+    setHolidayVerses([]);
+    (async () => {
+      try {
+        const cached = await getCachedHolidayVerses(lang);
+        if (!cancelled && cached && cached.length > 0) setHolidayVerses(cached);
+      } catch (e) {
+        if (__DEV__) console.warn(`[HolidayVerses] cache read failed for "${lang}":`, e);
+      }
+      try {
+        const fresh = await fetchAndCacheHolidayVerses(lang);
+        if (!cancelled && fresh.length > 0) setHolidayVerses(fresh);
+      } catch (e) {
+        if (__DEV__) console.warn(`[HolidayVerses] CDN fetch failed for "${lang}":`, e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [lang]);
+
+  // holiday_id for today (null on ordinary days). Drives the override below.
+  const todayHolidayId = useMemo(() => holidayIdForYmd(todayYmd), [todayYmd]);
+
   const getVerse = useCallback(
     (day: number, segment: 'morning' | 'evening'): FullDailyVerse | null => {
+      // Holiday override: ONLY for today's reading, and only when the matching
+      // holiday verse for this segment is loaded. Replaces the normal cycle
+      // verse + its meditation/action/prayer entirely.
+      if (day === todayDay && todayHolidayId) {
+        const h = holidayVerses.find(v => v.holidayId === todayHolidayId && v.segment === segment);
+        if (h) return h;
+      }
       if (verses.length === 0) return null;
       // Cycle within whatever's loaded so any day number resolves.
       const cycleDay = ((day - 1) % coverageDays + coverageDays) % coverageDays + 1;
@@ -144,7 +185,7 @@ export function DailyVersesProvider({ children }: { children: React.ReactNode })
         || verses[0]
       );
     },
-    [verses, coverageDays],
+    [verses, coverageDays, holidayVerses, todayHolidayId, todayDay],
   );
 
   const value = useMemo<DailyVersesState>(() => ({ getVerse, todayDay }), [getVerse, todayDay]);

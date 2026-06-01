@@ -32,3 +32,13 @@ export const DAILY_VERSES_VERSION = 'v1';
 export function dailyVersesUrl(lang: string): string {
   return `${PLANS_API_BASE}/v1/verses/${lang}.json`;
 }
+
+// Holiday daily-verse override files. Served PUBLICLY + R2-direct (no Worker,
+// no attestation) from the herbible-plans-7languages bucket behind
+// covers.everlandapps.com — the herbible-verses bucket is private/Worker-gated
+// and we don't redeploy that Worker from the app repo. Holiday verses are free
+// core content + only ~20 entries, so a plain public path is the cheaper,
+// simpler home (zero egress on R2 direct). Path-versioned `/v1/` for cache-bust.
+export function holidayVersesUrl(lang: string): string {
+  return `https://covers.everlandapps.com/v1/holiday-verses/${lang}.json`;
+}

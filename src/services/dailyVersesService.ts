@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BUNDLED_DAILY_VERSES, type DailyVerse } from '../constants/dailyVersesBundled';
-import { DAILY_VERSES_VERSION, dailyVersesUrl } from '../constants/dailyVersesCdn';
+import { DAILY_VERSES_VERSION, dailyVersesUrl, holidayVersesUrl } from '../constants/dailyVersesCdn';
 import { getSessionToken, invalidateSessionToken } from './attestService';
 import type { LanguageCode } from '../state/TranslationsContext';
 
@@ -108,4 +108,49 @@ export async function fetchAndCacheDailyVerses(lang: LanguageCode): Promise<Full
 
 export function getBundledDailyVerses(lang: LanguageCode): FullDailyVerse[] {
   return BUNDLED_DAILY_VERSES[lang] || BUNDLED_DAILY_VERSES.en;
+}
+
+// ── Holiday daily-verse overrides ──────────────────────────────────────────
+// Same per-verse shape as the regular file (so `slim` is reused) plus a
+// special_occasion.holiday_id that keys the lookup. Served public + R2-direct
+// (no attestation) — see dailyVersesCdn.holidayVersesUrl.
+
+export interface HolidayVerse extends FullDailyVerse {
+  holidayId: string;
+}
+
+const holidayCacheKey = (lang: LanguageCode) => `holiday-verses:${CACHE_TAG}:${lang}`;
+
+function slimHoliday(v: UpstreamVerse & { special_occasion?: { holiday_id?: string } }, lang: LanguageCode): HolidayVerse | null {
+  const base = slim(v, lang);
+  const holidayId = v.special_occasion?.holiday_id;
+  if (!base || !holidayId) return null;
+  return { ...base, holidayId };
+}
+
+export async function getCachedHolidayVerses(lang: LanguageCode): Promise<HolidayVerse[] | null> {
+  try {
+    const raw = await AsyncStorage.getItem(holidayCacheKey(lang));
+    if (!raw) return null;
+    return JSON.parse(raw) as HolidayVerse[];
+  } catch {
+    return null;
+  }
+}
+
+// Plain public fetch (no authedFetch) — holiday files live on the public
+// covers domain, not behind the attested verses Worker. Throws on
+// network/parse error; the caller treats failure as "no holiday override".
+export async function fetchAndCacheHolidayVerses(lang: LanguageCode): Promise<HolidayVerse[]> {
+  const url = holidayVersesUrl(lang);
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+  const data = JSON.parse(await res.text()) as { verses?: (UpstreamVerse & { special_occasion?: { holiday_id?: string } })[] };
+  const out: HolidayVerse[] = [];
+  for (const v of data.verses || []) {
+    const s = slimHoliday(v, lang);
+    if (s) out.push(s);
+  }
+  await AsyncStorage.setItem(holidayCacheKey(lang), JSON.stringify(out)).catch(() => {});
+  return out;
 }

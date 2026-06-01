@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Alert, Linking, Platform } from 'react-native';
+import { Alert, AppState, Linking, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { useUILanguage, type UILanguageCode } from './UILanguageContext';
@@ -50,9 +50,12 @@ const BRAND_ROSE = '#E8619A';
 
 // ─── Pure helpers (no React) ──────────────────────────────────────────────
 
-// Deterministic 1..N variant pick that changes daily — same slot+day
-// always yields the same content, but morning vs night vs plan get
-// different content on the same day (salt = slot index in NOTIF_IDS).
+// Deterministic 1..N variant pick keyed on day-of-year: the same slot on the
+// same calendar day always yields the same content, while morning vs night vs
+// plan differ on that day (salt = slot index in NOTIF_IDS). The value is baked
+// into the scheduled notification, so rotation across days only happens when the
+// schedule is rebuilt — which the foreground re-sync effect (5) now does on
+// every app open, so an active user sees fresh content each day.
 function pickDailyVariant(slot: NotifKey): number {
   const now = new Date();
   const yearStart = new Date(now.getFullYear(), 0, 0);
@@ -83,6 +86,29 @@ function buildScheduleRequest(slot: NotifKey, cfg: NotifSettings, lang: UILangua
       ...(Platform.OS === 'android' ? { channelId: ANDROID_CHANNEL } : {}),
     },
   };
+}
+
+// Immediate confirmation push, fired the moment a reminder is switched ON. The
+// real reminder uses a DAILY trigger, so it won't arrive until the next time
+// the clock hits HH:MM (often hours away) — without this, turning a toggle on
+// produces no visible result and feels broken. A ~2s delayed one-shot gives the
+// user instant proof the pipeline works (permission + delivery + channel).
+async function fireEnableConfirmation(cfg: NotifSettings, lang: UILanguageCode): Promise<void> {
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: lookupString('notif.confirm.title', lang),
+      body: lookupString('notif.confirm.body', lang, { time: formatHHMM(cfg.hour, cfg.minute) }),
+      sound: 'default',
+    },
+    // A short interval (not null) so it reads as a real incoming push, and so we
+    // can pin it to the brand channel on Android (channelId is only honoured on
+    // the trigger). iOS ignores channelId.
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+      seconds: 2,
+      ...(Platform.OS === 'android' ? { channelId: ANDROID_CHANNEL } : {}),
+    },
+  });
 }
 
 // Reconcile the OS schedule with the current settings. Cancels every slot
@@ -210,6 +236,25 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     syncScheduledNotifications(settings, lang);
   }, [ready, settings, lang]);
 
+  // 5) Re-sync every time the app returns to the foreground. A DAILY trigger
+  //    bakes ONE day's title/body at schedule time and then repeats THAT exact
+  //    payload every day — so without this, the "rotating" devotional content
+  //    freezes on whichever day it was first scheduled. Re-baking on each
+  //    foreground means the next reminder always reflects the CURRENT day's
+  //    variant (pickDailyVariant is keyed on day-of-year). Re-arming a DAILY
+  //    trigger just points it at the next HH:MM occurrence, so the user's chosen
+  //    time is preserved and nothing drifts. Skipped when no slot is enabled so
+  //    we don't issue pointless cancel calls on every resume.
+  useEffect(() => {
+    if (!ready) return;
+    const sub = AppState.addEventListener('change', state => {
+      if (state === 'active' && SLOTS.some(s => settings[s].enabled)) {
+        syncScheduledNotifications(settings, lang);
+      }
+    });
+    return () => sub.remove();
+  }, [ready, settings, lang]);
+
   const persist = useCallback((next: NotifMap) => {
     setSettings(next);
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(() => {});
@@ -222,7 +267,13 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   // alert with a shortcut to system Settings.
   const setEnabled = useCallback(async (key: NotifKey, value: boolean): Promise<boolean> => {
     if (value && !(await ensureNotificationPermission(lang))) return false;
-    persist({ ...settings, [key]: { ...settings[key], enabled: value } });
+    const next = { ...settings, [key]: { ...settings[key], enabled: value } };
+    persist(next);
+    // On enable, fire an instant confirmation so the user sees it works now —
+    // the scheduled daily reminder itself won't arrive until HH:MM.
+    if (value) fireEnableConfirmation(next[key], lang).catch(err => {
+      if (__DEV__) console.warn('[notifications] confirmation push failed:', err);
+    });
     return true;
   }, [settings, lang, persist]);
 

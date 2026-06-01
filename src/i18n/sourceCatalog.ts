@@ -86,6 +86,12 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'sheet.langBible.switchPrompt.body':  { en: 'Your UI language is now {ui}. Would you also like to read the Bible in {bible}?', context: 'Alert body. {ui} = UI language native name, {bible} = matching Bible version edition name.' },
   'sheet.langBible.switchPrompt.keep':   { en: 'Keep current',               context: 'Alert button. Keeps existing Bible translation when declining the switch.' },
   'sheet.langBible.switchPrompt.switch': { en: 'Switch Bible',               context: 'Alert button. Confirms switching Bible to match UI language.' },
+  'sheet.langConfirm.title':        { en: 'Switch to {lang}?',                context: 'Confirmation alert title shown when the user taps a language chip BEFORE anything changes. {lang} = tapped language native name. Prevents accidental switch + download.' },
+  'sheet.langConfirm.bodyDownload': { en: 'The app will switch to {lang}, and its Bible ({edition}) will be downloaded for offline reading. This uses mobile data and storage space.', context: 'Confirmation alert body when the tapped language’s Bible is NOT yet downloaded. {lang} = native language name, {edition} = Bible edition name.' },
+  'sheet.langConfirm.bodyReady':    { en: 'The app and your Bible will switch to {lang}.', context: 'Confirmation alert body when the tapped language’s Bible is already downloaded (no download needed). {lang} = native language name.' },
+  'sheet.langConfirm.cancel':       { en: 'Cancel',                           context: 'Confirmation alert button that dismisses without switching language or downloading.' },
+  'sheet.langConfirm.confirm':      { en: 'Switch',                           context: 'Confirmation alert button that commits the language switch when no download is needed.' },
+  'sheet.langConfirm.confirmDownload': { en: 'Download & Switch',             context: 'Confirmation alert button that commits the language switch and starts the Bible download.' },
 
   // ─── Prayer screen (home) ────────────────────────────────────────────────
   'prayer.greeting.morning':        { en: 'Good morning',                    context: 'Greeting shown before 12pm.' },
@@ -327,6 +333,10 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'notif.channel.name':            { en: 'Daily reminders', context: 'Android notification channel display name — shown to users in system Settings → Apps → Her Bible → Notifications. Localized per UI language.' },
   'notif.permission.title':        { en: 'Allow notifications', context: 'Alert title when user turns ON a reminder toggle but OS-level permission is missing.' },
   'notif.permission.body':         { en: 'Her Bible needs permission to send you the morning + evening reminders you just enabled. You can change this anytime in Settings.', context: 'Alert body for permission rationale.' },
+  'notif.permBanner.title':        { en: 'Notifications are turned off', context: 'Banner title at the top of the Notifications screen when OS-level notification permission is NOT granted — so reminders cannot be delivered.' },
+  'notif.permBanner.body':         { en: 'Turn on notifications in your phone’s Settings so your reminders can actually reach you.', context: 'Banner body explaining the user must enable notifications in system Settings for reminders to work.' },
+  'notif.confirm.title':           { en: 'Reminder set ✓', context: 'Title of the immediate confirmation notification fired the moment a user turns a reminder toggle ON — so they see proof it works (the real daily reminder only fires at the scheduled time).' },
+  'notif.confirm.body':            { en: 'All set — we’ll remind you each day at {time}.', context: 'Body of the immediate confirmation notification. {time} is the scheduled HH:MM, e.g. 08:00.' },
 
   // ─── Mood flow / mood check-in ───────────────────────────────────────────
   'moodFlow.pick.title':           { en: 'How do you feel today?', context: 'Mood picker screen title — appears once per day.' },
@@ -393,6 +403,10 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'addWidget.step3':               { en: 'Drag the size you want and let go.', context: 'Step 3 of add instructions.' },
   'addWidget.installBtn':          { en: 'Install widget', context: 'Primary CTA on Add Widget screen.' },
   'addWidget.laterBtn':            { en: 'Remind me later', context: 'Dismiss link below the install CTA.' },
+  'addWidget.confirm.title':       { en: 'Add to your Home Screen?', context: 'Title of the in-app confirm dialog shown when the user taps Install, before the OS widget-pin dialog appears.' },
+  'addWidget.confirm.body':        { en: "We'll place the daily verse widget on your Home Screen. Your phone will then ask you to confirm where it goes.", context: 'Body of the confirm dialog. Sets the expectation that the phone/launcher shows its own placement prompt next.' },
+  'addWidget.confirm.add':         { en: 'Add widget', context: 'Confirm button on the dialog — proceeds to the system pin prompt.' },
+  'addWidget.confirm.cancel':      { en: 'Not now', context: 'Dismiss button on the confirm dialog.' },
 
   // ─── Widget preview (mock content inside the WidgetPreview component) ────
   // These are the default props of <WidgetPreview> — shown when no caller

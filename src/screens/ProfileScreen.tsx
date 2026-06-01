@@ -30,6 +30,7 @@ import { useBookmarks } from '../state/BookmarksContext';
 import { useNotes, type Note } from '../state/NotesContext';
 import { useMoodCheckIn } from '../state/MoodCheckInContext';
 import { useAchievements } from '../state/AchievementsContext';
+import { useBadges } from '../state/BadgesContext';
 import BadgeIcon from '../components/BadgeIcon';
 import { ACHIEVEMENTS } from '../constants/achievements';
 import SignInSheet from '../components/SignInSheet';
@@ -274,6 +275,10 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
   const { notes, removeNote } = useNotes();
   const { totalCheckIns } = useMoodCheckIn();
   const { earned, earnedCount } = useAchievements();
+  // Second prefetch channel: warm the badge-art cache on the first Profile
+  // visit too (the badge wall lives here). Idempotent with the home-screen one.
+  const { prefetchAll: prefetchBadges } = useBadges();
+  useEffect(() => { prefetchBadges(); }, [prefetchBadges]);
   const { current: currentTranslation, pending: dlPending, setTranslation, pauseDownload, resumeDownload } = useTranslation();
   const { lang: uiLang, meta: uiMeta, setLang: setUILang } = useUILanguage();
   const t = useT();
@@ -410,14 +415,10 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
     setShowEditNameSheet(false);
   };
 
-  // Picking a UI language. The Bible version now FOLLOWS the UI language
-  // (we assume a zh reader doesn't want an English UI over a Chinese Bible),
-  // so we switch both at once — no "Switch Bible?" confirm dialog. If the
-  // matching Bible isn't cached yet, `setTranslation` downloads it in the
-  // background and auto-swaps the reader when it completes; we just post a
-  // heads-up that the download started (it uses mobile data).
-  const pickLanguage = (code: UILanguageCode) => {
-    if (code === uiLang) return;
+  // Committing a UI language. The Bible version FOLLOWS the UI language, so this
+  // ALSO kicks off the matching Bible download (storage + mobile data). Only
+  // reached after the user confirms in pickLanguage's alert.
+  const commitLanguage = (code: UILanguageCode) => {
     setUILang(code);
     const tr = TRANSLATIONS.find(x => x.code === code);
     if (!tr) return;
@@ -425,6 +426,35 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
     if (dlStates[code]?.status !== 'complete' && code !== currentTranslation.code) {
       showToast(t('sheet.langBible.toast.bibleDownloading', { name: tr.nativeName }), 3800);
     }
+  };
+
+  // Picking a UI language. Switching the whole UI + downloading a second Bible
+  // is heavy and (for the UI part) hard to undo if you land on a script you
+  // can't read — so a stray or curious tap must NOT commit silently. We gate the
+  // commit behind a confirmation alert that renders in the CURRENT (pre-switch)
+  // language, so it's always readable. Nothing changes until the user confirms.
+  // If that language's Bible is already cached, the prompt is a lightweight
+  // switch with no download warning.
+  const pickLanguage = (code: UILanguageCode) => {
+    if (code === uiLang) return;
+    const tr = TRANSLATIONS.find(x => x.code === code);
+    if (!tr) return;
+    const alreadyDownloaded = dlStates[code]?.status === 'complete';
+    Alert.alert(
+      t('sheet.langConfirm.title', { lang: tr.nativeName }),
+      alreadyDownloaded
+        ? t('sheet.langConfirm.bodyReady', { lang: tr.nativeName })
+        : t('sheet.langConfirm.bodyDownload', { lang: tr.nativeName, edition: tr.edition }),
+      [
+        { text: t('sheet.langConfirm.cancel'), style: 'cancel' },
+        {
+          text: alreadyDownloaded
+            ? t('sheet.langConfirm.confirm')
+            : t('sheet.langConfirm.confirmDownload'),
+          onPress: () => commitLanguage(code),
+        },
+      ],
+    );
   };
 
   // Download status per translation — loaded once on mount so the version row
@@ -1276,9 +1306,9 @@ const styles = StyleSheet.create({
   statNum: { flex: 1, fontSize: 22, fontWeight: '700', color: TXT, fontFamily: FONTS.latoBold, textAlign: 'right' },
   statLabel: { flex: 3, fontSize: 12.14, color: TXTSUB, fontFamily: FONTS.lato, textAlign: 'center', lineHeight: 15.18 },
   widgetBanner: {
-    // Same chrome as achievementPreview. White bg sits flat on the screen;
-    // Android elevation removed because it renders as a gray frame during
-    // navigation transitions. Height locked to 92 per user.
+    // Matches notesTile (My Notes cards) 1:1 per user — same radius/height/
+    // shadow AND elevation:1 so it lifts off the page on Android too (the iOS
+    // shadow props alone render flat on Android — Android shadows need elevation).
     marginBottom: 25,
     height: 92,
     backgroundColor: '#FFFFFF',
@@ -1287,6 +1317,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
+    elevation: 1,
   },
   widgetBannerInner: {
     flex: 1,                                                                     // fills the outer banner's locked 92 px height — the gradient now matches the card outline exactly
@@ -1425,8 +1456,8 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginTop: 6,
   },
-  // Same chrome as widgetBanner — see note there re: background + height.
-  // Locked to 92 per user.
+  // Same chrome as widgetBanner / notesTile — radius, height, shadow AND
+  // elevation:1 so it lifts on Android the same way the My Notes cards do.
   removeAdsBanner: {
     marginBottom: 12,
     height: 92,
@@ -1436,6 +1467,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
+    elevation: 1,
   },
   // Override on top of widgetBannerTitle — Lato 600 per user (reverted from
   // Lora 600). Color matches the slash on the AD icon (#D54A6E) so the whole

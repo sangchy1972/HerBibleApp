@@ -9,10 +9,9 @@ import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { useOnboarding } from '../state/OnboardingContext';
 import { useT } from '../i18n/useT';
 
-// Drop your hero artwork at assets/onboarding-hero.png and uncomment the require below.
-// Until then we render a warm gradient placeholder so the screen still composes.
-const HERO_SOURCE: number | null = null;
-// const HERO_SOURCE = require('../../assets/onboarding-hero.png');
+// Bundled onboarding hero — a compressed webp (900w, q58, ~52 KB; down from the
+// 92 KB source follow_him_day.webp) so it ships in the APK without bloat.
+const HERO_SOURCE: number | null = require('../../assets/onboarding-hero.webp');
 
 type Step = 'cover' | 'permission';
 

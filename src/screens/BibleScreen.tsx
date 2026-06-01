@@ -2347,11 +2347,11 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingRight: 4,                                                            // breathing room at the scroll end
   },
-  // Content-width chips (no flex). Height 30 (+30 % from 23 per user); text
-  // centers via align/justify. radius ≥ height/2 keeps it a full pill.
+  // Content-width chips (no flex). Height 36 (+20 % per user); text centers
+  // via align/justify. radius ≥ height/2 keeps it a full pill.
   fontPill: {
     paddingHorizontal: 20,
-    height: 30,
+    height: 36,
     borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
@@ -2363,11 +2363,16 @@ const styles = StyleSheet.create({
     backgroundColor: `${ROSE}14`,
   },
   fontPillText: {
-    fontSize: 16,
+    fontSize: 14.9,                        // −7 % per user (was 16)
     // 400 to match the per-font *_400Regular files (FONT_FAMILY). Forcing 700
     // here would make Android fail to find a bold variant and fall back to
     // system sans — breaking the in-its-own-typeface preview (the Lora trap).
     fontWeight: '400',
+    // Sans (system font) carries extra intrinsic top padding on Android, so it
+    // rendered low/clipped vs the bundled serif fonts. Killing includeFontPadding
+    // + centering vertically lines every font up the same way inside the pill.
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   // Single row of 6 swatches (was 6 with flexWrap → dark sat alone on a
   // second line). Circle size reduced 52 → 44 + smaller gap so the full

@@ -110,9 +110,12 @@ function CalendarStep({ onContinue }: { onContinue: () => void }) {
   // Title renders here (not inside MoodCalendar) so it can match the verse
   // page's title 1:1 and animate independently. "Well Done!" leads, then the
   // existing two-line headline.
+  // One continuous string (no hard \n) per user — "Well Done! You've completed
+  // your Nth check-in." flows as one sentence and wraps only by width, instead
+  // of breaking at forced points.
   const title =
-    `${t('moodFlow.calendar.wellDone')}\n` +
-    t('moodFlow.calendar.headline', { ordinal: ordinalFor(lang, totalCheckIns) });
+    `${t('moodFlow.calendar.wellDone')} ` +
+    t('moodFlow.calendar.headline', { ordinal: ordinalFor(lang, totalCheckIns) }).replace(/\n/g, ' ');
 
   // Silky sequential reveal, ~0.7 s total: title → calendar → button, each a
   // 300 ms fade-and-rise staggered 200 ms apart (last ends at 700 ms).
@@ -319,7 +322,8 @@ const styles = StyleSheet.create({
   verseCard: {
     borderRadius: 14,
     overflow: 'hidden',
-    paddingVertical: 32,
+    paddingTop: 32,
+    paddingBottom: 52,                     // +20 below the verse per user — card bottom no longer feels cramped
     paddingHorizontal: 26,
     // Same shadow recipe as PrayerScreen.heroCard so the card lifts off
     // the page the same way the home verse card does.
@@ -383,7 +387,6 @@ const styles = StyleSheet.create({
   calScroll: { paddingTop: 0 },
   // 1:1 with verseHeaderTitle (Lora 600 / 24 / 32 / marginTop 36) so this
   // title sits at the same size + top position as the previous page's title.
-  // marginBottom 0 — the gap to the calendar is owned by monthRow's marginTop.
   calTitle: {
     fontFamily: FONTS.loraBold,
     fontWeight: '600',
@@ -392,7 +395,7 @@ const styles = StyleSheet.create({
     lineHeight: 32,
     textAlign: 'center',
     marginTop: 36,
-    marginBottom: 0,
+    marginBottom: 15,                      // +15 after the title per user (on top of monthRow's marginTop)
   },
   // Done CTA mirrors PrayerScreen.styles.startBtn 1:1 (ROSE fill, 49.41 height,
   // 17.07 radius, stretch). Sits 50 px below the calendar inside the scroll.

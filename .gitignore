@@ -42,6 +42,8 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+# gradle build output for local Expo modules (e.g. modules/expo-pin-widget)
+modules/**/build/
 
 # local Temurin JDK 17 (toolchain for local Android builds)
 /.jdk17

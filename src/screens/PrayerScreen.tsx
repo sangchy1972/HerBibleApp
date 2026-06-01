@@ -759,24 +759,20 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
     return {
       width: w,
       transform: [{ translateX: progress.value * w }],
-      // Selected fill: very light ROSE → very light LAV (no border, just a
-      // soft tint). Border removed entirely per user — selection is now
-      // conveyed by the soft fill + the text colour change alone.
-      backgroundColor: interpolateColor(
-        progress.value,
-        [0, 1],
-        ['rgba(232,97,154,0.12)', 'rgba(134,107,192,0.12)'],
-      ),
+      // SOLID fill — matches PlanScreen's Current/Explore/Completed segmented
+      // control (filled pill + white text), per user "make it identical". Keeps
+      // morning=ROSE / evening=LAV so the toggle still tracks the time-of-day
+      // theme of the hero card directly below it.
+      backgroundColor: interpolateColor(progress.value, [0, 1], [ROSE, LAV]),
     };
   });
-  // Selected → slot's accent color, unselected → TXTSUB (muted).
-  // Morning text: ROSE when progress=0 (selected) → TXTSUB at progress=1.
-  // Evening text: TXTSUB at progress=0 → LAV at progress=1 (selected).
+  // Active label → white (on the solid pill); inactive → TXTSUB. Mirrors
+  // PlanScreen.tabText's active '#fff' / inactive TXTSUB exactly.
   const morningTextStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(progress.value, [0, 1], [ROSE, TXTSUB]),
+    color: interpolateColor(progress.value, [0, 1], ['#FFFFFF', TXTSUB]),
   }));
   const eveningTextStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(progress.value, [0, 1], [TXTSUB, LAV]),
+    color: interpolateColor(progress.value, [0, 1], [TXTSUB, '#FFFFFF']),
   }));
   const onToggleLayout = (e: LayoutChangeEvent) => {
     toggleWidth.value = e.nativeEvent.layout.width;
@@ -1256,19 +1252,18 @@ const styles = StyleSheet.create({
     left: 2,
     borderRadius: 15,
   },
-  // Inner pill height: paddingVertical → 7 per user, shrinking the outer
-  // white frame. The indicator chip (top/bottom/left: 2) tracks it because
-  // it's absolute-positioned inside the same container, so its height needs
-  // no change — the pink/lav chip stays vertically centered automatically.
+  // Inner pill — paddingVertical 8.5 to match PlanScreen.tab 1:1 (was 7), so
+  // the Morning/Evening strip is exactly the same height as Current/Explore/
+  // Completed. radius 15 + the container's radius 18 / padding 2 already match.
   toggleBtn: {
     flex: 1,
-    paddingVertical: 7,
+    paddingVertical: 8.5,
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
   },
   toggleText: {
-    fontSize: 16,                                                                // 15 → 16 — Morning / Evening read a touch larger per user
+    fontSize: 16,                                                                // matches PlanScreen.tabText (16 / 600 / latoBold)
     fontWeight: '600',
     fontFamily: FONTS.latoBold,
   },

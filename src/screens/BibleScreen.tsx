@@ -530,6 +530,11 @@ function ReaderSheet({
   paragraphSpacing, setParagraphSpacing, font, setFont, theme, setTheme,
 }: ReaderSheetProps) {
   const t = useT();
+  // Theme swatches must always fit ONE row regardless of device width: 6 dots,
+  // capped at 36 px (−10 % from the old 40), shrinking only on ultra-narrow
+  // screens. Sheet inset is (P+4) each side; reserve ≥8 px between dots.
+  const { width: winW } = useWindowDimensions();
+  const themeDot = Math.min(36, Math.floor((winW - (P + 4) * 2 - 5 * 8) / 6));
   return (
     <View style={styles.readerOverlay}>
       <Animated.View
@@ -610,6 +615,9 @@ function ReaderSheet({
                 key={t.id}
                 onPress={() => setTheme(t.id)}
                 style={[styles.themeCircle, {
+                  width: themeDot,
+                  height: themeDot,
+                  borderRadius: themeDot / 2,
                   backgroundColor: t.color,
                   borderWidth: active ? 2 : 1,
                   borderColor: active ? ROSE : 'rgba(30,27,46,0.10)',
@@ -2339,10 +2347,11 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingRight: 4,                                                            // breathing room at the scroll end
   },
-  // Content-width chips (no flex), height -15 % (paddingVertical 14 → 11.9).
+  // Content-width chips (no flex). Height 30 (+30 % from 23 per user); text
+  // centers via align/justify. radius ≥ height/2 keeps it a full pill.
   fontPill: {
     paddingHorizontal: 20,
-    height: 23,                                                                // explicit 23 px per user (was ~28); text centers via align/justify
+    height: 30,
     borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
@@ -2369,9 +2378,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   themeCircle: {
-    width: 40,                                                                 // slightly smaller per user (was 44)
-    height: 40,
-    borderRadius: 20,
+    // Size applied inline (adaptive — see ReaderSheet `themeDot`) so all 6
+    // swatches always sit on one row; capped at 36 (−10 % from 40) per user.
     alignItems: 'center',
     justifyContent: 'center',
   },

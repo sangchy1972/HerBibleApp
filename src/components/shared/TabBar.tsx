@@ -87,7 +87,12 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
                 <Icon active={isActive} />
               </View>
             </View>
-            <Text style={[styles.label, { color: isActive ? ROSE : TXTSUB, fontWeight: isActive ? '700' : '500' }]}>
+            <Text
+              style={[styles.label, { color: isActive ? ROSE : TXTSUB, fontWeight: isActive ? '700' : '500' }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+            >
               {label}
             </Text>
             {/* The bar is always rendered; opacity hides it on inactive
@@ -128,8 +133,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   label: {
-    fontSize: 10,
+    fontSize: 11,                          // +10 % per user (was 10)
     letterSpacing: 0.3,
+    // Fill the cell width + shrink-to-fit on one line so long translations
+    // (es "Oración" / pt "Oração" / de "Profil") never wrap or overflow —
+    // adjustsFontSizeToFit on the Text scales them down only when needed.
+    alignSelf: 'stretch',
+    textAlign: 'center',
   },
   activeBar: {
     width: 18,

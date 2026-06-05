@@ -1601,7 +1601,7 @@ function NotifRationaleScreen({ onDismiss }: { onDismiss: () => void }) {
 
       <Animated.View
         entering={FadeIn.duration(360).delay(700)}
-        style={[rationaleStyles.ctaRow, { paddingBottom: Math.max(insets.bottom, 12) + 24 }]}
+        style={[rationaleStyles.ctaRow, { paddingBottom: Math.max(insets.bottom, 12) + 48 }]}
       >
         <TouchableOpacity onPress={onDismiss} activeOpacity={0.85} style={rationaleStyles.skipBtn}>
           <Text style={rationaleStyles.skipText}>{t('prayerFlow.notif.skip')}</Text>
@@ -1618,61 +1618,38 @@ function NotifRationaleScreen({ onDismiss }: { onDismiss: () => void }) {
 // grid. ~280×360 viewBox; everything tinted with the rose palette so it
 // reads as a HerBible screenshot, not a generic phone.
 function PhoneMockup() {
+  // Rounded-rect path helper. Everything is centered on cx=122 (viewBox is
+  // 244 wide → center 122) so the phone never looks cut off on one side.
+  const rr = (x: number, y: number, w: number, h: number, r: number) =>
+    `M${x + r} ${y} L${x + w - r} ${y} Q${x + w} ${y} ${x + w} ${y + r} L${x + w} ${y + h - r} Q${x + w} ${y + h} ${x + w - r} ${y + h} L${x + r} ${y + h} Q${x} ${y + h} ${x} ${y + h - r} L${x} ${y + r} Q${x} ${y} ${x + r} ${y} Z`;
   return (
-    <Svg width={280} height={360} viewBox="0 0 280 360">
-      {/* Soft drop shadow under the phone */}
+    <Svg width={244} height={168} viewBox="0 0 244 168">
+      {/* Only the TOP of the phone is shown — the home screen is intentionally
+          out of frame. Top corners rounded; the frame runs straight off the
+          bottom edge so it reads as "the top of a phone" carrying one
+          notification. No icon grid (it confused the message). */}
       <Path
-        d="M70 350 Q140 372 210 350 L200 348 Q140 358 80 348 Z"
-        fill="rgba(232,97,154,0.10)"
+        d="M52 40 Q52 16 76 16 L168 16 Q192 16 192 40 L192 168 L52 168 Z"
+        fill="#FFFFFF" stroke="#ECE0EC" strokeWidth={1.5}
       />
-      {/* Phone outer frame, slightly tilted */}
-      <Path
-        d="M88 36 Q88 28 96 28 L208 28 Q216 28 216 36 L216 320 Q216 328 208 328 L96 328 Q88 328 88 320 Z"
-        fill="#FFFFFF"
-        stroke="#E8DDE8"
-        strokeWidth={1.5}
-      />
-      {/* Subtle pink-peach gradient fill on the phone screen */}
-      <Path
-        d="M94 50 L210 50 L210 320 Q210 326 204 326 L100 326 Q94 326 94 320 Z"
-        fill="rgba(249,168,201,0.18)"
-      />
-      <Path
-        d="M94 130 L210 130 L210 320 Q210 326 204 326 L100 326 Q94 326 94 320 Z"
-        fill="rgba(196,181,253,0.18)"
-      />
+      {/* Soft screen tint */}
+      <Path d="M58 44 L186 44 L186 168 L58 168 Z" fill="rgba(249,168,201,0.13)" />
+      {/* Notch */}
+      <Path d={rr(108, 27, 28, 7, 3.5)} fill="rgba(30,27,46,0.16)" />
 
-      {/* Notification card near the top */}
-      <Path
-        d="M104 78 Q104 70 112 70 L200 70 Q208 70 208 78 L208 122 Q208 130 200 130 L112 130 Q104 130 104 122 Z"
-        fill="#FFFFFF"
-        stroke="rgba(30,27,46,0.06)"
-        strokeWidth={1}
-      />
-      {/* App icon dot in the notification */}
-      <Path d="M118 88 Q118 84 122 84 L130 84 Q134 84 134 88 L134 96 Q134 100 130 100 L122 100 Q118 100 118 96 Z" fill={ROSE} />
+      {/* Motion hint — a soft rose chevron: the banner just slid down from the top. */}
+      <Path d="M113 52 L122 60 L131 52" fill="none" stroke="rgba(232,97,154,0.45)"
+            strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
 
-      {/* Faux home-screen icon grid below the notification. Phone screen is
-          x=94..210, so a 4-col grid with 22-wide icons + 6 px gap fits at
-          x = 106 / 134 / 162 / 190 (last icon ends at 212 — flush right). */}
-      {[170, 210, 250].flatMap(y =>
-        [106, 134, 162, 190].map(x => {
-          const isHero = x === 162 && y === 210;
-          const r = 4;
-          const w = 22;
-          const path = `M${x} ${y + r} Q${x} ${y} ${x + r} ${y} L${x + w - r} ${y} Q${x + w} ${y} ${x + w} ${y + r} L${x + w} ${y + w - r} Q${x + w} ${y + w} ${x + w - r} ${y + w} L${x + r} ${y + w} Q${x} ${y + w} ${x} ${y + w - r} Z`;
-          return isHero ? (
-            <Path key={`${x}-${y}`} d={path} fill="#FFFFFF" stroke={ROSE} strokeWidth={1.6} />
-          ) : (
-            <Path key={`${x}-${y}`} d={path} fill="rgba(255,255,255,0.70)" />
-          );
-        }),
-      )}
-      {/* Rose dot inside the highlighted icon (HerBible glyph stand-in) */}
-      <Path
-        d="M167 215 Q167 213 169 213 L177 213 Q179 213 179 215 L179 227 Q179 229 177 229 L169 229 Q167 229 167 227 Z"
-        fill={ROSE}
-      />
+      {/* The notification banner — the single thing this illustration is about. */}
+      <Path d={rr(64, 74, 116, 50, 13)} fill="rgba(232,97,154,0.10)" />{/* lift shadow */}
+      <Path d={rr(64, 71, 116, 50, 13)} fill="#FFFFFF" stroke="rgba(30,27,46,0.05)" strokeWidth={1} />
+      {/* app icon */}
+      <Path d={rr(75, 82, 26, 26, 7)} fill={ROSE} />
+      {/* title + two faux text lines */}
+      <Path d={rr(110, 84, 56, 7, 3.5)} fill="rgba(30,27,46,0.55)" />
+      <Path d={rr(110, 98, 60, 6, 3)} fill="rgba(30,27,46,0.16)" />
+      <Path d={rr(110, 109, 38, 6, 3)} fill="rgba(30,27,46,0.16)" />
     </Svg>
   );
 }

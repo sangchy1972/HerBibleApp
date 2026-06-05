@@ -57,18 +57,20 @@ interface UILanguageState {
   setLang: (code: UILanguageCode) => void;
   // True until AsyncStorage has been consulted on cold start. Components that
   // need to defer first-paint translation (rare) can gate on this; most just
-  // render against the default 'en' until hydration finishes a tick later.
+  // render against the system-detected default until hydration finishes.
   hydrated: boolean;
 }
 
 const UILanguageContext = createContext<UILanguageState | null>(null);
 
 export function UILanguageProvider({ children }: { children: React.ReactNode }) {
+  // Follow the device locale by default so a Spanish/Chinese/… user lands in a
+  // UI they can read. A returning user's stored choice overrides it on hydrate.
   const [lang, setLangState] = useState<UILanguageCode>(() => detectSystemLanguage());
   const [hydrated, setHydrated] = useState(false);
 
-  // Hydrate from AsyncStorage on mount — overrides the system-detected
-  // default if the user has previously picked something.
+  // Hydrate from AsyncStorage on mount — overrides the system-detected default
+  // if the user has previously picked something.
   useEffect(() => {
     let cancelled = false;
     (async () => {

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTabFocusScrollReset } from '../components/shared/useTabFocusEntrance';
 import TabSection from '../components/shared/TabSection';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, Linking } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, Linking, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, Ionicons } from '@expo/vector-icons';
@@ -435,26 +435,14 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
   // language, so it's always readable. Nothing changes until the user confirms.
   // If that language's Bible is already cached, the prompt is a lightweight
   // switch with no download warning.
+  // Pending language to confirm (null = dialog closed). Drives a branded
+  // in-app dialog (see the <Modal> in the render) instead of the OS Alert —
+  // the confirmation text is rendered in the CURRENT UI language via t().
+  const [langConfirm, setLangConfirm] = useState<UILanguageCode | null>(null);
   const pickLanguage = (code: UILanguageCode) => {
     if (code === uiLang) return;
-    const tr = TRANSLATIONS.find(x => x.code === code);
-    if (!tr) return;
-    const alreadyDownloaded = dlStates[code]?.status === 'complete';
-    Alert.alert(
-      t('sheet.langConfirm.title', { lang: tr.nativeName }),
-      alreadyDownloaded
-        ? t('sheet.langConfirm.bodyReady', { lang: tr.nativeName })
-        : t('sheet.langConfirm.bodyDownload', { lang: tr.nativeName, edition: tr.edition }),
-      [
-        { text: t('sheet.langConfirm.cancel'), style: 'cancel' },
-        {
-          text: alreadyDownloaded
-            ? t('sheet.langConfirm.confirm')
-            : t('sheet.langConfirm.confirmDownload'),
-          onPress: () => commitLanguage(code),
-        },
-      ],
-    );
+    if (!TRANSLATIONS.find(x => x.code === code)) return;
+    setLangConfirm(code);
   };
 
   // Download status per translation — loaded once on mount so the version row
@@ -1210,6 +1198,45 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
           </GestureDetector>
         </View>
       )}
+
+      {/* Language-switch confirmation — branded in-app dialog (replaces the OS
+          Alert). Text is localized to the CURRENT UI language via t(). */}
+      {langConfirm && (() => {
+        const tr = TRANSLATIONS.find(x => x.code === langConfirm);
+        if (!tr) return null;
+        const ready = dlStates[langConfirm]?.status === 'complete';
+        const close = () => setLangConfirm(null);
+        return (
+          <Modal visible transparent animationType="fade" onRequestClose={close}>
+            <View style={styles.langDlgOverlay}>
+              <View style={styles.langDlgCard}>
+                <Text style={styles.langDlgTitle}>{t('sheet.langConfirm.title', { lang: tr.nativeName })}</Text>
+                <Text style={styles.langDlgBody}>
+                  {ready
+                    ? t('sheet.langConfirm.bodyReady', { lang: tr.nativeName })
+                    : t('sheet.langConfirm.bodyDownload', { lang: tr.nativeName, edition: tr.edition })}
+                </Text>
+                <View style={styles.langDlgActions}>
+                  <TouchableOpacity onPress={close} style={styles.langDlgCancel} activeOpacity={0.85}>
+                    <Text style={styles.langDlgCancelText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                      {t('sheet.langConfirm.cancel')}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => { const c = langConfirm; close(); commitLanguage(c); }}
+                    style={styles.langDlgConfirm}
+                    activeOpacity={0.9}
+                  >
+                    <Text style={styles.langDlgConfirmText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                      {ready ? t('sheet.langConfirm.confirm') : t('sheet.langConfirm.confirmDownload')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        );
+      })()}
     </View>
   );
 }
@@ -1816,4 +1843,58 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: 0.7,
   },
+
+  // Language-switch confirm dialog — branded, centered card (replaces the OS Alert).
+  langDlgOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(20,12,24,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  langDlgCard: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    paddingTop: 24,
+    paddingBottom: 16,
+    paddingHorizontal: 22,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  langDlgTitle: {
+    fontSize: 20,
+    fontWeight: '600',                     // loraBold + 600 (never 700 on Android)
+    fontFamily: FONTS.loraBold,
+    color: TXT,
+    marginBottom: 10,
+  },
+  langDlgBody: {
+    fontSize: 14.5,
+    lineHeight: 21,
+    color: TXTSUB,
+    fontFamily: FONTS.lato,
+    marginBottom: 22,
+  },
+  langDlgActions: { flexDirection: 'row', alignSelf: 'stretch', gap: 10 },
+  langDlgCancel: {
+    flex: 1,
+    height: 46,
+    borderRadius: 23,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(30,27,46,0.06)',
+  },
+  langDlgCancelText: { color: TXTSUB, fontSize: 15, fontWeight: '700', fontFamily: FONTS.latoBold },
+  langDlgConfirm: {
+    flex: 1.4,
+    height: 46,
+    borderRadius: 23,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: ROSE,
+    paddingHorizontal: 8,
+  },
+  langDlgConfirmText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', fontFamily: FONTS.latoBold },
 });

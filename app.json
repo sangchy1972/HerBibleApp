@@ -48,6 +48,7 @@
     },
     "plugins": [
       "./plugins/withAndroidPackageQueries.js",
+      "./plugins/withNoNativeDebugSymbols.js",
       "@react-native-firebase/app",
       "@react-native-firebase/crashlytics",
       "expo-font",

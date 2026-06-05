@@ -31,6 +31,7 @@
     },
     "android": {
       "package": "com.holy.bible.kjv.audio.prayer",
+      "googleServicesFile": "./google-services.json",
       "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -47,6 +48,8 @@
     },
     "plugins": [
       "./plugins/withAndroidPackageQueries.js",
+      "@react-native-firebase/app",
+      "@react-native-firebase/crashlytics",
       "expo-font",
       "expo-web-browser",
       [
@@ -94,11 +97,21 @@
       ],
       ["expo-audio", { "recordAudioAndroid": false }],
       [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "android": {
             "compileSdkVersion": 35,
             "targetSdkVersion": 35
+          },
+          "ios": {
+            "useFrameworks": "static"
           }
         }
       ],

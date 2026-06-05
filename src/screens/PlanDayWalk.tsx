@@ -10,6 +10,7 @@ import Animated, { FadeIn, FadeOut, Easing, useSharedValue, useAnimatedStyle, wi
 import * as Clipboard from 'expo-clipboard';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { ROSE, LAV, TXT, TXTSUB, P, FONTS, SERIF_BODY } from '../constants/theme';
+import { maybeShowInterstitial } from '../services/ads';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import { usePlanCompletion } from '../state/PlanCompletionContext';
 import { useTranslation } from '../state/TranslationsContext';
@@ -208,6 +209,9 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
     } else if (plan) {
       markDayComplete(slug, day, plan.duration);
       navigation.replace('PlanDayDone', { slug, day });
+      // Interstitial at the end of a plan day's reading — shows over the
+      // just-pushed PlanDayDone screen; frequency-capped + remove-ads-aware.
+      maybeShowInterstitial();
     }
   };
   const onPrev = () => {

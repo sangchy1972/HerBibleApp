@@ -62,8 +62,15 @@ import { PlansProvider } from './src/state/PlansContext';
 import { PlanCompletionProvider } from './src/state/PlanCompletionContext';
 import AchievementUnlockSheet from './src/components/AchievementUnlockSheet';
 import DeepLinkHandler from './src/navigation/DeepLinkHandler';
+import { initFirebase } from './src/services/firebase';
+import { initAds } from './src/services/ads';
 
 export default function App() {
+  // Enable Firebase Analytics + Crashlytics collection once on launch, and
+  // initialize AdMob (preloads the first interstitial). Both no-op safely on a
+  // build that doesn't yet have the respective native module.
+  React.useEffect(() => { initFirebase(); initAds(); }, []);
+
   const [fontsLoaded] = useFonts({
     'SourceSerif4Variable-Roman':  require('./assets/fonts/SourceSerif4Variable-Roman.ttf'),
     'SourceSerif4Variable-Italic': require('./assets/fonts/SourceSerif4Variable-Italic.ttf'),

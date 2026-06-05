@@ -16,6 +16,7 @@ import Animated, {
   Easing, SlideInDown, FadeIn, runOnJS, interpolateColor,
 } from 'react-native-reanimated';
 import { ROSE, LAV, TXT, TXTSUB, FONTS } from '../constants/theme';
+import { maybeShowInterstitial } from '../services/ads';
 import { usePrayer } from '../state/PrayerContext';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useNotes } from '../state/NotesContext';
@@ -626,6 +627,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
 
   const handleAmen = () => {
     setAmened(true);
+    // Interstitial at this natural break — the congrats scene renders beneath
+    // it, so closing the ad returns the user straight to it. Frequency-capped +
+    // remove-ads-aware inside the service.
+    maybeShowInterstitial();
   };
 
   const closeFlow = () => navigation.goBack();

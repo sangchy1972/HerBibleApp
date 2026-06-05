@@ -43,9 +43,9 @@ import { useBadges } from '../state/BadgesContext';
 import { localeFor } from '../i18n/locale';
 import type { TabScreenProps } from '../navigation/types';
 
-const NOTO_REG = 'NotoSansSC_400Regular';
-const NOTO_MED = 'NotoSansSC_500Medium';
-const NOTO_BOLD = 'NotoSansSC_700Bold';
+const NOTO_REG = 'Lato_400Regular';   // Noto Sans SC no longer bundled; Latin → Lato, CJK → system font
+const NOTO_MED = 'Lato_400Regular';
+const NOTO_BOLD = 'Lato_700Bold';
 
 // All four action icons sized 20 (was 22, -10 % per user). The comment
 // icon was previously a custom bubble-with-tail SVG that read as

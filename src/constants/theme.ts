@@ -30,10 +30,17 @@ export const FONTS = {
   serifMedium:    'SourceSerif4Variable-Roman',
   serifSemiBold:  'SourceSerif4Variable-Roman',
   serifItalic:    'SourceSerif4Variable-Italic',
-  sans:           'NotoSansSC_400Regular',
-  sansMedium:     'NotoSansSC_500Medium',
-  sansSemiBold:   'NotoSansSC_600SemiBold',
-  sansBold:       'NotoSansSC_700Bold',
+  // Noto Sans SC (CJK) ships ONE ~10 MB file PER weight (≈40 MB for four
+  // weights). We DON'T bundle it at all: Chinese glyphs fall back to the
+  // device's system CJK font (Noto Sans CJK on Android, PingFang on iOS, present
+  // on virtually every device), which is also what the Bible reader already uses
+  // since its body faces (Merriweather / Source Serif) are Latin-only. The
+  // `sans*` families therefore point at Lato (a bundled Latin sans) so Latin
+  // characters stay on-brand while CJK uses the system fallback. Saves ~40 MB.
+  sans:           'Lato_400Regular',
+  sansMedium:     'Lato_400Regular',
+  sansSemiBold:   'Lato_700Bold',
+  sansBold:       'Lato_700Bold',
   inter:          'Inter_400Regular',
   // Merriweather — slab-influenced serif optimized for on-screen reading;
   // used as the default body font in the Bible reader.

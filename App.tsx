@@ -27,7 +27,8 @@ const DEFAULT_FONT_STYLE = { fontFamily: 'Lato_400Regular' };
 // already at opsz 14 / wght 400 (the body-text master), and any style
 // can override via `fontVariationSettings` to push toward Caption (small
 // opsz) or Display (large opsz) shapes. See `serifVariation` in theme.ts.
-import { NotoSansSC_400Regular, NotoSansSC_500Medium, NotoSansSC_600SemiBold, NotoSansSC_700Bold } from '@expo-google-fonts/noto-sans-sc';
+// Noto Sans SC is intentionally NOT bundled (~10 MB/weight). Chinese text falls
+// back to the system CJK font; theme.FONTS.sans* point at Lato for Latin glyphs.
 import { Inter_400Regular } from '@expo-google-fonts/inter';
 // Merriweather — purpose-built for on-screen reading. Used as the default
 // body font in the Bible reader. Regular (400) + Bold (700) cover the verse
@@ -74,10 +75,6 @@ export default function App() {
   const [fontsLoaded] = useFonts({
     'SourceSerif4Variable-Roman':  require('./assets/fonts/SourceSerif4Variable-Roman.ttf'),
     'SourceSerif4Variable-Italic': require('./assets/fonts/SourceSerif4Variable-Italic.ttf'),
-    NotoSansSC_400Regular,
-    NotoSansSC_500Medium,
-    NotoSansSC_600SemiBold,
-    NotoSansSC_700Bold,
     Inter_400Regular,
     Merriweather_400Regular,
     Merriweather_700Bold,

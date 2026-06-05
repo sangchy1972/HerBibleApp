@@ -7,8 +7,8 @@ import { HELP_ITEMS, SUPPORT_EMAIL } from '../constants/helpContent';
 import { useT } from '../i18n/useT';
 import type { RootStackScreenProps } from '../navigation/types';
 
-const NOTO_REG = 'NotoSansSC_400Regular';
-const NOTO_BOLD = 'NotoSansSC_700Bold';
+const NOTO_REG = 'Lato_400Regular';   // Noto Sans SC no longer bundled; Latin → Lato, CJK → system font
+const NOTO_BOLD = 'Lato_700Bold';
 
 export default function HelpAnswerScreen({ route, navigation }: RootStackScreenProps<'HelpAnswer'>) {
   const insets = useSafeAreaInsets();

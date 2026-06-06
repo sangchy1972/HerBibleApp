@@ -36,9 +36,13 @@ export function BadgesProvider({ children }: { children: React.ReactNode }) {
       for (const a of ACHIEVEMENTS) {
         if (cachedBadgeUri(a.id)) continue;    // already on disk
         const ok = await downloadBadge(a.id);  // best-effort; 404/offline → false
-        if (ok) landed++;
+        // Re-render every few that land so badges appear progressively instead
+        // of all-at-once only after the full 72-item pass finishes (which a
+        // user might leave before — the files cache regardless, but this makes
+        // them show THIS session too).
+        if (ok && ++landed % 4 === 0) setVersion(v => v + 1);
       }
-      if (landed > 0) setVersion(v => v + 1);  // single re-render after the pass
+      if (landed > 0) setVersion(v => v + 1);  // final re-render for the remainder
     })();
   }, []);
 

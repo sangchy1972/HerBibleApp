@@ -22,7 +22,7 @@ export type TabParamList = {
   // top, and replays its fade-in. Used by the Profile "My Plan" tile so
   // the entry always lands at the same starting point. Undefined → the
   // user just tabbed in normally; preserve their current state.
-  plan: { reset?: number } | undefined;
+  plan: { reset?: number; tab?: 'current' | 'explore' | 'completed' } | undefined;
   profile: undefined;
 };
 

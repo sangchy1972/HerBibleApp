@@ -960,7 +960,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
             <Text style={styles.inProgressEmptyTitle}>{t('prayer.plansEmpty.title')}</Text>
             <Text style={styles.inProgressEmptyDesc}>{t('prayer.plansEmpty.desc')}</Text>
             <TouchableOpacity
-              onPress={() => navigation.navigate('Tabs', { screen: 'plan' })}
+              onPress={() => navigation.navigate('Tabs', { screen: 'plan', params: { tab: 'explore', reset: Date.now() } })}
               style={styles.inProgressExploreBtn}
               activeOpacity={0.9}
             >

@@ -352,14 +352,15 @@ export default function PlanScreen() {
   );
 
   // Profile "My Plan" tile entry: navigation.navigate(..., { reset: Date.now() })
-  // gives us a fresh timestamp every tap. When that changes, reset the
-  // tab to 'current' and scroll the page to the top so the user always
-  // lands at the same starting point. Regular tab-switches don't send
-  // `reset`, so this effect is a no-op for them — their state is
-  // preserved.
+  // gives us a fresh timestamp every tap. When that changes, jump to the
+  // requested tab (`route.params.tab`, default 'current') and scroll to the
+  // top so the user always lands at the same starting point. The Profile "My
+  // Plan" tile sends no `tab` → 'current' (unchanged); the home "Explore Plans"
+  // button sends `tab: 'explore'`. Regular tab-switches don't send `reset`, so
+  // this is a no-op for them — their state is preserved.
   useEffect(() => {
     if (resetSignal !== undefined) {
-      setTab('current');
+      setTab(route.params?.tab ?? 'current');
       scrollRef.current?.scrollTo({ y: 0, animated: false });
     }
   }, [resetSignal]);

@@ -27,7 +27,7 @@ import { useDailyVerses } from '../state/DailyVersesContext';
 import { useTranslation } from '../state/TranslationsContext';
 import { useReadChapters } from '../state/ReadChaptersContext';
 import { usePlanCompletion } from '../state/PlanCompletionContext';
-import { usePlans } from '../state/PlansContext';
+import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import { nextUncompletedDay } from '../components/PlanRowCard';
 import PlanProgressCard from '../components/PlanProgressCard';
 import { dailyLabels } from '../constants/dailyVersesLabels';
@@ -477,7 +477,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   // `records`; the "in progress" derivation is local: any plan with at
   // least one day completed but no `finishedAt` is active.
   const { records: planRecords } = usePlanCompletion();
-  const { getPlanBySlug } = usePlans();
+  const { getSummary } = useFeaturedPlans();
   const inProgressPlanRows = useMemo(() => {
     const activeSlugs = Object.entries(planRecords)
       .filter(([, r]) => r.completedDays.length > 0 && !r.finishedAt)
@@ -485,9 +485,9 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
       .slice(0, 2)
       .map(([slug]) => slug);
     return activeSlugs
-      .map(slug => getPlanBySlug(slug))
-      .filter((p): p is NonNullable<ReturnType<typeof getPlanBySlug>> => !!p);
-  }, [planRecords, getPlanBySlug]);
+      .map(slug => getSummary(slug))
+      .filter((p): p is NonNullable<ReturnType<typeof getSummary>> => !!p);
+  }, [planRecords, getSummary]);
   // Share + More overlays live at the screen root so their absolute-fill
   // overlays are sized to the screen, not to the verse-card section. Render-
   // ing them inside VerseHeroCard sized them to the card and the share sheet

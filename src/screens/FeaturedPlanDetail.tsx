@@ -244,9 +244,8 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
       <Animated.View entering={FadeIn.delay(100).duration(260)}>{/* 280/420 → 100/260 */}
         {/* Worker plan JSON returns identical strings for `subtitle` and
             `goal` on most plans — show only one in that case. The goal
-            phrasing is the canonical one (it's what drives the plans
-            audience match in featuredForWeek), so when they collide we
-            keep goal and drop subtitle. */}
+            phrasing is the canonical one, so when they collide we keep
+            goal and drop subtitle. */}
         {!!summary.subtitle && summary.subtitle !== summary.goal && (
           <Text style={ds.subtitle}>{summary.subtitle}</Text>
         )}

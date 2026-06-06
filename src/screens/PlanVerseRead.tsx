@@ -45,7 +45,7 @@ export default function PlanVerseRead({ route, navigation }: RootStackScreenProp
     scrolledRef.current = false;
     fetchChapter(translation.code, translation.source, focus.bookSlug, focus.chapter)
       .then(setChapter)
-      .catch(() => setError('Could not load this chapter. Please check your connection.'));
+      .catch(() => setError(t('planRead.chapterError')));
   }, [translation.code, translation.source, focus.bookSlug, focus.chapter]);
 
   const onFocusLayout = (e: LayoutChangeEvent) => {

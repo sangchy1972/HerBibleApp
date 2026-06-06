@@ -1102,7 +1102,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 12 }}>
 
               {/* Language section — collapsible. Drives UI strings (and via
-                  PlansContext, the plans CDN locale). When collapsed, only the
+                  UILanguageContext, the plans CDN locale). When collapsed, only the
                   header + current-language chip stay visible so the Bible-
                   versions list below dominates the sheet. */}
               <TouchableOpacity

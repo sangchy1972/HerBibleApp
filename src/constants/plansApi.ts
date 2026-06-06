@@ -35,12 +35,8 @@ export const PLAN_COVER_CDN_BASE = 'https://covers.everlandapps.com/v1/covers';
 // to opt out (the dev bypass on the Worker still has to be on).
 export const PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER = 312250019928;
 
-// Cache keys (suffixed with version so a bump auto-invalidates).
+// Session-token cache key for the attest flow.
 export const plansTokenKey = () => `plans:token`;
-export const plansSummaryKey = (lang: string) => `plans:summary:${PLANS_SUMMARY_VERSION}:${lang}`;
-export const plansFullKey = (lang: string, slug: string) => `plans:full:${PLANS_SUMMARY_VERSION}:${lang}:${slug}`;
-export const planProfileKey = () => `plans:profile:v1`;
-export const planBehaviorKey = () => `plans:behavior:v1`;
 
 // The 5 sections that hold real plans. Featured is computed, not stored.
 export const PLAN_SECTIONS = [

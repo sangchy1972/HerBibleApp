@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { TXT, TXTSUB, FONTS } from '../constants/theme';
 import PlanCover from './PlanCover';
 import { useT } from '../i18n/useT';
-import type { PlanSummary } from '../services/plansService';
+import type { PlanSummary } from '../constants/featuredPlansSummary';
 
 interface Props {
   plan: PlanSummary;

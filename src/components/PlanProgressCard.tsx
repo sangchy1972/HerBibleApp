@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { ROSE, TXT, TXTSUB, FONTS } from '../constants/theme';
 import PlanCover from './PlanCover';
-import type { PlanSummary } from '../services/plansService';
+import type { PlanSummary } from '../constants/featuredPlansSummary';
 
 interface Props {
   plan: PlanSummary;

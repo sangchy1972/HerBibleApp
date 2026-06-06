@@ -73,6 +73,7 @@ interface SelectedVerse {
 
 export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<'PlanDayWalk'>) {
   const insets = useSafeAreaInsets();
+  const t = useT();
   const { slug, day } = route.params;
   const { loadPlan, loadedPlans } = useFeaturedPlans();
   const { markDayComplete } = usePlanCompletion();
@@ -106,7 +107,7 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
     if (plan) return;
     loadPlan(slug)
       .then(setPlan)
-      .catch(() => setError('Plan content is not available yet. Please try again later.'));
+      .catch(() => setError(t('plan.dayLoadError')));
   }, [slug, plan, loadPlan]);
 
   const dayContent = useMemo(() => plan?.days.find(d => d.day === day), [plan, day]);
@@ -222,7 +223,7 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
         <CloseBtn onPress={() => navigation.goBack()} top={insets.top + 4} />
         <View style={styles.empty}>
           <Feather name="cloud-off" size={42} color={TXTSUB} />
-          <Text style={styles.emptyText}>{error || 'This day has no content.'}</Text>
+          <Text style={styles.emptyText}>{error || t('plan.dayEmpty')}</Text>
         </View>
       </View>
     );
@@ -325,10 +326,10 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
                     const existing = savedList.find(s => s.ref === ref);
                     if (existing) {
                       removeVerse(existing.id);
-                      showToast('Removed');
+                      showToast(t('common.removed'));
                     } else {
                       addVerse(ref, selected.text);
-                      showToast('Saved');
+                      showToast(t('common.saved'));
                     }
                   } },
                 { key: 'Copy', icon: 'copy' as const, onPress: () => {
@@ -337,7 +338,7 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
                     // (Android 13+/Samsung One UI) — suppress our app pill on
                     // Android so the two don't stack. See BibleScreen for the
                     // matching gate.
-                    if (Platform.OS === 'ios') showToast('Copied');
+                    if (Platform.OS === 'ios') showToast(t('common.copied'));
                     setSelected(null);
                   } },
                 { key: 'Notes', icon: 'edit-2' as const, onPress: () => {
@@ -401,7 +402,7 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
               // Close the sheet AND surface a gray "Saved" pill — matches
               // the confirmation the Save action on the verse toolbar shows.
               setNoteVerse(null);
-              showToast('Saved');
+              showToast(t('common.saved'));
             }}
           />
         )}

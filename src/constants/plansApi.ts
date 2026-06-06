@@ -1,20 +1,7 @@
-// Plan duration label — "1 day" / "7 days". Wraps the singular/plural rule in
-// one place so PlanRowCard, featured carousel, and any future caller stay
-// consistent. Lowercase 'd' per user preference (matches the "min/day" suffix
-// sitting beside it on PlanDetail's duration row).
-//
-// i18n NOTE (constants refactor, May 2026): the `label` fields on
-// EMOTION_TAGS, SUBTAB_OVERRIDE[*][*], SUBTAB_ORDER[*][*], and the values of
-// PLAN_SECTION_LABELS / PLAN_SECTION_DESC are now CATALOG KEYS (e.g.
-// 'plansMeta.section.emotions'), not pre-localized strings. Every render site
-// that surfaces one of these labels must pass it through `t(...)` from
-// `useT()` — otherwise the user sees the raw key. The label field name is
-// kept (rather than introducing a parallel `labelKey`) because it minimises
-// callsite churn: a single `t(label)` wrap is fewer edits than maintaining
-// two fields everywhere.
-export function formatDayCount(days: number): string {
-  return `${days} ${days === 1 ? 'day' : 'days'}`;
-}
+// i18n NOTE: the `label` fields on EMOTION_TAGS, SUBTAB_OVERRIDE / SUBTAB_ORDER,
+// and the values of PLAN_SECTION_LABELS are CATALOG KEYS (e.g.
+// 'plansMeta.section.emotions'), not pre-localized strings — every render site
+// must pass them through `t(...)` from `useT()`, else the raw key shows.
 
 // Pinned configuration for the Cloudflare-Worker-backed plans pipeline.
 // Bumping SUMMARY_VERSION invalidates every device's cached summaries — use
@@ -78,22 +65,12 @@ export const PLAN_SECTION_LABELS: Record<PlanSectionId, string> = {
   'life-seasons': 'plansMeta.section.seasons',
 };
 
-// One-line section descriptions — values are i18n catalog KEYS (resolve with
-// `t(...)` at render time).
-export const PLAN_SECTION_DESC: Record<PlanSectionId, string> = {
-  'emotions': 'plansMeta.sectionDesc.emotions',
-  'walking-with-god': 'plansMeta.sectionDesc.walking',
-  'personal-growth': 'plansMeta.sectionDesc.growth',
-  'roles-identity': 'plansMeta.sectionDesc.roles',
-  'life-seasons': 'plansMeta.sectionDesc.seasons',
-};
-
 // "How Are You Feeling Today?" tags on the Plan tab. Each tag's `secondary`
 // is the slug PlanCategoryScreen will preselect when tapped — it must match a
 // real `secondary` value present in the cloud `emotions` section, otherwise
 // the screen falls back to its empty state. Sibling secondaries (e.g.
 // `anxiety-fear`) remain accessible as adjacent pills inside PlanCategory.
-export interface EmotionTag {
+interface EmotionTag {
   /** i18n catalog key — resolve with `t(label)` at the render site. */
   label: string;
   color: string;

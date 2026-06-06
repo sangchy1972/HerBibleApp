@@ -8,8 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import Animated, { FadeIn, FadeOut, Easing, useSharedValue, useAnimatedStyle, withTiming, type SharedValue } from 'react-native-reanimated';
 import * as Clipboard from 'expo-clipboard';
-import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import { ROSE, LAV, TXT, TXTSUB, P, FONTS, SERIF_BODY } from '../constants/theme';
+import { ROSE, TXT, TXTSUB, P, FONTS, SERIF_BODY } from '../constants/theme';
 import { maybeShowInterstitial } from '../services/ads';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import { usePlanCompletion } from '../state/PlanCompletionContext';
@@ -18,7 +17,6 @@ import { useHighlights } from '../state/HighlightsContext';
 import { useSavedVerses } from '../state/SavedVersesContext';
 import { bookCodeToSlug, parseVerseRange } from '../constants/bibleBookCode';
 import { localizeBookName } from '../constants/bibleBookNames';
-import { bibleAudioUrl } from '../constants/bibleAudioCdn';
 import { fetchChapter, fetchCommentaryChapter, type Chapter, type Verse } from '../services/bibleService';
 import { CORPUS_CDN_ROOT } from '../constants/corpus';
 import VerseNoteSheet from '../components/VerseNoteSheet';
@@ -76,12 +74,11 @@ interface SelectedVerse {
 export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<'PlanDayWalk'>) {
   const insets = useSafeAreaInsets();
   const { slug, day } = route.params;
-  const { loadPlan, loadedPlans, getSummary } = useFeaturedPlans();
+  const { loadPlan, loadedPlans } = useFeaturedPlans();
   const { markDayComplete } = usePlanCompletion();
   const { current: translation } = useTranslation();
   const { setHighlight, getColor } = useHighlights();
   const { verses: savedList, addVerse, removeVerse, hasVerse } = useSavedVerses();
-  const summary = getSummary(slug);
 
   const [plan, setPlan] = useState<FullPlan | null>(loadedPlans[slug] || null);
   const [error, setError] = useState<string | null>(null);
@@ -140,32 +137,6 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
     }
     return out;
   }, [dayContent]);
-
-  // Anchor chapter for the bottom audio button. Picked from scripture_focus
-  // if present; otherwise the first verse_wall reference.
-  const anchorChapter = useMemo(() => {
-    const first = pages.find(p => p.kind === 'scripture_focus') as Extract<Page, { kind: 'scripture_focus' }> | undefined;
-    if (first) {
-      const bs = bookCodeToSlug(first.section.verse.bookCode);
-      if (bs) return { bookSlug: bs, chapter: first.section.verse.chapter };
-    }
-    const v = pages.find(p => p.kind === 'verse') as Extract<Page, { kind: 'verse' }> | undefined;
-    if (v) return { bookSlug: v.bookSlug, chapter: v.ref.chapter };
-    return null;
-  }, [pages]);
-
-  // Narration isn't wired in the plan reader yet (the play button was removed),
-  // so don't load any audio — avoids a 404 fetch on every open.
-  const audioSrc = '';
-  const audioPlayer = useAudioPlayer(audioSrc || null);
-  const audioStatus = useAudioPlayerStatus(audioPlayer);
-  useEffect(() => () => {
-    try { if (audioPlayer.playing) audioPlayer.pause(); } catch {}
-  }, [audioPlayer]);
-  const toggleAudio = () => {
-    if (!anchorChapter) return;
-    if (audioStatus.playing) audioPlayer.pause(); else audioPlayer.play();
-  };
 
   // Pager state
   const { width: winWidth, height: winHeight } = useWindowDimensions();
@@ -902,12 +873,6 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     gap: 12,
     backgroundColor: 'transparent',
-  },
-  playBtn: {
-    width: 46, height: 46, borderRadius: 23,
-    backgroundColor: '#fff',
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 3,
   },
   pillNav: {
     flex: 1,

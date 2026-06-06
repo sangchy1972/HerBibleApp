@@ -139,7 +139,7 @@ export default function PlanCategoryScreen({ route, navigation }: RootStackScree
           contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 24 }]}
           ListHeaderComponent={
             <Text style={styles.subhead}>
-              {filteredPlans.length} {filteredPlans.length === 1 ? 'plan' : 'plans'}
+              {t('planCategory.count', { n: filteredPlans.length })}
             </Text>
           }
           // Virtualization tuning. Each row is ~110 px tall, so an iPhone

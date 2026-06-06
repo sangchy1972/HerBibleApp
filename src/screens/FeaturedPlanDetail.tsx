@@ -113,14 +113,8 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
     );
   }
 
-  // Accent color = the saturated dark of the cover gradient. The plan JSON's
-  // `color_primary` is a pastel tint (great as a soft cover wash) while
-  // `color_secondary` is the saturated brand color — this is the one that
-  // matches the demo's hand-picked `plan.ac` (e.g., LAV `#9560C2`). Using the
-  // pastel as button bg made the CTA read as "disabled" — verified on the
-  // anger plan where `color_primary: #E0BCA0` produced a near-white button.
   // Unified pink accent for all plans (selected day, time badge, walk row,
-  // Start button). Completed days use PLAN_DONE green — see the day strip.
+  // Start button); completed days use PLAN_DONE green — see the day strip.
   const ac = ROSE;
 
   // Day cells: number, calendar date, walk title (from full plan when loaded),
@@ -299,7 +293,7 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
           <View style={ds.dayHeader}>
             <Text style={ds.dayTitle}>{t('plan.row.dayOfTotal', { n: cur.n, total: summary.duration })}</Text>
             <View style={[ds.timeBadge, { backgroundColor: `${ac}18` }]}>
-              <Text style={[ds.timeBadgeText, { color: ac }]}>~{summary.minutes} min</Text>
+              <Text style={[ds.timeBadgeText, { color: ac }]}>{t('planDetail.dayMin', { min: summary.minutes })}</Text>
             </View>
           </View>
 

@@ -27,7 +27,7 @@ export type PlanSection =
   | { type: 'prayer';          heading: string; body: string }
   | { type: 'verse_wall';      heading: string; verses: PlanVerseRef[] };
 
-export interface PlanDay {
+interface PlanDay {
   day: number;
   title: string;
   estimatedMinutes: number;
@@ -159,7 +159,7 @@ async function authedFetch(path: string): Promise<Response> {
   }, PLAN_NET_TIMEOUT_MS);
 }
 
-export async function fetchAndCachePlan(lang: LanguageCode, slug: string): Promise<FullPlan> {
+async function fetchAndCachePlan(lang: LanguageCode, slug: string): Promise<FullPlan> {
   const path = `/v1/plans/${lang}/${slug}.json`;
   const res = await authedFetch(path);
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${path}`);

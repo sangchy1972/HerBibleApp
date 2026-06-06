@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, LayoutChangeEvent } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import Animated, {
@@ -8,9 +7,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import type { NavigationProp, RouteProp } from '@react-navigation/native';
-import { ROSE, LAV, TXT, TXTSUB, P, FONTS, SERIF_BODY } from '../constants/theme';
-import { PLANS_EXPLORE } from '../constants/data';
-import { useActivity } from '../state/ActivityContext';
+import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import { usePlanCompletion } from '../state/PlanCompletionContext';
 import { PLAN_SECTIONS, PLAN_SECTION_LABELS, EMOTION_TAGS, type PlanSectionId } from '../constants/plansApi';
@@ -23,23 +20,10 @@ import { useT } from '../i18n/useT';
 import { useUILanguage } from '../state/UILanguageContext';
 import { localeFor } from '../i18n/locale';
 
-type Plan = typeof PLANS_EXPLORE[0];
-
 const TABS = ['current', 'explore', 'completed'] as const;
 type TabId = typeof TABS[number];
 
-function ImagePlaceholder({ ac, width = PLAN_ROW_COVER.width, height = PLAN_ROW_COVER.height, radius = PLAN_ROW_COVER.radius }: {
-  ac: string; width?: number; height?: number; radius?: number;
-}) {
-  return (
-    <View style={{ width, height, borderRadius: radius, backgroundColor: `${ac}22`, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-      <Feather name="image" size={26} color={`${ac}99`} />
-    </View>
-  );
-}
-
-// Corpus-plan list row — same visual shape as PlanRow but reads PlanSummary
-// fields and uses the gradient cover instead of the demo color tint.
+// Plan list row — gradient cover + day count + title + a Start button.
 function CorpusPlanRow({ plan, onPress }: { plan: PlanSummary; onPress: () => void }) {
   const t = useT();
   return (
@@ -86,161 +70,6 @@ function CorpusCategorySection({ title, plans, onOpen, onSeeAll }: {
   );
 }
 
-function PlanRow({ plan, onPress }: { plan: Plan; onPress: () => void }) {
-  const t = useT();
-  return (
-    <TouchableOpacity onPress={onPress} style={styles.planRow} activeOpacity={0.75}>
-      <ImagePlaceholder ac={plan.ac} />
-      <View style={styles.planMeta}>
-        <Text style={styles.planDays}>{t('plan.row.daysLabel', { n: plan.days })}</Text>
-        <Text style={styles.planTitle} numberOfLines={2}>{plan.title}</Text>
-      </View>
-      <TouchableOpacity onPress={onPress} style={styles.startBtn}>
-        <Text style={styles.startBtnText}>{t('plan.startFallback')}</Text>
-      </TouchableOpacity>
-    </TouchableOpacity>
-  );
-}
-
-function PlanDetail({ plan, onBack }: { plan: Plan; onBack: () => void }) {
-  const t = useT();
-  const { lang } = useUILanguage();
-  const insets = useSafeAreaInsets();
-  const { markToday } = useActivity();
-  useEffect(() => { markToday(); }, [markToday]);
-  const [activeDay, setActiveDay] = useState(0);
-  // Memoized so the N×forEach + Date()/.toLocaleDateString() chain only
-  // re-runs when the plan changes (parent re-renders are a no-op).
-  const days = useMemo(() => {
-    const today = new Date();
-    return Array.from({ length: plan.days }, (_, i) => {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      const sched = plan.schedule && plan.schedule[i]
-        ? plan.schedule[i]
-        : { walk: `Day ${i + 1}`, verses: [] };
-      return {
-        n: i + 1,
-        label: d.toLocaleDateString(localeFor(lang), { month: 'short', day: 'numeric' }),
-        ...sched,
-      };
-    });
-  }, [plan, lang]);
-  const cur = days[activeDay];
-
-  // Phased fade-in on each section after the page mounts. Walks the eye from
-  // top to bottom rather than sliding the whole view from the right.
-  // Layout + spacing live in `planDetailStyles.ts` and are shared with the
-  // corpus-backed FeaturedPlanDetail so the two screens stay byte-aligned.
-  return (
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={[ds.scroll, { paddingTop: insets.top + 8 }]}
-    >
-      <Animated.View entering={FadeIn.duration(360)}>
-        <View style={ds.nav}>
-          <TouchableOpacity onPress={onBack} style={ds.backBtn} hitSlop={8}>
-            <Feather name="chevron-left" size={22} color={TXT} />
-          </TouchableOpacity>
-        </View>
-        <Text style={ds.title}>{plan.title}</Text>
-      </Animated.View>
-
-      <Animated.View entering={FadeIn.delay(140).duration(420)}>
-        {/* Demo plans have no CDN cover, just a single accent colour —
-            render a flat hero wash with the book icon for visual continuity
-            with the live FeaturedPlanDetail hero. */}
-        <View style={[ds.heroWrap, { backgroundColor: `${plan.ac}18`, alignItems: 'center', justifyContent: 'center' }]}>
-          <Feather name="book-open" size={44} color={`${plan.ac}88`} />
-        </View>
-      </Animated.View>
-
-      <Animated.View entering={FadeIn.delay(280).duration(420)}>
-        <Text style={ds.subtitle}>{plan.subtitle}</Text>
-        <Text style={ds.goal}>{plan.goal}</Text>
-      </Animated.View>
-
-      <Animated.View entering={FadeIn.delay(420).duration(420)}>
-        <Text style={ds.dailyPlanLabel}>{t('plan.dailyPlanLabel')}</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={ds.dayStrip} contentContainerStyle={ds.dayStripContent}>
-          {days.map((d, i) => {
-            const sel = i === activeDay;
-            return (
-              <TouchableOpacity
-                key={i}
-                onPress={() => setActiveDay(i)}
-                style={[ds.dayBtn, { backgroundColor: sel ? plan.ac : 'rgba(255,255,255,0.7)', borderColor: sel ? 'transparent' : 'rgba(30,27,46,0.08)' }]}
-                activeOpacity={0.8}
-              >
-                <Text style={[ds.dayNum, { color: sel ? '#fff' : TXT }]}>{d.n}</Text>
-                <Text style={[ds.dayDate, { color: sel ? 'rgba(255,255,255,0.9)' : TXTSUB }]}>{d.label}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </Animated.View>
-
-      <Animated.View entering={FadeIn.delay(560).duration(420)}>
-        <View style={ds.dayContent}>
-          <View style={ds.dayHeader}>
-            <Text style={ds.dayTitle}>{t('plan.row.dayOfTotal', { n: cur.n, total: plan.days })}</Text>
-            <View style={[ds.timeBadge, { backgroundColor: `${plan.ac}18` }]}>
-              <Text style={[ds.timeBadgeText, { color: plan.ac }]}>{t('plan.timeMinCaps', { min: 8 })}</Text>
-            </View>
-          </View>
-
-          <TouchableOpacity style={ds.walkRow} activeOpacity={0.8}>
-            <View style={[ds.walkIcon, { backgroundColor: `${plan.ac}22` }]}>
-              <Feather name="arrow-right" size={16} color={plan.ac} />
-            </View>
-            <View style={ds.walkMeta}>
-              <Text style={[ds.walkCaption, { color: plan.ac }]}>{t('plan.dailyWalkCaption')}</Text>
-              <Text style={ds.walkTitle}>{cur.walk}</Text>
-            </View>
-            <Feather name="chevron-right" size={18} color={TXTSUB} />
-          </TouchableOpacity>
-
-          {cur.verses.map((v, i) => (
-            <TouchableOpacity key={i} style={ds.verseRow} activeOpacity={0.8}>
-              <View style={ds.verseIcon}>
-                <Feather name="book-open" size={15} color={TXTSUB} />
-              </View>
-              <Text style={ds.verseName}>{v}</Text>
-              <Feather name="chevron-right" size={18} color={TXTSUB} />
-            </TouchableOpacity>
-          ))}
-        </View>
-      </Animated.View>
-
-      <Animated.View entering={FadeIn.delay(720).duration(400)}>
-        <TouchableOpacity style={[ds.startReadingBtn, { backgroundColor: plan.ac }]}>
-          <Text style={ds.startReadingText}>{t('plan.startReading')}</Text>
-        </TouchableOpacity>
-      </Animated.View>
-
-      <View style={{ height: 23 }} />
-    </ScrollView>
-  );
-}
-
-// Per-emotion-secondary saturated brand color. White text on these reads
-// cleanly; the pastel `colorPrimary` from the plan cover did not.
-const EMOTION_TAG_COLOR: Record<string, string> = {
-  'anger-bitterness':     '#D9762A',  // burnt orange — fire/heat, sits warm next to the pink palette
-  'anxiety-fear':         '#4F8AC2',
-  'grief-disappointment': '#9560C2',
-  'joy-gratitude':        '#E25C8C',  // pink — joy/gratitude reads warm/bright
-  'loneliness-emptiness': '#5078A1',
-  'weariness-burnout':    '#3DA386',
-};
-
-const CATEGORIES = [
-  { name: 'Walking with God', desc: 'Prayer, devotion & spiritual rhythms', plans: [PLANS_EXPLORE[0], PLANS_EXPLORE[1]] },
-  { name: 'Personal Growth', desc: 'Identity, courage & wisdom', plans: [PLANS_EXPLORE[2], PLANS_EXPLORE[3]] },
-  { name: 'Roles & Identity', desc: 'Womanhood, marriage & motherhood', plans: [PLANS_EXPLORE[0], PLANS_EXPLORE[1]] },
-  { name: 'Life Seasons', desc: 'Singleness, transitions & waiting', plans: [PLANS_EXPLORE[2], PLANS_EXPLORE[3]] },
-];
-
 export default function PlanScreen() {
   const t = useT();
   const insets = useSafeAreaInsets();
@@ -248,7 +77,7 @@ export default function PlanScreen() {
   const route = useRoute<RouteProp<TabParamList, 'plan'>>();
   const scrollRef = useRef<ScrollView>(null);
   const [tab, setTab] = useState<TabId>('current');
-  const [detail, setDetail] = useState<Plan | null>(null);
+  const { lang } = useUILanguage();
   // Bumped each time the screen comes into focus (and each time the
   // Profile "My Plan" tile re-enters with a fresh `reset` param). Used
   // as the key on the page-level Animated.View so React Native remounts
@@ -257,10 +86,8 @@ export default function PlanScreen() {
   // initial key value is 0.
   const [fadeKey, setFadeKey] = useState(0);
   const resetSignal = route.params?.reset;
-  // Corpus-backed plans for the Featured carousel + emotion tags + the
-  // bottom two category sections (Roles & Identity, Life Seasons). The
-  // existing PLANS_EXPLORE demo data still feeds Walking with God +
-  // Personal Growth; the two paths coexist.
+  // Corpus-backed plans powering the Featured carousel, emotion tags, and the
+  // category sections — all from the bundled summary (no demo data anymore).
   const { summary, getSummary, loadPlan } = useFeaturedPlans();
   const { records: planRecords } = usePlanCompletion();
 
@@ -377,8 +204,6 @@ export default function PlanScreen() {
   const onTabsLayout = (e: LayoutChangeEvent) => {
     tabsWidth.value = e.nativeEvent.layout.width;
   };
-
-  if (detail) return <PlanDetail plan={detail} onBack={() => setDetail(null)} />;
 
   return (
     <View style={styles.container}>
@@ -563,7 +388,7 @@ export default function PlanScreen() {
             <View>
               {completedPlanRows.length > 0 ? (
                 completedPlanRows.map(({ summary: p, finishedAt }) => {
-                  const dateStr = new Date(finishedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+                  const dateStr = new Date(finishedAt).toLocaleDateString(localeFor(lang), { year: 'numeric', month: 'short', day: 'numeric' });
                   return (
                     <TouchableOpacity
                       key={p.slug}
@@ -616,7 +441,6 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: P, paddingTop: 0 },
   header: { paddingTop: 9, marginBottom: 18 },
   heading: { fontSize: 28, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT, marginBottom: 2 },   // -7 % from 30
-  subheading: { fontSize: 14, fontFamily: FONTS.lato, color: TXTSUB },
   // Outer wrap shrunk -15 % per user — mirrors PrayerScreen's Morning /
   // Evening toggle so both strips read at identical height. Inner button
   // paddingVertical drops to 7, outer padding 3 → 2, borderRadius 22 → 18.
@@ -768,8 +592,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
-  emotionStrip: { marginBottom: 30 },
-  emotionContent: { paddingBottom: 6 },
   // Right breathing room at the end of the horizontal strip.
   emotionScrollContent: { paddingRight: 4 },
   emotionGrid: { flexDirection: 'column', gap: 10 },
@@ -803,7 +625,6 @@ const styles = StyleSheet.create({
   // catName matches the unified section title (20). Was 21 (-5 % per spec).
   catName: { fontSize: 20, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT },
   seeAll: { fontSize: 15.4, fontWeight: '700', fontFamily: FONTS.latoBold },   // bold per user
-  catDesc: { fontSize: 14.3, fontFamily: FONTS.lato, color: TXTSUB, marginBottom: 14 },  // +10 %
   emptyHint: { textAlign: 'center', paddingVertical: 23, alignItems: 'center' },
   emptyTitle: { fontSize: 17.3, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT, marginBottom: 5 },   // +8 % then +7 % (was 15)
   emptyDesc: { fontSize: 16.2, fontFamily: FONTS.lato, color: TXTSUB, textAlign: 'center' },                    // +8 % then +7 % (was 14)

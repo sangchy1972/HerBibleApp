@@ -33,6 +33,12 @@ yarn-error.*
 # local env files
 .env*.local
 
+# Firebase config — contains the Android API key. Kept OUT of the repo; provided
+# to EAS as a "file" env var GOOGLE_SERVICES_JSON and injected via app.config.js.
+# A local copy stays on disk for local/dev-client builds.
+google-services.json
+GoogleService-Info.plist
+
 # Claude Code per-user settings
 .claude/
 

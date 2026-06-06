@@ -3,13 +3,13 @@ import { View, Text, TouchableOpacity, StyleSheet, Linking, Platform } from 'rea
 import Svg, { Path, G } from 'react-native-svg';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
 import * as Facebook from 'expo-auth-session/providers/facebook';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import Animated, { FadeIn, SlideInDown, Easing } from 'react-native-reanimated';
 import { ROSE, TXT, TXTSUB, P } from '../constants/theme';
-import { GOOGLE_CLIENT_IDS, FACEBOOK_APP_ID, isConfigured } from '../constants/oauth';
+import { FACEBOOK_APP_ID, isConfigured } from '../constants/oauth';
 import { useAuth } from '../state/AuthContext';
+import { googleAuthAvailable } from '../services/firebaseAuth';
 import { useT } from '../i18n/useT';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -20,39 +20,18 @@ interface Props {
 }
 
 export default function SignInSheet({ onClose, onError }: Props) {
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const t = useT();
 
-  // Google: ID-token flow (gives us a JWT we can decode for name/email/photo locally).
-  const [, googleResp, promptGoogle] = Google.useIdTokenAuthRequest({
-    iosClientId: GOOGLE_CLIENT_IDS.ios,
-    androidClientId: GOOGLE_CLIENT_IDS.android,
-    clientId: GOOGLE_CLIENT_IDS.web,
-    scopes: ['openid', 'profile', 'email'],
-  });
+  // Google now goes through Firebase Authentication (native account picker →
+  // Firebase credential, giving us a stable uid + email) via
+  // AuthContext.signInWithGoogle — see onGoogle below.
 
   // Facebook: token flow → Graph API for name/email/picture.
   const [, fbResp, promptFb] = Facebook.useAuthRequest({
     clientId: FACEBOOK_APP_ID,
     scopes: ['public_profile', 'email'],
   });
-
-  useEffect(() => {
-    if (googleResp?.type !== 'success') return;
-    const idToken = googleResp.params.id_token;
-    if (!idToken) return;
-    const claims = decodeJwt(idToken);
-    if (!claims?.email) {
-      onError?.('Google did not return an email address.');
-      return;
-    }
-    signIn({
-      name: claims.name || claims.email.split('@')[0],
-      email: claims.email,
-      photoUri: claims.picture,
-    });
-    onClose();
-  }, [googleResp]);
 
   useEffect(() => {
     if (fbResp?.type !== 'success') return;
@@ -75,12 +54,20 @@ export default function SignInSheet({ onClose, onError }: Props) {
       .catch(() => onError?.('Could not load your Facebook profile.'));
   }, [fbResp]);
 
-  const onGoogle = () => {
-    if (!isConfigured.google()) {
-      onError?.('Google sign-in not yet configured. See src/constants/oauth.ts.');
+  const onGoogle = async () => {
+    if (!googleAuthAvailable()) {
+      // Native module not compiled into this build yet (e.g. an old dev client).
+      // A fresh build with @react-native-firebase/auth + google-signin enables it.
+      onError?.('Google sign-in is unavailable in this build.');
       return;
     }
-    promptGoogle();
+    try {
+      await signInWithGoogle();
+      onClose();   // signed into Firebase → close the sheet
+    } catch (e: any) {
+      if (e?.message === 'CANCELLED') return;   // user dismissed the picker — stay silent
+      onError?.('Google sign-in failed. Please try again.');
+    }
   };
 
   const onFacebook = () => {
@@ -200,18 +187,6 @@ function LegalText({
   );
 }
 
-// Decode a JWT payload without verification — fine for client-side display only.
-// We trust the token because it came back through the OAuth flow on this device;
-// real auth verification happens server-side if the user upgrades to a backend.
-function decodeJwt(token: string): { name?: string; email?: string; picture?: string } | null {
-  try {
-    const payload = token.split('.')[1];
-    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
-    return JSON.parse(json);
-  } catch {
-    return null;
-  }
-}
 
 function GoogleGlyph() {
   return (

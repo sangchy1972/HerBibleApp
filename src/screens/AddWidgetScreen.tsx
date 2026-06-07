@@ -5,6 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import WidgetPreview from '../components/WidgetPreview';
 import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { useDailyVerses } from '../state/DailyVersesContext';
+import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useT } from '../i18n/useT';
 import { requestPin as requestPinWidget, isPinSupported } from '../../modules/expo-pin-widget';
 import { syncVerseWidget } from '../../widgets/syncVerseWidget';
@@ -13,7 +14,13 @@ import type { RootStackScreenProps } from '../navigation/types';
 export default function AddWidgetScreen({ navigation }: RootStackScreenProps<'AddWidget'>) {
   const insets = useSafeAreaInsets();
   const { getVerse, todayDay } = useDailyVerses();
+  const prayerBg = usePrayerBackgrounds();
   const t = useT();
+  // Preview reflects the live widget: same clock→segment rule (evening after
+  // 6 pm / before 4 am), same verse + same card background.
+  const hr = new Date().getHours();
+  const previewSegment: 'morning' | 'evening' = hr >= 18 || hr < 4 ? 'evening' : 'morning';
+  const previewVerse = getVerse(todayDay, previewSegment);
   // Pretty in-app confirmation BEFORE invoking the OS pin dialog — gives the
   // user a heads-up that matches our UI (the system dialog that follows is the
   // launcher's own, which is what keeps this Google-Play-compliant).
@@ -62,38 +69,20 @@ export default function AddWidgetScreen({ navigation }: RootStackScreenProps<'Ad
         <Text style={styles.title}>{t('addWidget.title')}</Text>
         <Text style={styles.body}>{t('addWidget.body')}</Text>
 
-        {/* All three previews share the same cell size, so 2×2 / 4×2 / 5×2
-            render at proportional widths — exactly how they'd lay out next to
-            each other on a real home screen. Cell size scales with screen
-            width so 5×2 always fits even on iPhone SE. */}
-        {(() => {
-          const screenW = Dimensions.get('window').width;
-          const cellSize = Math.min(70, Math.floor((screenW - 56) / 5));
-          return (
-            <>
-              <View style={styles.previewBlock}>
-                <SizeLabel text={t('addWidget.size.small')} />
-                <View style={styles.previewCenter}>
-                  <WidgetPreview size="2x2" width={cellSize * 2} />
-                </View>
-              </View>
-
-              <View style={styles.previewBlock}>
-                <SizeLabel text={t('addWidget.size.medium')} />
-                <View style={styles.previewCenter}>
-                  <WidgetPreview size="4x2" width={cellSize * 4} />
-                </View>
-              </View>
-
-              <View style={styles.previewBlock}>
-                <SizeLabel text={t('addWidget.size.wide')} />
-                <View style={styles.previewCenter}>
-                  <WidgetPreview size="5x2" width={cellSize * 5} />
-                </View>
-              </View>
-            </>
-          );
-        })()}
+        {/* Live 4×2 preview — the exact verse + background the widget will
+            show (same as the home-screen hero card). */}
+        <View style={styles.previewBlock}>
+          <View style={styles.previewCenter}>
+            <WidgetPreview
+              size="4x2"
+              width={Math.min(Dimensions.get('window').width - 48, 360)}
+              body={previewVerse?.modernText}
+              reference={previewVerse?.reference.full_reference}
+              segment={previewSegment}
+              bgSource={prayerBg.imageFor(previewSegment)}
+            />
+          </View>
+        </View>
 
         <View style={styles.howCard}>
           <Text style={styles.howTitle}>{t('addWidget.howTitle')}</Text>
@@ -136,10 +125,6 @@ export default function AddWidgetScreen({ navigation }: RootStackScreenProps<'Ad
   );
 }
 
-function SizeLabel({ text }: { text: string }) {
-  return <Text style={styles.sizeLabel}>{text}</Text>;
-}
-
 function Step({ n, text }: { n: number; text: string }) {
   return (
     <View style={styles.step}>
@@ -180,7 +165,6 @@ const styles = StyleSheet.create({
   },
   previewBlock: { marginBottom: 22 },
   previewCenter: { alignItems: 'center' },
-  sizeLabel: { fontSize: 13, fontWeight: '700', color: TXTSUB, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 10 },
   howCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,

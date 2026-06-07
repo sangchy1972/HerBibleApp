@@ -99,13 +99,11 @@
               "label": "Her Bible — Verse of the Day",
               "description": "Today's verse on your home screen.",
               "previewImage": "./assets/widget/preview.png",
-              "minWidth": "180dp",
-              "minHeight": "100dp",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
               "targetCellWidth": 4,
               "targetCellHeight": 2,
-              "maxResizeWidth": "320dp",
-              "maxResizeHeight": "180dp",
-              "resizeMode": "horizontal|vertical",
+              "resizeMode": "none",
               "updatePeriodMillis": 21600000
             }
           ]

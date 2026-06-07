@@ -59,6 +59,7 @@ import { FeaturedPlansProvider } from './src/state/FeaturedPlansContext';
 import { PlanCompletionProvider } from './src/state/PlanCompletionContext';
 import AchievementUnlockSheet from './src/components/AchievementUnlockSheet';
 import DeepLinkHandler from './src/navigation/DeepLinkHandler';
+import WidgetSync from './src/components/WidgetSync';
 import { initFirebase } from './src/services/firebase';
 import { initAds } from './src/services/ads';
 
@@ -125,6 +126,11 @@ export default function App() {
                                               inside NavigationContainer so it
                                               can call navigate(). */}
                                           <DeepLinkHandler />
+                                          {/* Mirrors today's verse + the card's
+                                              background image to the home-screen
+                                              widget. Null render; needs DailyVerses
+                                              + PrayerBackgrounds (both above). */}
+                                          <WidgetSync />
                                         </NavigationContainer>
                                         </ReminderInterstitialProvider>
                                       </NotificationsProvider>

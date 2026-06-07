@@ -10,7 +10,7 @@ import { VerseOfDayWidget } from './VerseOfDayWidget';
 // custom native bridge.
 export const WIDGET_VERSE_KEY = 'verse-of-day-widget';
 
-interface SegmentVerse { verse: string; reference: string }
+interface SegmentVerse { verse: string; reference: string; bg?: string | null }
 
 // New payload carries BOTH segments + a localized Amen label so the widget can
 // switch morning⇄evening by clock without the app re-running, and render in the
@@ -58,6 +58,7 @@ export function buildVerseWidgetElement(
   return React.createElement(VerseOfDayWidget, {
     verse: seg?.verse ?? null,
     reference: seg?.reference ?? null,
+    bgUri: seg?.bg ?? null,
     segment,
     amenLabel: cache.amenLabel ?? null,
     width: info.width,

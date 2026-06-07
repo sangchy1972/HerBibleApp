@@ -20,6 +20,11 @@ const SLUGS = [
   'jude', 'revelation-of-john',
 ] as const;
 
+// Canonical Protestant book order (1-66). Exported for consumers that need
+// the ordinal — e.g. the human-reading audio CDN, whose folders are named
+// `<NN>_<slug>` (01_genesis … 66_revelation-of-john).
+export const CANONICAL_BOOK_SLUGS: readonly string[] = SLUGS;
+
 type Slug = typeof SLUGS[number];
 type NameMap = Record<Slug, string>;
 

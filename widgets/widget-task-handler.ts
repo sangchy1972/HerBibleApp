@@ -66,6 +66,11 @@ export function buildVerseWidgetElement(
   });
 }
 
+// Names of every verse-of-day widget variant registered in app.json. All three
+// share the same render path; the per-size layout decisions happen inside
+// VerseOfDayWidget based on the widthDp passed via widgetInfo.
+export const VERSE_WIDGET_NAMES = ['verseOfDay', 'verseOfDayWide', 'verseOfDaySmall'] as const;
+
 // react-native-android-widget hands us a `renderWidget(jsx)` callback —
 // whatever we pass becomes the home-screen layout for that widget instance.
 // The native side calls us back on the OS lifecycle events (added, periodic
@@ -73,7 +78,7 @@ export function buildVerseWidgetElement(
 // intent-filter + widgetprovider_verseofday.xml.
 export const widgetTaskHandler = async (props: WidgetTaskHandlerProps): Promise<void> => {
   const { widgetInfo, widgetAction, renderWidget } = props;
-  if (widgetInfo.widgetName !== 'verseOfDay') return;
+  if (!(VERSE_WIDGET_NAMES as readonly string[]).includes(widgetInfo.widgetName)) return;
   if (widgetAction === 'WIDGET_DELETED') return;
 
   const cache = await readCache();

@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Svg, { Path } from 'react-native-svg';
+import LottieView from 'lottie-react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withDelay, withRepeat, withSequence,
   Easing, SlideInDown, FadeIn, runOnJS, interpolateColor,
@@ -34,6 +35,15 @@ import ShareVerseSheet from '../components/ShareVerseSheet';
 import VerseNoteSheet from '../components/VerseNoteSheet';
 import { useSavedVerses } from '../state/SavedVersesContext';
 import { useUILanguage } from '../state/UILanguageContext';
+
+// Post-Amen celebration Lotties (both extracted from the user's dotLottie
+// uploads into plain JSON so Metro bundles them like any other asset).
+// Shown on BOTH morning and evening flows — the Amen screen is shared.
+//   • prayer-hands.json — replaces the old static <PrayingHand /> SVG.
+//   • confetti.json     — plays ONCE, full-screen over the Amen canvas,
+//     at the same moment the hands animation appears.
+const LOTTIE_PRAYER_HANDS = require('../../assets/lottie/prayer-hands.json');
+const LOTTIE_CONFETTI = require('../../assets/lottie/confetti.json');
 import { prepareVerseAudio, prepareHolidayVerseAudio, verseIdFor } from '../services/dailyVerseAudioService';
 import { DAILY_VERSE_AUDIO_LANG } from '../constants/dailyVerseAudioCdn';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -895,9 +905,26 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
           <TouchableOpacity onPress={closeFlow} style={[styles.chromeBtn, { position: 'absolute', top: insets.top + 8, left: 19 }]}>
             <Feather name="x" size={20} color="#fff" />
           </TouchableOpacity>
+          {/* Confetti burst — plays once, in sync with the hands animation
+              below, on both morning and evening flows. pointerEvents none so
+              Continue stays tappable through the overlay. */}
+          <View style={[StyleSheet.absoluteFillObject, { zIndex: 2 }]} pointerEvents="none">
+            <LottieView
+              source={LOTTIE_CONFETTI}
+              autoPlay
+              loop={false}
+              style={StyleSheet.absoluteFillObject}
+            />
+          </View>
           <Animated.View style={[styles.amenHands, handsContainerStyle]}>
             <View style={styles.handsStage}>
-              <PrayingHand />
+              {/* Animated praying hands (was the static PrayingHand SVG). */}
+              <LottieView
+                source={LOTTIE_PRAYER_HANDS}
+                autoPlay
+                loop
+                style={{ width: 200, height: 200 }}
+              />
               <Animated.View style={[styles.starPos, { top: 4, left: 14 }, star1Style]}>
                 <Sparkle size={22} />
               </Animated.View>

@@ -42,12 +42,13 @@ const Ctx = createContext<BackgroundsState | null>(null);
 
 // Bundled APK fallbacks — keep the app usable when the CDN is unreachable
 // (offline boot, blocked network, first launch before the manifest fetch
-// resolves). The real curated defaults live in `assets/prayer-bg/`, which
-// hasn't been re-added to the repo after the recovery; for now we point
-// every image fallback at the brand mark and leave audio fallback null so
-// expo-audio simply plays nothing rather than choking on a PNG.
-const DEFAULT_MORNING_IMG = require('../../assets/adaptive-icon.png');
-const DEFAULT_EVENING_IMG = require('../../assets/adaptive-icon.png');
+// resolves). Reuse the FollowHimScreen day/night photos (~80 KB webp each,
+// already bundled) so the fallback is a real atmospheric photo — the
+// previous adaptive-icon.png stopgap rendered the app icon stretched
+// across the whole verse card (user-reported bug, 2026-06-07). Audio
+// fallback stays null so expo-audio simply plays nothing.
+const DEFAULT_MORNING_IMG = require('../../assets/follow_him_day.webp');
+const DEFAULT_EVENING_IMG = require('../../assets/follow_him_night.webp');
 const DEFAULT_AUDIO       = null;
 
 // Audio cache: mirror today's CDN audio into the app's cache directory so

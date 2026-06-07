@@ -97,8 +97,8 @@ const styles = StyleSheet.create({
   list: { gap: 18 },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    paddingVertical: 22,
+    borderRadius: 17.6,                                                          // 22 → 17.6 (-20 % per user, scaled with the smaller card)
+    paddingVertical: 15.5,                                                       // 22 → 15.5 — total card height ≈ 66 → 53 (-20 % per user)
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 2,
   },
-  cardLabel: { fontSize: 18, fontWeight: '600', color: TXT },
+  cardLabel: { fontSize: 16.5, fontWeight: '600', color: TXT },                  // 18 → 16.5 (-8 % per user)
   emailBlock: { marginTop: 32, alignItems: 'center', paddingHorizontal: 16 },
   emailIntro: { fontSize: 14, color: TXTSUB, textAlign: 'center', marginBottom: 6 },
   emailLink: { fontSize: 15, color: ROSE, fontWeight: '600', textDecorationLine: 'underline' },

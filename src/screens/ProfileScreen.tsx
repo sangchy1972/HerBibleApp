@@ -1317,8 +1317,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
-    // No Android elevation — it renders as an ugly gray frame during
-    // react-navigation screen transitions. iOS shadow is enough.
+    elevation: 1,                                                                // matches widgetBanner / removeAdsBanner / notesTile so the stat cards lift on Android too (per user — iOS shadow props alone render flat on Android)
   },
   // Icon hugs the top center of the card; container height bumped to fit
   // the +15 % icons. marginBottom 0 per user — no gap between icon and the
@@ -1398,7 +1397,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
-    // Android elevation removed — see statCard note.
+    elevation: 1,                                                                // matches the other Profile cards so the Faith Achievement card lifts on Android too (per user)
   },
   achievementPreviewTile: { flex: 1, alignItems: 'center' },
   achievementPreviewMore: {

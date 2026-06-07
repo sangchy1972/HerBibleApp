@@ -105,6 +105,30 @@
               "targetCellHeight": 2,
               "resizeMode": "none",
               "updatePeriodMillis": 21600000
+            },
+            {
+              "name": "verseOfDayWide",
+              "label": "Her Bible — Verse of the Day (Wide)",
+              "description": "Today's verse, wider layout.",
+              "previewImage": "./assets/widget/preview.png",
+              "minWidth": "320dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 5,
+              "targetCellHeight": 2,
+              "resizeMode": "none",
+              "updatePeriodMillis": 21600000
+            },
+            {
+              "name": "verseOfDaySmall",
+              "label": "Her Bible — Verse of the Day (Compact)",
+              "description": "Today's verse, compact size.",
+              "previewImage": "./assets/widget/preview.png",
+              "minWidth": "120dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "resizeMode": "none",
+              "updatePeriodMillis": 21600000
             }
           ]
         }

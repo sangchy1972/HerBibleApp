@@ -19,8 +19,13 @@ import {
 // verse copy legible; the brand eyebrow + segment icon sit top, the reference
 // + a faux "Amen" pill sit bottom.
 //
-// The widget is locked to a 4×2 footprint (see app.json), so typography is
-// tuned for that single size.
+// Sizes — three variants are registered in app.json (verseOfDay 4×2 default,
+// verseOfDayWide 5×2, verseOfDaySmall 2×2). All three share this single render
+// path; the layout adapts on the fly based on the widthDp the OS hands us:
+//   • compact (< 200 dp ≈ 2×2): eyebrow + ref-only — no verse body, no pill.
+//     There just isn't legible room for a multi-line verse at this footprint.
+//   • default (200–319 dp ≈ 4×2): full layout, the design baseline.
+//   • wide (≥ 320 dp ≈ 5×2): same layout, slightly larger body type.
 //
 // Click target — the whole widget has clickAction="OPEN_APP", so a tap
 // anywhere (including the Amen pill, an intentional decoy CTA) launches the
@@ -82,16 +87,25 @@ export function VerseOfDayWidget({
   const w = Math.max(120, Math.round(width));
   const h = Math.max(80, Math.round(height));
 
-  // Locked 4×2 → one tuned type scale. (+15% over the first cut, per design.)
-  const eyebrowSize = 13;
-  const bodySize = 17.5;
-  const refSize = 14;
-  const iconSize = 20;
-  const pad = 15;
+  // Size variant — picks one of three layouts. Threshold is widthDp because
+  // the OS hands us actual rendered width (cell × cellWidth), so a 5×2 with
+  // a roomy launcher reads as ~320+ and a 2×2 reads as ~140.
+  const compact = w < 200;
+  const wide = w >= 320;
+
+  // Type scale per variant. 4×2 stays at the design baseline (+15% over the
+  // first cut). Wide bumps verse body by ~1.5pt for the extra real estate;
+  // compact shrinks the eyebrow/ref since the verse body is dropped.
+  const eyebrowSize = compact ? 11 : 13;
+  const bodySize = wide ? 19 : 17.5;
+  const refSize = compact ? 13 : 14;
+  const iconSize = compact ? 16 : 20;
+  const pad = compact ? 11 : 15;
 
   // Amen pill — bumped ~20% larger than the first cut, then widened ~15%
   // more (horizontal padding only; height/font/radius held constant) so it
-  // stays in step with the in-app WidgetPreview's pill.
+  // stays in step with the in-app WidgetPreview's pill. Hidden on compact
+  // (2×2) — no horizontal room next to the reference.
   const amenFont = 14.5;
   const heartSize = 17;
   const pillPadH = 20;
@@ -145,9 +159,9 @@ export function VerseOfDayWidget({
           justifyContent: 'space-between',
         }}
       >
-        {/* Top cluster: eyebrow + verse, anchored high over the calmer sky. */}
+        {/* Top cluster: eyebrow + (verse on 4×2 / 5×2 only). */}
         <FlexWidget style={{ flexDirection: 'column', width: 'match_parent' }}>
-          <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', width: 'match_parent', marginBottom: 7 }}>
+          <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', width: 'match_parent', marginBottom: compact ? 5 : 7 }}>
             <FlexWidget style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: ROSE, marginRight: 6 }} />
             <TextWidget
               text="HER BIBLE"
@@ -157,36 +171,44 @@ export function VerseOfDayWidget({
             <SvgWidget svg={segment === 'evening' ? MOON_SVG : SUN_SVG} style={{ width: iconSize, height: iconSize }} />
           </FlexWidget>
 
-          <TextWidget
-            text={bodyText}
-            maxLines={3}
-            style={{ fontSize: bodySize, fontFamily: 'Lora_400Regular', color: WHITE }}
-          />
+          {/* Verse body is dropped on the 2×2 compact variant — at ~140 dp wide
+              there's no legible room for a multi-line verse. The reference
+              alone earns its keep there as a "today's verse → tap to open"
+              pointer back into the app. */}
+          {!compact && (
+            <TextWidget
+              text={bodyText}
+              maxLines={3}
+              style={{ fontSize: bodySize, fontFamily: 'Lora_400Regular', color: WHITE }}
+            />
+          )}
         </FlexWidget>
 
-        {/* Bottom row: reference (left) + faux Amen pill (right). */}
+        {/* Bottom row: reference (left) + faux Amen pill (right, full sizes only). */}
         <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', width: 'match_parent' }}>
           <TextWidget
             text={refText}
             style={{ fontSize: refSize, fontWeight: '700', color: WHITE, letterSpacing: 0.3 }}
           />
           <FlexWidget style={{ flex: 1, height: 1 }} />
-          <FlexWidget
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              borderRadius: pillRadius,
-              paddingHorizontal: pillPadH,
-              paddingVertical: pillPadV,
-            }}
-          >
-            <SvgWidget svg={HEART_SVG} style={{ width: heartSize, height: heartSize }} />
-            <TextWidget
-              text={amen}
-              style={{ fontSize: amenFont, fontWeight: '700', color: ROSE, marginLeft: 6 }}
-            />
-          </FlexWidget>
+          {!compact && (
+            <FlexWidget
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                borderRadius: pillRadius,
+                paddingHorizontal: pillPadH,
+                paddingVertical: pillPadV,
+              }}
+            >
+              <SvgWidget svg={HEART_SVG} style={{ width: heartSize, height: heartSize }} />
+              <TextWidget
+                text={amen}
+                style={{ fontSize: amenFont, fontWeight: '700', color: ROSE, marginLeft: 6 }}
+              />
+            </FlexWidget>
+          )}
         </FlexWidget>
       </FlexWidget>
     </OverlapWidget>

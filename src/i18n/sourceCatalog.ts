@@ -262,7 +262,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'weekly.headline.twoStrong':     { en: 'Two Days Strong!',context: 'Celebration headline when count == 2.' },
   'weekly.headline.greatStart':    { en: 'Great Start Of The Week!', context: 'Celebration headline when count < 2.' },
   'weekly.subPrefix':              { en: 'Your',           context: 'Sub-text "Your <Nth> prayer of the week!" — leading word.' },
-  'weekly.subSuffix':              { en: 'prayer of the week!', context: 'Sub-text trailing words. Full pattern: Your <ordinal> prayer of the week!' },
+  'weekly.subSuffix':              { en: 'day of prayer this week!', context: 'Sub-text trailing words. Full pattern: Your <ordinal> day of prayer this week! The number counts DAYS prayed (morning+evening same day = one day), not sessions.' },
   'weekly.openReminder':           { en: 'Open Daily Verse Reminder', context: 'CTA inside the weekly progress card — opens the reminder time picker.' },
   'weekly.back':                   { en: 'Back',           context: 'Back button below weekly card — returns to PrayerScreen.' },
 
@@ -864,6 +864,8 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'plan.verseRead.back':           { en: 'BACK TO PLAN',                                          context: 'Top-left back button on PlanVerseRead. All-caps for chip styling.' },
   'plan.verseRead.chapter':        { en: 'CHAPTER {n}',                                           context: 'Caption above the verses on PlanVerseRead. All-caps eyebrow style.' },
   'plan.dayDone.shareProgress':    { en: 'Share progress',                                        context: 'Button on the PlanDayDone celebration screen. Opens share sheet with the day completion.' },
+  'plan.dayDone.congratsTitle':    { en: 'Congratulations!',                                      context: 'Big headline on the PlanDayDone screen when the user finishes the FINAL day of a plan. Joyful, celebratory.' },
+  'plan.dayDone.congratsSubtitle': { en: 'You completed this plan',                               context: 'Subtitle under the Congratulations headline when the whole plan is finished.' },
   'plan.dayWalk.chapterLoadError': { en: "Couldn't load this chapter.",                           context: 'Error message inside PlanDayWalk verse page when the chapter fetch fails.' },
 
   'profile.adPlaceholder':         { en: 'AD',                                                    context: 'Two-letter placeholder shown on the ad slot when no ad is loaded. Universal — keep as "AD".' },

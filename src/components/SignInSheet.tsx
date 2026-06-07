@@ -1,13 +1,13 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Linking, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Linking, Platform, Pressable, ActivityIndicator } from 'react-native';
 import Svg, { Path, G } from 'react-native-svg';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import Animated, { FadeIn, SlideInDown, Easing } from 'react-native-reanimated';
+import Animated, { FadeIn, SlideInDown, Easing, useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
 import { ROSE, TXT, TXTSUB, P } from '../constants/theme';
 import { isConfigured } from '../constants/oauth';
 import { useAuth } from '../state/AuthContext';
-import { googleAuthAvailable, facebookAuthAvailable } from '../services/firebaseAuth';
+import { googleAuthAvailable, facebookAuthAvailable, warmupGoogleSignIn } from '../services/firebaseAuth';
 import { useT } from '../i18n/useT';
 
 interface Props {
@@ -15,42 +15,60 @@ interface Props {
   onError?: (msg: string) => void;
 }
 
+type Provider = 'apple' | 'google' | 'facebook';
+
 export default function SignInSheet({ onClose, onError }: Props) {
   const { signIn, signInWithGoogle, signInWithFacebook } = useAuth();
   const t = useT();
+  // Which provider is mid-flight. Drives the in-button spinner AND disables
+  // every provider row so a slow native picker can't be double-fired.
+  const [busy, setBusy] = useState<Provider | null>(null);
+
+  // Pre-warm Google's native stack the moment the sheet opens — configure +
+  // Play Services check happen while the user reads the sheet, instead of
+  // being paid inside the button tap (was a multi-second silent stall).
+  useEffect(() => { warmupGoogleSignIn(); }, []);
 
   // Google + Facebook both go through Firebase Authentication via native SDKs
   // (Google account picker / Facebook login dialog → Firebase credential →
   // stable uid + email). See onGoogle / onFacebook below.
 
   const onGoogle = async () => {
+    if (busy) return;
     if (!googleAuthAvailable()) {
       // Native module not compiled into this build yet (e.g. an old dev client).
       // A fresh build with @react-native-firebase/auth + google-signin enables it.
       onError?.('Google sign-in is unavailable in this build.');
       return;
     }
+    setBusy('google');
     try {
       await signInWithGoogle();
       onClose();   // signed into Firebase → close the sheet
     } catch (e: any) {
       if (e?.message === 'CANCELLED') return;   // user dismissed the picker — stay silent
       onError?.('Google sign-in failed. Please try again.');
+    } finally {
+      setBusy(null);
     }
   };
 
   const onFacebook = async () => {
+    if (busy) return;
     if (!facebookAuthAvailable()) {
       // Native module not compiled into this build yet, or Firebase auth absent.
       onError?.('Facebook sign-in is unavailable in this build.');
       return;
     }
+    setBusy('facebook');
     try {
       await signInWithFacebook();
       onClose();   // signed into Firebase → close the sheet
     } catch (e: any) {
       if (e?.message === 'CANCELLED') return;   // user dismissed the dialog — stay silent
       onError?.('Facebook sign-in failed. Please try again.');
+    } finally {
+      setBusy(null);
     }
   };
 
@@ -59,10 +77,12 @@ export default function SignInSheet({ onClose, onError }: Props) {
   // stable user identifier. We handle that by falling back to the email
   // prefix for the display name on subsequent sign-ins. Cancel is silent.
   const onApple = async () => {
+    if (busy) return;
     if (!isConfigured.apple()) {
       onError?.(t('signIn.error.appleIOSOnly'));
       return;
     }
+    setBusy('apple');
     try {
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
@@ -82,6 +102,8 @@ export default function SignInSheet({ onClose, onError }: Props) {
       const code = (e as { code?: string })?.code;
       if (code === 'ERR_REQUEST_CANCELED') return;          // user dismissed — no toast
       onError?.(t('signIn.error.appleFailed'));
+    } finally {
+      setBusy(null);
     }
   };
 
@@ -105,21 +127,39 @@ export default function SignInSheet({ onClose, onError }: Props) {
         {Platform.OS === 'ios' && (
           // Apple HIG requires Sign in with Apple to sit at-or-above any
           // other social sign-in option, so it leads the stack on iOS.
-          <TouchableOpacity onPress={onApple} style={[styles.providerBtn, styles.providerBtnApple]} activeOpacity={0.85}>
-            <AppleGlyph />
+          <ProviderButton
+            onPress={onApple}
+            style={[styles.providerBtn, styles.providerBtnApple]}
+            busy={busy === 'apple'}
+            disabled={busy !== null}
+            spinnerColor="#fff"
+            glyph={<AppleGlyph />}
+          >
             <Text style={[styles.providerText, { color: '#fff' }]}>{t('signIn.apple')}</Text>
-          </TouchableOpacity>
+          </ProviderButton>
         )}
 
-        <TouchableOpacity onPress={onGoogle} style={styles.providerBtn} activeOpacity={0.85}>
-          <GoogleGlyph />
+        <ProviderButton
+          onPress={onGoogle}
+          style={styles.providerBtn}
+          busy={busy === 'google'}
+          disabled={busy !== null}
+          spinnerColor={ROSE}
+          glyph={<GoogleGlyph />}
+        >
           <Text style={styles.providerText}>{t('signIn.google')}</Text>
-        </TouchableOpacity>
+        </ProviderButton>
 
-        <TouchableOpacity onPress={onFacebook} style={[styles.providerBtn, styles.providerBtnFb]} activeOpacity={0.85}>
-          <FacebookGlyph />
+        <ProviderButton
+          onPress={onFacebook}
+          style={[styles.providerBtn, styles.providerBtnFb]}
+          busy={busy === 'facebook'}
+          disabled={busy !== null}
+          spinnerColor="#fff"
+          glyph={<FacebookGlyph />}
+        >
           <Text style={[styles.providerText, { color: '#fff' }]}>{t('signIn.facebook')}</Text>
-        </TouchableOpacity>
+        </ProviderButton>
 
         <LegalText
           template={t('signIn.legal')}
@@ -133,6 +173,43 @@ export default function SignInSheet({ onClose, onError }: Props) {
         </TouchableOpacity>
       </Animated.View>
     </View>
+  );
+}
+
+// Provider row with tactile press feedback + an in-flight spinner (per user:
+// the Google button previously gave NO reaction on tap, then the system
+// account picker took seconds to appear with zero feedback in between).
+//   • Press-in shrinks the row to 96 %; release springs it back.
+//   • While `busy`, the brand glyph is swapped for an ActivityIndicator so
+//     the wait between tap and the native dialog reads as "working".
+//   • `disabled` greys nothing while THIS row is busy (the spinner is the
+//     signal) but dims the other rows so only one flow runs at a time.
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+function ProviderButton({
+  onPress, style, busy, disabled, spinnerColor, glyph, children,
+}: {
+  onPress: () => void;
+  style: any;
+  busy: boolean;
+  disabled: boolean;
+  spinnerColor: string;
+  glyph: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const scale = useSharedValue(1);
+  const pressStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      disabled={disabled}
+      onPressIn={() => { scale.value = withTiming(0.96, { duration: 90 }); }}
+      onPressOut={() => { scale.value = withSpring(1, { damping: 16, stiffness: 320 }); }}
+      style={[style, pressStyle, disabled && !busy && { opacity: 0.5 }]}
+    >
+      {busy ? <ActivityIndicator size="small" color={spinnerColor} /> : glyph}
+      {children}
+    </AnimatedPressable>
   );
 }
 

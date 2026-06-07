@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
+import LottieView from 'lottie-react-native';
+import Animated, { FadeInRight } from 'react-native-reanimated';
 import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { DAYS } from '../constants/data';
 import { useT } from '../i18n/useT';
@@ -16,6 +18,17 @@ import DayCircle from '../components/shared/DayCircle';
 import FireFlame from '../components/shared/FireFlame';
 import { usePrayer } from '../state/PrayerContext';
 import type { RootStackScreenProps } from '../navigation/types';
+
+// Animated hero flame (user's FireStreak Lottie, extracted from dotLottie to
+// plain JSON). Replaces the static FireFlame SVG for the BIG flame only —
+// the small milestone/day-circle flames stay on the lightweight SVG.
+// Source comp is 500×690, so width = height × 0.725 keeps its aspect.
+const LOTTIE_FIRE = require('../../assets/lottie/fire-streak.json');
+
+// Staggered entrance: each content block fades/slides in from the RIGHT,
+// top to bottom, the whole sequence wrapping up at ~0.7 s (last delay 300 +
+// duration 400). Used instead of the hard cut the screen had before.
+const ENTER = (slot: number) => FadeInRight.duration(400).delay(slot * 75);
 
 function splitDate(s: string): string {
   return s.split(',').map(p => p.trim()).filter(Boolean).join('\n');
@@ -112,7 +125,10 @@ export default function StreakScreen({ navigation }: RootStackScreenProps<'Strea
       {info && (
         <TouchableOpacity style={styles.infoOverlay} onPress={() => setInfo(false)} activeOpacity={1}>
           <TouchableOpacity activeOpacity={1} style={styles.infoCard}>
-            <TouchableOpacity onPress={() => setInfo(false)} hitSlop={10} style={styles.infoClose}>
+            {/* hitSlop 10 → 18: the 32-px ✕ was genuinely hard to hit (per
+                user) — effective touch target now ≈ 68×68, comfortably above
+                the 48-px Android minimum. */}
+            <TouchableOpacity onPress={() => setInfo(false)} hitSlop={18} style={styles.infoClose}>
               <Feather name="x" size={20} color={TXT} />
             </TouchableOpacity>
             <Text style={styles.infoTitle}>{t('streak.info.title')}</Text>
@@ -126,15 +142,23 @@ export default function StreakScreen({ navigation }: RootStackScreenProps<'Strea
         {/* Flame + count. Count + label sit on the same row per user — big
             numeral on the left, "Days\nPrayed" wrapping to two lines on the
             right (left-aligned). */}
-        <View style={styles.flameSection}>
-          <FireFlame size={flameSizeForLevel(lvl)} />
+        <Animated.View entering={ENTER(0)} style={styles.flameSection}>
+          <LottieView
+            source={LOTTIE_FIRE}
+            autoPlay
+            loop
+            style={{
+              width: Math.round(flameSizeForLevel(lvl) * 0.725),
+              height: flameSizeForLevel(lvl),
+            }}
+          />
           <View style={styles.streakNumRow}>
             <Text style={styles.streakNum}>{totalComplete}</Text>
             <Text style={styles.streakLabel}>{t('streak.daysPrayedTwoLine')}</Text>
           </View>
-        </View>
+        </Animated.View>
 
-        <View style={styles.statsRow}>
+        <Animated.View entering={ENTER(1)} style={styles.statsRow}>
           <View style={styles.statItem}>
             <View style={styles.statValueWrap}>
               <Text style={styles.statValueDate}>{splitDate(formatStreakStart(firstCompleteDate, lang))}</Text>
@@ -155,10 +179,10 @@ export default function StreakScreen({ navigation }: RootStackScreenProps<'Strea
             </View>
             <Text style={styles.statLabel}>{t('streak.stat.maxStreak')}</Text>
           </View>
-        </View>
+        </Animated.View>
 
         {/* This Week */}
-        <View style={styles.sectionPad}>
+        <Animated.View entering={ENTER(2)} style={styles.sectionPad}>
           <View style={[card, styles.weekCard]}>
             <View style={styles.weekHeader}>
               <Text style={styles.weekTitle}>{t('streak.thisWeek')}</Text>
@@ -173,9 +197,9 @@ export default function StreakScreen({ navigation }: RootStackScreenProps<'Strea
               })}
             </View>
           </View>
-        </View>
+        </Animated.View>
 
-        <View style={styles.sectionPad}>
+        <Animated.View entering={ENTER(3)} style={styles.sectionPad}>
           <View style={[card, styles.milestoneCard]}>
             <View style={styles.milestoneRow}>
               <View style={styles.milestoneFlame}>
@@ -200,13 +224,13 @@ export default function StreakScreen({ navigation }: RootStackScreenProps<'Strea
               </View>
             </View>
           </View>
-        </View>
+        </Animated.View>
 
         {/* Footer */}
-        <View style={styles.footerCard}>
+        <Animated.View entering={ENTER(4)} style={styles.footerCard}>
           <Text style={styles.footerTitle}>{t('streak.footer.title')}</Text>
           <Text style={styles.footerBody}>{t('streak.footer.body')}</Text>
-        </View>
+        </Animated.View>
 
         <View style={{ height: 146 }} />
       </ScrollView>
@@ -231,9 +255,11 @@ const styles = StyleSheet.create({
     paddingBottom: 9,
   },
   headerBtn: {
-    width: 39,
-    height: 41,
-    borderRadius: 19,
+    // 39×41 read visibly egg-shaped on the ⓘ button (per user) — locked to a
+    // true circle.
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.7)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.92)',
@@ -387,14 +413,14 @@ const styles = StyleSheet.create({
     // matches per user. Tall enough to comfortably fit the 7-day circle row
     // + header in week-card AND the flame / progress / caption stack in
     // milestone-card.
-    minHeight: 150,
+    minHeight: 135,                                                              // 150 → 135 (-10 % per user; matches milestoneCard so the stack stays even)
     justifyContent: 'space-between',
   },
   weekHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 23,                                                            // 28 → 23 (-5 px gap below "This Week" per user)
+    marginBottom: 14,                                                            // 23 → 14 — header sat too far from the SU–SA row per user
   },
   weekTitle: {                                                                   // 16 → 19.2 (+20 % per user). Lora 600.
     fontSize: 19.2,
@@ -415,7 +441,7 @@ const styles = StyleSheet.create({
   milestoneCard: {
     padding: 19,
     paddingHorizontal: 14,
-    minHeight: 150,                                                              // matches weekCard so the two stack with consistent block heights per user
+    minHeight: 135,                                                              // 150 → 135 (-10 %), stays equal to weekCard per user
     justifyContent: 'center',
   },
   // Bare flames now hug the edges; the middle column expands to fill

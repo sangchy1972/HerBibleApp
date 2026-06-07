@@ -50,6 +50,22 @@ function ensureConfigured(): void {
   configured = true;
 }
 
+// Pre-warm the Google sign-in stack OFF the tap's critical path. The first
+// `googleSignIn()` used to pay configure + the Play Services availability
+// check + native picker spin-up all at once — a visible multi-second stall
+// between tapping the button and the account chooser appearing. Calling this
+// when the sign-in sheet MOUNTS moves the configure + Play Services check to
+// the moments while the user is still reading the sheet. Fire-and-forget.
+export function warmupGoogleSignIn(): void {
+  if (!GoogleSignin) return;
+  try {
+    ensureConfigured();
+    // No update dialog here — this is a silent background probe; the real
+    // sign-in call still passes showPlayServicesUpdateDialog: true.
+    GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: false }).catch(() => {});
+  } catch { /* never let warmup break the sheet */ }
+}
+
 function mapFirebaseUser(u: any): AuthUser | null {
   if (!u) return null;
   return {

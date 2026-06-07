@@ -44,7 +44,8 @@ export default function HelpCenterScreen({ navigation }: RootStackScreenProps<'H
         ))}
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+      {/* +20 px bottom clearance per user — the CTA sat too close to the screen edge. */}
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) + 20 }]}>
         <TouchableOpacity onPress={onContact} activeOpacity={0.85} style={styles.contactBtn}>
           <Feather name="edit-3" size={20} color="#FFFFFF" />
           <Text style={styles.contactText}>{t('help.contactUs')}</Text>
@@ -91,8 +92,8 @@ const styles = StyleSheet.create({
   },
   contactBtn: {
     backgroundColor: ROSE,
-    borderRadius: 28,
-    paddingVertical: 16,
+    borderRadius: 22.4,                  // 28 → 22.4 (-20 % per user)
+    paddingVertical: 13.2,               // 16 → 13.2 — total button height ≈ 56 → 50.4 (-10 % per user)
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

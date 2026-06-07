@@ -27,8 +27,13 @@ export interface ChapterTimestamps {
   verses: VerseTimestamp[];
 }
 
+// v2 (2026-06): cache version bumped when English switched from TTS to the
+// human-read narration — the old cached TTS timestamps don't line up with
+// the new audio, and this cache is cache-FIRST (never revalidates), so
+// without the bump existing users would keep stale highlight timings
+// forever. Old `bible-audio:ts:…` (unversioned) entries are simply orphaned.
 const cacheKey = (lang: string, bookSlug: string, chapter: number) =>
-  `bible-audio:ts:${lang}:${bookSlug}:${chapter}`;
+  `bible-audio:ts:v2:${lang}:${bookSlug}:${chapter}`;
 
 /** Cache-first fetch of per-verse timestamps for a chapter. */
 export async function loadTimestamps(

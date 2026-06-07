@@ -6,6 +6,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Feather, Ionicons } from '@expo/vector-icons';
+import Svg, { Path } from 'react-native-svg';
 import Animated, { FadeIn, FadeOut, Easing, useSharedValue, useAnimatedStyle, withTiming, type SharedValue } from 'react-native-reanimated';
 import * as Clipboard from 'expo-clipboard';
 import { ROSE, TXT, TXTSUB, P, FONTS, SERIF_BODY } from '../constants/theme';
@@ -260,7 +261,7 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
               exploreTarget={exploreTarget}
               onCloseExplore={() => setExploreTarget(null)}
               insetTop={20}
-              insetBottom={insets.bottom + 110}
+              insetBottom={insets.bottom + 120}                                  // 110 → 120 — tracks the bottom bar's +10 px lift so text keeps the same clearance above the pill
               translationCode={translation.code}
               translationSource={translation.source}
               getColor={getColor}
@@ -374,19 +375,30 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
 
       {/* Bottom: white pill (back chevron + chapter:verse) + a SEPARATE round
           next button to its right (independent of the pill, per user). The
-          play button was removed — no narration audio is wired yet. */}
-      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 13 }]}>
+          play button was removed — no narration audio is wired yet.
+          Icons are custom bold SVGs (2× Feather's stroke — per user, the
+          stock glyphs read too thin), and the round button flips ROSE →
+          green on the last page so finishing the day is visibly different. */}
+      {/* 13 → 23 (+10 px per user — pill + next button sat too close to the bottom edge). */}
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 23 }]}>
         <View style={styles.pillNav}>
           <TouchableOpacity onPress={onPrev} disabled={page === 0} style={styles.pillNavBtn} hitSlop={6}>
             {/* First page → greyed + disabled (can't go back a page). */}
-            <Feather name="chevron-left" size={20} color={page === 0 ? 'rgba(30,27,46,0.25)' : TXT} />
+            <BoldChevron dir="left" size={20} color={page === 0 ? 'rgba(30,27,46,0.25)' : TXT} />
           </TouchableOpacity>
           <Text style={styles.pillRef} numberOfLines={1}>{currentRef}</Text>
           {/* Spacer matching the chevron width so the label stays centered. */}
           <View style={styles.pillNavBtn} pointerEvents="none" />
         </View>
-        <TouchableOpacity onPress={onNext} style={styles.nextBtn} hitSlop={8} activeOpacity={0.85}>
-          <Feather name={isLast ? 'check' : 'chevron-right'} size={22} color="#fff" />
+        <TouchableOpacity
+          onPress={onNext}
+          style={[styles.nextBtn, isLast && styles.nextBtnDone]}
+          hitSlop={8}
+          activeOpacity={0.85}
+        >
+          {isLast
+            ? <BoldCheck size={22} color="#fff" />
+            : <BoldChevron dir="right" size={22} color="#fff" />}
         </TouchableOpacity>
       </View>
 
@@ -456,6 +468,25 @@ function CloseBtn({ onPress, top }: { onPress: () => void; top: number }) {
   );
 }
 
+// Bottom-bar glyphs at 2× Feather's stroke weight (4 vs 2 on a 24-px
+// viewBox) — the stock Feather chevron/check looked too thin in the nav
+// pill and round next button (per user). Same geometry as Feather's paths.
+function BoldChevron({ dir, size, color }: { dir: 'left' | 'right'; size: number; color: string }) {
+  const d = dir === 'left' ? 'M15 18 L9 12 L15 6' : 'M9 18 L15 12 L9 6';
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d={d} stroke={color} strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+function BoldCheck({ size, color }: { size: number; color: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M20 6 L9 17 L4 12" stroke={color} strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
 // One page of the pager. Either a prose section (verse / teaching /
 // prayer) or a verse page — which fetches the chapter so it can render
 // the surrounding context dimmed, focus the target range, and surface
@@ -493,12 +524,13 @@ function PageContent({
   onSelectVerse: (sv: SelectedVerse) => void;
 }) {
   // Replays the staggered entrance every time this page becomes the active one
-  // (initial mount + each swipe to it). 0.6 s total per user.
+  // (initial mount + each swipe to it). 0.6 s → 1.2 s per user — the rise-up
+  // reveal felt too fast / flashy, so the whole stagger now plays at half speed.
   const anim = useSharedValue(0);
   useEffect(() => {
     if (active) {
       anim.value = 0;
-      anim.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
+      anim.value = withTiming(1, { duration: 1200, easing: Easing.out(Easing.cubic) });
     }
   }, [active, anim]);
   const base = isFirstPage ? 1 : 0;          // dayTitle occupies stagger slot 0 on the first page
@@ -768,7 +800,10 @@ function renderMarkdownBolds(s: string): React.ReactNode {
   let m;
   while ((m = re.exec(s)) !== null) {
     if (m.index > cursor) out.push(s.slice(cursor, m.index));
-    out.push(<Text key={m.index} style={{ fontWeight: '700' }}>{m[1]}</Text>);
+    // Lora 600 per user — bare fontWeight:'700' fell back to the system
+    // sans bold, visually clashing with the serif body around it. (loraBold
+    // must pair with '600': '700' drops Lora entirely on Android.)
+    out.push(<Text key={m.index} style={{ fontFamily: FONTS.loraBold, fontWeight: '600' }}>{m[1]}</Text>);
     cursor = m.index + m[0].length;
   }
   if (cursor < s.length) out.push(s.slice(cursor));
@@ -803,10 +838,10 @@ const styles = StyleSheet.create({
     lineHeight: 33, letterSpacing: 0.2, marginTop: 15, marginBottom: 22,         // +15 px before, +10 px after (12 → 22) per user
   },
   sectionCaption: {
-    fontSize: 13.5, fontWeight: '800', fontFamily: FONTS.latoBold, color: ROSE,
-    letterSpacing: 1.6, marginBottom: 12,
+    fontSize: 16.2, fontWeight: '800', fontFamily: FONTS.latoBold, color: ROSE, // 13.5 → 16.2 (+20 % per user — applies to the whole TODAY'S VERSE / PRAYER / … caption series)
+    letterSpacing: 1.6, marginTop: 20, marginBottom: 20,                         // +20 px before, +8 px after (12 → 20) per user
   },
-  captionWide: { fontSize: 15.5, marginTop: 20, marginBottom: 22 },             // +15 % font (13.5→15.5) + 20 px top per user (teaching/prayer headings)
+  captionWide: { marginBottom: 22 },                                            // teaching/prayer headings keep their slightly roomier bottom gap; size + top now unified in sectionCaption
   verseRef: { fontSize: 18.4, fontWeight: '700', fontFamily: FONTS.loraBold, color: ROSE, marginBottom: 26, letterSpacing: 0.4 },
   verseBodyLarge: {
     fontFamily: FONTS.serif, fontVariationSettings: SERIF_BODY,
@@ -897,6 +932,9 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     shadowColor: ROSE, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 3,
   },
+  // Last page — ROSE flips to green so "this day is finished" registers
+  // at a glance (per user). Shadow tracks the new fill.
+  nextBtnDone: { backgroundColor: '#3FAE6A', shadowColor: '#3FAE6A' },
   pillRef: {
     flex: 1, textAlign: 'center',
     fontSize: 16, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT,

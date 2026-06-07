@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, FlatList, type ListRenderItem } from 'react-native';
+import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, FlatList, type LayoutChangeEvent, type ListRenderItem } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
@@ -51,6 +51,51 @@ export default function PlanCategoryScreen({ route, navigation }: RootStackScree
   // from a different mood pill).
   useEffect(() => { setActiveTab(initialTab); }, [initialTab]);
 
+  // Auto-scroll the pill strip so the chip matching the incoming `secondary`
+  // route param (e.g. arriving via the "How are you feeling today?" Shame
+  // pill) is brought into view AND visibly highlighted. Without this the
+  // strip stays scrolled to "All" on the left, making it look like nothing
+  // is selected even though `activeTab` is set correctly — exactly the
+  // confusion users hit on the SHAME category.
+  //
+  // Implementation: each pill reports its x/width via onLayout into a Map;
+  // we also measure the strip viewport width. As soon as both are known we
+  // scroll once to center the active chip (no animation — instant on
+  // first render, so it feels like the screen "opens to" Shame rather than
+  // sliding to it after the fact). The `hasAutoScrolledFor` ref prevents
+  // the autoscroll from re-firing every render or when the user manually
+  // taps another chip.
+  const stripRef = useRef<ScrollView>(null);
+  const chipLayouts = useRef<Map<string, { x: number; w: number }>>(new Map());
+  const stripViewportW = useRef(0);
+  const hasAutoScrolledFor = useRef<string | null>(null);
+
+  const tryAutoScroll = useCallback((tabId: string) => {
+    if (hasAutoScrolledFor.current === tabId) return;
+    const layout = chipLayouts.current.get(tabId);
+    const viewportW = stripViewportW.current;
+    if (!layout || viewportW === 0) return;
+    hasAutoScrolledFor.current = tabId;
+    // Center the chip in the viewport when there's room; otherwise scroll
+    // just enough to bring it fully into view from the right edge.
+    const centered = layout.x + layout.w / 2 - viewportW / 2;
+    stripRef.current?.scrollTo({ x: Math.max(0, centered), animated: false });
+  }, []);
+
+  // When the route brings us to a new chip, allow another autoscroll.
+  useEffect(() => { hasAutoScrolledFor.current = null; }, [initialTab]);
+
+  const onChipLayout = useCallback((id: string, e: LayoutChangeEvent) => {
+    const { x, width } = e.nativeEvent.layout;
+    chipLayouts.current.set(id, { x, w: width });
+    if (id === initialTab) tryAutoScroll(id);
+  }, [initialTab, tryAutoScroll]);
+
+  const onStripLayout = useCallback((e: LayoutChangeEvent) => {
+    stripViewportW.current = e.nativeEvent.layout.width;
+    tryAutoScroll(initialTab);
+  }, [initialTab, tryAutoScroll]);
+
   // Plans for THIS primary, then optionally filtered by the active sub-tab.
   const allInPrimary = useMemo(() => {
     return summary.filter(p => p.primary === primary);
@@ -100,8 +145,9 @@ export default function PlanCategoryScreen({ route, navigation }: RootStackScree
           Wrapping in a View with vertical padding gives the pills room to
           breathe regardless of platform. */}
       {subtabs.length > 0 && (
-        <View style={styles.pillStripWrap}>
+        <View style={styles.pillStripWrap} onLayout={onStripLayout}>
           <ScrollView
+            ref={stripRef}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.pillStripContent}
@@ -112,6 +158,7 @@ export default function PlanCategoryScreen({ route, navigation }: RootStackScree
                 <TouchableOpacity
                   key={st.id}
                   onPress={() => setActiveTab(st.id)}
+                  onLayout={(e) => onChipLayout(st.id, e)}
                   activeOpacity={0.85}
                   style={[styles.pill, active && styles.pillActive]}
                 >

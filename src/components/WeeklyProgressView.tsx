@@ -1,17 +1,18 @@
 import React from 'react';
-import { View, Text, ImageBackground, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
+import LottieView from 'lottie-react-native';
 import Animated, { FadeIn, SlideInDown, Easing } from 'react-native-reanimated';
-import { Feather } from '@expo/vector-icons';
 import { ROSE, LAV, TXT, TXTSUB, FONTS } from '../constants/theme';
 import { usePrayer } from '../state/PrayerContext';
 import { useT } from '../i18n/useT';
 
-// Drop your flat-illustration art at assets/weekly-jesus.png and uncomment.
-// Until then we render a soft gradient with a placeholder badge.
-const HERO_SOURCE: number | null = null;
-// const HERO_SOURCE = require('../../assets/weekly-jesus.png');
+// Hero animation (replaces the old assets/weekly-jesus.png placeholder slot):
+// the user's plant-loader Lottie, extracted from dotLottie into plain JSON.
+// Plays ONCE on mount and freezes on its final frame (loop={false} holds the
+// last frame in lottie-react-native).
+const HERO_LOTTIE = require('../../assets/lottie/weekly-plant.json');
 
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -29,6 +30,12 @@ function dateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+// Counts DAYS prayed this week, not prayer sessions. v1 added morning and
+// evening separately (`(r.m?1:0)+(r.e?1:0)`), so finishing both prayers on
+// the same day read "Two Days Strong! / Your 2nd prayer of the week" — wrong
+// per user: morning + evening on one calendar day is ONE day. A day counts
+// as prayed when it has at least one completed session (matching the day
+// circles, which already used m || e).
 function countPrayersThisWeek(
   recordOn: (k: string) => { m: boolean; e: boolean },
 ): { count: number; weekFlags: boolean[]; todayIdx: number } {
@@ -42,8 +49,9 @@ function countPrayersThisWeek(
     const d = new Date(sunday);
     d.setDate(sunday.getDate() + i);
     const r = recordOn(dateKey(d));
-    weekFlags.push(r.m || r.e);
-    if (i <= todayIdx) count += (r.m ? 1 : 0) + (r.e ? 1 : 0);
+    const prayedThatDay = r.m || r.e;
+    weekFlags.push(prayedThatDay);
+    if (i <= todayIdx && prayedThatDay) count += 1;
   }
   return { count, weekFlags, todayIdx };
 }
@@ -184,18 +192,14 @@ function BackgroundDecor({ morning }: { morning: boolean }) {
 }
 
 function Hero() {
-  if (HERO_SOURCE) {
-    return <ImageBackground source={HERO_SOURCE} style={styles.hero} resizeMode="cover" />;
-  }
-  // No image yet — leave the hero area transparent so the global gradient
-  // + blobs show through. The placeholder tag is centered so the user can
-  // still see exactly where the asset slot is during development.
   return (
     <View style={styles.hero}>
-      <View style={styles.placeholderTag} pointerEvents="none">
-        <Feather name="image" size={18} color="rgba(255,255,255,0.95)" />
-        <Text style={styles.placeholderText}>assets/weekly-jesus.png</Text>
-      </View>
+      <LottieView
+        source={HERO_LOTTIE}
+        autoPlay
+        loop={false}                                                             // play once, hold the final frame
+        style={{ width: 230, height: 230 }}
+      />
     </View>
   );
 }

@@ -712,29 +712,15 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
       </View>
       </TabSection>
 
-      {/* Learning Bible — uses the same NotesTile component as My Notes so
-          the two rows look like siblings (white card + centered icon + label).
-          The previous GridTile carried a soft-rose icon background that made
-          this row read as a different tier of UI. */}
+      {/* Widget banner — now its own section (Learning Bible's Quiz / Did You
+          Know were never-shipped "coming soon" placeholders, removed per user).
+          Mirrors the Remove Ads banner above: "+" thumbnail, a pink title + one
+          gray line, and a chevron — no eyebrow, no third "Pick a size…" line. */}
       <TabSection delay={150}>{/* 450 → 150 */}
-      <Text style={[styles.sectionTitle, { marginTop: 28, marginBottom: 14 }]}>{t('profile.section.learningBible')}</Text>
-      <View style={styles.notesRow}>
-        <NotesTile label="My Plan"      icon="check-square" onPress={() => navigation.navigate('Tabs', { screen: 'plan', params: { reset: Date.now() } })} />
-        <NotesTile label="Quiz"         icon="help-circle"  onPress={() => showToast('Quiz coming soon')} />
-        <NotesTile label="Did You Know" icon="book-open"    badge onPress={() => showToast('Did You Know coming soon')} />
-      </View>
-
-      {/* Widget banner — moved here (was previously between Remove Ads and
-          Faith Achievement). Sits below Learning Bible so the page flow
-          reads: identity → upgrade → achievements → notes → tools → widget
-          → account. Left thumbnail is a big bold "+" so it reads
-          language-agnostically across locales (was a mini WidgetPreview
-          but sample verse text in 72 px got cramped/clipped in every
-          non-en lang). */}
       <TouchableOpacity
         onPress={() => navigation.navigate('AddWidget')}
         activeOpacity={0.85}
-        style={[styles.widgetBanner, { marginTop: 22, marginBottom: 0 }]}
+        style={[styles.widgetBanner, { marginTop: 28, marginBottom: 0 }]}
       >
         <LinearGradient
           colors={[`${ROSE}1A`, `${LAV}1A`]}
@@ -742,22 +728,14 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
           end={{ x: 1, y: 1 }}
           style={styles.widgetBannerInner}
         >
-          {/* Left thumbnail — was a mini WidgetPreview rendering sample verse +
-              ref, but the cross-language text inside that 72-px tile rendered
-              cramped/clipped on every non-en locale. Replaced with a bold
-              "+" affordance (per user 2026-05-22) so the thumbnail reads
-              language-agnostically as "tap to add a widget". */}
           <View style={styles.widgetBannerThumb}>
             <Feather name="plus" size={42} color={ROSE} strokeWidth={3} />
           </View>
           <View style={styles.widgetBannerCopy}>
-            <Text style={styles.widgetBannerEyebrow} numberOfLines={1} ellipsizeMode="tail">{t('profile.widget.eyebrow')}</Text>
-            <Text style={styles.widgetBannerTitle} numberOfLines={2} ellipsizeMode="tail">{t('profile.widget.title')}</Text>
-            <Text style={styles.widgetBannerSub} numberOfLines={2} ellipsizeMode="tail">{t('profile.widget.sub')}</Text>
+            <Text style={[styles.widgetBannerTitle, styles.removeAdsTitle]} numberOfLines={1} ellipsizeMode="tail">{t('profile.widget.title')}</Text>
+            <Text style={styles.widgetBannerSub} numberOfLines={2} ellipsizeMode="tail">{t('profile.widget.eyebrow')}</Text>
           </View>
-          <View style={styles.widgetBannerCta}>
-            <Feather name="plus" size={20} color="#FFFFFF" />
-          </View>
+          <Feather name="chevron-right" size={20} color={TXTSUB} />
         </LinearGradient>
       </TouchableOpacity>
       </TabSection>
@@ -1374,14 +1352,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
-  widgetBannerEyebrow: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: ROSE,
-    letterSpacing: 1.4,
-    marginBottom: 4,
-    fontFamily: FONTS.latoBold,
-  },
   widgetBannerTitle: {
     fontSize: 16,
     fontWeight: '700',
@@ -1394,19 +1364,6 @@ const styles = StyleSheet.create({
     color: TXTSUB,
     lineHeight: 18,
     fontFamily: FONTS.lato,
-  },
-  widgetBannerCta: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: ROSE,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: ROSE,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 3,
   },
   achievementPreview: {
     flexDirection: 'row',

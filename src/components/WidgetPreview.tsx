@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.95)',
     borderRadius: 20,
-    paddingHorizontal: 13,
+    paddingHorizontal: 20,                      // 13 → 20: widen the pill ~15% (width only; height/font unchanged)
     paddingVertical: 7,
     gap: 5,
   },

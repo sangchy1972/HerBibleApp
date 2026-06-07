@@ -89,10 +89,12 @@ export function VerseOfDayWidget({
   const iconSize = 20;
   const pad = 15;
 
-  // Amen pill — bumped ~20% larger than the first cut.
+  // Amen pill — bumped ~20% larger than the first cut, then widened ~15%
+  // more (horizontal padding only; height/font/radius held constant) so it
+  // stays in step with the in-app WidgetPreview's pill.
   const amenFont = 14.5;
   const heartSize = 17;
-  const pillPadH = 14;
+  const pillPadH = 20;
   const pillPadV = 7;
   const pillRadius = 22;
 

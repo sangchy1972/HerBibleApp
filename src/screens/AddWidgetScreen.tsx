@@ -92,7 +92,7 @@ export default function AddWidgetScreen({ navigation }: RootStackScreenProps<'Ad
         </View>
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) + 15 }]}>
         <TouchableOpacity onPress={() => setConfirmOpen(true)} activeOpacity={0.85} style={styles.installBtn}>
           <Text style={styles.installText}>{t('addWidget.installBtn')}</Text>
         </TouchableOpacity>

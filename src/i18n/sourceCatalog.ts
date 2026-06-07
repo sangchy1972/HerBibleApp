@@ -796,7 +796,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'profile.highlightsSheet.search':{ en: 'Search highlights', context: 'Search field placeholder.' },
   'profile.reflectionsSheet.title':{ en: 'Reflections · {n}', context: 'Sheet title for Reflections — matches the other Profile content sheets (Saved verses · {n} / Notes · {n}). {n} is reflection count.' },
   'profile.sheet.noMatches':       { en: 'No matches for "{query}"', context: 'Empty-state when a search query yields no results inside any of the four content sheets. {query} is the user\'s search term.' },
-  'profile.widget.eyebrow':        { en: 'HOME SCREEN WIDGET', context: 'Uppercase eyebrow on the widget banner.' },
+  'profile.widget.eyebrow':        { en: 'Home screen widget', context: 'Gray sub-line under the widget banner title (was an uppercase eyebrow).' },
   'profile.widget.title':          { en: 'Daily verse, one tap away', context: 'Widget banner title.' },
   'profile.widget.sub':            { en: 'Pick a size and add it in seconds.', context: 'Widget banner sub-title.' },
   'profile.signOut.row':           { en: 'Sign out',       context: 'Settings row label in the danger zone — opens the sign-out confirm.' },

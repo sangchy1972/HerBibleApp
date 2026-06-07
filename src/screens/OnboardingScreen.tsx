@@ -1,237 +1,146 @@
-import React, { useState } from 'react';
-import { View, Text, ImageBackground, TouchableOpacity, StyleSheet, Linking, Platform } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Image, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
-import * as Notifications from 'expo-notifications';
-import Animated, { FadeIn, SlideInDown, Easing } from 'react-native-reanimated';
-import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
+import Animated, {
+  FadeIn,
+  Easing,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  runOnJS,
+} from 'react-native-reanimated';
+import { TXT, FONTS } from '../constants/theme';
 import { useOnboarding } from '../state/OnboardingContext';
-import { useT } from '../i18n/useT';
 
-// Bundled onboarding hero — a compressed webp (900w, q58, ~52 KB; down from the
-// 92 KB source follow_him_day.webp) so it ships in the APK without bloat.
-const HERO_SOURCE: number | null = require('../../assets/onboarding-hero.webp');
+// First-open welcome screen (2026-06: replaces the old "Connect with God"
+// cover + notification-permission step). New users now see ONLY this calm
+// brand splash — app icon, wordmark, tagline on a silk-like white→pink
+// gradient — then auto-fade into the app. NO notification prompt here:
+// the opt-in moved to the user's SECOND cold start (see
+// ReminderInterstitialContext, which gates FollowHimScreen).
+const ICON = require('../../assets/icon.png');
 
-type Step = 'cover' | 'permission';
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+
+// How long the splash holds before fading into the app. Long enough to
+// register the brand, short enough to never feel like a loading stall.
+const HOLD_MS = 2500;
+const FADE_OUT_MS = 450;
 
 export default function OnboardingScreen() {
-  const [step, setStep] = useState<Step>('cover');
   const { finish } = useOnboarding();
-  const insets = useSafeAreaInsets();
-  const t = useT();
+  const fade = useSharedValue(1);
 
-  const requestNotifications = async () => {
-    try {
-      let perm = await Notifications.getPermissionsAsync();
-      if (!perm.granted && perm.canAskAgain) {
-        perm = await Notifications.requestPermissionsAsync();
-      }
-      if (!perm.granted && Platform.OS !== 'web') {
-        // Permanently denied — best we can do is route to Settings, but we
-        // still finish onboarding so the user isn't stuck.
-        Linking.openSettings().catch(() => {});
-      }
-    } catch {
-      // Notification API can throw on simulators / unsupported environments.
-      // Don't block the user from entering the app.
-    } finally {
-      finish();
-    }
-  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fade.value = withTiming(
+        0,
+        { duration: FADE_OUT_MS, easing: Easing.in(Easing.quad) },
+        (finished) => {
+          if (finished) runOnJS(finish)();
+        },
+      );
+    }, HOLD_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: fade.value }));
 
   return (
-    <View style={styles.root}>
-      <Hero />
+    <Animated.View style={[styles.root, fadeStyle]}>
+      {/* Base wash — white melting into the brand pink, top to bottom. */}
       <LinearGradient
-        colors={['rgba(40,20,10,0)', 'rgba(40,20,10,0.55)', 'rgba(30,15,8,0.95)']}
-        locations={[0, 0.45, 1]}
-        style={styles.fade}
+        colors={['#FFFFFF', '#FFF7FA', '#FCE4EE', '#F6CFE0']}
+        locations={[0, 0.38, 0.72, 1]}
+        style={StyleSheet.absoluteFillObject}
       />
 
-      {step === 'cover' && (
-        <TouchableOpacity
-          onPress={finish}
-          hitSlop={12}
-          style={[styles.skip, { top: insets.top + 14 }]}
+      {/* Two oversized diagonal sheens layered over the wash give the
+          flowing-silk feel: one rose ribbon sweeping down-right, one white
+          highlight sweeping up-left. Pure gradients — no image assets. */}
+      <LinearGradient
+        colors={['transparent', 'rgba(232,97,154,0.10)', 'rgba(232,97,154,0.04)', 'transparent']}
+        locations={[0.1, 0.45, 0.62, 0.95]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.ribbon, { transform: [{ rotate: '-14deg' }, { translateY: -SCREEN_H * 0.12 }] }]}
+        pointerEvents="none"
+      />
+      <LinearGradient
+        colors={['transparent', 'rgba(255,255,255,0.55)', 'transparent']}
+        locations={[0.2, 0.5, 0.8]}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={[styles.ribbon, { transform: [{ rotate: '18deg' }, { translateY: SCREEN_H * 0.18 }] }]}
+        pointerEvents="none"
+      />
+
+      <View style={styles.center}>
+        <Animated.View entering={FadeIn.duration(650)}>
+          <Image source={ICON} style={styles.icon} />
+        </Animated.View>
+        <Animated.Text
+          entering={FadeIn.duration(650).delay(180)}
+          style={styles.title}
         >
-          <Text style={styles.skipText}>{t('onboarding.skip')}</Text>
-        </TouchableOpacity>
-      )}
-
-      <Animated.View
-        key={step}
-        entering={FadeIn.duration(360)}
-        style={[styles.bottom, { paddingBottom: insets.bottom + 38 }]}
-      >
-        {step === 'cover' ? (
-          <>
-            <Text style={styles.title}>{t('onboarding.title')}</Text>
-            <Text style={styles.subtitle}>{t('onboarding.subtitle')}</Text>
-            <TouchableOpacity
-              onPress={() => setStep('permission')}
-              activeOpacity={0.85}
-              style={styles.continueBtn}
-            >
-              <Text style={styles.continueText}>{t('onboarding.continue')}</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <PermissionSheet
-            onAllow={requestNotifications}
-            onSkip={finish}
-          />
-        )}
-      </Animated.View>
-    </View>
-  );
-}
-
-function Hero() {
-  if (HERO_SOURCE) {
-    return <ImageBackground source={HERO_SOURCE} style={StyleSheet.absoluteFillObject} resizeMode="cover" />;
-  }
-  // Placeholder — warm field-like gradient + a small note so it's obvious
-  // this is a temp asset slot, not the final art.
-  return (
-    <LinearGradient
-      colors={['#F4D58A', '#E8A85C', '#A86A2A', '#3A2410']}
-      locations={[0, 0.35, 0.7, 1]}
-      style={StyleSheet.absoluteFillObject}
-    >
-      <View style={styles.placeholderTag} pointerEvents="none">
-        <Feather name="image" size={18} color="rgba(255,255,255,0.85)" />
-        <Text style={styles.placeholderText}>assets/onboarding-hero.png</Text>
+          Her Bible
+        </Animated.Text>
+        <Animated.Text
+          entering={FadeIn.duration(650).delay(330)}
+          style={styles.tagline}
+        >
+          {/* Brand line — intentionally not localized. */}
+          Take God's Word with you, wherever you go
+        </Animated.Text>
       </View>
-    </LinearGradient>
-  );
-}
-
-function PermissionSheet({ onAllow, onSkip }: { onAllow: () => void; onSkip: () => void }) {
-  const t = useT();
-  return (
-    <Animated.View
-      entering={SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic))}
-      style={styles.sheet}
-    >
-      <View style={styles.sheetIcon}>
-        <Feather name="bell" size={22} color={ROSE} />
-      </View>
-      <Text style={styles.sheetTitle}>{t('onboarding.permission.title')}</Text>
-      <Text style={styles.sheetDesc}>{t('onboarding.permission.desc')}</Text>
-      <TouchableOpacity onPress={onAllow} activeOpacity={0.85} style={styles.allowBtn}>
-        <Text style={styles.allowText}>{t('onboarding.permission.allow')}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={onSkip} hitSlop={10} style={styles.notNowBtn}>
-        <Text style={styles.notNowText}>{t('onboarding.permission.notNow')}</Text>
-      </TouchableOpacity>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#000' },
-  fade: { ...StyleSheet.absoluteFillObject },
-  skip: {
+  root: { flex: 1, backgroundColor: '#FFFFFF' },
+  ribbon: {
     position: 'absolute',
-    right: P + 4,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.30)',
+    width: SCREEN_W * 1.8,
+    height: SCREEN_H * 0.9,
+    left: -SCREEN_W * 0.4,
+    top: SCREEN_H * 0.05,
   },
-  skipText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600', letterSpacing: 0.4 },
-  placeholderTag: {
-    position: 'absolute',
-    bottom: '52%',
-    alignSelf: 'center',
-    flexDirection: 'row',
+  center: {
+    ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 14,
-    backgroundColor: 'rgba(0,0,0,0.30)',
+    justifyContent: 'center',
+    // Optical centering — nudge the block slightly above true center so the
+    // icon+text group reads centered (true center looks low on tall screens).
+    paddingBottom: SCREEN_H * 0.06,
   },
-  placeholderText: { color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: '600' },
-  bottom: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: P + 7,
-    paddingTop: 28,
+  icon: {
+    width: 118,
+    height: 118,
+    // icon.png ships its own rounded-square mask; the shadow just lifts it
+    // off the pale background.
+    shadowColor: '#E8619A',
+    shadowOpacity: 0.25,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+    marginBottom: 26,
   },
   title: {
-    fontSize: 30,
-    fontFamily: FONTS.loraBold,                                                  // Lora bold per user; weight 600 per project rule (700 + loraBold falls back to system sans on Android)
-    fontWeight: '600',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 12,
-    letterSpacing: 0.2,
-  },
-  subtitle: {
-    fontSize: 16,
-    lineHeight: 23,
-    color: 'rgba(255,255,255,0.85)',
-    textAlign: 'center',
-    marginBottom: 28,
-  },
-  continueBtn: {
-    // Matches PrayerScreen.startBtn radius (17.07); height 56 → 53.2 (-5 %).
-    // Bottom spacing handled via the parent `bottom` view's paddingBottom
-    // (insets.bottom + 38, was 28 — extra 10 px per user).
-    alignSelf: 'stretch',
-    height: 53.2,
-    borderRadius: 17.07,
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  continueText: { color: '#3A2410', fontSize: 17, fontWeight: '700', letterSpacing: 1.2 },
-  sheet: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 22,
-    paddingTop: 24,
-  },
-  sheetIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: `${ROSE}1A`,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    marginBottom: 14,
-  },
-  sheetTitle: {
-    fontSize: 19,
-    fontWeight: '700',
+    fontSize: 34,
+    fontFamily: FONTS.loraBold,
+    fontWeight: '600',                       // loraBold pairs with 600 (700 drops Lora on Android)
     color: TXT,
-    textAlign: 'center',
-    marginBottom: 8,
+    letterSpacing: 0.3,
+    marginBottom: 10,
   },
-  sheetDesc: {
-    fontSize: 14,
+  tagline: {
+    fontSize: 14.5,
     lineHeight: 21,
-    color: TXTSUB,
+    color: 'rgba(30,27,46,0.45)',
+    fontFamily: FONTS.lato,
     textAlign: 'center',
-    marginBottom: 20,
-    paddingHorizontal: 6,
+    paddingHorizontal: 40,
   },
-  allowBtn: {
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: ROSE,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  allowText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
-  notNowBtn: {
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  notNowText: { color: TXTSUB, fontSize: 15, fontWeight: '500' },
 });

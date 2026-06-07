@@ -1567,13 +1567,15 @@ function NotifRationaleScreen({ onDismiss }: { onDismiss: () => void }) {
 
   const requestPermission = async () => {
     try {
-      let perm = await Notifications.getPermissionsAsync();
+      const perm = await Notifications.getPermissionsAsync();
       if (!perm.granted && perm.canAskAgain) {
-        perm = await Notifications.requestPermissionsAsync();
-      }
-      if (!perm.granted && Platform.OS !== 'web') {
-        // Permanently denied — surface Settings so the user can flip it
-        // there. We still dismiss either way so they aren't stuck.
+        // Fresh ask — show the OS dialog. If the user picks "Don't allow"
+        // we just dismiss; denying a popup must NOT teleport them into
+        // system Settings (2026-06 bug fix).
+        await Notifications.requestPermissionsAsync();
+      } else if (!perm.granted && Platform.OS !== 'web') {
+        // Permanently denied BEFORE this tap — the OS can't show the
+        // dialog anymore, so Settings is the only way "Allow" can work.
         Linking.openSettings().catch(() => {});
       }
     } catch {

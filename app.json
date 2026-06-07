@@ -92,11 +92,13 @@
       [
         "react-native-android-widget",
         {
+          "fonts": ["./assets/fonts/Lora_400Regular.ttf"],
           "widgets": [
             {
               "name": "verseOfDay",
               "label": "Her Bible — Verse of the Day",
-              "description": "A daily verse on your home screen.",
+              "description": "Today's verse on your home screen.",
+              "previewImage": "./assets/widget/preview.png",
               "minWidth": "180dp",
               "minHeight": "100dp",
               "targetCellWidth": 4,

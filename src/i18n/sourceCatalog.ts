@@ -417,6 +417,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   // mock reads in the user's UI language instead of always being English.
   'widgetPreview.sampleBody':      { en: 'The Lord is my shepherd.', context: 'Canonical first half of Psalm 23:1 — use each language\'s standard Bible translation (KJV / 和合本 / Lutherbibel / Louis Segond / Reina-Valera / João Ferreira de Almeida). Period at the end (the widget shows only a verse fragment, not the full sentence).' },
   'widgetPreview.sampleRef':       { en: 'Psalm 23:1', context: 'Reference under the sample verse. Use each language\'s canonical book name + reference form (e.g. "诗篇 23:1", "Psalm 23,1" for German with comma).' },
+  'widget.amen':                  { en: 'Amen', context: 'Faux "Amen" pill on the home-screen verse widget. Short liturgical interjection; use the language\'s standard form.' },
 
   // ─── Widget add sheet (post-prayer prompt) ───────────────────────────────
   'widgetSheet.headline':          { en: 'Bring His Word to your home screen', context: 'Headline in the post-prayer widget add bottom sheet.' },

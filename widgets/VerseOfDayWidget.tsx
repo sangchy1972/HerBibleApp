@@ -1,127 +1,178 @@
 import React from 'react';
-import { FlexWidget, TextWidget } from 'react-native-android-widget';
+import { FlexWidget, ImageWidget, OverlapWidget, SvgWidget, TextWidget } from 'react-native-android-widget';
 
 // Native Android home-screen widget. Uses the react-native-android-widget
-// primitives (FlexWidget / TextWidget / etc.) — these compile down to
-// Android RemoteViews, NOT regular React Native components, so do NOT
-// import `View` / `Text` from 'react-native' here.
+// primitives (FlexWidget / TextWidget / ImageWidget / OverlapWidget / SvgWidget)
+// — these compile down to Android RemoteViews, NOT regular RN components, so do
+// NOT import View / Text / Image from 'react-native' here.
 //
-// Cell sizing — Android sends an `info.width` / `info.height` in dp via
-// the task handler; we derive `cellWidth` / `cellHeight` (≈ # of 70-dp
-// grid cells) so the widget can adapt typography. A 4×2 widget gets
-// ~280×140 dp on most devices; a 2×2 lands around 140×140 dp; a 5×2
-// extends to ~350×140 dp.
+// Visual: today's verse on a full-bleed scenic background that follows the
+// time of day (sunrise art in the morning, dusk art in the evening) — the
+// same imagery family as the in-app prayer hero. A dark scrim keeps the white
+// verse copy legible over the bright horizon. The brand eyebrow + segment icon
+// sit top; the reference + a faux "Amen" pill sit bottom.
 //
-// Click target — the root FlexWidget has `clickAction="OPEN_APP"` so any
-// tap launches the app via the package's main launcher intent. The
-// DeepLinkHandler component then picks up `Linking.getInitialURL()` and
-// can route based on the herbible:// scheme if we expand later. Today
-// "open the app" is enough — once open, the user lands on the home
-// (Prayer) screen which is exactly where they want to be after seeing
-// today's verse.
+// Backgrounds are pre-cropped to a 600×320 landscape (decoded ≈ 0.77 MB) so
+// the RemoteViews bitmap stays well under Android's ~1 MB Binder transaction
+// limit — an oversized bitmap is the classic cause of the launcher's
+// "Couldn't add widget" failure.
+//
+// Click target — the whole widget has clickAction="OPEN_APP", so a tap
+// anywhere (including the Amen pill, which is intentionally a decoy CTA)
+// launches the app onto the Prayer home screen where today's verse lives.
+
+const MORNING_BG = require('../assets/widget/bg-morning.webp');
+const EVENING_BG = require('../assets/widget/bg-evening.webp');
+
+const WHITE = '#FFFFFF';
+const ROSE = '#E8619A';
+
+// Time-of-day floor gradient, shown if the bitmap ever fails to marshal —
+// the widget is never a blank/gray box.
+const BASE_GRADIENT = {
+  morning: { from: '#F6C19A' as const, to: '#5E8FC7' as const },
+  evening: { from: '#3C5A8C' as const, to: '#1A2740' as const },
+};
+
+// Vector segment marks (no icon font needed — SvgWidget renders inline SVG).
+const SUN_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' +
+  '<g fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round">' +
+  '<circle cx="12" cy="12" r="4" fill="#FFFFFF"/>' +
+  '<line x1="12" y1="2.5" x2="12" y2="4.8"/><line x1="12" y1="19.2" x2="12" y2="21.5"/>' +
+  '<line x1="2.5" y1="12" x2="4.8" y2="12"/><line x1="19.2" y1="12" x2="21.5" y2="12"/>' +
+  '<line x1="5.1" y1="5.1" x2="6.7" y2="6.7"/><line x1="17.3" y1="17.3" x2="18.9" y2="18.9"/>' +
+  '<line x1="5.1" y1="18.9" x2="6.7" y2="17.3"/><line x1="17.3" y1="6.7" x2="18.9" y2="5.1"/>' +
+  '</g></svg>';
+const MOON_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' +
+  '<path fill="#FFFFFF" d="M20.5 14.8A8.2 8.2 0 1 1 9.2 3.5 6.4 6.4 0 0 0 20.5 14.8z"/></svg>';
+const HEART_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' +
+  '<path fill="#E8619A" d="M12 20.6S3.7 15.3 3.7 9.3A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 8.3 1.7c0 6-8.3 11.3-8.3 11.3z"/></svg>';
 
 interface Props {
   verse?: string | null;
   reference?: string | null;
-  cellWidth?: number;
-  cellHeight?: number;
+  segment?: 'morning' | 'evening';
+  amenLabel?: string | null;
+  // Widget size in dp (from the task handler's widgetInfo). Drives the
+  // background ImageWidget dimensions + adaptive typography.
+  width?: number;
+  height?: number;
 }
-
-const BRAND_ROSE = '#E8619A';
-const SURFACE = '#FFFFFF';
-const TEXT_DARK = '#1E1B2E';
-const TEXT_SUB = '#5A526E';
-const PINK_TINT = '#FBE9F1';
 
 export function VerseOfDayWidget({
   verse,
   reference,
-  cellWidth = 4,
+  segment = 'morning',
+  amenLabel,
+  width = 280,
+  height = 140,
 }: Props) {
-  // Compact vs full layout: a single-column 2×2 squeezes content; 4×2 and
-  // 5×2 give us room for a generous body line + reference footer. Switch
-  // the body line cap and font sizes by cell width.
-  const compact = cellWidth <= 2;
-  const titleSize = compact ? 12 : 13;
-  const bodySize = compact ? 13 : 15;
-  const refSize = compact ? 10 : 11;
-  const bodyLines = compact ? 4 : 3;
+  const w = Math.max(120, Math.round(width));
+  const h = Math.max(80, Math.round(height));
+  const compact = w <= 200;          // 2×2 square
+  const wide = w >= 330;             // 5×2
 
-  const bodyText = verse ?? 'The Lord is my shepherd.';
-  const refText = reference ?? 'Psalm 23:1';
+  const bodySize = compact ? 13 : wide ? 17 : 15;
+  const bodyLines = compact ? 4 : 3;
+  const refSize = compact ? 10.5 : 12;
+  const eyebrowSize = compact ? 9.5 : 11;
+  const iconSize = compact ? 14 : 17;
+  const pad = compact ? 12 : 15;
+
+  const bg = segment === 'evening' ? EVENING_BG : MORNING_BG;
+  const base = BASE_GRADIENT[segment === 'evening' ? 'evening' : 'morning'];
+
+  const bodyText = verse ?? 'For I know the plans I have for you, declares the LORD.';
+  const refText = reference ?? 'Jeremiah 29:11';
+  const amen = amenLabel ?? 'Amen';
 
   return (
-    <FlexWidget
+    <OverlapWidget
       clickAction="OPEN_APP"
-      style={{
-        width: 'match_parent',
-        height: 'match_parent',
-        backgroundColor: SURFACE,
-        borderRadius: 18,
-        padding: 12,
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-      }}
+      style={{ width: 'match_parent', height: 'match_parent', borderRadius: 22 }}
     >
-      {/* Top eyebrow — brand label so the widget is identifiable at a
-          glance on a crowded home screen. */}
-      <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-        <FlexWidget
-          style={{
-            width: 6, height: 6, borderRadius: 3,
-            backgroundColor: BRAND_ROSE, marginRight: 6,
-          }}
-        />
-        <TextWidget
-          text="HER BIBLE"
-          style={{ fontSize: titleSize, fontWeight: '700', color: BRAND_ROSE, letterSpacing: 1.0 }}
-        />
-      </FlexWidget>
-
-      {/* Verse body — the actual content the user pinned the widget for. */}
-      <TextWidget
-        text={bodyText}
-        maxLines={bodyLines}
-        style={{
-          fontSize: bodySize,
-          fontWeight: '400',
-          color: TEXT_DARK,
-          marginTop: compact ? 2 : 4,
-        }}
-      />
-
-      {/* Footer: reference pill (filled tint so it reads as a chip, not
-          a passive label). */}
+      {/* 1 — time-of-day floor color (always renders) */}
       <FlexWidget
         style={{
-          marginTop: compact ? 4 : 6,
-          flexDirection: 'row',
-          alignItems: 'center',
+          width: 'match_parent',
+          height: 'match_parent',
+          borderRadius: 22,
+          backgroundGradient: { from: base.from, to: base.to, orientation: 'TOP_BOTTOM' },
+        }}
+      />
+
+      {/* 2 — scenic background art (sunrise / dusk) */}
+      <ImageWidget image={bg} imageWidth={w} imageHeight={h} radius={22} />
+
+      {/* 3 — legibility scrim: darker toward the bottom where the reference
+          + figure sit, so white copy stays readable over the bright horizon */}
+      <FlexWidget
+        style={{
+          width: 'match_parent',
+          height: 'match_parent',
+          borderRadius: 22,
+          backgroundGradient: { from: 'rgba(15, 18, 38, 0.32)', to: 'rgba(15, 18, 38, 0.66)', orientation: 'TOP_BOTTOM' },
+        }}
+      />
+
+      {/* 4 — content */}
+      <FlexWidget
+        style={{
+          width: 'match_parent',
+          height: 'match_parent',
+          padding: pad,
+          flexDirection: 'column',
+          justifyContent: 'space-between',
         }}
       >
-        <FlexWidget
-          style={{
-            backgroundColor: PINK_TINT,
-            borderRadius: 10,
-            paddingHorizontal: 8,
-            paddingVertical: 3,
-          }}
-        >
+        {/* Top cluster: eyebrow + verse, anchored high so the body sits over
+            the calmer sky rather than the bright glow band. */}
+        <FlexWidget style={{ flexDirection: 'column', width: 'match_parent' }}>
+          <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', width: 'match_parent', marginBottom: compact ? 5 : 7 }}>
+            <FlexWidget style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: ROSE, marginRight: 6 }} />
+            <TextWidget
+              text="HER BIBLE"
+              style={{ fontSize: eyebrowSize, fontWeight: '700', color: WHITE, letterSpacing: 1.4 }}
+            />
+            <FlexWidget style={{ flex: 1, height: 1 }} />
+            <SvgWidget svg={segment === 'evening' ? MOON_SVG : SUN_SVG} style={{ width: iconSize, height: iconSize }} />
+          </FlexWidget>
+
           <TextWidget
-            text={refText}
-            style={{ fontSize: refSize, fontWeight: '700', color: BRAND_ROSE, letterSpacing: 0.3 }}
+            text={bodyText}
+            maxLines={bodyLines}
+            style={{ fontSize: bodySize, fontFamily: 'Lora_400Regular', color: WHITE }}
           />
         </FlexWidget>
-      </FlexWidget>
 
-      {/* Body color tap-hint for screen-readers (no visual). The label
-          is for TalkBack/accessibility; react-native-android-widget
-          ignores style props it can't translate to RemoteViews so this
-          is a no-op visually. */}
-      <TextWidget
-        text=""
-        style={{ fontSize: 1, color: TEXT_SUB }}
-      />
-    </FlexWidget>
+        {/* Bottom row: reference (left) + faux Amen pill (right). */}
+        <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', width: 'match_parent' }}>
+          <TextWidget
+            text={refText}
+            style={{ fontSize: refSize, fontWeight: '700', color: WHITE, letterSpacing: 0.3 }}
+          />
+          <FlexWidget style={{ flex: 1, height: 1 }} />
+          <FlexWidget
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: 'rgba(255, 255, 255, 0.94)',
+              borderRadius: 18,
+              paddingHorizontal: compact ? 9 : 12,
+              paddingVertical: compact ? 5 : 6,
+            }}
+          >
+            <SvgWidget svg={HEART_SVG} style={{ width: refSize + 2, height: refSize + 2 }} />
+            <TextWidget
+              text={amen}
+              style={{ fontSize: refSize, fontWeight: '700', color: ROSE, marginLeft: 5 }}
+            />
+          </FlexWidget>
+        </FlexWidget>
+      </FlexWidget>
+    </OverlapWidget>
   );
 }

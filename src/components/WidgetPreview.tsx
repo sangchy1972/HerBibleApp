@@ -1,98 +1,73 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Feather } from '@expo/vector-icons';
-import { ROSE, LAV, TXT, TXTSUB } from '../constants/theme';
+import { Feather, Ionicons } from '@expo/vector-icons';
+import { ROSE, FONTS } from '../constants/theme';
 import { useT } from '../i18n/useT';
 
 export type WidgetSize = '2x2' | '4x2' | '5x2';
 
 // Standard Android widget cell ≈ 70 dp. We render previews at full container
-// width and scale internal padding/typography by the widget's aspect ratio.
+// width and scale internal typography by the widget's aspect ratio.
 const ASPECTS: Record<WidgetSize, number> = {
   '2x2': 1.0,
   '4x2': 2.0,
   '5x2': 2.5,
 };
 
+const MORNING_BG = require('../../assets/widget/bg-morning.webp');
+
 interface Props {
   size: WidgetSize;
   width?: number;        // optional override; defaults to fill parent
-  /** Mock content. Real widget will pull today's verse + active prayer slot. */
-  title?: string;
+  /** Mock content. Real widget pulls today's verse + reference. */
   body?: string;
   reference?: string;
 }
 
-// Home-screen widgets on Android/iOS launch the app on tap — they don't host
-// in-widget actions. So no "Pray now" button here; that would imply a
-// behavior the OS-level widget can't actually deliver. The preview shows the
-// content the widget will surface (segment label, verse, reference) and a
-// small brand mark so users recognize it on their home screen.
-//
-// All three text props default to localized mock content via `useT()` —
-// `title` falls back to the current Morning-prayer toggle label, body+ref
-// to the Psalm 23:1 sample under `widgetPreview.*`. Callers (Profile widget
-// banner, AddWidgetScreen size previews) can override with their own
-// translated strings; if they don't, the mock follows the UI language
-// instead of always being English.
-export default function WidgetPreview({
-  size,
-  width,
-  title,
-  body,
-  reference,
-}: Props) {
+// Faithful preview of the home-screen widget: today's verse on the scenic
+// sunrise background, with the brand eyebrow, reference, and the faux "Amen"
+// pill — exactly what the OS widget renders. All copy defaults to localized
+// mock content via useT() so the preview follows the UI language.
+export default function WidgetPreview({ size, width, body, reference }: Props) {
   const t = useT();
-  const resolvedTitle = title ?? t('prayer.toggle.morning');
   const resolvedBody = body ?? t('widgetPreview.sampleBody');
   const resolvedReference = reference ?? t('widgetPreview.sampleRef');
-  const isSquare = size === '2x2';
-  const showImage = size !== '2x2';
-  // 4×2 → square thumb (1:1); 5×2 → wider 4:3 thumb. Image height fills the
-  // content row, width derives from the aspect ratio so it never stretches.
-  const imageAspect = size === '4x2' ? 1 : 4 / 3;
+  const compact = size === '2x2';
+  const bodySize = compact ? 12 : size === '5x2' ? 16 : 14;
 
   return (
     <View style={[styles.shell, { aspectRatio: ASPECTS[size], width: width ?? '100%' }]}>
-      <LinearGradient
-        colors={['#FFFFFF', `${ROSE}14`]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.canvas}
-      >
-        <View style={styles.contentRow}>
-          <View style={styles.textCol}>
-            <Text style={[styles.title, isSquare && styles.titleSm]} numberOfLines={1}>{resolvedTitle}</Text>
-            <Text
-              style={[styles.body, isSquare && styles.bodySm]}
-              numberOfLines={isSquare ? 3 : 4}
-            >
+      <ImageBackground source={MORNING_BG} resizeMode="cover" style={styles.fill} imageStyle={styles.img}>
+        <LinearGradient
+          colors={['rgba(15,18,38,0.30)', 'rgba(15,18,38,0.66)']}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <View style={[styles.content, { padding: compact ? 11 : 14 }]}>
+          <View style={styles.topCol}>
+            <View style={styles.eyebrowRow}>
+              <View style={styles.dot} />
+              <Text style={styles.eyebrow}>HER BIBLE</Text>
+              <View style={styles.spacer} />
+              <Feather name="sun" size={compact ? 13 : 16} color="#FFFFFF" />
+            </View>
+            <Text style={[styles.body, { fontSize: bodySize }]} numberOfLines={compact ? 4 : 3}>
               {resolvedBody}
             </Text>
           </View>
 
-          {showImage && (
-            <View style={[styles.image, { aspectRatio: imageAspect }]}>
-              <LinearGradient
-                colors={[`${ROSE}55`, `${LAV}55`]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFillObject}
-              />
-              <Feather name="image" size={22} color="rgba(255,255,255,0.85)" />
+          <View style={styles.bottomRow}>
+            <Text style={[styles.reference, { fontSize: compact ? 10.5 : 12 }]} numberOfLines={1}>
+              {resolvedReference}
+            </Text>
+            <View style={styles.spacer} />
+            <View style={[styles.amenPill, { paddingHorizontal: compact ? 8 : 10 }]}>
+              <Ionicons name="heart" size={compact ? 10 : 12} color={ROSE} />
+              <Text style={[styles.amenText, { fontSize: compact ? 10.5 : 12 }]}>{t('widget.amen')}</Text>
             </View>
-          )}
+          </View>
         </View>
-
-        {/* Reference line + brand mark — passive surface, not a button. */}
-        <View style={styles.footer}>
-          <Text style={[styles.reference, isSquare && styles.referenceSm]} numberOfLines={1}>
-            {resolvedReference}
-          </Text>
-          <View style={styles.brandDot} />
-        </View>
-      </LinearGradient>
+      </ImageBackground>
     </View>
   );
 }
@@ -101,42 +76,31 @@ const styles = StyleSheet.create({
   shell: {
     borderRadius: 18,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(30,27,46,0.08)',
+    backgroundColor: '#2D3A5A',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  canvas: { flex: 1, padding: 12 },
-  contentRow: { flex: 1, flexDirection: 'row', alignItems: 'stretch' },
-  textCol: { flex: 1, justifyContent: 'flex-start' },
-  title: { fontSize: 16, fontWeight: '700', color: TXT, marginBottom: 4 },
-  titleSm: { fontSize: 14, marginBottom: 3 },
-  body: { fontSize: 13, lineHeight: 18, color: TXTSUB },
-  bodySm: { fontSize: 11, lineHeight: 15 },
-  image: {
-    marginLeft: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  footer: {
-    marginTop: 8,
+  fill: { flex: 1 },
+  img: { borderRadius: 18 },
+  content: { flex: 1, justifyContent: 'space-between' },
+  topCol: {},
+  eyebrowRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: ROSE, marginRight: 6 },
+  eyebrow: { fontSize: 10.5, fontWeight: '700', color: '#FFFFFF', letterSpacing: 1.3 },
+  spacer: { flex: 1 },
+  body: { color: '#FFFFFF', fontFamily: FONTS.lora, lineHeight: undefined },
+  bottomRow: { flexDirection: 'row', alignItems: 'center' },
+  reference: { fontWeight: '700', color: '#FFFFFF', letterSpacing: 0.3 },
+  amenPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255,255,255,0.94)',
+    borderRadius: 16,
+    paddingVertical: 5,
+    gap: 4,
   },
-  reference: { fontSize: 12, fontWeight: '600', color: ROSE, letterSpacing: 0.3 },
-  referenceSm: { fontSize: 10 },
-  brandDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: ROSE,
-    opacity: 0.7,
-  },
+  amenText: { fontWeight: '700', color: ROSE },
 });

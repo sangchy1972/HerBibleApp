@@ -764,6 +764,7 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     // Widget preview
     'widgetPreview.sampleBody': '耶和华是我的牧者。',
     'widgetPreview.sampleRef': '诗篇 23:1',
+    'widget.amen': '阿们',
 
     // Retired hardcoded English (2026-05)
     'plan.row.daysLabel': '{n} 天',
@@ -1568,6 +1569,7 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
 
     'widgetPreview.sampleBody': '耶和華是我的牧者。',
     'widgetPreview.sampleRef': '詩篇 23:1',
+    'widget.amen': '阿們',
 
     // Retired hardcoded English (2026-05)
     'plan.row.daysLabel': '{n} 天',
@@ -2372,6 +2374,7 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
 
     'widgetPreview.sampleBody': 'Der Herr ist mein Hirte.',
     'widgetPreview.sampleRef': 'Psalm 23,1',
+    'widget.amen': 'Amen',
 
     // Retired hardcoded English (2026-05)
     'plan.row.daysLabel': '{n} Tage',
@@ -3180,6 +3183,7 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
 
     'widgetPreview.sampleBody': 'L\'Éternel est mon berger.',
     'widgetPreview.sampleRef': 'Psaume 23:1',
+    'widget.amen': 'Amen',
 
     // Retired hardcoded English (2026-05)
     'plan.row.daysLabel': '{n} jours',
@@ -3984,6 +3988,7 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
 
     'widgetPreview.sampleBody': 'El Señor es mi pastor.',
     'widgetPreview.sampleRef': 'Salmo 23:1',
+    'widget.amen': 'Amén',
 
     // Retired hardcoded English (2026-05)
     'plan.row.daysLabel': '{n} días',
@@ -4788,6 +4793,7 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
 
     'widgetPreview.sampleBody': 'O Senhor é meu pastor.',
     'widgetPreview.sampleRef': 'Salmo 23:1',
+    'widget.amen': 'Amém',
 
     // Retired hardcoded English (2026-05)
     'plan.row.daysLabel': '{n} dias',

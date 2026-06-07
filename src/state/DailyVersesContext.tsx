@@ -14,6 +14,8 @@ import { holidayIdForYmd } from '../constants/holidayCalendar';
 import { type LanguageCode } from './TranslationsContext';
 import { useUILanguage } from './UILanguageContext';
 import { useCurrentDayYmd } from '../hooks/useCurrentDayYmd';
+import { lookupString } from '../i18n/lookup';
+import { syncVerseWidget } from '../../widgets/syncVerseWidget';
 
 interface DailyVersesState {
   // The verse to render for (day, segment). Falls back to day 1 if the
@@ -187,6 +189,27 @@ export function DailyVersesProvider({ children }: { children: React.ReactNode })
     },
     [verses, coverageDays, holidayVerses, todayHolidayId, todayDay],
   );
+
+  // Mirror today's verse to the home-screen widget. We write BOTH segments so
+  // the widget can switch morning⇄evening by clock without the app re-running,
+  // and the localized Amen label so it renders in the user's language. The
+  // serialized-payload guard avoids redundant writes/re-renders on every
+  // dependency tick. No-op on iOS; failures are swallowed inside syncVerseWidget.
+  const lastWidgetPayload = useRef('');
+  useEffect(() => {
+    const m = getVerse(todayDay, 'morning');
+    const e = getVerse(todayDay, 'evening');
+    if (!m && !e) return;
+    const cache = {
+      morning: m ? { verse: m.modernText, reference: m.reference.full_reference } : null,
+      evening: e ? { verse: e.modernText, reference: e.reference.full_reference } : null,
+      amenLabel: lookupString('widget.amen', lang),
+    };
+    const ser = JSON.stringify(cache);
+    if (ser === lastWidgetPayload.current) return;
+    lastWidgetPayload.current = ser;
+    void syncVerseWidget(cache);
+  }, [getVerse, todayDay, lang]);
 
   const value = useMemo<DailyVersesState>(() => ({ getVerse, todayDay }), [getVerse, todayDay]);
   return <DailyVersesContext.Provider value={value}>{children}</DailyVersesContext.Provider>;

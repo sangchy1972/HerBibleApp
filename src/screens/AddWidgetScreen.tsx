@@ -2,15 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform, Dimensions, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { requestWidgetUpdate } from 'react-native-android-widget';
 import WidgetPreview from '../components/WidgetPreview';
 import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { useDailyVerses } from '../state/DailyVersesContext';
 import { useT } from '../i18n/useT';
 import { requestPin as requestPinWidget, isPinSupported } from '../../modules/expo-pin-widget';
-import { WIDGET_VERSE_KEY } from '../../widgets/widget-task-handler';
-import { VerseOfDayWidget } from '../../widgets/VerseOfDayWidget';
+import { syncVerseWidget } from '../../widgets/syncVerseWidget';
 import type { RootStackScreenProps } from '../navigation/types';
 
 export default function AddWidgetScreen({ navigation }: RootStackScreenProps<'AddWidget'>) {
@@ -24,35 +21,16 @@ export default function AddWidgetScreen({ navigation }: RootStackScreenProps<'Ad
 
   const onInstall = async () => {
     setConfirmOpen(false);
-    // Day's verse — default to morning segment so a freshly pinned widget
-    // never lands blank. Persisted to WIDGET_VERSE_KEY so the widget's task
-    // handler can re-read it the next time Android renders the widget.
-    const segment: 'morning' | 'evening' =
-      new Date().getHours() < 16 ? 'morning' : 'evening';
-    const dailyVerse = getVerse(todayDay, segment);
-    if (dailyVerse) {
-      try {
-        await AsyncStorage.setItem(WIDGET_VERSE_KEY, JSON.stringify({
-          verse: dailyVerse.modernText,
-          reference: dailyVerse.reference.full_reference,
-        }));
-      } catch {}
-    }
-    // Refresh any already-pinned instance with the latest verse so the user
-    // immediately sees the right content after pinning.
-    try {
-      await requestWidgetUpdate({
-        widgetName: 'verseOfDay',
-        renderWidget: (info) => (
-          <VerseOfDayWidget
-            verse={dailyVerse?.modernText ?? null}
-            reference={dailyVerse?.reference.full_reference ?? null}
-            cellWidth={Math.max(2, Math.round(info.width / 70))}
-            cellHeight={Math.max(1, Math.round(info.height / 70))}
-          />
-        ),
-      });
-    } catch {}
+    // Seed both segments of today's verse so a freshly pinned widget never
+    // lands blank and can switch morning⇄evening by clock on its own. This
+    // also refreshes any already-pinned instance immediately.
+    const m = getVerse(todayDay, 'morning');
+    const e = getVerse(todayDay, 'evening');
+    await syncVerseWidget({
+      morning: m ? { verse: m.modernText, reference: m.reference.full_reference } : null,
+      evening: e ? { verse: e.modernText, reference: e.reference.full_reference } : null,
+      amenLabel: t('widget.amen'),
+    });
     // One-tap pin via AppWidgetManager.requestPinAppWidget (Android 8+, supported
     // launchers). Defaults to the verseOfDay provider, which is registered as a
     // 4×2 cell in widgetprovider_verseofday.xml.

@@ -1090,20 +1090,20 @@ const styles = StyleSheet.create({
     paddingBottom: 5,
   },
   dateText: {
-    fontSize: 11.50,                                                            // 12.10 → 11.50 (-5 % per user)
+    fontSize: 12.65,                                                            // 11.50 → 12.65 (+10 % per user)
     color: TXTSUB,
     letterSpacing: 1.8,
     marginBottom: 0,                                                            // -5 → 0 (restored per user)
     fontFamily: FONTS.lora,
   },
   greetText: {
-    fontSize: 23.04,                                                            // 24.77 → 23.04 (-7 % per user)
+    fontSize: 25.34,                                                            // 23.04 → 25.34 (+10 % per user)
     fontWeight: '500',
     color: TXT,
     fontFamily: FONTS.loraBold,
     marginLeft: -3,                                                              // -3 px on this line only — parent wrapper marginLeft 8 stays for the date above
     marginTop: -3,                                                              // -3 px leading per user — tightens the gap below the date
-    marginBottom: 2,                                                            // +2 px trailing per user — opens the gap above "Today's Progress"
+    marginBottom: 7,                                                            // 2 → 7 (+5 px trailing per user) — opens the gap below "Good Morning"
   },
   // Header row — `gap: 0` and `avatar.marginLeft: -3` makes the pink avatar
   // circle sit ~3 px over the streak badge's right edge (about 5 % of the
@@ -1236,8 +1236,8 @@ const styles = StyleSheet.create({
   toggle: {
     flexDirection: 'row',
     marginHorizontal: P,
-    marginTop: 9,                                                                // 7 → 9 (+2 px before, per user)
-    marginBottom: -3,                                                            // -3 px after (pulls the hero card up), per user
+    marginTop: 12,                                                               // 9 → 12 (+3 px before, per user)
+    marginBottom: 0,                                                             // -3 → 0 (+3 px after, per user)
     backgroundColor: 'rgba(255,255,255,0.55)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.90)',
@@ -1263,7 +1263,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   toggleText: {
-    fontSize: 16,                                                                // matches PlanScreen.tabText (16 / 600 / latoBold)
+    fontSize: 17.28,                                                             // 16 → 17.28 (+8 % per user)
     fontWeight: '600',
     fontFamily: FONTS.latoBold,
   },

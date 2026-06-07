@@ -75,14 +75,19 @@ export async function fetchChapter(code: string, baseUrl: string, slug: string, 
 // dedicated key prefix so a future invalidation of bible-only data (e.g.
 // the zh-Hant whitespace fix) doesn't blow away the commentary cache.
 //
-// EN fallback: only English commentary exists on the corpus mirror today.
-// Non-`en` readers (和合本 / Lutherbibel / LSG / Reina-Valera / Almeida)
-// would otherwise hit 404 → "Network error" in the Explore card. We
-// transparently retry against `commentary/en/...` on 404 so every reader
-// sees the Tyndale notes. When a localised commentary ships later,
-// CORPUS_COMMIT bumps, the AsyncStorage cache invalidates (keys are
-// hashed under CACHE_TAG), and the same fetch path naturally picks up
-// the new file — no further code change needed.
+// Source priority (tried in order, 404 → next, non-404 error → bail):
+//   1. `commentary/en-mh/...` — HerBibleApp's bespoke devotional style
+//      (warm, women-friendly, avg 30w/verse). Chapters appear here
+//      incrementally as they get written; missing chapters 404.
+//   2. `commentary/<lang>/...` — the requested locale, when not `en`.
+//      Currently only `en` (Tyndale Open Study Notes) ships on the
+//      mirror; future zh/de/fr/es/pt drops will activate here.
+//   3. `commentary/en/...` — Tyndale (CC BY-SA 4.0) as the universal
+//      last-resort fallback. Every KJV verse has an entry here.
+// For an English reader the priority collapses to en-mh → en; for a
+// non-English reader it's lang → en-mh → en. The hybrid means
+// already-rewritten chapters serve the new style and the long tail
+// keeps serving Tyndale until we catch up, all behind one fetch call.
 const commentaryKey = (lang: string, slug: string, ch: number) =>
   `bible:commentary:${CACHE_TAG}:${lang}:${slug}:${ch}`;
 
@@ -98,19 +103,23 @@ export async function fetchCommentaryChapter(cdnRoot: string, lang: string, slug
 async function fetchCommentaryWithFallback(
   cdnRoot: string, lang: string, slug: string, chapter: number,
 ): Promise<Chapter> {
-  const primary = `${cdnRoot}/commentary/${lang}/books/${slug}/chapters/${chapter}.json`;
-  const res = await fetch(primary);
-  if (res.ok) return (await res.json()) as Chapter;
-  // Non-EN → 404 → retry against the English file. EN → 404 is a real
-  // corruption signal (every KJV verse has a Tyndale or Claude-written
-  // entry); let the caller render the "error" state.
-  if (res.status === 404 && lang !== 'en') {
-    const fallback = `${cdnRoot}/commentary/en/books/${slug}/chapters/${chapter}.json`;
-    const r2 = await fetch(fallback);
-    if (!r2.ok) throw new Error(`HTTP ${r2.status} for ${fallback}`);
-    return (await r2.json()) as Chapter;
+  const base = (variant: string) =>
+    `${cdnRoot}/commentary/${variant}/books/${slug}/chapters/${chapter}.json`;
+  const urls = lang === 'en'
+    ? [base('en-mh'), base('en')]
+    : [base(lang), base('en-mh'), base('en')];
+  let last404: string | null = null;
+  for (const url of urls) {
+    const res = await fetch(url);
+    if (res.ok) return (await res.json()) as Chapter;
+    if (res.status === 404) {
+      last404 = url;
+      continue;
+    }
+    // 5xx / network → real failure, stop trying further variants.
+    throw new Error(`HTTP ${res.status} for ${url}`);
   }
-  throw new Error(`HTTP ${res.status} for ${primary}`);
+  throw new Error(`HTTP 404 — no commentary at ${last404 ?? '(unknown)'}`);
 }
 
 export interface VerseHit {

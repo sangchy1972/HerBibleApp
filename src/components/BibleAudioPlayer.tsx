@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Share, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Share, Dimensions, ActivityIndicator } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,6 +35,11 @@ interface AudioLike {
   playing?: boolean;
   currentTime?: number;
   duration?: number;
+  // expo-audio status flags — used to swap the play button for a spinner
+  // before the chapter audio is ready. `isLoaded` flips true once a duration
+  // is known; `isBuffering` may flip back on/off as the stream catches up.
+  isLoaded?: boolean;
+  isBuffering?: boolean;
 }
 interface PlayerLike {
   play: () => void;
@@ -127,8 +132,12 @@ export default function BibleAudioPlayer({
       <Animated.View style={[styles.root, { paddingTop: insets.top }, slideStyle]}>
         {/* Top bar */}
         <View style={styles.topbar}>
+          {/* Dismiss icon = chevron-down — visually mirrors the slide-down
+              dismissal direction, the same way Apple/Spotify mini-player
+              sheets do it. (Was chevron-left, which read as nav-back even
+              though it actually closes the sheet.) */}
           <TouchableOpacity onPress={onClose} hitSlop={12} style={styles.topBtn}>
-            <Feather name="chevron-left" size={28} color={TXT} />
+            <Feather name="chevron-down" size={28} color={TXT} />
           </TouchableOpacity>
           <Text style={styles.topTitle}>{t('bibleAudio.playing')}</Text>
           <TouchableOpacity onPress={onShare} hitSlop={12} style={styles.topBtn}>
@@ -194,9 +203,29 @@ export default function BibleAudioPlayer({
             <TouchableOpacity onPress={onPrev} hitSlop={10} style={styles.navBtn}>
               <Feather name="chevron-left" size={34} color={TXT} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={togglePlay} hitSlop={10} style={styles.playBtn} activeOpacity={0.85}>
-              <Feather name={playing ? 'pause' : 'play'} size={30} color="#fff" />
-            </TouchableOpacity>
+            {/* Play button — three states:
+                  ① audio still loading (isLoaded false, or first-buffer)
+                    → spinner, taps no-op
+                  ② loaded & playing  → pause glyph (two bars)
+                  ③ loaded & paused   → play glyph (triangle)
+                The play triangle is optically nudged right by 3 px because
+                Feather's play geometry is centered on the bounding box but
+                visually weighted to the left — without the nudge it reads
+                as off-center inside the round pill. */}
+            {(!status?.isLoaded || (status?.isBuffering && !playing)) ? (
+              <View style={styles.playBtn} pointerEvents="none">
+                <ActivityIndicator size="small" color="#fff" />
+              </View>
+            ) : (
+              <TouchableOpacity onPress={togglePlay} hitSlop={10} style={styles.playBtn} activeOpacity={0.85}>
+                <Feather
+                  name={playing ? 'pause' : 'play'}
+                  size={30}
+                  color="#fff"
+                  style={playing ? undefined : styles.playGlyphOpticalShift}
+                />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity onPress={onNext} hitSlop={10} style={styles.navBtn}>
               <Feather name="chevron-right" size={34} color={TXT} />
             </TouchableOpacity>
@@ -250,7 +279,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(30,27,46,0.4)',
   },
   readText: { fontSize: 16, fontWeight: '600', color: TXT, fontFamily: FONTS.lora },
-  progressWrap: { width: '100%', marginTop: 46, marginHorizontal: -18 },        // -8 → -18 (another -10 px each side per user) — widens the progress bar
+  progressWrap: { width: '100%', marginTop: 46, marginHorizontal: -28 },        // -18 → -28 (another -10 px each side per user) — widens the progress bar still more
   time: { fontSize: 14, color: TXTSUB, fontFamily: FONTS.lato, marginLeft: 4 },
   sliderWrap: { width: '100%', height: 40, marginTop: 2, justifyContent: 'center' },
   slider: { width: '100%', height: 40 },
@@ -272,7 +301,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 18,
-    marginHorizontal: -20,                                                      // -10 → -20 (another -10 px each side per user) — spreads the 1x/prev/play/next/list row wider
+    marginHorizontal: -30,                                                      // -20 → -30 (another -10 px each side per user) — spreads the 1x/prev/play/next/list row wider still
     paddingBottom: 24,
   },
   sideBtn: { width: 56, alignItems: 'center', justifyContent: 'center' },
@@ -286,4 +315,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Optical centering for Feather's `play` glyph — the triangle's geometric
+  // bounding box centers, but its visual mass sits ~3 px left of that, so a
+  // dead-center triangle reads as "shifted left". 3 px on the icon (NOT the
+  // pill) keeps the pause glyph (which IS symmetrical) untouched.
+  playGlyphOpticalShift: { marginLeft: 3 },
 });

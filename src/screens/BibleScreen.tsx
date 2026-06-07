@@ -1626,12 +1626,26 @@ export default function BibleScreen() {
         <Feather name="chevron-right" size={22} color={canNext ? TH.txt : 'rgba(30,27,46,0.25)'} />
       </TouchableOpacity>
 
-      {/* Floating audio button → opens the full-screen player. A small filled
-          dot when audio is already playing hints "now playing" without
-          turning this into a pause toggle (pause lives in the player). */}
-      <TouchableOpacity onPress={openPlayer} style={styles.audioBtn} activeOpacity={0.85}>
-        <Feather name="headphones" size={26} color="#fff" />
-        {audioPlaying && <View style={styles.audioBtnPlayingDot} />}
+      {/* Floating audio button — its glyph mirrors player state, so a single
+          tap always reads as the obvious next action:
+            • idle (or paused) → headphones, tap opens the player + starts
+              playback (loading spinner shows in the sheet if the chapter
+              audio is still buffering)
+            • playing → pause bars, tap stops audio immediately and reverts
+              to the headphones glyph WITHOUT opening the player. The user
+              never needs the sheet just to stop. */}
+      <TouchableOpacity
+        onPress={() => {
+          if (audioPlaying) {
+            try { audioPlayer.pause(); } catch {}
+          } else {
+            openPlayer();
+          }
+        }}
+        style={styles.audioBtn}
+        activeOpacity={0.85}
+      >
+        <Feather name={audioPlaying ? 'pause' : 'headphones'} size={26} color="#fff" />
       </TouchableOpacity>
 
       {/* Full-screen narration player (Modal — covers the tab bar). */}
@@ -2015,16 +2029,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 40,
-  },
-  // "Now playing" hint on the listen button — small white dot, top-right.
-  audioBtnPlayingDot: {
-    position: 'absolute',
-    top: 9,
-    right: 9,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#fff',
   },
   drawerOverlay: {
     ...StyleSheet.absoluteFillObject,

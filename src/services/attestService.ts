@@ -19,6 +19,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { PLANS_API_BASE, plansTokenKey } from '../constants/plansApi';
+import { cfAccessHeaders } from '../constants/cfAccess';
 
 // In-storage envelope. We materialise `expiresAt` (absolute ms) from the
 // Worker's `expires_in` (relative seconds) at mint time so the freshness
@@ -58,7 +59,7 @@ async function writeCached(env: TokenEnvelope): Promise<void> {
 async function mintToken(): Promise<TokenEnvelope> {
   const res = await fetch(`${PLANS_API_BASE}/v1/attest`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...cfAccessHeaders() },
     body: JSON.stringify({ platform: Platform.OS }),
   });
   if (!res.ok) {

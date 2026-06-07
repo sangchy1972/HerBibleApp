@@ -7,7 +7,15 @@
 // Bumping SUMMARY_VERSION invalidates every device's cached summaries — use
 // when the schema or content of summaries/plans changes meaningfully.
 
-export const PLANS_API_BASE = 'https://plans.everlandapps.com';
+// NOTE: pointed at the Worker's *.workers.dev host (not the plans.everlandapps.com
+// custom domain) on purpose. The Worker's dev-bypass for attestation only fires
+// when DEV_BYPASS_ATTEST=1 AND the request host is a "dev host" — and its
+// isDevHost() treats any *.workers.dev hostname as a dev host. Routing the app
+// through this URL lets attest mint a session token from just { platform } (no
+// Play Integrity), which is what unblocks plan-day content. Revert to
+// 'https://plans.everlandapps.com' once real Play Integrity attestation is wired
+// (requires Expo SDK 55+, where @expo/app-integrity is available).
+export const PLANS_API_BASE = 'https://herbible-plans-7languages.sangchy1972.workers.dev';
 // 1.1.0 — day_outlines gains `scripture_refs: string[]` and cover.image_url
 // is now null (AI covers retired in favour of gradient + icon).
 export const PLANS_SUMMARY_VERSION = '1.1.0';

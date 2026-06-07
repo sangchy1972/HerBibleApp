@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PLANS_API_BASE, PLANS_SUMMARY_VERSION } from '../constants/plansApi';
+import { cfAccessHeaders } from '../constants/cfAccess';
 import { getSessionToken, invalidateSessionToken } from './attestService';
 import type { LanguageCode } from '../state/TranslationsContext';
 
@@ -149,13 +150,13 @@ async function fetchWithTimeout(url: string, init: RequestInit, ms: number): Pro
 async function authedFetch(path: string): Promise<Response> {
   const token = await withTimeout(getSessionToken(), PLAN_NET_TIMEOUT_MS, 'session token');
   const res = await fetchWithTimeout(`${PLANS_API_BASE}${path}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, ...cfAccessHeaders() },
   }, PLAN_NET_TIMEOUT_MS);
   if (res.status !== 401) return res;
   await invalidateSessionToken();
   const fresh = await withTimeout(getSessionToken(), PLAN_NET_TIMEOUT_MS, 'session token refresh');
   return fetchWithTimeout(`${PLANS_API_BASE}${path}`, {
-    headers: { Authorization: `Bearer ${fresh}` },
+    headers: { Authorization: `Bearer ${fresh}`, ...cfAccessHeaders() },
   }, PLAN_NET_TIMEOUT_MS);
 }
 

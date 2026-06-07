@@ -1,18 +1,14 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Linking, Platform } from 'react-native';
 import Svg, { Path, G } from 'react-native-svg';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import * as WebBrowser from 'expo-web-browser';
-import * as Facebook from 'expo-auth-session/providers/facebook';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import Animated, { FadeIn, SlideInDown, Easing } from 'react-native-reanimated';
 import { ROSE, TXT, TXTSUB, P } from '../constants/theme';
-import { FACEBOOK_APP_ID, isConfigured } from '../constants/oauth';
+import { isConfigured } from '../constants/oauth';
 import { useAuth } from '../state/AuthContext';
-import { googleAuthAvailable } from '../services/firebaseAuth';
+import { googleAuthAvailable, facebookAuthAvailable } from '../services/firebaseAuth';
 import { useT } from '../i18n/useT';
-
-WebBrowser.maybeCompleteAuthSession();
 
 interface Props {
   onClose: () => void;
@@ -20,39 +16,12 @@ interface Props {
 }
 
 export default function SignInSheet({ onClose, onError }: Props) {
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, signInWithFacebook } = useAuth();
   const t = useT();
 
-  // Google now goes through Firebase Authentication (native account picker →
-  // Firebase credential, giving us a stable uid + email) via
-  // AuthContext.signInWithGoogle — see onGoogle below.
-
-  // Facebook: token flow → Graph API for name/email/picture.
-  const [, fbResp, promptFb] = Facebook.useAuthRequest({
-    clientId: FACEBOOK_APP_ID,
-    scopes: ['public_profile', 'email'],
-  });
-
-  useEffect(() => {
-    if (fbResp?.type !== 'success') return;
-    const token = fbResp.authentication?.accessToken;
-    if (!token) return;
-    fetch(`https://graph.facebook.com/me?fields=id,name,email,picture.type(large)&access_token=${token}`)
-      .then(r => r.json())
-      .then(profile => {
-        if (!profile?.email) {
-          onError?.('Facebook did not return an email address. Make sure email permission was granted.');
-          return;
-        }
-        signIn({
-          name: profile.name,
-          email: profile.email,
-          photoUri: profile.picture?.data?.url,
-        });
-        onClose();
-      })
-      .catch(() => onError?.('Could not load your Facebook profile.'));
-  }, [fbResp]);
+  // Google + Facebook both go through Firebase Authentication via native SDKs
+  // (Google account picker / Facebook login dialog → Firebase credential →
+  // stable uid + email). See onGoogle / onFacebook below.
 
   const onGoogle = async () => {
     if (!googleAuthAvailable()) {
@@ -70,12 +39,19 @@ export default function SignInSheet({ onClose, onError }: Props) {
     }
   };
 
-  const onFacebook = () => {
-    if (!isConfigured.facebook()) {
-      onError?.('Facebook sign-in not yet configured. See src/constants/oauth.ts.');
+  const onFacebook = async () => {
+    if (!facebookAuthAvailable()) {
+      // Native module not compiled into this build yet, or Firebase auth absent.
+      onError?.('Facebook sign-in is unavailable in this build.');
       return;
     }
-    promptFb();
+    try {
+      await signInWithFacebook();
+      onClose();   // signed into Firebase → close the sheet
+    } catch (e: any) {
+      if (e?.message === 'CANCELLED') return;   // user dismissed the dialog — stay silent
+      onError?.('Facebook sign-in failed. Please try again.');
+    }
   };
 
   // Apple is iOS-only. fullName + email come back ONLY on the very first

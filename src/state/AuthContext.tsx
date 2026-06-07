@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { onAuthChanged, googleSignIn, firebaseSignOut, type AuthUser } from '../services/firebaseAuth';
+import { onAuthChanged, googleSignIn, facebookSignIn, firebaseSignOut, type AuthUser } from '../services/firebaseAuth';
 import { setAnalyticsUser } from '../services/firebase';
 
 export interface User {
@@ -14,7 +14,9 @@ interface AuthState {
   user: User | null;
   /** Native Google → Firebase. Resolves on success; throws 'CANCELLED' if dismissed. */
   signInWithGoogle: () => Promise<void>;
-  /** Legacy local sign-in — still used by Facebook/Apple until they migrate to Firebase (Phase 2). */
+  /** Native Facebook (fbsdk) → Firebase. Resolves on success; throws 'CANCELLED' if dismissed. */
+  signInWithFacebook: () => Promise<void>;
+  /** Legacy local sign-in — still used by Apple until it migrates to Firebase. */
   signIn: (u: User) => void;
   signOut: () => void;
   updateProfile: (patch: Partial<User>) => void;
@@ -64,6 +66,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await googleSignIn();   // onAuthChanged fires with the new user
   }, []);
 
+  const signInWithFacebook = useCallback(async () => {
+    await facebookSignIn();   // onAuthChanged fires with the new user
+  }, []);
+
   const signIn = useCallback((u: User) => {
     setLocalUser(u);
     AsyncStorage.setItem(LOCAL_USER_KEY, JSON.stringify(u)).catch(() => {});
@@ -92,8 +98,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo<AuthState>(() => ({
-    user, signInWithGoogle, signIn, signOut, updateProfile,
-  }), [user, signInWithGoogle, signIn, signOut, updateProfile]);
+    user, signInWithGoogle, signInWithFacebook, signIn, signOut, updateProfile,
+  }), [user, signInWithGoogle, signInWithFacebook, signIn, signOut, updateProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

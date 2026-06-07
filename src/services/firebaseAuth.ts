@@ -12,6 +12,8 @@
 
 let authMod: any = null;
 let GoogleSignin: any = null;
+let FBLoginManager: any = null;
+let FBAccessToken: any = null;
 try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   authMod = require('@react-native-firebase/auth').default;
@@ -19,6 +21,12 @@ try {
 try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
+} catch { /* native module not in this build */ }
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const fb = require('react-native-fbsdk-next');
+  FBLoginManager = fb.LoginManager;
+  FBAccessToken = fb.AccessToken;
 } catch { /* native module not in this build */ }
 
 export interface AuthUser {
@@ -65,6 +73,26 @@ export async function googleSignIn(): Promise<void> {
   const idToken = result?.data?.idToken ?? result?.idToken;
   if (!idToken) throw new Error('NO_ID_TOKEN');
   const credential = authMod.GoogleAuthProvider.credential(idToken);
+  await authMod().signInWithCredential(credential);
+}
+
+export function facebookAuthAvailable(): boolean {
+  return !!authMod && !!FBLoginManager && !!FBAccessToken;
+}
+
+// Native Facebook login (react-native-fbsdk-next) → Firebase. The official FB
+// SDK handles the native login dialog + redirect, then we exchange the FB
+// access token for a Firebase credential so the FB user lands in the same
+// Firebase Auth pool as Google (same uid model + Analytics). Throws 'CANCELLED'
+// if the user dismissed the dialog, so the caller can stay silent.
+export async function facebookSignIn(): Promise<void> {
+  if (!authMod) throw new Error('FIREBASE_AUTH_UNAVAILABLE');
+  if (!FBLoginManager || !FBAccessToken) throw new Error('FB_SDK_UNAVAILABLE');
+  const result = await FBLoginManager.logInWithPermissions(['public_profile', 'email']);
+  if (result?.isCancelled) throw new Error('CANCELLED');
+  const data = await FBAccessToken.getCurrentAccessToken();
+  if (!data?.accessToken) throw new Error('NO_FB_TOKEN');
+  const credential = authMod.FacebookAuthProvider.credential(data.accessToken);
   await authMod().signInWithCredential(credential);
 }
 

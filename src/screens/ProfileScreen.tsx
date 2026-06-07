@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTabFocusScrollReset } from '../components/shared/useTabFocusEntrance';
 import TabSection from '../components/shared/TabSection';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, Linking, Modal } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, Linking, Modal, Share } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, Ionicons } from '@expo/vector-icons';
@@ -311,6 +311,25 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
   useEffect(() => () => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
   }, []);
+
+  // Share the app — hand the Play Store link to the OS share sheet. A friend
+  // who receives it (WhatsApp / iMessage / Telegram …) sees Google's official
+  // store card — app icon, name, description pulled from the listing's Open
+  // Graph tags — and tapping it opens Play to install. No link shortener or
+  // hosting needed; the receiving chat app renders the card from the URL.
+  // The localized message embeds the URL on its own line (the {url}
+  // placeholder), which both iOS and Android detect as a link.
+  const onShareApp = async () => {
+    const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.holy.bible.kjv.audio.prayer';
+    try {
+      await Share.share(
+        { message: t('profile.shareApp.message', { url: PLAY_URL }) },
+        { dialogTitle: t('profile.account.shareApp') },
+      );
+    } catch {
+      showToast(t('error.couldNotShare'));
+    }
+  };
 
   const [editingName, setEditingName] = useState('');
 
@@ -744,7 +763,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
       <TabSection delay={180}>{/* 550 → 180 */}
       <Text style={[styles.sectionTitle, { marginTop: 28, marginBottom: 14 }]}>{t('profile.section.account')}</Text>
       <Glass style={styles.settingsCard}>
-        <SettingRow icon="share-2"     label="Share Her Bible"  onPress={() => showToast('Share App coming soon')} />
+        <SettingRow icon="share-2"     label={t('profile.account.shareApp')}  onPress={onShareApp} />
         <TouchableOpacity
           style={[styles.settingRow, styles.settingBorder]}
           onPress={() => setShowTranslationPicker(true)}

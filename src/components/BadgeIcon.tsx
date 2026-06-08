@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Feather } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import type { BadgeRarity } from '../constants/achievements';
 import { BADGE_IMAGES } from '../constants/badgeImages';
 import { useBadges } from '../state/BadgesContext';

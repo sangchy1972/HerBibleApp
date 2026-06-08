@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { TXT, TXTSUB, ROSE } from '../constants/theme';
 
@@ -18,7 +19,8 @@ import { fetchChapter } from '../services/bibleService';
 import type { FullPlan, PlanSection, PlanVerseRef } from '../services/featuredPlansService';
 import type { RootStackScreenProps } from '../navigation/types';
 import { detailStyles as ds } from './planDetailStyles';
-import { Image } from 'react-native';
+import { Image, Dimensions } from 'react-native';
+import { cfImage } from '../services/cfImage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { PLAN_COVER_CDN_BASE } from '../constants/plansApi';
 import { useT } from '../i18n/useT';
@@ -34,6 +36,20 @@ import { useUILanguage } from '../state/UILanguageContext';
 // The plan's `colorPrimary` plays the same role as the demo's `plan.ac`
 // accent, threaded through hero placeholder, day-strip selection, time
 // badge, walk row icon + caption, and the Start Reading Plan button.
+
+// Full-width detail hero with Cloudflare right-sizing + original-URL fallback.
+function HeroCover({ uri }: { uri: string }) {
+  const [transformFailed, setTransformFailed] = useState(false);
+  const src = transformFailed ? uri : cfImage(uri, Dimensions.get('window').width);
+  return (
+    <Image
+      source={{ uri: src }}
+      style={{ width: '100%', height: '100%' }}
+      resizeMode="cover"
+      onError={() => { if (!transformFailed) setTransformFailed(true); }}
+    />
+  );
+}
 
 export default function FeaturedPlanDetail({ route, navigation }: RootStackScreenProps<'FeaturedPlanDetail'>) {
   const t = useT();
@@ -233,11 +249,10 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
             end={{ x: 1, y: 1 }}
             style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
           />
-          <Image
-            source={{ uri: `${PLAN_COVER_CDN_BASE}/${summary.slug}.webp` }}
-            style={{ width: '100%', height: '100%' }}
-            resizeMode="cover"
-          />
+          {/* Hero renders near screen width → ask Cloudflare for that width
+              instead of the full original; on transform error (e.g. zone
+              feature disabled) fall back to the untransformed URL. */}
+          <HeroCover uri={`${PLAN_COVER_CDN_BASE}/${summary.slug}.webp`} />
         </View>
       </Animated.View>
 

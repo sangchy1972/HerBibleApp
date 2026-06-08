@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform, Dimensions, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import WidgetPreview from '../components/WidgetPreview';
 import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { useDailyVerses } from '../state/DailyVersesContext';

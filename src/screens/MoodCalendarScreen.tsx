@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import MoodCalendar from '../components/MoodCalendar';
 import { TXT, P } from '../constants/theme';
 import type { RootStackScreenProps } from '../navigation/types';

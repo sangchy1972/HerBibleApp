@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import TabNavigator from './TabNavigator';
 import StreakScreen from '../screens/StreakScreen';
 import PrayerFlow from '../screens/PrayerFlow';
+import GospelPsalmReader from '../screens/GospelPsalmReader';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import MoodFlow from '../screens/MoodFlow';
 import MoodCalendarScreen from '../screens/MoodCalendarScreen';
@@ -53,6 +54,11 @@ export default function RootNavigator() {
         name="PrayerFlow"
         component={PrayerFlow}
         // 700 → 320 — modal slide was the slowest nav action; PrayerFlow now lifts in feels-instant.
+        options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', animationDuration: 320 }}
+      />
+      <Stack.Screen
+        name="GospelPsalm"
+        component={GospelPsalmReader}
         options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', animationDuration: 320 }}
       />
       <Stack.Screen

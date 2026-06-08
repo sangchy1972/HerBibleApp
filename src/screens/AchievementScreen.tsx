@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
 import BadgeIcon from '../components/BadgeIcon';
 import SignInSheet from '../components/SignInSheet';

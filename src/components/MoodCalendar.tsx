@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import MoodEmoji from './MoodEmoji';
 import { useMoodCheckIn } from '../state/MoodCheckInContext';
 import { useUILanguage } from '../state/UILanguageContext';

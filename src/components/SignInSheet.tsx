@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Linking, Platform, Pressable, ActivityIndicator } from 'react-native';
 import Svg, { Path, G } from 'react-native-svg';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import Animated, { FadeIn, SlideInDown, Easing, useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
 import { ROSE, TXT, TXTSUB, P } from '../constants/theme';

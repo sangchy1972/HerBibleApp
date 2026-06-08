@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import Logo from '../components/shared/Logo';
 import type { RootStackScreenProps } from '../navigation/types';

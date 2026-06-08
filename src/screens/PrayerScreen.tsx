@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Feather } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import Svg, { Path, Line, Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -30,6 +30,7 @@ import { usePlanCompletion } from '../state/PlanCompletionContext';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import { nextUncompletedDay } from '../components/PlanRowCard';
 import PlanProgressCard from '../components/PlanProgressCard';
+import GospelPsalmCards from '../components/GospelPsalmCards';
 import { dailyLabels } from '../constants/dailyVersesLabels';
 import { localizeBookName, englishBookName, chaptersInBook } from '../constants/bibleBookNames';
 import { parseReference, localizeReference } from '../services/parseReference';
@@ -934,6 +935,12 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
       {/* Psalms for You section removed per user — left this comment so a
           future search for the label still surfaces the intentional removal
           and doesn't trigger a "regression" re-add. */}
+
+      {/* Gospel & Psalm — 89-day plan entry. Two cards (Morning + Evening)
+          sit directly below the Start prayer CTA, above Plans In Progress. */}
+      <View style={[styles.section, { paddingTop: 18 }]}>
+        <GospelPsalmCards onOpen={(slot) => navigation.navigate('GospelPsalm', { slot })} />
+      </View>
 
       {/* Plans In Progress — up to 2 active plans. Sits ABOVE Continue
           Reading per user; section title matches Continue Reading 1:1.

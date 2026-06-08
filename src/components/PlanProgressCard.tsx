@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import { ROSE, TXT, TXTSUB, FONTS } from '../constants/theme';
 import PlanCover from './PlanCover';
 import type { PlanSummary } from '../constants/featuredPlansSummary';

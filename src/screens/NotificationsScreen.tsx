@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, AppState } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import * as Notifications from 'expo-notifications';
 import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { useNotifications, formatHHMM, type NotifKey } from '../state/NotificationsContext';

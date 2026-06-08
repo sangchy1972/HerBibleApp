@@ -1,11 +1,15 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { Image, Platform } from 'react-native';
+import { Image, Platform, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { cfImage } from '../services/cfImage';
 // expo-file-system 19.x — used to mirror today's CDN audio into the app's
 // cache directory so PrayerFlow plays from a local `file://` URI on the
 // second+ entries (instant start, no 1-5 s CDN download wait).
 import { File, Directory, Paths } from 'expo-file-system';
 import { useCurrentDayYmd } from '../hooks/useCurrentDayYmd';
+
+// Hero card / PrayerFlow backgrounds render at (or near) full screen width.
+const SCREEN_W = Dimensions.get('window').width;
 
 // Manifest served at CDN root for prayer-screen + PrayerFlow backgrounds.
 // Schema 1.0 — bumping `version` invalidates the cached copy in AsyncStorage.
@@ -138,6 +142,12 @@ function pickByDate(list: string[], salt: string): string | null {
 export function PrayerBackgroundsProvider({ children }: { children: React.ReactNode }) {
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [loaded, setLoaded] = useState(false);
+  // Cloudflare Image Transformations availability. Starts FALSE (serve
+  // originals — the previous behaviour) and flips true only after a HEAD
+  // probe confirms /cdn-cgi/image/ works on the zone. This keeps the hero
+  // photos rock-solid even if the dashboard feature gets toggled off:
+  // worst case we just serve the full-size original like before.
+  const [cfReady, setCfReady] = useState(false);
   // `todayYmd` ticks when the calendar day rolls over (AppState resume +
   // midnight setTimeout). Used as a memo dependency below so consumers
   // re-render and `imageFor` / `audioFor` re-pick today's filename — without
@@ -208,9 +218,23 @@ export function PrayerBackgroundsProvider({ children }: { children: React.ReactN
       const fn = pickByDate(manifest.images[slot], `img:${slot}`);
       if (!fn) continue;
       const url = `${manifest.base_url}/${slot}/${fn}`;
-      Image.prefetch(url).catch(() => {});
+      Image.prefetch(cfReady ? cfImage(url, SCREEN_W) : url).catch(() => {});
     }
-  }, [manifest, todayYmd]);
+  }, [manifest, todayYmd, cfReady]);
+
+  // One-shot probe: does this zone serve /cdn-cgi/image/ transforms? Uses a
+  // tiny (width=64) variant of today's first manifest image as the test
+  // object. Runs once per manifest load; HEAD keeps it to a few hundred bytes.
+  useEffect(() => {
+    if (!manifest) return;
+    const fn = manifest.images.morning?.[0];
+    if (!fn) return;
+    const probeUrl = cfImage(`${manifest.base_url}/morning/${fn}`, 64);
+    if (probeUrl.indexOf('/cdn-cgi/') === -1) return;       // host not in transform list
+    fetch(probeUrl, { method: 'HEAD' })
+      .then(r => setCfReady(r.ok && (r.headers.get('content-type') || '').includes('image')))
+      .catch(() => setCfReady(false));
+  }, [manifest]);
 
   const value = useMemo<BackgroundsState>(() => ({
     loaded,
@@ -218,7 +242,10 @@ export function PrayerBackgroundsProvider({ children }: { children: React.ReactN
       if (!manifest) return slot === 'morning' ? DEFAULT_MORNING_IMG : DEFAULT_EVENING_IMG;
       const fn = pickByDate(manifest.images[slot], `img:${slot}`);
       if (!fn) return slot === 'morning' ? DEFAULT_MORNING_IMG : DEFAULT_EVENING_IMG;
-      return { uri: `${manifest.base_url}/${slot}/${fn}` };
+      const url = `${manifest.base_url}/${slot}/${fn}`;
+      // Hero card + PrayerFlow render at screen width — a 1080-px variant
+      // (typically 60–150 KB) replaces multi-MB originals on slow networks.
+      return { uri: cfReady ? cfImage(url, SCREEN_W) : url };
     },
     audioFor: (slot) => {
       // Fallback chain — picks the most "ready" source so the player has
@@ -249,7 +276,7 @@ export function PrayerBackgroundsProvider({ children }: { children: React.ReactN
       if (otherSlotLeftover) return { uri: otherSlotLeftover.uri };
       return DEFAULT_AUDIO;
     },
-  }), [manifest, loaded, todayYmd]);
+  }), [manifest, loaded, todayYmd, cfReady]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

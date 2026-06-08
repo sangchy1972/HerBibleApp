@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, FlatList, type LayoutChangeEvent, type ListRenderItem } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import type { PlanSummary } from '../constants/featuredPlansSummary';

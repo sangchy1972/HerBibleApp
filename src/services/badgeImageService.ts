@@ -1,5 +1,6 @@
 import { File, Directory, Paths } from 'expo-file-system';
 import { badgeUrl, badgeFileName } from '../constants/badgeImageCdn';
+import { cfImage } from './cfImage';
 
 // Achievement badge art — download-once + local cache.
 //
@@ -56,20 +57,27 @@ export async function downloadBadge(id: string): Promise<boolean> {
   if (!f) return false;
   try {
     if (f.exists) return true;
-    const url = badgeUrl(id);
-    // HEAD-guard: only download when the object actually exists AND is an image.
-    // This prevents a 404 (badge not yet on the CDN) from writing the 404 HTML
-    // body into the cache file — which previously made f.exists permanently
-    // true so the real PNG was never re-fetched once it landed on R2. On
-    // 404/offline we return false WITHOUT writing, so the next prefetch retries.
-    const head = await fetch(url, { method: 'HEAD' });
-    if (!head.ok || !(head.headers.get('content-type') || '').toLowerCase().includes('image')) {
-      return false;
+    // Prefer the Cloudflare-resized variant (badges render ≤ ~110 dp, so a
+    // 384-px transform is plenty and a fraction of the original PNG); fall
+    // back to the untransformed URL when transformations aren't enabled on
+    // the zone. Both candidates go through the same HEAD-guard.
+    const original = badgeUrl(id);
+    const candidates = [...new Set([cfImage(original, 120), original])];
+    for (const url of candidates) {
+      // HEAD-guard: only download when the object actually exists AND is an
+      // image. Prevents a 404 body from being written into the cache file —
+      // which previously made f.exists permanently true so the real PNG was
+      // never re-fetched once it landed on R2.
+      const head = await fetch(url, { method: 'HEAD' }).catch(() => null);
+      if (!head?.ok || !(head.headers.get('content-type') || '').toLowerCase().includes('image')) {
+        continue;
+      }
+      const parent = f.parentDirectory;
+      if (!parent.exists) parent.create({ intermediates: true, idempotent: true });
+      await File.downloadFileAsync(url, f);
+      if (f.exists) return true;
     }
-    const parent = f.parentDirectory;
-    if (!parent.exists) parent.create({ intermediates: true, idempotent: true });
-    await File.downloadFileAsync(url, f);
-    return f.exists;
+    return false;
   } catch {
     // Clean up any half-written file so it isn't mistaken for a valid cache hit.
     try { if (f.exists) f.delete(); } catch {}

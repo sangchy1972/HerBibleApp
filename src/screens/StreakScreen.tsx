@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import LottieView from 'lottie-react-native';
 import Animated, { FadeInRight } from 'react-native-reanimated';
 import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';

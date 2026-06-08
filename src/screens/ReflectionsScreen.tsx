@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import { ROSE, TXT, TXTSUB, P } from '../constants/theme';
 import { useNotes } from '../state/NotesContext';
 import { useUILanguage, type UILanguageCode } from '../state/UILanguageContext';

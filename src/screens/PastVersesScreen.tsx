@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { ROSE, TXT, TXTSUB, P, FONTS, SERIF_BODY } from '../constants/theme';
 import { useDailyVerses } from '../state/DailyVersesContext';

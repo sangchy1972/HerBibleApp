@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Svg, { Path, Polygon } from 'react-native-svg';
-import { Feather } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import { ROSE, TXT, TXTSUB, FONTS } from '../constants/theme';
 
 type FeatherIcon = keyof typeof Feather.glyphMap;

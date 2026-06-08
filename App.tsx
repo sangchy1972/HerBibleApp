@@ -57,6 +57,7 @@ import { AchievementsProvider } from './src/state/AchievementsContext';
 import { BadgesProvider } from './src/state/BadgesContext';
 import { FeaturedPlansProvider } from './src/state/FeaturedPlansContext';
 import { PlanCompletionProvider } from './src/state/PlanCompletionContext';
+import { GospelsPsalmsProvider } from './src/state/GospelsPsalmsContext';
 import AchievementUnlockSheet from './src/components/AchievementUnlockSheet';
 import DeepLinkHandler from './src/navigation/DeepLinkHandler';
 import WidgetSync from './src/components/WidgetSync';
@@ -101,6 +102,7 @@ export default function App() {
                         <TranslationsProvider>
                           <FeaturedPlansProvider>
                             <PlanCompletionProvider>
+                          <GospelsPsalmsProvider>
                           <DailyVersesProvider>
                             <PrayerBackgroundsProvider>
                             <ShareProvider>
@@ -142,6 +144,7 @@ export default function App() {
                             </ShareProvider>
                             </PrayerBackgroundsProvider>
                           </DailyVersesProvider>
+                          </GospelsPsalmsProvider>
                             </PlanCompletionProvider>
                           </FeaturedPlansProvider>
                         </TranslationsProvider>

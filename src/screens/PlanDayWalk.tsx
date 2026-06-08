@@ -5,7 +5,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import Svg, { Path } from 'react-native-svg';
 import Animated, { FadeIn, FadeOut, Easing, useSharedValue, useAnimatedStyle, withTiming, type SharedValue } from 'react-native-reanimated';
 import * as Clipboard from 'expo-clipboard';

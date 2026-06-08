@@ -5,7 +5,8 @@ import TabSection from '../components/shared/TabSection';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, Linking, Modal, Share } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import FireFlame from '../components/shared/FireFlame';
 import Animated, {
   FadeIn, FadeOut, Easing,

@@ -4,11 +4,12 @@
 // gradient with the same dimensions, so a successful load hides the
 // gradient; a missing or still-loading image keeps the gradient visible
 // and the layout stable.
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ROSE, LAV } from '../constants/theme';
 import { PLAN_COVER_CDN_BASE } from '../constants/plansApi';
+import { cfImage } from '../services/cfImage';
 
 // Accept either the legacy bundled shape (`cover: string`) or the new
 // CDN-summary shape (`cover: PlanCover` object).
@@ -42,12 +43,19 @@ function PlanCoverImpl({ cover, slug, gradient, width, height, radius }: Props) 
       ? [cover.color_primary, cover.color_secondary]
       : [ROSE, LAV]);
 
-  const uri =
+  const originalUri =
     (typeof cover === 'object' && cover?.image_url)
       ? cover.image_url
       : slug
         ? `${PLAN_COVER_CDN_BASE}/${slug}.webp`
         : null;
+
+  // Right-sized Cloudflare variant for this slot (e.g. a 118-dp row cover on
+  // a 3× device fetches a 384-px image instead of the full original). If the
+  // transformed URL errors (e.g. Image Transformations disabled on the zone),
+  // fall back to the original full-size URL so covers never disappear.
+  const [transformFailed, setTransformFailed] = useState(false);
+  const uri = originalUri && !transformFailed ? cfImage(originalUri, width) : originalUri;
 
   return (
     <View style={{ width, height, borderRadius: radius, overflow: 'hidden' }}>
@@ -58,7 +66,12 @@ function PlanCoverImpl({ cover, slug, gradient, width, height, radius }: Props) 
         style={{ position: 'absolute', top: 0, left: 0, width, height }}
       />
       {uri ? (
-        <Image source={{ uri }} style={{ width, height }} resizeMode="cover" />
+        <Image
+          source={{ uri }}
+          style={{ width, height }}
+          resizeMode="cover"
+          onError={() => { if (!transformFailed) setTransformFailed(true); }}
+        />
       ) : null}
     </View>
   );

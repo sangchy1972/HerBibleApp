@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import MoodEmoji, { MOOD_LIST, type Mood } from '../components/MoodEmoji';
 import MoodCalendar, { ordinalFor } from '../components/MoodCalendar';

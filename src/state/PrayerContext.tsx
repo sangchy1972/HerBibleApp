@@ -23,6 +23,7 @@ interface PrayerState {
   // (legacy data) don't qualify and break the streak.
   earlyBirdStreak: number;
   firstCompleteDate: string | null;   // earliest 'YYYY-MM-DD' with both done
+  firstPrayedDate: string | null;     // earliest 'YYYY-MM-DD' with ANY prayer (m OR e) — the "streak started" date per user
   everPrayed: boolean;                // any record has m or e set — used to detect first-prayer onboarding moment
   wasCompleteOn: (dateKey: string) => boolean;
   recordOn: (dateKey: string) => DayRecord;
@@ -126,6 +127,14 @@ export function PrayerProvider({ children }: { children: React.ReactNode }) {
       .map(([d]) => d)
       .sort();
 
+    // Earliest day the user prayed AT ALL (morning OR evening). Per user, the
+    // "streak started" date is their very first prayer — they don't have to
+    // complete both halves of a day for the journey to have begun.
+    const prayedDates = Object.entries(records)
+      .filter(([, r]) => r.m || r.e)
+      .map(([d]) => d)
+      .sort();
+
     return {
       morning,
       mDone: todayRec.m,
@@ -135,7 +144,8 @@ export function PrayerProvider({ children }: { children: React.ReactNode }) {
       maxStreak: longestStreak(completeDates),
       earlyBirdStreak: earlyBirdStreakOf(records),
       firstCompleteDate: completeDates[0] ?? null,
-      everPrayed: Object.values(records).some(r => r.m || r.e),
+      firstPrayedDate: prayedDates[0] ?? null,
+      everPrayed: prayedDates.length > 0,
       wasCompleteOn: (dateKey) => {
         const r = records[dateKey];
         return !!(r && r.m && r.e);

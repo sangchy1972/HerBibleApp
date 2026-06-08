@@ -71,7 +71,7 @@ export default function StreakScreen({ navigation }: RootStackScreenProps<'Strea
   const insets = useSafeAreaInsets();
   const t = useT();
   const { lang } = useUILanguage();
-  const { mDone, eDone, totalComplete, maxStreak, firstCompleteDate, wasCompleteOn } = usePrayer();
+  const { mDone, eDone, totalComplete, maxStreak, firstPrayedDate, wasCompleteOn } = usePrayer();
   const [info, setInfo] = useState(false);
   // Headline number = total days at 100 % progress. Flame level scales with it.
   const lvl = streakLevel(totalComplete);
@@ -161,7 +161,7 @@ export default function StreakScreen({ navigation }: RootStackScreenProps<'Strea
         <Animated.View entering={ENTER(1)} style={styles.statsRow}>
           <View style={styles.statItem}>
             <View style={styles.statValueWrap}>
-              <Text style={styles.statValueDate}>{splitDate(formatStreakStart(firstCompleteDate, lang))}</Text>
+              <Text style={styles.statValueDate}>{splitDate(formatStreakStart(firstPrayedDate, lang))}</Text>
             </View>
             <Text style={styles.statLabel}>{t('streak.stat.started')}</Text>
           </View>

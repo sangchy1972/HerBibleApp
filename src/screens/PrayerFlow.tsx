@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Dimensions,
-  KeyboardAvoidingView, Keyboard, Platform, Linking, Modal,
+  Keyboard, Platform, Linking, Modal,
 } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
@@ -338,6 +338,19 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const [showNoteSheet, setShowNoteSheet] = useState(false);
   const [showRatePrompt, setShowRatePrompt] = useState(false);
   const [noteText, setNoteText] = useState('');
+  // Keyboard height for the reflection sheet — drives a deterministic lift so
+  // the Save button always clears the keyboard on EVERY device. The old
+  // KeyboardAvoidingView behavior="height" was unreliable across Androids
+  // (worked on the dev's Samsung, hidden the button on many others).
+  const [kbHeight, setKbHeight] = useState(0);
+  useEffect(() => {
+    if (!showNoteSheet) { setKbHeight(0); return; }
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const onShow = Keyboard.addListener(showEvt, (e) => setKbHeight(e.endCoordinates?.height ?? 0));
+    const onHide = Keyboard.addListener(hideEvt, () => setKbHeight(0));
+    return () => { onShow.remove(); onHide.remove(); };
+  }, [showNoteSheet]);
   const [page, setPage] = useState(0);
   const [buttonReady, setButtonReady] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
@@ -842,7 +855,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >
-              <Animated.View style={[styles.pageContent, styles.deepPageOffset, styles.meditationContent, meditationAnim]}>
+              <Animated.View style={[styles.pageContent, styles.meditationContent, { paddingTop: insets.top + 140 }, meditationAnim]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption]}>{meditationCaption}</Text>
                 {meditationParas.map((p, i) => (
                   <Text key={i} style={styles.pageBody}>{p}</Text>
@@ -859,7 +872,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >
-              <Animated.View style={[styles.pageContent, styles.deepPageOffset, styles.actionPagePad, actionAnim]}>
+              <Animated.View style={[styles.pageContent, { paddingTop: insets.top + 140 }, actionAnim]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption]}>{actionCaption}</Text>
                 <Text style={styles.pageBody}>{actionBody}</Text>
                 <TouchableOpacity
@@ -882,7 +895,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >
-              <Animated.View style={[styles.pageContent, styles.deepPageOffset, styles.prayerPagePad, prayerAnim]}>
+              <Animated.View style={[styles.pageContent, styles.prayerPagePad, { paddingTop: insets.top + 140 }, prayerAnim]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption, styles.prayerCaption]}>{prayerCaption}</Text>
                 <Text style={[styles.pageBody, styles.prayerBody]}>{prayerBody}</Text>
                 <TouchableOpacity
@@ -1040,14 +1053,13 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
       )}
 
       {showNoteSheet && (
-        // KAV must wrap the SHEET, not its inner content — with the sheet
-        // clipped to 92% height + overflow: hidden, padding inside the sheet
-        // pushes the Save button off the bottom edge. Wrapping outside lets
-        // the sheet itself shift up by the keyboard height (flex-end).
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.sheetOverlay}
-        >
+        // Keyboard-aware overlay (flex-end). paddingBottom = live keyboard
+        // height lifts the sheet's bottom — and the Save button — above the
+        // keyboard deterministically on every device; the noteSheet height is
+        // also capped to the space above the keyboard (inline override below)
+        // so the title never clips. Replaces KeyboardAvoidingView, whose
+        // behavior="height" was flaky on Android.
+        <View style={[styles.sheetOverlay, { paddingBottom: kbHeight }]}>
           <Animated.View
             entering={FadeIn.duration(300)}
             style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.4)' }]}
@@ -1061,7 +1073,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
           <GestureDetector gesture={notePan}>
             <Animated.View
               entering={SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic))}
-              style={[styles.noteSheet, noteSheetAnimStyle]}
+              style={[styles.noteSheet, kbHeight > 0 ? { height: height - kbHeight - insets.top - 12 } : null, noteSheetAnimStyle]}
             >
               <View style={[styles.noteSheetInner, { paddingBottom: Math.max(insets.bottom, 12) + 24 }]}>
                 <TouchableOpacity onPress={Keyboard.dismiss} activeOpacity={1} style={styles.noteHandleHit}>
@@ -1091,7 +1103,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               </View>
             </Animated.View>
           </GestureDetector>
-        </KeyboardAvoidingView>
+        </View>
       )}
 
       {showSheet && (

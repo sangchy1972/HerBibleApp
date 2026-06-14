@@ -73,7 +73,7 @@ export default function VerseCardArt({ format, reference, text, width, bgSource 
           ]}
           numberOfLines={format === 'square' ? 6 : format === 'portrait' ? 9 : 12}
         >
-          “{text}”
+          {text}
         </Text>
         <Text style={[styles.ref, bgSource ? styles.refOnPhoto : null, { fontSize: refFont, marginTop: Math.round(36 * scale) }]}>
           {reference}

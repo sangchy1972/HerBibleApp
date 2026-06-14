@@ -288,6 +288,16 @@ export default function PlanScreen() {
                       </TouchableOpacity>
                     );
                   })}
+                  {/* Explore-more CTA — the in-progress list has no bottom
+                      affordance, so guide users on to the catalog (per user).
+                      Same pill as the empty state, just centered. */}
+                  <TouchableOpacity
+                    onPress={() => setTab('explore')}
+                    style={[styles.exploreCta, { backgroundColor: ROSE, alignSelf: 'center' }]}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={{ color: '#fff', fontSize: 15.1, fontWeight: '600' }}>{t('plan.exploreMore.cta')}</Text>
+                  </TouchableOpacity>
                 </>
               ) : (
                 <View style={styles.emptyHint}>

@@ -577,6 +577,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'plan.empty.notStarted.title':   { en: "You haven't started a plan yet", context: 'Current-tab empty state title.' },
   'plan.empty.notStarted.desc':    { en: 'Pick one from Explore and your reading will show up here.', context: 'Current-tab empty state body.' },
   'plan.empty.notStarted.cta':     { en: 'Explore Plans',  context: 'Current-tab empty state CTA.' },
+  'plan.exploreMore.cta':          { en: 'Explore more plans', context: 'CTA pill below the in-progress plan list (Current tab) — guides users to the Explore catalog when they already have plans running.' },
   'plan.empty.completed.title':   { en: 'No completed plans yet', context: 'Completed-tab empty state title.' },
   'plan.empty.completed.desc':    { en: "Finish a plan and it'll show up here.", context: 'Completed-tab empty state body.' },
   'plan.empty.completed.cta':     { en: 'Explore Plans',  context: 'Completed-tab empty state CTA.' },

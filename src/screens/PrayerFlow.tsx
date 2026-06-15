@@ -47,6 +47,8 @@ const LOTTIE_PRAYER_HANDS = require('../../assets/lottie/prayer-hands.json');
 const LOTTIE_CONFETTI = require('../../assets/lottie/confetti.json');
 import { prepareVerseAudio, prepareHolidayVerseAudio, verseIdFor } from '../services/dailyVerseAudioService';
 import { DAILY_VERSE_AUDIO_LANG } from '../constants/dailyVerseAudioCdn';
+import { fetchStepTimings, type SentenceTiming } from '../services/verseHighlight';
+import HighlightedText from '../components/HighlightedText';
 import type { RootStackScreenProps } from '../navigation/types';
 
 const { width, height } = Dimensions.get('window');
@@ -407,6 +409,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // effect depended on that object it would re-run mid-listen, re-set
   // readUris, swap the audio source, and CUT OFF the playing clip. Keying on
   // verseId/verseDay re-runs only when the verse genuinely changes.
+  // Per-step sentence timings for follow-along highlight (4 arrays in page
+  // order; any step null = no highlight for it). Loaded alongside the audio.
+  const [stepTimings, setStepTimings] = useState<(SentenceTiming[] | null)[] | null>(null);
+
   const verseId = (listenLangOk && dailyVerse) ? verseIdFor(dailyVerse.day, dailyVerse.segment) : null;
   const verseDay = dailyVerse?.day ?? null;
   // Holiday verses carry a `holidayId` and live in a SEPARATE audio
@@ -419,13 +425,19 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // everything older than today is pruned inside prepareVerseAudio so the
   // device never accumulates stale audio.
   useEffect(() => {
-    if (!verseId || verseDay == null) { setReadUris(null); return; }
+    if (!verseId || verseDay == null) { setReadUris(null); setStepTimings(null); return; }
     let alive = true;
     const keep = [verseIdFor(verseDay, 'morning'), verseIdFor(verseDay, 'evening')];
     const prepare = isHolidayVerse ? prepareHolidayVerseAudio : prepareVerseAudio;
     prepare(verseId, keep)
       .then(uris => { if (alive) setReadUris(uris); })
       .catch(() => { if (alive) setReadUris(null); });
+    // Sentence timings for highlight — best-effort, independent of audio so a
+    // timings failure never blocks playback.
+    setStepTimings(null);
+    fetchStepTimings(verseId, isHolidayVerse)
+      .then(ts => { if (alive) setStepTimings(ts); })
+      .catch(() => { if (alive) setStepTimings(null); });
     return () => { alive = false; };
   }, [verseId, verseDay, isHolidayVerse]);
 
@@ -438,6 +450,13 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   );
   const readPlayer = useAudioPlayer(readSource);
   const readStatus = useAudioPlayerStatus(readPlayer);
+
+  // Narration cursor time (s) for the page currently being read; -1 when not
+  // listening so HighlightedText renders plain text. `timingFor` picks the
+  // step's sentence timings (or null = no highlight for that step).
+  const narrationTime = listenOn ? (readStatus?.currentTime ?? -1) : -1;
+  const timingFor = (step: number): SentenceTiming[] | null =>
+    (stepTimings && stepTimings[step]) || null;
 
   // Play/pause follows `listenOn`; also (re)plays when the cursor moves to a
   // new clip while listening. Pausing (listenOn=false) holds position so a
@@ -821,7 +840,14 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             <Animated.View style={[styles.pageContent, verseAnim]}>
               <Text style={styles.verseCaption}>{verseCaption}</Text>
               <Text style={styles.pageRef}>{verseRef}</Text>
-              <Text style={styles.pageVerse}>{verseText}</Text>
+              <HighlightedText
+                text={verseText}
+                timings={timingFor(0)}
+                time={narrationTime}
+                active={listenOn && listenStep === 0}
+                style={styles.pageVerse}
+                highlightStyle={styles.spokenLine}
+              />
               {/* Save / Notes / Share — mirrors the home verse-card affordances.
                   Lives inside the verse page so it scrolls away with the next
                   page (it shouldn't follow the user into Meditation / etc.). */}
@@ -858,7 +884,15 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               <Animated.View style={[styles.pageContent, styles.meditationContent, { paddingTop: insets.top + 140 }, meditationAnim]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption]}>{meditationCaption}</Text>
                 {meditationParas.map((p, i) => (
-                  <Text key={i} style={styles.pageBody}>{p}</Text>
+                  <HighlightedText
+                    key={i}
+                    text={p}
+                    timings={timingFor(1)}
+                    time={narrationTime}
+                    active={listenOn && listenStep === 1}
+                    style={styles.pageBody}
+                    highlightStyle={styles.spokenLine}
+                  />
                 ))}
               </Animated.View>
             </ScrollView>
@@ -874,7 +908,14 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             >
               <Animated.View style={[styles.pageContent, { paddingTop: insets.top + 140 }, actionAnim]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption]}>{actionCaption}</Text>
-                <Text style={styles.pageBody}>{actionBody}</Text>
+                <HighlightedText
+                  text={actionBody}
+                  timings={timingFor(2)}
+                  time={narrationTime}
+                  active={listenOn && listenStep === 2}
+                  style={styles.pageBody}
+                  highlightStyle={styles.spokenLine}
+                />
                 <TouchableOpacity
                   style={styles.reflectBtn}
                   onPress={openNoteSheet}
@@ -897,7 +938,14 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             >
               <Animated.View style={[styles.pageContent, styles.prayerPagePad, { paddingTop: insets.top + 140 }, prayerAnim]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption, styles.prayerCaption]}>{prayerCaption}</Text>
-                <Text style={[styles.pageBody, styles.prayerBody]}>{prayerBody}</Text>
+                <HighlightedText
+                  text={prayerBody}
+                  timings={timingFor(3)}
+                  time={narrationTime}
+                  active={listenOn && listenStep === 3}
+                  style={[styles.pageBody, styles.prayerBody]}
+                  highlightStyle={styles.spokenLine}
+                />
                 <TouchableOpacity
                   onPress={handleAmen}
                   style={styles.amenBtn}
@@ -1327,6 +1375,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',                                                           // pure white per user — deep pages back on the photo bg
     marginBottom: 36,                                                           // 18 → 36 (doubled per user) — more breathing room between meditation / action / prayer paragraphs
     fontFamily: FONTS.lato,                                                     // Reflection / Action / Prayer body unified to Lato per user (was Merriweather)
+  },
+  // Highlight applied to the sentence currently being narrated (Listen mode).
+  // Soft translucent-white pill over the photo bg + full-opacity text so the
+  // spoken line lifts off the dimmed-white body without recoloring it.
+  spokenLine: {
+    color: '#FFFFFF',
+    backgroundColor: 'rgba(255,255,255,0.22)',
   },
   // Mirrors PrayerScreen's `startBtn` for height/radius/text — but stays
   // content-hugging (alignSelf 'flex-start') per user, not stretched to the

@@ -108,18 +108,27 @@ async function fetchCommentaryWithFallback(
   const urls = lang === 'en'
     ? [base('en-mh'), base('en')]
     : [base(lang), base('en-mh'), base('en')];
-  let last404: string | null = null;
+  let lastErr: string | null = null;
   for (const url of urls) {
-    const res = await fetch(url);
-    if (res.ok) return (await res.json()) as Chapter;
-    if (res.status === 404) {
-      last404 = url;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) {
+        // Any non-200 (404 not-yet-written, or a transient 5xx / jsDelivr
+        // cold-start hiccup) → try the next variant rather than bailing. This
+        // is what lets en-mh gaps fall through to Tyndale, and stops a flaky
+        // en-mh response from blocking the en fallback.
+        lastErr = `HTTP ${res.status} for ${url}`;
+        continue;
+      }
+      // Guard JSON parsing too: a truncated body on a weak network would
+      // otherwise throw and escape the whole fallback chain.
+      return (await res.json()) as Chapter;
+    } catch (e) {
+      lastErr = `${String(e)} for ${url}`;
       continue;
     }
-    // 5xx / network → real failure, stop trying further variants.
-    throw new Error(`HTTP ${res.status} for ${url}`);
   }
-  throw new Error(`HTTP 404 — no commentary at ${last404 ?? '(unknown)'}`);
+  throw new Error(`No commentary available — ${lastErr ?? '(unknown)'}`);
 }
 
 export interface VerseHit {

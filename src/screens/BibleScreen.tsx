@@ -1214,18 +1214,20 @@ export default function BibleScreen() {
     if (loadedCommentaryKey.current === commentaryKey && commentaryState === 'ready') return;
     let cancelled = false;
     setCommentaryState('loading');
-    // 5-second timeout — feels like a hung request beyond that and is the
-    // copy the user sees as "network error". Aborting via Promise.race so
-    // a slow fetch resolving later doesn't stomp a cancelled request.
-    const timeout = new Promise<never>((_, rej) =>
-      setTimeout(() => rej(new Error('timeout')), 5000)
-    );
-    Promise.race([
+    // Per-attempt timeout via Promise.race so a slow fetch resolving later
+    // doesn't stomp a cancelled request. 9s (was 5s) tolerates jsDelivr's
+    // cold-start latency: the FIRST request for a file at a given commit can
+    // take several seconds while the CDN packs it from GitHub — 5s tripped a
+    // false "Network error" that vanished on a manual retry. We now also
+    // auto-retry once silently before surfacing the error.
+    const attempt = () => Promise.race([
       fetchCommentaryChapter(CORPUS_CDN_ROOT, translation.code, bookSlug, chapter),
-      timeout,
-    ])
+      new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 9000)),
+    ]);
+    attempt()
+      .catch(() => attempt())   // one transparent retry (2nd hit is usually warm-cached)
       .then((data) => {
-        if (cancelled) return;
+        if (cancelled || !data) return;
         const lookup: Record<number, string> = {};
         for (const v of data.verses) lookup[v.verse] = v.text;
         setCommentaryByVerse(lookup);

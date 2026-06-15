@@ -1,0 +1,28 @@
+# Files excluded from the EAS build upload (gitignore syntax). None of these
+# are imported by the app, so they never reach the binary — this just keeps the
+# upload lean and removes any chance of accidental bundling.
+
+# Docs & handoff notes
+TEST_REPORT.md
+SMOKE_TEST.md
+GOSPELS_PSALMS_PLAN.md
+COMMENTARY_CDN_HANDOFF.md
+BADGES_FILELIST.txt
+FONTS.md
+
+# Dev-only test harness (jest) — not part of the app runtime
+__tests__/
+test/
+jest.config.js
+
+# One-off export deliverables (mood emoji PNGs were generated for the user,
+# not used by the app)
+mood_emoji_png/
+
+# Data-pipeline source folders (already gitignored; listed for safety)
+_incoming_verses/
+_cdn_ready/
+
+# Stray build artifacts
+*.aab
+*.apk

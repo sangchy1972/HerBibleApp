@@ -29,7 +29,7 @@ export type TabParamList = {
 export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabParamList>;
   Streak: undefined;
-  PrayerFlow: { kind: 'morning' | 'evening' };
+  PrayerFlow: { kind: 'morning' | 'evening'; day?: number };
   GospelPsalm: { slot: 'morning' | 'evening' };
   MoodFlow: undefined;
   MoodCalendar: undefined;

@@ -1,16 +1,15 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import { ROSE, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
+import { ROSE, LAV, TXT, TXTSUB, FONTS } from '../constants/theme';
 import { useGospelsPsalms, type Slot } from '../state/GospelsPsalmsContext';
 import { useT } from '../i18n/useT';
 
-// Home-screen entry for the 89-day Gospels & Psalms plan. Renders TWO white
-// cards (Morning + Evening) styled to match PlanProgressCard, so the home
-// screen reads as one consistent stack. Each card shows the plan title with
-// the current day (e.g. "Gospel & Psalm (1/89)"), the slot label, and a
-// green check once that slot is read. Both are openable any time today — the
-// user can do the evening reading in the morning if they like.
+// Home-screen entry for the 89-day Gospels & Psalms plan. Two cards (Morning +
+// Evening) built to MATCH PlanProgressCard byte-for-byte — same card metrics
+// (white, 9.8 radius, 11.4/12 padding, soft shadow), same 92.15² left tile,
+// and the SAME meta typography (label 13 Lato, title 16 Lato-bold / 21 line)
+// so this section reads as one continuous stack with "Plans In Progress".
 const GREEN = '#3FAE6A';
 
 function SlotCard({ slot, done, title, subtitle, onPress }: {
@@ -20,17 +19,20 @@ function SlotCard({ slot, done, title, subtitle, onPress }: {
   const t = useT();
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
-      <View style={[styles.iconWrap, { backgroundColor: `${accent}1A` }]}>
-        <Feather name={slot === 'morning' ? 'sunrise' : 'moon'} size={20} color={accent} />
+      {/* Left tile — same 92.15² footprint as the plan cover, tinted with the
+          slot accent and centring the sunrise/moon glyph. */}
+      <View style={[styles.tile, { backgroundColor: `${accent}1A` }]}>
+        <Feather name={slot === 'morning' ? 'sunrise' : 'moon'} size={34} color={accent} />
       </View>
       <View style={styles.meta}>
-        <View style={styles.slotRow}>
-          <Text style={[styles.slot, { color: accent }]}>
+        {/* Top row mirrors PlanProgressCard's "Day N" row metrics. */}
+        <View style={styles.labelRow}>
+          <Text style={[styles.label, { color: accent }]}>
             {slot === 'morning' ? t('gp.morning') : t('gp.evening')}
           </Text>
           {done && <Feather name="check-circle" size={15} color={GREEN} />}
         </View>
-        <Text style={styles.title} numberOfLines={1}>{title}</Text>
+        <Text style={styles.title} numberOfLines={2}>{title}</Text>
         <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
       </View>
       <Feather name="chevron-right" size={22} color={TXTSUB} />
@@ -44,7 +46,6 @@ export default function GospelPsalmCards({ onOpen }: { onOpen: (slot: Slot) => v
   if (!ready) return null;
 
   const cardTitle = t('gp.cardTitle', { day, total });
-  // Morning subtitle = today's gospel + psalm; evening = the evening psalm.
   const mSub = `${today.gospel.bookName} ${today.gospel.chapter} · Psalm ${today.morningPsalm.chapter}`;
   const eSub = `Psalm ${today.eveningPsalm.chapter}`;
 
@@ -58,10 +59,9 @@ export default function GospelPsalmCards({ onOpen }: { onOpen: (slot: Slot) => v
 }
 
 const styles = StyleSheet.create({
-  // sectionTitle mirrors PrayerScreen.sectionTitle so "Gospel & Psalm" sits
-  // visually identical to "Plans In Progress" below it.
-  sectionTitle: { fontSize: 19.2, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold, marginBottom: 2 },
-  // card byte-matches PlanProgressCard (white, 9.8 radius, soft shadow).
+  // Matches PrayerScreen.sectionTitle ("Plans In Progress") so the heading is identical.
+  sectionTitle: { fontSize: 19.85, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold },
+  // card byte-matches PlanProgressCard.
   card: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
     backgroundColor: '#FFFFFF', borderRadius: 9.8,
@@ -69,10 +69,15 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03, shadowRadius: 3, elevation: 1,
   },
-  iconWrap: { width: 46, height: 46, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  tile: {
+    width: 92.15, height: 92.15, borderRadius: 10,
+    alignItems: 'center', justifyContent: 'center',
+  },
   meta: { flex: 1, minWidth: 0 },
-  slotRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 },
-  slot: { fontSize: 13, fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
-  title: { fontSize: 15.5, fontWeight: '600', color: TXT, fontFamily: FONTS.latoBold },
-  subtitle: { fontSize: 12.5, color: TXTSUB, fontFamily: FONTS.lato, marginTop: 1 },
+  // labelRow matches PlanProgressCard.dayRow (gap 6, marginBottom 6).
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
+  label: { fontSize: 13, fontFamily: FONTS.latoBold, letterSpacing: 0.3 },
+  // title matches PlanProgressCard.title (16 / Lato-bold / 21 line height).
+  title: { fontSize: 16, fontWeight: '600', color: TXT, lineHeight: 21, fontFamily: FONTS.latoBold },
+  subtitle: { fontSize: 13, color: TXTSUB, fontFamily: FONTS.lato, marginTop: 4 },
 });

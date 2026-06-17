@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Text, TextInput } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, useNavigationContainerRef } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { SCREEN_BG } from './src/constants/theme';
 
@@ -61,7 +61,8 @@ import { GospelsPsalmsProvider } from './src/state/GospelsPsalmsContext';
 import AchievementUnlockSheet from './src/components/AchievementUnlockSheet';
 import DeepLinkHandler from './src/navigation/DeepLinkHandler';
 import WidgetSync from './src/components/WidgetSync';
-import { initFirebase } from './src/services/firebase';
+import LoadingOverlay from './src/components/LoadingOverlay';
+import { initFirebase, logScreenView } from './src/services/firebase';
 import { initAds } from './src/services/ads';
 
 export default function App() {
@@ -69,6 +70,21 @@ export default function App() {
   // initialize AdMob (preloads the first interstitial). Both no-op safely on a
   // build that doesn't yet have the respective native module.
   React.useEffect(() => { initFirebase(); initAds(); }, []);
+
+  // One central screen-view hook: log the active route on every navigation
+  // state change so Firebase Analytics gets a complete screen funnel without
+  // touching each screen. getCurrentRoute() reflects the deepest active route.
+  const navRef = useNavigationContainerRef();
+  const onNavStateChange = React.useCallback(() => {
+    const name = navRef.getCurrentRoute()?.name;
+    if (name) logScreenView(name);
+  }, [navRef]);
+
+  // Custom launch loading page. Shown over the app until the navigator is ready
+  // (onReady) AND a 2s floor has passed — so users see a branded loading screen
+  // with a rotating hymn/quote instead of a black screen or a bare logo.
+  const [appReady, setAppReady] = React.useState(false);
+  const [loadingDone, setLoadingDone] = React.useState(false);
 
   const [fontsLoaded] = useFonts({
     'SourceSerif4Variable-Roman':  require('./assets/fonts/SourceSerif4Variable-Roman.ttf'),
@@ -113,7 +129,7 @@ export default function App() {
                                     <MoodCheckInProvider>
                                       <NotificationsProvider>
                                         <ReminderInterstitialProvider>
-                                        <NavigationContainer theme={NAV_THEME}>
+                                        <NavigationContainer ref={navRef} theme={NAV_THEME} onStateChange={onNavStateChange} onReady={() => setAppReady(true)}>
                                           <StatusBar style="dark" />
                                           <RootNavigator />
                                           {/* Mounted inside NavigationContainer
@@ -133,6 +149,12 @@ export default function App() {
                                               widget. Null render; needs DailyVerses
                                               + PrayerBackgrounds (both above). */}
                                           <WidgetSync />
+                                          {/* Launch loading page — absolute-fill
+                                              overlay above everything; hides once
+                                              the nav is ready + the 2s floor passes. */}
+                                          {!loadingDone && (
+                                            <LoadingOverlay appReady={appReady} onHide={() => setLoadingDone(true)} />
+                                          )}
                                         </NavigationContainer>
                                         </ReminderInterstitialProvider>
                                       </NotificationsProvider>

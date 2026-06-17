@@ -216,12 +216,14 @@ function formatCountdown(ms: number): string {
   return `${h}h ${m}m`;
 }
 
-function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTab, waitLabel, waitHint, onBegin, onOpenRef, onShare, onMore, cardLabel, verseRef, verseText, bgSource }: {
+function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTab, offerPastDays, onOfferPastDays, waitLabel, waitHint, onBegin, onOpenRef, onShare, onMore, cardLabel, verseRef, verseText, bgSource }: {
   morning: boolean;
   canStart: boolean;        // active slot in window + not yet done
   canReplay: boolean;       // slot already done — tapping the card re-enters as redo
   readyToSwitch: boolean;   // morning done + evening already open → tap = flip tab
   onSwitchTab: () => void;
+  offerPastDays: boolean;   // 00:00–06:00 dead zone → tapping offers "See past days"
+  onOfferPastDays: () => void;
   waitLabel: string;        // copy for the gray wait-state button (countdown)
   waitHint: string;         // pop-up text shown on tapping the gray button
   onBegin: () => void;
@@ -312,10 +314,13 @@ function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTa
   //   • canReplay → re-enter the (already-done) flow so the user can read
   //     meditation / prayer / closing again. PrayerFlow detects the redo
   //     via its isRedoRef and skips the celebration screens after Amen.
+  //   • offerPastDays (00:00–06:00 dead zone, nothing actionable) → prompt to
+  //     revisit past days so the user always has something to do.
   //   • otherwise → pop the friendly hint
   const onCardPress = canStart ? onBegin
     : readyToSwitch ? onSwitchTab
     : canReplay ? onBegin
+    : offerPastDays ? onOfferPastDays
     : popHint;
 
   return (
@@ -494,6 +499,8 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   // ing them inside VerseHeroCard sized them to the card and the share sheet
   // ended up anchored a few hundred px above the bottom edge.
   const [showShare, setShowShare] = useState(false);
+  // "See past days" prompt shown when tapping the card in the 00:00–06:00 dead zone.
+  const [showPastPrompt, setShowPastPrompt] = useState(false);
   const [moreAnchor, setMoreAnchor] = useState<MoreAnchor | null>(null);
   const labels = dailyLabels(translation.code);
   const segment: 'morning' | 'evening' = morning ? 'morning' : 'evening';
@@ -566,6 +573,10 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   const slotDone = morning ? mDone : eDone;
   const inWindow = morning ? hr >= 6 : hr >= 18;
   const canStart = !slotDone && inWindow;
+  // 00:00–06:00 dead zone: morning window not open yet AND evening window
+  // closed — nothing is actionable on either tab. Instead of a dead card, a
+  // tap offers to revisit past days so the user always has something to do.
+  const offerPastDays = hr < 6 && !canStart && !slotDone;
 
   // Compute the wait-state label and the hint that pops on tap. Only used
   // when canStart === false; otherwise the button is the active "Start" CTA.
@@ -913,6 +924,8 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           canReplay={slotDone}
           readyToSwitch={readyToSwitch}
           onSwitchTab={() => setMorning(false)}
+          offerPastDays={offerPastDays}
+          onOfferPastDays={() => setShowPastPrompt(true)}
           waitLabel={waitLabel}
           waitHint={waitHint}
           bgSource={prayerBg.imageFor(morning ? 'morning' : 'evening')}
@@ -1033,6 +1046,28 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           // verse card the user just tapped — no more pink/lav placeholder.
           bgSource={prayerBg.imageFor(morning ? 'morning' : 'evening')}
         />
+      </Modal>
+
+      {/* "See past days" prompt — shown when the verse card is tapped during
+          the 00:00–06:00 dead zone (morning not open, evening closed). Gives
+          the user a way to revisit + re-pray past days instead of a dead card. */}
+      <Modal visible={showPastPrompt} transparent animationType="fade" statusBarTranslucent onRequestClose={() => setShowPastPrompt(false)}>
+        <View style={styles.pastPromptOverlay}>
+          <View style={styles.pastPromptCard}>
+            <Text style={styles.pastPromptTitle}>{t('prayer.pastPrompt.title')}</Text>
+            <Text style={styles.pastPromptBody}>{t('prayer.pastPrompt.body')}</Text>
+            <TouchableOpacity
+              style={styles.pastPromptConfirm}
+              activeOpacity={0.85}
+              onPress={() => { setShowPastPrompt(false); navigation.navigate('PastVerses'); }}
+            >
+              <Text style={styles.pastPromptConfirmText}>{t('prayer.pastPrompt.confirm')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.pastPromptCancel} activeOpacity={0.7} onPress={() => setShowPastPrompt(false)}>
+              <Text style={styles.pastPromptCancelText}>{t('prayer.pastPrompt.cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
 
       <Modal
@@ -1472,6 +1507,23 @@ const styles = StyleSheet.create({
     color: TXT,
     fontFamily: FONTS.loraBold,
   },
+  // "See past days" dead-zone prompt (app-styled centered dialog).
+  pastPromptOverlay: {
+    flex: 1, backgroundColor: 'rgba(30,27,46,0.45)',
+    alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32,
+  },
+  pastPromptCard: {
+    width: '100%', backgroundColor: '#FFFFFF', borderRadius: 20,
+    paddingHorizontal: 22, paddingTop: 22, paddingBottom: 16,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18, shadowRadius: 18, elevation: 10,
+  },
+  pastPromptTitle: { fontSize: 19, fontWeight: '700', color: TXT, textAlign: 'center', marginBottom: 10, fontFamily: FONTS.loraBold },
+  pastPromptBody: { fontSize: 14.5, lineHeight: 21, color: TXTSUB, textAlign: 'center', marginBottom: 20 },
+  pastPromptConfirm: { height: 48, borderRadius: 24, backgroundColor: ROSE, alignItems: 'center', justifyContent: 'center' },
+  pastPromptConfirmText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+  pastPromptCancel: { height: 46, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  pastPromptCancelText: { color: TXTSUB, fontSize: 15, fontWeight: '600' },
   // "Plans In Progress" empty state — pink-tinted card with a one-line nudge
   // and a primary CTA that drops the user into the Plan tab to pick a plan.
   // Keeps the home screen feeling alive even when the user has zero active

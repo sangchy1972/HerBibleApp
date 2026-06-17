@@ -32,6 +32,11 @@ interface ReadChaptersState {
   readToday: boolean;
   readingStreak: number;
   markRead: (bookSlug: string, chapter: number) => void;
+  /** Revert a chapter to unread (user "Mark as unread"). Progress counters
+   *  derive from the read set, so they update automatically. Reading-date
+   *  history is left intact — un-completing one chapter shouldn't erase the
+   *  fact the user read on that day. */
+  markUnread: (bookSlug: string, chapter: number) => void;
   isRead: (bookSlug: string, chapter: number) => boolean;
 }
 
@@ -85,6 +90,14 @@ export function ReadChaptersProvider({ children }: { children: React.ReactNode }
           const nextDates = new Set(readDates);
           nextDates.add(today);
           persistDates(nextDates);
+        }
+      },
+      markUnread: (bookSlug, chapter) => {
+        const k = keyOf(bookSlug, chapter);
+        if (read.has(k)) {
+          const nextRead = new Set(read);
+          nextRead.delete(k);
+          persistRead(nextRead);
         }
       },
       isRead: (bookSlug, chapter) => read.has(keyOf(bookSlug, chapter)),

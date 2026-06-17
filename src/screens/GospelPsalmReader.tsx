@@ -1,22 +1,22 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ImageBackground,
-  ActivityIndicator, Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import * as Clipboard from 'expo-clipboard';
 import { useAudioPlayer } from 'expo-audio';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { ROSE, LAV, TXT, TXTSUB, P, FONTS, SERIF_BODY } from '../constants/theme';
+import { ROSE, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { useGospelsPsalms } from '../state/GospelsPsalmsContext';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useTranslation } from '../state/TranslationsContext';
 import { fetchChapter, type Verse } from '../services/bibleService';
-import ShareVerseSheet from '../components/ShareVerseSheet';
 import { useT } from '../i18n/useT';
+import { logEvent } from '../services/firebase';
 import type { RootStackScreenProps } from '../navigation/types';
-import type { PsalmRef } from '../constants/gospelsPsalmsPlan';
+import { GOSPELS_PSALMS_PLAN, type PsalmRef, type GPlanDay } from '../constants/gospelsPsalmsPlan';
 
 // Gospel & Psalm reader. Morning shows a Gospel chapter + a Psalm; Evening
 // shows the Psalm alone. Layout mirrors the daily-verse reading screen the
@@ -49,7 +49,7 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
   const { slot } = route.params;
   const insets = useSafeAreaInsets();
   const t = useT();
-  const { today, markDone } = useGospelsPsalms();
+  const { today, day, total, markDone } = useGospelsPsalms();
   const prayerBg = usePrayerBackgrounds();
   const { current: translation } = useTranslation();
   const morning = slot === 'morning';
@@ -57,21 +57,23 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
 
   const [sections, setSections] = useState<Section[] | null>(null);
   const [failed, setFailed] = useState(false);
-  const [shareTarget, setShareTarget] = useState<Section | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Background music — reuse the prayer-screen ambient track for this slot
-  // (NOT the spoken narration). Loops while the screen is open; user toggles
-  // it from the header note icon. Starts OFF so we never autoplay audio.
-  const audioSource = prayerBg.audioFor(slot);
+  // Background music — ambient (NOT the spoken narration). Per user, this must
+  // sound DIFFERENT from the Verse-card music (which plays this slot's track),
+  // so we deliberately pull the OPPOSITE slot's track. Auto-plays on enter.
+  const musicSlot = morning ? 'evening' : 'morning';
+  const audioSource = prayerBg.audioFor(musicSlot);
   const player = useAudioPlayer(audioSource ?? null);
-  const [musicOn, setMusicOn] = useState(false);
+  const [musicOn, setMusicOn] = useState(true);   // auto-play on enter
   useEffect(() => {
+    if (!audioSource) return;
     try {
-      if (musicOn) { player.loop = true; player.play(); }
+      player.loop = true;
+      if (musicOn) player.play();
       else player.pause();
     } catch { /* player may be null on unsupported envs */ }
-  }, [musicOn, player]);
+  }, [musicOn, audioSource, player]);
   useEffect(() => () => { try { player.pause(); } catch {} }, [player]);
 
   // Fetch the day's scripture. Morning = gospel chapter + morning psalm;
@@ -107,16 +109,38 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
     return () => { cancelled = true; };
   }, [morning, today, translation.code, translation.source]);
 
+  // Prefetch caching: warm BOTH today's full set and TOMORROW's into the
+  // fetchChapter AsyncStorage cache (fire-and-forget). Per user — so a user
+  // who opens the app on a no-signal subway the next day still has that day's
+  // Gospel + Psalms available offline. fetchChapter no-ops when already cached.
+  const warmDay = useCallback((d?: GPlanDay) => {
+    if (!d) return;
+    const f = (slug: string, ch: number) =>
+      fetchChapter(translation.code, translation.source, slug, ch).catch(() => {});
+    f(d.gospel.bookSlug, d.gospel.chapter);
+    f('psalms', d.morningPsalm.chapter);
+    f('psalms', d.eveningPsalm.chapter);
+  }, [translation.code, translation.source]);
+  useEffect(() => {
+    warmDay(today);
+    if (day < total) warmDay(GOSPELS_PSALMS_PLAN[day]); // day is 1-based → index `day` = tomorrow
+  }, [today, day, total, warmDay]);
+
   const heroImg = useMemo(() => prayerBg.imageFor(slot), [prayerBg, slot]);
 
-  const onCopy = async (s: Section) => {
-    await Clipboard.setStringAsync(`${s.reference}\n\n${s.body}`).catch(() => {});
+  // Copy the WHOLE reading (all sections) — replaces the old per-section share,
+  // which used the verse-card template that truncated the long Gospel+Psalm.
+  const onCopyAll = async () => {
+    if (!sections) return;
+    const text = sections.map(s => `${s.caption}\n${s.reference}\n\n${s.body}`).join('\n\n———\n\n');
+    await Clipboard.setStringAsync(text).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 1600);
   };
 
   const onAmen = () => {
     markDone(slot);
+    logEvent('gospel_psalm_complete', { slot, day: today.day });
     navigation.goBack();
   };
 
@@ -161,18 +185,20 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
                 <Text style={styles.refText}>{s.reference}</Text>
                 <View style={styles.refLine} />
               </View>
-              <Text style={styles.body}>{s.body}</Text>
-
-              <View style={styles.actions}>
-                <TouchableOpacity onPress={() => setShareTarget(s)} hitSlop={10} style={styles.actionBtn}>
-                  <Feather name="share-2" size={20} color={TXTSUB} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => onCopy(s)} hitSlop={10} style={styles.actionBtn}>
-                  <Feather name="copy" size={20} color={TXTSUB} />
-                </TouchableOpacity>
-              </View>
+              {/* Each verse rendered as its own paragraph so we can give a 10px
+                  after-gap (per user); Merriweather body, line-height −10%. */}
+              {s.body.split('\n').map((para, j) => (
+                <Text key={j} style={styles.body}>{para}</Text>
+              ))}
             </Animated.View>
           ))}
+
+          {/* Single Copy button — copies the entire reading (share removed:
+              the verse-card share template truncated the long Gospel+Psalm). */}
+          <TouchableOpacity onPress={onCopyAll} activeOpacity={0.8} style={styles.copyAllBtn}>
+            <Feather name="copy" size={18} color={accent} />
+            <Text style={[styles.copyAllText, { color: accent }]}>{t('common.copy')}</Text>
+          </TouchableOpacity>
         </ScrollView>
       )}
 
@@ -188,17 +214,6 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
           <Text style={styles.toastText}>{t('common.copied')}</Text>
         </View>
       )}
-
-      <Modal visible={!!shareTarget} animationType="fade" transparent onRequestClose={() => setShareTarget(null)}>
-        {shareTarget && (
-          <ShareVerseSheet
-            reference={shareTarget.reference}
-            text={shareTarget.body}
-            bgSource={heroImg}
-            onClose={() => setShareTarget(null)}
-          />
-        )}
-      </Modal>
     </View>
   );
 }
@@ -223,11 +238,17 @@ const styles = StyleSheet.create({
   refLine: { flex: 1, height: 1, backgroundColor: 'rgba(30,27,46,0.18)' },
   refText: { fontSize: 15, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.3 },
   body: {
-    fontFamily: FONTS.serif, fontVariationSettings: SERIF_BODY,
-    fontSize: 21, lineHeight: 34, color: TXT,
+    fontFamily: FONTS.merriweather,     // Merriweather per user (was Source Serif)
+    fontSize: 21,
+    lineHeight: 30.6,                    // 34 → 30.6 (−10 % line spacing per user)
+    color: TXT,
+    marginBottom: 10,                    // 10px after each paragraph per user
   },
-  actions: { flexDirection: 'row', justifyContent: 'center', gap: 56, marginTop: 22 },
-  actionBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  copyAllBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    alignSelf: 'center', marginTop: 18, paddingVertical: 10, paddingHorizontal: 18,
+  },
+  copyAllText: { fontSize: 15, fontWeight: '700', fontFamily: FONTS.latoBold },
   amenWrap: {
     position: 'absolute', left: 0, right: 0, bottom: 0,
     paddingHorizontal: P + 7, alignItems: 'center',

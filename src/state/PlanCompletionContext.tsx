@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logEvent } from '../services/firebase';
 
 const STORAGE_KEY = 'plan-completion:v1';
 
@@ -57,6 +58,7 @@ export function PlanCompletionProvider({ children }: { children: React.ReactNode
       const current = records[slug] || { completedDays: [], firstStartedAt: Date.now() };
       if (current.completedDays.includes(day)) return;
       const completedDays = [...current.completedDays, day].sort((a, b) => a - b);
+      const justFinished = completedDays.length >= total && !current.finishedAt;
       const next: PlanRecord = {
         ...current,
         completedDays,
@@ -64,6 +66,8 @@ export function PlanCompletionProvider({ children }: { children: React.ReactNode
         finishedAt: completedDays.length >= total ? Date.now() : current.finishedAt,
       };
       persist({ ...records, [slug]: next });
+      logEvent('plan_day_complete', { slug, day });
+      if (justFinished) logEvent('plan_complete', { slug, total });
     },
     planProgress: (slug, total) => {
       const r = records[slug];

@@ -23,14 +23,22 @@
 //   3. Bump DAILY_VERSES_VERSION below only if the JSON SHAPE changed
 //      (not for routine content edits — ETag handles those).
 
-import { PLANS_API_BASE } from './plansApi';
-
 // Local AsyncStorage cache tag. Bump on a schema/shape change to discard
 // every device's stale parsed copy. Not part of the URL anymore.
 export const DAILY_VERSES_VERSION = 'v1';
 
+// Daily verses are served PUBLICLY + R2-direct from the dedicated
+// herbible-verses-7languages bucket, exposed via its own R2 Custom Domain
+// `verses.everlandapps.com`. (The attested herbible-plans Worker never had a
+// /v1/verses/ route, so the old attested URL silently 404'd and the app fell
+// back to the 3-day bundle.) Verses are free core content, so public is fine.
+// Files live at the BUCKET ROOT keeping their uploaded name `verses_<lang>.json`
+// — no re-upload needed, the bucket just gained a public custom domain.
+//   e.g. https://verses.everlandapps.com/verses_en.json
+// NOTE: if you bind a different subdomain, update VERSES_HOST below.
+const VERSES_HOST = 'https://verses.everlandapps.com';
 export function dailyVersesUrl(lang: string): string {
-  return `${PLANS_API_BASE}/v1/verses/${lang}.json`;
+  return `${VERSES_HOST}/verses_${lang}.json`;
 }
 
 // Holiday daily-verse override files. Served PUBLICLY + R2-direct (no Worker,

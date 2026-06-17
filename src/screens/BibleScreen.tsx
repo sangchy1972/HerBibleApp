@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
-  StyleSheet, ActivityIndicator, AppState, useWindowDimensions, PanResponder, Platform,
+  StyleSheet, ActivityIndicator, AppState, useWindowDimensions, PanResponder, Platform, Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -664,7 +664,10 @@ export default function BibleScreen() {
   const { markToday } = useActivity();
   const { setHighlight, getColor } = useHighlights();
   const { isBookmarked, toggleBookmark } = useBookmarks();
-  const { markRead, isRead, readDates } = useReadChapters();
+  const { markRead, markUnread, isRead, readDates } = useReadChapters();
+  // Confirm-dialog state for "mark as unread" (tapping an already-completed
+  // chapter button). Holds the {bookSlug, chapter} to revert, or null.
+  const [unreadConfirm, setUnreadConfirm] = useState<{ bookSlug: string; chapter: number } | null>(null);
   // Same prayer-bg context the home verse card consumes — used here to
   // pass the daily photo into ShareVerseSheet so its preview cards inherit
   // the live backdrop instead of falling back to the pink/lav gradient.
@@ -1473,7 +1476,11 @@ export default function BibleScreen() {
         {verses.length > 0 && (() => {
           const completed = isRead(bookSlug, chapter);
           const onMark = () => {
-            if (completed) return;
+            if (completed) {
+              // Already done → offer to revert (styled confirm dialog below).
+              setUnreadConfirm({ bookSlug, chapter });
+              return;
+            }
             markRead(bookSlug, chapter);
             markToday();
             showToast(t('bibleReader.toast.daysRead'), { icon: 'check', ms: 2000 });
@@ -1481,8 +1488,7 @@ export default function BibleScreen() {
           return (
             <TouchableOpacity
               onPress={onMark}
-              disabled={completed}
-              activeOpacity={completed ? 1 : 0.85}
+              activeOpacity={0.85}
               style={[styles.markCompleteBtn, completed && styles.markCompleteBtnDone]}
             >
               <Feather name={completed ? 'check' : 'check-circle'} size={20} color="#FFFFFF" />
@@ -1494,6 +1500,30 @@ export default function BibleScreen() {
         })()}
       </ScrollView>
       </TabSection>
+
+      {/* Mark-as-unread confirmation — app-styled centered dialog (not the OS
+          Alert) so the user can revert an accidentally-completed chapter. */}
+      <Modal visible={!!unreadConfirm} transparent animationType="fade" onRequestClose={() => setUnreadConfirm(null)}>
+        <View style={styles.unreadOverlay}>
+          <View style={styles.unreadCard}>
+            <Text style={styles.unreadTitle}>{t('bibleReader.unread.title')}</Text>
+            <Text style={styles.unreadBody}>{t('bibleReader.unread.body')}</Text>
+            <TouchableOpacity
+              style={styles.unreadConfirmBtn}
+              activeOpacity={0.85}
+              onPress={() => {
+                if (unreadConfirm) markUnread(unreadConfirm.bookSlug, unreadConfirm.chapter);
+                setUnreadConfirm(null);
+              }}
+            >
+              <Text style={styles.unreadConfirmText}>{t('bibleReader.unread.confirm')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.unreadCancelBtn} activeOpacity={0.7} onPress={() => setUnreadConfirm(null)}>
+              <Text style={styles.unreadCancelText}>{t('bibleReader.unread.cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Verse toolbar */}
       {selVerse !== null && (
@@ -1850,6 +1880,52 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: LAV,
   },
+  // Mark-as-unread confirmation dialog (app-styled, mirrors StreakScreen's
+  // info card: dim scrim + white rounded card + primary/secondary buttons).
+  unreadOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(30,27,46,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  unreadCard: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 22,
+    paddingTop: 22,
+    paddingBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    elevation: 10,
+  },
+  unreadTitle: {
+    fontSize: 19,
+    fontWeight: '700',
+    color: TXT,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  unreadBody: {
+    fontSize: 14.5,
+    lineHeight: 21,
+    color: TXTSUB,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  unreadConfirmBtn: {
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: ROSE,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  unreadConfirmText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+  unreadCancelBtn: { height: 46, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  unreadCancelText: { color: TXTSUB, fontSize: 15, fontWeight: '600' },
   verseToolbar: {
     position: 'absolute',
     left: 22,

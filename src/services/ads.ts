@@ -12,6 +12,7 @@
 // functions below become silent no-ops.
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logEvent } from './firebase';
 
 let mobileAdsFn: any = null;
 let InterstitialAdCls: any = null;
@@ -98,5 +99,6 @@ export function maybeShowInterstitial(): void {
   try {
     interstitial.show();
     lastShownAt = now;
+    logEvent('ad_impression', { format: 'interstitial' });
   } catch { /* if show fails, the CLOSED/ERROR handlers will reload */ }
 }

@@ -151,16 +151,22 @@ export default function SignInSheet({ onClose, onError }: Props) {
           <Text style={styles.providerText}>{t('signIn.google')}</Text>
         </ProviderButton>
 
-        <ProviderButton
-          onPress={onFacebook}
-          style={[styles.providerBtn, styles.providerBtnFb]}
-          busy={busy === 'facebook'}
-          disabled={busy !== null}
-          spinnerColor="#fff"
-          glyph={<FacebookGlyph />}
-        >
-          <Text style={[styles.providerText, { color: '#fff' }]}>{t('signIn.facebook')}</Text>
-        </ProviderButton>
+        {/* Facebook hidden until real FB App ID / clientToken are configured
+            (app.json fbsdk plugin + FACEBOOK_APP_ID). Shipping a button that
+            always fails is worse than not showing it; it auto-reappears once
+            isConfigured.facebook() is true. */}
+        {isConfigured.facebook() && (
+          <ProviderButton
+            onPress={onFacebook}
+            style={[styles.providerBtn, styles.providerBtnFb]}
+            busy={busy === 'facebook'}
+            disabled={busy !== null}
+            spinnerColor="#fff"
+            glyph={<FacebookGlyph />}
+          >
+            <Text style={[styles.providerText, { color: '#fff' }]}>{t('signIn.facebook')}</Text>
+          </ProviderButton>
+        )}
 
         <LegalText
           template={t('signIn.legal')}

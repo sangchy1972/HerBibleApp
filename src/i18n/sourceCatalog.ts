@@ -385,6 +385,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
 
   // ─── Past Verses screen ──────────────────────────────────────────────────
   'pastVerses.title':              { en: 'Verses of the Day', context: 'Screen title — history of daily verses.' },
+  'pastVerses.prayAgain':          { en: 'Pray again →', context: 'Tappable affordance on each past-day card; opens that day\'s full devotional flow as a replay.' },
   'pastVerses.today':              { en: 'Today',          context: 'Date pill on the most recent card.' },
   'pastVerses.yesterday':          { en: 'Yesterday',      context: 'Date pill on the second-most-recent card.' },
 
@@ -746,7 +747,11 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'bibleReader.reader.font':       { en: 'Font',           context: 'Section header for font-family chooser.' },
   'bibleReader.reader.theme':      { en: 'Theme',          context: 'Section header for theme color chooser.' },
   'bibleReader.markComplete':      { en: 'Mark as Complete', context: 'Button at the bottom of each chapter that promotes the chapter to "read".' },
-  'bibleReader.chapterCompleted':  { en: 'Chapter completed', context: 'Disabled state of the Mark-as-Complete button once tapped.' },
+  'bibleReader.chapterCompleted':  { en: 'Chapter completed', context: 'State of the Mark-as-Complete button once tapped; tapping again offers to mark unread.' },
+  'bibleReader.unread.title':      { en: 'Mark as unread?', context: 'Title of the confirmation dialog shown when tapping an already-completed chapter button.' },
+  'bibleReader.unread.body':      { en: 'This will remove this chapter from your reading progress. You can mark it complete again anytime.', context: 'Body of the mark-as-unread confirmation dialog.' },
+  'bibleReader.unread.confirm':    { en: 'Yes, mark unread', context: 'Confirm button in the mark-as-unread dialog.' },
+  'bibleReader.unread.cancel':     { en: 'No, keep it', context: 'Cancel button in the mark-as-unread dialog.' },
   'bibleReader.toast.daysRead':    { en: 'Your days read +1', context: 'Toast when Mark-as-Complete fires the first chapter of the day.' },
   'bibleReader.stillDownloading':  { en: '{name} is still downloading. This page will update automatically when it’s ready.', context: 'Notice shown in the Bible reader when the user opened it while the just-chosen language’s Bible is still downloading. {name} = Bible version native name. It auto-swaps in when the download completes.' },
   'bibleReader.toast.threeMinutes':{ en: '3 minutes of reading · counted toward Days Read', context: 'Toast after 3 minutes of dwell time crosses the threshold.' },
@@ -804,7 +809,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'profile.signOut.confirmCancel': { en: 'Cancel',         context: 'Cancel button in sign-out confirmation alert.' },
   'profile.signOut.confirmConfirm':{ en: 'Sign out',       context: 'Destructive confirm button in sign-out alert.' },
   'profile.version':               { en: 'Her Bible · v{version}', context: 'App version footer. {version} is the numeric version like "1.0.0".' },
-  'profile.shareApp.message':      { en: 'Her Bible — daily verses, prayer flows, and quiet moments with Scripture.\n\n{url}', context: 'Body of the system share-app message. {url} is the store URL on its own line so chat apps render a rich preview card.' },
+  'profile.shareApp.message':      { en: 'Her Bible is your daily companion for staying close to God. Find rest for an anxious heart, comfort when you feel alone, and quiet strength in His Word — with daily verses, guided morning and evening prayers, and reading plans that meet you right where you are. Download Her Bible free on Google Play:\n\n{url}', context: 'Body of the system share-app message. Warm, invitational (~55 words, under 60). Must start with the brand name "Her Bible", speak to closeness with God / rest / comfort / companionship, and tell the recipient to download on Google Play. {url} is the Play Store URL on its own line so chat apps render a rich preview card.' },
 
   // ─── Rate prompt sheet ───────────────────────────────────────────────────
   'rate.title':                    { en: 'Hello, are you enjoying Her Bible?', context: 'Rate-app prompt title.' },
@@ -865,6 +870,10 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'plan.verseRead.back':           { en: 'BACK TO PLAN',                                          context: 'Top-left back button on PlanVerseRead. All-caps for chip styling.' },
   'plan.verseRead.chapter':        { en: 'CHAPTER {n}',                                           context: 'Caption above the verses on PlanVerseRead. All-caps eyebrow style.' },
   'plan.dayDone.shareProgress':    { en: 'Share progress',                                        context: 'Button on the PlanDayDone celebration screen. Opens share sheet with the day completion.' },
+  'prayer.pastPrompt.title':       { en: 'Morning prayer opens at 6 AM',                          context: 'Title of the dialog shown when tapping the verse card between midnight and 6 AM (before morning prayer opens).' },
+  'prayer.pastPrompt.body':        { en: 'Would you like to see past verses?', context: 'Body of the pre-dawn dialog — directly asks whether to open past verses.' },
+  'prayer.pastPrompt.confirm':     { en: 'See past verses',                                       context: 'Confirm button — opens the past verses screen.' },
+  'prayer.pastPrompt.cancel':      { en: 'Not now',                                               context: 'Dismiss button on the pre-dawn dialog.' },
   'gp.section':                    { en: 'Gospel & Psalm',                                        context: 'Home-screen section title for the 89-day Gospels & Psalms reading plan, between the prayer CTA and Plans In Progress.' },
   'gp.cardTitle':                  { en: 'Gospel & Psalm ({day}/{total})',                        context: 'Title on each Gospel & Psalm home card. {day}=current plan day, {total}=89.' },
   'gp.morning':                    { en: 'Morning',                                               context: 'Label marking the morning Gospel & Psalm card (Gospel chapter + psalm).' },

@@ -801,10 +801,9 @@ function renderMarkdownBolds(s: string): React.ReactNode {
   let m;
   while ((m = re.exec(s)) !== null) {
     if (m.index > cursor) out.push(s.slice(cursor, m.index));
-    // Lora 600 per user — bare fontWeight:'700' fell back to the system
-    // sans bold, visually clashing with the serif body around it. (loraBold
-    // must pair with '600': '700' drops Lora entirely on Android.)
-    out.push(<Text key={m.index} style={{ fontFamily: FONTS.loraBold, fontWeight: '600' }}>{m[1]}</Text>);
+    // Merriweather bold per user — matches the Merriweather body face so the
+    // bold run reads as the same serif, just heavier (no font-family switch).
+    out.push(<Text key={m.index} style={{ fontFamily: FONTS.merriweatherBold, fontWeight: '700' }}>{m[1]}</Text>);
     cursor = m.index + m[0].length;
   }
   if (cursor < s.length) out.push(s.slice(cursor));

@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg';
 import LottieView from 'lottie-react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withDelay, withRepeat, withSequence,
@@ -19,6 +19,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ROSE, LAV, TXT, TXTSUB, FONTS } from '../constants/theme';
 import { maybeShowInterstitial } from '../services/ads';
+import { logEvent } from '../services/firebase';
 import { usePrayer } from '../state/PrayerContext';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useNotes } from '../state/NotesContext';
@@ -53,6 +54,13 @@ import type { RootStackScreenProps } from '../navigation/types';
 
 const { width, height } = Dimensions.get('window');
 const SECTIONS = ['verse', 'meditation', 'action', 'prayer'];
+
+// Top padding for the deep pages (Reflection / Today's Practice / Closing
+// Prayer), measured BELOW the safe-area inset. Scales with screen height so
+// short phones don't get a huge top gap: ~100 px on a tall phone (height
+// ≈910), ~73 px on a small one (≈667), clamped to a sane 64–104 range so
+// tablets don't overshoot. Was a fixed 140 (too low on every device per user).
+const DEEP_PAGE_TOP = Math.round(Math.max(64, Math.min(104, height * 0.11)));
 
 function FlowPage({ children }: { children: React.ReactNode }) {
   return <View style={[styles.flowPage, { height }]}>{children}</View>;
@@ -218,6 +226,21 @@ function Sparkle({ size = 18 }: { size?: number }) {
   );
 }
 
+// "Person reading aloud" — head + shoulders + two sound-wave arcs. Replaces
+// the old headphones glyph on the narration (Listen) button per user.
+function ReaderGlyph({ size = 22, color }: { size?: number; color: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={9} cy={7} r={3} fill={color} />
+      {/* shoulders / upper body */}
+      <Path d="M3.5 19c0-3.3 2.4-5.5 5.5-5.5s5.5 2.2 5.5 5.5Z" fill={color} />
+      {/* sound waves to the right (speaking) */}
+      <Path d="M17.5 8.5c1.3 1.3 1.3 5.7 0 7" stroke={color} strokeWidth={1.7} strokeLinecap="round" />
+      <Path d="M20 6.5c2.2 2.2 2.2 8.8 0 11" stroke={color} strokeWidth={1.7} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'PrayerFlow'>) {
   const insets = useSafeAreaInsets();
   const t = useT();
@@ -228,10 +251,17 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const { notifRationaleShown, markNotifRationaleShown } = useOnboarding();
   const { kind } = route.params;
   const morning = kind === 'morning';
+  // Past-day replay: when a specific `day` is passed (from See Past Days), we
+  // render THAT day's devotional from the CDN and treat the whole session as a
+  // pure re-read — no completion recorded, no streak, no ad, no celebration.
+  // The Amen button still works, it just exits without counting (per user:
+  // "can re-read, just can't Amen [for credit]").
+  const replayDay = route.params.day ?? null;
+  const isReplay = replayDay != null;
   // Capture whether this slot was already completed BEFORE this flow started.
-  // If so, this is a re-do and the celebration screens (weekly progress + set
-  // reminder sheet) are skipped — the user just wanted to revisit the prayer.
-  const isRedoRef = useRef<boolean>(morning ? mDone : eDone);
+  // If so (or if this is a past-day replay), it's a re-do and the celebration
+  // screens (weekly progress + set reminder sheet) are skipped.
+  const isRedoRef = useRef<boolean>(isReplay || (morning ? mDone : eDone));
   // Capture whether this is the user's first-ever prayer of any kind. We
   // freeze the value at flow mount so markDone (which fires inside the flow)
   // doesn't flip it before we get to the Continue branch.
@@ -246,7 +276,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const labels = dailyLabels(translation.code);
   // Pull today's verse for the segment we entered with. Bundled fallback
   // covers the first 3 days offline; the CDN file expands to 60 once cached.
-  const dailyVerse = getVerse(todayDay, morning ? 'morning' : 'evening');
+  const dailyVerse = getVerse(replayDay ?? todayDay, morning ? 'morning' : 'evening');
   // The corpus stores English book names; localize for the active translation
   // so Chinese / Spanish / Portuguese / etc. readers see "創世記 1:2" instead
   // of "Genesis 1:2" under the daily-verse heading.
@@ -321,6 +351,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     if (!audioSource) return;
     try {
       audioPlayer.loop = true;
+      audioPlayer.volume = 0.8;        // bg music −20% per user (sits under the voice)
       if (musicOn) audioPlayer.play();
       else audioPlayer.pause();
     } catch {}
@@ -464,10 +495,26 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   useEffect(() => {
     if (!readUris) return;
     try {
+      // Voice tuning per user: 1.1× speed (pitch-corrected so it doesn't
+      // sound sped-up) and full volume (caps at 1.0 — louder than the 0.8 bg
+      // music, realizing the "voice up / music down" balance).
+      readPlayer.volume = 1.0;
+      try { readPlayer.setPlaybackRate(1.1, 'high'); } catch { try { (readPlayer as any).playbackRate = 1.1; } catch {} }
       if (listenOn) readPlayer.play();
       else readPlayer.pause();
     } catch {}
   }, [listenOn, listenStep, readUris, readPlayer]);
+
+  // Auto-start narration 1s after the clips are ready — no tap needed (per
+  // user). Fires once; the bg music already auto-plays via musicOn. If the
+  // narration isn't available (non-EN UI, fetch failed) this simply no-ops.
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (!readUris || autoStartedRef.current) return;
+    autoStartedRef.current = true;
+    const t = setTimeout(() => setListenOn(true), 1000);
+    return () => clearTimeout(t);
+  }, [readUris]);
 
   // Auto-advance: a finished clip scrolls to + plays the next step. Stops
   // (without auto-Amen) after the closing prayer.
@@ -645,8 +692,12 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
       withTiming(1, { duration: T_BTN, easing: Easing.out(Easing.cubic) }));
 
     // Lock in "this prayer is done" immediately so a force-close still counts.
-    markDone(kind);
-    markToday();
+    // Skipped entirely for a past-day replay — it must not mark TODAY's slot
+    // complete or touch the streak.
+    if (!isReplay) {
+      markDone(kind);
+      markToday();
+    }
 
     // Enable the Continue button only once it's visible
     const btnTimer = setTimeout(
@@ -670,10 +721,13 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
 
   const handleAmen = () => {
     setAmened(true);
-    // Interstitial at this natural break — the congrats scene renders beneath
-    // it, so closing the ad returns the user straight to it. Frequency-capped +
-    // remove-ads-aware inside the service.
-    maybeShowInterstitial();
+    if (!isReplay) {
+      logEvent('prayer_complete', { slot: morning ? 'morning' : 'evening' });
+      // Interstitial at this natural break — the congrats scene renders beneath
+      // it, so closing the ad returns the user straight to it. Frequency-capped +
+      // remove-ads-aware inside the service.
+      maybeShowInterstitial();
+    }
   };
 
   const closeFlow = () => navigation.goBack();
@@ -807,10 +861,12 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                 style={[styles.chromeBtn, styles.chromeBtnWhite, !readUris && { opacity: 0.5 }]}
                 disabled={!readUris}
               >
-                {/* White button → dark icon (slot tint) so it reads on the
-                    light fill, distinguishing the narration control from the
-                    dark close/music buttons beside it. */}
-                <Feather name={listenOn ? 'pause' : 'headphones'} size={20} color={morning ? ROSE : LAV} />
+                {/* White button → dark icon (slot tint). Idle shows a
+                    "person reading aloud" glyph (per user); playing shows pause
+                    so the user can stop the narration. */}
+                {listenOn
+                  ? <Feather name="pause" size={20} color={morning ? ROSE : LAV} />
+                  : <ReaderGlyph size={22} color={morning ? ROSE : LAV} />}
               </TouchableOpacity>
             )}
           </View>
@@ -881,7 +937,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >
-              <Animated.View style={[styles.pageContent, styles.meditationContent, { paddingTop: insets.top + 140 }, meditationAnim]}>
+              <Animated.View style={[styles.pageContent, styles.meditationContent, { paddingTop: insets.top + DEEP_PAGE_TOP }, meditationAnim]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption]}>{meditationCaption}</Text>
                 {meditationParas.map((p, i) => (
                   <HighlightedText
@@ -906,7 +962,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >
-              <Animated.View style={[styles.pageContent, { paddingTop: insets.top + 140 }, actionAnim]}>
+              <Animated.View style={[styles.pageContent, { paddingTop: insets.top + DEEP_PAGE_TOP }, actionAnim]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption]}>{actionCaption}</Text>
                 <HighlightedText
                   text={actionBody}
@@ -936,7 +992,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >
-              <Animated.View style={[styles.pageContent, styles.prayerPagePad, { paddingTop: insets.top + 140 }, prayerAnim]}>
+              <Animated.View style={[styles.pageContent, styles.prayerPagePad, { paddingTop: insets.top + DEEP_PAGE_TOP }, prayerAnim]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption, styles.prayerCaption]}>{prayerCaption}</Text>
                 <HighlightedText
                   text={prayerBody}
@@ -1296,8 +1352,9 @@ const styles = StyleSheet.create({
   // stay on Lato). Weight 600 sits just under the Lora_700Bold cut so
   // Android keeps the custom face instead of falling back to system sans.
   prayerCaption: {
-    fontFamily: FONTS.loraBold,
-    fontWeight: '600',
+    // Font intentionally NOT overridden — inherits pageCaption's Lato bold so
+    // "Closing Prayer" matches the Reflection / Today's Practice titles (the
+    // old loraBold override made this one title look different — user bug).
   },
   meditationContent: {
     paddingBottom: 280,

@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BUNDLED_DAILY_VERSES, type DailyVerse } from '../constants/dailyVersesBundled';
 import { DAILY_VERSES_VERSION, dailyVersesUrl, holidayVersesUrl } from '../constants/dailyVersesCdn';
-import { getSessionToken, invalidateSessionToken } from './attestService';
 import type { LanguageCode } from '../state/TranslationsContext';
 
 // Cache keys are scoped by the content version so a republish (bumping
@@ -79,26 +78,14 @@ export async function getCachedDailyVerses(lang: LanguageCode): Promise<FullDail
   }
 }
 
-// Attested GET against the Worker, refreshing the session token once on a
-// 401 (the Worker rotated its signing secret, or the cached token aged
-// out). Mirrors featuredPlansService.authedFetch — daily verses now live
-// behind the same device-attestation gate as plans.
-async function authedFetch(url: string): Promise<Response> {
-  const token = await getSessionToken();
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  if (res.status !== 401) return res;
-  await invalidateSessionToken();
-  const fresh = await getSessionToken();
-  return fetch(url, { headers: { Authorization: `Bearer ${fresh}` } });
-}
-
-// One-shot fetch: pulls the per-language file (attested), slims it, caches
-// it. Throws on network/auth/parse error so the caller can decide whether
-// to retry. The bundled fallback covers the offline + not-yet-attested
-// cases, so failures here are non-fatal.
+// One-shot fetch: pulls the per-language file (public, R2-direct), slims it,
+// caches it. Throws on network/parse error so the caller can decide whether to
+// retry. The bundled fallback covers the offline case, so failures are
+// non-fatal. No attestation: verses moved to the public covers path (same as
+// holiday verses) because the attested Worker had no /v1/verses/ route.
 export async function fetchAndCacheDailyVerses(lang: LanguageCode): Promise<FullDailyVerse[]> {
   const url = dailyVersesUrl(lang);
-  const res = await authedFetch(url);
+  const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
   const text = await res.text();
   const parsed = parseUpstream(text, lang);

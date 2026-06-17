@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { onAuthChanged, googleSignIn, facebookSignIn, firebaseSignOut, type AuthUser } from '../services/firebaseAuth';
-import { setAnalyticsUser } from '../services/firebase';
+import { setAnalyticsUser, logEvent } from '../services/firebase';
 
 export interface User {
   uid?: string;          // Firebase UID when signed in via Firebase (Google); undefined for legacy local sign-ins
@@ -64,15 +64,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = useCallback(async () => {
     await googleSignIn();   // onAuthChanged fires with the new user
+    logEvent('login', { method: 'google' });
   }, []);
 
   const signInWithFacebook = useCallback(async () => {
     await facebookSignIn();   // onAuthChanged fires with the new user
+    logEvent('login', { method: 'facebook' });
   }, []);
 
   const signIn = useCallback((u: User) => {
     setLocalUser(u);
     AsyncStorage.setItem(LOCAL_USER_KEY, JSON.stringify(u)).catch(() => {});
+    logEvent('login', { method: 'apple' });   // legacy local path = Apple today
   }, []);
 
   const signOut = useCallback(() => {

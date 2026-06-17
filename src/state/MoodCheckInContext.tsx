@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Mood } from '../components/MoodEmoji';
+import { logEvent } from '../services/firebase';
 
 const STORAGE_KEY = 'mood:v1';
 const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
@@ -63,11 +64,14 @@ export function MoodCheckInProvider({ children }: { children: React.ReactNode })
         return Date.now() - state.lastShownAt >= EIGHT_HOURS_MS;
       },
       markShown: () => persist({ ...state, lastShownAt: Date.now() }),
-      recordPick: (mood) => persist({
-        ...state,
-        picks: { ...state.picks, [today]: mood },
-        lastShownAt: Date.now(),
-      }),
+      recordPick: (mood) => {
+        logEvent('mood_check_in', { mood });
+        persist({
+          ...state,
+          picks: { ...state.picks, [today]: mood },
+          lastShownAt: Date.now(),
+        });
+      },
     };
   }, [state, ready]);
 

@@ -69,6 +69,7 @@ interface Row {
   text: string;
   verseLabel: string | null;  // e.g. "9" or "1-3" — rendered as a superscript
   date: string;
+  day: number;                // day-of-cycle, passed to PrayerFlow for replay
 }
 
 export default function PastVersesScreen({ navigation }: RootStackScreenProps<'PastVerses'>) {
@@ -99,6 +100,7 @@ export default function PastVersesScreen({ navigation }: RootStackScreenProps<'P
           text: v.modernText,
           verseLabel: v.reference.verse ? String(v.reference.verse) : null,
           date: label,
+          day: dayOfCycle,
         });
       }
     }
@@ -123,7 +125,14 @@ export default function PastVersesScreen({ navigation }: RootStackScreenProps<'P
         {rows.map(r => {
           const isMorning = r.segment === 'morning';
           return (
-            <View key={r.key} style={styles.card}>
+            // Tapping the card opens that day's FULL devotional flow as a
+            // read-only replay (loads from CDN; no completion/streak recorded).
+            <TouchableOpacity
+              key={r.key}
+              style={styles.card}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('PrayerFlow', { kind: r.segment, day: r.day })}
+            >
               <View style={styles.cardHead}>
                 <View style={styles.cardHeadLeft}>
                   {isMorning ? <SunGlyph color={TXT} /> : <MoonGlyph color={TXT} />}
@@ -138,11 +147,12 @@ export default function PastVersesScreen({ navigation }: RootStackScreenProps<'P
               </Text>
 
               <View style={styles.cardFoot}>
+                <Text style={styles.prayAgain}>{t('pastVerses.prayAgain')}</Text>
                 <TouchableOpacity onPress={() => setShareTarget(r)} hitSlop={8} style={styles.footBtn}>
                   <ShareGlyph color={TXTSUB} />
                 </TouchableOpacity>
               </View>
-            </View>
+            </TouchableOpacity>
           );
         })}
       </ScrollView>
@@ -197,11 +207,13 @@ const styles = StyleSheet.create({
   verseNumber: { fontSize: 12, color: TXTSUB, fontWeight: '600' },
   cardFoot: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 12,
     gap: 18,
   },
   footBtn: { padding: 6 },
+  // "Pray again →" affordance on each past card, signalling it's tappable to
+  // re-enter that day's full devotional flow.
+  prayAgain: { fontSize: 13, fontWeight: '700', color: ROSE, letterSpacing: 0.2 },
 });
-
-void ROSE;

@@ -1,7 +1,11 @@
+import { Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { File, Directory, Paths } from 'expo-file-system';
 import { LOADING_IMAGE_FILES, loadingImageUrl } from '../constants/loadingImages';
 import { LOADING_LINES_COUNT } from '../constants/loadingContent';
+import { cfImage } from './cfImage';
+
+const SCREEN_W = Dimensions.get('window').width;
 
 // Loading-screen rotation + image cache.
 //
@@ -53,7 +57,20 @@ async function downloadIfMissing(filename: string): Promise<void> {
     if (f.exists) return;
     const parent = f.parentDirectory;
     if (!parent.exists) parent.create({ intermediates: true, idempotent: true });
-    await File.downloadFileAsync(loadingImageUrl(filename), f);
+    const raw = loadingImageUrl(filename);
+    // Prefer a Cloudflare screen-width variant (~100-200 KB) over the multi-MB
+    // original — a loading screen shouldn't pull a 6 MB photo. If Image
+    // Transformations aren't enabled on the zone, that URL errors, so fall back
+    // to the raw original. Either way we end up with a usable cached file.
+    const sized = cfImage(raw, SCREEN_W);
+    try {
+      await File.downloadFileAsync(sized, f);
+    } catch {
+      // A failed first attempt can leave a partial file → delete before the
+      // raw retry so downloadFileAsync doesn't throw on an existing target.
+      try { if (f.exists) f.delete(); } catch {}
+      if (sized !== raw) await File.downloadFileAsync(raw, f);
+    }
   } catch { /* offline / not uploaded yet → fallback image is used */ }
 }
 

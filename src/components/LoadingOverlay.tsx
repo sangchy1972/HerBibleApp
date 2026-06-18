@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Image, ImageBackground, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS, Easing } from 'react-native-reanimated';
-import { FONTS } from '../constants/theme';
+import { FONTS, TXT, TXTSUB } from '../constants/theme';
 import { useUILanguage } from '../state/UILanguageContext';
+import { useReminderInterstitial } from '../state/ReminderInterstitialContext';
+import { useOnboarding } from '../state/OnboardingContext';
 import { localeFor } from '../i18n/locale';
 import { LOADING_LINES } from '../constants/loadingContent';
-import { LOADING_FALLBACK_IMG, LOADING_IMAGE_FILES } from '../constants/loadingImages';
+import { LOADING_IMAGE_FILES } from '../constants/loadingImages';
 import {
   advanceRotation, lineIndexFor, imageFileFor, cachedLoadingImage, warmLoadingPool,
 } from '../services/loadingCache';
@@ -14,6 +16,8 @@ import {
 const { height } = Dimensions.get('window');
 const APP_ICON = require('../../assets/icon.png');
 const MIN_VISIBLE_MS = 2000;   // show for at least 2s (per user)
+const MIN_SKIP_MS = 800;       // shorter floor when FollowHim is queued (avoid a sub-half-second flash)
+const MAX_VISIBLE_MS = 6000;   // safety cap — never let the loading page hang
 
 // English ordinal suffix ("17th"); other locales use their own date format.
 function enOrdinal(d: number): string {
@@ -36,28 +40,53 @@ interface Props {
 }
 
 // Full-screen launch loading page: rotating background photo + a hymn/quote
-// line under today's date, brand mark at the bottom. Stays up for at least 2s
-// AND until the app is ready (so slow devices never flash a half-built screen),
-// then fades out. Lines are bundled; images are CDN-cached with a tiny bundled
-// fallback for the very first launch.
+// line under today's date, brand mark at the bottom. Stays up for ≥2s AND until
+// the app is ready (slow devices never flash a half-built screen), then fades.
+// When no CDN photo is cached yet (e.g. fresh install) it falls back to a
+// white→pink silk gradient with dark text — the app's only launch screen now
+// (the old "Connect with God" onboarding cover was removed). If the returning-
+// user notification opt-in (FollowHim) is about to show, the 2s floor is
+// skipped so the entry flow doesn't get too long.
 export default function LoadingOverlay({ appReady, onHide }: Props) {
   const { lang } = useUILanguage();
+  const reminder = useReminderInterstitial();
+  const onboarding = useOnboarding();
   const [rot, setRot] = useState<number | null>(null);
   const [minElapsed, setMinElapsed] = useState(false);
+  const [imgBroken, setImgBroken] = useState(false);
   const opacity = useSharedValue(1);
+  const hidingRef = useRef(false);
 
-  // Advance rotation once, then warm the image pool (current + next) in bg.
+  const [shortElapsed, setShortElapsed] = useState(false);
   useEffect(() => { advanceRotation().then(n => { setRot(n); warmLoadingPool(n).catch(() => {}); }); }, []);
   useEffect(() => { const tm = setTimeout(() => setMinElapsed(true), MIN_VISIBLE_MS); return () => clearTimeout(tm); }, []);
+  useEffect(() => { const tm = setTimeout(() => setShortElapsed(true), MIN_SKIP_MS); return () => clearTimeout(tm); }, []);
 
-  // Dismiss once BOTH the floor time has passed and the app is ready.
+  // Single-shot fade — guarded so the dismiss effect and the safety cap can't
+  // restart the animation or call onHide twice.
+  const fadeOut = React.useCallback(() => {
+    if (hidingRef.current) return;
+    hidingRef.current = true;
+    opacity.value = withTiming(0, { duration: 420, easing: Easing.in(Easing.quad) }, (fin) => {
+      if (fin) runOnJS(onHide)();
+    });
+  }, [opacity, onHide]);
+
+  // "Real app is rendered" = nav reported ready AND both gating contexts have
+  // hydrated (RootNavigator returns null until these are ready, so without this
+  // the overlay could fade to a blank screen on a slow device).
+  const contextsReady = appReady && reminder.ready && onboarding.ready;
+  // Skip the 2s floor when FollowHim (notification opt-in) is queued, so we
+  // don't stack loading + opt-in into a long entry.
+  const skipFloor = reminder.ready && reminder.shouldShow;
   useEffect(() => {
-    if (minElapsed && appReady) {
-      opacity.value = withTiming(0, { duration: 420, easing: Easing.in(Easing.quad) }, (fin) => {
-        if (fin) runOnJS(onHide)();
-      });
-    }
-  }, [minElapsed, appReady, opacity, onHide]);
+    // Normal: ≥2s floor. FollowHim queued: shorter 0.8s floor (not 0, so the
+    // brand page never flashes for a fraction of a second).
+    if ((minElapsed || (skipFloor && shortElapsed)) && contextsReady) fadeOut();
+  }, [minElapsed, skipFloor, shortElapsed, contextsReady, fadeOut]);
+
+  // Hard safety cap — force away even if the app never signals ready.
+  useEffect(() => { const cap = setTimeout(fadeOut, MAX_VISIBLE_MS); return () => clearTimeout(cap); }, [fadeOut]);
 
   const fade = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
@@ -65,57 +94,59 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   const line = LOADING_LINES[idx];
   const imgFile = rot != null ? imageFileFor(rot) : LOADING_IMAGE_FILES[0];
   const cachedUri = cachedLoadingImage(imgFile);
-  const bgSource = cachedUri ? { uri: cachedUri } : LOADING_FALLBACK_IMG;
+  const onPhoto = !!cachedUri && !imgBroken;   // a broken cached file falls back to the gradient
+  const fg = onPhoto ? '#FFFFFF' : TXT;          // text color adapts to backdrop
+  const fgSub = onPhoto ? 'rgba(255,255,255,0.85)' : TXTSUB;
 
   const sentence = line.text[lang] || line.text.en || '';
   const source = line.source ? (line.source[lang] || line.source.en || null) : null;
 
   return (
     <Animated.View style={[StyleSheet.absoluteFillObject, styles.root, fade]}>
-      <ImageBackground source={bgSource} style={StyleSheet.absoluteFillObject} resizeMode="cover">
-        {/* Dark scrim top→bottom so white text stays legible on any photo. */}
+      {onPhoto ? (
+        <ImageBackground source={{ uri: cachedUri! }} style={StyleSheet.absoluteFillObject} resizeMode="cover" onError={() => setImgBroken(true)}>
+          <LinearGradient
+            colors={['rgba(10,8,24,0.55)', 'rgba(10,8,24,0.30)', 'rgba(10,8,24,0.65)']}
+            locations={[0, 0.5, 1]}
+            style={StyleSheet.absoluteFillObject}
+          />
+        </ImageBackground>
+      ) : (
+        // White → soft pink silk gradient (no hard colour boundary) — the
+        // default backdrop when no photo is cached yet.
         <LinearGradient
-          colors={['rgba(10,8,24,0.55)', 'rgba(10,8,24,0.30)', 'rgba(10,8,24,0.65)']}
-          locations={[0, 0.5, 1]}
+          colors={['#FFFFFF', '#FFF6FA', '#FCE3EE', '#F6CFE0']}
+          locations={[0, 0.4, 0.74, 1]}
           style={StyleSheet.absoluteFillObject}
         />
+      )}
 
-        {/* Date + line, seated in the upper third like the reference design. */}
-        <View style={[styles.textBlock, { top: height * 0.20 }]}>
-          <Text style={styles.date}>{dateLine(lang)}</Text>
-          <Text style={styles.sentence}>{sentence}</Text>
-          {source ? <Text style={styles.source}>— {source}</Text> : null}
-        </View>
+      {/* Date + line, seated in the upper third like the reference design. */}
+      <View style={[styles.textBlock, { top: height * 0.20 }]}>
+        <Text style={[styles.date, { color: fg }]}>{dateLine(lang)}</Text>
+        <Text style={[styles.sentence, { color: fg }]}>{sentence}</Text>
+        {source ? <Text style={[styles.source, { color: fgSub }]}>— {source}</Text> : null}
+      </View>
 
-        {/* Brand mark at the bottom: pink app logo + "Her Bible". */}
-        <View style={styles.brand}>
-          <Image source={APP_ICON} style={styles.brandLogo} />
-          <Text style={styles.brandName}>Her Bible</Text>
-        </View>
-      </ImageBackground>
+      {/* Brand mark at the bottom: pink app logo + "Her Bible". */}
+      <View style={styles.brand}>
+        <Image source={APP_ICON} style={styles.brandLogo} />
+        <Text style={[styles.brandName, { color: fg }]}>Her Bible</Text>
+      </View>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { backgroundColor: '#0A0818', zIndex: 1000, elevation: 1000 },
+  root: { backgroundColor: '#FFFFFF', zIndex: 1000, elevation: 1000 },
   textBlock: { position: 'absolute', left: 28, right: 28, alignItems: 'center' },
   date: {
     fontFamily: FONTS.merriweatherBold, fontSize: 26, fontWeight: '700',
-    color: '#FFFFFF', textAlign: 'center', marginBottom: 16,   // larger after-gap than the reference per user
+    textAlign: 'center', marginBottom: 16,   // larger after-gap than the reference per user
   },
-  sentence: {
-    fontFamily: FONTS.merriweather, fontSize: 22, lineHeight: 32,
-    color: 'rgba(255,255,255,0.96)', textAlign: 'center',
-  },
-  source: {
-    fontFamily: FONTS.merriweather, fontSize: 16, lineHeight: 24,
-    color: 'rgba(255,255,255,0.82)', textAlign: 'center', marginTop: 14,
-  },
-  brand: {
-    position: 'absolute', left: 0, right: 0, bottom: 54,
-    alignItems: 'center', justifyContent: 'center',
-  },
+  sentence: { fontFamily: FONTS.merriweather, fontSize: 22, lineHeight: 32, textAlign: 'center' },
+  source: { fontFamily: FONTS.merriweather, fontSize: 16, lineHeight: 24, textAlign: 'center', marginTop: 14 },
+  brand: { position: 'absolute', left: 0, right: 0, bottom: 54, alignItems: 'center', justifyContent: 'center' },
   brandLogo: { width: 44, height: 44, borderRadius: 12, marginBottom: 8 },
-  brandName: { fontFamily: FONTS.merriweatherBold, fontSize: 18, fontWeight: '700', color: '#FFFFFF', letterSpacing: 0.4 },
+  brandName: { fontFamily: FONTS.merriweatherBold, fontSize: 18, fontWeight: '700', letterSpacing: 0.4 },
 });

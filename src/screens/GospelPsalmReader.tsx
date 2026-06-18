@@ -13,6 +13,7 @@ import { useGospelsPsalms } from '../state/GospelsPsalmsContext';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useTranslation } from '../state/TranslationsContext';
 import { fetchChapter, type Verse } from '../services/bibleService';
+import { localizeBookName } from '../constants/bibleBookNames';
 import { useT } from '../i18n/useT';
 import { logEvent } from '../services/firebase';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -39,10 +40,12 @@ function rangeText(verses: Verse[], ref?: PsalmRef): string {
   return vs.map(v => v.text.trim()).join('\n');
 }
 
-function psalmReference(ref: PsalmRef): string {
+// `psalmBook` = the localized name for Psalms (e.g. "诗篇"), so the reference
+// line follows the UI language instead of always reading "Psalms".
+function psalmReference(ref: PsalmRef, psalmBook: string): string {
   return ref.vStart != null && ref.vEnd != null
-    ? `Psalms ${ref.chapter}:${ref.vStart}-${ref.vEnd}`
-    : `Psalms ${ref.chapter}`;
+    ? `${psalmBook} ${ref.chapter}:${ref.vStart}-${ref.vEnd}`
+    : `${psalmBook} ${ref.chapter}`;
 }
 
 export default function GospelPsalmReader({ route, navigation }: RootStackScreenProps<'GospelPsalm'>) {
@@ -58,12 +61,15 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
   const [sections, setSections] = useState<Section[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [retry, setRetry] = useState(0);   // bump to re-run the fetch after a failure
 
   // Background music — ambient (NOT the spoken narration). Per user, this must
   // sound DIFFERENT from the Verse-card music (which plays this slot's track),
   // so we deliberately pull the OPPOSITE slot's track. Auto-plays on enter.
+  // Memoized so the source object identity is stable — otherwise useAudioPlayer
+  // rebuilds the player on every render (stutter / leaked handles).
   const musicSlot = morning ? 'evening' : 'morning';
-  const audioSource = prayerBg.audioFor(musicSlot);
+  const audioSource = useMemo(() => prayerBg.audioFor(musicSlot), [prayerBg, musicSlot]);
   const player = useAudioPlayer(audioSource ?? null);
   const [musicOn, setMusicOn] = useState(true);   // auto-play on enter
   useEffect(() => {
@@ -85,12 +91,13 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
     setFailed(false);
     (async () => {
       try {
+        const psalmBook = localizeBookName(translation.code, 'psalms', 'Psalms');
         const out: Section[] = [];
         if (morning) {
           const g = await fetchChapter(translation.code, translation.source, today.gospel.bookSlug, today.gospel.chapter);
           out.push({
             caption: t('gp.gospelsOfDay'),
-            reference: `${today.gospel.bookName} ${today.gospel.chapter}`,
+            reference: `${localizeBookName(translation.code, today.gospel.bookSlug, today.gospel.bookName)} ${today.gospel.chapter}`,
             body: rangeText(g.verses),
           });
         }
@@ -98,7 +105,7 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
         const ps = await fetchChapter(translation.code, translation.source, 'psalms', pref.chapter);
         out.push({
           caption: t('gp.psalmsOfDay'),
-          reference: psalmReference(pref),
+          reference: psalmReference(pref, psalmBook),
           body: rangeText(ps.verses, pref),
         });
         if (!cancelled) setSections(out);
@@ -107,7 +114,7 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
       }
     })();
     return () => { cancelled = true; };
-  }, [morning, today, translation.code, translation.source]);
+  }, [morning, today, translation.code, translation.source, retry]);
 
   // Prefetch caching: warm BOTH today's full set and TOMORROW's into the
   // fetchChapter AsyncStorage cache (fire-and-forget). Per user — so a user
@@ -167,6 +174,13 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
       {failed && (
         <View style={styles.center}>
           <Text style={styles.errText}>{t('gp.loadError')}</Text>
+          <TouchableOpacity
+            onPress={() => { setFailed(false); setSections(null); setRetry(r => r + 1); }}
+            activeOpacity={0.85}
+            style={[styles.retryBtn, { backgroundColor: accent }]}
+          >
+            <Text style={styles.retryText}>{t('common.retry')}</Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -227,7 +241,9 @@ const styles = StyleSheet.create({
   headerBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 19, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  errText: { fontSize: 15, color: TXTSUB, fontFamily: FONTS.lato },
+  errText: { fontSize: 15, color: TXTSUB, fontFamily: FONTS.lato, textAlign: 'center', paddingHorizontal: 32 },
+  retryBtn: { marginTop: 18, height: 44, borderRadius: 22, paddingHorizontal: 28, alignItems: 'center', justifyContent: 'center' },
+  retryText: { color: '#fff', fontSize: 15, fontWeight: '700', fontFamily: FONTS.latoBold },
   hero: { width: '100%', height: 215, backgroundColor: '#EADFE8' },
   sectionWrap: { paddingHorizontal: P + 7, paddingTop: 26 },
   sectionCaption: {

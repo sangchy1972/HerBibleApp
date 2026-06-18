@@ -29,6 +29,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'common.saved':          { en: 'Saved',          context: 'Past-tense state label for a verse that has been saved. Pairs with common.save.' },
   'common.removed': { en: 'Removed', context: 'Toast shown after removing a saved verse.' },
   'common.copied': { en: 'Copied', context: 'Toast shown after copying verse text to the clipboard.' },
+  'common.retry': { en: 'Try again', context: 'Generic retry button (e.g. on a network-error state).' },
   'common.notes':          { en: 'Notes',          context: 'Plural noun. Opens a notes/journaling input for a verse.' },
   'common.share':          { en: 'Share',          context: 'Verb. Opens the share sheet.' },
   'common.cancel':         { en: 'Cancel',         context: 'Verb. Dismisses a modal / alert without action.' },

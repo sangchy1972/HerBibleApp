@@ -4,7 +4,6 @@ import TabNavigator from './TabNavigator';
 import StreakScreen from '../screens/StreakScreen';
 import PrayerFlow from '../screens/PrayerFlow';
 import GospelPsalmReader from '../screens/GospelPsalmReader';
-import OnboardingScreen from '../screens/OnboardingScreen';
 import MoodFlow from '../screens/MoodFlow';
 import MoodCalendarScreen from '../screens/MoodCalendarScreen';
 import RemoveAdsScreen from '../screens/RemoveAdsScreen';
@@ -31,13 +30,14 @@ import type { RootStackParamList } from './types';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
-  const { ready, done } = useOnboarding();
+  const { ready } = useOnboarding();
   const reminder = useReminderInterstitial();
   // Gate on BOTH ready flags so we never flash the main tabs and then snap
-  // to the interstitial — splash holds until we know which to show.
+  // to the interstitial — the launch LoadingOverlay covers this window.
   if (!ready || !reminder.ready) return null;
 
-  if (!done) return <OnboardingScreen />;
+  // (The old "Connect with God" onboarding cover was removed — the launch
+  // LoadingOverlay is now the only pre-app screen for new users.)
 
   // Returning user (day 2+), notifications still off, not yet shown today →
   // the full-screen "Follow Him" opt-in. Only Skip/Continue dismiss it

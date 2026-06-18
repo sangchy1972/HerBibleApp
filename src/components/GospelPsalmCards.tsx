@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { ROSE, LAV, TXT, TXTSUB, FONTS } from '../constants/theme';
 import { useGospelsPsalms, type Slot } from '../state/GospelsPsalmsContext';
+import { useTranslation } from '../state/TranslationsContext';
+import { localizeBookName } from '../constants/bibleBookNames';
 import { useT } from '../i18n/useT';
 
 // Home-screen entry for the 89-day Gospels & Psalms plan. Two cards (Morning +
@@ -42,12 +44,16 @@ function SlotCard({ slot, done, title, subtitle, onPress }: {
 
 export default function GospelPsalmCards({ onOpen }: { onOpen: (slot: Slot) => void }) {
   const t = useT();
+  const { current: translation } = useTranslation();
   const { ready, day, total, today, morningDone, eveningDone } = useGospelsPsalms();
   if (!ready) return null;
 
   const cardTitle = t('gp.cardTitle', { day, total });
-  const mSub = `${today.gospel.bookName} ${today.gospel.chapter} · Psalm ${today.morningPsalm.chapter}`;
-  const eSub = `Psalm ${today.eveningPsalm.chapter}`;
+  // Localized book names so the subtitle follows the UI language, not English.
+  const gospelBook = localizeBookName(translation.code, today.gospel.bookSlug, today.gospel.bookName);
+  const psalmBook = localizeBookName(translation.code, 'psalms', 'Psalms');
+  const mSub = `${gospelBook} ${today.gospel.chapter} · ${psalmBook} ${today.morningPsalm.chapter}`;
+  const eSub = `${psalmBook} ${today.eveningPsalm.chapter}`;
 
   return (
     <View>

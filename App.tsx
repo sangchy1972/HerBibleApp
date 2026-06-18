@@ -85,6 +85,9 @@ export default function App() {
   // with a rotating hymn/quote instead of a black screen or a bare logo.
   const [appReady, setAppReady] = React.useState(false);
   const [loadingDone, setLoadingDone] = React.useState(false);
+  // Stable callback so LoadingOverlay's timers/effects don't reset on every
+  // re-render (an inline arrow would churn its 6s safety-cap effect).
+  const hideLoading = React.useCallback(() => setLoadingDone(true), []);
 
   const [fontsLoaded] = useFonts({
     'SourceSerif4Variable-Roman':  require('./assets/fonts/SourceSerif4Variable-Roman.ttf'),
@@ -153,7 +156,7 @@ export default function App() {
                                               overlay above everything; hides once
                                               the nav is ready + the 2s floor passes. */}
                                           {!loadingDone && (
-                                            <LoadingOverlay appReady={appReady} onHide={() => setLoadingDone(true)} />
+                                            <LoadingOverlay appReady={appReady} onHide={hideLoading} />
                                           )}
                                         </NavigationContainer>
                                         </ReminderInterstitialProvider>

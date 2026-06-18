@@ -131,7 +131,12 @@ export default function PastVersesScreen({ navigation }: RootStackScreenProps<'P
               key={r.key}
               style={styles.card}
               activeOpacity={0.85}
-              onPress={() => navigation.navigate('PrayerFlow', { kind: r.segment, day: r.day })}
+              onPress={() => navigation.navigate('PrayerFlow', {
+                kind: r.segment,
+                // "Today" row opens the REAL prayer flow (counts toward
+                // completion/streak); only genuinely past days open as replay.
+                day: r.day === todayDay ? undefined : r.day,
+              })}
             >
               <View style={styles.cardHead}>
                 <View style={styles.cardHeadLeft}>

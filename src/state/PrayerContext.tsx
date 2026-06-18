@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useCurrentDayYmd } from '../hooks/useCurrentDayYmd';
 
 type PrayerKind = 'morning' | 'evening';
 
@@ -33,11 +34,6 @@ interface PrayerState {
 
 const PrayerContext = createContext<PrayerState | null>(null);
 const STORAGE_KEY = 'prayer:records:v1';
-
-const todayKey = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
 
 // Longest consecutive run within a sorted ascending list of YYYY-MM-DD strings.
 function longestStreak(dates: string[]): number {
@@ -104,8 +100,14 @@ function earlyBirdStreakOf(records: DayRecords): number {
 
 export function PrayerProvider({ children }: { children: React.ReactNode }) {
   const hr = new Date().getHours();
-  const [morning, setMorning] = useState(hr >= 5 && hr < 17);
+  // Initial tab aligned to the 6/18 prayer windows (was 5/17, which put the
+  // 05–06 and 17–18 boundary hours on the wrong tab vs the window logic).
+  const [morning, setMorning] = useState(hr >= 6 && hr < 18);
   const [records, setRecords] = useState<DayRecords>({});
+  // Local calendar day; ticks at midnight (foreground resume + midnight timer)
+  // so mDone/eDone/markDone all key off the SAME day even when the app is left
+  // open across midnight (without this, the value memo froze on yesterday).
+  const todayYmd = useCurrentDayYmd();
 
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY)
@@ -119,7 +121,7 @@ export function PrayerProvider({ children }: { children: React.ReactNode }) {
   };
 
   const value = useMemo<PrayerState>(() => {
-    const today = todayKey();
+    const today = todayYmd;
     const todayRec = records[today] || { m: false, e: false };
 
     const completeDates = Object.entries(records)
@@ -165,7 +167,7 @@ export function PrayerProvider({ children }: { children: React.ReactNode }) {
         persist({ ...records, [today]: next });
       },
     };
-  }, [morning, records]);
+  }, [morning, records, todayYmd]);
 
   return <PrayerContext.Provider value={value}>{children}</PrayerContext.Provider>;
 }

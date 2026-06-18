@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Dimensions,
-  Keyboard, Platform, Linking, Modal,
+  Keyboard, Platform, Linking, Modal, AppState,
 } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
@@ -458,7 +458,13 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   useEffect(() => {
     if (!verseId || verseDay == null) { setReadUris(null); setStepTimings(null); return; }
     let alive = true;
-    const keep = [verseIdFor(verseDay, 'morning'), verseIdFor(verseDay, 'evening')];
+    // Always protect TODAY's morning+evening narration from pruning — even in a
+    // past-day replay (verseDay = replayDay), so replaying an old day doesn't
+    // evict today's prefetched audio.
+    const keep = Array.from(new Set([
+      verseIdFor(verseDay, 'morning'), verseIdFor(verseDay, 'evening'),
+      verseIdFor(todayDay, 'morning'), verseIdFor(todayDay, 'evening'),
+    ]));
     const prepare = isHolidayVerse ? prepareHolidayVerseAudio : prepareVerseAudio;
     prepare(verseId, keep)
       .then(uris => { if (alive) setReadUris(uris); })
@@ -470,7 +476,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
       .then(ts => { if (alive) setStepTimings(ts); })
       .catch(() => { if (alive) setStepTimings(null); });
     return () => { alive = false; };
-  }, [verseId, verseDay, isHolidayVerse]);
+  }, [verseId, verseDay, isHolidayVerse, todayDay]);
 
   // Source is keyed on the cursor (NOT on listenOn) so pausing keeps the
   // clip mounted at its position — resume continues mid-clip. Changing the
@@ -488,6 +494,23 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const narrationTime = listenOn ? (readStatus?.currentTime ?? -1) : -1;
   const timingFor = (step: number): SentenceTiming[] | null =>
     (stepTimings && stepTimings[step]) || null;
+
+  // Pause BOTH players when the app leaves the foreground (backgrounded, call,
+  // lock) and resume per the user's intent when it returns — so audio never
+  // keeps playing in the background and the button state can't desync from the
+  // native player after an interruption.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s !== 'active') {
+        try { audioPlayer.pause(); } catch {}
+        try { readPlayer.pause(); } catch {}
+      } else {
+        try { if (musicOn && audioSource) audioPlayer.play(); } catch {}
+        try { if (listenOn && readUris) readPlayer.play(); } catch {}
+      }
+    });
+    return () => sub.remove();
+  }, [audioPlayer, readPlayer, musicOn, listenOn, audioSource, readUris]);
 
   // Play/pause follows `listenOn`; also (re)plays when the cursor moves to a
   // new clip while listening. Pausing (listenOn=false) holds position so a
@@ -939,17 +962,18 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             >
               <Animated.View style={[styles.pageContent, styles.meditationContent, { paddingTop: insets.top + DEEP_PAGE_TOP }, meditationAnim]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption]}>{meditationCaption}</Text>
-                {meditationParas.map((p, i) => (
-                  <HighlightedText
-                    key={i}
-                    text={p}
-                    timings={timingFor(1)}
-                    time={narrationTime}
-                    active={listenOn && listenStep === 1}
-                    style={styles.pageBody}
-                    highlightStyle={styles.spokenLine}
-                  />
-                ))}
+                {/* Single HighlightedText over the WHOLE reflection (paragraphs
+                    rejoined) so sentence timings match sequentially. Rendering
+                    one HighlightedText per paragraph made each restart matching
+                    at cursor 0 → paragraphs 2+ mis-highlighted. */}
+                <HighlightedText
+                  text={meditationParas.join('\n\n')}
+                  timings={timingFor(1)}
+                  time={narrationTime}
+                  active={listenOn && listenStep === 1}
+                  style={styles.pageBody}
+                  highlightStyle={styles.spokenLine}
+                />
               </Animated.View>
             </ScrollView>
           </FlowPage>

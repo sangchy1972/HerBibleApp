@@ -1,10 +1,10 @@
 // Loading-screen background images.
 //
-// The 10 photos live on the public covers domain under /v1/loading/. They are
-// NOT bundled (≈25 MB total) — only ONE small image (244 KB) ships in the APK
-// as the instant cold-start backdrop for a fresh install before any CDN image
-// is cached. After first launch, the rotating CDN images are cached on disk
-// (see services/loadingCache.ts) and shown thereafter.
+// The 10 photos live on the public covers domain under /v1/loading/. NONE are
+// bundled (≈25 MB total). Before any CDN image is cached (fresh install), the
+// loading screen shows a white→pink silk GRADIENT fallback (see
+// components/LoadingOverlay). After first launch the rotating CDN images are
+// cached on disk (see services/loadingCache.ts) and shown thereafter.
 //
 // Upload target (public bucket behind covers.everlandapps.com):
 //   covers.everlandapps.com/v1/loading/<filename>.jpg
@@ -27,6 +27,3 @@ export const LOADING_IMAGE_FILES: string[] = [
 export function loadingImageUrl(filename: string): string {
   return `${LOADING_IMG_BASE}/${filename}`;
 }
-
-// Bundled cold-start fallback (the smallest of the 10).
-export const LOADING_FALLBACK_IMG = require('../../assets/loading-fallback.jpg');

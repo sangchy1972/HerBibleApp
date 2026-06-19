@@ -20,12 +20,17 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-WRANGLER="${HOME}/claude_herbible_plan/workers/herbible-plans-7languages/node_modules/.bin/wrangler"
 BUCKET="herbible-plans-7languages"          # custom domain: covers.everlandapps.com
 PREFIX="v1/badges"
 SRC="${1:-${HOME}/Desktop/badges}"
 
-[ -x "$WRANGLER" ] || { echo "wrangler not found at $WRANGLER — run 'wrangler login' first"; exit 1; }
+# Resolve a usable wrangler: $WRANGLER env override → on PATH → npx fallback.
+# (The old hardcoded ~/claude_herbible_plan/... path no longer exists.)
+if [ -n "${WRANGLER:-}" ] && [ -x "${WRANGLER}" ]; then WR=( "$WRANGLER" )
+elif command -v wrangler >/dev/null 2>&1; then WR=( wrangler )
+else WR=( npx --yes wrangler ); fi
+echo "Using wrangler: ${WR[*]}"
+
 [ -d "$SRC" ] || { echo "source dir not found: $SRC"; exit 1; }
 
 # Expected filenames, derived from the achievement ids (single source of truth).
@@ -40,7 +45,7 @@ missing=0; uploaded=0
 while IFS= read -r f; do
   if [ -f "${SRC}/${f}" ]; then
     echo ">>> ${f}"
-    "$WRANGLER" r2 object put "${BUCKET}/${PREFIX}/${f}" \
+    "${WR[@]}" r2 object put "${BUCKET}/${PREFIX}/${f}" \
       --file "${SRC}/${f}" --content-type "image/png" --remote
     uploaded=$((uploaded+1))
   else

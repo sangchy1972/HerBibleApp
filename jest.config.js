@@ -8,6 +8,10 @@ module.exports = {
   testMatch: ['**/__tests__/**/*.test.ts'],
   moduleNameMapper: {
     '^react-native$': '<rootDir>/test/reactNativeStub.ts',
+    // expo-file-system ships as untranspiled ESM that jest can't parse, and
+    // node_modules aren't transformed. Modules under test transitively import
+    // it but never run its filesystem code, so a no-op stub lets the suite load.
+    '^expo-file-system$': '<rootDir>/test/expoFileSystemStub.ts',
   },
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: { strict: false, esModuleInterop: true, jsx: 'react' } }],

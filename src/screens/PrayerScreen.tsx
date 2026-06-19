@@ -958,9 +958,10 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
       {/* Plans In Progress — up to 2 active plans. Sits ABOVE Continue
           Reading per user; section title matches Continue Reading 1:1.
           The card on each row shows "Day N" (next day to read) instead of
-          "Start", so the user knows exactly where to pick up. paddingTop
-          tightens the gap to the Start CTA above per user. */}
-      <View style={[styles.section, { paddingTop: 12 }]}>
+          "Start", so the user knows exactly where to pick up. paddingTop 24 so
+          the gap BETWEEN the Gospel&Psalm block and this one is larger than the
+          gap within a block (title↔card 12) — clear block separation. */}
+      <View style={[styles.section, { paddingTop: 24 }]}>
         <Text style={styles.sectionTitle}>{t('prayer.section.plansInProgress')}</Text>
         {inProgressPlanRows.length > 0 ? (
           inProgressPlanRows.map(p => {
@@ -1009,7 +1010,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
             <Feather name="book-open" size={42} color="#fff" />
           </LinearGradient>
           <View style={styles.continueMeta}>
-            <Text style={styles.continueTitle} numberOfLines={2}>
+            <Text style={styles.continueTitle} numberOfLines={1} ellipsizeMode="tail">
               {continueBookName} · Chapter {lastRead.chapter}
             </Text>
             <View style={styles.continueProgressRow}>
@@ -1024,7 +1025,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
       </View>
       </TabSection>
 
-      <View style={{ height: 23 }} />
+      <View style={{ height: insets.bottom + 23 }} />
 
       {/* Overlays are wrapped in Modal so they render on a separate native
           layer above the tab content. Earlier they sat as siblings of this
@@ -1691,7 +1692,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: TXT,
     fontFamily: FONTS.latoBold,                                                // Lato per user (was Lora); latoBold + 600 = the app's "Lato 600"
-    marginBottom: 0,
+    marginBottom: 4,                                                           // breathing room before the progress row (was 0; single-line + ellipsis now)
   },
   continueProgressTrack: {
     flex: 1,                                                                     // sits to the right of the % label and fills the remaining row width — without `flex: 1` the View collapsed to 0 px and the bar was invisible

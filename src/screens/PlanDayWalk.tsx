@@ -841,7 +841,7 @@ const styles = StyleSheet.create({
     fontSize: 16.2, fontWeight: '800', fontFamily: FONTS.latoBold, color: ROSE, // 13.5 → 16.2 (+20 % per user — applies to the whole TODAY'S VERSE / PRAYER / … caption series)
     letterSpacing: 1.6, marginTop: 20, marginBottom: 20,                         // +20 px before, +8 px after (12 → 20) per user
   },
-  captionWide: { marginBottom: 22 },                                            // teaching/prayer headings keep their slightly roomier bottom gap; size + top now unified in sectionCaption
+  captionWide: { marginBottom: 20 },                                            // unified to 20 to match sectionCaption (was 22 — 2px inconsistency across page types)
   verseRef: { fontSize: 18.4, fontWeight: '700', fontFamily: FONTS.loraBold, color: ROSE, marginBottom: 26, letterSpacing: 0.4 },
   verseBodyLarge: {
     fontFamily: FONTS.serif, fontVariationSettings: SERIF_BODY,

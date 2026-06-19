@@ -106,7 +106,7 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
       {onPhoto ? (
         <ImageBackground source={{ uri: cachedUri! }} style={StyleSheet.absoluteFillObject} resizeMode="cover" onError={() => setImgBroken(true)}>
           <LinearGradient
-            colors={['rgba(10,8,24,0.55)', 'rgba(10,8,24,0.30)', 'rgba(10,8,24,0.65)']}
+            colors={['rgba(10,8,24,0.58)', 'rgba(10,8,24,0.42)', 'rgba(10,8,24,0.68)']}
             locations={[0, 0.5, 1]}
             style={StyleSheet.absoluteFillObject}
           />
@@ -122,10 +122,10 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
       )}
 
       {/* Date + line, seated in the upper third like the reference design. */}
-      <View style={[styles.textBlock, { top: height * 0.20 }]}>
-        <Text style={[styles.date, { color: fg }]}>{dateLine(lang)}</Text>
-        <Text style={[styles.sentence, { color: fg }]}>{sentence}</Text>
-        {source ? <Text style={[styles.source, { color: fgSub }]}>— {source}</Text> : null}
+      <View style={[styles.textBlock, { top: height * 0.18 }]}>
+        <Text style={[styles.date, { color: fg }, onPhoto && styles.shadow]}>{dateLine(lang)}</Text>
+        <Text numberOfLines={6} style={[styles.sentence, { color: fg }, onPhoto && styles.shadow]}>{sentence}</Text>
+        {source ? <Text numberOfLines={2} style={[styles.source, { color: fgSub }, onPhoto && styles.shadow]}>— {source}</Text> : null}
       </View>
 
       {/* Brand mark at the bottom: pink app logo + "Her Bible". */}
@@ -139,7 +139,13 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
 
 const styles = StyleSheet.create({
   root: { backgroundColor: '#FFFFFF', zIndex: 1000, elevation: 1000 },
+  // Seated in the upper third (top set inline). numberOfLines on the sentence
+  // (6) + source (2) is the hard cap that keeps a long line from reaching the
+  // brand mark — so no `bottom` constraint is needed (which would otherwise
+  // leave a big empty band below the text on tall screens).
   textBlock: { position: 'absolute', left: 28, right: 28, alignItems: 'center' },
+  // Soft shadow only over photos, for legibility on bright images.
+  shadow: { textShadowColor: 'rgba(0,0,0,0.45)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 },
   date: {
     fontFamily: FONTS.merriweatherBold, fontSize: 26, fontWeight: '700',
     textAlign: 'center', marginBottom: 16,   // larger after-gap than the reference per user

@@ -187,7 +187,7 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
       {sections && (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: insets.bottom + 110 }}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 130 }}
         >
           <ImageBackground source={heroImg} style={styles.hero} resizeMode="cover" />
 
@@ -201,7 +201,7 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
               </View>
               {/* Each verse rendered as its own paragraph so we can give a 10px
                   after-gap (per user); Merriweather body, line-height −10%. */}
-              {s.body.split('\n').map((para, j) => (
+              {s.body.split('\n').filter(Boolean).map((para, j) => (
                 <Text key={j} style={styles.body}>{para}</Text>
               ))}
             </Animated.View>

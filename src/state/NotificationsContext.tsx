@@ -43,7 +43,16 @@ const NOTIF_IDS: Record<NotifKey, string> = {
 
 const SLOTS = Object.keys(NOTIF_IDS) as NotifKey[];
 
-const VARIANTS_PER_SLOT = 3;
+// Per-slot variant counts. All three slots rotate through 10 copies so an
+// active user rarely sees the same reminder twice in a fortnight.
+// MUST stay in sync with the `notif.push.<slot>.{title,body}.<n>` keys present
+// in the i18n catalog — picking a variant with no string would fall back to the
+// raw key text in the notification.
+const VARIANTS_PER_SLOT: Record<NotifKey, number> = {
+  morning: 10,
+  night: 10,
+  plan: 10,
+};
 const ACTION_CATEGORY = 'her-bible.prayer';
 const ANDROID_CHANNEL = 'her-bible.daily';
 const BRAND_ROSE = '#E8619A';
@@ -61,7 +70,7 @@ function pickDailyVariant(slot: NotifKey): number {
   const yearStart = new Date(now.getFullYear(), 0, 0);
   const dayOfYear = Math.floor((now.getTime() - yearStart.getTime()) / 86_400_000);
   const salt = SLOTS.indexOf(slot);
-  return ((dayOfYear + salt) % VARIANTS_PER_SLOT) + 1;
+  return ((dayOfYear + salt) % VARIANTS_PER_SLOT[slot]) + 1;
 }
 
 function buildScheduleRequest(slot: NotifKey, cfg: NotifSettings, lang: UILanguageCode): Notifications.NotificationRequestInput {

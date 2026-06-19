@@ -31,14 +31,32 @@ Notifications.setNotificationHandler({
 // right destination screen. Morning/night both go to PrayerFlow because
 // that's the screen the reminder is about; plan reminders go to the Plan
 // tab. Unknown slots fall through to the home tabs (safer than crashing).
+//
+// IMPORTANT: PrayerFlow REQUIRES a `kind` param ({ kind: 'morning' |
+// 'evening' }) — it destructures `route.params.kind` on mount, so
+// navigating without params throws and the tap *crashes the app* instead
+// of opening the prayer. The notification slot vocabulary is
+// 'morning' | 'night', so 'night' must be translated to PrayerFlow's
+// 'evening'.
 function routeForSlot(slot: unknown): { screen: keyof RootStackParamList; params?: object } | null {
-  if (slot === 'morning' || slot === 'night') {
-    return { screen: 'PrayerFlow' };
+  if (slot === 'morning') {
+    return { screen: 'PrayerFlow', params: { kind: 'morning' } };
+  }
+  if (slot === 'night') {
+    return { screen: 'PrayerFlow', params: { kind: 'evening' } };
   }
   if (slot === 'plan') {
     return { screen: 'Tabs' };
   }
   return null;
+}
+
+// Time-of-day fallback for entry points with no explicit slot (e.g. the
+// home-screen widget's `herbible://prayer` link). Mirrors PrayerContext's
+// initial-tab rule: 06:00–17:59 → morning, else evening.
+function kindByTime(): 'morning' | 'evening' {
+  const hr = new Date().getHours();
+  return hr >= 6 && hr < 18 ? 'morning' : 'evening';
 }
 
 // Map a deep-link URL path to a destination. Currently widget taps emit
@@ -52,7 +70,8 @@ function routeForUrl(url: string): { screen: keyof RootStackParamList; params?: 
       return { screen: 'Tabs' };
     }
     if (path === 'prayer') {
-      return { screen: 'PrayerFlow' };
+      // No slot in the URL → pick by time of day (PrayerFlow needs a kind).
+      return { screen: 'PrayerFlow', params: { kind: kindByTime() } };
     }
     if (path.startsWith('plan')) {
       return { screen: 'Tabs' };
@@ -61,6 +80,24 @@ function routeForUrl(url: string): { screen: keyof RootStackParamList; params?: 
     return null;
   }
   return null;
+}
+
+// Dedup guard for notification-tap routing. `getLastNotificationResponseAsync`
+// replays the SAME response for the entire process lifetime, and the response
+// listener can also fire for the launching tap — so without a guard a single
+// tap could navigate twice, or re-navigate to a stale target on a later
+// foreground / component remount. Keyed by the notification identifier + its
+// delivery date, so a genuine NEW tap (e.g. the next day's reminder → a
+// different delivery date) still routes. Module-scoped so it survives remounts
+// within the same app process.
+let lastHandledNotifKey: string | null = null;
+
+function notifResponseKey(response: Notifications.NotificationResponse): string {
+  const req = response.notification.request;
+  // `notification.date` is the delivery timestamp; distinguishes repeat
+  // deliveries of the same stable scheduled identifier across days.
+  const date = (response.notification as { date?: number }).date ?? '';
+  return `${req.identifier}:${date}`;
 }
 
 export default function DeepLinkHandler() {
@@ -74,20 +111,23 @@ export default function DeepLinkHandler() {
   useEffect(() => {
     let mounted = true;
 
-    // Cold start — replay the last notification tap that opened the app.
-    Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (!mounted || !response) return;
+    const handle = (response: Notifications.NotificationResponse | null) => {
+      if (!response) return;
+      const key = notifResponseKey(response);
+      if (key === lastHandledNotifKey) return; // already routed this exact tap
+      lastHandledNotifKey = key;
       const slot = response.notification.request.content.data?.slot;
       const dest = routeForSlot(slot);
       if (dest) (navigation.navigate as any)(dest.screen, dest.params);
-    }).catch(() => { /* no-op; first launch with no prior notification */ });
+    };
+
+    // Cold start — replay the last notification tap that opened the app (once).
+    Notifications.getLastNotificationResponseAsync()
+      .then((response) => { if (mounted) handle(response); })
+      .catch(() => { /* no-op; first launch with no prior notification */ });
 
     // Warm path — every subsequent tap while the app is alive.
-    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-      const slot = response.notification.request.content.data?.slot;
-      const dest = routeForSlot(slot);
-      if (dest) (navigation.navigate as any)(dest.screen, dest.params);
-    });
+    const sub = Notifications.addNotificationResponseReceivedListener(handle);
 
     return () => { mounted = false; sub.remove(); };
   }, [navigation]);

@@ -63,7 +63,9 @@ const LEVEL_INFO: Record<number, { nameKey: string; next: number }> = {
 };
 
 function flameSizeForLevel(level: number) {
-  const s = level >= 5 ? 1.12 : level >= 4 ? 1.0 : level >= 3 ? 0.88 : level >= 2 ? 0.72 : 0.55;
+  // Floor raised (0.55→0.78, 0.72→0.86) so the low-streak flame isn't dwarfed
+  // by the 74px streak number beside it; still grows with the level.
+  const s = level >= 5 ? 1.12 : level >= 4 ? 1.0 : level >= 3 ? 0.92 : level >= 2 ? 0.86 : 0.78;
   return Math.round(172 * s);
 }
 

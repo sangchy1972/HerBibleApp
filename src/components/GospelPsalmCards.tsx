@@ -35,7 +35,7 @@ function SlotCard({ slot, done, title, subtitle, onPress }: {
           {done && <Feather name="check-circle" size={15} color={GREEN} />}
         </View>
         <Text style={styles.title} numberOfLines={2}>{title}</Text>
-        <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
+        <Text style={styles.subtitle} numberOfLines={2}>{subtitle}</Text>
       </View>
       <Feather name="chevron-right" size={22} color={TXTSUB} />
     </TouchableOpacity>
@@ -45,7 +45,7 @@ function SlotCard({ slot, done, title, subtitle, onPress }: {
 export default function GospelPsalmCards({ onOpen }: { onOpen: (slot: Slot) => void }) {
   const t = useT();
   const { current: translation } = useTranslation();
-  const { ready, day, total, today, morningDone, eveningDone } = useGospelsPsalms();
+  const { ready, day, total, today, morningDone, eveningDone, planComplete } = useGospelsPsalms();
   if (!ready) return null;
 
   const cardTitle = t('gp.cardTitle', { day, total });
@@ -58,6 +58,7 @@ export default function GospelPsalmCards({ onOpen }: { onOpen: (slot: Slot) => v
   return (
     <View>
       <Text style={styles.sectionTitle}>{t('gp.section')}</Text>
+      {planComplete && <Text style={styles.completeNote}>{t('gp.planComplete')}</Text>}
       <SlotCard slot="morning" done={morningDone} title={cardTitle} subtitle={mSub} onPress={() => onOpen('morning')} />
       <SlotCard slot="evening" done={eveningDone} title={cardTitle} subtitle={eSub} onPress={() => onOpen('evening')} />
     </View>
@@ -67,6 +68,7 @@ export default function GospelPsalmCards({ onOpen }: { onOpen: (slot: Slot) => v
 const styles = StyleSheet.create({
   // Matches PrayerScreen.sectionTitle ("Plans In Progress") so the heading is identical.
   sectionTitle: { fontSize: 19.85, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold },
+  completeNote: { fontSize: 13, color: '#3FAE6A', fontFamily: FONTS.latoBold, marginTop: 4 },
   // card byte-matches PlanProgressCard.
   card: {
     flexDirection: 'row', alignItems: 'center', gap: 14,

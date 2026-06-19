@@ -99,6 +99,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 17.6,                                                          // 22 → 17.6 (-20 % per user, scaled with the smaller card)
     paddingVertical: 15.5,                                                       // 22 → 15.5 — total card height ≈ 66 → 53 (-20 % per user)
+    paddingHorizontal: 16,                                                       // so a long localized label (de/zh) doesn't touch the card edges when it wraps
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },

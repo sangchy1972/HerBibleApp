@@ -962,18 +962,22 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             >
               <Animated.View style={[styles.pageContent, styles.meditationContent, { paddingTop: insets.top + DEEP_PAGE_TOP }, meditationAnim]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption]}>{meditationCaption}</Text>
-                {/* Single HighlightedText over the WHOLE reflection (paragraphs
-                    rejoined) so sentence timings match sequentially. Rendering
-                    one HighlightedText per paragraph made each restart matching
-                    at cursor 0 → paragraphs 2+ mis-highlighted. */}
-                <HighlightedText
-                  text={meditationParas.join('\n\n')}
-                  timings={timingFor(1)}
-                  time={narrationTime}
-                  active={listenOn && listenStep === 1}
-                  style={styles.pageBody}
-                  highlightStyle={styles.spokenLine}
-                />
+                {/* Per-paragraph render preserves the 36px paragraph spacing
+                    (pageBody.marginBottom). Highlight stays correct because
+                    each paragraph's text only contains its OWN sentences, so
+                    buildSegments matches just those (others simply don't match
+                    and are skipped). */}
+                {meditationParas.map((p, i) => (
+                  <HighlightedText
+                    key={i}
+                    text={p}
+                    timings={timingFor(1)}
+                    time={narrationTime}
+                    active={listenOn && listenStep === 1}
+                    style={styles.pageBody}
+                    highlightStyle={styles.spokenLine}
+                  />
+                ))}
               </Animated.View>
             </ScrollView>
           </FlowPage>
@@ -1461,8 +1465,10 @@ const styles = StyleSheet.create({
   // Soft translucent-white pill over the photo bg + full-opacity text so the
   // spoken line lifts off the dimmed-white body without recoloring it.
   spokenLine: {
+    // Dark translucent pill (not white) so the currently-spoken sentence stays
+    // visible over BOTH dark and bright photo backgrounds; text stays white.
     color: '#FFFFFF',
-    backgroundColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: 'rgba(0,0,0,0.32)',
   },
   // Mirrors PrayerScreen's `startBtn` for height/radius/text — but stays
   // content-hugging (alignSelf 'flex-start') per user, not stretched to the

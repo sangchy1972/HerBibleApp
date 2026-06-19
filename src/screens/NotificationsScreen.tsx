@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, AppState } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, AppState, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import * as Notifications from 'expo-notifications';
@@ -33,6 +33,21 @@ export default function NotificationsScreen({ navigation }: RootStackScreenProps
     Notifications.getPermissionsAsync()
       .then(p => setPermGranted(p.granted))
       .catch(() => setPermGranted(null));
+  }, []);
+
+  // OEM background-restriction escape hatch. Samsung (Sleeping apps), Xiaomi
+  // (MIUI/HyperOS autostart + battery saver), Huawei, OPPO/vivo (ColorOS) etc.
+  // each kill or defer background work on top of stock Android — which silences
+  // or delays our scheduled reminders even though everything is wired correctly.
+  // The Play-safe remedy is to send the user to the battery-optimization list so
+  // they can mark Her Bible "unrestricted". ACTION_IGNORE_BATTERY_OPTIMIZATION_
+  // SETTINGS (the list, not the direct REQUEST_ dialog) is allowed without the
+  // restricted permission. sendIntent is Android-only; fall back to the app's
+  // own settings page if the OEM doesn't expose that screen.
+  const openBatterySettings = useCallback(() => {
+    if (Platform.OS !== 'android') { Linking.openSettings().catch(() => {}); return; }
+    Linking.sendIntent('android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS')
+      .catch(() => Linking.openSettings().catch(() => {}));
   }, []);
 
   // Check on mount, again every time the screen regains focus, and whenever the
@@ -78,6 +93,28 @@ export default function NotificationsScreen({ navigation }: RootStackScreenProps
               <Text style={styles.bannerBody}>{t('notif.permBanner.body')}</Text>
               <View style={styles.bannerCtaRow}>
                 <Text style={styles.bannerCta}>{t('common.openSettings')}</Text>
+                <Feather name="chevron-right" size={16} color={ROSE} />
+              </View>
+            </View>
+          </TouchableOpacity>
+        )}
+
+        {/* OEM background-restriction helper (Android only). Even with the OS
+            permission granted, Samsung/Xiaomi/Huawei/OPPO/vivo background limits
+            can delay or drop reminders — surface a one-tap route to mark the app
+            "unrestricted" so the pull-back flow actually fires on time. */}
+        {Platform.OS === 'android' && (
+          <TouchableOpacity
+            style={styles.reliabilityCard}
+            activeOpacity={0.85}
+            onPress={openBatterySettings}
+          >
+            <Feather name="battery-charging" size={20} color={ROSE} style={{ marginTop: 1 }} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.bannerTitle}>{t('notif.reliability.title')}</Text>
+              <Text style={styles.bannerBody}>{t('notif.reliability.body')}</Text>
+              <View style={styles.bannerCtaRow}>
+                <Text style={styles.bannerCta}>{t('notif.reliability.cta')}</Text>
                 <Feather name="chevron-right" size={16} color={ROSE} />
               </View>
             </View>
@@ -172,6 +209,21 @@ const styles = StyleSheet.create({
   bannerBody: { ...LORA, fontSize: 14, lineHeight: 20, color: TXTSUB, marginTop: 3 },
   bannerCtaRow: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 8 },
   bannerCta: { ...LORA_BOLD, fontSize: 14, color: ROSE },
+  // Same visual language as the permission banner but in a calmer neutral tint —
+  // it's helpful guidance, not an error state.
+  reliabilityCard: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
+    marginHorizontal: P,
+    marginTop: 12,
+    marginBottom: 10,
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: 'rgba(30,27,46,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(30,27,46,0.10)',
+  },
 
   section: { marginBottom: 6 },
   sectionHeader: {

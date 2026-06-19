@@ -131,7 +131,9 @@ const styles = StyleSheet.create({
   // Fills the space above the CTAs and centers its children vertically —
   // shifts the Lottie + copy toward the visual center of the screen.
   centerBlock: { flex: 1, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
-  lottieWrap: { alignItems: 'center', justifyContent: 'center' },
+  // Fixed-height box so both the square checkmark (180) and the wide confetti
+  // (168) center within the SAME footprint → identical gap to the heading below.
+  lottieWrap: { height: 184, alignItems: 'center', justifyContent: 'center' },
   // All on-screen text uses Noto Sans (matching the rest of the app's
   // sans-serif system font) — the previous Roboto Serif heading felt
   // editorial in a screen that's celebratory / functional.

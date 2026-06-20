@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Linking, Platform, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Pressable, ActivityIndicator } from 'react-native';
 import Svg, { Path, G } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -10,6 +10,8 @@ import { isConfigured } from '../constants/oauth';
 import { useAuth } from '../state/AuthContext';
 import { googleAuthAvailable, facebookAuthAvailable, warmupGoogleSignIn } from '../services/firebaseAuth';
 import { useT } from '../i18n/useT';
+import { useNavigation, type NavigationProp } from '@react-navigation/native';
+import type { RootStackParamList } from '../navigation/types';
 
 interface Props {
   onClose: () => void;
@@ -21,6 +23,7 @@ type Provider = 'apple' | 'google' | 'facebook';
 export default function SignInSheet({ onClose, onError }: Props) {
   const { signIn, signInWithGoogle, signInWithFacebook } = useAuth();
   const t = useT();
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   // Which provider is mid-flight. Drives the in-button spinner AND disables
   // every provider row so a slow native picker can't be double-fired.
   const [busy, setBusy] = useState<Provider | null>(null);
@@ -172,6 +175,8 @@ export default function SignInSheet({ onClose, onError }: Props) {
           template={t('signIn.legal')}
           termsLabel={t('signIn.legal.terms')}
           privacyLabel={t('signIn.legal.privacy')}
+          onOpenTerms={() => navigation.navigate('Policy', { id: 'terms' })}
+          onOpenPrivacy={() => navigation.navigate('Policy', { id: 'privacy' })}
         />
 
         <TouchableOpacity onPress={onClose} hitSlop={10} style={styles.cancel}>
@@ -229,18 +234,21 @@ function ProviderButton({
 // different points in the paragraph, so a single key is cleaner than
 // splitting into two concatenated strings.
 function LegalText({
-  template, termsLabel, privacyLabel,
+  template, termsLabel, privacyLabel, onOpenTerms, onOpenPrivacy,
 }: {
   template: string; termsLabel: string; privacyLabel: string;
+  onOpenTerms: () => void; onOpenPrivacy: () => void;
 }) {
-  const openTerms = () => Linking.openURL('https://example.com/terms').catch(() => {});
-  const openPrivacy = () => Linking.openURL('https://example.com/privacy').catch(() => {});
+  // Links open the IN-APP Terms / Privacy pages (the same Policy screen the
+  // About tab uses) — not an external website. The documents already ship in
+  // the app, so this keeps everything offline-safe and avoids the old
+  // example.com placeholder that went nowhere.
   const parts = template.split(/(\{terms\}|\{privacy\})/g);
   return (
     <Text style={styles.legal}>
       {parts.map((p, i) => {
-        if (p === '{terms}') return <Text key={i} style={styles.legalLink} onPress={openTerms}>{termsLabel}</Text>;
-        if (p === '{privacy}') return <Text key={i} style={styles.legalLink} onPress={openPrivacy}>{privacyLabel}</Text>;
+        if (p === '{terms}') return <Text key={i} style={styles.legalLink} onPress={onOpenTerms}>{termsLabel}</Text>;
+        if (p === '{privacy}') return <Text key={i} style={styles.legalLink} onPress={onOpenPrivacy}>{privacyLabel}</Text>;
         return p;
       })}
     </Text>

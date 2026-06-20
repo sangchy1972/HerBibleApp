@@ -84,8 +84,8 @@ const styles = StyleSheet.create({
   meta: { flex: 1, minWidth: 0 },
   // labelRow matches PlanProgressCard.dayRow (gap 6, marginBottom 6).
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
-  label: { fontSize: 13, fontFamily: FONTS.latoBold, letterSpacing: 0.3 },
-  // title matches PlanProgressCard.title (16 / Lato-bold / 21 line height).
-  title: { fontSize: 16, fontWeight: '600', color: TXT, lineHeight: 21, fontFamily: FONTS.latoBold },
-  subtitle: { fontSize: 13, color: TXTSUB, fontFamily: FONTS.lato, marginTop: 4 },
+  label: { fontSize: 14.04, fontFamily: FONTS.latoBold, letterSpacing: 0.3 },                          // 13 × 1.08 (+8 % per user)
+  // title matches PlanProgressCard.title, +8 % per user (16→17.28, lh 21→22.68).
+  title: { fontSize: 17.28, fontWeight: '600', color: TXT, lineHeight: 22.68, fontFamily: FONTS.latoBold },
+  subtitle: { fontSize: 14.04, color: TXTSUB, fontFamily: FONTS.lato, marginTop: 4 },                  // 13 × 1.08 (+8 % per user)
 });

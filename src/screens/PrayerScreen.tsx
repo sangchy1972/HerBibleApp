@@ -255,9 +255,10 @@ function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTa
   // not a pink wash over the photo. Evening tint unchanged.
   // Matches PrayerFlow's reading-view scrim EXACTLY (same colors + alphas +
   // gradient direction) per user, so the home card and the reading screen have
-  // an identical photo veil.
+  // an identical photo veil. Morning is the new wine-red/burgundy (darker +
+  // more transparent than the old magenta-pink) the user preferred.
   const colors = morning
-    ? (['rgba(123,34,85,0.35)', 'rgba(45,10,26,0.65)'] as const)
+    ? (['rgba(74,20,36,0.30)', 'rgba(28,8,16,0.58)'] as const)
     : (['rgba(45,22,96,0.40)', 'rgba(16,5,37,0.70)'] as const);
   const iconColor = 'rgba(255,255,255,0.92)';
 
@@ -612,10 +613,16 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
       }
     } else {
       if (slotDone) {
-        // Evening done → "Beautiful Work Today" celebration; no countdown
-        // line on the button itself. The hint carries the timing.
-        waitLabel = t('prayer.wait.beautifulWork');
-        waitHint = t('prayer.hint.tomorrowMorning');
+        if (mDone) {
+          // BOTH slots done → the real 100 % celebration.
+          waitLabel = t('prayer.wait.beautifulWork');
+          waitHint = t('prayer.hint.tomorrowMorning');
+        } else {
+          // Evening done but morning still pending — don't claim the whole day
+          // is finished. Nudge the user that morning is still open (per user).
+          waitLabel = t('prayer.wait.morningAwaits');
+          waitHint = t('prayer.hint.morningAwaits');
+        }
       } else {
         // Before 18:00 → countdown to today's 18:00.
         const target = new Date(now); target.setHours(18, 0, 0, 0);
@@ -1432,7 +1439,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   waitBtnText: {
-    fontSize: 16,
+    fontSize: 17.28,                    // 16 × 1.08 (+8 % per user)
     fontWeight: '600',                  // 700 → 600 paired with Lato bold per user
     letterSpacing: 0.3,
     fontFamily: FONTS.latoBold,         // was system default sans — now Lato bold per user
@@ -1538,17 +1545,17 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   inProgressEmptyTitle: {
-    fontSize: 16,
+    fontSize: 17.28,                                                            // 16 × 1.08 (+8 % per user)
     fontWeight: '600',
     color: TXT,
     fontFamily: FONTS.loraBold,
     marginBottom: 6,
   },
   inProgressEmptyDesc: {
-    fontSize: 14,
+    fontSize: 15.12,                                                            // 14 × 1.08 (+8 % per user)
     color: TXTSUB,
     fontFamily: FONTS.lato,
-    lineHeight: 20,
+    lineHeight: 21.6,                                                           // 20 × 1.08 to keep rhythm
     marginBottom: 14,
   },
   inProgressExploreBtn: {
@@ -1560,7 +1567,7 @@ const styles = StyleSheet.create({
   },
   inProgressExploreText: {
     color: '#fff',
-    fontSize: 15,
+    fontSize: 16.2,                                                             // 15 × 1.08 (+8 % per user)
     fontWeight: '700',
     letterSpacing: 0.3,
     fontFamily: FONTS.latoBold,
@@ -1688,7 +1695,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   continueTitle: {                   // card title ("Joshua · Chapter 12")
-    fontSize: 16,
+    fontSize: 17.28,                  // 16 × 1.08 (+8 % per user)
     fontWeight: '600',
     color: TXT,
     fontFamily: FONTS.latoBold,                                                // Lato per user (was Lora); latoBold + 600 = the app's "Lato 600"
@@ -1707,7 +1714,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   continuePct: {                     // dynamic % badge — non-title
-    fontSize: 14,                    // +10% from 13
+    fontSize: 15.12,                 // 14 × 1.08 (+8 % per user)
     fontFamily: FONTS.latoBold,      // Lato per user (was Noto bold)
   },
 });

@@ -133,9 +133,14 @@ export default function PastVersesScreen({ navigation }: RootStackScreenProps<'P
               activeOpacity={0.85}
               onPress={() => navigation.navigate('PrayerFlow', {
                 kind: r.segment,
-                // "Today" row opens the REAL prayer flow (counts toward
-                // completion/streak); only genuinely past days open as replay.
-                day: r.day === todayDay ? undefined : r.day,
+                // ALWAYS a read-only replay — including today's row. The Past
+                // Verses browser must NEVER record completion / streak / Today's
+                // Progress (per user: re-reading a verse here wrongly bumped
+                // Today's Progress to 50 %). Passing `day` makes PrayerFlow treat
+                // the whole session as a re-read (isReplay = true → markDone is
+                // skipped). The real, counting prayer is started only from the
+                // home "Start Prayer" button.
+                day: r.day,
               })}
             >
               <View style={styles.cardHead}>

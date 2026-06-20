@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import Feather from '@expo/vector-icons/Feather';
+import Svg, { Path } from 'react-native-svg';
 import MoodEmoji from './MoodEmoji';
 import { useMoodCheckIn } from '../state/MoodCheckInContext';
 import { useUILanguage } from '../state/UILanguageContext';
@@ -19,6 +19,25 @@ const WEEKDAY_KEYS = [
   'moodCalendar.weekday.fri',
   'moodCalendar.weekday.sat',
 ] as const;
+
+// Month-nav chevrons drawn as inline SVG, NOT @expo/vector-icons Feather. The
+// icon font loads lazily and on some real devices / production builds it can be
+// missing or late, leaving the grey nav buttons with no arrow inside (a "broken"
+// look the user hit). An SVG path has no font dependency, so it always renders.
+const CHEVRON_D: Record<'left' | 'right' | 'up' | 'down', string> = {
+  left:  'M15 18 L9 12 L15 6',
+  right: 'M9 18 L15 12 L9 6',
+  up:    'M6 15 L12 9 L18 15',
+  down:  'M6 9 L12 15 L18 9',
+};
+function Chevron({ dir, small, color = TXT }: { dir: 'left' | 'right' | 'up' | 'down'; small?: boolean; color?: string }) {
+  const s = small ? 15 : 22;
+  return (
+    <Svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+      <Path d={CHEVRON_D[dir]} stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
 
 function isoKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -75,6 +94,10 @@ export default function MoodCalendar({ headline, showHeadline = true }: Props) {
   const { lang } = useUILanguage();
   const { picks, totalCheckIns } = useMoodCheckIn();
   const [cursor, setCursor] = useState(() => new Date());
+  // Month/year picker (opens on tapping the month label) + the year it's
+  // currently browsing (independent of `cursor` until the user picks a month).
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerYear, setPickerYear] = useState(() => new Date().getFullYear());
   const monthLabel = cursor.toLocaleDateString(localeFor(lang), { month: 'long', year: 'numeric' });
   const grid = monthGrid(cursor);
   // Chunk into explicit 7-day rows. Rendering each week as its own row of
@@ -91,6 +114,19 @@ export default function MoodCalendar({ headline, showHeadline = true }: Props) {
     setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + delta, 1));
   };
 
+  const isCurrentMonth =
+    cursor.getFullYear() === today.getFullYear() && cursor.getMonth() === today.getMonth();
+  // Tapping the month label opens a month/year menu; tapping again closes it.
+  const togglePicker = () => {
+    if (!pickerOpen) setPickerYear(cursor.getFullYear());
+    setPickerOpen(o => !o);
+  };
+  // One-tap jump back to the current month.
+  const goToday = () => { setCursor(new Date()); setPickerOpen(false); };
+  // Localized short month names (Jan…Dec) for the picker grid.
+  const monthShort = (i: number) =>
+    new Date(2021, i, 1).toLocaleDateString(localeFor(lang), { month: 'short' });
+
   const headlineText = headline ?? t('moodFlow.calendar.headline', { ordinal: ordinalFor(lang, totalCheckIns) });
 
   return (
@@ -101,13 +137,54 @@ export default function MoodCalendar({ headline, showHeadline = true }: Props) {
           read as "previous month" / "next month" relative to it. */}
       <View style={styles.monthRow}>
         <TouchableOpacity onPress={() => shiftMonth(-1)} hitSlop={14} style={styles.monthNavBtn}>
-          <Feather name="chevron-left" size={22} color={TXT} />
+          <Chevron dir="left" />
         </TouchableOpacity>
-        <Text style={styles.month}>{monthLabel}</Text>
+        <TouchableOpacity onPress={togglePicker} hitSlop={8} activeOpacity={0.7} style={styles.monthLabelBtn}>
+          <Text style={styles.month}>{monthLabel}</Text>
+          <Chevron dir={pickerOpen ? 'up' : 'down'} small />
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => shiftMonth(1)} hitSlop={14} style={styles.monthNavBtn}>
-          <Feather name="chevron-right" size={22} color={TXT} />
+          <Chevron dir="right" />
         </TouchableOpacity>
       </View>
+
+      {/* Jump back to the current month — only shown when viewing another month. */}
+      {!isCurrentMonth && !pickerOpen && (
+        <TouchableOpacity onPress={goToday} style={styles.todayChip} activeOpacity={0.85}>
+          <Chevron dir="left" small color={ROSE} />
+          <Text style={styles.todayChipText}>{t('pastVerses.today')}</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Month/year picker — pops open right under the label. */}
+      {pickerOpen && (
+        <View style={styles.pickerCard}>
+          <View style={styles.pickerYearRow}>
+            <TouchableOpacity onPress={() => setPickerYear(y => y - 1)} hitSlop={12} style={styles.monthNavBtn}>
+              <Chevron dir="left" />
+            </TouchableOpacity>
+            <Text style={styles.pickerYear}>{pickerYear}</Text>
+            <TouchableOpacity onPress={() => setPickerYear(y => y + 1)} hitSlop={12} style={styles.monthNavBtn}>
+              <Chevron dir="right" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.pickerMonths}>
+            {Array.from({ length: 12 }, (_, i) => {
+              const selected = i === cursor.getMonth() && pickerYear === cursor.getFullYear();
+              return (
+                <TouchableOpacity
+                  key={i}
+                  style={styles.pickerMonthCell}
+                  activeOpacity={0.8}
+                  onPress={() => { setCursor(new Date(pickerYear, i, 1)); setPickerOpen(false); }}
+                >
+                  <Text style={[styles.pickerMonthText, selected && styles.pickerMonthTextSel]}>{monthShort(i)}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      )}
 
       <View style={styles.weekHead}>
         {WEEKDAY_KEYS.map(k => (
@@ -188,7 +265,31 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(30,27,46,0.06)',
   },
-  month: { fontSize: 18, color: TXT, fontWeight: '700', minWidth: 160, textAlign: 'center' },
+  monthLabelBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 160, justifyContent: 'center' },
+  month: { fontSize: 18, color: TXT, fontWeight: '700', textAlign: 'center' },
+  todayChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 2,
+    alignSelf: 'center',
+    marginTop: 2, marginBottom: 6,
+    paddingLeft: 8, paddingRight: 12, paddingVertical: 6,
+    borderRadius: 14,
+    backgroundColor: 'rgba(232,97,154,0.10)',
+  },
+  todayChipText: { fontSize: 13, fontWeight: '700', color: ROSE },
+  pickerCard: {
+    marginTop: 4, marginBottom: 10, marginHorizontal: 6,
+    padding: 12, borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1, borderColor: 'rgba(30,27,46,0.08)',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08, shadowRadius: 12, elevation: 4,
+  },
+  pickerYearRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24, marginBottom: 6 },
+  pickerYear: { fontSize: 17, fontWeight: '700', color: TXT, minWidth: 72, textAlign: 'center' },
+  pickerMonths: { flexDirection: 'row', flexWrap: 'wrap' },
+  pickerMonthCell: { width: '25%', paddingVertical: 11, alignItems: 'center' },
+  pickerMonthText: { fontSize: 14, color: TXT, fontWeight: '600' },
+  pickerMonthTextSel: { color: ROSE, fontWeight: '800' },
   weekHead: {
     flexDirection: 'row',
     justifyContent: 'space-between',

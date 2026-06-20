@@ -5,6 +5,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer, DefaultTheme, useNavigationContainerRef } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
+import Feather from '@expo/vector-icons/Feather';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { SCREEN_BG } from './src/constants/theme';
 
 // Pin the navigator's scene background to our canonical SCREEN_BG (same value
@@ -90,6 +92,15 @@ export default function App() {
   const hideLoading = React.useCallback(() => setLoadingDone(true), []);
 
   const [fontsLoaded] = useFonts({
+    // Preload the @expo/vector-icons fonts we use up front. Without this they
+    // load LAZILY on first render of each set; on some real devices / production
+    // builds that lazy load was missing or late, leaving icons blank inside
+    // their containers (e.g. the calendar's month-nav buttons rendered as empty
+    // grey circles). Bundled already, so this adds no size — just guarantees
+    // they're ready before anything draws. (MaterialCommunityIcons is large and
+    // used in only one screen, so it stays lazy.)
+    ...Feather.font,
+    ...Ionicons.font,
     'SourceSerif4Variable-Roman':  require('./assets/fonts/SourceSerif4Variable-Roman.ttf'),
     'SourceSerif4Variable-Italic': require('./assets/fonts/SourceSerif4Variable-Italic.ttf'),
     // Latin fonts are glyph-SUBSET to the Latin range + the few symbols the UI

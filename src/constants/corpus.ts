@@ -2,6 +2,17 @@
 // reads via jsDelivr. Bumping this invalidates AsyncStorage caches across all
 // translations, so users on the previous corpus pull fresh chapters next time.
 //
+// bd7ea258 (2026-06-19) — complete tight original PORTUGUESE (pt) commentary
+//   for all 66 books, replacing the old bloated Tyndale-translation commentary/pt
+//   (scripture-retelling + labels + over-long blocks). Pure commentary, no
+//   scripture, no labels, <=70 words & 2-3 verses per block, varied openings;
+//   rendered from en-mh and exegeted afresh. Verse boundaries verified against
+//   bibles/pt — four edition-specific versification offsets traced and remapped
+//   (Ezekiel 20, Luke 9, 2 Corinthians 13, 3 John, Revelation 12). Per-book
+//   full audits clean (coverage==bibles/pt, all blocks <=70 words). Verified
+//   live on jsDelivr (HTTP 200, offset verse counts correct). Portuguese
+//   readers now get pt via the client's lang->en-mh->en fetch order; English
+//   and every other locale are unaffected. No client code change needed.
 // b3651357 (2026-06-18) — fix en-mh book slugs to match the Bible index
 //   (i-corinthians, ii-kings, iii-john, revelation-of-john, song-of-solomon).
 //   19 books had 404'd on the client and silently fallen back to Tyndale;
@@ -31,7 +42,7 @@
 //   new content AND invalidates every device's cached chapters.
 // 8055c8f — added the full `commentary/en/` tree (Tyndale Open Study Notes
 //   for 30,836 verses + Claude-filled devotionals for the 266 gap verses).
-export const CORPUS_COMMIT = 'b3651357c9521d3ea7f6ea2cc610c8cf799d22f0';
+export const CORPUS_COMMIT = 'bd7ea258e8dea3a668fe1a45b5d5b9fb6f680f8a';
 
 // Root of the corpus tree (no `/bibles` suffix). Use this when reading
 // non-Bible payloads like commentary or any future cross-bible asset. The

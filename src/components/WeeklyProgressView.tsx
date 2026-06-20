@@ -13,6 +13,8 @@ import { useT } from '../i18n/useT';
 // Plays ONCE on mount and freezes on its final frame (loop={false} holds the
 // last frame in lottie-react-native).
 const HERO_LOTTIE = require('../../assets/lottie/weekly-plant.json');
+// Evening completion shows the streak fire instead of the plant (per user).
+const FIRE_LOTTIE = require('../../assets/lottie/fire-streak.json');
 
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -88,7 +90,7 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack }: 
           no hard color boundaries (no native blur lib needed). */}
       <BackgroundDecor morning={morning} />
 
-      <Hero />
+      <Hero morning={morning} />
 
       <Animated.View
         entering={SlideInDown.duration(500).delay(200).easing(Easing.out(Easing.cubic))}
@@ -98,19 +100,22 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack }: 
           {DAY_LABELS.map((d, i) => {
             const isToday = i === todayIdx;
             const done = weekFlags[i];
+            // A completed day (past OR today) shows the praying-hands glyph on
+            // a yellow fill. Today is additionally marked with an accent ring
+            // (~30% bolder border) to read as "today / selected".
             return (
               <View
                 key={i}
                 style={[
                   styles.dayCircle,
-                  done && { borderColor: accent, backgroundColor: `${accent}1A` },
-                  isToday && styles.dayCircleToday,
+                  done && styles.dayDone,
+                  isToday && { borderWidth: 2, borderColor: accent },
                 ]}
               >
-                {isToday ? (
+                {done ? (
                   <PrayingHandsGlyph color={accent} />
                 ) : (
-                  <Text style={[styles.dayLetter, done && { color: accent, fontWeight: '700' }]}>{d}</Text>
+                  <Text style={styles.dayLetter}>{d}</Text>
                 )}
               </View>
             );
@@ -191,11 +196,11 @@ function BackgroundDecor({ morning }: { morning: boolean }) {
   );
 }
 
-function Hero() {
+function Hero({ morning }: { morning: boolean }) {
   return (
     <View style={styles.hero}>
       <LottieView
-        source={HERO_LOTTIE}
+        source={morning ? HERO_LOTTIE : FIRE_LOTTIE}                             // morning = plant, evening = streak fire (per user)
         autoPlay
         loop={false}                                                             // play once, hold the final frame
         style={{ width: 230, height: 230 }}
@@ -227,6 +232,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#FBE5EF' },
   hero: {
     height: '38%',
+    marginTop: 30,                                                               // +30 px from the top edge per user
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'transparent',
@@ -258,10 +264,10 @@ const styles = StyleSheet.create({
   blobD: { width: 360, height: 360, bottom: -80, left: -100 },
   blobE: { width: 240, height: 240, bottom: '12%', right: -50 },
   card: {
-    marginTop: -32,
+    marginTop: -22,                                                              // -32 → -22 (+10 px gap below the lottie per user)
     marginHorizontal: 16,
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
+    borderRadius: 11,                                                            // 22 → 11 (-50 % per user)
     paddingHorizontal: 22,
     paddingTop: 22,
     paddingBottom: 22,
@@ -285,14 +291,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayCircleToday: {
+  // Completed day — yellow fill, no border. The accent "today" ring is added
+  // inline only for the current day (replaces the old today-only style).
+  dayDone: {
     borderWidth: 0,
     backgroundColor: '#F4D58A',
-    shadowColor: '#F4B860',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 8,
-    elevation: 4,
   },
   dayLetter: { fontSize: 13, color: TXTSUB, fontWeight: '600' },
   headline: {
@@ -316,7 +319,8 @@ const styles = StyleSheet.create({
     gap: 14,
     paddingVertical: 12,
     paddingHorizontal: 12,
-    borderRadius: 18,
+    borderRadius: 10.8,                                                          // 18 → 10.8 (-40 % per user)
+    marginHorizontal: -8,                                                        // bleed ~8 px each side past the card padding ≈ +5 % width (per user)
   },
   reminderIcon: {
     width: 40, height: 40, borderRadius: 20,

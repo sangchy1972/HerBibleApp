@@ -254,11 +254,15 @@ const styles = StyleSheet.create({
   refLine: { flex: 1, height: 1, backgroundColor: 'rgba(30,27,46,0.18)' },
   refText: { fontSize: 15, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.3 },
   body: {
-    fontFamily: FONTS.merriweather,     // Merriweather per user (was Source Serif)
-    fontSize: 21,
-    lineHeight: 30.6,                    // 34 → 30.6 (−10 % line spacing per user)
+    // Byte-matched to the home Verse card body (PrayerScreen `heroText`) per
+    // user: same face, size, and line-height. Only the colour differs — the
+    // hero text is white on a dark photo; the reader sits on a light page, so
+    // it keeps the dark TXT colour for legibility.
+    fontFamily: FONTS.merriweather,     // = heroText
+    fontSize: 19.16,                    // = heroText (was 21)
+    lineHeight: 29.59,                  // = heroText (was 30.6)
     color: TXT,
-    marginBottom: 10,                    // 10px after each paragraph per user
+    marginBottom: 12.5,                 // 10 × 1.25 (+25 % paragraph spacing per user)
   },
   copyAllBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,

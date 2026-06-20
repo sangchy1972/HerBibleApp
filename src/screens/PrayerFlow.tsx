@@ -23,6 +23,7 @@ import { logEvent } from '../services/firebase';
 import { usePrayer } from '../state/PrayerContext';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useNotes } from '../state/NotesContext';
+import { useNotifications } from '../state/NotificationsContext';
 import { useActivity } from '../state/ActivityContext';
 import { useRatePrompt } from '../state/RatePromptContext';
 import { useDailyVerses } from '../state/DailyVersesContext';
@@ -325,7 +326,9 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // skies. Skipped entirely when no image is available — the gradient
   // fallback below carries enough contrast on its own.
   const scrimColors = morning
-    ? (['rgba(123,34,85,0.35)', 'rgba(45,10,26,0.65)'] as const)
+    // Wine-red (burgundy) instead of the old magenta-pink, and more transparent
+    // so the photo shows through more — per user: "darker colour but more see-through".
+    ? (['rgba(74,20,36,0.30)', 'rgba(28,8,16,0.58)'] as const)
     : (['rgba(45,22,96,0.40)', 'rgba(16,5,37,0.70)'] as const);
   // Background-music source for this slot. `audioFor` returns either a
   // local cached `file://` URI (prefetched on app launch via
@@ -378,6 +381,14 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const [kbHeight, setKbHeight] = useState(0);
   useEffect(() => {
     if (!showNoteSheet) { setKbHeight(0); return; }
+    // Seed an estimated keyboard height the moment the sheet opens. The input
+    // autoFocuses, so the keyboard WILL be up — the sheet must be laid out for
+    // that from the first frame. Without this seed there's a window where
+    // kbHeight=0, the 92% sheet sits flush at the bottom, and the Save/Cancel
+    // buttons render UNDER the keyboard until keyboardDidShow fires — which on
+    // the first-ever open can arrive late/be missed on some Androids, leaving
+    // the buttons stuck off-screen. The real height refines this ~250 ms later.
+    setKbHeight(prev => (prev > 0 ? prev : Math.round(height * 0.36)));
     const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
     const onShow = Keyboard.addListener(showEvt, (e) => setKbHeight(e.endCoordinates?.height ?? 0));
@@ -385,6 +396,9 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     return () => { onShow.remove(); onHide.remove(); };
   }, [showNoteSheet]);
   const [page, setPage] = useState(0);
+  // Live pager scroll offset (px). Drives the page slide/fade so the animation
+  // is always in sync with what's physically on screen — see the page anims.
+  const scrollY = useSharedValue(0);
   const [buttonReady, setButtonReady] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   // Each page that can overflow has its own inner ScrollView. Reset whichever
@@ -512,6 +526,22 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     return () => sub.remove();
   }, [audioPlayer, readPlayer, musicOn, listenOn, audioSource, readUris]);
 
+  // Hard stop on unmount / exit. expo-audio's useAudioPlayer does NOT reliably
+  // stop a LOOPING player when the component unmounts, so leaving the flow
+  // (the X button → closeFlow → navigation.goBack, or any unmount) left the
+  // background music still playing on the home screen. Refs hold the latest
+  // player instances; the cleanup pauses both the moment the screen goes away.
+  const audioPlayerRef = useRef(audioPlayer);
+  audioPlayerRef.current = audioPlayer;
+  const readPlayerRef = useRef(readPlayer);
+  readPlayerRef.current = readPlayer;
+  useEffect(() => {
+    return () => {
+      try { audioPlayerRef.current?.pause(); } catch {}
+      try { readPlayerRef.current?.pause(); } catch {}
+    };
+  }, []);
+
   // Play/pause follows `listenOn`; also (re)plays when the cursor moves to a
   // new clip while listening. Pausing (listenOn=false) holds position so a
   // resume on the same page continues where it left off.
@@ -595,7 +625,9 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
 
   // Visual page (dots / inner-scroll reset) follows the finger in real time.
   const handleScroll = (e: any) => {
-    const idx = Math.round(e.nativeEvent.contentOffset.y / height);
+    const y = e.nativeEvent.contentOffset.y;
+    scrollY.value = y;                              // keep the page anims in sync with the real offset
+    const idx = Math.round(y / height);
     if (idx !== page) setPage(idx);
   };
 
@@ -605,14 +637,38 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // to the landed page and plays it from the top. (Our own auto-advance
   // scroll lands on a page whose cursor is already set, so this is a no-op
   // for it — no feedback loop.)
+  // Force the OUTER pager onto an exact page boundary. The inner ScrollViews
+  // hand off the gesture on Android, after which pagingEnabled sometimes leaves
+  // the pager a few-dozen px PAST a page — so the page (and its title) rests
+  // shifted up under the top chrome and can't be nudged back. Snapping here
+  // guarantees every page rests exactly aligned, on any phone height.
+  const snapOuterToPage = (y: number): number => {
+    const landed = Math.round(y / height);
+    if (Math.abs(y - landed * height) > 1) {
+      scrollRef.current?.scrollTo({ y: landed * height, animated: true });
+    }
+    return landed;
+  };
+
   const handleMomentumEnd = (e: any) => {
-    const landed = Math.round(e.nativeEvent.contentOffset.y / height);
+    const landed = snapOuterToPage(e.nativeEvent.contentOffset.y);
+    scrollY.value = landed * height;               // snap the anim driver exactly onto the landed page
     if (landed !== page) setPage(landed);
+    // Pin the page you just landed on to the TOP so its caption always rests at
+    // the intended top offset (insets.top + DEEP_PAGE_TOP) — never scrolled past
+    // with the title jammed under the top chrome. The leave-reset effect can
+    // miss when `page` desyncs on Android nested scroll, so reset on arrival too.
+    const inner = landed === 1 ? meditationScrollRef
+      : landed === 2 ? actionScrollRef
+      : landed === 3 ? prayerScrollRef
+      : null;
+    inner?.current?.scrollTo({ y: 0, animated: false });
     if (listenOn && landed !== listenStep) {
       advancedFromRef.current = -1;  // fresh clip — let its finish advance
       setListenStep(landed);
     }
   };
+
 
   // Closing scene timing: hands move in, then 8 sparkles twinkle continuously
   // for ~4s (6 cycles × ~700ms each) before fading out. Closing text appears
@@ -659,30 +715,27 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // previous 60 px makes the motion clearly visible instead of feeling like
   // a hard cut, while `Easing.out(Easing.cubic)` keeps the arrival soft.
   const PAGE_TY = 110;
-  const PAGE_DURATION = 500;
-  const pageProgress = useSharedValue(0);
-  useEffect(() => {
-    pageProgress.value = withTiming(page, { duration: PAGE_DURATION, easing: Easing.out(Easing.cubic) });
-  }, [page, pageProgress]);
+  // Page slide + fade driven by the ACTUAL pager offset (scrollY), not a
+  // withTiming chase of `page`. The old approach could desync from the real
+  // scroll on Android (nested inner ScrollViews swallow momentum events), which
+  // left the visible page faded to opacity 0 — a blank, frozen-looking screen.
+  // Reading the live offset means the settled page is ALWAYS dist 0 → opacity 1
+  // and fully visible/scrollable, while mid-swipe pages cross-fade cleanly.
   const verseAnim = useAnimatedStyle(() => {
-    const dist = Math.abs(pageProgress.value - 0);
-    const ty = Math.min(PAGE_TY, dist * PAGE_TY);
-    return { transform: [{ translateY: ty }], opacity: 1 - ty / PAGE_TY };
+    const ty = Math.min(PAGE_TY, Math.abs(scrollY.value / height - 0) * PAGE_TY);
+    return { transform: [{ translateY: ty }], opacity: 1 - Math.min(1, ty / PAGE_TY) };
   });
   const meditationAnim = useAnimatedStyle(() => {
-    const dist = Math.abs(pageProgress.value - 1);
-    const ty = Math.min(PAGE_TY, dist * PAGE_TY);
-    return { transform: [{ translateY: ty }], opacity: 1 - ty / PAGE_TY };
+    const ty = Math.min(PAGE_TY, Math.abs(scrollY.value / height - 1) * PAGE_TY);
+    return { transform: [{ translateY: ty }], opacity: 1 - Math.min(1, ty / PAGE_TY) };
   });
   const actionAnim = useAnimatedStyle(() => {
-    const dist = Math.abs(pageProgress.value - 2);
-    const ty = Math.min(PAGE_TY, dist * PAGE_TY);
-    return { transform: [{ translateY: ty }], opacity: 1 - ty / PAGE_TY };
+    const ty = Math.min(PAGE_TY, Math.abs(scrollY.value / height - 2) * PAGE_TY);
+    return { transform: [{ translateY: ty }], opacity: 1 - Math.min(1, ty / PAGE_TY) };
   });
   const prayerAnim = useAnimatedStyle(() => {
-    const dist = Math.abs(pageProgress.value - 3);
-    const ty = Math.min(PAGE_TY, dist * PAGE_TY);
-    return { transform: [{ translateY: ty }], opacity: 1 - ty / PAGE_TY };
+    const ty = Math.min(PAGE_TY, Math.abs(scrollY.value / height - 3) * PAGE_TY);
+    return { transform: [{ translateY: ty }], opacity: 1 - Math.min(1, ty / PAGE_TY) };
   });
 
   useEffect(() => {
@@ -909,6 +962,12 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
         <ScrollView
           ref={scrollRef}
           pagingEnabled
+          // NOTE: no disableIntervalMomentum / onScrollEndDrag here — those made
+          // the outer pager grab the vertical gesture and snap back, stealing it
+          // from the inner page ScrollViews so a long page (e.g. Closing Prayer)
+          // couldn't be scrolled to reach the Amen button. Plain pagingEnabled +
+          // the inner ScrollViews' nestedScrollEnabled is the combo that lets the
+          // inner content scroll first, then hands off to the pager at its edges.
           showsVerticalScrollIndicator={false}
           onScroll={handleScroll}
           onMomentumScrollEnd={handleMomentumEnd}
@@ -974,7 +1033,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                     timings={timingFor(1)}
                     time={narrationTime}
                     active={listenOn && listenStep === 1}
-                    style={styles.pageBody}
+                    // Reflection body matches the Closing Prayer body (Merriweather
+                    // 18.3 / lh 29.7) per user — same serif voice across the
+                    // Reflection / Practice / Prayer deep pages.
+                    style={[styles.pageBody, styles.prayerBody]}
                     highlightStyle={styles.spokenLine}
                   />
                 ))}
@@ -997,7 +1059,9 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                   timings={timingFor(2)}
                   time={narrationTime}
                   active={listenOn && listenStep === 2}
-                  style={styles.pageBody}
+                  // Today's/Tonight's Practice body matches the Closing Prayer
+                  // body (Merriweather 18.3 / lh 29.7) per user.
+                  style={[styles.pageBody, styles.prayerBody]}
                   highlightStyle={styles.spokenLine}
                 />
                 <TouchableOpacity
@@ -1020,7 +1084,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >
-              <Animated.View style={[styles.pageContent, styles.prayerPagePad, { paddingTop: insets.top + DEEP_PAGE_TOP }, prayerAnim]}>
+              <Animated.View style={[styles.pageContent, { paddingTop: insets.top + DEEP_PAGE_TOP, paddingBottom: insets.bottom + 100 }, prayerAnim]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption, styles.prayerCaption]}>{prayerCaption}</Text>
                 <HighlightedText
                   text={prayerBody}
@@ -1030,11 +1094,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                   style={[styles.pageBody, styles.prayerBody]}
                   highlightStyle={styles.spokenLine}
                 />
-                <TouchableOpacity
-                  onPress={handleAmen}
-                  style={styles.amenBtn}
-                  activeOpacity={0.9}
-                >
+                {/* Amen sits at the END of the prayer content (per user): scroll
+                    through the prayer, then the button with 100 px of breathing
+                    room above (marginTop) and below (the page's paddingBottom). */}
+                <TouchableOpacity onPress={handleAmen} style={styles.amenBtn} activeOpacity={0.9}>
                   <Text style={[styles.amenText, { color: morning ? ROSE : LAV }]}>{t('prayerFlow.amen')}</Text>
                 </TouchableOpacity>
                 <Text style={styles.prayedCount}>{t('prayerFlow.prayedCount', { count: formatThousands(prayedTodayCount()) })}</Text>
@@ -1366,15 +1429,14 @@ const styles = StyleSheet.create({
   actionPagePad: {
     paddingTop: 205,                                                            // deepPageOffset 175 + 30 (per user)
   },
-  // Closing Prayer body only — back to Merriweather per user so the prayer
-  // text reads in the same warm serif voice as the Bible reader's body
-  // copy, while Reflection + Today's Practice stay on Lato. Line-height
-  // also +10 % vs. the shared deep-page rhythm (30 → 33) for slightly more
-  // breathing room befitting the closing prayer's contemplative tone.
+  // Merriweather serif body shared by the three deep pages — Reflection,
+  // Today's/Tonight's Practice, AND Closing Prayer — per user, so all read in
+  // the same warm serif voice as the Bible reader's body copy. (Was Closing
+  // Prayer only; Reflection + Practice were Lato before this change.)
   prayerBody: {
     fontFamily: FONTS.merriweather,
-    fontSize: 18.3,                                                             // 19 → 20.33 → 18.3 (-10 % this round per user) — Closing Prayer body only
-    lineHeight: 29.7,                                                           // 33 → 29.7 (proportional to -10 % fontSize so line rhythm stays balanced)
+    fontSize: 18.3,
+    lineHeight: 29.7,
   },
   // Closing Prayer title only — Lora bold per user (other two deep pages
   // stay on Lato). Weight 600 sits just under the Lora_700Bold cut so
@@ -1385,14 +1447,11 @@ const styles = StyleSheet.create({
     // old loraBold override made this one title look different — user bug).
   },
   meditationContent: {
-    paddingBottom: 280,
+    paddingBottom: 200,                                                         // 280 → 200 per user (96 was too short)
   },
   // Closing Prayer page — extra bottom room so the long prayer text, the
   // Amen button, and the prayed-count line all clear the bottom edge + the
   // page-dot cluster when scrolled to the end.
-  prayerPagePad: {
-    paddingBottom: 160,
-  },
   pageCaption: {
     fontSize: 28.6,                                                             // 15 → 19.5 → 20.48 → 24 → 26 → 28.6 (+10 % per user)
     // letterSpacing + textTransform removed — captions are now title-case per
@@ -1503,7 +1562,7 @@ const styles = StyleSheet.create({
     borderRadius: 24.39,                                                        // matches startBtn
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 45,                                                              // 100 → 85 → 60 → 45 per user
+    marginTop: 100,                                                             // 100 px of space before the button (段前) per user
     backgroundColor: '#FFFFFF',
   },
   amenText: {
@@ -1746,19 +1805,22 @@ const styles = StyleSheet.create({
 function NotifRationaleScreen({ onDismiss }: { onDismiss: () => void }) {
   const insets = useSafeAreaInsets();
   const t = useT();
+  const { requestPermissionAndEnableDefaults } = useNotifications();
 
   const requestPermission = async () => {
     try {
       const perm = await Notifications.getPermissionsAsync();
-      if (!perm.granted && perm.canAskAgain) {
-        // Fresh ask — show the OS dialog. If the user picks "Don't allow"
-        // we just dismiss; denying a popup must NOT teleport them into
-        // system Settings (2026-06 bug fix).
-        await Notifications.requestPermissionsAsync();
-      } else if (!perm.granted && Platform.OS !== 'web') {
-        // Permanently denied BEFORE this tap — the OS can't show the
-        // dialog anymore, so Settings is the only way "Allow" can work.
+      if (!perm.granted && !perm.canAskAgain && Platform.OS !== 'web') {
+        // Permanently denied BEFORE this tap — the OS can't show the dialog
+        // anymore, so Settings is the only way "Allow" can work.
         Linking.openSettings().catch(() => {});
+      } else {
+        // Fresh ask (or already granted): fire the REAL OS permission dialog
+        // AND, on grant, turn on + schedule the default morning/evening
+        // reminders — so tapping Allow actually produces reminders, not just a
+        // granted permission with nothing scheduled. (On a "Don't allow" this
+        // returns false and we simply dismiss — no teleport to Settings.)
+        await requestPermissionAndEnableDefaults();
       }
     } catch {
       // Notifications API can throw on some sims/unsupported runtimes.
@@ -1806,8 +1868,14 @@ function PhoneMockup() {
   // 244 wide → center 122) so the phone never looks cut off on one side.
   const rr = (x: number, y: number, w: number, h: number, r: number) =>
     `M${x + r} ${y} L${x + w - r} ${y} Q${x + w} ${y} ${x + w} ${y + r} L${x + w} ${y + h - r} Q${x + w} ${y + h} ${x + w - r} ${y + h} L${x + r} ${y + h} Q${x} ${y + h} ${x} ${y + h - r} L${x} ${y + r} Q${x} ${y} ${x + r} ${y} Z`;
+  // Device-adaptive size. +25 % vs the old fixed 244 (→ 305 cap = 244 × 1.25) on
+  // normal/wide phones, but scaled down by screen width on narrow phones so it
+  // never overflows the screen's 24 px side padding or gets oversized. viewBox
+  // stays 244×168, so every path scales proportionally.
+  const MOCK_W = Math.min(Math.round(width * 0.76), 305);
+  const MOCK_H = Math.round((MOCK_W * 168) / 244);
   return (
-    <Svg width={244} height={168} viewBox="0 0 244 168">
+    <Svg width={MOCK_W} height={MOCK_H} viewBox="0 0 244 168">
       {/* Only the TOP of the phone is shown — the home screen is intentionally
           out of frame. Top corners rounded; the frame runs straight off the
           bottom edge so it reads as "the top of a phone" carrying one
@@ -1853,8 +1921,8 @@ const rationaleStyles = StyleSheet.create({
     marginBottom: 14,
   },
   body: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 17.6,                                                             // 16 × 1.1 (+10 % per user)
+    lineHeight: 26.4,                                                           // 24 × 1.1 to keep rhythm
     color: TXTSUB,
     marginBottom: 20,
   },

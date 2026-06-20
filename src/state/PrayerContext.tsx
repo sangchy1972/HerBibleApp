@@ -100,9 +100,14 @@ function earlyBirdStreakOf(records: DayRecords): number {
 
 export function PrayerProvider({ children }: { children: React.ReactNode }) {
   const hr = new Date().getHours();
-  // Initial tab aligned to the 6/18 prayer windows (was 5/17, which put the
-  // 05–06 and 17–18 boundary hours on the wrong tab vs the window logic).
-  const [morning, setMorning] = useState(hr >= 6 && hr < 18);
+  // Initial tab follows the CALENDAR DAY, not the prayer-start window. The day
+  // rolls at midnight, so from 00:00 the user is in the new day's MORNING
+  // context (this matches the "Good Morning" greeting and the verse-of-the-day).
+  // Evening only takes over at 18:00. The 00:00–06:00 dead zone (morning prayer
+  // not yet startable → "see past verses") is handled separately by the start
+  // gating in PrayerScreen, so the tab can safely show morning there.
+  // Previously `hr >= 6 && hr < 18`, which wrongly showed Evening from 00:00–06:00.
+  const [morning, setMorning] = useState(hr < 18);
   const [records, setRecords] = useState<DayRecords>({});
   // Local calendar day; ticks at midnight (foreground resume + midnight timer)
   // so mDone/eDone/markDone all key off the SAME day even when the app is left

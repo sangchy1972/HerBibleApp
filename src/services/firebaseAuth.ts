@@ -10,6 +10,8 @@
 // build that doesn't yet contain these native modules degrades to no-ops
 // instead of crashing at import time.
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 let authMod: any = null;
 let GoogleSignin: any = null;
 let FBLoginManager: any = null;
@@ -110,6 +112,53 @@ export async function facebookSignIn(): Promise<void> {
   if (!data?.accessToken) throw new Error('NO_FB_TOKEN');
   const credential = authMod.FacebookAuthProvider.credential(data.accessToken);
   await authMod().signInWithCredential(credential);
+}
+
+// ─── Email magic-link (passwordless) sign-in ──────────────────────────────
+// Firebase-native, NO backend. Flow:
+//   1. sendEmailSignInLink(email) → Firebase emails a one-tap sign-in link; we
+//      stash the email locally so we can finish on this device.
+//   2. User taps the link → it lands on everlandapps.com/finishSignIn.html (a
+//      tiny redirect page) → bounces to herbible://finishSignIn?<params> →
+//      DeepLinkHandler → completeEmailSignIn(link).
+// The redirect page + the app's existing custom scheme avoid Firebase Dynamic
+// Links (deprecated) and Android App Links / SHA-256 setup entirely.
+// REQUIRES in Firebase Console: Authentication → Sign-in method → Email/Password
+// → "Email link (passwordless sign-in)" ENABLED, and Authentication → Settings →
+// Authorized domains includes `everlandapps.com`.
+const EMAIL_LINK_CONTINUE_URL = 'https://everlandapps.com/finishSignIn.html';
+const PENDING_EMAIL_KEY = 'auth:emailLink:pendingEmail';
+
+export function emailAuthAvailable(): boolean { return !!authMod; }
+
+export async function sendEmailSignInLink(email: string): Promise<void> {
+  if (!authMod) throw new Error('FIREBASE_AUTH_UNAVAILABLE');
+  const clean = email.trim();
+  await authMod().sendSignInLinkToEmail(clean, {
+    handleCodeInApp: true,
+    url: EMAIL_LINK_CONTINUE_URL,
+  });
+  try { await AsyncStorage.setItem(PENDING_EMAIL_KEY, clean); } catch {}
+}
+
+export function isEmailSignInLink(link: string): boolean {
+  if (!authMod) return false;
+  try { return !!authMod().isSignInWithEmailLink(link); } catch { return false; }
+}
+
+export async function getPendingEmail(): Promise<string | null> {
+  try { return await AsyncStorage.getItem(PENDING_EMAIL_KEY); } catch { return null; }
+}
+
+// `link` must be the original https sign-in link (carrying the oobCode), which
+// the caller reconstructs from the herbible:// redirect. `fallbackEmail` covers
+// the rare case where the link is opened on a device with no stored email.
+export async function completeEmailSignIn(link: string, fallbackEmail?: string): Promise<void> {
+  if (!authMod) throw new Error('FIREBASE_AUTH_UNAVAILABLE');
+  const email = (await getPendingEmail()) || (fallbackEmail ?? '').trim();
+  if (!email) throw new Error('NO_PENDING_EMAIL');
+  await authMod().signInWithEmailLink(email, link);
+  try { await AsyncStorage.removeItem(PENDING_EMAIL_KEY); } catch {}
 }
 
 export async function firebaseSignOut(): Promise<void> {

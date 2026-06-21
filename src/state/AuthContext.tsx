@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { onAuthChanged, googleSignIn, facebookSignIn, firebaseSignOut, type AuthUser } from '../services/firebaseAuth';
+import { onAuthChanged, googleSignIn, facebookSignIn, firebaseSignOut, sendEmailSignInLink, completeEmailSignIn, type AuthUser } from '../services/firebaseAuth';
 import { setAnalyticsUser, logEvent } from '../services/firebase';
 
 export interface User {
@@ -16,6 +16,10 @@ interface AuthState {
   signInWithGoogle: () => Promise<void>;
   /** Native Facebook (fbsdk) → Firebase. Resolves on success; throws 'CANCELLED' if dismissed. */
   signInWithFacebook: () => Promise<void>;
+  /** Email magic-link (passwordless): sends a one-tap sign-in link to the email. */
+  sendEmailLink: (email: string) => Promise<void>;
+  /** Completes magic-link sign-in from the tapped link (called by DeepLinkHandler). */
+  completeEmailLink: (link: string) => Promise<void>;
   /** Legacy local sign-in — still used by Apple until it migrates to Firebase. */
   signIn: (u: User) => void;
   signOut: () => void;
@@ -72,6 +76,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logEvent('login', { method: 'facebook' });
   }, []);
 
+  const sendEmailLink = useCallback(async (email: string) => {
+    await sendEmailSignInLink(email);
+  }, []);
+
+  const completeEmailLink = useCallback(async (link: string) => {
+    await completeEmailSignIn(link);   // onAuthChanged fires with the new user
+    logEvent('login', { method: 'email_link' });
+  }, []);
+
   const signIn = useCallback((u: User) => {
     setLocalUser(u);
     AsyncStorage.setItem(LOCAL_USER_KEY, JSON.stringify(u)).catch(() => {});
@@ -101,8 +114,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo<AuthState>(() => ({
-    user, signInWithGoogle, signInWithFacebook, signIn, signOut, updateProfile,
-  }), [user, signInWithGoogle, signInWithFacebook, signIn, signOut, updateProfile]);
+    user, signInWithGoogle, signInWithFacebook, sendEmailLink, completeEmailLink, signIn, signOut, updateProfile,
+  }), [user, signInWithGoogle, signInWithFacebook, sendEmailLink, completeEmailLink, signIn, signOut, updateProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

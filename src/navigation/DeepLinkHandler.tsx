@@ -4,6 +4,19 @@ import * as Notifications from 'expo-notifications';
 import { useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import type { RootStackParamList } from './types';
+import { useAuth } from '../state/AuthContext';
+
+// `herbible://finishSignIn?<query>` (bounced from everlandapps.com/finishSignIn
+// .html, the email magic-link redirect page) → the original https sign-in link
+// the Firebase SDK expects, preserving the oobCode/mode query so
+// signInWithEmailLink can complete the passwordless sign-in.
+function emailLinkFromDeepLink(url: string): string | null {
+  const path = url.replace(/^herbible:\/\//, '').split(/[?#]/)[0];
+  if (path !== 'finishSignIn') return null;
+  const q = url.includes('?') ? url.slice(url.indexOf('?')) : '';
+  if (!/oobCode=/.test(q)) return null;
+  return `https://everlandapps.com/finishSignIn.html${q}`;
+}
 
 // Configures foreground-notification behaviour + handles taps on:
 //   • Local notifications scheduled by NotificationsContext
@@ -102,6 +115,7 @@ function notifResponseKey(response: Notifications.NotificationResponse): string 
 
 export default function DeepLinkHandler() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const { completeEmailLink } = useAuth();
 
   // Handle notification taps — both the warm path (app already running)
   // and the cold path (app was killed; tap launches it). Expo exposes
@@ -132,24 +146,27 @@ export default function DeepLinkHandler() {
     return () => { mounted = false; sub.remove(); };
   }, [navigation]);
 
-  // Handle deep-link URLs (widget taps, share-back-to-app links, etc.).
+  // Handle deep-link URLs: email magic-link completion, widget taps, etc.
   // Same warm/cold split as notifications.
   useEffect(() => {
     let mounted = true;
 
-    Linking.getInitialURL().then((url) => {
+    const handleUrl = (url: string | null) => {
       if (!mounted || !url) return;
+      // Email magic-link → complete passwordless sign-in (onAuthChanged then
+      // flips the app to signed-in). Swallows errors so a stale/expired link
+      // can't crash the launch.
+      const emailLink = emailLinkFromDeepLink(url);
+      if (emailLink) { completeEmailLink(emailLink).catch(() => {}); return; }
       const dest = routeForUrl(url);
       if (dest) (navigation.navigate as any)(dest.screen, dest.params);
-    }).catch(() => {});
+    };
 
-    const sub = Linking.addEventListener('url', ({ url }) => {
-      const dest = routeForUrl(url);
-      if (dest) (navigation.navigate as any)(dest.screen, dest.params);
-    });
+    Linking.getInitialURL().then(handleUrl).catch(() => {});
+    const sub = Linking.addEventListener('url', ({ url }) => handleUrl(url));
 
     return () => { mounted = false; sub.remove(); };
-  }, [navigation]);
+  }, [navigation, completeEmailLink]);
 
   return null;
 }

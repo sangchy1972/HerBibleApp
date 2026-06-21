@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Pressable, ActivityIndicator, TextInput } from 'react-native';
 import Svg, { Path, G } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -21,12 +21,32 @@ interface Props {
 type Provider = 'apple' | 'google' | 'facebook';
 
 export default function SignInSheet({ onClose, onError }: Props) {
-  const { signIn, signInWithGoogle, signInWithFacebook } = useAuth();
+  const { signIn, signInWithGoogle, signInWithFacebook, sendEmailLink } = useAuth();
   const t = useT();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   // Which provider is mid-flight. Drives the in-button spinner AND disables
   // every provider row so a slow native picker can't be double-fired.
   const [busy, setBusy] = useState<Provider | null>(null);
+  // Email magic-link sub-flow: 'providers' = the OAuth list, 'email' = the
+  // email-entry form, then `emailSent` swaps to the "check your inbox" state.
+  const [mode, setMode] = useState<'providers' | 'email'>('providers');
+  const [email, setEmail] = useState('');
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
+  const onSendEmail = async () => {
+    if (emailBusy || !emailValid) return;
+    setEmailBusy(true);
+    try {
+      await sendEmailLink(email.trim());
+      setEmailSent(true);
+    } catch {
+      onError?.(t('signIn.email.error'));
+    } finally {
+      setEmailBusy(false);
+    }
+  };
 
   // Pre-warm Google's native stack the moment the sheet opens — configure +
   // Play Services check happen while the user reads the sheet, instead of
@@ -126,6 +146,8 @@ export default function SignInSheet({ onClose, onError }: Props) {
       <Animated.View entering={SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic))} style={styles.sheet}>
         <View style={styles.handle} />
         <Text style={styles.title}>{t('signIn.sheet.title')}</Text>
+        {mode === 'providers' ? (
+        <>
         <Text style={styles.desc}>{t('signIn.sub')}</Text>
 
         {Platform.OS === 'ios' && (
@@ -171,6 +193,65 @@ export default function SignInSheet({ onClose, onError }: Props) {
           </ProviderButton>
         )}
 
+        {/* Email magic-link (passwordless): no password, no OAuth — Firebase
+            emails a one-tap sign-in link. */}
+        <ProviderButton
+          onPress={() => setMode('email')}
+          style={styles.providerBtn}
+          busy={false}
+          disabled={busy !== null}
+          spinnerColor={ROSE}
+          glyph={<Feather name="mail" size={20} color={TXT} />}
+        >
+          <Text style={styles.providerText}>{t('signIn.email')}</Text>
+        </ProviderButton>
+        </>
+        ) : (
+        <View style={styles.emailForm}>
+          <TouchableOpacity onPress={() => { setMode('providers'); setEmailSent(false); }} hitSlop={10} style={styles.emailBack}>
+            <Feather name="chevron-left" size={22} color={TXTSUB} />
+            <Text style={styles.emailBackText}>{t('signIn.email.back')}</Text>
+          </TouchableOpacity>
+          {!emailSent ? (
+            <>
+              <Text style={styles.emailTitle}>{t('signIn.email.title')}</Text>
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder={t('signIn.email.placeholder')}
+                placeholderTextColor={TXTSUB}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+                editable={!emailBusy}
+                style={styles.emailInput}
+                onSubmitEditing={onSendEmail}
+                returnKeyType="send"
+              />
+              <TouchableOpacity
+                onPress={onSendEmail}
+                disabled={!emailValid || emailBusy}
+                style={[styles.emailSendBtn, (!emailValid || emailBusy) && { opacity: 0.5 }]}
+                activeOpacity={0.9}
+              >
+                {emailBusy ? <ActivityIndicator color="#fff" /> : <Text style={styles.emailSendText}>{t('signIn.email.send')}</Text>}
+              </TouchableOpacity>
+            </>
+          ) : (
+            <View style={styles.emailSentWrap}>
+              <Feather name="mail" size={34} color={ROSE} style={{ marginBottom: 12 }} />
+              <Text style={styles.emailTitle}>{t('signIn.email.sent.title')}</Text>
+              <Text style={styles.emailSentBody}>{t('signIn.email.sent.body', { email: email.trim() })}</Text>
+              <TouchableOpacity onPress={() => setEmailSent(false)} hitSlop={8}>
+                <Text style={styles.emailChange}>{t('signIn.email.changeEmail')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+        )}
+
+        {mode === 'providers' && (
         <LegalText
           template={t('signIn.legal')}
           termsLabel={t('signIn.legal.terms')}
@@ -178,6 +259,7 @@ export default function SignInSheet({ onClose, onError }: Props) {
           onOpenTerms={() => navigation.navigate('Policy', { id: 'terms' })}
           onOpenPrivacy={() => navigation.navigate('Policy', { id: 'privacy' })}
         />
+        )}
 
         <TouchableOpacity onPress={onClose} hitSlop={10} style={styles.cancel}>
           <Feather name="x" size={18} color={TXTSUB} />
@@ -366,6 +448,22 @@ const styles = StyleSheet.create({
     color: ROSE,
     fontWeight: '600',
   },
+  emailForm: { paddingTop: 4 },
+  emailBack: { flexDirection: 'row', alignItems: 'center', gap: 2, alignSelf: 'flex-start', marginBottom: 10, paddingVertical: 4 },
+  emailBackText: { fontSize: 15, color: TXTSUB, fontWeight: '500' },
+  emailTitle: { fontSize: 18, fontWeight: '700', color: TXT, textAlign: 'center', marginBottom: 14 },
+  emailInput: {
+    height: 52, borderRadius: 14, borderWidth: 1.5, borderColor: 'rgba(30,27,46,0.12)',
+    paddingHorizontal: 16, fontSize: 16, color: TXT, backgroundColor: '#fff', marginBottom: 14,
+  },
+  emailSendBtn: {
+    height: 52, borderRadius: 28, backgroundColor: ROSE,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 4,
+  },
+  emailSendText: { fontSize: 16, fontWeight: '700', color: '#fff', letterSpacing: 0.2 },
+  emailSentWrap: { alignItems: 'center', paddingHorizontal: 8, paddingVertical: 8 },
+  emailSentBody: { fontSize: 14.5, lineHeight: 21, color: TXTSUB, textAlign: 'center', marginBottom: 16, paddingHorizontal: 8 },
+  emailChange: { fontSize: 14, fontWeight: '700', color: ROSE },
   cancel: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -193,14 +193,21 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     textAlign: 'center',
     marginBottom: 6,
+    // The 280-px sunburst overflows the 150-px badgeArea upward into the title's
+    // row; badgeArea is a LATER sibling so by default its rays paint OVER this
+    // title. Lift the title above the rays (zIndex + Android elevation).
+    zIndex: 2,
+    elevation: 2,
   },
   // Relative box holding the badge with the sunburst centered behind it.
+  // Kept BELOW the title in paint order so the overflowing rays sit behind it.
   badgeArea: {
     width: '100%',
     height: 150,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
+    zIndex: 1,
   },
   raysWrap: {
     ...StyleSheet.absoluteFillObject,
@@ -220,8 +227,8 @@ const styles = StyleSheet.create({
   okBtn: {
     marginTop: 22,
     backgroundColor: ROSE,
-    borderRadius: 32,
-    paddingVertical: 16,
+    borderRadius: 16,                                                            // 32 → 16 (-50 % per user)
+    paddingVertical: 13.12,                                                      // 16 → 13.12 (-18 % height per user)
     paddingHorizontal: 80,
     minWidth: 200,
     alignItems: 'center',

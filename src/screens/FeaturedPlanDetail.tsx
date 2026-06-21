@@ -267,6 +267,19 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
         {!!summary.goal && <Text style={ds.goal}>{summary.goal}</Text>}
       </Animated.View>
 
+      {/* Start Reading Plan — placed BEFORE the Daily Plan list (per user),
+          with 20px top + bottom margin. */}
+      <Animated.View entering={FadeIn.delay(130).duration(260)}>
+        <TouchableOpacity
+          style={[ds.startReadingBtn, { backgroundColor: ac, marginTop: 20, marginBottom: 20 }, !plan && { opacity: 0.5 }]}
+          onPress={startActiveDay}
+          disabled={!plan}
+          activeOpacity={0.9}
+        >
+          <Text style={ds.startReadingText}>{t('plan.startReading')}</Text>
+        </TouchableOpacity>
+      </Animated.View>
+
       <Animated.View entering={FadeIn.delay(150).duration(260)}>{/* 420/420 → 150/260 */}
         <Text style={ds.dailyPlanLabel}>{t('plan.dailyPlanLabel')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={ds.dayStrip} contentContainerStyle={ds.dayStripContent}>
@@ -349,17 +362,6 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
             </>
           )}
         </View>
-      </Animated.View>
-
-      <Animated.View entering={FadeIn.delay(250).duration(260)}>{/* 720/400 → 250/260 — Start button reaches resting state ~510 ms after mount instead of 1120 ms */}
-        <TouchableOpacity
-          style={[ds.startReadingBtn, { backgroundColor: ac }, !plan && { opacity: 0.5 }]}
-          onPress={startActiveDay}
-          disabled={!plan}
-          activeOpacity={0.9}
-        >
-          <Text style={ds.startReadingText}>{t('plan.startReading')}</Text>
-        </TouchableOpacity>
       </Animated.View>
 
       <View style={{ height: 23 }} />

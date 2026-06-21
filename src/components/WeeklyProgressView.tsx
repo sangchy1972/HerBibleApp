@@ -41,12 +41,16 @@ function dateKey(d: Date): string {
 // circles, which already used m || e).
 function countPrayersThisWeek(
   recordOn: (k: string) => { m: boolean; e: boolean },
-): { count: number; weekFlags: boolean[]; todayIdx: number } {
+): { count: number; weekFlags: boolean[]; bothFlags: boolean[]; todayIdx: number } {
   const today = new Date();
   const todayIdx = today.getDay();             // 0 = Sunday
   const sunday = new Date(today);
   sunday.setDate(today.getDate() - todayIdx);
   const weekFlags: boolean[] = [];
+  // bothFlags[i] = that day had BOTH morning AND evening done → a fully
+  // completed day, which the calendar marks with the streak-fire glyph
+  // (a partially-done day keeps the praying-hands glyph). Per user.
+  const bothFlags: boolean[] = [];
   let count = 0;
   for (let i = 0; i < 7; i++) {
     const d = new Date(sunday);
@@ -54,9 +58,10 @@ function countPrayersThisWeek(
     const r = recordOn(dateKey(d));
     const prayedThatDay = r.m || r.e;
     weekFlags.push(prayedThatDay);
+    bothFlags.push(r.m && r.e);
     if (i <= todayIdx && prayedThatDay) count += 1;
   }
-  return { count, weekFlags, todayIdx };
+  return { count, weekFlags, bothFlags, todayIdx };
 }
 
 // 10 morning headlines, rotated by calendar day so each morning reads fresh.
@@ -75,25 +80,37 @@ interface Props {
 
 export default function WeeklyProgressView({ morning, onOpenReminder, onBack, onStartGospelPsalm }: Props) {
   const t = useT();
-  const { recordOn } = usePrayer();
-  const { count, weekFlags, todayIdx } = countPrayersThisWeek(recordOn);
+  const { recordOn, mDone, eDone } = usePrayer();
+  const { count, weekFlags, bothFlags, todayIdx } = countPrayersThisWeek(recordOn);
   const accent = morning ? ROSE : LAV;
 
+  // Day completion is what drives the hero + today's calendar glyph — NOT which
+  // slot was just prayed. Per user: the FIRST prayer of the day (morning OR
+  // evening) shows the growing sapling; once BOTH are done the day is complete
+  // and we switch to the streak fire (hero + calendar). markDone() already ran
+  // for the just-finished slot before this screen mounts, so these are current.
+  const dayComplete = mDone && eDone;
+
   // Today's Gospel & Psalms — if the slot matching this prayer isn't read yet,
-  // surface a "next" card with a Start button below the weekly card.
+  // surface a "next" card with a Continue button below the weekly card.
   const { ready: gpReady, day: gpDay, total: gpTotal, morningDone, eveningDone } = useGospelsPsalms();
   const showNext = gpReady && !(morning ? morningDone : eveningDone);
 
-  // Headline: morning gets a rotating affirmation (10 phrases, by day);
-  // evening keeps the prayer-count tier. Each resolves to a catalog key so
-  // every language renders its own form.
-  const headlineKey = morning
-    ? MORNING_KEYS[(new Date().getDate() - 1) % MORNING_KEYS.length]
-    : count >= 7 ? 'weekly.headline.perfect' :
+  // Headline (resolves to a catalog key so every language renders its own form):
+  //   • day complete (both done) → weekly milestone tier, regardless of which
+  //     slot finished last — so finishing the 2nd prayer always reads as a
+  //     "day done" celebration.
+  //   • first prayer of the day is the MORNING one → a rotating fresh-morning
+  //     affirmation (10 phrases by day).
+  //   • first prayer of the day is the EVENING one → the neutral milestone tier
+  //     (the morning phrases are morning-specific, so we don't use them at night).
+  const headlineKey = dayComplete || !morning
+    ? count >= 7 ? 'weekly.headline.perfect' :
       count >= 5 ? 'weekly.headline.onFire' :
       count >= 3 ? 'weekly.headline.halfway' :
       count === 2 ? 'weekly.headline.twoStrong' :
-                    'weekly.headline.greatStart';
+                    'weekly.headline.greatStart'
+    : MORNING_KEYS[(new Date().getDate() - 1) % MORNING_KEYS.length];
   const headline = t(headlineKey);
 
   return (
@@ -105,7 +122,7 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack, on
           no hard color boundaries (no native blur lib needed). */}
       <BackgroundDecor morning={morning} />
 
-      <Hero morning={morning} />
+      <Hero dayComplete={dayComplete} />
 
       <Animated.View
         entering={SlideInDown.duration(500).delay(200).easing(Easing.out(Easing.cubic))}
@@ -115,9 +132,12 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack, on
           {DAY_LABELS.map((d, i) => {
             const isToday = i === todayIdx;
             const done = weekFlags[i];
-            // A completed day (past OR today) shows the praying-hands glyph on
-            // a yellow fill. Today is additionally marked with an accent ring
-            // (~30% bolder border) to read as "today / selected".
+            const both = bothFlags[i];
+            // A prayed day (past OR today) gets a yellow fill. A FULLY completed
+            // day (both morning + evening) shows the streak-fire glyph; a
+            // partially completed day keeps the praying-hands glyph (per user).
+            // Today is additionally marked with an accent ring to read as
+            // "today / selected".
             return (
               <View
                 key={i}
@@ -128,7 +148,7 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack, on
                 ]}
               >
                 {done ? (
-                  <PrayingHandsGlyph color={accent} />
+                  both ? <FireGlyph /> : <PrayingHandsGlyph color={accent} />
                 ) : (
                   <Text style={styles.dayLetter}>{d}</Text>
                 )}
@@ -164,11 +184,14 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack, on
             <View style={styles.nextCard}>
               <View style={styles.nextMeta}>
                 <Text style={[styles.nextLabel, { color: accent }]}>{t('weekly.next.label')}</Text>
-                <Text style={styles.nextTitle} numberOfLines={1}>{t('gp.section')}</Text>
-                <Text style={styles.nextSub} numberOfLines={1}>{t('gp.cardTitle', { day: gpDay, total: gpTotal })}</Text>
+                <Text style={styles.nextTitle} numberOfLines={1}>
+                  {t('gp.section')}<Text style={styles.nextProgress}>  {gpDay}/{gpTotal}</Text>
+                </Text>
               </View>
-              <TouchableOpacity onPress={onStartGospelPsalm} activeOpacity={0.85} style={[styles.nextStartBtn, { backgroundColor: accent }]}>
-                <Text style={styles.nextStartText}>{t('weekly.next.start')}</Text>
+              {/* Continue sits full-width at the BOTTOM of the card so tapping it
+                  reads as "carry straight on into Gospel & Psalm" (per user). */}
+              <TouchableOpacity onPress={onStartGospelPsalm} activeOpacity={0.85} style={[styles.nextContinueBtn, { backgroundColor: accent }]}>
+                <Text style={styles.nextContinueText}>{t('weekly.next.start')}</Text>
               </TouchableOpacity>
             </View>
             <TouchableOpacity onPress={onBack} hitSlop={12} style={styles.laterBtn}>
@@ -230,16 +253,34 @@ function BackgroundDecor({ morning }: { morning: boolean }) {
   );
 }
 
-function Hero({ morning }: { morning: boolean }) {
+function Hero({ dayComplete }: { dayComplete: boolean }) {
   return (
     <View style={styles.hero}>
       <LottieView
-        source={morning ? HERO_LOTTIE : FIRE_LOTTIE}                             // morning = plant, evening = streak fire (per user)
+        source={dayComplete ? FIRE_LOTTIE : HERO_LOTTIE}                         // both prayers done = streak fire; first of the day = growing sapling (per user)
         autoPlay
         loop={false}                                                             // play once, hold the final frame
-        style={{ width: 230, height: 230 }}
+        style={{ width: 195.5, height: 195.5 }}                                  // 230 → 195.5 (-15 % per user)
       />
     </View>
+  );
+}
+
+// Streak-fire glyph for the calendar's fully-completed days (both prayers
+// done). Small monochrome flame in the slot accent — distinct from the
+// praying-hands used for partially-done days.
+function FireGlyph({ color = '#F2722B' }: { color?: string }) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24">
+      <Path
+        d="M12.8 2 C12.8 5.2 9.2 6.6 9.2 10.8 C8 9.8 7.6 8.2 7.6 8.2 C6.6 9.6 6 11.3 6 13.2 C6 16.95 8.69 20 12 20 C15.31 20 18 16.95 18 13.2 C18 10.2 16.2 7.6 15.2 6.2 C14.7 8 13.4 8.6 13.4 6.8 C13.4 5 13.2 3.4 12.8 2 Z"
+        fill={color}
+      />
+      <Path
+        d="M12 12 C12 13.6 10.8 14.4 10.8 16 C10.8 17.2 11.3 18.2 12 18.2 C12.7 18.2 13.2 17.2 13.2 16.2 C13.2 15 12 14.4 12 12 Z"
+        fill="#FFE9A8"
+      />
+    </Svg>
   );
 }
 
@@ -390,28 +431,34 @@ const styles = StyleSheet.create({
   backText: { fontSize: 18, fontWeight: '700' },                                  // color set inline (morning → ROSE / evening → LAV)
   // Gospel & Psalms "next" card — shown in the Back slot when today's reading
   // isn't done. Same 50 px top gap as the Back button.
+  // Vertical layout (was a single row): meta on top, full-width Continue at the
+  // bottom. The column + button make the card ~60 % taller per user.
   nextCard: {
     marginHorizontal: 16,
     marginTop: 50,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
     backgroundColor: '#FFFFFF',
     borderRadius: 11,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 18,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.10,
     shadowRadius: 8,
     elevation: 3,
   },
-  nextMeta: { flex: 1, minWidth: 0 },
-  nextLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.2, marginBottom: 3 },
-  nextTitle: { fontSize: 16, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold },
-  nextSub: { fontSize: 13, color: TXTSUB, marginTop: 2 },
-  nextStartBtn: { paddingHorizontal: 22, paddingVertical: 10, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  nextStartText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  nextMeta: { minWidth: 0 },
+  nextLabel: { fontSize: 12.65, fontFamily: FONTS.lato, fontWeight: '600', letterSpacing: 1.2, marginBottom: 4 },  // 11 → 12.65 (+15 %), Lato 600 per user
+  nextTitle: { fontSize: 17.6, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold },                         // 16 → 17.6 (+10 % per user)
+  nextProgress: { fontSize: 14, color: TXTSUB, fontFamily: FONTS.lato, fontWeight: '600' },                          // "1/89" kept inline on the title (gray dup subtitle removed)
+  nextContinueBtn: {
+    marginTop: 16,
+    alignSelf: 'stretch',
+    height: 46,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nextContinueText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   laterBtn: { marginTop: 14, alignItems: 'center', paddingVertical: 6 },
   laterText: { fontSize: 15, fontWeight: '600' },
 });

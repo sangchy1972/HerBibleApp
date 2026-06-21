@@ -1299,9 +1299,18 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                 <TouchableOpacity onPress={Keyboard.dismiss} activeOpacity={1} style={styles.noteHandleHit}>
                   <View style={styles.sheetHandle} />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={Keyboard.dismiss} activeOpacity={1}>
-                  <Text style={styles.noteSheetTitle}>{t('prayerFlow.note.title')}</Text>
-                </TouchableOpacity>
+                {/* Top header — Cancel | title | Save. Mirrors the verse Note
+                    sheet so the actions sit ABOVE the keyboard and can never be
+                    covered by it (the old bottom button row got hidden). */}
+                <View style={styles.reflectHeader}>
+                  <TouchableOpacity onPress={closeNoteSheet} hitSlop={10}>
+                    <Text style={styles.reflectHeaderCancel}>{t('prayerFlow.note.cancel')}</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.reflectHeaderTitle} numberOfLines={1}>{t('prayerFlow.note.title')}</Text>
+                  <TouchableOpacity onPress={saveNote} hitSlop={10}>
+                    <Text style={[styles.reflectHeaderSave, { color: morning ? ROSE : LAV }]}>{t('prayerFlow.note.save')}</Text>
+                  </TouchableOpacity>
+                </View>
                 <TextInput
                   value={noteText}
                   onChangeText={setNoteText}
@@ -1312,14 +1321,6 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                   autoFocus
                   textAlignVertical="top"
                 />
-                <View style={styles.sheetBtns}>
-                  <TouchableOpacity onPress={closeNoteSheet} style={[styles.sheetBtnBack, styles.reflectionBtn]}>
-                    <Text style={[styles.sheetBtnText, styles.reflectionBtnText, { color: TXTSUB }]}>{t('prayerFlow.note.cancel')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={saveNote} style={[styles.sheetBtnConfirm, styles.reflectionBtn, { backgroundColor: morning ? ROSE : LAV }]}>
-                    <Text style={[styles.sheetBtnText, styles.reflectionBtnText, { color: '#fff', fontWeight: '700' }]}>{t('prayerFlow.note.save')}</Text>
-                  </TouchableOpacity>
-                </View>
               </View>
             </Animated.View>
           </GestureDetector>
@@ -1574,11 +1575,11 @@ const styles = StyleSheet.create({
   // for the label — set inline by the consumer.
   amenBtn: {
     alignSelf: 'stretch',
-    height: 48.71,                                                              // startBtn 47.06 × 1.15 → 54.12 → 48.71 (-10 % per user)
-    borderRadius: 24.39,                                                        // matches startBtn
+    height: 46.27,                                                              // 48.71 → 46.27 (-5 % per user)
+    borderRadius: 14.63,                                                        // 24.39 → 14.63 (-40 % per user; rounded rect, no longer a full capsule)
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 100,                                                             // 100 px of space before the button (段前) per user
+    marginTop: 50,                                                             // 100 → 50 (段前距离减半 per user)
     backgroundColor: '#FFFFFF',
   },
   amenText: {
@@ -1720,6 +1721,27 @@ const styles = StyleSheet.create({
     marginBottom: 21,
     fontFamily: FONTS.loraBold,
   },
+  // Reflection sheet top header — Cancel | title | Save. Matches VerseNoteSheet
+  // (the "Note" sheet) so the two sheets read identically and the actions stay
+  // above the keyboard.
+  reflectHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: -8,
+    marginBottom: 18,
+  },
+  reflectHeaderTitle: {
+    flex: 1,
+    textAlign: 'center',
+    marginHorizontal: 8,
+    fontSize: 19,
+    fontWeight: '600',
+    color: TXT,
+    fontFamily: FONTS.loraBold,
+  },
+  reflectHeaderCancel: { fontSize: 17, color: TXTSUB, fontWeight: '500' },
+  reflectHeaderSave:   { fontSize: 17, fontWeight: '700' },                      // color set inline (morning → ROSE / evening → LAV)
   noteInput: {
     flex: 1,
     fontSize: 17,
@@ -1884,11 +1906,12 @@ function PhoneMockup() {
   // 244 wide → center 122) so the phone never looks cut off on one side.
   const rr = (x: number, y: number, w: number, h: number, r: number) =>
     `M${x + r} ${y} L${x + w - r} ${y} Q${x + w} ${y} ${x + w} ${y + r} L${x + w} ${y + h - r} Q${x + w} ${y + h} ${x + w - r} ${y + h} L${x + r} ${y + h} Q${x} ${y + h} ${x} ${y + h - r} L${x} ${y + r} Q${x} ${y} ${x + r} ${y} Z`;
-  // Device-adaptive size. +25 % vs the old fixed 244 (→ 305 cap = 244 × 1.25) on
-  // normal/wide phones, but scaled down by screen width on narrow phones so it
-  // never overflows the screen's 24 px side padding or gets oversized. viewBox
-  // stays 244×168, so every path scales proportionally.
-  const MOCK_W = Math.min(Math.round(width * 0.76), 305);
+  // Device-adaptive size, then ×1.5 (+50 % W & H per user — the mockup read too
+  // small). The visible phone is only ~57 % of MOCK_W (the 244-wide viewBox has
+  // big transparent side margins), and mockupWrap is flex:1 / centered with no
+  // clipping, so the larger box overflows only into empty space. viewBox stays
+  // 244×168 so every path scales proportionally and MOCK_H tracks MOCK_W.
+  const MOCK_W = Math.round(Math.min(width * 0.76, 305) * 1.5);
   const MOCK_H = Math.round((MOCK_W * 168) / 244);
   return (
     <Svg width={MOCK_W} height={MOCK_H} viewBox="0 0 244 168">

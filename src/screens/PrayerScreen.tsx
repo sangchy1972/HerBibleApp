@@ -37,6 +37,7 @@ import { parseReference, localizeReference } from '../services/parseReference';
 import { useTabFocusScrollReset } from '../components/shared/useTabFocusEntrance';
 import { useT } from '../i18n/useT';
 import ShareVerseSheet from '../components/ShareVerseSheet';
+import CommentsSheet from '../components/CommentsSheet';
 import TabSection from '../components/shared/TabSection';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useUILanguage } from '../state/UILanguageContext';
@@ -216,7 +217,7 @@ function formatCountdown(ms: number): string {
   return `${h}h ${m}m`;
 }
 
-function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTab, offerPastDays, onOfferPastDays, waitLabel, waitHint, onBegin, onOpenRef, onShare, onMore, cardLabel, verseRef, verseText, bgSource }: {
+function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTab, offerPastDays, onOfferPastDays, waitLabel, waitHint, onBegin, onOpenRef, onShare, onComment, onMore, cardLabel, verseRef, verseText, bgSource }: {
   morning: boolean;
   canStart: boolean;        // active slot in window + not yet done
   canReplay: boolean;       // slot already done — tapping the card re-enters as redo
@@ -229,6 +230,7 @@ function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTa
   onBegin: () => void;
   onOpenRef: () => void;
   onShare: () => void;
+  onComment: () => void;    // opens the verse comment sheet
   onMore: (anchor: { x: number; y: number; w: number; h: number }) => void;
   cardLabel: string;
   verseRef: string;
@@ -373,7 +375,7 @@ function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTa
             <HeartIcon filled={liked} color={liked ? '#FFB3CC' : iconColor} />
             <Text style={[styles.actionLabel, { color: liked ? '#FFB3CC' : iconColor }]}>{formatLikes(likes + (liked ? 1 : 0))}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn}>
+          <TouchableOpacity style={styles.actionBtn} onPress={onComment}>
             <CommentIcon color={iconColor} />
             <Text style={[styles.actionLabel, { color: iconColor }]}>{comments}</Text>
           </TouchableOpacity>
@@ -502,6 +504,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   const [showShare, setShowShare] = useState(false);
   // "See past days" prompt shown when tapping the card in the 00:00–06:00 dead zone.
   const [showPastPrompt, setShowPastPrompt] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const [moreAnchor, setMoreAnchor] = useState<MoreAnchor | null>(null);
   const labels = dailyLabels(translation.code);
   const segment: 'morning' | 'evening' = morning ? 'morning' : 'evening';
@@ -536,7 +539,11 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
     for (const k of readChapterSet) if (k.startsWith(prefix)) count++;
     return count;
   }, [readChapterSet, lastRead.bookSlug]);
-  const continuePct = Math.min(100, Math.round((continueBookReadCount / continueTotalChapters) * 100));
+  // Guard divide-by-zero: a stored bookSlug with no chapter count (unknown book)
+  // would make this NaN → `width: "NaN%"` on the progress bar.
+  const continuePct = continueTotalChapters > 0
+    ? Math.min(100, Math.round((continueBookReadCount / continueTotalChapters) * 100))
+    : 0;
   // Pct widget can collapse the visual to 0 % which looks broken; clamp the
   // bar to a thin minimum so users see SOME fill before they've read much.
   const continuePctWidth = Math.max(continuePct, 4);
@@ -944,6 +951,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           onBegin={() => navigation.navigate('PrayerFlow', { kind: morning ? 'morning' : 'evening' })}
           onOpenRef={openVerseInBible}
           onShare={() => setShowShare(true)}
+          onComment={() => setShowComments(true)}
           onMore={(anchor) => setMoreAnchor(anchor)}
         />
       </View>
@@ -1054,6 +1062,12 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           // verse card the user just tapped — no more pink/lav placeholder.
           bgSource={prayerBg.imageFor(morning ? 'morning' : 'evening')}
         />
+      </Modal>
+
+      {/* Verse comment sheet — decorative community reactions (canned, random
+          5–25 each open). Remounts per open so it re-rolls a fresh set. */}
+      <Modal visible={showComments} transparent animationType="none" statusBarTranslucent onRequestClose={() => setShowComments(false)}>
+        {showComments && <CommentsSheet onClose={() => setShowComments(false)} />}
       </Modal>
 
       {/* "See past days" prompt — shown when the verse card is tapped during

@@ -18,7 +18,7 @@ interface Props {
 export default function PlanProgressCard({ plan, dayLabel, onPress }: Props) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
-      <PlanCover cover={plan.cover} slug={plan.slug} width={92.15} height={92.15} radius={10} />
+      <PlanCover cover={plan.cover} slug={plan.slug} width={82.01} height={82.01} radius={10} />
       <View style={styles.meta}>
         <View style={styles.dayRow}>
           <Feather name="check-square" size={15} color={TXTSUB} />
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
     gap: 14,
     backgroundColor: '#FFFFFF',
     borderRadius: 9.8,                                                           // 14 → 9.8 (matches heroCard above per user)
-    paddingVertical: 11.4,                                                       // 12 → 16.5 → 13.25 → 12 → 11.4 (-5 % per user)
+    paddingVertical: 10.26,                                                      // 11.4 × 0.9 (-10 % card height per user; text size unchanged)
     paddingHorizontal: 12,
     marginTop: 12,
     // Lighter shadow per user — was too heavy. Halved opacity + tightened radius.

@@ -67,7 +67,7 @@ export default function MoodFlow({ navigation }: RootStackScreenProps<'MoodFlow'
       {step === 'calendar' && <CalendarStep onContinue={exit} />}
       {step === 'fact' && (
         <FactModal
-          fact={funFacts[factIdx]}
+          fact={funFacts[Math.min(factIdx, funFacts.length - 1)]}
           onShuffle={() => setFactIdx(i => (i + 1) % funFacts.length)}
           onShare={() => { /* hook into ShareVerseSheet later if needed */ }}
           onClose={() => setStep('calendar')}
@@ -81,7 +81,7 @@ export default function MoodFlow({ navigation }: RootStackScreenProps<'MoodFlow'
 function PickStep({ onPick }: { onPick: (m: Mood) => void }) {
   const t = useT();
   return (
-    <Animated.View entering={FadeIn.duration(220)} style={styles.pickWrap}>
+    <Animated.View entering={FadeIn.duration(440)} style={styles.pickWrap}>
       <Text style={styles.pickTitle}>{t('mood.howFeel')}</Text>
       <View style={styles.grid}>
         {MOOD_LIST.map((m) => (

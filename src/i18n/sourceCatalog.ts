@@ -218,6 +218,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'prayer.hint.nightOpens':        { en: 'Night Prayer opens at 6 PM. Come back this evening.', context: 'Hint before evening prayer opens.' },
   'prayer.action.share':           { en: 'Share',          context: 'Hero verse card action button (under the verse) — opens share sheet.' },
   'prayer.action.more':            { en: 'More',           context: 'Hero verse card action button — opens overflow menu (Read full chapter / See past days).' },
+  'comments.title':                { en: 'Comments',       context: 'Header title of the verse-card comment sheet (decorative community reactions).' },
   'prayer.more.readFullChapter':   { en: 'Read full chapter', context: 'Overflow menu row — opens the Bible reader at the verse range.' },
   'prayer.more.seePastDays':       { en: 'See past days',  context: 'Overflow menu row — opens the past-verses history screen.' },
   'prayer.section.plansInProgress':{ en: 'Plans In Progress', context: 'Section header on Prayer screen listing active reading plans.' },

@@ -797,6 +797,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
 
   const handleAmen = () => {
     setAmened(true);
+    setMusicOn(false);   // stop bg music on Amen — the flow swaps to the congrats scene WITHOUT unmounting, so the unmount-pause cleanups don't fire; mute here so music doesn't follow the user into the celebration / weekly / reminder screens
     if (!isReplay) {
       logEvent('prayer_complete', { slot: morning ? 'morning' : 'evening' });
       // Interstitial at this natural break — the congrats scene renders beneath

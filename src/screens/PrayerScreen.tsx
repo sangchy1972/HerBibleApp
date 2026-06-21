@@ -260,8 +260,11 @@ function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTa
   // an identical photo veil. Morning is the new wine-red/burgundy (darker +
   // more transparent than the old magenta-pink) the user preferred.
   const colors = morning
-    ? (['rgba(74,20,36,0.30)', 'rgba(28,8,16,0.58)'] as const)
-    : (['rgba(45,22,96,0.40)', 'rgba(16,5,37,0.70)'] as const);
+    // Veil alphas halved (+50% more transparent per user) so the photo reads
+    // clearly through the card: morning 0.30/0.58 → 0.15/0.29, evening
+    // 0.40/0.70 → 0.20/0.35. Kept in sync with PrayerFlow's reading-view scrim.
+    ? (['rgba(74,20,36,0.15)', 'rgba(28,8,16,0.29)'] as const)
+    : (['rgba(45,22,96,0.20)', 'rgba(16,5,37,0.35)'] as const);
   const iconColor = 'rgba(255,255,255,0.92)';
 
   // Per-day social proof. Likes 1001 – 5000, comments 36 – 135. Different

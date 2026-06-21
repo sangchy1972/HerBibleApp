@@ -59,7 +59,7 @@ const DEFAULT_AUDIO       = null;
 // subsequent entries to PrayerFlow play instantly from disk instead of
 // re-downloading 1–1.6 MB over HTTPS every time. Keyed by filename, so a
 // future manifest change with a new audio filename gets a fresh download
-// while the old one ages out naturally via cleanupOldAudio below.
+// while rotated-out filenames are pruned via pruneAudioNotIn below.
 const AUDIO_CACHE_SUBDIR = 'prayer-audio';
 function audioCacheFile(slot: Slot, fn: string): File | null {
   try {
@@ -69,10 +69,10 @@ function audioCacheFile(slot: Slot, fn: string): File | null {
   }
 }
 
-// Returns the first cached audio file for this slot (if any). Used as a
-// graceful fallback so that on a new day with no network, the user keeps
-// hearing yesterday's track instead of silence. We only ever expect 0 or
-// 1 file per slot dir thanks to cleanupOldAudio below.
+// Returns the first cached audio file for this slot (if any). Used only as a
+// last-resort fallback when today's pick somehow isn't cached — normally the
+// whole track list is cached (see the prefetch effect) so audioFor returns
+// today's pick directly. Keeps music playing offline instead of silence.
 function anyCachedAudio(slot: Slot): File | null {
   try {
     const dir = new Directory(Paths.cache, AUDIO_CACHE_SUBDIR, slot);
@@ -86,15 +86,16 @@ function anyCachedAudio(slot: Slot): File | null {
   }
 }
 
-// Removes every cached audio file in this slot's dir EXCEPT the one matching
-// `keepFn`. Called only after the new file has been successfully downloaded
-// — so a network failure tomorrow doesn't leave the user with an empty cache.
-function cleanupOldAudio(slot: Slot, keepFn: string): void {
+// Removes cached audio files in this slot's dir that are NO LONGER in the
+// manifest (rotated-out tracks). We now cache the WHOLE current track list per
+// slot so the daily pick is always ready; only entries the manifest dropped
+// get pruned — never the active set.
+function pruneAudioNotIn(slot: Slot, keep: string[]): void {
   try {
     const dir = new Directory(Paths.cache, AUDIO_CACHE_SUBDIR, slot);
     if (!dir.exists) return;
     for (const entry of dir.list()) {
-      if (entry instanceof File && entry.name !== keepFn) {
+      if (entry instanceof File && !keep.includes(entry.name)) {
         try { entry.delete(); } catch {}
       }
     }
@@ -194,17 +195,22 @@ export function PrayerBackgroundsProvider({ children }: { children: React.ReactN
   // yesterday's leftover is cleaned up.
   useEffect(() => {
     if (!manifest) return;
+    // Prefetch EVERY track for each slot (not just today's pickByDate choice)
+    // so the daily pick is ALWAYS already cached and audioFor rotates the music
+    // reliably day-to-day. BUG FIX: previously only today's pick was downloaded,
+    // so on a fresh day that track wasn't ready when PrayerFlow mounted and
+    // audioFor fell back to a stale cached file → the music never changed across
+    // days. ~1.5 MB each, all kept; rotated-out files are pruned.
     for (const slot of ['morning', 'evening'] as const) {
-      const fn = pickByDate(manifest.audio[slot], `audio:${slot}`);
-      if (!fn) continue;
-      const target = audioCacheFile(slot, fn);
-      if (!target) continue;
-      const url = `${manifest.base_url}/audio/${slot}/${fn}`;
-      prefetchAudio(url, target).then((landed) => {
-        if (landed) cleanupOldAudio(slot, fn);
-      });
+      const list = manifest.audio[slot] ?? [];
+      for (const fn of list) {
+        const target = audioCacheFile(slot, fn);
+        if (!target) continue;
+        prefetchAudio(`${manifest.base_url}/audio/${slot}/${fn}`, target);
+      }
+      pruneAudioNotIn(slot, list);
     }
-  }, [manifest, todayYmd]);
+  }, [manifest]);
 
   // Eagerly warm the native Image cache for today's morning AND evening
   // photos as soon as the manifest is in. Without this, the photos only

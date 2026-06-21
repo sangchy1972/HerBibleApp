@@ -326,10 +326,12 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // skies. Skipped entirely when no image is available — the gradient
   // fallback below carries enough contrast on its own.
   const scrimColors = morning
-    // Wine-red (burgundy) instead of the old magenta-pink, and more transparent
-    // so the photo shows through more — per user: "darker colour but more see-through".
-    ? (['rgba(74,20,36,0.30)', 'rgba(28,8,16,0.58)'] as const)
-    : (['rgba(45,22,96,0.40)', 'rgba(16,5,37,0.70)'] as const);
+    // Wine-red (burgundy) instead of the old magenta-pink. Alphas halved
+    // (+50% more transparent per user) so the photo shows through clearly:
+    // morning 0.30/0.58 → 0.15/0.29, evening 0.40/0.70 → 0.20/0.35. Kept in
+    // sync with the home card's veil (PrayerScreen).
+    ? (['rgba(74,20,36,0.15)', 'rgba(28,8,16,0.29)'] as const)
+    : (['rgba(45,22,96,0.20)', 'rgba(16,5,37,0.35)'] as const);
   // Background-music source for this slot. `audioFor` returns either a
   // local cached `file://` URI (prefetched on app launch via
   // PrayerBackgroundsContext) or null when no audio is available yet.
@@ -1426,17 +1428,8 @@ const styles = StyleSheet.create({
     paddingBottom: 115,
     justifyContent: 'center',
   },
-  // Pushes the caption further down on the meditation / action / prayer
-  // pages so the title doesn't crowd the top edge.
-  deepPageOffset: {
-    paddingTop: 175,                                                            // 185 → 175 (-10 px per user) — Reflection / Action / Prayer titles sit 10 px closer to the top
-  },
-  // Today's / Tonight's Practice (action page) only — title sits +30 px
-  // lower than the other two deep pages. Font is now Lato across all three
-  // deep pages, so no font override needed here anymore.
-  actionPagePad: {
-    paddingTop: 205,                                                            // deepPageOffset 175 + 30 (per user)
-  },
+  // (deepPageOffset / actionPagePad removed — deep-page top spacing is now the
+  //  adaptive inline `insets.top + DEEP_PAGE_TOP`, applied per page.)
   // Merriweather serif body shared by the three deep pages — Reflection,
   // Today's/Tonight's Practice, AND Closing Prayer — per user, so all read in
   // the same warm serif voice as the Bible reader's body copy. (Was Closing

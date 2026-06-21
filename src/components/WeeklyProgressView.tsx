@@ -7,6 +7,7 @@ import Animated, { FadeIn, SlideInDown, Easing } from 'react-native-reanimated';
 import { ROSE, LAV, TXT, TXTSUB, FONTS } from '../constants/theme';
 import { usePrayer } from '../state/PrayerContext';
 import { useT } from '../i18n/useT';
+import { useGospelsPsalms } from '../state/GospelsPsalmsContext';
 
 // Hero animation (replaces the old assets/weekly-jesus.png placeholder slot):
 // the user's plant-loader Lottie, extracted from dotLottie into plain JSON.
@@ -58,27 +59,41 @@ function countPrayersThisWeek(
   return { count, weekFlags, todayIdx };
 }
 
+// 10 morning headlines, rotated by calendar day so each morning reads fresh.
+const MORNING_KEYS = [
+  'weekly.morning.h1', 'weekly.morning.h2', 'weekly.morning.h3', 'weekly.morning.h4', 'weekly.morning.h5',
+  'weekly.morning.h6', 'weekly.morning.h7', 'weekly.morning.h8', 'weekly.morning.h9', 'weekly.morning.h10',
+];
+
 interface Props {
   morning: boolean;
   onOpenReminder: () => void;
   onBack: () => void;
+  /** Open today's Gospel & Psalms reader for this slot (the "next" CTA). */
+  onStartGospelPsalm: () => void;
 }
 
-export default function WeeklyProgressView({ morning, onOpenReminder, onBack }: Props) {
+export default function WeeklyProgressView({ morning, onOpenReminder, onBack, onStartGospelPsalm }: Props) {
   const t = useT();
   const { recordOn } = usePrayer();
   const { count, weekFlags, todayIdx } = countPrayersThisWeek(recordOn);
   const accent = morning ? ROSE : LAV;
 
-  // Headline tier from prayer count. Each branch resolves to a catalog key so
-  // every language renders its own title-cased / non-title-cased form (English
-  // copy is title-cased in the catalog; other languages use their own style).
-  const headlineKey =
-    count >= 7 ? 'weekly.headline.perfect' :
-    count >= 5 ? 'weekly.headline.onFire' :
-    count >= 3 ? 'weekly.headline.halfway' :
-    count === 2 ? 'weekly.headline.twoStrong' :
-                  'weekly.headline.greatStart';
+  // Today's Gospel & Psalms — if the slot matching this prayer isn't read yet,
+  // surface a "next" card with a Start button below the weekly card.
+  const { ready: gpReady, day: gpDay, total: gpTotal, morningDone, eveningDone } = useGospelsPsalms();
+  const showNext = gpReady && !(morning ? morningDone : eveningDone);
+
+  // Headline: morning gets a rotating affirmation (10 phrases, by day);
+  // evening keeps the prayer-count tier. Each resolves to a catalog key so
+  // every language renders its own form.
+  const headlineKey = morning
+    ? MORNING_KEYS[(new Date().getDate() - 1) % MORNING_KEYS.length]
+    : count >= 7 ? 'weekly.headline.perfect' :
+      count >= 5 ? 'weekly.headline.onFire' :
+      count >= 3 ? 'weekly.headline.halfway' :
+      count === 2 ? 'weekly.headline.twoStrong' :
+                    'weekly.headline.greatStart';
   const headline = t(headlineKey);
 
   return (
@@ -139,13 +154,32 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack }: 
         </TouchableOpacity>
       </Animated.View>
 
-      {/* Back button sits 50 px below the card per user — not pinned to the
-          screen bottom. Text color follows the slot's accent (ROSE morning /
-          LAV evening). */}
+      {/* Below the card: when today's Gospel & Psalms isn't read, a "next"
+          card (with Start) is the primary CTA + a small "Maybe later" keeps
+          the plain dismiss. Otherwise the plain Back button. 50 px below the
+          card per user; text color follows the slot accent. */}
       <Animated.View entering={FadeIn.duration(360).delay(360)}>
-        <TouchableOpacity onPress={onBack} activeOpacity={0.85} style={styles.backBtn}>
-          <Text style={[styles.backText, { color: accent }]}>{t('weekly.back')}</Text>
-        </TouchableOpacity>
+        {showNext ? (
+          <>
+            <View style={styles.nextCard}>
+              <View style={styles.nextMeta}>
+                <Text style={[styles.nextLabel, { color: accent }]}>{t('weekly.next.label')}</Text>
+                <Text style={styles.nextTitle} numberOfLines={1}>{t('gp.section')}</Text>
+                <Text style={styles.nextSub} numberOfLines={1}>{t('gp.cardTitle', { day: gpDay, total: gpTotal })}</Text>
+              </View>
+              <TouchableOpacity onPress={onStartGospelPsalm} activeOpacity={0.85} style={[styles.nextStartBtn, { backgroundColor: accent }]}>
+                <Text style={styles.nextStartText}>{t('weekly.next.start')}</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity onPress={onBack} hitSlop={12} style={styles.laterBtn}>
+              <Text style={[styles.laterText, { color: accent }]}>{t('weekly.later')}</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <TouchableOpacity onPress={onBack} activeOpacity={0.85} style={styles.backBtn}>
+            <Text style={[styles.backText, { color: accent }]}>{t('weekly.back')}</Text>
+          </TouchableOpacity>
+        )}
       </Animated.View>
     </View>
   );
@@ -354,4 +388,30 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   backText: { fontSize: 18, fontWeight: '700' },                                  // color set inline (morning → ROSE / evening → LAV)
+  // Gospel & Psalms "next" card — shown in the Back slot when today's reading
+  // isn't done. Same 50 px top gap as the Back button.
+  nextCard: {
+    marginHorizontal: 16,
+    marginTop: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 11,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  nextMeta: { flex: 1, minWidth: 0 },
+  nextLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.2, marginBottom: 3 },
+  nextTitle: { fontSize: 16, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold },
+  nextSub: { fontSize: 13, color: TXTSUB, marginTop: 2 },
+  nextStartBtn: { paddingHorizontal: 22, paddingVertical: 10, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  nextStartText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  laterBtn: { marginTop: 14, alignItems: 'center', paddingVertical: 6 },
+  laterText: { fontSize: 15, fontWeight: '600' },
 });

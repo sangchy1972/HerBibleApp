@@ -829,6 +829,14 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     setTimeout(finishFlow, 200);
   };
 
+  // "Start" on the Gospel & Psalms next card — dismiss the weekly screen and
+  // open today's reader for the matching slot. replace() so the prayer flow
+  // doesn't linger under the reader.
+  const handleStartGospelPsalm = () => {
+    setShowWeekly(false);
+    navigation.replace('GospelPsalm', { slot: morning ? 'morning' : 'evening' });
+  };
+
   const handleSheetClose = () => {
     setShowSheet(false);
     setTimeout(finishFlow, 280);
@@ -1174,12 +1182,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                 } else if (isFirstEverRef.current) {
                   // First-ever prayer (any kind) → onboarding rationale.
                   setShowNotifRationale(true);
-                } else if (morning) {
-                  // Morning re-completion is not a "day done" moment,
-                  // so we skip the Weekly green screen and head home.
-                  navigation.goBack();
                 } else {
-                  // Evening prayer → Weekly progress + Set Reminder.
+                  // Morning OR evening completion → Weekly progress screen
+                  // (morning shows the plant + a rotating morning headline;
+                  // evening shows the streak fire). Per user.
                   setShowWeekly(true);
                 }
               }}
@@ -1200,6 +1206,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             morning={morning}
             onOpenReminder={handleWeeklyOpenReminder}
             onBack={handleWeeklyBack}
+            onStartGospelPsalm={handleStartGospelPsalm}
           />
         </View>
       )}

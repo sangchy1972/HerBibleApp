@@ -55,7 +55,12 @@
       "./plugins/withNativeDebugSymbols.js",
       "@react-native-firebase/app",
       "@react-native-firebase/crashlytics",
-      "@react-native-google-signin/google-signin",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.553397384848-u1plipp9pj4ksv0f114spvdt63p292am"
+        }
+      ],
       [
         "react-native-fbsdk-next",
         {

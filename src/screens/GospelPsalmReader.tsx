@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ImageBackground,
-  ActivityIndicator,
+  ActivityIndicator, AppState,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -81,6 +81,16 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
     } catch { /* player may be null on unsupported envs */ }
   }, [musicOn, audioSource, player]);
   useEffect(() => () => { try { player.pause(); } catch {} }, [player]);
+  // Pause when the app leaves the foreground so the ambient music never keeps
+  // playing in the background (call, app switch, lock); resume on return only
+  // if the user still has it on.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s !== 'active') { try { player.pause(); } catch {} }
+      else { try { if (musicOn && audioSource) player.play(); } catch {} }
+    });
+    return () => sub.remove();
+  }, [player, musicOn, audioSource]);
 
   // Fetch the day's scripture. Morning = gospel chapter + morning psalm;
   // evening = evening psalm only. Verse text comes from the corpus CDN

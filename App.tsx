@@ -62,6 +62,7 @@ import { PlanCompletionProvider } from './src/state/PlanCompletionContext';
 import { GospelsPsalmsProvider } from './src/state/GospelsPsalmsContext';
 import AchievementUnlockSheet from './src/components/AchievementUnlockSheet';
 import DeepLinkHandler from './src/navigation/DeepLinkHandler';
+import PrefetchManager from './src/components/PrefetchManager';
 import WidgetSync from './src/components/WidgetSync';
 import LoadingOverlay from './src/components/LoadingOverlay';
 import { initFirebase, logScreenView } from './src/services/firebase';
@@ -163,6 +164,14 @@ export default function App() {
                                               widget. Null render; needs DailyVerses
                                               + PrayerBackgrounds (both above). */}
                                           <WidgetSync />
+                                          {/* Quietly pre-warms prayer-flow
+                                              narration + plan covers/details
+                                              after launch settles (phases 3-4).
+                                              Deferred behind InteractionManager;
+                                              needs UILanguage + DailyVerses +
+                                              FeaturedPlans + PrayerBackgrounds,
+                                              all mounted above. */}
+                                          <PrefetchManager appReady={appReady} />
                                           {/* Launch loading page — absolute-fill
                                               overlay above everything; hides once
                                               the nav is ready + the 2s floor passes. */}

@@ -553,7 +553,7 @@ function PageContent({
         <Stagger anim={anim} index={base + 1}><Text style={styles.verseRef}>{v.display}</Text></Stagger>
         <Stagger anim={anim} index={base + 2}>
           <TouchableOpacity activeOpacity={0.85} onPress={onTap}>
-            <Text style={[styles.verseBodyLarge, bodyType]}>&ldquo;{v.text}&rdquo;</Text>
+            <Text style={[styles.verseBodyLarge, bodyType]}>{v.text}</Text>
           </TouchableOpacity>
         </Stagger>
       </ScrollView>

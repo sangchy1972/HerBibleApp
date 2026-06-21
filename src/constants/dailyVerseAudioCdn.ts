@@ -20,10 +20,29 @@
 export const DAILY_VERSE_AUDIO_BASE =
   'https://audio.everlandapps.com/dailyverse_4steps_audio_7languages';
 
-// The only language with recorded narration today. Gate the listen button
-// on this so non-English readers don't get an English-only control. Also
-// the language-folder segment in every audio URL.
+// Default language-folder segment. English is the baseline that always
+// exists; the URL builders below accept an explicit `lang` so the path is
+// already multilingual-ready — only the SET below gates which languages we
+// actually point at.
 export const DAILY_VERSE_AUDIO_LANG = 'en';
+
+// Languages that have narration mp3s + timestamp .json uploaded to the CDN
+// under <BASE>/<lang>/…. Today only `en` is recorded. When more languages
+// are uploaded to Cloudflare, add their codes here (and ship a matching
+// per-language entry in the bundled manifest) and the rest of the pipeline —
+// URL building, prefetch, the Listen gate — picks them up automatically. The
+// folder path itself is ALREADY parameterised, so no path code changes are
+// needed at upload time, just this set + the manifest.
+export const AVAILABLE_DAILY_VERSE_AUDIO_LANGS = new Set<string>(['en']);
+
+// Resolve a UI language to the narration language we should fetch: the UI
+// language itself when its audio exists, otherwise null (caller skips the
+// listen control / prefetch — we never silently serve English audio to a
+// non-English reader, and we never waste bandwidth pre-warming clips that
+// won't be offered).
+export function resolveDailyVerseAudioLang(uiLang: string): string | null {
+  return AVAILABLE_DAILY_VERSE_AUDIO_LANGS.has(uiLang) ? uiLang : null;
+}
 
 // Step keys in PRAYER-FLOW PAGE ORDER (page 0..3). Mirrors PrayerFlow's
 // SECTIONS = ['verse','meditation','action','prayer'] one-to-one:
@@ -42,8 +61,8 @@ export interface DailyVerseAudioManifest {
   verses: Record<string, Partial<Record<DailyVerseAudioStep, string>>>;
 }
 
-export function dailyVerseAudioUrl(filename: string): string {
-  return `${DAILY_VERSE_AUDIO_BASE}/${DAILY_VERSE_AUDIO_LANG}/${filename}`;
+export function dailyVerseAudioUrl(filename: string, lang: string = DAILY_VERSE_AUDIO_LANG): string {
+  return `${DAILY_VERSE_AUDIO_BASE}/${lang}/${filename}`;
 }
 
 // Holiday-verse narration. Separate bucket prefix from the regular daily-verse
@@ -55,6 +74,6 @@ export function dailyVerseAudioUrl(filename: string): string {
 export const HOLIDAY_VERSE_AUDIO_BASE =
   'https://audio.everlandapps.com/holiday_dailyverse_4steps_audio';
 
-export function holidayVerseAudioUrl(filename: string): string {
-  return `${HOLIDAY_VERSE_AUDIO_BASE}/${DAILY_VERSE_AUDIO_LANG}/${filename}`;
+export function holidayVerseAudioUrl(filename: string, lang: string = DAILY_VERSE_AUDIO_LANG): string {
+  return `${HOLIDAY_VERSE_AUDIO_BASE}/${lang}/${filename}`;
 }

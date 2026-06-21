@@ -55,7 +55,7 @@ export default function ReflectionsScreen({ navigation }: RootStackScreenProps<'
               {r.verseRef && (
                 <View style={styles.versePreview}>
                   <Text style={styles.verseRef}>{r.verseRef}</Text>
-                  {r.verseText ? <Text style={styles.verseText}>"{r.verseText}"</Text> : null}
+                  {r.verseText ? <Text style={styles.verseText}>{r.verseText}</Text> : null}
                 </View>
               )}
               <Text style={styles.body}>{r.text}</Text>

@@ -1,6 +1,7 @@
 import { File, Directory, Paths } from 'expo-file-system';
 import {
   DAILY_VERSE_AUDIO_STEPS,
+  DAILY_VERSE_AUDIO_LANG,
   dailyVerseAudioUrl,
   holidayVerseAudioUrl,
   type DailyVerseAudioManifest,
@@ -35,6 +36,7 @@ export async function loadManifest(): Promise<DailyVerseAudioManifest | null> {
 export function remoteStepUrls(
   manifest: DailyVerseAudioManifest,
   verseId: string,
+  lang: string = DAILY_VERSE_AUDIO_LANG,
 ): string[] | null {
   const entry = manifest.verses?.[verseId];
   if (!entry) return null;
@@ -42,7 +44,7 @@ export function remoteStepUrls(
   for (const step of DAILY_VERSE_AUDIO_STEPS) {
     const fn = entry[step];
     if (!fn) return null;          // incomplete set → don't offer listen
-    urls.push(dailyVerseAudioUrl(fn));
+    urls.push(dailyVerseAudioUrl(fn, lang));
   }
   return urls;
 }
@@ -104,10 +106,11 @@ async function downloadIfMissing(url: string, target: File): Promise<boolean> {
 export async function prepareVerseAudio(
   verseId: string,
   keepVerseIds: string[],
+  lang: string = DAILY_VERSE_AUDIO_LANG,
 ): Promise<string[] | null> {
   const manifest = await loadManifest();
   if (!manifest) return null;
-  const urls = remoteStepUrls(manifest, verseId);
+  const urls = remoteStepUrls(manifest, verseId, lang);
   if (!urls) return null;
 
   const dir = verseDir(verseId);

@@ -369,6 +369,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     setMusicOn(v => !v);
   };
   const [amened, setAmened] = useState(false);
+  // Set true the instant Amen is tapped — a synchronous guard so the AppState
+  // foreground handler (and any late effect) never auto-resumes audio after the
+  // flow has ended (e.g. when an interstitial closes and the app returns).
+  const endedRef = useRef(false);
   const [showWeekly, setShowWeekly] = useState(false);
   const [showNotifRationale, setShowNotifRationale] = useState(false);
   const [showSheet, setShowSheet] = useState(false);
@@ -521,8 +525,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
         try { audioPlayer.pause(); } catch {}
         try { readPlayer.pause(); } catch {}
       } else {
-        try { if (musicOn && audioSource) audioPlayer.play(); } catch {}
-        try { if (listenOn && readUris) readPlayer.play(); } catch {}
+        // Don't resume once the flow has ended (e.g. returning from the
+        // interstitial) — the prayer is over, audio must stay silent.
+        try { if (!endedRef.current && musicOn && audioSource) audioPlayer.play(); } catch {}
+        try { if (!endedRef.current && listenOn && readUris) readPlayer.play(); } catch {}
       }
     });
     return () => sub.remove();
@@ -799,7 +805,16 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
 
   const handleAmen = () => {
     setAmened(true);
-    setMusicOn(false);   // stop bg music on Amen — the flow swaps to the congrats scene WITHOUT unmounting, so the unmount-pause cleanups don't fire; mute here so music doesn't follow the user into the celebration / weekly / reminder screens
+    setMusicOn(false);
+    setListenOn(false);
+    // Stop BOTH players SYNCHRONOUSLY, before the interstitial. The state→effect
+    // pause chain only runs on the next render — too late: the ad would pop with
+    // the bg music + narration still playing, and the post-ad foreground event
+    // would resume them. endedRef blocks that resume; this hard-pauses now so
+    // nothing bleeds into the ad / congrats / weekly / reminder screens.
+    endedRef.current = true;
+    try { audioPlayer.pause(); } catch {}
+    try { readPlayer.pause(); } catch {}
     if (!isReplay) {
       logEvent('prayer_complete', { slot: morning ? 'morning' : 'evening' });
       // Interstitial at this natural break — the congrats scene renders beneath

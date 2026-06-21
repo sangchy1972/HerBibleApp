@@ -120,7 +120,7 @@ export default function VerseNoteSheet({ verseRef, verseText, existingNote, onCl
               </View>
               <View style={styles.versePreview}>
                 <Text style={styles.verseRef}>{verseRef}</Text>
-                <Text style={styles.verseText}>"{verseText}"</Text>
+                <Text style={styles.verseText}>{verseText}</Text>
               </View>
             </TouchableOpacity>
 

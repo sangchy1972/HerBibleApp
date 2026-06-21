@@ -18,7 +18,10 @@
       "bundleIdentifier": "com.holy.bible.kjv.audio.prayer",
       "buildNumber": "1",
       "usesAppleSignIn": true,
+      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
+        "NSUserTrackingUsageDescription": "Her Bible uses this to show ads that are more relevant to you. You can decline and still use every feature.",
+        "ITSAppUsesNonExemptEncryption": false,
         "LSApplicationQueriesSchemes": [
           "fb",
           "fbapi",

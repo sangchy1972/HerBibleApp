@@ -26,6 +26,9 @@ interface MoodCheckInState {
   shouldShow: () => boolean;
   markShown: () => void;
   recordPick: (mood: Mood) => void;
+  /** Record (or change) the mood for an arbitrary day — powers make-up
+   *  check-ins / editing a past day from the calendar. `dateKey` is YYYY-MM-DD. */
+  recordPickFor: (dateKey: string, mood: Mood) => void;
 }
 
 const Ctx = createContext<MoodCheckInState | null>(null);
@@ -70,6 +73,16 @@ export function MoodCheckInProvider({ children }: { children: React.ReactNode })
           ...state,
           picks: { ...state.picks, [today]: mood },
           lastShownAt: Date.now(),
+        });
+      },
+      recordPickFor: (dateKey, mood) => {
+        logEvent('mood_check_in', { mood, backfill: dateKey !== today });
+        persist({
+          ...state,
+          picks: { ...state.picks, [dateKey]: mood },
+          // Only bump the "shown today" clock when it's actually today, so a
+          // back-fill of a past day doesn't suppress today's own prompt.
+          lastShownAt: dateKey === today ? Date.now() : state.lastShownAt,
         });
       },
     };

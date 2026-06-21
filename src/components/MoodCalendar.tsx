@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Pressable } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import MoodEmoji from './MoodEmoji';
+import MoodEmoji, { MOOD_LIST, type Mood } from './MoodEmoji';
 import { useMoodCheckIn } from '../state/MoodCheckInContext';
 import { useUILanguage } from '../state/UILanguageContext';
 import { useT } from '../i18n/useT';
@@ -92,8 +92,11 @@ interface Props {
 export default function MoodCalendar({ headline, showHeadline = true }: Props) {
   const t = useT();
   const { lang } = useUILanguage();
-  const { picks, totalCheckIns } = useMoodCheckIn();
+  const { picks, totalCheckIns, recordPickFor } = useMoodCheckIn();
   const [cursor, setCursor] = useState(() => new Date());
+  // Make-up check-in: the YYYY-MM-DD a mood is being picked for (today or a
+  // past day tapped on the grid), or null when the picker is closed.
+  const [pickDate, setPickDate] = useState<string | null>(null);
   // Month/year picker (opens on tapping the month label) + the year it's
   // currently browsing (independent of `cursor` until the user picks a month).
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -127,7 +130,14 @@ export default function MoodCalendar({ headline, showHeadline = true }: Props) {
   const monthShort = (i: number) =>
     new Date(2021, i, 1).toLocaleDateString(localeFor(lang), { month: 'short' });
 
-  const headlineText = headline ?? t('moodFlow.calendar.headline', { ordinal: ordinalFor(lang, totalCheckIns) });
+  // Mood-record headline (count-based so it never reads "your 0th check-in").
+  // MoodFlow passes its own `headline`, so this only drives the standalone
+  // mood-tracking screen.
+  const headlineText = headline ?? (
+    totalCheckIns === 0 ? t('moodCalendar.headline.empty')
+    : totalCheckIns === 1 ? t('moodCalendar.headline.one')
+    : t('moodCalendar.headline.count', { count: totalCheckIns })
+  );
 
   return (
     <View>
@@ -146,6 +156,41 @@ export default function MoodCalendar({ headline, showHeadline = true }: Props) {
         <TouchableOpacity onPress={() => shiftMonth(1)} hitSlop={14} style={styles.monthNavBtn}>
           <Chevron dir="right" />
         </TouchableOpacity>
+
+        {/* Month/year picker — floats OVER the calendar (absolute) with a soft
+            scrim behind it, instead of pushing the grid down (per user). The
+            scrim catches outside taps to close. */}
+        {pickerOpen && (
+          <>
+            <Pressable style={styles.pickerBackdrop} onPress={() => setPickerOpen(false)} />
+            <View style={styles.pickerCard}>
+              <View style={styles.pickerYearRow}>
+                <TouchableOpacity onPress={() => setPickerYear(y => y - 1)} hitSlop={12} style={styles.monthNavBtn}>
+                  <Chevron dir="left" />
+                </TouchableOpacity>
+                <Text style={styles.pickerYear}>{pickerYear}</Text>
+                <TouchableOpacity onPress={() => setPickerYear(y => y + 1)} hitSlop={12} style={styles.monthNavBtn}>
+                  <Chevron dir="right" />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.pickerMonths}>
+                {Array.from({ length: 12 }, (_, i) => {
+                  const selected = i === cursor.getMonth() && pickerYear === cursor.getFullYear();
+                  return (
+                    <TouchableOpacity
+                      key={i}
+                      style={styles.pickerMonthCell}
+                      activeOpacity={0.8}
+                      onPress={() => { setCursor(new Date(pickerYear, i, 1)); setPickerOpen(false); }}
+                    >
+                      <Text style={[styles.pickerMonthText, selected && styles.pickerMonthTextSel]}>{monthShort(i)}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </>
+        )}
       </View>
 
       {/* Jump back to the current month — only shown when viewing another month. */}
@@ -154,36 +199,6 @@ export default function MoodCalendar({ headline, showHeadline = true }: Props) {
           <Chevron dir="left" small color={ROSE} />
           <Text style={styles.todayChipText}>{t('pastVerses.today')}</Text>
         </TouchableOpacity>
-      )}
-
-      {/* Month/year picker — pops open right under the label. */}
-      {pickerOpen && (
-        <View style={styles.pickerCard}>
-          <View style={styles.pickerYearRow}>
-            <TouchableOpacity onPress={() => setPickerYear(y => y - 1)} hitSlop={12} style={styles.monthNavBtn}>
-              <Chevron dir="left" />
-            </TouchableOpacity>
-            <Text style={styles.pickerYear}>{pickerYear}</Text>
-            <TouchableOpacity onPress={() => setPickerYear(y => y + 1)} hitSlop={12} style={styles.monthNavBtn}>
-              <Chevron dir="right" />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.pickerMonths}>
-            {Array.from({ length: 12 }, (_, i) => {
-              const selected = i === cursor.getMonth() && pickerYear === cursor.getFullYear();
-              return (
-                <TouchableOpacity
-                  key={i}
-                  style={styles.pickerMonthCell}
-                  activeOpacity={0.8}
-                  onPress={() => { setCursor(new Date(pickerYear, i, 1)); setPickerOpen(false); }}
-                >
-                  <Text style={[styles.pickerMonthText, selected && styles.pickerMonthTextSel]}>{monthShort(i)}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
       )}
 
       <View style={styles.weekHead}>
@@ -204,7 +219,15 @@ export default function MoodCalendar({ headline, showHeadline = true }: Props) {
               const isFuture = cell.date > today && !isToday;
               const cellMood = picks[key];
               return (
-                <View key={ci} style={styles.cell}>
+                // Tappable to log / change that day's mood (make-up check-in);
+                // future days are disabled — you can't pre-log a feeling.
+                <TouchableOpacity
+                  key={ci}
+                  style={styles.cell}
+                  activeOpacity={0.6}
+                  disabled={isFuture}
+                  onPress={() => setPickDate(key)}
+                >
                   <View style={styles.bubble}>
                     {cellMood ? <MoodEmoji mood={cellMood} size={24} /> : null}
                   </View>
@@ -215,15 +238,41 @@ export default function MoodCalendar({ headline, showHeadline = true }: Props) {
                       isFuture && styles.numFuture,
                     ]}>{cell.day}</Text>
                   </View>
-                </View>
+                </TouchableOpacity>
               );
             })}
           </View>
         ))}
       </View>
-      {/* "Your mood on this day is" card removed per user — the emojis on
-          the calendar already convey the same information, so the panel was
-          redundant and ate vertical space the calendar needs. */}
+      {/* Make-up check-in. Lets the user log today's mood if they never opened
+          the daily prompt — or change it. (Any past day is also tappable on the
+          grid above to back-fill.) */}
+      <TouchableOpacity style={styles.logTodayBtn} activeOpacity={0.9} onPress={() => setPickDate(todayKey)}>
+        <Text style={styles.logTodayText}>{todayMood ? t('moodCalendar.updateToday') : t('moodCalendar.logToday')}</Text>
+      </TouchableOpacity>
+
+      {/* Mood picker — opens for `pickDate` (today via the button, or any past
+          day tapped on the grid). Picking writes that day's mood and closes. */}
+      <Modal visible={!!pickDate} transparent animationType="fade" onRequestClose={() => setPickDate(null)}>
+        <Pressable style={styles.moodModalBackdrop} onPress={() => setPickDate(null)}>
+          <Pressable style={styles.moodModalCard} onPress={() => {}}>
+            <Text style={styles.moodModalTitle}>{t('moodFlow.pick.title')}</Text>
+            <View style={styles.moodModalGrid}>
+              {MOOD_LIST.map((m: Mood) => (
+                <TouchableOpacity
+                  key={m}
+                  style={styles.moodModalCell}
+                  activeOpacity={0.8}
+                  onPress={() => { if (pickDate) recordPickFor(pickDate, m); setPickDate(null); }}
+                >
+                  <MoodEmoji mood={m} size={46} />
+                  <Text style={styles.moodModalLabel}>{t(`mood.label.${m}`)}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -259,6 +308,7 @@ const styles = StyleSheet.create({
     gap: 18,
     marginTop: 15,                         // +5 above per user (screen felt cramped)
     marginBottom: 15,                      // +5 below per user
+    zIndex: 30,                            // lift the floating month picker (its absolute child) above the grid below
   },
   monthNavBtn: {
     width: 36, height: 36, borderRadius: 18,
@@ -276,13 +326,22 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(232,97,154,0.10)',
   },
   todayChipText: { fontSize: 13, fontWeight: '700', color: ROSE },
+  // Soft scrim behind the floating month picker — dims the calendar it covers
+  // and catches outside taps to dismiss. Anchored just below the month row.
+  pickerBackdrop: {
+    position: 'absolute', top: 42, left: 0, right: 0, height: 540,
+    backgroundColor: 'rgba(20,16,28,0.06)',
+    zIndex: 30,
+  },
+  // Floating month/year picker — absolute so it overlays the grid instead of
+  // pushing it down (per user). Anchored under the month row.
   pickerCard: {
-    marginTop: 4, marginBottom: 10, marginHorizontal: 6,
+    position: 'absolute', top: 42, left: 6, right: 6, zIndex: 31,
     padding: 12, borderRadius: 16,
     backgroundColor: '#FFFFFF',
     borderWidth: 1, borderColor: 'rgba(30,27,46,0.08)',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08, shadowRadius: 12, elevation: 4,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.14, shadowRadius: 16, elevation: 14,
   },
   pickerYearRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24, marginBottom: 6 },
   pickerYear: { fontSize: 17, fontWeight: '700', color: TXT, minWidth: 72, textAlign: 'center' },
@@ -322,4 +381,28 @@ const styles = StyleSheet.create({
   // Future-date demotion. 30 % alpha keeps the digit legible while clearly
   // reading as "not yet reached".
   numFuture: { color: 'rgba(30,27,46,0.30)' },
+  // Make-up check-in button below the calendar.
+  logTodayBtn: {
+    alignSelf: 'center',
+    marginTop: 22,
+    backgroundColor: ROSE,
+    paddingVertical: 13,
+    paddingHorizontal: 28,
+    borderRadius: 24,
+  },
+  logTodayText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
+  // Mood-picker modal (make-up check-in for a chosen day).
+  moodModalBackdrop: {
+    flex: 1, backgroundColor: 'rgba(20,16,28,0.45)',
+    alignItems: 'center', justifyContent: 'center', padding: 24,
+  },
+  moodModalCard: {
+    width: '100%', maxWidth: 380,
+    backgroundColor: '#FFFFFF', borderRadius: 22,
+    paddingVertical: 22, paddingHorizontal: 14,
+  },
+  moodModalTitle: { fontSize: 19, fontWeight: '700', color: TXT, textAlign: 'center', marginBottom: 16 },
+  moodModalGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
+  moodModalCell: { width: '33.33%', alignItems: 'center', paddingVertical: 12 },
+  moodModalLabel: { fontSize: 12.5, color: TXT, fontWeight: '600', marginTop: 5 },
 });

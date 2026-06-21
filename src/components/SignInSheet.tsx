@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Pressable, ActivityIndicator, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Pressable, ActivityIndicator, TextInput, Keyboard } from 'react-native';
 import Svg, { Path, G } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -52,6 +52,22 @@ export default function SignInSheet({ onClose, onError }: Props) {
   // Play Services check happen while the user reads the sheet, instead of
   // being paid inside the button tap (was a multi-second silent stall).
   useEffect(() => { warmupGoogleSignIn(); }, []);
+
+  // Keyboard lift. This app runs edge-to-edge on Android, so the window does
+  // NOT resize when the keyboard opens — without this the keyboard slides up
+  // OVER the bottom-anchored sheet and hides the email field + Send button
+  // entirely (user-reported P0). We measure the live keyboard height and pad
+  // the flex-end overlay by it, pushing the whole sheet up above the keyboard
+  // on every device (the same deterministic pattern the reflection sheet uses;
+  // KeyboardAvoidingView was flaky across Androids).
+  const [kbHeight, setKbHeight] = useState(0);
+  useEffect(() => {
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const onShow = Keyboard.addListener(showEvt, (e) => setKbHeight(e.endCoordinates?.height ?? 0));
+    const onHide = Keyboard.addListener(hideEvt, () => setKbHeight(0));
+    return () => { onShow.remove(); onHide.remove(); };
+  }, []);
 
   // Google + Facebook both go through Firebase Authentication via native SDKs
   // (Google account picker / Facebook login dialog → Firebase credential →
@@ -132,7 +148,7 @@ export default function SignInSheet({ onClose, onError }: Props) {
   };
 
   return (
-    <View style={styles.overlay}>
+    <View style={[styles.overlay, kbHeight ? { paddingBottom: kbHeight } : null]}>
       <Animated.View
         entering={FadeIn.duration(300)}
         style={[StyleSheet.absoluteFillObject, styles.backdrop]}

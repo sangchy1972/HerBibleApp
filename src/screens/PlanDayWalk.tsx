@@ -802,8 +802,10 @@ function renderMarkdownBolds(s: string): React.ReactNode {
   while ((m = re.exec(s)) !== null) {
     if (m.index > cursor) out.push(s.slice(cursor, m.index));
     // Merriweather bold per user — matches the Merriweather body face so the
-    // bold run reads as the same serif, just heavier (no font-family switch).
-    out.push(<Text key={m.index} style={{ fontFamily: FONTS.merriweatherBold, fontWeight: '700' }}>{m[1]}</Text>);
+    // bold run reads as the same serif, just heavier. Weight 600, NOT 700:
+    // merriweatherBold + fontWeight '700' makes Android drop the face and fall
+    // back to system sans (same quirk as the Lora 600 rule).
+    out.push(<Text key={m.index} style={{ fontFamily: FONTS.merriweatherBold, fontWeight: '600' }}>{m[1]}</Text>);
     cursor = m.index + m[0].length;
   }
   if (cursor < s.length) out.push(s.slice(cursor));
@@ -835,7 +837,7 @@ const styles = StyleSheet.create({
   pageScroll: { paddingHorizontal: P + 4 },
   dayTitle: {
     fontFamily: FONTS.loraBold, fontSize: 25, fontWeight: '600', color: TXT,    // Lora 600 per user (loraBold pairs with 600, not 700)
-    lineHeight: 33, letterSpacing: 0.2, marginTop: 15, marginBottom: 22,         // +15 px before, +10 px after (12 → 22) per user
+    lineHeight: 33, letterSpacing: 0.2, marginTop: 30, marginBottom: 22,         // marginTop 15 → 30 (+15 px per user — clears the close button)
   },
   sectionCaption: {
     fontSize: 16.2, fontWeight: '800', fontFamily: FONTS.latoBold, color: ROSE, // 13.5 → 16.2 (+20 % per user — applies to the whole TODAY'S VERSE / PRAYER / … caption series)

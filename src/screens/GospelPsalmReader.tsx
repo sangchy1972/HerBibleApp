@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ImageBackground,
   ActivityIndicator, AppState,
+  type NativeSyntheticEvent, type NativeScrollEvent, type LayoutChangeEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -161,6 +162,22 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
     navigation.goBack();
   };
 
+  // Amen stays disabled (grey) until the reader has been scrolled to the end,
+  // so the user can only complete after reading the whole passage (per user).
+  // Short passages that fit on screen with no scroll enable immediately (see
+  // onContentSizeChange) so the button is never permanently stuck.
+  const [atBottom, setAtBottom] = useState(false);
+  const scrollLayoutH = useRef(0);
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+    if (contentOffset.y + layoutMeasurement.height >= contentSize.height - 28) setAtBottom(true);
+  };
+  const onScrollLayout = (e: LayoutChangeEvent) => { scrollLayoutH.current = e.nativeEvent.layout.height; };
+  const onContentSizeChange = (_w: number, h: number) => {
+    // Not tall enough to scroll → nothing to read past; allow Amen right away.
+    if (scrollLayoutH.current > 0 && h <= scrollLayoutH.current + 4) setAtBottom(true);
+  };
+
   return (
     <View style={styles.root}>
       {/* Header */}
@@ -198,6 +215,10 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: insets.bottom + 130 }}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          onLayout={onScrollLayout}
+          onContentSizeChange={onContentSizeChange}
         >
           <ImageBackground source={heroImg} style={styles.hero} resizeMode="cover" />
 
@@ -226,10 +247,16 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
         </ScrollView>
       )}
 
-      {/* Amen — marks this slot complete. Pinned to the bottom over the scroll. */}
-      <View style={[styles.amenWrap, { paddingBottom: insets.bottom + 14 }]} pointerEvents="box-none">
-        <TouchableOpacity onPress={onAmen} activeOpacity={0.9} style={[styles.amenBtn, { backgroundColor: accent }]}>
-          <Text style={styles.amenText}>{t('prayerFlow.amen')}</Text>
+      {/* Amen — marks this slot complete. Pinned to the bottom over the scroll.
+          Disabled (grey) until the passage is scrolled to the end. */}
+      <View style={[styles.amenWrap, { paddingBottom: insets.bottom + 24 }]} pointerEvents="box-none">
+        <TouchableOpacity
+          onPress={atBottom ? onAmen : undefined}
+          disabled={!atBottom}
+          activeOpacity={0.9}
+          style={[styles.amenBtn, atBottom ? { backgroundColor: accent } : styles.amenBtnDisabled]}
+        >
+          <Text style={[styles.amenText, !atBottom && styles.amenTextDisabled]}>{t('prayerFlow.amen')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -269,10 +296,10 @@ const styles = StyleSheet.create({
     // hero text is white on a dark photo; the reader sits on a light page, so
     // it keeps the dark TXT colour for legibility.
     fontFamily: FONTS.merriweather,     // = heroText
-    fontSize: 19.16,                    // = heroText (was 21)
-    lineHeight: 29.59,                  // = heroText (was 30.6)
+    fontSize: 17.82,                    // 19.16 → 17.82 (-7 % per user)
+    lineHeight: 34.03,                  // 29.59 → 34.03 (+15 % line spacing per user)
     color: TXT,
-    marginBottom: 12.5,                 // 10 × 1.25 (+25 % paragraph spacing per user)
+    marginBottom: 14.38,                // 12.5 → 14.38 (+15 % paragraph spacing per user)
   },
   copyAllBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -284,12 +311,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: P + 7, alignItems: 'center',
   },
   amenBtn: {
-    alignSelf: 'stretch', height: 53.2, borderRadius: 17.07,
+    alignSelf: 'stretch', height: 50.54, borderRadius: 17.07,   // 53.2 → 50.54 (-5 % per user)
     alignItems: 'center', justifyContent: 'center',
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.18, shadowRadius: 10, elevation: 4,
   },
+  // Locked state until the passage is read to the end — flat grey, no shadow.
+  amenBtnDisabled: {
+    backgroundColor: '#DEDAE3',
+    shadowOpacity: 0, elevation: 0,
+  },
   amenText: { color: '#fff', fontSize: 18, fontWeight: '700', letterSpacing: 0.5, fontFamily: FONTS.loraBold },
+  amenTextDisabled: { color: '#A49DAE' },
   toast: {
     position: 'absolute', alignSelf: 'center',
     backgroundColor: 'rgba(30,27,46,0.88)', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20,

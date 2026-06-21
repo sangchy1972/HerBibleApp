@@ -942,7 +942,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'plan.category.empty':           { en: 'No plans in this category yet.',                        context: 'Empty-state on PlanCategoryScreen when the category has no plans.' },
   'plan.verseRead.back':           { en: 'BACK TO PLAN',                                          context: 'Top-left back button on PlanVerseRead. All-caps for chip styling.' },
   'plan.verseRead.chapter':        { en: 'CHAPTER {n}',                                           context: 'Caption above the verses on PlanVerseRead. All-caps eyebrow style.' },
-  'plan.dayDone.shareProgress':    { en: 'Share progress',                                        context: 'Button on the PlanDayDone celebration screen. Opens share sheet with the day completion.' },
+  'plan.dayDone.shareProgress':    { en: 'Share Progress',                                        context: 'Button on the PlanDayDone celebration screen. Opens share sheet with the day completion. Title-cased per user (button labels capitalize each word).' },
   'prayer.pastPrompt.title':       { en: 'Morning prayer opens at 6 AM',                          context: 'Title of the dialog shown when tapping the verse card between midnight and 6 AM (before morning prayer opens).' },
   'prayer.pastPrompt.body':        { en: 'Would you like to see past verses?', context: 'Body of the pre-dawn dialog — directly asks whether to open past verses.' },
   'prayer.pastPrompt.confirm':     { en: 'See past verses',                                       context: 'Confirm button — opens the past verses screen.' },

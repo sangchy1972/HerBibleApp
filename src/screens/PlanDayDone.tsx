@@ -67,8 +67,9 @@ export default function PlanDayDone({ route, navigation }: RootStackScreenProps<
         <Feather name="x" size={24} color={TXT} />
       </TouchableOpacity>
 
-      {/* Bottom padding 24 → 44 (+20 px per user — CTAs sat too close to the screen edge). */}
-      <View style={[styles.content, { paddingTop: insets.top + 56, paddingBottom: insets.bottom + 44 }]}>
+      {/* Whole content band shifted up 30 px per user: paddingTop 56 → 26,
+          paddingBottom 44 → 74 (top boundary up 30, bottom boundary up 30). */}
+      <View style={[styles.content, { paddingTop: insets.top + 26, paddingBottom: insets.bottom + 74 }]}>
         {/* Celebration block fills the space above the CTAs and centers
             vertically, so the Lottie + copy sit lower / visually centered
             (per user) instead of hugging the top. */}
@@ -77,11 +78,12 @@ export default function PlanDayDone({ route, navigation }: RootStackScreenProps<
             <LottieView
               source={planComplete ? LOTTIE_PLAN_CONGRATS : LOTTIE_DAY_DONE}
               autoPlay
-              // Confetti loops while the user takes in the moment; the
-              // day-checkmark plays once like before.
-              loop={planComplete}
-              // congrats source is a wide 300×180 comp; the checkmark is square.
-              style={planComplete ? { width: 280, height: 168 } : { width: 180, height: 180 }}
+              // Loop both — the day checkmark plays so fast it's invisible if it
+              // runs only once (per user), so keep it animating.
+              loop
+              // congrats source is a wide 300×180 comp; the checkmark is square,
+              // +20% per user (180 → 216).
+              style={planComplete ? { width: 280, height: 168 } : { width: 216, height: 216 }}
             />
           </Animated.View>
 
@@ -133,7 +135,7 @@ const styles = StyleSheet.create({
   centerBlock: { flex: 1, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
   // Fixed-height box so both the square checkmark (180) and the wide confetti
   // (168) center within the SAME footprint → identical gap to the heading below.
-  lottieWrap: { height: 184, alignItems: 'center', justifyContent: 'center' },
+  lottieWrap: { height: 216, alignItems: 'center', justifyContent: 'center' },   // fits the +20% checkmark (216)
   // All on-screen text uses Noto Sans (matching the rest of the app's
   // sans-serif system font) — the previous Roboto Serif heading felt
   // editorial in a screen that's celebratory / functional.
@@ -152,21 +154,24 @@ const styles = StyleSheet.create({
     marginTop: 28, overflow: 'hidden',
   },
   progressFill: { height: '100%', borderRadius: 4 },
-  progressText: { fontFamily: FONTS.sansSemiBold, fontSize: 13, color: TXTSUB, marginTop: 10, fontWeight: '600' },
+  progressText: { fontFamily: FONTS.sansSemiBold, fontSize: 14.3, color: TXTSUB, marginTop: 10, fontWeight: '600' },   // 13 → 14.3 (+10 % per user)
   ctaWrap: { width: '100%', gap: 10 },                                          // marginTop:'auto' dropped — centerBlock's flex:1 now owns the spacing
   // Height + radius mirror PrayerScreen.startBtn ("Start Night Prayer":
   // 46.94 / 17.07) so the plan-done CTAs match the home CTA exactly (per user).
   shareBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 10, height: 46.94, borderRadius: 17.07, backgroundColor: ROSE,
+    gap: 10, height: 51.63, borderRadius: 17.07, backgroundColor: ROSE,          // 46.94 → 51.63 (+10 % per user)
     shadowColor: ROSE, shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25, shadowRadius: 14, elevation: 4,
   },
   shareBtnText: { fontFamily: FONTS.sansBold, fontSize: 16, fontWeight: '700', color: '#FFFFFF', letterSpacing: 0.4 },
   continueBtn: {
-    height: 46.94, borderRadius: 17.07, backgroundColor: '#FFFFFF',
-    borderWidth: 1, borderColor: 'rgba(30,27,46,0.10)',
+    height: 51.63, borderRadius: 17.07, backgroundColor: '#FFFFFF',             // 46.94 → 51.63 (+10 % per user)
+    // No gray border per user — a soft shadow keeps the white button readable
+    // on the cream background instead.
     alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08, shadowRadius: 8, elevation: 2,
   },
   continueBtnText: { fontFamily: FONTS.sansBold, fontSize: 16, fontWeight: '700', color: TXT, letterSpacing: 0.4 },
 });

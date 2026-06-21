@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   },
   sentence: { fontFamily: FONTS.merriweather, fontSize: 22, lineHeight: 32, textAlign: 'center' },
   source: { fontFamily: FONTS.merriweather, fontSize: 16, lineHeight: 24, textAlign: 'center', marginTop: 14 },
-  brand: { position: 'absolute', left: 0, right: 0, bottom: 54, alignItems: 'center', justifyContent: 'center' },
+  brand: { position: 'absolute', left: 0, right: 0, bottom: 79, alignItems: 'center', justifyContent: 'center' },   // 54 → 79 (+25 px from the bottom per user)
   brandLogo: { width: 44, height: 44, borderRadius: 12, marginBottom: 8 },
-  brandName: { fontFamily: FONTS.merriweatherBold, fontSize: 18, fontWeight: '700', letterSpacing: 0.4 },
+  brandName: { fontFamily: FONTS.loraBold, fontSize: 18, fontWeight: '600', letterSpacing: 0.4 },   // Lora 600 per user (700 drops Lora on Android)
 });

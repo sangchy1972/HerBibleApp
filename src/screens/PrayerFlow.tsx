@@ -1524,7 +1524,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   verseActionLabel: {
-    fontSize: 13,
+    fontSize: 14.04,
     color: '#FFFFFF',
     fontFamily: FONTS.lato,
     letterSpacing: 0.2,
@@ -1556,8 +1556,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignSelf: 'flex-start',
     gap: 10,
-    height: 51.77,                                                              // 47.06 → 51.77 (+10 % per user)
-    borderRadius: 24.39,                                                        // matches startBtn (auto-caps to capsule since > h/2)
+    height: 46.59,                                                              // 51.77 → 46.59 (-10 % per user)
+    borderRadius: 14.63,                                                        // 24.39 → 14.63 (-40 % per user; now a rounded rect, no longer a full capsule)
     paddingHorizontal: 22,                                                      // breathing room around the icon + label since the pill no longer stretches
     marginTop: 62,                                                              // section spacing kept
     backgroundColor: '#FFFFFF',

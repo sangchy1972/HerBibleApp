@@ -236,7 +236,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'prayerFlow.verse.saved':        { en: 'Saved',          context: 'Verse-page action when verse has been saved.' },
   'prayerFlow.verse.notes':        { en: 'Notes',          context: 'Verse-page action button label.' },
   'prayerFlow.verse.share':        { en: 'Share',          context: 'Verse-page action button label.' },
-  'prayerFlow.writeReflection':    { en: 'Write a reflection', context: 'Button on action page in prayer flow that opens the reflection writing sheet.' },
+  'prayerFlow.writeReflection':    { en: 'Write a Reflection', context: 'Button on action page in prayer flow that opens the reflection writing sheet. Title-case in English.' },
   'prayerFlow.amen':               { en: 'AMEN',           context: 'Final ritual button at end of prayer flow. Uppercase. Liturgical "amen" — never translate to "agree" or similar.' },
   'prayerFlow.prayedCount':        { en: '{count} prayed with you today', context: 'Subtitle under AMEN showing daily community count. {count} is a thousands-separated number.' },
   'prayerFlow.amenHeading':        { en: 'We hope this prayer time encouraged you. Come back again soon.', context: 'Heading on the post-Amen celebration screen.' },

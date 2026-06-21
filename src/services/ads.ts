@@ -11,6 +11,7 @@
 // the same defensive pattern used in services/firebase.ts. On such a build all
 // functions below become silent no-ops.
 
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent } from './firebase';
 
@@ -31,8 +32,15 @@ try {
   /* native module not in this build → no-op everywhere below */
 }
 
-// Real interstitial ad unit (user-provided; the first of the planned waterfall).
-const REAL_INTERSTITIAL_UNIT_ID = 'ca-app-pub-4656643588243987/3482477831';
+// Real interstitial ad units (user-provided; first of the planned waterfall).
+// Per-platform — AdMob unit IDs are NOT interchangeable across iOS/Android, and
+// each lives under its own platform App ID (see app.json
+// react-native-google-mobile-ads androidAppId / iosAppId).
+const REAL_INTERSTITIAL_UNIT_ID = Platform.select({
+  ios:     'ca-app-pub-4656643588243987/9512513187',
+  android: 'ca-app-pub-4656643588243987/3482477831',
+  default: 'ca-app-pub-4656643588243987/3482477831',
+}) as string;
 // In a DEV build ALWAYS use Google's TEST interstitial so we never serve / click
 // our own LIVE ad (that gets the AdMob account flagged). The production build
 // uses the real unit. To verify the real unit on a device safely, register it as

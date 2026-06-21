@@ -413,7 +413,7 @@ function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTa
           <TouchableOpacity
             onPress={onSwitchTab}
             activeOpacity={0.9}
-            style={[styles.startBtn, { backgroundColor: LAV }]}
+            style={[styles.startBtn, { backgroundColor: morning ? LAV : ROSE }]}
           >
             <Text style={styles.startBtnText}>{waitLabel}</Text>
           </TouchableOpacity>
@@ -592,8 +592,9 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   // Compute the wait-state label and the hint that pops on tap. Only used
   // when canStart === false; otherwise the button is the active "Start" CTA.
   // readyToSwitch is the special case where the morning slot is complete AND
-  // night has already opened — the button still pulses, and tapping flips
-  // the active tab to evening rather than popping a hint.
+  // the OTHER slot has already opened — the button still pulses, and tapping
+  // flips to that slot rather than popping a hint (morning→evening when night
+  // opens; evening→morning when morning is still pending).
   let waitLabel = '';
   let waitHint = '';
   let readyToSwitch = false;
@@ -628,10 +629,11 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           waitLabel = t('prayer.wait.beautifulWork');
           waitHint = t('prayer.hint.tomorrowMorning');
         } else {
-          // Evening done but morning still pending — don't claim the whole day
-          // is finished. Nudge the user that morning is still open (per user).
+          // Evening done but morning still pending — surface morning as the
+          // actionable slot: tapping the button/card flips straight to the
+          // morning card (reuses readyToSwitch), no hint pop-up (per user).
+          readyToSwitch = true;
           waitLabel = t('prayer.wait.morningAwaits');
-          waitHint = t('prayer.hint.morningAwaits');
         }
       } else {
         // Before 18:00 → countdown to today's 18:00.
@@ -940,7 +942,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           canStart={canStart}
           canReplay={slotDone}
           readyToSwitch={readyToSwitch}
-          onSwitchTab={() => setMorning(false)}
+          onSwitchTab={() => setMorning(!morning)}
           offerPastDays={offerPastDays}
           onOfferPastDays={() => setShowPastPrompt(true)}
           waitLabel={waitLabel}

@@ -26,3 +26,12 @@ _cdn_ready/
 # Stray build artifacts
 *.aab
 *.apk
+
+# Native projects — this app is managed / CNG (config plugins in app.json).
+# A leftover local android/ or ios/ from a manual `expo prebuild` / `run:*`
+# must NOT be uploaded: if EAS receives a native dir it treats the build as
+# bare and SKIPS prebuild, so app.json + plugin changes (AdMob IDs, Firebase,
+# ATT, Google sign-in URL scheme, app name) would be silently ignored. Keeping
+# these out forces EAS to prebuild fresh from app.json on every build.
+/android
+/ios

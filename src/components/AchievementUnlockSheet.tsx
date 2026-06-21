@@ -13,7 +13,7 @@ import BadgeIcon from './BadgeIcon';
 import { achievementUi, localizedAchievementName } from '../constants/achievements';
 import { useAchievements } from '../state/AchievementsContext';
 import { useTranslation } from '../state/TranslationsContext';
-import { ROSE, TXT, TXTSUB } from '../constants/theme';
+import { ROSE, TXT, TXTSUB, FONTS } from '../constants/theme';
 import type { RootStackParamList } from '../navigation/types';
 
 // Single source of truth for the new-badge popup. Mounted once at the app
@@ -77,29 +77,25 @@ export default function AchievementUnlockSheet() {
           exiting={FadeOut.duration(160)}
           style={styles.card}
         >
-          {/* Sunburst rays */}
-          <View style={styles.raysWrap} pointerEvents="none">
-            <Animated.View style={raysStyle}>
-              <Sunburst />
+          {/* CONGRATS — title at the very top, in Lora (per user). */}
+          <Text style={styles.congratsTitle}>{ui.congrats}</Text>
+
+          {/* Badge with the rotating sunburst centered behind it. */}
+          <View style={styles.badgeArea}>
+            <View style={styles.raysWrap} pointerEvents="none">
+              <Animated.View style={raysStyle}>
+                <Sunburst />
+              </Animated.View>
+            </View>
+            <Animated.View style={[styles.badgeWrap, badgeStyle]}>
+              <BadgeIcon
+                id={current.id}
+                iconKey={current.iconKey}
+                rarity={current.rarity}
+                size={120}
+                label={null}
+              />
             </Animated.View>
-          </View>
-
-          <Animated.View style={[styles.badgeWrap, badgeStyle]}>
-            <BadgeIcon
-              id={current.id}
-              iconKey={current.iconKey}
-              rarity={current.rarity}
-              size={120}
-              label={null}
-            />
-          </Animated.View>
-
-          <View style={styles.flourishRow}>
-            <View style={styles.fl} />
-            <Text style={styles.diamond}>✦</Text>
-            <Text style={styles.congrats}>{ui.congrats}</Text>
-            <Text style={styles.diamond}>✦</Text>
-            <View style={styles.fl} />
           </View>
 
           <Text style={styles.subtitle}>
@@ -119,25 +115,26 @@ export default function AchievementUnlockSheet() {
   );
 }
 
-// 12-spoke peach sunburst behind the badge. Each ray is a trapezoid that
+// 8-spoke peach sunburst behind the badge. Each ray is a trapezoid that
 // widens from inside (narrow, near the badge) to outside (wide, at the rim);
 // a single radial gradient fades opacity from solid near the center to fully
 // transparent at the edge so the rays bleed off into the card background.
+// Per user: 12 → 8 rays, each widened, and ~30% more transparent.
 function Sunburst() {
   const W = 280;
   const center = W / 2;
   const innerR = 26;
   const outerR = W / 2 - 4;
-  const halfIn = 4;
-  const halfOut = 22;
+  const halfIn = 6;      // 4 → 6 (wider — fewer rays, so each is broader)
+  const halfOut = 33;    // 22 → 33 (wider)
   const rays: number[] = [];
-  for (let i = 0; i < 12; i++) rays.push(i * 30);
+  for (let i = 0; i < 8; i++) rays.push(i * 45);
   return (
     <Svg width={W} height={W} viewBox={`0 0 ${W} ${W}`}>
       <Defs>
         <RadialGradient id="rayFade" cx="50%" cy="50%" r="50%">
-          <Stop offset="0%" stopColor="#F8B68C" stopOpacity={0.7} />
-          <Stop offset="55%" stopColor="#F8B68C" stopOpacity={0.35} />
+          <Stop offset="0%" stopColor="#F8B68C" stopOpacity={0.49} />
+          <Stop offset="55%" stopColor="#F8B68C" stopOpacity={0.245} />
           <Stop offset="100%" stopColor="#F8B68C" stopOpacity={0} />
         </RadialGradient>
       </Defs>
@@ -175,9 +172,9 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 420,
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 12,                                                            // 24 → 12 (-50 % per user)
     paddingHorizontal: 24,
-    paddingTop: 36,
+    paddingTop: 30,
     paddingBottom: 24,
     alignItems: 'center',
     shadowColor: '#000',
@@ -187,26 +184,35 @@ const styles = StyleSheet.create({
     elevation: 12,
     overflow: 'hidden',
   },
+  // CONGRATS — title at the top of the card, in Lora (per user).
+  congratsTitle: {
+    fontSize: 26,
+    fontFamily: FONTS.loraBold,
+    fontWeight: '600',                                                           // loraBold pairs with 600 (700 drops Lora on Android)
+    color: ROSE,
+    letterSpacing: 1.2,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  // Relative box holding the badge with the sunburst centered behind it.
+  badgeArea: {
+    width: '100%',
+    height: 150,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
   raysWrap: {
-    position: 'absolute',
-    top: -40,
-    left: 0, right: 0,
+    ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  badgeWrap: { alignItems: 'center', justifyContent: 'center', marginBottom: 18 },
-  flourishRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 8,
-  },
-  fl: { height: 1, width: 28, backgroundColor: 'rgba(196,140,90,0.5)' },
-  diamond: { color: 'rgba(196,140,90,0.7)', fontSize: 12 },
-  congrats: { fontSize: 22, fontWeight: '800', color: ROSE, letterSpacing: 1.5 },
+  badgeWrap: { alignItems: 'center', justifyContent: 'center' },
   subtitle: {
     marginTop: 12,
     textAlign: 'center',
     fontSize: 18,
+    fontFamily: FONTS.lora,                                                      // Lora (per user)
     color: TXT,
     paddingHorizontal: 8,
     lineHeight: 25,
@@ -225,7 +231,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 4,
   },
-  okText: { color: '#fff', fontSize: 18, fontWeight: '700', letterSpacing: 0.5 },
+  okText: { color: '#fff', fontSize: 20.7, fontWeight: '700', letterSpacing: 0.5 },   // 18 → 20.7 (+15 % per user)
   detailsBtn: { marginTop: 14, paddingVertical: 6 },
   detailsText: { color: TXTSUB, fontSize: 15, textDecorationLine: 'underline' },
 });

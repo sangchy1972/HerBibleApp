@@ -17,6 +17,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.holy.bible.kjv.audio.prayer",
       "buildNumber": "1",
+      "icon": "./assets/icon-ios.png",
       "usesAppleSignIn": true,
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
@@ -59,18 +60,6 @@
         "@react-native-google-signin/google-signin",
         {
           "iosUrlScheme": "com.googleusercontent.apps.553397384848-u1plipp9pj4ksv0f114spvdt63p292am"
-        }
-      ],
-      [
-        "react-native-fbsdk-next",
-        {
-          "appID": "REPLACE_FB_APP_ID",
-          "clientToken": "REPLACE_FB_CLIENT_TOKEN",
-          "displayName": "Her Bible",
-          "scheme": "fbREPLACE_FB_APP_ID",
-          "isAutoInitEnabled": false,
-          "advertiserIDCollectionEnabled": false,
-          "autoLogAppEventsEnabled": false
         }
       ],
       "expo-font",

@@ -160,7 +160,13 @@
             "enableShrinkResourcesInReleaseBuilds": true
           },
           "ios": {
-            "useFrameworks": "static"
+            "useFrameworks": "static",
+            "forceStaticLinking": [
+              "RNFBApp",
+              "RNFBAuth",
+              "RNFBAnalytics",
+              "RNFBCrashlytics"
+            ]
           }
         }
       ],

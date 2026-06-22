@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeIn, SlideInDown, Easing } from 'react-native-reanimated';
-import { TXT, TXTSUB, FONTS } from '../constants/theme';
+import Animated, { FadeIn, SlideInDown, Easing, useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated';
+import { TXT, TXTSUB, ROSE, FONTS } from '../constants/theme';
 import { VERSE_COMMENTS, COMMENT_NAMES } from '../constants/verseComments';
 import { useUILanguage } from '../state/UILanguageContext';
 import { useT } from '../i18n/useT';
@@ -81,25 +82,47 @@ export default function CommentsSheet({ onClose }: { onClose: () => void }) {
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 10 }}>
           {rows.map(r => (
-            <View key={r.id} style={styles.row}>
-              <View style={[styles.avatar, { backgroundColor: AVATAR_COLORS[hashIdx(r.name, AVATAR_COLORS.length)] }]}>
-                <Text style={styles.avatarTxt}>{initialOf(r.name)}</Text>
-              </View>
-              <View style={styles.body}>
-                <View style={styles.metaRow}>
-                  <Text style={styles.name}>{r.name}</Text>
-                  <Text style={styles.ago}>· {r.ago}</Text>
-                </View>
-                <Text style={styles.text}>{r.text}</Text>
-              </View>
-              <View style={styles.likeCol}>
-                <Feather name="heart" size={15} color={TXTSUB} />
-                <Text style={styles.likeCount}>{r.likes}</Text>
-              </View>
-            </View>
+            <CommentRow key={r.id} row={r} />
           ))}
         </ScrollView>
       </Animated.View>
+    </View>
+  );
+}
+
+// One comment row with a tappable like-heart. Tapping toggles a filled rose
+// heart + bumps the count, with a quick pop animation so the tap clearly
+// registers (the heart had no interaction feedback before — user-reported).
+function CommentRow({ row }: { row: Row }) {
+  const [liked, setLiked] = useState(false);
+  const scale = useSharedValue(1);
+  const heartStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const toggle = () => {
+    setLiked((l) => !l);
+    scale.value = withSequence(
+      withTiming(1.35, { duration: 120, easing: Easing.out(Easing.quad) }),
+      withTiming(1, { duration: 130, easing: Easing.out(Easing.quad) }),
+    );
+  };
+  const likes = row.likes + (liked ? 1 : 0);
+  return (
+    <View style={styles.row}>
+      <View style={[styles.avatar, { backgroundColor: AVATAR_COLORS[hashIdx(row.name, AVATAR_COLORS.length)] }]}>
+        <Text style={styles.avatarTxt}>{initialOf(row.name)}</Text>
+      </View>
+      <View style={styles.body}>
+        <View style={styles.metaRow}>
+          <Text style={styles.name}>{row.name}</Text>
+          <Text style={styles.ago}>· {row.ago}</Text>
+        </View>
+        <Text style={styles.text}>{row.text}</Text>
+      </View>
+      <TouchableOpacity style={styles.likeCol} onPress={toggle} activeOpacity={0.7} hitSlop={12}>
+        <Animated.View style={heartStyle}>
+          <Ionicons name={liked ? 'heart' : 'heart-outline'} size={17} color={liked ? ROSE : TXTSUB} />
+        </Animated.View>
+        <Text style={[styles.likeCount, liked && { color: ROSE, fontWeight: '700' }]}>{likes}</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -124,7 +147,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, fontWeight: '700', color: TXT, fontFamily: FONTS.loraBold },
   count: { fontSize: 15, fontWeight: '600', color: TXTSUB },
   closeBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(30,27,46,0.05)' },
-  row: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 11 },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 17 },
   avatar: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   avatarTxt: { color: '#FFFFFF', fontWeight: '700', fontSize: 16 },
   body: { flex: 1, minWidth: 0 },

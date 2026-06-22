@@ -168,15 +168,22 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
   // onContentSizeChange) so the button is never permanently stuck.
   const [atBottom, setAtBottom] = useState(false);
   const scrollLayoutH = useRef(0);
+  const contentH = useRef(0);
+  // If the passage fits on screen (not scrollable) there's nothing to scroll
+  // past, so Amen unlocks immediately. We can only know this once BOTH the
+  // viewport height (onLayout) and content height (onContentSizeChange) are in,
+  // and those two callbacks can fire in either order — so recompute from both.
+  const maybeUnlockShort = () => {
+    if (scrollLayoutH.current > 0 && contentH.current > 0 && contentH.current <= scrollLayoutH.current + 4) {
+      setAtBottom(true);
+    }
+  };
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
     if (contentOffset.y + layoutMeasurement.height >= contentSize.height - 28) setAtBottom(true);
   };
-  const onScrollLayout = (e: LayoutChangeEvent) => { scrollLayoutH.current = e.nativeEvent.layout.height; };
-  const onContentSizeChange = (_w: number, h: number) => {
-    // Not tall enough to scroll → nothing to read past; allow Amen right away.
-    if (scrollLayoutH.current > 0 && h <= scrollLayoutH.current + 4) setAtBottom(true);
-  };
+  const onScrollLayout = (e: LayoutChangeEvent) => { scrollLayoutH.current = e.nativeEvent.layout.height; maybeUnlockShort(); };
+  const onContentSizeChange = (_w: number, h: number) => { contentH.current = h; maybeUnlockShort(); };
 
   return (
     <View style={styles.root}>

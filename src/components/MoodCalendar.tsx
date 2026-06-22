@@ -332,6 +332,7 @@ const styles = StyleSheet.create({
     position: 'absolute', top: 42, left: 0, right: 0, height: 540,
     backgroundColor: 'rgba(20,16,28,0.06)',
     zIndex: 30,
+    elevation: 13,   // Android: lift above the (tappable) grid cells so the scrim actually blocks taps under the open picker (card sits at 14, above this)
   },
   // Floating month/year picker — absolute so it overlays the grid instead of
   // pushing it down (per user). Anchored under the month row.

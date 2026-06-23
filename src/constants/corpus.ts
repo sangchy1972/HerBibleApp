@@ -2,6 +2,18 @@
 // reads via jsDelivr. Bumping this invalidates AsyncStorage caches across all
 // translations, so users on the previous corpus pull fresh chapters next time.
 //
+// fc875e33 (2026-06-22) — complete tight original GERMAN (de) AND FRENCH (fr)
+//   commentary for all 66 books, in the same tight Genesis-style format (pure
+//   commentary, no scripture/no labels, <=70 words & 2-3 verses per block,
+//   varied openings). Rendered from en-mh and exegeted afresh; in-block
+//   scripture wording quoted from Lutherbibel 1912 (de) and Louis Segond 1910
+//   (fr) to match bibles/de and bibles/fr. The old bloated Tyndale-translation
+//   commentary/fr NT was overwritten; commentary/de is new. Verse boundaries
+//   verified against bibles/<lang> — per-edition versification offsets traced
+//   and remapped (2 Corinthians 13, 3 John, Revelation 12, et al.). Per-book
+//   full audits clean (coverage==bibles/<lang>, all blocks <=70 words). German
+//   and French readers now get de/fr via the client's lang->en-mh->en fetch
+//   order; every other locale is unaffected. No client logic change needed.
 // bd7ea258 (2026-06-19) — complete tight original PORTUGUESE (pt) commentary
 //   for all 66 books, replacing the old bloated Tyndale-translation commentary/pt
 //   (scripture-retelling + labels + over-long blocks). Pure commentary, no
@@ -42,7 +54,7 @@
 //   new content AND invalidates every device's cached chapters.
 // 8055c8f — added the full `commentary/en/` tree (Tyndale Open Study Notes
 //   for 30,836 verses + Claude-filled devotionals for the 266 gap verses).
-export const CORPUS_COMMIT = 'bd7ea258e8dea3a668fe1a45b5d5b9fb6f680f8a';
+export const CORPUS_COMMIT = 'fc875e33d2174b868e6cd46b3eb5360b94a7df5f';
 
 // Root of the corpus tree (no `/bibles` suffix). Use this when reading
 // non-Bible payloads like commentary or any future cross-bible asset. The

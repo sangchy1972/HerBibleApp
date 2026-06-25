@@ -40,6 +40,14 @@ export async function logScreenView(screen: string): Promise<void> {
   } catch {}
 }
 
+// Durable user properties — set ONCE, then Firebase attaches them to every
+// subsequent event for that user. Ideal for cohort/segmentation analysis in
+// BigQuery (e.g. retention by time_commitment, conversion by goal). Property
+// names ≤24 chars; string values ≤36 chars. Pass null to clear one.
+export async function setUserProps(props: Record<string, string | null>): Promise<void> {
+  try { if (analyticsMod) await analyticsMod().setUserProperties(props); } catch {}
+}
+
 // Tie events to a signed-in user (Firebase Auth UID). Pass null on sign-out.
 export async function setAnalyticsUser(uid: string | null): Promise<void> {
   try {

@@ -2,6 +2,21 @@
 // reads via jsDelivr. Bumping this invalidates AsyncStorage caches across all
 // translations, so users on the previous corpus pull fresh chapters next time.
 //
+// e9df0306 (2026-06-25) — complete original SIMPLIFIED (zh-Hans) AND
+//   TRADITIONAL (zh-Hant) CHINESE commentary for all 66 books (Genesis→
+//   Revelation). Pure exegesis, no scripture-retelling/no labels; length by
+//   CJK chars (60-80/block, cap 120), 2-3 verses/block; in-block scripture
+//   quoted from 和合本/CUV (圣经和合本 1919) to match bibles/zh-Hans &
+//   bibles/zh-Hant. zh-Hans hand-written; zh-Hant auto-converted via opencc
+//   s2tw + targeted fix maps (系→繫/儘性→盡性/迴→回/複興→復興/覆活→復活/
+//   云→雲/睏→困/舍→捨). Verse boundaries verified against bibles/zh-Hans;
+//   per-edition versification offsets traced & remapped (3 John KJV14/CUV15,
+//   Revelation 12 KJV17/CUV18). Per-book python text-value audits clean
+//   (coverage==bibles/zh-Hans, all blocks <=120 CJK, no residual English/
+//   artifacts). Chinese readers selecting the 简体中文 / 繁體中文 Bible
+//   translation now get zh-Hans/zh-Hant via the client's lang->en-mh->en
+//   commentary fetch order; every other locale is unaffected. No client logic
+//   change needed.
 // fc875e33 (2026-06-22) — complete tight original GERMAN (de) AND FRENCH (fr)
 //   commentary for all 66 books, in the same tight Genesis-style format (pure
 //   commentary, no scripture/no labels, <=70 words & 2-3 verses per block,
@@ -54,7 +69,7 @@
 //   new content AND invalidates every device's cached chapters.
 // 8055c8f — added the full `commentary/en/` tree (Tyndale Open Study Notes
 //   for 30,836 verses + Claude-filled devotionals for the 266 gap verses).
-export const CORPUS_COMMIT = 'fc875e33d2174b868e6cd46b3eb5360b94a7df5f';
+export const CORPUS_COMMIT = 'e9df0306d76c8b1bf66aae71fc6e93ed8622c8cc';
 
 // Root of the corpus tree (no `/bibles` suffix). Use this when reading
 // non-Bible payloads like commentary or any future cross-bible asset. The

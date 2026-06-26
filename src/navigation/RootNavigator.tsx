@@ -23,6 +23,7 @@ import PlanDayWalk from '../screens/PlanDayWalk';
 import PlanVerseRead from '../screens/PlanVerseRead';
 import PlanDayDone from '../screens/PlanDayDone';
 import FollowHimScreen from '../screens/FollowHimScreen';
+import OnboardingFlow from '../screens/OnboardingFlow';
 import { useOnboarding } from '../state/OnboardingContext';
 import { useReminderInterstitial } from '../state/ReminderInterstitialContext';
 import type { RootStackParamList } from './types';
@@ -30,14 +31,18 @@ import type { RootStackParamList } from './types';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
-  const { ready } = useOnboarding();
+  const { ready, done, finish } = useOnboarding();
   const reminder = useReminderInterstitial();
   // Gate on BOTH ready flags so we never flash the main tabs and then snap
   // to the interstitial — the launch LoadingOverlay covers this window.
   if (!ready || !reminder.ready) return null;
 
-  // (The old "Connect with God" onboarding cover was removed — the launch
-  // LoadingOverlay is now the only pre-app screen for new users.)
+  // First launch → the new-user questionnaire (goal, age, Bible familiarity,
+  // topics, daily time, reminder times, notification opt-in). Shown once;
+  // `finish` flips `done` true so we never show it again. It collects the
+  // notification permission itself, so it takes priority over the returning-
+  // user "Follow Him" reminder interstitial below.
+  if (!done) return <OnboardingFlow onDone={finish} />;
 
   // Returning user (day 2+), notifications still off, not yet shown today →
   // the full-screen "Follow Him" opt-in. Only Skip/Continue dismiss it

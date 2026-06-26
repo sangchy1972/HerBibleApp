@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { useUILanguage, type UILanguageCode } from './UILanguageContext';
 import { lookupString } from '../i18n/lookup';
+import { logEvent, setUserProps } from '../services/firebase';
 
 // ─── Public types ─────────────────────────────────────────────────────────
 
@@ -264,6 +265,13 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     return () => sub.remove();
   }, [ready, settings, lang]);
 
+  // Durable analytics dimension — whether ANY reminder is currently on. Kept
+  // live (ob_notifications only reflects the onboarding-time choice).
+  useEffect(() => {
+    if (!ready) return;
+    setUserProps({ notif_enabled: SLOTS.some(s => settings[s].enabled) ? 'on' : 'off' });
+  }, [ready, settings]);
+
   const persist = useCallback((next: NotifMap) => {
     setSettings(next);
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(() => {});
@@ -278,6 +286,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     if (value && !(await ensureNotificationPermission(lang))) return false;
     const next = { ...settings, [key]: { ...settings[key], enabled: value } };
     persist(next);
+    logEvent('reminder_toggle', { key, enabled: value, source: 'settings' });
     // On enable, fire an instant confirmation so the user sees it works now —
     // the scheduled daily reminder itself won't arrive until HH:MM.
     if (value) fireEnableConfirmation(next[key], lang).catch(err => {

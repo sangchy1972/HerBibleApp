@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { logEvent } from '../services/firebase';
+import { logEvent, setUserProps } from '../services/firebase';
 
 const STORAGE_KEY = 'plan-completion:v1';
 
@@ -87,6 +87,11 @@ export function PlanCompletionProvider({ children }: { children: React.ReactNode
       }),
     totalDayCompletions: Object.values(records).reduce((sum, r) => sum + r.completedDays.length, 0),
   }), [records]);
+
+  // Durable analytics dimension — has the user engaged any plan (retention Q).
+  useEffect(() => {
+    setUserProps({ has_started_plan: Object.keys(records).length > 0 ? 'yes' : 'no' });
+  }, [records]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

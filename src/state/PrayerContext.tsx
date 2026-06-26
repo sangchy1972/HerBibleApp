@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCurrentDayYmd } from '../hooks/useCurrentDayYmd';
+import { setUserProps } from '../services/firebase';
 
 type PrayerKind = 'morning' | 'evening';
 
@@ -173,6 +174,14 @@ export function PrayerProvider({ children }: { children: React.ReactNode }) {
       },
     };
   }, [morning, records, todayYmd]);
+
+  // Durable analytics dimensions — the headline retention-driver cohorts:
+  // does the user do BOTH slots, and what streak bucket are they in.
+  useEffect(() => {
+    const s = value.currentStreak;
+    const bucket = s >= 30 ? '30+' : s >= 7 ? '7-29' : s >= 3 ? '3-6' : s >= 1 ? '1-2' : '0';
+    setUserProps({ does_both_slots: value.totalComplete > 0 ? 'yes' : 'no', prayer_streak_bucket: bucket });
+  }, [value.totalComplete, value.currentStreak]);
 
   return <PrayerContext.Provider value={value}>{children}</PrayerContext.Provider>;
 }

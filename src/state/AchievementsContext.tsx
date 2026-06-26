@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ACHIEVEMENTS, type Achievement } from '../constants/achievements';
 import { evaluateAchievements } from '../services/achievementsEvaluator';
+import { logEvent } from '../services/firebase';
 import { usePrayer } from './PrayerContext';
 import { useNotes } from './NotesContext';
 import { useHighlights } from './HighlightsContext';
@@ -255,7 +256,13 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
       AsyncStorage.setItem(PREV_PASSING_KEY, JSON.stringify([...passingNow])).catch(() => {});
     }
 
-    if (newAwards.length > 0) setAwardQueue(prev => [...prev, ...newAwards]);
+    if (newAwards.length > 0) {
+      // unlock_achievement (Firebase Recommended). Only here in the NORMAL award
+      // branch — migration mode returned earlier, so a v1→v2 schema bump never
+      // fires phantom unlocks for already-earned badges.
+      newAwards.forEach(def => logEvent('unlock_achievement', { achievement_id: def.id, rarity: def.rarity, category: def.category }));
+      setAwardQueue(prev => [...prev, ...newAwards]);
+    }
   }, [
     prayer.currentStreak, prayer.totalComplete, prayer.earlyBirdStreak, prayer.everPrayed, prayerDoneToday,
     chaptersRead, readPercent, readingStreak, bookCompletedToday,

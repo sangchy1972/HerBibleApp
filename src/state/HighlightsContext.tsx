@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logEvent } from '../services/firebase';
 
 export interface Highlight {
   id: string;          // `${translation}:${bookSlug}:${chapter}:${verse}`
@@ -16,7 +17,9 @@ export interface Highlight {
 interface HighlightsState {
   highlights: Record<string, Highlight>;
   count: number;
-  setHighlight: (h: Omit<Highlight, 'id' | 'savedAt'>) => void;
+  /** `source` is analytics-only; we log `verse_highlight` for 'bible' (the
+   *  Bible-reader popup) but not 'plan' (per product decision). */
+  setHighlight: (h: Omit<Highlight, 'id' | 'savedAt'>, source?: 'bible' | 'plan') => void;
   removeHighlight: (id: string) => void;
   getColor: (translation: string, bookSlug: string, chapter: number, verse: number) => string | undefined;
 }
@@ -46,16 +49,18 @@ export function HighlightsProvider({ children }: { children: React.ReactNode }) 
   const value = useMemo<HighlightsState>(() => ({
     highlights,
     count: Object.keys(highlights).length,
-    setHighlight: (h) => {
+    setHighlight: (h, source) => {
       const id = makeId(h.translation, h.bookSlug, h.chapter, h.verse);
       const existing = highlights[id];
-      // Toggle off if same color tapped again
+      // Toggle off if same color tapped again — NOT logged (un-highlight is noise).
       if (existing && existing.color === h.color) {
         const next = { ...highlights };
         delete next[id];
         persist(next);
         return;
       }
+      // Add/change a highlight. Analytics: only the Bible-reader page, per product.
+      if (source === 'bible') logEvent('verse_highlight', { color: h.color, source: 'bible' });
       persist({
         ...highlights,
         [id]: { ...h, id, savedAt: new Date().toISOString() },

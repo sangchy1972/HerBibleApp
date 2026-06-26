@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import type { RootStackParamList } from './types';
 import { useAuth } from '../state/AuthContext';
+import { logEvent } from '../services/firebase';
 
 // `herbible://finishSignIn?<query>` (bounced from everlandapps.com/finishSignIn
 // .html, the email magic-link redirect page) → the original https sign-in link
@@ -131,6 +132,9 @@ export default function DeepLinkHandler() {
       if (key === lastHandledNotifKey) return; // already routed this exact tap
       lastHandledNotifKey = key;
       const slot = response.notification.request.content.data?.slot;
+      // notification_tap — normalize 'night' → 'evening' so it joins cleanly
+      // with prayer_complete/gospel_psalm_complete in BigQuery.
+      logEvent('notification_tap', { slot: slot === 'night' ? 'evening' : String(slot ?? 'unknown') });
       const dest = routeForSlot(slot);
       if (dest) (navigation.navigate as any)(dest.screen, dest.params);
     };

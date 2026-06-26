@@ -26,6 +26,7 @@ import { PLAN_COVER_CDN_BASE } from '../constants/plansApi';
 import { useT } from '../i18n/useT';
 import { localeFor } from '../i18n/locale';
 import { useUILanguage } from '../state/UILanguageContext';
+import { logEvent } from '../services/firebase';
 
 // Corpus-backed plan detail screen. Layout mirrors the demo PlanDetail
 // (the "Identity in Christ" placeholder inside PlanScreen.tsx) byte-for-
@@ -55,6 +56,9 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
   const t = useT();
   const insets = useSafeAreaInsets();
   const { slug } = route.params;
+  // select_content (Firebase Recommended) — top of the browse→start→finish plan
+  // funnel: fires when the user opens a plan's detail page.
+  useEffect(() => { logEvent('select_content', { content_type: 'plan', item_id: slug }); }, [slug]);
   const { getSummary, loadPlan, loadedPlans } = useFeaturedPlans();
   const { isDayComplete, records } = usePlanCompletion();
   const { current: translation } = useTranslation();

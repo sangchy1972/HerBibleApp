@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logEvent } from '../services/firebase';
 
 export type NoteKind = 'reflection' | 'note';
 
@@ -41,6 +42,7 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
     addNote: (text, verse, kind) => {
       const trimmed = text.trim();
       if (!trimmed) return;
+      logEvent('note_add', { kind: kind ?? 'note', has_verse: !!verse });
       persist([
         {
           id: String(Date.now()),

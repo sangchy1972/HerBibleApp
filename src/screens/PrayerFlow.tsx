@@ -816,11 +816,14 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     try { audioPlayer.pause(); } catch {}
     try { readPlayer.pause(); } catch {}
     if (!isReplay) {
-      logEvent('prayer_complete', { slot: morning ? 'morning' : 'evening' });
+      // is_redo lets BigQuery separate first-of-day completions from same-day
+      // redos (which still count an ad per product decision). markDone/streak
+      // are unaffected — they key on calendar day, not session.
+      logEvent('prayer_complete', { slot: morning ? 'morning' : 'evening', is_redo: isRedoRef.current });
       // Interstitial at this natural break — the congrats scene renders beneath
       // it, so closing the ad returns the user straight to it. Frequency-capped +
       // remove-ads-aware inside the service.
-      maybeShowInterstitial();
+      maybeShowInterstitial('prayer_end');
     }
   };
 

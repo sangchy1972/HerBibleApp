@@ -33,6 +33,7 @@ import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { bibleAudioUrl } from '../constants/bibleAudioCdn';
 import { loadTimestamps, verseAtTime, type ChapterTimestamps } from '../services/bibleAudioService';
 import BibleAudioPlayer from '../components/BibleAudioPlayer';
+import { logEvent } from '../services/firebase';
 import { adjustFocus } from '../constants/versification';
 import { HL_COLORS, getHighlightColor } from '../constants/highlightColors';
 import type { BibleFocus, TabParamList } from '../navigation/types';
@@ -1087,7 +1088,7 @@ export default function BibleScreen() {
       verse: v.verse,
       color,
       text: v.text,
-    });
+    }, 'bible');
     setSelVerse(null);
   };
 
@@ -1260,6 +1261,9 @@ export default function BibleScreen() {
   const [showPlayer, setShowPlayer] = useState(false);
   const openPlayer = () => {
     setShowPlayer(true);
+    // Genuine "user chose to listen" tap (pink headphones button) — distinct
+    // from auto-resume on chapter change. book/chapter/translation = what's played.
+    logEvent('bible_audio_play', { book: bookSlug, chapter, translation: translation.code });
     if (!audioStatus.playing) { try { audioPlayer.play(); } catch {} }
   };
   // Player verse-nav at a chapter boundary advances the chapter AND flags it

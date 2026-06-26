@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logEvent } from '../services/firebase';
 
 export interface SavedVerse {
   id: string;
@@ -36,6 +37,8 @@ export function SavedVersesProvider({ children }: { children: React.ReactNode })
     addVerse: (ref, text) => {
       const trimmed = text.trim();
       if (!trimmed) return;
+      if (verses.some(v => v.ref === ref)) return;   // already saved → no event
+      logEvent('verse_save', {});
       setVerses(prev => {
         if (prev.some(v => v.ref === ref)) return prev;
         return [{ id: String(Date.now()), ref, text: trimmed, savedAt: new Date().toISOString() }, ...prev];

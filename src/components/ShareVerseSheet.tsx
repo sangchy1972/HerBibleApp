@@ -21,6 +21,7 @@ import { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-nat
 import VerseCardArt, { VERSE_FORMATS, type VerseFormat } from './VerseCardArt';
 import { ROSE, TXT, TXTSUB, P } from '../constants/theme';
 import { useShare } from '../state/ShareContext';
+import { logEvent } from '../services/firebase';
 import { useT } from '../i18n/useT';
 
 const FORMAT_LABEL_KEYS: Record<VerseFormat, string> = {
@@ -188,6 +189,7 @@ export default function ShareVerseSheet({ reference, text, onClose, bgSource }: 
         social: SOCIAL_MAP[app],
       });
       recordShare();
+      logEvent('share', { content_type: 'verse', item_id: reference, method: app });
     } catch (e) {
       // react-native-share emits a generic "User did not share" on cancel,
       // which isn't an error worth alerting about.
@@ -200,6 +202,7 @@ export default function ShareVerseSheet({ reference, text, onClose, bgSource }: 
         const url = await captureCard();
         await Sharing.shareAsync(url, { mimeType: CAPTURE_MIME, dialogTitle: t('shareVerse.appShare.dialogTitle', { app: cfg.label }) });
         recordShare();
+        logEvent('share', { content_type: 'verse', item_id: reference, method: app });
       } catch {
         Alert.alert(t('error.couldNotShare'), msg);
       }
@@ -260,6 +263,7 @@ export default function ShareVerseSheet({ reference, text, onClose, bgSource }: 
       }
       await Sharing.shareAsync(url, { mimeType: CAPTURE_MIME, dialogTitle: t('shareVerse.share.dialogTitle') });
       recordShare();
+      logEvent('share', { content_type: 'verse', item_id: reference, method: 'system' });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       if (/cancel|dismiss/i.test(msg)) return;

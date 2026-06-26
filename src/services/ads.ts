@@ -13,7 +13,7 @@
 
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { logEvent } from './firebase';
+import { logEvent, setUserProps } from './firebase';
 
 let mobileAdsFn: any = null;
 let InterstitialAdCls: any = null;
@@ -65,6 +65,7 @@ let lastShownAt = 0;
 
 export async function setAdsRemoved(value: boolean): Promise<void> {
   adsRemoved = value;
+  setUserProps({ ads_removed: value ? 'on' : 'off' });   // payer cohort for BigQuery
   try { await AsyncStorage.setItem(REMOVE_ADS_KEY, value ? '1' : '0'); } catch {}
 }
 
@@ -119,13 +120,15 @@ function preload(): void {
 // Show an interstitial at a natural break (e.g. after Amen, after finishing a
 // plan day). Respects the remove-ads flag and the frequency cap, and silently
 // no-ops if no ad is loaded yet (a fresh one is always preloading for next time).
-export function maybeShowInterstitial(): void {
+export function maybeShowInterstitial(placement: 'prayer_end' | 'plan_end' | 'unknown' = 'unknown'): void {
   if (adsRemoved || !initialized || !interstitial || !loaded) return;
   const now = Date.now();
   if (now - lastShownAt < MIN_INTERVAL_MS) return;
   try {
     interstitial.show();
     lastShownAt = now;
-    logEvent('ad_impression', { format: 'interstitial' });
+    // NOT `ad_impression` — that's a Firebase auto-collected reserved event
+    // (AdMob link). `placement` distinguishes the two call sites.
+    logEvent('ad_impression_custom', { format: 'interstitial', placement });
   } catch { /* if show fails, the CLOSED/ERROR handlers will reload */ }
 }

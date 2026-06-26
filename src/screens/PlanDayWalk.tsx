@@ -185,7 +185,7 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
       navigation.replace('PlanDayDone', { slug, day });
       // Interstitial at the end of a plan day's reading — shows over the
       // just-pushed PlanDayDone screen; frequency-capped + remove-ads-aware.
-      maybeShowInterstitial();
+      maybeShowInterstitial('plan_end');
     }
   };
   const onPrev = () => {

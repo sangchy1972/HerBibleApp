@@ -68,7 +68,7 @@ export function MoodCheckInProvider({ children }: { children: React.ReactNode })
       },
       markShown: () => persist({ ...state, lastShownAt: Date.now() }),
       recordPick: (mood) => {
-        logEvent('mood_check_in', { mood });
+        logEvent('mood_check_in', { mood, backfill: false });
         persist({
           ...state,
           picks: { ...state.picks, [today]: mood },

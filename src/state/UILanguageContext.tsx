@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { NativeModules, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setUserProps } from '../services/firebase';
 
 // The 7 supported UI languages. Mirrors TranslationsContext.LanguageCode so a
 // user can sensibly say "switch my UI to Português → switch my Bible to João
@@ -90,6 +91,9 @@ export function UILanguageProvider({ children }: { children: React.ReactNode }) 
     setLangState(code);
     AsyncStorage.setItem(STORAGE_KEY, code).catch(() => {});
   }, []);
+
+  // Durable analytics dimension — keep app_language current for BigQuery cohorting.
+  useEffect(() => { setUserProps({ app_language: lang }); }, [lang]);
 
   const value = useMemo<UILanguageState>(() => ({
     lang,

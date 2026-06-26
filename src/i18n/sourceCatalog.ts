@@ -332,6 +332,12 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'onboarding.notify.cta': { en: 'Remind me', context: 'New-user onboarding questionnaire.' },
   'onboarding.notify.later': { en: 'Maybe later', context: 'New-user onboarding questionnaire.' },
   'onboarding.notify.banner': { en: 'Your morning verse is waiting for you.', context: 'New-user onboarding questionnaire.' },
+  'onboarding.login.title': { en: 'Save Your Journey', context: 'Final onboarding screen inviting the user to sign in.' },
+  'onboarding.login.sub': { en: 'Create a free account so your progress is never lost.', context: 'Final onboarding screen inviting the user to sign in.' },
+  'onboarding.login.b1': { en: 'Keep your notes and reflections', context: 'Benefit of signing in, shown on the final onboarding screen.' },
+  'onboarding.login.b2': { en: 'Save every highlight you make', context: 'Benefit of signing in, shown on the final onboarding screen.' },
+  'onboarding.login.b3': { en: 'Never lose your streak or reading history', context: 'Benefit of signing in, shown on the final onboarding screen.' },
+  'onboarding.login.cta': { en: 'Sign in', context: 'Button on the final onboarding screen that opens the sign-in sheet.' },
 
   // ─── Streak screen ───────────────────────────────────────────────────────
   'streak.daysPrayed':             { en: 'Days Prayed',    context: 'Title of the Streak detail screen. Also used as the two-line caption next to the big numeral.' },

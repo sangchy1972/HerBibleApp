@@ -61,6 +61,8 @@ import { FeaturedPlansProvider } from './src/state/FeaturedPlansContext';
 import { PlanCompletionProvider } from './src/state/PlanCompletionContext';
 import { GospelsPsalmsProvider } from './src/state/GospelsPsalmsContext';
 import AchievementUnlockSheet from './src/components/AchievementUnlockSheet';
+import { LoginPromptProvider } from './src/state/LoginPromptContext';
+import LoginPromptHost from './src/components/LoginPromptHost';
 import DeepLinkHandler from './src/navigation/DeepLinkHandler';
 import PrefetchManager from './src/components/PrefetchManager';
 import WidgetSync from './src/components/WidgetSync';
@@ -144,6 +146,7 @@ export default function App() {
                                     <MoodCheckInProvider>
                                       <NotificationsProvider>
                                         <ReminderInterstitialProvider>
+                                        <LoginPromptProvider>
                                         <NavigationContainer ref={navRef} theme={NAV_THEME} onStateChange={onNavStateChange} onReady={() => setAppReady(true)}>
                                           <StatusBar style="dark" />
                                           <RootNavigator />
@@ -159,6 +162,11 @@ export default function App() {
                                               inside NavigationContainer so it
                                               can call navigate(). */}
                                           <DeepLinkHandler />
+                                          {/* Soft login nudges (first badge /
+                                              note / highlight / day-1 / periodic,
+                                              frequency-capped). Inside the nav so
+                                              SignInSheet's legal links work. */}
+                                          <LoginPromptHost />
                                           {/* Mirrors today's verse + the card's
                                               background image to the home-screen
                                               widget. Null render; needs DailyVerses
@@ -179,6 +187,7 @@ export default function App() {
                                             <LoadingOverlay appReady={appReady} onHide={hideLoading} />
                                           )}
                                         </NavigationContainer>
+                                        </LoginPromptProvider>
                                         </ReminderInterstitialProvider>
                                       </NotificationsProvider>
                                     </MoodCheckInProvider>

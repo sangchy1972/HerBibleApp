@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { onAuthChanged, googleSignIn, facebookSignIn, firebaseSignOut, sendEmailSignInLink, completeEmailSignIn, type AuthUser } from '../services/firebaseAuth';
-import { setAnalyticsUser, logEvent } from '../services/firebase';
+import { setAnalyticsUser, logEvent, setUserProps } from '../services/firebase';
 
 export interface User {
   uid?: string;          // Firebase UID when signed in via Firebase (Google); undefined for legacy local sign-ins
@@ -66,15 +66,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     : localUser;
   const user: User | null = base ? { ...base, photoUri: photoOverride ?? base.photoUri } : null;
 
+  // Fires `login` on every sign-in, and `sign_up` (Firebase Recommended) ONCE —
+  // on the user's first-ever authentication (persisted flag). `prompt_source`
+  // attributes the conversion to whichever login prompt was last shown (written
+  // by the onboarding login screen / LoginPromptContext). Also sets the durable
+  // `is_signed_up` user property for BigQuery cohorting.
+  const recordSignInEvent = useCallback(async (method: string) => {
+    logEvent('login', { method });
+    try {
+      const done = await AsyncStorage.getItem('auth:signed-up:v1');
+      if (done !== '1') {
+        const src = (await AsyncStorage.getItem('loginPrompt:lastTrigger')) || 'unknown';
+        logEvent('sign_up', { method, prompt_source: src });
+        setUserProps({ is_signed_up: 'yes' });
+        await AsyncStorage.setItem('auth:signed-up:v1', '1');
+      }
+    } catch { /* analytics best-effort */ }
+  }, []);
+
   const signInWithGoogle = useCallback(async () => {
     await googleSignIn();   // onAuthChanged fires with the new user
-    logEvent('login', { method: 'google' });
-  }, []);
+    recordSignInEvent('google');
+  }, [recordSignInEvent]);
 
   const signInWithFacebook = useCallback(async () => {
     await facebookSignIn();   // onAuthChanged fires with the new user
-    logEvent('login', { method: 'facebook' });
-  }, []);
+    recordSignInEvent('facebook');
+  }, [recordSignInEvent]);
 
   const sendEmailLink = useCallback(async (email: string) => {
     await sendEmailSignInLink(email);
@@ -82,14 +100,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const completeEmailLink = useCallback(async (link: string) => {
     await completeEmailSignIn(link);   // onAuthChanged fires with the new user
-    logEvent('login', { method: 'email_link' });
-  }, []);
+    recordSignInEvent('email_link');
+  }, [recordSignInEvent]);
 
   const signIn = useCallback((u: User) => {
     setLocalUser(u);
     AsyncStorage.setItem(LOCAL_USER_KEY, JSON.stringify(u)).catch(() => {});
-    logEvent('login', { method: 'apple' });   // legacy local path = Apple today
-  }, []);
+    recordSignInEvent('apple');   // legacy local path = Apple today
+  }, [recordSignInEvent]);
 
   const signOut = useCallback(() => {
     firebaseSignOut().catch(() => {});

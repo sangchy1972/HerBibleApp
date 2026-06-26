@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Feather from '@expo/vector-icons/Feather';
@@ -12,6 +13,7 @@ import { useNotifications } from '../state/NotificationsContext';
 import { useUILanguage } from '../state/UILanguageContext';
 import { logEvent, setUserProps } from '../services/firebase';
 import TimePickerSheet from '../components/TimePickerSheet';
+import SignInSheet from '../components/SignInSheet';
 
 // New-user questionnaire (first launch only — gated in RootNavigator). Seven
 // questions + one encouragement interstitial, in the Her Bible white/pink
@@ -19,11 +21,11 @@ import TimePickerSheet from '../components/TimePickerSheet';
 // the final screen is the notification soft pre-prompt → OS permission.
 // Answers persist via OnboardingContext and tailor later content.
 
-const TOTAL = 8;
+const TOTAL = 9;
 
 // Analytics step names (snake_case, index-aligned). Mirrors the funnel order so
 // `onboarding_step_view.step_name` is stable for BigQuery.
-const STEP_NAMES = ['goal', 'age', 'bible', 'encourage', 'topics', 'time', 'remind', 'notify'] as const;
+const STEP_NAMES = ['goal', 'age', 'bible', 'encourage', 'topics', 'time', 'remind', 'notify', 'login'] as const;
 
 const GOAL_OPTS = [
   { k: 'closer',     icon: 'heart-outline' },
@@ -63,12 +65,22 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState(0);
   const [a, setA] = useState<OnboardingAnswers>({ topics: [] });
   const [editing, setEditing] = useState<'morning' | 'night' | null>(null);
+  const [showSignIn, setShowSignIn] = useState(false);
+  const notifsOnRef = useRef(false);   // set at the notify step; read by finishAll
 
   // Analytics. `onboarding_start` once; `onboarding_step_view` on every step
   // (incl. step 0 on mount) → powers the per-screen funnel / drop-off in
   // Firebase + BigQuery.
   useEffect(() => { logEvent('onboarding_start', { app_language: lang }); }, []);   // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { logEvent('onboarding_step_view', { step_index: step, step_name: STEP_NAMES[step] }); }, [step]);
+  // The final login screen is itself a login prompt — log it + record the source
+  // so a sign-in here is attributed to onboarding in AuthContext's sign_up event.
+  useEffect(() => {
+    if (step === 8) {
+      AsyncStorage.setItem('loginPrompt:lastTrigger', 'onboarding').catch(() => {});
+      logEvent('login_prompt_shown', { trigger: 'onboarding' });
+    }
+  }, [step]);
 
   const goNext = () => setStep((s) => Math.min(TOTAL - 1, s + 1));
   const goBack = () => setStep((s) => Math.max(0, s - 1));
@@ -101,17 +113,22 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
     goNext();
   };
 
-  // Finish the whole flow. enableNotif=true fires the OS permission prompt and
-  // turns on the morning + evening reminders. `method` distinguishes a full
-  // completion from an early Skip. Emits onboarding_complete (full profile) +
-  // sets durable user properties for BigQuery segmentation.
-  const finishAll = async (enableNotif: boolean, method: 'completed' | 'skipped') => {
+  // Notify step: fire the OS permission prompt + enable reminders, then advance
+  // to the login screen (onboarding finishes there, not here).
+  const onNotifyRemind = async () => {
+    let granted = false;
+    try { granted = await requestPermissionAndEnableDefaults(); } catch { /* declined / no module */ }
+    notifsOnRef.current = granted;
+    logEvent('onboarding_notification_result', { granted: granted ? 'true' : 'false', source: 'onboarding' });
+    goNext();
+  };
+
+  // Finish the whole flow (from the login step, or an early Skip). Emits
+  // onboarding_complete (full profile) + durable user properties. Sign-in and
+  // the sign_up event are handled by AuthContext via the SignInSheet.
+  const finishAll = (method: 'completed' | 'skipped') => {
     saveAnswers(a);
-    let notifsOn = false;
-    if (enableNotif) {
-      try { notifsOn = await requestPermissionAndEnableDefaults(); } catch { /* declined / no module */ }
-      logEvent('onboarding_notification_result', { granted: notifsOn ? 'true' : 'false', source: 'onboarding' });
-    }
+    const notifsOn = notifsOnRef.current;
     const topics = a.topics ?? [];
     logEvent('onboarding_complete', {
       method,
@@ -145,7 +162,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
             <Feather name="chevron-left" size={24} color={TXTSUB} />
           </TouchableOpacity>
         ) : <View style={styles.backBtn} />}
-        <TouchableOpacity onPress={() => finishAll(false, 'skipped')} hitSlop={12}>
+        <TouchableOpacity onPress={() => finishAll('skipped')} hitSlop={12}>
           <Text style={styles.skip}>{t('onboarding.skip')}</Text>
         </TouchableOpacity>
       </View>
@@ -291,6 +308,24 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
               </LinearGradient>
             </>
           )}
+
+          {step === 8 && (
+            <View style={{ alignItems: 'center' }}>
+              <LinearGradient colors={['#F9D9E6', '#F4A6C0', ROSE]} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={styles.loginHero}>
+                <Ionicons name="bookmark" size={42} color="#FFFFFF" style={{ opacity: 0.92 }} />
+              </LinearGradient>
+              <Text style={[styles.h, { fontSize: 26, textAlign: 'center', marginTop: 22 }]}>{t('onboarding.login.title')}</Text>
+              <Text style={[styles.sub, { textAlign: 'center', paddingHorizontal: 10 }]}>{t('onboarding.login.sub')}</Text>
+              <View style={styles.loginBenefits}>
+                {([['create-outline', 'b1'], ['color-wand-outline', 'b2'], ['sync-outline', 'b3']] as const).map(([icon, k]) => (
+                  <View key={k} style={styles.benefitRow}>
+                    <View style={styles.benefitIcon}><Ionicons name={icon} size={19} color={ROSE} /></View>
+                    <Text style={styles.benefitText}>{t(`onboarding.login.${k}`)}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
         </ScrollView>
       </Animated.View>
 
@@ -298,10 +333,19 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
       <View style={[styles.footer, { paddingBottom: insets.bottom + 14 }]}>
         {step === 7 ? (
           <Animated.View entering={FadeIn.duration(300)}>
-            <TouchableOpacity activeOpacity={0.9} onPress={() => finishAll(true, 'completed')} style={styles.cta}>
+            <TouchableOpacity activeOpacity={0.9} onPress={onNotifyRemind} style={styles.cta}>
               <Text style={styles.ctaText}>{t('onboarding.notify.cta')}</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => finishAll(false, 'completed')} hitSlop={10} style={styles.laterBtn}>
+            <TouchableOpacity onPress={goNext} hitSlop={10} style={styles.laterBtn}>
+              <Text style={styles.laterText}>{t('onboarding.notify.later')}</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        ) : step === 8 ? (
+          <Animated.View entering={FadeIn.duration(300)}>
+            <TouchableOpacity activeOpacity={0.9} onPress={() => setShowSignIn(true)} style={styles.cta}>
+              <Text style={styles.ctaText}>{t('onboarding.login.cta')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => finishAll('completed')} hitSlop={10} style={styles.laterBtn}>
               <Text style={styles.laterText}>{t('onboarding.notify.later')}</Text>
             </TouchableOpacity>
           </Animated.View>
@@ -324,6 +368,12 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
           />
         )}
       </Modal>
+
+      {/* Final login screen's sign-in sheet. Closing it (success OR cancel)
+          finishes onboarding; the sign_up event is fired by AuthContext. */}
+      {showSignIn && (
+        <SignInSheet onClose={() => { setShowSignIn(false); finishAll('completed'); }} />
+      )}
     </View>
   );
 }
@@ -384,6 +434,11 @@ const styles = StyleSheet.create({
   timePill: { fontSize: 15, fontWeight: '700', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 12, overflow: 'hidden' },
   // Notification hero + mock banner.
   notifHero: { width: '100%', height: 188, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginTop: 4, overflow: 'hidden' },
+  loginHero: { width: 92, height: 92, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginTop: 12 },
+  loginBenefits: { alignSelf: 'stretch', marginTop: 22, gap: 14, paddingHorizontal: 4 },
+  benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 13 },
+  benefitIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: '#FBEAF0', alignItems: 'center', justifyContent: 'center' },
+  benefitText: { flex: 1, fontSize: 14.5, color: TXT, fontFamily: FONTS.lato, lineHeight: 20 },
   banner: {
     position: 'absolute', left: 14, right: 14, bottom: 14,
     flexDirection: 'row', alignItems: 'center', gap: 10,

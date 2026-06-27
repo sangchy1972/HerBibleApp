@@ -120,12 +120,12 @@ lo = clamp( floor(V / 20) + 1 , 2 , 25 )
 实现文件：`src/services/adFrequency.ts`（决定"何时"）+ `ads.ts` / `usInterstitial.ts`（执行展示）。
 
 **两档频率（按用户使用天数分）：**
-- **Day 0–3（新用户,温和）**：只在自然断点弹 —— `prayer_end`(祈祷结束) + `plan_end`(计划当日结束)。
-- **Day ≥ 4(老用户,激进)**：在温和基础上**额外**加两个触发:
+- **Day 0–2（新用户,温和）**：只在自然断点弹 —— `prayer_end`(祈祷结束) + `plan_end`(计划当日结束)。
+- **Day ≥ 3(第 4 天起,老用户,激进)**：在温和基础上**额外**加两个触发:
   - **页面跳转**：每 **3** 次合格跳转弹一次(`placement='nav'`)。
   - **热启动**：app 退后台 **≥15 秒**再回前台弹一次(`placement='app_open'`)。
 
-> 天数 = 距首次启动的自然日(安装当天=day0),常量 `AGGRESSIVE_FROM_DAY=4`。首启日期存 `ads:firstLaunchYmd`。
+> 天数 = 距首次启动的自然日(安装当天=day0),常量 `AGGRESSIVE_FROM_DAY=3`。首启日期存 `ads:firstLaunchYmd`。
 
 **"一次跳转"如何计数：**
 - **底部 4 个 tab(prayer/bible/plan/profile)之间连续互跳** → 整段只计 **+1**(不管点多少次),直到跳到非 tab 页面打断该段。

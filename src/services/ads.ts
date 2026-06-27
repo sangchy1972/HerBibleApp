@@ -11,9 +11,10 @@
 // the same defensive pattern used in services/firebase.ts. On such a build all
 // functions below become silent no-ops.
 
-import { Platform } from 'react-native';
+import { Platform, NativeModules } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent, setUserProps } from './firebase';
+import { startUsController, stopUsController, usOnShowOpportunity, isUsControllerActive } from './usInterstitial';
 
 let mobileAdsFn: any = null;
 let InterstitialAdCls: any = null;
@@ -66,11 +67,39 @@ let lastShownAt = 0;
 export async function setAdsRemoved(value: boolean): Promise<void> {
   adsRemoved = value;
   setUserProps({ ads_removed: value ? 'on' : 'off' });   // payer cohort for BigQuery
+  // Tear the US waterfall down on purchase so its ticker + cached/in-flight ads
+  // stop immediately (not just no-op behind the flag).
+  if (value) { try { stopUsController(); } catch {} }
   try { await AsyncStorage.setItem(REMOVE_ADS_KEY, value ? '1' : '0'); } catch {}
 }
 
 export function areAdsRemoved(): boolean {
   return adsRemoved;
+}
+
+// Device-region detection (no extra dependency — reads the OS locale via RN's
+// built-in native modules). Used to route US users through the waterfall
+// controller. NOTE: this is the DEVICE region, a client-side proxy for the
+// ad-serving country (which AdMob ultimately decides by IP). Good enough for
+// the US-only rollout; swap for a real geo/IP signal later if needed.
+function deviceRegion(): string | null {
+  try {
+    const { SettingsManager, I18nManager } = NativeModules as any;
+    let loc: string | undefined;
+    if (Platform.OS === 'ios') {
+      loc = SettingsManager?.settings?.AppleLocale
+        || (Array.isArray(SettingsManager?.settings?.AppleLanguages) ? SettingsManager.settings.AppleLanguages[0] : undefined);
+    } else {
+      loc = I18nManager?.localeIdentifier;
+    }
+    if (!loc) return null;
+    const m = String(loc).match(/[_-]([A-Za-z]{2})(?:[_@.-]|$)/);
+    return m ? m[1].toUpperCase() : null;
+  } catch { return null; }
+}
+
+export function isUsUser(): boolean {
+  return deviceRegion() === 'US';
 }
 
 // Initialize the SDK once at app launch and preload the first interstitial.
@@ -95,7 +124,13 @@ export async function initAds(): Promise<void> {
     }
     await mobileAdsFn().initialize();
     initialized = true;
-    preload();
+    // US users → the 26-unit waterfall controller. Everyone else → the simple
+    // single-unit preload (other-country logic ships later).
+    if (isUsUser() && InterstitialAdCls) {
+      startUsController({ Interstitial: InterstitialAdCls, AdEventType: AdEventTypeEnum, isAdsRemoved: () => adsRemoved });
+    } else {
+      preload();
+    }
   } catch { /* never crash on ads init */ }
 }
 
@@ -121,7 +156,12 @@ function preload(): void {
 // plan day). Respects the remove-ads flag and the frequency cap, and silently
 // no-ops if no ad is loaded yet (a fresh one is always preloading for next time).
 export function maybeShowInterstitial(placement: 'prayer_end' | 'plan_end' | 'unknown' = 'unknown'): void {
-  if (adsRemoved || !initialized || !interstitial || !loaded) return;
+  if (adsRemoved || !initialized) return;
+  // US users go through the waterfall controller (own cache, frequency cap,
+  // impression-level logging). It returns silently if nothing is cached yet.
+  if (isUsControllerActive()) { usOnShowOpportunity(placement); return; }
+  // Non-US simple path: show the single preloaded interstitial.
+  if (!interstitial || !loaded) return;
   const now = Date.now();
   if (now - lastShownAt < MIN_INTERVAL_MS) return;
   try {

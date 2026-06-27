@@ -26,6 +26,7 @@
 // ads-removed getter are injected to avoid a circular import.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent } from './firebase';
 
@@ -76,8 +77,8 @@ const FLOOR_COOLDOWN_MS = 8000;     // pause when even $40 can't fill (avoid flo
 // AdMob paid value is dollars-per-impression (1e-6 × valueMicros). The ladder
 // floors are eCPM (per-1000). eCPM = perImpression × 1000.
 const ECPM_PER_IMPRESSION = 1000;
-// Don't pop two interstitials back-to-back (e.g. prayer end then a plan day).
-const MIN_INTERVAL_MS = 90 * 1000;
+// Global floor between any two interstitials (also the nav-trigger's 60s cooldown).
+const MIN_INTERVAL_MS = 60 * 1000;
 
 const STORAGE_KEY = 'us:ad:state:v1';
 
@@ -468,10 +469,11 @@ export function isUsControllerActive(): boolean {
  * brand-new user — or, if PAID never fires, bootstrapping on close), then refill.
  * Returns true if a show was initiated.
  */
-export function usOnShowOpportunity(placement: 'prayer_end' | 'plan_end' | 'unknown' = 'unknown'): boolean {
+export function usOnShowOpportunity(placement: 'prayer_end' | 'plan_end' | 'nav' | 'app_open' | 'unknown' = 'unknown'): boolean {
   if (adsOff()) return false;
   ensureDay();
   if (showing) return false;
+  if (AppState.currentState !== 'active') return false;            // never show off-foreground
   if (Date.now() - lastShownAt < MIN_INTERVAL_MS) return false;   // frequency cap
   evictExpired();
   if (cache.length === 0) { pump(); return false; }
@@ -495,7 +497,7 @@ export function usOnShowOpportunity(placement: 'prayer_end' | 'plan_end' | 'unkn
       paidSeen = true;
       const vEcpm = (Number(e?.value) || 0) * ECPM_PER_IMPRESSION;
       todayImpr.push(vEcpm);
-      logEvent('ad_paid', { value: Number(e?.value) || 0, ecpm: vEcpm, unit_idx: slot.idx, precision: String(e?.precision ?? '') });
+      logEvent('ad_paid', { value: Number(e?.value) || 0, ecpm: vEcpm, currency: String(e?.currency ?? ''), unit_idx: slot.idx, precision: String(e?.precision ?? '') });
       if (!established) {                                // first real impression sets the window
         established = true;
         win = makeWindow(startIndexFromValue(vEcpm));

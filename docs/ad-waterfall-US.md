@@ -115,12 +115,38 @@ lo = clamp( floor(V / 20) + 1 , 2 , 25 )
 
 ---
 
+## 8.5 展示触发与频率（何时弹插页）
+
+实现文件：`src/services/adFrequency.ts`（决定"何时"）+ `ads.ts` / `usInterstitial.ts`（执行展示）。
+
+**两档频率（按用户使用天数分）：**
+- **Day 0–3（新用户,温和）**：只在自然断点弹 —— `prayer_end`(祈祷结束) + `plan_end`(计划当日结束)。
+- **Day ≥ 4(老用户,激进)**：在温和基础上**额外**加两个触发:
+  - **页面跳转**：每 **3** 次合格跳转弹一次(`placement='nav'`)。
+  - **热启动**：app 退后台 **≥15 秒**再回前台弹一次(`placement='app_open'`)。
+
+> 天数 = 距首次启动的自然日(安装当天=day0),常量 `AGGRESSIVE_FROM_DAY=4`。首启日期存 `ads:firstLaunchYmd`。
+
+**"一次跳转"如何计数：**
+- **底部 4 个 tab(prayer/bible/plan/profile)之间连续互跳** → 整段只计 **+1**(不管点多少次),直到跳到非 tab 页面打断该段。
+- **任何涉及非 tab "浏览页"的跳转**(Streak/Achievement/Reflections/PastVerses/FeaturedPlanDetail/PlanCategory/MoodCalendar 的进/出) → 正常 **+1**。
+- **流程页与功能页全程不计数、不打断**:`PrayerFlow / GospelPsalm / MoodFlow / PlanDayWalk / PlanVerseRead / PlanDayDone`(流程结尾已各弹一次)、`RemoveAds / HelpCenter / HelpAnswer / AboutUs / Policy / Notifications / AddWidget`。
+
+**硬性闸门(对所有触发统一生效)：**
+- **冷却 60 秒**：任意两条插页间隔 ≥ `MIN_INTERVAL_MS=60s`(即"每 3 次跳转 **且** 距上次 ≥60s")。
+- **必须在前台**：`AppState.currentState==='active'` 才展示,否则跳过(防止切走瞬间浪费曝光 / 渲染异常)。
+- 缓存为空则不弹(由瀑布流补量,见 §6)。
+
+> ⚠️ 政策提示:"热启动弹插页 + 每 3 次跳转弹"属于高频实现,AdMob 对"开屏/每次切屏弹插页"有 disallowed interstitial 风险。已用"仅 day≥4 + 60s 冷却 + 前台 + 排除流程页"四重约束收敛;Google 对开屏场景的官方推荐格式是 App Open Ad,此处按产品决策仍用插页。
+
+---
+
 ## 9. 事件埋点（供 BigQuery 分析）
 
 | 事件 | 触发 | 字段 |
 |---|---|---|
-| `ad_impression_custom` | 广告真实展示（OPENED） | `format='interstitial'`, `placement`('prayer_end'/'plan_end'), `unit_idx`, `floor` |
-| `ad_paid` | paid 价值回传 | `value`（$/次）, `ecpm`（$×1000）, `unit_idx`, `precision` |
+| `ad_impression_custom` | 广告真实展示（OPENED） | `format='interstitial'`, `placement`('prayer_end'/'plan_end'/'nav'/'app_open'), `unit_idx`, `floor` |
+| `ad_paid` | paid 价值回传 | `value`（$/次）, `ecpm`（$×1000）, `currency`('USD'), `unit_idx`, `precision` |
 
 > 不用 `ad_impression`（那是 Firebase 自动采集的保留事件）。
 

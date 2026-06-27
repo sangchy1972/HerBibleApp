@@ -11,7 +11,7 @@
 // the same defensive pattern used in services/firebase.ts. On such a build all
 // functions below become silent no-ops.
 
-import { Platform, NativeModules } from 'react-native';
+import { Platform, NativeModules, AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent, setUserProps } from './firebase';
 import { startUsController, stopUsController, usOnShowOpportunity, isUsControllerActive } from './usInterstitial';
@@ -56,7 +56,7 @@ const REMOVE_ADS_KEY = 'ads:removed:v1';
 
 // Frequency cap: never show two interstitials within this window, so e.g.
 // finishing morning prayer and a plan day back-to-back won't double-pop.
-const MIN_INTERVAL_MS = 90 * 1000;
+const MIN_INTERVAL_MS = 60 * 1000;
 
 let adsRemoved = false;
 let initialized = false;
@@ -155,13 +155,14 @@ function preload(): void {
 // Show an interstitial at a natural break (e.g. after Amen, after finishing a
 // plan day). Respects the remove-ads flag and the frequency cap, and silently
 // no-ops if no ad is loaded yet (a fresh one is always preloading for next time).
-export function maybeShowInterstitial(placement: 'prayer_end' | 'plan_end' | 'unknown' = 'unknown'): void {
+export function maybeShowInterstitial(placement: 'prayer_end' | 'plan_end' | 'nav' | 'app_open' | 'unknown' = 'unknown'): void {
   if (adsRemoved || !initialized) return;
   // US users go through the waterfall controller (own cache, frequency cap,
   // impression-level logging). It returns silently if nothing is cached yet.
   if (isUsControllerActive()) { usOnShowOpportunity(placement); return; }
   // Non-US simple path: show the single preloaded interstitial.
   if (!interstitial || !loaded) return;
+  if (AppState.currentState !== 'active') return;   // never show off-foreground
   const now = Date.now();
   if (now - lastShownAt < MIN_INTERVAL_MS) return;
   try {

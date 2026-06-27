@@ -69,12 +69,13 @@ import WidgetSync from './src/components/WidgetSync';
 import LoadingOverlay from './src/components/LoadingOverlay';
 import { initFirebase, logScreenView } from './src/services/firebase';
 import { initAds } from './src/services/ads';
+import { initAdFrequency, noteNavigation } from './src/services/adFrequency';
 
 export default function App() {
   // Enable Firebase Analytics + Crashlytics collection once on launch, and
   // initialize AdMob (preloads the first interstitial). Both no-op safely on a
   // build that doesn't yet have the respective native module.
-  React.useEffect(() => { initFirebase(); initAds(); }, []);
+  React.useEffect(() => { initFirebase(); initAds(); initAdFrequency(); }, []);
 
   // One central screen-view hook: log the active route on every navigation
   // state change so Firebase Analytics gets a complete screen funnel without
@@ -82,7 +83,7 @@ export default function App() {
   const navRef = useNavigationContainerRef();
   const onNavStateChange = React.useCallback(() => {
     const name = navRef.getCurrentRoute()?.name;
-    if (name) logScreenView(name);
+    if (name) { logScreenView(name); noteNavigation(name); }
   }, [navRef]);
 
   // Custom launch loading page. Shown over the app until the navigator is ready

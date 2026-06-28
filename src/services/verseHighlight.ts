@@ -13,7 +13,7 @@
 
 import { DAILY_VERSE_AUDIO_STEPS } from '../constants/dailyVerseAudioCdn';
 import {
-  loadManifest, loadHolidayManifest, remoteStepUrls,
+  loadManifest, loadHolidayManifest, remoteStepUrls, readCachedStepTimingsRaw,
 } from './dailyVerseAudioService';
 
 export interface SentenceTiming { text: string; start: number; end: number; }
@@ -84,13 +84,25 @@ export async function fetchStepTimings(
   const hit = timingsCache.get(cacheKey);
   if (hit) return hit;
 
+  // Disk-first: the timing .json siblings are cached next to the audio (by
+  // prepareVerseAudio / the launch prefetch), so they're instant + offline.
+  // We only hit the network for steps not yet on disk.
+  const localRaw = readCachedStepTimingsRaw(verseId, isHoliday);
+
   const manifest = await (isHoliday ? loadHolidayManifest() : loadManifest());
-  if (!manifest) return null;
-  const mp3Urls = remoteStepUrls(manifest, verseId);
-  if (!mp3Urls) return null;
+  const mp3Urls = manifest ? remoteStepUrls(manifest, verseId) : null;
+  // No manifest/urls: still serve whatever timings are already on disk.
+  if (!mp3Urls) {
+    if (!localRaw.some(Boolean)) return null;
+    const out = localRaw.map(r => (r ? parseTimings(r) : null));
+    timingsCache.set(cacheKey, out);
+    return out;
+  }
 
   const out = await Promise.all(
     DAILY_VERSE_AUDIO_STEPS.map(async (_step, i) => {
+      const local = localRaw[i];
+      if (local) return parseTimings(local);               // disk-cached → instant
       const jsonUrl = mp3Urls[i].replace(/\.mp3$/i, '.json');
       try {
         const res = await fetch(jsonUrl);
@@ -101,6 +113,8 @@ export async function fetchStepTimings(
       }
     }),
   );
-  timingsCache.set(cacheKey, out);
+  // Don't permanently memo a total failure — let a later attempt retry the
+  // network once the connection is back.
+  if (out.some(t => t && t.length)) timingsCache.set(cacheKey, out);
   return out;
 }

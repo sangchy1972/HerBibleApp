@@ -84,6 +84,48 @@ async function downloadIfMissing(url: string, target: File): Promise<boolean> {
   }
 }
 
+// Cache the sentence-timing `.json` sibling of each step mp3 onto disk, next to
+// the audio. Highlight timings used to be fetched live over the network at
+// flow-open (memory-cache only), so on slow / flaky connections (and OEMs that
+// throttle data, e.g. MIUI) the audio — already cached on disk — would play
+// while the highlight silently never loaded. Caching the timings the SAME way
+// as the audio makes the highlight just as reliable + offline-capable.
+async function cacheTimingSiblings(dir: Directory | null, mp3Urls: string[]): Promise<void> {
+  if (!dir) return;
+  for (const url of mp3Urls) {
+    try {
+      const jsonUrl = url.replace(/\.mp3$/i, '.json');
+      const fn = jsonUrl.split('/').pop() || 'step.json';
+      await downloadIfMissing(jsonUrl, new File(dir, fn)).catch(() => {});
+    } catch { /* best-effort */ }
+  }
+}
+
+// Read locally-cached step timings (the `.json` siblings) for a verse. Returns a
+// length-4 array in page order: the raw parsed JSON for any step already on
+// disk, null where not cached yet. Never throws — a missing/corrupt file just
+// yields null for that step (caller falls back to the network).
+export function readCachedStepTimingsRaw(verseId: string, isHoliday: boolean): (unknown[] | null)[] {
+  const out: (unknown[] | null)[] = [null, null, null, null];
+  try {
+    const manifest = isHoliday ? HOLIDAY_VERSE_AUDIO_MANIFEST : DAILY_VERSE_AUDIO_MANIFEST;
+    const entry = manifest.verses?.[verseId];
+    const dir = isHoliday ? holidayVerseDir(verseId) : verseDir(verseId);
+    if (!entry || !dir) return out;
+    DAILY_VERSE_AUDIO_STEPS.forEach((step, i) => {
+      try {
+        const mp3 = entry[step];
+        if (!mp3) return;
+        const f = new File(dir, mp3.replace(/\.mp3$/i, '.json'));
+        if (!f.exists) return;
+        const parsed = JSON.parse(f.textSync());
+        if (Array.isArray(parsed)) out[i] = parsed;
+      } catch { /* leave null */ }
+    });
+  } catch { /* leave all null */ }
+  return out;
+}
+
 // Resolve the four playable sources for `verseId`, downloading them into a
 // day-scoped cache and pruning every OTHER verse's cache afterwards.
 // `keepVerseIds` lists the ids that should survive the prune (typically
@@ -130,17 +172,15 @@ export async function prepareVerseAudio(
   }
 
   const keep = new Set(keepVerseIds.length ? keepVerseIds : [verseId]);
-  if (pending.length) {
-    // Fire-and-forget: download the uncached clips, then prune old verses.
-    void (async () => {
-      for (const { url, target } of pending) {
-        await downloadIfMissing(url, target).catch(() => {});
-      }
-      pruneOtherVerses(keep);
-    })();
-  } else {
+  // Always run the background task — even when every mp3 is already cached — so
+  // the timing .json siblings get cached too (highlight reliability).
+  void (async () => {
+    for (const { url, target } of pending) {
+      await downloadIfMissing(url, target).catch(() => {});
+    }
+    await cacheTimingSiblings(dir, urls);
     pruneOtherVerses(keep);
-  }
+  })();
   return resolved;
 }
 
@@ -223,15 +263,12 @@ export async function prepareHolidayVerseAudio(
   }
 
   const keep = new Set(keepVerseIds.length ? keepVerseIds : [verseId]);
-  if (pending.length) {
-    void (async () => {
-      for (const { url, target } of pending) {
-        await downloadIfMissing(url, target).catch(() => {});
-      }
-      pruneOtherHolidayVerses(keep);
-    })();
-  } else {
+  void (async () => {
+    for (const { url, target } of pending) {
+      await downloadIfMissing(url, target).catch(() => {});
+    }
+    await cacheTimingSiblings(dir, urls);
     pruneOtherHolidayVerses(keep);
-  }
+  })();
   return resolved;
 }

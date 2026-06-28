@@ -1,6 +1,6 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Text, TextInput } from 'react-native';
+import { Text, TextInput, InteractionManager } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer, DefaultTheme, useNavigationContainerRef } from '@react-navigation/native';
@@ -75,7 +75,14 @@ export default function App() {
   // Enable Firebase Analytics + Crashlytics collection once on launch, and
   // initialize AdMob (preloads the first interstitial). Both no-op safely on a
   // build that doesn't yet have the respective native module.
-  React.useEffect(() => { initFirebase(); initAds(); initAdFrequency(); }, []);
+  // Firebase is light + needed early (analytics/auth). The AdMob GMA SDK is
+  // heavy native init — defer it past the launch animations (InteractionManager)
+  // so it never competes with the loading screens / first render.
+  React.useEffect(() => {
+    initFirebase();
+    const task = InteractionManager.runAfterInteractions(() => { initAds(); initAdFrequency(); });
+    return () => task.cancel();
+  }, []);
 
   // One central screen-view hook: log the active route on every navigation
   // state change so Firebase Analytics gets a complete screen funnel without

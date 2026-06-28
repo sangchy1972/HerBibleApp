@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Dimensions,
   Keyboard, Platform, Linking, Modal, AppState,
@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import PagerView from 'react-native-pager-view';
 import Svg, { Path, Circle } from 'react-native-svg';
 import LottieView from 'lottie-react-native';
 import Animated, {
@@ -62,10 +63,6 @@ const SECTIONS = ['verse', 'meditation', 'action', 'prayer'];
 // ≈910), ~73 px on a small one (≈667), clamped to a sane 64–104 range so
 // tablets don't overshoot. Was a fixed 140 (too low on every device per user).
 const DEEP_PAGE_TOP = Math.round(Math.max(64, Math.min(104, height * 0.11)));
-
-function FlowPage({ children }: { children: React.ReactNode }) {
-  return <View style={[styles.flowPage, { height }]}>{children}</View>;
-}
 
 // Animated page indicator. Two shared values drive two independent animations
 // so a single change to `page` reads as one smooth motion instead of a stack
@@ -242,6 +239,42 @@ function ReaderGlyph({ size = 22, color }: { size?: number; color: string }) {
   );
 }
 
+// Narration highlight, ISOLATED. The audio status subscription lives HERE — in a
+// small leaf — instead of in PrayerFlow. expo-audio pushes status ~10×/s while
+// the narration plays; subscribing in the parent re-rendered the entire flow
+// (outer pager + 3 nested ScrollViews) every tick, which on Android stuttered
+// scrolling AND reset the nested-scroll hand-off so pages couldn't advance.
+// Now only this block re-renders per tick; the ScrollViews stay mounted/stable.
+function NarratedBody({ player, active, text, timings, style, highlightStyle }: {
+  player: any;
+  active: boolean;
+  text: string;
+  timings: SentenceTiming[] | null;
+  style?: any;
+  highlightStyle?: any;
+}) {
+  const status = useAudioPlayerStatus(player);
+  const time = active ? (status?.currentTime ?? -1) : -1;
+  return (
+    <HighlightedText text={text} timings={timings} time={time} active={active} style={style} highlightStyle={highlightStyle} />
+  );
+}
+
+// Invisible auto-advance driver. Owns its own status subscription so the
+// didJustFinish edge fires `onFinish` WITHOUT re-rendering the parent every
+// status tick. The per-step guard (advancedFromRef) still lives in the parent.
+function NarrationAdvancer({ player, active, onFinish }: { player: any; active: boolean; onFinish: () => void }) {
+  const status = useAudioPlayerStatus(player);
+  const justFinished = !!status?.didJustFinish;
+  const firedRef = useRef(false);
+  useEffect(() => {
+    if (!active) { firedRef.current = false; return; }
+    if (justFinished && !firedRef.current) { firedRef.current = true; onFinish(); }
+    else if (!justFinished) { firedRef.current = false; }
+  }, [justFinished, active, onFinish]);
+  return null;
+}
+
 export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'PrayerFlow'>) {
   const insets = useSafeAreaInsets();
   const t = useT();
@@ -402,11 +435,8 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     return () => { onShow.remove(); onHide.remove(); };
   }, [showNoteSheet]);
   const [page, setPage] = useState(0);
-  // Live pager scroll offset (px). Drives the page slide/fade so the animation
-  // is always in sync with what's physically on screen — see the page anims.
-  const scrollY = useSharedValue(0);
   const [buttonReady, setButtonReady] = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
+  const pagerRef = useRef<PagerView>(null);
   // Each page that can overflow has its own inner ScrollView. Reset whichever
   // one is no longer active so swiping back into it lands on its caption,
   // not on whatever scroll offset the user last left there.
@@ -506,12 +536,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     [readUris, listenStep],
   );
   const readPlayer = useAudioPlayer(readSource);
-  const readStatus = useAudioPlayerStatus(readPlayer);
 
-  // Narration cursor time (s) for the page currently being read; -1 when not
-  // listening so HighlightedText renders plain text. `timingFor` picks the
-  // step's sentence timings (or null = no highlight for that step).
-  const narrationTime = listenOn ? (readStatus?.currentTime ?? -1) : -1;
+  // Per-step sentence-timings selector. The narration TIME is now read inside
+  // each <NarratedBody> (one tiny leaf), so audio-status ticks no longer
+  // re-render this whole component — only the block currently being spoken.
   const timingFor = (step: number): SentenceTiming[] | null =>
     (stepTimings && stepTimings[step]) || null;
 
@@ -587,8 +615,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // it would advance AGAIN, skipping the next clip (that's why Reflection,
   // the step right after the first finish, was getting silently skipped).
   // With the ref, this only fires on a real didJustFinish transition.
-  useEffect(() => {
-    if (!listenOn || !readStatus?.didJustFinish) return;
+  const handleNarrationFinish = useCallback(() => {
     const cur = listenStepRef.current;
     if (advancedFromRef.current === cur) return;
     advancedFromRef.current = cur;
@@ -596,11 +623,11 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
       const next = cur + 1;
       setListenStep(next);
       setPage(next);
-      scrollRef.current?.scrollTo({ y: height * next, animated: true });
+      pagerRef.current?.setPage(next);
     } else {
       setListenOn(false);            // finished the closing prayer — stop
     }
-  }, [readStatus?.didJustFinish, listenOn]);
+  }, []);
 
   // Tapping Amen ends the flow — make sure narration stops before the
   // congrats scene (the topbar Listen button is already hidden by !amened).
@@ -625,47 +652,19 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
       advancedFromRef.current = -1;
       if (listenStep !== page) {
         setListenStep(page);
-        scrollRef.current?.scrollTo({ y: height * page, animated: true });
+        pagerRef.current?.setPage(page);
       }
       setListenOn(true);             // the play effect picks it up
     }
   };
 
-  // Visual page (dots / inner-scroll reset) follows the finger in real time.
-  const handleScroll = (e: any) => {
-    const y = e.nativeEvent.contentOffset.y;
-    scrollY.value = y;                              // keep the page anims in sync with the real offset
-    const idx = Math.round(y / height);
-    if (idx !== page) setPage(idx);
-  };
-
-  // Audio reacts only to the SETTLED page (momentum end), never mid-swipe —
-  // so a fast multi-page flick lands on one clip, not a stutter of half-
-  // started ones. While listening, a manual swipe re-points the narration
-  // to the landed page and plays it from the top. (Our own auto-advance
-  // scroll lands on a page whose cursor is already set, so this is a no-op
-  // for it — no feedback loop.)
-  // Force the OUTER pager onto an exact page boundary. The inner ScrollViews
-  // hand off the gesture on Android, after which pagingEnabled sometimes leaves
-  // the pager a few-dozen px PAST a page — so the page (and its title) rests
-  // shifted up under the top chrome and can't be nudged back. Snapping here
-  // guarantees every page rests exactly aligned, on any phone height.
-  const snapOuterToPage = (y: number): number => {
-    const landed = Math.round(y / height);
-    if (Math.abs(y - landed * height) > 1) {
-      scrollRef.current?.scrollTo({ y: landed * height, animated: true });
-    }
-    return landed;
-  };
-
-  const handleMomentumEnd = (e: any) => {
-    const landed = snapOuterToPage(e.nativeEvent.contentOffset.y);
-    scrollY.value = landed * height;               // snap the anim driver exactly onto the landed page
-    if (landed !== page) setPage(landed);
-    // Pin the page you just landed on to the TOP so its caption always rests at
-    // the intended top offset (insets.top + DEEP_PAGE_TOP) — never scrolled past
-    // with the title jammed under the top chrome. The leave-reset effect can
-    // miss when `page` desyncs on Android nested scroll, so reset on arrival too.
+  // PagerView lands exactly on a page (native), so there's no sub-page snapping
+  // to do. On every settle: sync `page`, pin the landed deep page's inner scroll
+  // to the top, and — if narrating — re-point the narration cursor to the page
+  // the user swiped to (plays that clip from the top).
+  const onPageSelected = (e: { nativeEvent: { position: number } }) => {
+    const landed = e.nativeEvent.position;
+    setPage(landed);
     const inner = landed === 1 ? meditationScrollRef
       : landed === 2 ? actionScrollRef
       : landed === 3 ? prayerScrollRef
@@ -723,28 +722,24 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // previous 60 px makes the motion clearly visible instead of feeling like
   // a hard cut, while `Easing.out(Easing.cubic)` keeps the arrival soft.
   const PAGE_TY = 110;
-  // Page slide + fade driven by the ACTUAL pager offset (scrollY), not a
-  // withTiming chase of `page`. The old approach could desync from the real
-  // scroll on Android (nested inner ScrollViews swallow momentum events), which
-  // left the visible page faded to opacity 0 — a blank, frozen-looking screen.
-  // Reading the live offset means the settled page is ALWAYS dist 0 → opacity 1
-  // and fully visible/scrollable, while mid-swipe pages cross-fade cleanly.
-  const verseAnim = useAnimatedStyle(() => {
-    const ty = Math.min(PAGE_TY, Math.abs(scrollY.value / height - 0) * PAGE_TY);
-    return { transform: [{ translateY: ty }], opacity: 1 - Math.min(1, ty / PAGE_TY) };
-  });
-  const meditationAnim = useAnimatedStyle(() => {
-    const ty = Math.min(PAGE_TY, Math.abs(scrollY.value / height - 1) * PAGE_TY);
-    return { transform: [{ translateY: ty }], opacity: 1 - Math.min(1, ty / PAGE_TY) };
-  });
-  const actionAnim = useAnimatedStyle(() => {
-    const ty = Math.min(PAGE_TY, Math.abs(scrollY.value / height - 2) * PAGE_TY);
-    return { transform: [{ translateY: ty }], opacity: 1 - Math.min(1, ty / PAGE_TY) };
-  });
-  const prayerAnim = useAnimatedStyle(() => {
-    const ty = Math.min(PAGE_TY, Math.abs(scrollY.value / height - 3) * PAGE_TY);
-    return { transform: [{ translateY: ty }], opacity: 1 - Math.min(1, ty / PAGE_TY) };
-  });
+  // Per-page entrance: content sits 110px low + transparent, then eases up to
+  // rest over 500ms when the page is LANDED on (per user "持续 0.5s"). Decoupled
+  // from scroll now that PagerView owns the native page transition — each value
+  // replays from 0 whenever its page becomes active (see the effect below), so
+  // the slide-in plays every visit. PagerView's own slide handles page movement.
+  const entVerse = useSharedValue(1);     // page 0 visible on mount
+  const entMed = useSharedValue(0);
+  const entAct = useSharedValue(0);
+  const entPrayer = useSharedValue(0);
+  useEffect(() => {
+    const sv = page === 0 ? entVerse : page === 1 ? entMed : page === 2 ? entAct : entPrayer;
+    sv.value = 0;
+    sv.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
+  }, [page]);
+  const verseAnim = useAnimatedStyle(() => ({ opacity: entVerse.value, transform: [{ translateY: (1 - entVerse.value) * PAGE_TY }] }));
+  const meditationAnim = useAnimatedStyle(() => ({ opacity: entMed.value, transform: [{ translateY: (1 - entMed.value) * PAGE_TY }] }));
+  const actionAnim = useAnimatedStyle(() => ({ opacity: entAct.value, transform: [{ translateY: (1 - entAct.value) * PAGE_TY }] }));
+  const prayerAnim = useAnimatedStyle(() => ({ opacity: entPrayer.value, transform: [{ translateY: (1 - entPrayer.value) * PAGE_TY }] }));
 
   useEffect(() => {
     if (!amened) return;
@@ -988,29 +983,27 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
       )}
 
       {!amened && (
-        <ScrollView
-          ref={scrollRef}
-          pagingEnabled
-          // NOTE: no disableIntervalMomentum / onScrollEndDrag here — those made
-          // the outer pager grab the vertical gesture and snap back, stealing it
-          // from the inner page ScrollViews so a long page (e.g. Closing Prayer)
-          // couldn't be scrolled to reach the Amen button. Plain pagingEnabled +
-          // the inner ScrollViews' nestedScrollEnabled is the combo that lets the
-          // inner content scroll first, then hands off to the pager at its edges.
-          showsVerticalScrollIndicator={false}
-          onScroll={handleScroll}
-          onMomentumScrollEnd={handleMomentumEnd}
-          scrollEventThrottle={16}
+        <PagerView
+          // Native VERTICAL pager. Replaces the old pagingEnabled ScrollView +
+          // nested ScrollViews: react-native-pager-view does the inner-scroll ↔
+          // page-swipe hand-off in NATIVE code, so deep pages (Reflection /
+          // Practice / Closing Prayer) scroll to their end and then reliably
+          // swipe to the next page on every device (Xiaomi / Redmi / Samsung
+          // included) — the structural fix for "can't scroll to the next page".
+          ref={pagerRef}
+          orientation="vertical"
+          initialPage={0}
+          onPageSelected={onPageSelected}
           style={StyleSheet.absoluteFillObject}
         >
-          <FlowPage>
+          <View key="verse" style={styles.pagerPageCenter}>
             <Animated.View style={[styles.pageContent, verseAnim]}>
               <Text style={styles.verseCaption}>{verseCaption}</Text>
               <Text style={styles.pageRef}>{verseRef}</Text>
-              <HighlightedText
+              <NarratedBody
+                player={readPlayer}
                 text={verseText}
                 timings={timingFor(0)}
-                time={narrationTime}
                 active={listenOn && listenStep === 0}
                 style={styles.pageVerse}
                 highlightStyle={styles.spokenLine}
@@ -1033,14 +1026,12 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                 </TouchableOpacity>
               </View>
             </Animated.View>
-          </FlowPage>
+          </View>
 
-          <FlowPage>
-            {/* nestedScrollEnabled — without it, Android's outer vertical
-                pager swallows the drag and this inner ScrollView never
-                scrolls, so long reflections get clipped + unreachable.
-                contentContainerStyle flexGrow:1 lets short content sit and
-                long content scroll. */}
+          <View key="meditation" style={styles.pagerPage}>
+            {/* Inner ScrollView for long reflections. nestedScrollEnabled keeps
+                Android scrolling this content first; PagerView natively hands the
+                swipe off to the next page once it reaches the bottom edge. */}
             <ScrollView
               ref={meditationScrollRef}
               showsVerticalScrollIndicator={false}
@@ -1056,11 +1047,11 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                     buildSegments matches just those (others simply don't match
                     and are skipped). */}
                 {meditationParas.map((p, i) => (
-                  <HighlightedText
+                  <NarratedBody
                     key={i}
+                    player={readPlayer}
                     text={p}
                     timings={timingFor(1)}
-                    time={narrationTime}
                     active={listenOn && listenStep === 1}
                     // Reflection body matches the Closing Prayer body (Merriweather
                     // 18.3 / lh 29.7) per user — same serif voice across the
@@ -1071,9 +1062,9 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                 ))}
               </Animated.View>
             </ScrollView>
-          </FlowPage>
+          </View>
 
-          <FlowPage>
+          <View key="action" style={styles.pagerPage}>
             <ScrollView
               ref={actionScrollRef}
               showsVerticalScrollIndicator={false}
@@ -1083,10 +1074,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             >
               <Animated.View style={[styles.pageContent, { paddingTop: insets.top + DEEP_PAGE_TOP }, actionAnim]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption]}>{actionCaption}</Text>
-                <HighlightedText
+                <NarratedBody
+                  player={readPlayer}
                   text={actionBody}
                   timings={timingFor(2)}
-                  time={narrationTime}
                   active={listenOn && listenStep === 2}
                   // Today's/Tonight's Practice body matches the Closing Prayer
                   // body (Merriweather 18.3 / lh 29.7) per user.
@@ -1103,9 +1094,9 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                 </TouchableOpacity>
               </Animated.View>
             </ScrollView>
-          </FlowPage>
+          </View>
 
-          <FlowPage>
+          <View key="prayer" style={styles.pagerPage}>
             <ScrollView
               ref={prayerScrollRef}
               showsVerticalScrollIndicator={false}
@@ -1115,10 +1106,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             >
               <Animated.View style={[styles.pageContent, { paddingTop: insets.top + DEEP_PAGE_TOP, paddingBottom: insets.bottom + 100 }, prayerAnim]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption, styles.prayerCaption]}>{prayerCaption}</Text>
-                <HighlightedText
+                <NarratedBody
+                  player={readPlayer}
                   text={prayerBody}
                   timings={timingFor(3)}
-                  time={narrationTime}
                   active={listenOn && listenStep === 3}
                   style={[styles.pageBody, styles.prayerBody]}
                   highlightStyle={styles.spokenLine}
@@ -1132,9 +1123,14 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                 <Text style={styles.prayedCount}>{t('prayerFlow.prayedCount', { count: formatThousands(prayedTodayCount()) })}</Text>
               </Animated.View>
             </ScrollView>
-          </FlowPage>
-        </ScrollView>
+          </View>
+        </PagerView>
       )}
+
+      {/* Isolated narration auto-advance — subscribes to audio status here, not
+          in the body, so a finished clip advances the page without re-rendering
+          the whole flow each status tick. */}
+      <NarrationAdvancer player={readPlayer} active={listenOn} onFinish={handleNarrationFinish} />
 
       {amened && !showWeekly && !showNotifRationale && (
         // Deep slot-tinted canvas per user — bright ROSE was too searing.
@@ -1404,8 +1400,13 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 3,
   },
-  flowPage: {
-    width,
+  // PagerView sizes each child to the page; pages just fill it. The verse page
+  // centers its (non-scrolling) content; deep pages let their ScrollView fill.
+  pagerPage: {
+    flex: 1,
+  },
+  pagerPageCenter: {
+    flex: 1,
     justifyContent: 'center',
   },
   pageScroll: {

@@ -39,6 +39,26 @@ function Chevron({ dir, small, color = TXT }: { dir: 'left' | 'right' | 'up' | '
   );
 }
 
+// Double chevron («  ») — fast year jump, mirroring the reference calendar
+// header (single = month, double = year).
+function DoubleChevron({ dir, color = TXT }: { dir: 'left' | 'right'; color?: string }) {
+  return (
+    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+      {dir === 'left' ? (
+        <>
+          <Path d="M11 18 L5 12 L11 6" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+          <Path d="M18 18 L12 12 L18 6" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      ) : (
+        <>
+          <Path d="M6 18 L12 12 L6 6" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+          <Path d="M13 18 L19 12 L13 6" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      )}
+    </Svg>
+  );
+}
+
 function isoKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
@@ -100,7 +120,6 @@ export default function MoodCalendar({ headline, showHeadline = true }: Props) {
   // Month/year picker (opens on tapping the month label) + the year it's
   // currently browsing (independent of `cursor` until the user picks a month).
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerYear, setPickerYear] = useState(() => new Date().getFullYear());
   const monthLabel = cursor.toLocaleDateString(localeFor(lang), { month: 'long', year: 'numeric' });
   const grid = monthGrid(cursor);
   // Chunk into explicit 7-day rows. Rendering each week as its own row of
@@ -116,14 +135,14 @@ export default function MoodCalendar({ headline, showHeadline = true }: Props) {
   const shiftMonth = (delta: number) => {
     setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + delta, 1));
   };
+  const shiftYear = (delta: number) => {
+    setCursor(new Date(cursor.getFullYear() + delta, cursor.getMonth(), 1));
+  };
 
   const isCurrentMonth =
     cursor.getFullYear() === today.getFullYear() && cursor.getMonth() === today.getMonth();
   // Tapping the month label opens a month/year menu; tapping again closes it.
-  const togglePicker = () => {
-    if (!pickerOpen) setPickerYear(cursor.getFullYear());
-    setPickerOpen(o => !o);
-  };
+  const togglePicker = () => setPickerOpen(o => !o);
   // One-tap jump back to the current month.
   const goToday = () => { setCursor(new Date()); setPickerOpen(false); };
   // Localized short month names (Jan…Dec) for the picker grid.
@@ -146,15 +165,22 @@ export default function MoodCalendar({ headline, showHeadline = true }: Props) {
       {/* Month label centered between the two arrows so the < / > buttons
           read as "previous month" / "next month" relative to it. */}
       <View style={styles.monthRow}>
-        <TouchableOpacity onPress={() => shiftMonth(-1)} hitSlop={14} style={styles.monthNavBtn}>
+        {/* « = jump a YEAR, ‹ = a MONTH (per user, mirrors a date-picker header). */}
+        <TouchableOpacity onPress={() => shiftYear(-1)} hitSlop={12} style={styles.monthNavPlain}>
+          <DoubleChevron dir="left" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => shiftMonth(-1)} hitSlop={12} style={styles.monthNavBtn}>
           <Chevron dir="left" />
         </TouchableOpacity>
         <TouchableOpacity onPress={togglePicker} hitSlop={8} activeOpacity={0.7} style={styles.monthLabelBtn}>
           <Text style={styles.month}>{monthLabel}</Text>
           <Chevron dir={pickerOpen ? 'up' : 'down'} small />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => shiftMonth(1)} hitSlop={14} style={styles.monthNavBtn}>
+        <TouchableOpacity onPress={() => shiftMonth(1)} hitSlop={12} style={styles.monthNavBtn}>
           <Chevron dir="right" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => shiftYear(1)} hitSlop={12} style={styles.monthNavPlain}>
+          <DoubleChevron dir="right" />
         </TouchableOpacity>
 
         {/* Month/year picker — floats OVER the calendar (absolute) with a soft
@@ -164,26 +190,21 @@ export default function MoodCalendar({ headline, showHeadline = true }: Props) {
           <>
             <Pressable style={styles.pickerBackdrop} onPress={() => setPickerOpen(false)} />
             <View style={styles.pickerCard}>
-              <View style={styles.pickerYearRow}>
-                <TouchableOpacity onPress={() => setPickerYear(y => y - 1)} hitSlop={12} style={styles.monthNavBtn}>
-                  <Chevron dir="left" />
-                </TouchableOpacity>
-                <Text style={styles.pickerYear}>{pickerYear}</Text>
-                <TouchableOpacity onPress={() => setPickerYear(y => y + 1)} hitSlop={12} style={styles.monthNavBtn}>
-                  <Chevron dir="right" />
-                </TouchableOpacity>
-              </View>
+              {/* Months only — no separate year row (the « » in the header above
+                  change the year). Tapping a month jumps to it in the current year. */}
               <View style={styles.pickerMonths}>
                 {Array.from({ length: 12 }, (_, i) => {
-                  const selected = i === cursor.getMonth() && pickerYear === cursor.getFullYear();
+                  const selected = i === cursor.getMonth();
                   return (
                     <TouchableOpacity
                       key={i}
                       style={styles.pickerMonthCell}
-                      activeOpacity={0.8}
-                      onPress={() => { setCursor(new Date(pickerYear, i, 1)); setPickerOpen(false); }}
+                      activeOpacity={0.7}
+                      onPress={() => { setCursor(new Date(cursor.getFullYear(), i, 1)); setPickerOpen(false); }}
                     >
-                      <Text style={[styles.pickerMonthText, selected && styles.pickerMonthTextSel]}>{monthShort(i)}</Text>
+                      <View style={[styles.pickerMonthPill, selected && styles.pickerMonthPillSel]}>
+                        <Text style={[styles.pickerMonthText, selected && styles.pickerMonthTextSel]}>{monthShort(i)}</Text>
+                      </View>
                     </TouchableOpacity>
                   );
                 })}
@@ -305,9 +326,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 18,
+    gap: 8,
     marginTop: 15,                         // +5 above per user (screen felt cramped)
-    marginBottom: 15,                      // +5 below per user
+    marginBottom: 20,                      // +5 more below per user
     zIndex: 30,                            // lift the floating month picker (its absolute child) above the grid below
   },
   monthNavBtn: {
@@ -315,40 +336,48 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(30,27,46,0.06)',
   },
-  monthLabelBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 160, justifyContent: 'center' },
+  // Year-jump (« ») — lighter, no grey circle, so they read as secondary nav.
+  monthNavPlain: { width: 30, height: 36, alignItems: 'center', justifyContent: 'center' },
+  monthLabelBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 138, justifyContent: 'center' },
   month: { fontSize: 18, color: TXT, fontWeight: '700', textAlign: 'center' },
   todayChip: {
     flexDirection: 'row', alignItems: 'center', gap: 2,
     alignSelf: 'center',
-    marginTop: 2, marginBottom: 6,
+    marginTop: 2, marginBottom: 11,        // 段后距离 +5 per user
     paddingLeft: 8, paddingRight: 12, paddingVertical: 6,
     borderRadius: 14,
     backgroundColor: 'rgba(232,97,154,0.10)',
   },
-  todayChipText: { fontSize: 13, fontWeight: '700', color: ROSE },
+  todayChipText: { fontSize: 14.3, fontWeight: '700', color: ROSE },   // 13 +10 % per user
   // Soft scrim behind the floating month picker — dims the calendar it covers
   // and catches outside taps to dismiss. Anchored just below the month row.
+  // Invisible tap-catcher only — NO dim/scrim (per user: the overlay shouldn't
+  // appear at all). Transparent + no elevation, so nothing darkens the calendar.
   pickerBackdrop: {
     position: 'absolute', top: 42, left: 0, right: 0, height: 540,
-    backgroundColor: 'rgba(20,16,28,0.06)',
+    backgroundColor: 'transparent',
     zIndex: 30,
-    elevation: 13,   // Android: lift above the (tappable) grid cells so the scrim actually blocks taps under the open picker (card sits at 14, above this)
   },
   // Floating month/year picker — absolute so it overlays the grid instead of
   // pushing it down (per user). Anchored under the month row.
   pickerCard: {
-    position: 'absolute', top: 42, left: 6, right: 6, zIndex: 31,
-    padding: 12, borderRadius: 16,
+    position: 'absolute', top: 44, left: 4, right: 4, zIndex: 31,
+    paddingVertical: 14, paddingHorizontal: 12, borderRadius: 20,
     backgroundColor: '#FFFFFF',
-    borderWidth: 1, borderColor: 'rgba(30,27,46,0.08)',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.14, shadowRadius: 16, elevation: 14,
+    // Clean, light card (no hard border) — soft lift only.
+    shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.10, shadowRadius: 20, elevation: 14,
   },
-  pickerYearRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24, marginBottom: 6 },
-  pickerYear: { fontSize: 17, fontWeight: '700', color: TXT, minWidth: 72, textAlign: 'center' },
   pickerMonths: { flexDirection: 'row', flexWrap: 'wrap' },
-  pickerMonthCell: { width: '25%', paddingVertical: 11, alignItems: 'center' },
-  pickerMonthText: { fontSize: 14, color: TXT, fontWeight: '600' },
+  pickerMonthCell: { width: '25%', paddingVertical: 5, alignItems: 'center' },
+  // Each month sits in a pill; the selected one gets a soft pink highlight
+  // (mirrors the reference's rounded selected-date chip).
+  pickerMonthPill: {
+    minWidth: 56, paddingVertical: 8, paddingHorizontal: 6,
+    borderRadius: 14, alignItems: 'center', justifyContent: 'center',
+  },
+  pickerMonthPillSel: { backgroundColor: '#FBE3EE' },
+  pickerMonthText: { fontSize: 14.5, color: TXT, fontWeight: '600' },
   pickerMonthTextSel: { color: ROSE, fontWeight: '800' },
   weekHead: {
     flexDirection: 'row',
@@ -385,13 +414,13 @@ const styles = StyleSheet.create({
   // Make-up check-in button below the calendar.
   logTodayBtn: {
     alignSelf: 'center',
-    marginTop: 22,
-    backgroundColor: ROSE,
+    marginTop: 32,                         // +10 from the calendar above per user
+    backgroundColor: '#FBE3EE',            // very light pink per user
     paddingVertical: 13,
     paddingHorizontal: 28,
-    borderRadius: 24,
+    borderRadius: 17.07,                    // match the Continue button per user
   },
-  logTodayText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
+  logTodayText: { fontSize: 15, fontWeight: '700', color: ROSE },
   // Mood-picker modal (make-up check-in for a chosen day).
   moodModalBackdrop: {
     flex: 1, backgroundColor: 'rgba(20,16,28,0.45)',

@@ -125,8 +125,8 @@ function CommentRow({ row }: { row: Row }) {
       </View>
       <View style={styles.body}>
         <View style={styles.metaRow}>
-          <Text style={styles.name}>{row.name}</Text>
-          <Text style={styles.ago}>· {row.ago}</Text>
+          <Text style={styles.name} numberOfLines={1}>{row.name}</Text>
+          <Text style={styles.ago} numberOfLines={1}>· {row.ago}</Text>
         </View>
         <Text style={styles.text}>{row.text}</Text>
       </View>
@@ -165,8 +165,8 @@ const styles = StyleSheet.create({
   avatarTxt: { color: '#FFFFFF', fontWeight: '700', fontSize: 16 },
   body: { flex: 1, minWidth: 0 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
-  name: { fontSize: 14, fontWeight: '700', color: TXT },
-  ago: { fontSize: 12, color: TXTSUB },
+  name: { fontSize: 14, fontWeight: '700', color: TXT, flexShrink: 1 },
+  ago: { fontSize: 12, color: TXTSUB, flexShrink: 0 },
   text: { fontSize: 15, lineHeight: 21, color: TXT, fontFamily: FONTS.lato },
   likeCol: { alignItems: 'center', gap: 2, paddingTop: 2 },
   likeCount: { fontSize: 11, color: TXTSUB },

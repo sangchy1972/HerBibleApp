@@ -716,30 +716,11 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     transform: [{ rotate: `${musicSpin.value}deg` }],
   }));
 
-  // Page text slide-in. The off-page content sits 110 px below its resting
-  // position with opacity 0; on page-snap it eases up to translateY 0,
-  // opacity 1 over 500 ms (per user "持续 0.5s"). Larger magnitude than the
-  // previous 60 px makes the motion clearly visible instead of feeling like
-  // a hard cut, while `Easing.out(Easing.cubic)` keeps the arrival soft.
-  const PAGE_TY = 110;
-  // Per-page entrance: content sits 110px low + transparent, then eases up to
-  // rest over 500ms when the page is LANDED on (per user "持续 0.5s"). Decoupled
-  // from scroll now that PagerView owns the native page transition — each value
-  // replays from 0 whenever its page becomes active (see the effect below), so
-  // the slide-in plays every visit. PagerView's own slide handles page movement.
-  const entVerse = useSharedValue(1);     // page 0 visible on mount
-  const entMed = useSharedValue(0);
-  const entAct = useSharedValue(0);
-  const entPrayer = useSharedValue(0);
-  useEffect(() => {
-    const sv = page === 0 ? entVerse : page === 1 ? entMed : page === 2 ? entAct : entPrayer;
-    sv.value = 0;
-    sv.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
-  }, [page]);
-  const verseAnim = useAnimatedStyle(() => ({ opacity: entVerse.value, transform: [{ translateY: (1 - entVerse.value) * PAGE_TY }] }));
-  const meditationAnim = useAnimatedStyle(() => ({ opacity: entMed.value, transform: [{ translateY: (1 - entMed.value) * PAGE_TY }] }));
-  const actionAnim = useAnimatedStyle(() => ({ opacity: entAct.value, transform: [{ translateY: (1 - entAct.value) * PAGE_TY }] }));
-  const prayerAnim = useAnimatedStyle(() => ({ opacity: entPrayer.value, transform: [{ translateY: (1 - entPrayer.value) * PAGE_TY }] }));
+  // NOTE: the per-page slide/fade entrance was removed. PagerView already does a
+  // native page transition; layering a translateY+fade on the page CONTENT made
+  // the incoming page's text sit 110px low / transparent mid-swipe — a visible
+  // gap/tear in the middle and janky "double motion". The native pager slide is
+  // the only transition now → smooth, no tear.
 
   useEffect(() => {
     if (!amened) return;
@@ -997,7 +978,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
           style={StyleSheet.absoluteFillObject}
         >
           <View key="verse" style={styles.pagerPageCenter}>
-            <Animated.View style={[styles.pageContent, verseAnim]}>
+            <Animated.View style={styles.pageContent}>
               <Text style={styles.verseCaption}>{verseCaption}</Text>
               <Text style={styles.pageRef}>{verseRef}</Text>
               <NarratedBody
@@ -1039,7 +1020,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >
-              <Animated.View style={[styles.pageContent, styles.meditationContent, { paddingTop: insets.top + DEEP_PAGE_TOP }, meditationAnim]}>
+              <Animated.View style={[styles.pageContent, styles.meditationContent, { paddingTop: insets.top + DEEP_PAGE_TOP }]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption]}>{meditationCaption}</Text>
                 {/* Per-paragraph render preserves the 36px paragraph spacing
                     (pageBody.marginBottom). Highlight stays correct because
@@ -1072,7 +1053,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >
-              <Animated.View style={[styles.pageContent, { paddingTop: insets.top + DEEP_PAGE_TOP }, actionAnim]}>
+              <Animated.View style={[styles.pageContent, { paddingTop: insets.top + DEEP_PAGE_TOP }]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption]}>{actionCaption}</Text>
                 <NarratedBody
                   player={readPlayer}
@@ -1104,7 +1085,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >
-              <Animated.View style={[styles.pageContent, { paddingTop: insets.top + DEEP_PAGE_TOP, paddingBottom: insets.bottom + 100 }, prayerAnim]}>
+              <Animated.View style={[styles.pageContent, { paddingTop: insets.top + DEEP_PAGE_TOP, paddingBottom: insets.bottom + 100 }]}>
                 <Text style={[styles.pageCaption, styles.deepPageCaption, styles.prayerCaption]}>{prayerCaption}</Text>
                 <NarratedBody
                   player={readPlayer}

@@ -16,4 +16,33 @@ export const VERSE_COMMENTS: Record<LanguageCode, string[]> = {
 
 // Virtual commenter names. Names don't translate, so one shared pool reads
 // naturally across a multilingual feed.
-export const COMMENT_NAMES: string[] = ["Grace", "Hannah", "Sarah M.", "Mary", "Ruth", "Esther", "Faith", "Joy", "Hope K.", "Naomi", "Abigail", "Rachel", "Leah", "Rebecca", "Deborah", "Miriam", "Lydia", "Priscilla", "Anna", "Elizabeth", "Susanna", "Joanna", "Phoebe", "Eunice", "Lois", "Claudia", "Maria", "Sofia", "Gabriela", "Ana", "Isabela", "Camila", "Luisa", "Mei", "Hui", "Grace W.", "Amara", "Zoe", "Naomi R.", "Bethany", "Charity", "Olivia", "Emma", "Chloe", "Sophie", "Marie", "Lena", "Greta", "Inês", "Beatriz"];
+// Virtual commenter names — a deliberately MIXED pool so the feed feels global:
+// some single first names, many first+last, a few with middle names, and a
+// spread of cultures (English, Italian, Portuguese/Brazilian, Spanish, French,
+// German, East-Asian, African). The sheet shuffles + samples these each open.
+export const COMMENT_NAMES: string[] = [
+  // First-name only (kept for natural variety)
+  "Grace", "Hope", "Joy", "Naomi", "Esther", "Ruth", "Faith", "Abigail",
+  // English first + last (+ a few middle names)
+  "Hannah Brooks", "Sarah Mitchell", "Olivia Hayes", "Emma Coleman", "Charlotte Reeves",
+  "Bethany Cole", "Naomi Carter", "Abigail Reed", "Ruth Whitfield", "Hope Sullivan",
+  "Lydia Grace Turner", "Mary Ellen Foster", "Hannah Joy Parker", "Sarah Anne Bennett",
+  // Italian
+  "Giulia Romano", "Francesca Bianchi", "Chiara Esposito", "Alessia Ferrari",
+  "Martina Conti", "Sofia Greco", "Valentina Ricci", "Giorgia De Luca", "Elena Marino",
+  // Portuguese / Brazilian
+  "Mariana Oliveira", "Beatriz Santos", "Ana Carolina Lima", "Camila Ribeiro",
+  "Maria Clara Souza", "Letícia Almeida", "Gabriela da Costa", "Inês Fernandes",
+  "Joana Pereira", "Mariana de Sousa", "Rafaela Gomes",
+  // Spanish
+  "Lucía Fernández", "Valentina García", "Sofía Martínez", "Isabela Torres",
+  "Camila Rodríguez", "María José Herrera", "Daniela Ramírez",
+  // French
+  "Marie Laurent", "Camille Moreau", "Léa Dubois", "Chloé Bernard", "Manon Petit",
+  // German
+  "Lena Schmidt", "Greta Müller", "Hannah Wagner", "Sophie Becker",
+  // East-Asian
+  "Mei Lin", "Hui Chen", "Grace Wong", "Sarah Tan", "Hannah Kim", "Joy Park",
+  // African
+  "Amara Okafor", "Naomi Mwangi", "Grace Adeyemi", "Esther Abara",
+];

@@ -222,25 +222,38 @@ export default function ShareVerseSheet({ reference, text, onClose, bgSource }: 
       // Capture first so we don't request permission if the capture itself
       // fails (less jarring permission flow).
       const url = await captureCard();
-      const perm = await MediaLibrary.getPermissionsAsync();
-      let granted = perm.status === 'granted';
-      if (!granted && perm.canAskAgain) {
-        const req = await MediaLibrary.requestPermissionsAsync();
-        granted = req.status === 'granted';
+      // Saving an image needs WRITE-ONLY access to PHOTOS only. Passing
+      // (writeOnly=true, ['photo']) stops expo-media-library from requesting the
+      // full media set — which on Android 13+ otherwise prompts for "music and
+      // audio" (READ_MEDIA_AUDIO) and "photos and videos" separately. Now it's a
+      // single add-photos prompt.
+      let perm = await MediaLibrary.getPermissionsAsync(true, ['photo']);
+      if (perm.status !== 'granted' && perm.canAskAgain) {
+        perm = await MediaLibrary.requestPermissionsAsync(true, ['photo']);
       }
-      if (!granted) {
-        Alert.alert(
-          t('shareVerse.alert.photoNeeded.title'),
-          t('shareVerse.alert.photoNeeded.body'),
-          [
-            { text: t('common.cancel'), style: 'cancel' },
-            { text: t('common.openSettings'), onPress: () => Linking.openSettings().catch(() => {}) },
-          ],
-        );
-        return;
+      // Attempt the save regardless of the exact status string. On Android 29+
+      // an image can be saved to the gallery WITHOUT read access, and a
+      // "limited"/partial photo selection still allows saving — so a strict
+      // status==='granted' gate wrongly blocked saves (the reported bug: photos
+      // allowed but audio declined → combined status wasn't 'granted'). Only if
+      // the save actually fails AND we truly lack permission do we prompt.
+      try {
+        await MediaLibrary.saveToLibraryAsync(url);
+        showToast(t('shareVerse.saveAlert.title'));
+      } catch (saveErr) {
+        if (perm.status !== 'granted') {
+          Alert.alert(
+            t('shareVerse.alert.photoNeeded.title'),
+            t('shareVerse.alert.photoNeeded.body'),
+            [
+              { text: t('common.cancel'), style: 'cancel' },
+              { text: t('common.openSettings'), onPress: () => Linking.openSettings().catch(() => {}) },
+            ],
+          );
+        } else {
+          throw saveErr;
+        }
       }
-      await MediaLibrary.saveToLibraryAsync(url);
-      showToast(t('shareVerse.saveAlert.title'));
     } catch (e) {
       Alert.alert(t('error.couldNotSave'), e instanceof Error ? e.message : t('common.tryAgain'));
     } finally {

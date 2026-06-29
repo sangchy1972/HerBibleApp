@@ -320,10 +320,10 @@ const styles = StyleSheet.create({
     marginBottom: 50,                      // 50 px gap to the Close button below per user
   },
   verseCard: {
-    borderRadius: 14,
+    borderRadius: 12,                      // per user
     overflow: 'hidden',
-    paddingTop: 32,
-    paddingBottom: 52,                     // +20 below the verse per user — card bottom no longer feels cramped
+    paddingTop: 65,                        // per user
+    paddingBottom: 85,                     // per user
     paddingHorizontal: 26,
     // Same shadow recipe as PrayerScreen.heroCard so the card lifts off
     // the page the same way the home verse card does.
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
   verseCardImage: {
     // Match the outer borderRadius so the photo doesn't ghost a hairline
     // outside the card during transitions.
-    borderRadius: 14,
+    borderRadius: 12,
   },
   verseInner: {
     // Sits above the scrim. Text styles mirror PrayerScreen.hero{Label,Ref,Text}
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
     // treatment — so the mood card and the home card read as one design.
   },
   verseDate: {
-    fontSize: 12.52,
+    fontSize: 14,                          // per user
     color: 'rgba(255,255,255,0.65)',
     marginBottom: 8,
   },
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   // Done CTA mirrors PrayerScreen.styles.startBtn 1:1 (ROSE fill, 49.41 height,
   // 17.07 radius, stretch). Sits 50 px below the calendar inside the scroll.
   calCta: {
-    marginTop: 50,
+    marginTop: 30,                         // 50 → 30 (-20px gap to the Update button above, per user)
     backgroundColor: ROSE,
     height: 49.41,
     borderRadius: 17.07,

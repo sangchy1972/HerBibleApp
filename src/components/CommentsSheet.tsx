@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeIn, SlideInDown, Easing, useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated';
 import { TXT, TXTSUB, ROSE, FONTS } from '../constants/theme';
 import { VERSE_COMMENTS, COMMENT_NAMES } from '../constants/verseComments';
 import { useUILanguage } from '../state/UILanguageContext';
@@ -16,6 +16,7 @@ import { useT } from '../i18n/useT';
 // to the active UI language.
 
 const AVATAR_COLORS = ['#E8619A', '#7B6CF6', '#F2A65A', '#3FAE6A', '#5B8DEF', '#E36588', '#46B3A6', '#C9772E'];
+const SCREEN_H = Dimensions.get('window').height;
 
 function initialOf(name: string): string {
   return name.trim().charAt(0).toUpperCase() || '🙂';
@@ -42,6 +43,19 @@ export default function CommentsSheet({ onClose }: { onClose: () => void }) {
   const t = useT();
   const { lang } = useUILanguage();
 
+  // Entrance via shared values (NOT reanimated `entering`) — layout-entering
+  // animations don't reliably run inside a RN <Modal> on the new architecture,
+  // which left the sheet stuck off-screen (its SlideInDown start), so tapping
+  // the comment button "did nothing". useAnimatedStyle DOES work in a Modal.
+  const backdropO = useSharedValue(0);
+  const sheetTY = useSharedValue(SCREEN_H);
+  useEffect(() => {
+    backdropO.value = withTiming(1, { duration: 220 });
+    sheetTY.value = withTiming(0, { duration: 420, easing: Easing.out(Easing.cubic) });
+  }, [backdropO, sheetTY]);
+  const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropO.value }));
+  const sheetAnim = useAnimatedStyle(() => ({ transform: [{ translateY: sheetTY.value }] }));
+
   const rows = useMemo<Row[]>(() => {
     const pool = VERSE_COMMENTS[lang] || VERSE_COMMENTS.en;
     const count = 5 + Math.floor(Math.random() * 21);            // 5..25
@@ -62,13 +76,12 @@ export default function CommentsSheet({ onClose }: { onClose: () => void }) {
 
   return (
     <View style={styles.overlay}>
-      <Animated.View entering={FadeIn.duration(220)} style={[StyleSheet.absoluteFillObject, styles.backdrop]}>
+      <Animated.View style={[StyleSheet.absoluteFillObject, styles.backdrop, backdropStyle]}>
         <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={onClose} />
       </Animated.View>
 
       <Animated.View
-        entering={SlideInDown.duration(420).easing(Easing.out(Easing.cubic))}
-        style={[styles.sheet, { paddingBottom: insets.bottom + 10 }]}
+        style={[styles.sheet, { paddingBottom: insets.bottom + 10 }, sheetAnim]}
       >
         <View style={styles.handle} />
         <View style={styles.header}>

@@ -13,6 +13,7 @@ import AddWidgetScreen from '../screens/AddWidgetScreen';
 import AboutUsScreen from '../screens/AboutUsScreen';
 import PolicyScreen from '../screens/PolicyScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
+import OtherNotificationsScreen from '../screens/OtherNotificationsScreen';
 import AchievementScreen from '../screens/AchievementScreen';
 import ReflectionsScreen from '../screens/ReflectionsScreen';
 import PastVersesScreen from '../screens/PastVersesScreen';
@@ -110,6 +111,11 @@ export default function RootNavigator() {
       <Stack.Screen
         name="Notifications"
         component={NotificationsScreen}
+        options={{ animation: 'slide_from_right', animationDuration: 240 }}
+      />
+      <Stack.Screen
+        name="OtherNotifications"
+        component={OtherNotificationsScreen}
         options={{ animation: 'slide_from_right', animationDuration: 240 }}
       />
       <Stack.Screen

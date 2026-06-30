@@ -626,7 +626,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
             <Glass style={styles.statCard}>
               <View style={styles.statIcon}>{s.render(STAT_COLORS[i])}</View>
               <View style={styles.statBottomRow}>
-                <Text style={styles.statNum}>{s.n}</Text>
+                <Text style={styles.statNum} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{s.n}</Text>
                 <Text style={styles.statLabel} numberOfLines={2}>{s.label}</Text>
               </View>
             </Glass>

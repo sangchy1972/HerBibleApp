@@ -413,14 +413,15 @@ const styles = StyleSheet.create({
   numFuture: { color: 'rgba(30,27,46,0.30)' },
   // Make-up check-in button below the calendar.
   logTodayBtn: {
-    alignSelf: 'center',
+    alignSelf: 'stretch',                  // same full width as Continue per user
     marginTop: 32,                         // +10 from the calendar above per user
-    backgroundColor: '#FBE3EE',            // very light pink per user
-    paddingVertical: 13,
-    paddingHorizontal: 28,
-    borderRadius: 17.07,                    // match the Continue button per user
+    backgroundColor: '#FBE3EE',            // very light pink per user (only thing kept)
+    height: 49.41,                         // match Continue
+    borderRadius: 17.07,                   // match Continue
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  logTodayText: { fontSize: 15, fontWeight: '700', color: ROSE },
+  logTodayText: { fontSize: 18, fontWeight: '700', letterSpacing: 0.3, color: ROSE },   // match Continue text size
   // Mood-picker modal (make-up check-in for a chosen day).
   moodModalBackdrop: {
     flex: 1, backgroundColor: 'rgba(20,16,28,0.45)',

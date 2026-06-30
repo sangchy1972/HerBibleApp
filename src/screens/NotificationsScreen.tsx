@@ -156,6 +156,17 @@ export default function NotificationsScreen({ navigation }: RootStackScreenProps
             </View>
           );
         })}
+
+        {/* Other notifications — always-on extras (daily devotionals + win-back),
+            shown read-only on the next screen. */}
+        <TouchableOpacity
+          style={styles.otherEntry}
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('OtherNotifications')}
+        >
+          <Text style={styles.otherEntryLabel}>{t('notif.other.entry')}</Text>
+          <Feather name="chevron-right" size={20} color={TXTSUB} />
+        </TouchableOpacity>
       </ScrollView>
 
       {editing && (
@@ -243,4 +254,9 @@ const styles = StyleSheet.create({
   rowDivider: { height: 1, marginHorizontal: P, backgroundColor: 'rgba(30,27,46,0.06)' },
   rowLabel: { ...LORA, fontSize: 17, color: TXT },
   rowValue: { ...LORA_BOLD, fontSize: 17, color: TXT },
+  otherEntry: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF', paddingHorizontal: P, paddingVertical: 18, marginTop: 6,
+  },
+  otherEntryLabel: { ...LORA_BOLD, fontSize: 17, color: TXT },
 });

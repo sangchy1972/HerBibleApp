@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   // Done CTA mirrors PrayerScreen.styles.startBtn 1:1 (ROSE fill, 49.41 height,
   // 17.07 radius, stretch). Sits 50 px below the calendar inside the scroll.
   calCta: {
-    marginTop: 30,                         // 50 → 30 (-20px gap to the Update button above, per user)
+    marginTop: 20,                         // -10px more gap to the Update button above, per user
     backgroundColor: ROSE,
     height: 49.41,
     borderRadius: 17.07,

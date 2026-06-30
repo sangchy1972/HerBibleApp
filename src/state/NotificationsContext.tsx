@@ -140,6 +140,139 @@ async function syncScheduledNotifications(settings: NotifMap, lang: UILanguageCo
   ));
 }
 
+// ─── Always-on "Other notifications" (no user toggle / time picker) ─────────
+// Four fixed daily devotional pushes + a win-back series. These are NOT in the
+// user's NotifMap settings — they're always on (gated only by OS permission)
+// and surfaced read-only on the Other Notifications screen. Reusing the morning
+// / night copy pools for the 10:00 / 21:00 slots keeps translation cost down;
+// 16:00 (afternoon) and 14:00 (Gospel & Psalms) have their own copy.
+type ExtraKey = 'verse10' | 'afternoon16' | 'verse21' | 'gospel14';
+const EXTRA_IDS: Record<ExtraKey, string> = {
+  verse10:     'her-bible.notif.verse10',
+  afternoon16: 'her-bible.notif.afternoon16',
+  verse21:     'her-bible.notif.verse21',
+  gospel14:    'her-bible.notif.gospel14',
+};
+// copyKey → which `notif.push.<copyKey>.{title,body}.<n>` pool to read; variants
+// MUST match the catalog count for that pool.
+const EXTRA_CONFIG: Record<ExtraKey, { hour: number; minute: number; copyKey: string; variants: number }> = {
+  verse10:     { hour: 10, minute: 0, copyKey: 'morning',   variants: 10 },
+  afternoon16: { hour: 16, minute: 0, copyKey: 'afternoon', variants: 5 },
+  verse21:     { hour: 21, minute: 0, copyKey: 'night',     variants: 10 },
+  gospel14:    { hour: 14, minute: 0, copyKey: 'gospel',    variants: 5 },
+};
+const EXTRA_KEYS = Object.keys(EXTRA_IDS) as ExtraKey[];
+
+// Read-only descriptor for the Other Notifications screen. These are always on
+// and not user-configurable (display only) — label + description + fixed time.
+export interface OtherNotifInfo { key: string; labelKey: string; descKey: string; time: string | null }
+export const OTHER_NOTIFICATIONS: OtherNotifInfo[] = [
+  { key: 'verse10',     labelKey: 'otherNotif.verse10.label',     descKey: 'otherNotif.verse10.desc',     time: '10:00' },
+  { key: 'gospel14',    labelKey: 'otherNotif.gospel14.label',    descKey: 'otherNotif.gospel14.desc',    time: '14:00' },
+  { key: 'afternoon16', labelKey: 'otherNotif.afternoon16.label', descKey: 'otherNotif.afternoon16.desc', time: '16:00' },
+  { key: 'verse21',     labelKey: 'otherNotif.verse21.label',     descKey: 'otherNotif.verse21.desc',     time: '21:00' },
+  { key: 'winback',     labelKey: 'otherNotif.winback.label',     descKey: 'otherNotif.winback.desc',     time: null },
+];
+
+// Win-back: a single notification fired N days after the user's last app open,
+// rescheduled on every foreground so an ACTIVE user never receives one. Tapered
+// (not daily) to avoid notification spam while still re-engaging across a month.
+const WINBACK_ID_PREFIX = 'her-bible.notif.winback.';
+const WINBACK_DAYS = [1, 2, 3, 5, 7, 10, 14, 21, 30] as const;
+const WINBACK_HOUR = 10;
+
+// Day-of-year rotation with a per-key salt (mirrors pickDailyVariant).
+function pickVariant(saltKey: string, count: number): number {
+  const now = new Date();
+  const yearStart = new Date(now.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((now.getTime() - yearStart.getTime()) / 86_400_000);
+  let salt = 0;
+  for (let i = 0; i < saltKey.length; i++) salt = (salt * 31 + saltKey.charCodeAt(i)) >>> 0;
+  return ((dayOfYear + salt) % count) + 1;
+}
+
+function buildExtraRequest(key: ExtraKey, lang: UILanguageCode, hour: number, minute: number): Notifications.NotificationRequestInput {
+  const c = EXTRA_CONFIG[key];
+  const variant = pickVariant(key, c.variants);
+  return {
+    identifier: EXTRA_IDS[key],
+    content: {
+      title: lookupString(`notif.push.${c.copyKey}.title.${variant}`, lang),
+      body:  lookupString(`notif.push.${c.copyKey}.body.${variant}`, lang),
+      sound: 'default',
+      categoryIdentifier: ACTION_CATEGORY,
+      data: { slot: key },
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour,
+      minute,
+      ...(Platform.OS === 'android' ? { channelId: ANDROID_CHANNEL } : {}),
+    },
+  };
+}
+
+// Collision avoidance: no two of OUR notifications fire at the exact same HH:MM.
+// Given a desired (hour, minute) and the set of minutes-of-day already taken,
+// push forward in 10-minute steps until a free slot is found, then claim it.
+function nextFreeSlot(hour: number, minute: number, taken: Set<number>): { hour: number; minute: number } {
+  let t = hour * 60 + minute;
+  let guard = 0;
+  while (taken.has(t) && guard++ < 144) t = (t + 10) % (24 * 60);
+  taken.add(t);
+  return { hour: Math.floor(t / 60), minute: t % 60 };
+}
+
+// Cancel + (re)schedule all always-on extras and the win-back series. Gated on
+// OS permission: if not granted we just clear them. Safe to call repeatedly —
+// stable identifiers replace, never stack.
+async function syncExtraNotifications(settings: NotifMap, lang: UILanguageCode): Promise<void> {
+  await Promise.all([
+    ...EXTRA_KEYS.map(k => Notifications.cancelScheduledNotificationAsync(EXTRA_IDS[k]).catch(() => {})),
+    ...WINBACK_DAYS.map(d => Notifications.cancelScheduledNotificationAsync(`${WINBACK_ID_PREFIX}${d}`).catch(() => {})),
+  ]);
+  let granted = false;
+  try { granted = (await Notifications.getPermissionsAsync()).granted; } catch {}
+  if (!granted) return;
+
+  // Seed the "taken" set with the user's enabled reminder times so the extras
+  // stagger around them too, then claim a free slot for each (extras first, then
+  // win-back) — so e.g. win-back's 10:00 base lands at 10:10 behind verse10.
+  const taken = new Set<number>();
+  for (const s of SLOTS) if (settings[s].enabled) taken.add(settings[s].hour * 60 + settings[s].minute);
+  const extraSlots: Record<ExtraKey, { hour: number; minute: number }> = {} as Record<ExtraKey, { hour: number; minute: number }>;
+  for (const k of EXTRA_KEYS) extraSlots[k] = nextFreeSlot(EXTRA_CONFIG[k].hour, EXTRA_CONFIG[k].minute, taken);
+  const wb = nextFreeSlot(WINBACK_HOUR, 0, taken);
+
+  await Promise.all(EXTRA_KEYS.map(k =>
+    Notifications.scheduleNotificationAsync(buildExtraRequest(k, lang, extraSlots[k].hour, extraSlots[k].minute)).catch(err => {
+      if (__DEV__) console.warn(`[notifications] failed to schedule extra ${k}:`, err);
+    }),
+  ));
+  await Promise.all(WINBACK_DAYS.map(d => {
+    const date = new Date();
+    date.setDate(date.getDate() + d);
+    date.setHours(wb.hour, wb.minute, 0, 0);
+    return Notifications.scheduleNotificationAsync({
+      identifier: `${WINBACK_ID_PREFIX}${d}`,
+      content: {
+        title: lookupString(`notif.winback.${d}.title`, lang),
+        body:  lookupString(`notif.winback.${d}.body`, lang),
+        sound: 'default',
+        categoryIdentifier: ACTION_CATEGORY,
+        data: { slot: 'winback', day: d },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date,
+        ...(Platform.OS === 'android' ? { channelId: ANDROID_CHANNEL } : {}),
+      },
+    }).catch(err => {
+      if (__DEV__) console.warn(`[notifications] failed to schedule winback ${d}:`, err);
+    });
+  }));
+}
+
 function hydrateFromStorage(raw: string | null): NotifMap {
   if (!raw) return DEFAULTS;
   let parsed: Partial<NotifMap>;
@@ -244,6 +377,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (!ready) return;
     syncScheduledNotifications(settings, lang);
+    syncExtraNotifications(settings, lang);   // always-on extras + win-back (gated on OS permission inside)
   }, [ready, settings, lang]);
 
   // 5) Re-sync every time the app returns to the foreground. A DAILY trigger
@@ -258,9 +392,11 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (!ready) return;
     const sub = AppState.addEventListener('change', state => {
-      if (state === 'active' && SLOTS.some(s => settings[s].enabled)) {
-        syncScheduledNotifications(settings, lang);
-      }
+      if (state !== 'active') return;
+      // Always re-sync extras on resume — this re-bakes the day's variant AND
+      // pushes the win-back series out, so an active user never receives one.
+      syncExtraNotifications(settings, lang);
+      if (SLOTS.some(s => settings[s].enabled)) syncScheduledNotifications(settings, lang);
     });
     return () => sub.remove();
   }, [ready, settings, lang]);

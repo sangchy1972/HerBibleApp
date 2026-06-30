@@ -105,6 +105,9 @@ function buildScheduleRequest(slot: NotifKey, cfg: NotifSettings, lang: UILangua
 // user instant proof the pipeline works (permission + delivery + channel).
 async function fireEnableConfirmation(cfg: NotifSettings, lang: UILanguageCode): Promise<void> {
   await Notifications.scheduleNotificationAsync({
+    // Stable id so toggling reminders on/off repeatedly replaces this one-shot
+    // instead of stacking pending entries against the iOS 64-notification cap.
+    identifier: 'her-bible.notif.confirm',
     content: {
       title: lookupString('notif.confirm.title', lang),
       body: lookupString('notif.confirm.body', lang, { time: formatHHMM(cfg.hour, cfg.minute) }),
@@ -214,26 +217,40 @@ function buildExtraRequest(key: ExtraKey, lang: UILanguageCode, hour: number, mi
 
 // Collision avoidance: no two of OUR notifications fire at the exact same HH:MM.
 // Given a desired (hour, minute) and the set of minutes-of-day already taken,
-// push forward in 10-minute steps until a free slot is found, then claim it.
+// step forward in 10-min increments to the first free slot. Hard limits: never
+// push more than +60 min from the base and never cross midnight — a "21:00
+// evening verse" must never wander to 2 AM. If the whole window is saturated
+// (only possible with absurdly many user reminders), we accept a collision at
+// the base time rather than firing at a nonsensical hour.
 function nextFreeSlot(hour: number, minute: number, taken: Set<number>): { hour: number; minute: number } {
-  let t = hour * 60 + minute;
-  let guard = 0;
-  while (taken.has(t) && guard++ < 144) t = (t + 10) % (24 * 60);
-  taken.add(t);
-  return { hour: Math.floor(t / 60), minute: t % 60 };
+  const base = hour * 60 + minute;
+  let chosen = base;
+  for (let cand = base; cand <= base + 60 && cand < 24 * 60; cand += 10) {
+    if (!taken.has(cand)) { chosen = cand; break; }
+  }
+  taken.add(chosen);
+  return { hour: Math.floor(chosen / 60), minute: chosen % 60 };
 }
 
 // Cancel + (re)schedule all always-on extras and the win-back series. Gated on
 // OS permission: if not granted we just clear them. Safe to call repeatedly —
 // stable identifiers replace, never stack.
+const cancelAllExtras = () => Promise.all([
+  ...EXTRA_KEYS.map(k => Notifications.cancelScheduledNotificationAsync(EXTRA_IDS[k]).catch(() => {})),
+  ...WINBACK_DAYS.map(d => Notifications.cancelScheduledNotificationAsync(`${WINBACK_ID_PREFIX}${d}`).catch(() => {})),
+]);
+
 async function syncExtraNotifications(settings: NotifMap, lang: UILanguageCode): Promise<void> {
-  await Promise.all([
-    ...EXTRA_KEYS.map(k => Notifications.cancelScheduledNotificationAsync(EXTRA_IDS[k]).catch(() => {})),
-    ...WINBACK_DAYS.map(d => Notifications.cancelScheduledNotificationAsync(`${WINBACK_ID_PREFIX}${d}`).catch(() => {})),
-  ]);
+  // Check permission FIRST, before touching anything. A transient read failure
+  // must NOT wipe an already-armed schedule (that would silently kill win-back
+  // for the exact inactive users it targets). On throw → leave things as-is.
   let granted = false;
-  try { granted = (await Notifications.getPermissionsAsync()).granted; } catch {}
-  if (!granted) return;
+  try { granted = (await Notifications.getPermissionsAsync()).granted; }
+  catch { return; }
+  // Genuinely no permission → clear our slots (they can't fire anyway) and stop.
+  if (!granted) { await cancelAllExtras(); return; }
+
+  await cancelAllExtras();
 
   // Seed the "taken" set with the user's enabled reminder times so the extras
   // stagger around them too, then claim a free slot for each (extras first, then
@@ -249,10 +266,15 @@ async function syncExtraNotifications(settings: NotifMap, lang: UILanguageCode):
       if (__DEV__) console.warn(`[notifications] failed to schedule extra ${k}:`, err);
     }),
   ));
+  const now = Date.now();
   await Promise.all(WINBACK_DAYS.map(d => {
     const date = new Date();
     date.setDate(date.getDate() + d);
     date.setHours(wb.hour, wb.minute, 0, 0);
+    // A DATE trigger in the past is silently dropped by the OS. With WINBACK_DAYS
+    // starting at 1 this never happens, but guard it so a future tweak (d=0, an
+    // earlier hour, a clock change) can't quietly break delivery.
+    if (date.getTime() <= now) return Promise.resolve();
     return Notifications.scheduleNotificationAsync({
       identifier: `${WINBACK_ID_PREFIX}${d}`,
       content: {
@@ -271,6 +293,21 @@ async function syncExtraNotifications(settings: NotifMap, lang: UILanguageCode):
       if (__DEV__) console.warn(`[notifications] failed to schedule winback ${d}:`, err);
     });
   }));
+}
+
+// Serialize extra-sync calls so two overlapping invocations (the settings/lang
+// effect firing while an AppState 'active' handler runs) can never interleave
+// their cancel/schedule phases and drop a freshly-armed notification. The
+// optional debounce collapses rapid foreground churn (app-switching) — a re-sync
+// skipped within the window is a no-op because nothing has changed.
+let extraSyncChain: Promise<void> = Promise.resolve();
+let lastExtraSyncAt = 0;
+function requestExtraSync(settings: NotifMap, lang: UILanguageCode, debounceMs = 0): Promise<void> {
+  const now = Date.now();
+  if (debounceMs > 0 && now - lastExtraSyncAt < debounceMs) return extraSyncChain;
+  lastExtraSyncAt = now;
+  extraSyncChain = extraSyncChain.then(() => syncExtraNotifications(settings, lang)).catch(() => {});
+  return extraSyncChain;
 }
 
 function hydrateFromStorage(raw: string | null): NotifMap {
@@ -377,7 +414,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (!ready) return;
     syncScheduledNotifications(settings, lang);
-    syncExtraNotifications(settings, lang);   // always-on extras + win-back (gated on OS permission inside)
+    requestExtraSync(settings, lang);   // always-on extras + win-back (serialized; gated on OS permission inside)
   }, [ready, settings, lang]);
 
   // 5) Re-sync every time the app returns to the foreground. A DAILY trigger
@@ -395,7 +432,8 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       if (state !== 'active') return;
       // Always re-sync extras on resume — this re-bakes the day's variant AND
       // pushes the win-back series out, so an active user never receives one.
-      syncExtraNotifications(settings, lang);
+      // Debounced so rapid app-switching can't trigger a cancel/schedule storm.
+      requestExtraSync(settings, lang, 60_000);
       if (SLOTS.some(s => settings[s].enabled)) syncScheduledNotifications(settings, lang);
     });
     return () => sub.remove();

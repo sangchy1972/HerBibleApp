@@ -79,7 +79,12 @@ export default function DayDetailSheet({ dateKey, onClose }: { dateKey: string; 
           ref={scrollRef}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: kb > 0 ? kb + 16 : insets.bottom + 24 }}
+          contentContainerStyle={{
+            paddingHorizontal: 22,
+            paddingBottom: kb > 0 ? kb + 16 : insets.bottom + 24,
+            flexGrow: 1,
+            justifyContent: 'center',
+          }}
         >
             {editing ? (
               <MoodInputCard

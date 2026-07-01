@@ -98,7 +98,15 @@ function Sheet() {
           ref={scrollRef}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: kb > 0 ? kb + 16 : insets.bottom + 24 }}
+          contentContainerStyle={{
+            paddingHorizontal: 22,
+            paddingBottom: kb > 0 ? kb + 16 : insets.bottom + 24,
+            // Fill the tall sheet + center the content so a short step (input /
+            // verse) has no bottom-only gap. When the keyboard is up the content
+            // outgrows the viewport → this is ignored and it scrolls to the end.
+            flexGrow: 1,
+            justifyContent: 'center',
+          }}
         >
           {step === 'input' && (
             <Animated.View key="input" entering={FadeIn.duration(220)}>

@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useNudgeCoordinator } from '../state/NudgeCoordinatorContext';
+import { NUDGE_PRIORITY } from '../state/nudgePriority';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions,
   ImageBackground, Keyboard, Platform, useWindowDimensions,
@@ -26,10 +28,22 @@ const TOP_GAP = 50;   // sheets rise to ~full height, leaving 50px at the top
 type Step = 'input' | 'verse' | 'done';
 
 // Global daily mood bottom-sheet. Mounted once at the app root; renders only
-// when the context's promptVisible flag is set (self-triggered once/day).
+// when the context's promptVisible flag is set (self-triggered once/day) AND
+// the nudge coordinator has granted it the single on-screen slot.
 export default function MoodCheckInSheet() {
   const { promptVisible } = useMoodCheckIn();
-  if (!promptVisible) return null;
+  const coord = useNudgeCoordinator();
+  useEffect(() => {
+    if (promptVisible) {
+      // Daily ritual → ignoresBudget (shows alongside a reward/nudge, but still
+      // strictly one overlay at a time).
+      coord.requestSlot({ id: 'moodCheckIn', priority: NUDGE_PRIORITY.moodCheckIn, canShow: () => true, ignoresBudget: true });
+    } else {
+      coord.releaseSlot('moodCheckIn');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [promptVisible]);
+  if (!promptVisible || !coord.isActive('moodCheckIn')) return null;
   return <Sheet />;
 }
 

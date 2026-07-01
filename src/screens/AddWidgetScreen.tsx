@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform, Dimensions, Modal } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import WidgetPreview from '../components/WidgetPreview';
@@ -28,6 +28,9 @@ export default function AddWidgetScreen({ navigation }: RootStackScreenProps<'Ad
 
   const onInstall = async () => {
     setConfirmOpen(false);
+    // Let the confirm overlay actually unmount before we hand control to the
+    // launcher's system pin dialog — so nothing of ours is on top when it opens.
+    await new Promise<void>(res => requestAnimationFrame(() => res()));
     // Seed both segments of today's verse so a freshly pinned widget never
     // lands blank and can switch morning⇄evening by clock on its own. This
     // also refreshes any already-pinned instance immediately.
@@ -101,9 +104,15 @@ export default function AddWidgetScreen({ navigation }: RootStackScreenProps<'Ad
         </TouchableOpacity>
       </View>
 
-      {/* Confirm sheet — branded rationale before the OS pin dialog. */}
-      <Modal visible={confirmOpen} transparent animationType="fade" onRequestClose={() => setConfirmOpen(false)}>
+      {/* Confirm sheet — branded rationale before the OS pin dialog. Rendered as
+          an in-view overlay, NOT a RN <Modal>: a Modal is a SEPARATE Android
+          window, and firing AppWidgetManager.requestPinAppWidget while that
+          window was dismissing made the launcher's pin dialog get swallowed on
+          the FIRST tap (it only appeared on the 2nd). An in-view overlay keeps
+          the Activity frontmost throughout, so the pin dialog always shows. */}
+      {confirmOpen && (
         <View style={styles.mOverlay}>
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => setConfirmOpen(false)} />
           <View style={styles.mCard}>
             <View style={styles.mIcon}>
               <Feather name="grid" size={26} color={ROSE} />
@@ -120,7 +129,7 @@ export default function AddWidgetScreen({ navigation }: RootStackScreenProps<'Ad
             </View>
           </View>
         </View>
-      </Modal>
+      )}
     </View>
   );
 }
@@ -202,9 +211,11 @@ const styles = StyleSheet.create({
   laterBtn: { paddingVertical: 12, alignItems: 'center' },
   laterText: { color: ROSE, fontSize: 16, fontWeight: '600' },
 
-  // Confirm modal — centered branded card.
+  // Confirm overlay — centered branded card. Absolute-fill (in-view, not a RN
+  // Modal window) so the launcher's pin dialog never races a dismissing window.
   mOverlay: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 50,
     backgroundColor: 'rgba(20,12,24,0.45)',
     alignItems: 'center',
     justifyContent: 'center',

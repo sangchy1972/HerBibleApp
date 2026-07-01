@@ -62,6 +62,7 @@ import { PlanCompletionProvider } from './src/state/PlanCompletionContext';
 import { GospelsPsalmsProvider } from './src/state/GospelsPsalmsContext';
 import AchievementUnlockSheet from './src/components/AchievementUnlockSheet';
 import { LoginPromptProvider } from './src/state/LoginPromptContext';
+import { NudgeCoordinatorProvider } from './src/state/NudgeCoordinatorContext';
 import LoginPromptHost from './src/components/LoginPromptHost';
 import MoodCheckInSheet from './src/components/MoodCheckInSheet';
 import DeepLinkHandler from './src/navigation/DeepLinkHandler';
@@ -156,6 +157,7 @@ export default function App() {
                                       <NotificationsProvider>
                                         <ReminderInterstitialProvider>
                                         <LoginPromptProvider>
+                                        <NudgeCoordinatorProvider>
                                         <NavigationContainer ref={navRef} theme={NAV_THEME} onStateChange={onNavStateChange} onReady={() => setAppReady(true)}>
                                           <StatusBar style="dark" />
                                           <RootNavigator />
@@ -201,6 +203,7 @@ export default function App() {
                                             <LoadingOverlay appReady={appReady} onHide={hideLoading} />
                                           )}
                                         </NavigationContainer>
+                                        </NudgeCoordinatorProvider>
                                         </LoginPromptProvider>
                                         </ReminderInterstitialProvider>
                                       </NotificationsProvider>

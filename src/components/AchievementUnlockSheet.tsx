@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import Svg, { Polygon, Defs, RadialGradient, Stop } from 'react-native-svg';
 import Animated, {
@@ -12,6 +12,8 @@ import type { NavigationProp } from '@react-navigation/native';
 import BadgeIcon from './BadgeIcon';
 import { achievementUi, localizedAchievementName } from '../constants/achievements';
 import { useAchievements } from '../state/AchievementsContext';
+import { useNudgeCoordinator } from '../state/NudgeCoordinatorContext';
+import { NUDGE_PRIORITY } from '../state/nudgePriority';
 import { useTranslation } from '../state/TranslationsContext';
 import { ROSE, TXT, TXTSUB, FONTS } from '../constants/theme';
 import type { RootStackParamList } from '../navigation/types';
@@ -28,6 +30,19 @@ export default function AchievementUnlockSheet() {
 
   const visible = awardQueue.length > 0;
   const current = awardQueue[0];
+
+  // Route through the nudge coordinator so a badge popup never stacks with the
+  // mood sheet / login. ignoresBudget: rewards always show, and a multi-badge
+  // queue drains one-by-one across successive activations.
+  const coord = useNudgeCoordinator();
+  useEffect(() => {
+    if (visible) coord.requestSlot({ id: 'achievementUnlock', priority: NUDGE_PRIORITY.achievementUnlock, canShow: () => true, ignoresBudget: true });
+    else coord.releaseSlot('achievementUnlock');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
+  const active = coord.isActive('achievementUnlock');
+  // Advance the coordinator when this popup closes, then pop the queue.
+  const close = useCallback(() => { coord.notifyDismissed('achievementUnlock'); dismissAward(); }, [coord, dismissAward]);
 
   // Sunburst rays behind the badge — gentle continuous rotation while open.
   const spin = useSharedValue(0);
@@ -58,7 +73,7 @@ export default function AchievementUnlockSheet() {
   if (!current) return null;
 
   const onViewDetails = () => {
-    dismissAward();
+    close();
     // Defer to next frame so the modal can finish closing animation.
     setTimeout(() => {
       try { navRef.current.navigate('Achievement'); } catch { /* navigator may not yet have the route mounted */ }
@@ -66,9 +81,9 @@ export default function AchievementUnlockSheet() {
   };
 
   return (
-    <Modal transparent visible={visible} animationType="none" onRequestClose={dismissAward}>
+    <Modal transparent visible={visible && active} animationType="none" onRequestClose={close}>
       <Animated.View entering={FadeIn.duration(220)} exiting={FadeOut.duration(180)} style={styles.backdrop}>
-        <TouchableOpacity activeOpacity={1} onPress={dismissAward} style={StyleSheet.absoluteFillObject} />
+        <TouchableOpacity activeOpacity={1} onPress={close} style={StyleSheet.absoluteFillObject} />
       </Animated.View>
 
       <View style={styles.centerWrap} pointerEvents="box-none">
@@ -102,7 +117,7 @@ export default function AchievementUnlockSheet() {
             {ui.earnedDescription(localizedAchievementName(current, translation.code))}
           </Text>
 
-          <TouchableOpacity onPress={dismissAward} activeOpacity={0.85} style={styles.okBtn}>
+          <TouchableOpacity onPress={close} activeOpacity={0.85} style={styles.okBtn}>
             <Text style={styles.okText}>{ui.ok}</Text>
           </TouchableOpacity>
 

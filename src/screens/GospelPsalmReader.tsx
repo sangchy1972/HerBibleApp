@@ -8,9 +8,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import * as Clipboard from 'expo-clipboard';
 import { useAudioPlayer } from 'expo-audio';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ROSE, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
-import { useGospelsPsalms } from '../state/GospelsPsalmsContext';
+import { useGospelsPsalms, type Slot } from '../state/GospelsPsalmsContext';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useTranslation } from '../state/TranslationsContext';
 import { fetchChapter, type Verse } from '../services/bibleService';
@@ -53,7 +54,7 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
   const { slot } = route.params;
   const insets = useSafeAreaInsets();
   const t = useT();
-  const { today, day, total, markDone } = useGospelsPsalms();
+  const { today, day, total, markDone, morningDone, eveningDone } = useGospelsPsalms();
   const prayerBg = usePrayerBackgrounds();
   const { current: translation } = useTranslation();
   const morning = slot === 'morning';
@@ -156,10 +157,15 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
     setTimeout(() => setCopied(false), 1600);
   };
 
+  // After Amen, show a celebration overlay (instead of jumping straight back)
+  // so the reading clearly registers — and, importantly, it tells the user WHY
+  // the "Day N/89" counter doesn't move yet (it advances the next calendar day
+  // once both slots are done). Continue there returns home.
+  const [showDone, setShowDone] = useState(false);
   const onAmen = () => {
     markDone(slot);
     logEvent('gospel_psalm_complete', { slot, day: today.day });
-    navigation.goBack();
+    setShowDone(true);
   };
 
   // Amen stays disabled (grey) until the reader has been scrolled to the end,
@@ -272,6 +278,78 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
           <Text style={styles.toastText}>{t('common.copied')}</Text>
         </View>
       )}
+
+      {showDone && (
+        <GPDoneCard
+          slot={slot}
+          day={day}
+          total={total}
+          morningDone={morningDone || slot === 'morning'}
+          eveningDone={eveningDone || slot === 'evening'}
+          accent={accent}
+          onContinue={() => navigation.goBack()}
+        />
+      )}
+    </View>
+  );
+}
+
+// Completion celebration shown after Amen. Confirms the slot is read, shows the
+// day's morning/evening status, and explains the pacing so the counter never
+// looks "stuck".
+function GPDoneCard({
+  slot, day, total, morningDone, eveningDone, accent, onContinue,
+}: {
+  slot: Slot; day: number; total: number;
+  morningDone: boolean; eveningDone: boolean; accent: string; onContinue: () => void;
+}) {
+  const t = useT();
+  const bothDone = morningDone && eveningDone;
+  const nextDay = Math.min(total, day + 1);
+  const gradient = slot === 'morning'
+    ? (['#FEF1F6', '#FBDCE9', '#FCE1ED'] as const)
+    : (['#F1EDF8', '#DDD2EF', '#E5DBF4'] as const);
+
+  const pop = useSharedValue(0);
+  useEffect(() => { pop.value = withSpring(1, { damping: 9, stiffness: 140, mass: 0.7 }); }, [pop]);
+  const popStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }));
+
+  const StatusPill = ({ label, done }: { label: string; done: boolean }) => (
+    <View style={[styles.doneStatusPill, done ? { backgroundColor: `${accent}1A` } : styles.doneStatusPending]}>
+      <Feather name={done ? 'check-circle' : 'circle'} size={16} color={done ? accent : TXTSUB} />
+      <Text style={[styles.doneStatusText, { color: done ? accent : TXTSUB }]}>{label}</Text>
+      {!done && <Text style={styles.donePendingText}>· {t('gpDone.pending')}</Text>}
+    </View>
+  );
+
+  return (
+    <View style={styles.doneOverlay}>
+      <LinearGradient colors={gradient} locations={[0, 0.55, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFillObject} />
+      <Animated.View style={[styles.doneCheck, { backgroundColor: accent }, popStyle]}>
+        <Feather name="check" size={54} color="#FFFFFF" />
+      </Animated.View>
+
+      <Animated.Text entering={FadeInDown.duration(360).delay(120)} style={styles.doneTitle}>
+        {slot === 'morning' ? t('gpDone.morningTitle') : t('gpDone.eveningTitle')}
+      </Animated.Text>
+      <Animated.Text entering={FadeInDown.duration(360).delay(200)} style={styles.doneDay}>
+        {t('gpDone.dayOf', { day, total })}
+      </Animated.Text>
+
+      <Animated.View entering={FadeInDown.duration(360).delay(280)} style={styles.doneStatusRow}>
+        <StatusPill label={t('gp.morning')} done={morningDone} />
+        <StatusPill label={t('gp.evening')} done={eveningDone} />
+      </Animated.View>
+
+      <Animated.Text entering={FadeInDown.duration(360).delay(360)} style={styles.doneMsg}>
+        {bothDone ? t('gpDone.bothDone', { day, next: nextDay }) : t('gpDone.oneLeft', { day })}
+      </Animated.Text>
+
+      <Animated.View entering={FadeInDown.duration(360).delay(440)} style={styles.doneBtnWrap}>
+        <TouchableOpacity onPress={onContinue} activeOpacity={0.9} style={[styles.doneBtn, { backgroundColor: accent }]}>
+          <Text style={styles.doneBtnText}>{t('common.continue')}</Text>
+        </TouchableOpacity>
+      </Animated.View>
     </View>
   );
 }
@@ -335,4 +413,45 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(30,27,46,0.88)', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20,
   },
   toastText: { color: '#fff', fontSize: 14, fontFamily: FONTS.latoBold },
+
+  // Completion celebration overlay.
+  doneOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 30,
+  },
+  doneCheck: {
+    width: 108, height: 108, borderRadius: 54,
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 26,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 18, elevation: 8,
+  },
+  doneTitle: {
+    fontSize: 26, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT,
+    textAlign: 'center', marginBottom: 8,
+  },
+  doneDay: {
+    fontSize: 14, fontFamily: FONTS.lato, color: TXTSUB, letterSpacing: 0.5,
+    textTransform: 'uppercase', marginBottom: 22,
+  },
+  doneStatusRow: { flexDirection: 'row', gap: 10, marginBottom: 22 },
+  doneStatusPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20,
+  },
+  doneStatusPending: { backgroundColor: 'rgba(30,27,46,0.06)' },
+  doneStatusText: { fontSize: 14, fontWeight: '700', fontFamily: FONTS.latoBold },
+  donePendingText: { fontSize: 13, color: TXTSUB, fontFamily: FONTS.lato },
+  doneMsg: {
+    fontSize: 15.5, fontFamily: FONTS.lato, color: 'rgba(30,27,46,0.72)',
+    textAlign: 'center', lineHeight: 23, marginBottom: 30, paddingHorizontal: 10,
+  },
+  doneBtnWrap: { alignSelf: 'stretch', paddingHorizontal: 8 },
+  doneBtn: {
+    height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.16, shadowRadius: 10, elevation: 4,
+  },
+  doneBtnText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', letterSpacing: 0.3, fontFamily: FONTS.loraBold },
 });

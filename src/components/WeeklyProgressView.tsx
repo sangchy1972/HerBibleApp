@@ -259,7 +259,7 @@ function Hero({ dayComplete }: { dayComplete: boolean }) {
       <LottieView
         source={dayComplete ? FIRE_LOTTIE : HERO_LOTTIE}                         // both prayers done = streak fire; first of the day = growing sapling (per user)
         autoPlay
-        loop={false}                                                             // play once, hold the final frame
+        loop={dayComplete}                                                       // fire LOOPS so it keeps burning (its end frame is empty → looked like it vanished); the sapling still plays once and holds its grown final frame
         style={{ width: 195.5, height: 195.5 }}                                  // 230 → 195.5 (-15 % per user)
       />
     </View>
@@ -435,10 +435,10 @@ const styles = StyleSheet.create({
   // bottom. The column + button make the card ~60 % taller per user.
   nextCard: {
     marginHorizontal: 16,
-    marginTop: 50,
+    marginTop: 30,                                                                // 50 → 30 (-20 px gap to the weekly card above per user)
     backgroundColor: '#FFFFFF',
     borderRadius: 11,
-    paddingVertical: 20,
+    paddingVertical: 36,                                                          // 20 → 36 (+~30 % card height per user)
     paddingHorizontal: 18,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
@@ -447,13 +447,13 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   nextMeta: { minWidth: 0 },
-  nextLabel: { fontSize: 12.65, fontFamily: FONTS.lato, fontWeight: '600', letterSpacing: 1.2, marginBottom: 4 },  // 11 → 12.65 (+15 %), Lato 600 per user
-  nextTitle: { fontSize: 17.6, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold },                         // 16 → 17.6 (+10 % per user)
-  nextProgress: { fontSize: 14, color: TXTSUB, fontFamily: FONTS.lato, fontWeight: '600' },                          // "1/89" kept inline on the title (gray dup subtitle removed)
+  nextLabel: { fontSize: 12.65, fontFamily: FONTS.lato, fontWeight: '600', letterSpacing: 1.2, marginBottom: 4, textAlign: 'center' },  // Lato 600; centered with the title per user
+  nextTitle: { fontSize: 20.24, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold, textAlign: 'center' },   // 17.6 → 20.24 (+15 %), centered per user
+  nextProgress: { fontSize: 16.1, color: TXTSUB, fontFamily: FONTS.lato, fontWeight: '600' },                        // "1/89" inline; +15 % to track the title
   nextContinueBtn: {
-    marginTop: 16,
+    marginTop: 20,                                                               // 16 → 20 (a little more breathing room in the taller card)
     alignSelf: 'stretch',
-    height: 46,
+    height: 54,                                                                  // 46 → 54 (taller card per user)
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',

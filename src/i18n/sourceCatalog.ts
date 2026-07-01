@@ -1056,6 +1056,13 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'gp.psalmsOfDay':                { en: 'Psalms of the Day',                                     context: 'Section heading above the psalm passage on the reader.' },
   'gp.loadError':                  { en: 'Could not load today\'s reading. Check your connection and try again.', context: 'Error shown when the Gospel & Psalm scripture fetch fails.' },
   'gp.planComplete':               { en: 'Plan complete 🎉',                                       context: 'Caption on the home cards once all 89 days are finished.' },
+  // Gospel & Psalm completion celebration (shown after tapping Amen)
+  'gpDone.morningTitle':           { en: 'Morning reading complete',                              context: 'Celebration title after finishing the morning Gospel & Psalm reading.' },
+  'gpDone.eveningTitle':           { en: 'Evening reading complete',                              context: 'Celebration title after finishing the evening Gospel & Psalm reading.' },
+  'gpDone.dayOf':                  { en: 'Day {day} of {total}',                                  context: 'Progress line on the completion celebration. {day} current plan day, {total} = 89.' },
+  'gpDone.pending':                { en: 'Pending',                                               context: 'Status pill for the slot (morning/evening) not yet read today.' },
+  'gpDone.bothDone':               { en: 'Day {day} complete! Day {next} unlocks tomorrow.',      context: 'Message when BOTH morning + evening are done for the day. Explains the next day unlocks the following calendar day.' },
+  'gpDone.oneLeft':                { en: 'One more reading to finish day {day}.',                 context: 'Message when only one of the two daily readings is done — encourages doing the other slot.' },
   'plan.dayDone.congratsTitle':    { en: 'Congratulations!',                                      context: 'Big headline on the PlanDayDone screen when the user finishes the FINAL day of a plan. Joyful, celebratory.' },
   'plan.dayDone.congratsSubtitle': { en: 'You completed this plan',                               context: 'Subtitle under the Congratulations headline when the whole plan is finished.' },
   'plan.dayWalk.chapterLoadError': { en: "Couldn't load this chapter.",                           context: 'Error message inside PlanDayWalk verse page when the chapter fetch fails.' },

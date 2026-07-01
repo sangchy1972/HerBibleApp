@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, withDelay, Easing, cancelAnimation,
+} from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import type { BadgeRarity } from '../constants/achievements';
 import { BADGE_IMAGES } from '../constants/badgeImages';
@@ -22,6 +25,54 @@ const RARITY: Record<BadgeRarity, { grad: [string, string]; ring: string }> = {
   epic:      { grad: ['#B79CE4', '#6F4AB0'], ring: 'rgba(255,255,255,0.50)' },
   legendary: { grad: ['#F2C661', '#B57215'], ring: 'rgba(255,255,255,0.55)' },
 };
+
+// Metallic gloss that sweeps diagonally across a badge on a ~3s loop: a bright
+// tilted band travels from the top-left off-screen to the bottom-right, then
+// rests off-screen until the period completes. A small random phase per badge
+// staggers the wall so they don't all flash in unison (also spreads GPU load).
+// Clipped to the badge bounds via the parent's overflow:hidden + borderRadius.
+const SWEEP_MS = 1050;
+const REST_MS = 1950;   // SWEEP + REST ≈ 3s period, per spec
+function BadgeShine({ size, radius }: { size: number; radius: number }) {
+  const p = useSharedValue(0);
+  useEffect(() => {
+    const phase = Math.random() * (SWEEP_MS + REST_MS);
+    p.value = withDelay(
+      phase,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: SWEEP_MS, easing: Easing.inOut(Easing.quad) }),
+          withTiming(1, { duration: REST_MS }),   // hold off-screen (the pause)
+          withTiming(0, { duration: 0 }),           // instant reset
+        ),
+        -1,
+        false,
+      ),
+    );
+    return () => cancelAnimation(p);
+  }, [p]);
+
+  const bandW = size * 0.42;
+  const anim = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: -bandW * 1.7 + p.value * (size + bandW * 3.4) },
+      { rotate: '20deg' },
+    ],
+  }));
+
+  return (
+    <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { borderRadius: radius, overflow: 'hidden' }]}>
+      <Animated.View style={[{ position: 'absolute', top: -size * 0.6, height: size * 2.2, width: bandW }, anim]}>
+        <LinearGradient
+          colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.12)', 'rgba(255,255,255,0.62)', 'rgba(255,255,255,0.12)', 'rgba(255,255,255,0)']}
+          locations={[0, 0.36, 0.5, 0.64, 1]}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+          style={{ flex: 1 }}
+        />
+      </Animated.View>
+    </View>
+  );
+}
 
 interface Props {
   /** Achievement id. Used to look up a PNG override in BADGE_IMAGES. */
@@ -131,6 +182,10 @@ export default function BadgeIcon({
           ) : null}
         </View>
       )}
+      {/* Metallic diagonal sheen — earned badges only (a shine on a dimmed,
+          unearned badge reads as broken). Clipped to a rounded square for the
+          PNG art, to a circle for the medallion placeholder. */}
+      {!locked && <BadgeShine size={size} radius={source ? size * 0.2 : size / 2} />}
       {count > 1 ? (
         <View style={styles.countBadge}>
           <Text style={styles.countText}>×{count}</Text>

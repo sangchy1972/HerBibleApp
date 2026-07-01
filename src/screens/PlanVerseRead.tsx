@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
-import { ROSE, TXT, TXTSUB, P, FONTS, SERIF_BODY } from '../constants/theme';
+import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { fetchChapter, type Chapter } from '../services/bibleService';
 import { adjustFocus } from '../constants/versification';
 import { useTranslation } from '../state/TranslationsContext';
@@ -30,6 +31,26 @@ export default function PlanVerseRead({ route, navigation }: RootStackScreenProp
   const { focus: incoming } = route.params;
   const { current: translation } = useTranslation();
   const focus = adjustFocus(translation.code, incoming);
+
+  // Mirror the Bible reader's typography EXACTLY: Merriweather at the user's
+  // saved reader size / line-height (same AsyncStorage key the reader + plan
+  // walk use). Without this the jump-to-verse screen rendered in Source Serif
+  // at a fixed size, looking nothing like the reader.
+  const [readPrefs, setReadPrefs] = useState({ fontSize: 18, lineH: 1.8, paragraphSpacing: 24 });
+  useEffect(() => {
+    AsyncStorage.getItem('bible:reader-settings:v1').then(raw => {
+      if (!raw) return;
+      try {
+        const s = JSON.parse(raw);
+        setReadPrefs(p => ({
+          fontSize: typeof s.fontSize === 'number' ? s.fontSize : p.fontSize,
+          lineH: typeof s.lineH === 'number' ? s.lineH : p.lineH,
+          paragraphSpacing: typeof s.paragraphSpacing === 'number' ? s.paragraphSpacing : p.paragraphSpacing,
+        }));
+      } catch { /* keep defaults */ }
+    }).catch(() => {});
+  }, []);
+  const bodyType = { fontFamily: FONTS.merriweather, fontSize: readPrefs.fontSize, lineHeight: readPrefs.fontSize * readPrefs.lineH };
 
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -63,23 +84,6 @@ export default function PlanVerseRead({ route, navigation }: RootStackScreenProp
   const bookName = localizeBookName(translation.code, focus.bookSlug, englishBookName(focus.bookSlug));
   const headerTitle = `${bookName} ${focus.chapter}`;
 
-  // Partition the chapter so the JSX below stays readable. Memoized so
-  // the three .filter() passes only run when the chapter or focus range
-  // actually changes — parent re-renders (e.g. from a sibling state
-  // update) don't trigger a re-partition of every verse.
-  const { preFocus, inFocus, postFocus } = useMemo(() => {
-    if (!chapter) return { preFocus: [], inFocus: [], postFocus: [] };
-    const pre: typeof chapter.verses = [];
-    const inF: typeof chapter.verses = [];
-    const post: typeof chapter.verses = [];
-    for (const v of chapter.verses) {
-      if (v.verse < focus.verseStart) pre.push(v);
-      else if (v.verse <= focus.verseEnd) inF.push(v);
-      else post.push(v);
-    }
-    return { preFocus: pre, inFocus: inF, postFocus: post };
-  }, [chapter, focus.verseStart, focus.verseEnd]);
-
   return (
     <View style={[styles.root, { paddingTop: insets.top + 8 }]}>
       <View style={styles.header}>
@@ -109,40 +113,30 @@ export default function PlanVerseRead({ route, navigation }: RootStackScreenProp
         >
           <Text style={styles.chapterLabel}>{t('plan.verseRead.chapter', { n: focus.chapter })}</Text>
 
-          {preFocus.length > 0 && (
-            <Text style={styles.chapterBody}>
-              {preFocus.map((v, i) => (
-                <Text key={v.verse} style={styles.dimVerse}>
-                  {i > 0 ? '  ' : ''}<Text style={styles.verseNum}>{v.verse}</Text>{' '}{v.text}
+          {/* Each verse is its own paragraph block (matches the Bible reader /
+              plan walk) — the old inline single-Text made verses 3+ clump into
+              one wall of text. Focus verses get the pink highlight + full color;
+              the rest are dimmed for context. */}
+          {chapter.verses.map((v) => {
+            const inFocus = v.verse >= focus.verseStart && v.verse <= focus.verseEnd;
+            const isFirstFocus = v.verse === focus.verseStart;
+            return (
+              <View
+                key={v.verse}
+                onLayout={isFirstFocus ? onFocusLayout : undefined}
+                style={styles.verseBlock}
+              >
+                <Text style={[
+                  bodyType,
+                  { color: inFocus ? TXT : 'rgba(30,27,46,0.38)' },
+                  inFocus ? styles.focusHl : null,
+                ]}>
+                  <Text style={[styles.verseNum, { color: inFocus ? ROSE : 'rgba(232,97,154,0.45)' }]}>{v.verse}{'  '}</Text>
+                  {v.text}
                 </Text>
-              ))}
-            </Text>
-          )}
-
-          {inFocus.length > 0 && (
-            <View
-              onLayout={onFocusLayout}
-              style={preFocus.length > 0 ? styles.focusBlockGap : undefined}
-            >
-              <Text style={styles.chapterBody}>
-                {inFocus.map((v, i) => (
-                  <Text key={v.verse} style={styles.focusVerse}>
-                    {i > 0 ? '  ' : ''}<Text style={styles.verseNum}>{v.verse}</Text>{' '}{v.text}
-                  </Text>
-                ))}
-              </Text>
-            </View>
-          )}
-
-          {postFocus.length > 0 && (
-            <Text style={[styles.chapterBody, styles.focusBlockGap]}>
-              {postFocus.map((v, i) => (
-                <Text key={v.verse} style={styles.dimVerse}>
-                  {i > 0 ? '  ' : ''}<Text style={styles.verseNum}>{v.verse}</Text>{' '}{v.text}
-                </Text>
-              ))}
-            </Text>
-          )}
+              </View>
+            );
+          })}
         </ScrollView>
       )}
     </View>
@@ -166,19 +160,12 @@ const styles = StyleSheet.create({
     fontSize: 12, fontWeight: '800', color: TXTSUB, letterSpacing: 1.6,
     marginBottom: 16, textAlign: 'center',
   },
-  // Source Serif 4 Variable — opsz axis pinned to body-text master via
-  // SERIF_BODY (see theme.ts) so the chapter renders with sturdy/open
-  // letterforms instead of the static Regular's flat shape.
-  chapterBody: {
-    fontFamily: FONTS.serif, fontVariationSettings: SERIF_BODY, fontSize: 18, lineHeight: 30, color: TXT,
-  },
-  // Small visible break between pre / focus / post blocks. Without this the
-  // three blocks would butt up against each other (no inline flow across
-  // sibling Texts), making the focus highlight harder to spot.
-  focusBlockGap: { marginTop: 10 },
-  focusVerse: { color: TXT, backgroundColor: 'rgba(232,97,154,0.18)' },
-  dimVerse: { color: 'rgba(30,27,46,0.45)' },
-  verseNum: { fontSize: 11, color: TXTSUB, fontWeight: '700' },
+  // One block per verse — 18px gap matches the reader / plan-walk verse rhythm.
+  verseBlock: { marginBottom: 18 },
+  // Pink highlight on the focus verses (rounded, like the reader's highlight).
+  focusHl: { backgroundColor: 'rgba(232,97,154,0.18)', borderRadius: 6 },
+  // Verse number — Lato bold 14, colour set inline (ROSE for focus / dim rose).
+  verseNum: { fontFamily: FONTS.latoBold, fontWeight: '700', fontSize: 14 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 36, gap: 14 },
   emptyText: { fontSize: 15, lineHeight: 22, color: TXTSUB, textAlign: 'center' },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },

@@ -267,6 +267,7 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
               translationSource={translation.source}
               getColor={getColor}
               onSelectVerse={setSelected}
+              onScrollDismiss={() => setSelected(null)}
             />
           </View>
         ))}
@@ -360,9 +361,13 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
               ];
               return actions.map(a => (
                 <TouchableOpacity key={a.key} onPress={a.onPress} style={styles.actionBtn}>
-                  {a.key === 'Save'
-                    ? <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={20} color={isSaved ? ROSE : TXT} />
-                    : <Feather name={a.icon} size={18} color={TXT} />}
+                  {/* Fixed-height icon box so the 20px Save heart and the 18px
+                      Feather glyphs share one baseline (Save used to sit taller). */}
+                  <View style={styles.actionIcon}>
+                    {a.key === 'Save'
+                      ? <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={20} color={isSaved ? ROSE : TXT} />
+                      : <Feather name={a.icon} size={18} color={TXT} />}
+                  </View>
                   <Text style={[styles.actionLabel, a.key === 'Save' && isSaved && { color: ROSE, fontWeight: '700' }]}>
                     {a.key}
                   </Text>
@@ -508,7 +513,7 @@ function Stagger({ anim, index, style, children }: { anim: SharedValue<number>; 
 
 function PageContent({
   page, dayTitle, isFirstPage, active, readPrefs, exploreTarget, onCloseExplore, insetTop, insetBottom,
-  translationCode, translationSource, getColor, onSelectVerse,
+  translationCode, translationSource, getColor, onSelectVerse, onScrollDismiss,
 }: {
   page: Page;
   dayTitle: string;
@@ -523,6 +528,7 @@ function PageContent({
   translationSource: string;
   getColor: (tr: string, b: string, ch: number, v: number) => string | undefined;
   onSelectVerse: (sv: SelectedVerse) => void;
+  onScrollDismiss: () => void;
 }) {
   // Replays the staggered entrance every time this page becomes the active one
   // (initial mount + each swipe to it). 0.6 s → 1.2 s per user — the rise-up
@@ -547,7 +553,7 @@ function PageContent({
       onSelectVerse({ bookSlug, bookTitle, chapter: v.chapter, verse: parseVerseRange(v.verses).start, text: v.text });
     };
     return (
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.pageScroll, { paddingTop: insetTop, paddingBottom: insetBottom }]}>
+      <ScrollView showsVerticalScrollIndicator={false} onScrollBeginDrag={onScrollDismiss} contentContainerStyle={[styles.pageScroll, { paddingTop: insetTop, paddingBottom: insetBottom }]}>
         {isFirstPage && <Stagger anim={anim} index={0}><Text style={styles.dayTitle}>{dayTitle}</Text></Stagger>}
         <Stagger anim={anim} index={base}><Text style={styles.sectionCaption}>{page.section.heading.toUpperCase()}</Text></Stagger>
         <Stagger anim={anim} index={base + 1}><Text style={styles.verseRef}>{v.display}</Text></Stagger>
@@ -597,6 +603,7 @@ function PageContent({
       insetBottom={insetBottom}
       getColor={getColor}
       onSelectVerse={onSelectVerse}
+      onScrollDismiss={onScrollDismiss}
     />
   );
 }
@@ -604,7 +611,7 @@ function PageContent({
 function VersePage({
   bookSlug, chapter, verseStart, verseEnd,
   translationCode, translationSource, readPrefs, exploreTarget, onCloseExplore,
-  insetTop, insetBottom, getColor, onSelectVerse,
+  insetTop, insetBottom, getColor, onSelectVerse, onScrollDismiss,
 }: {
   bookSlug: string; chapter: number; verseStart: number; verseEnd: number;
   translationCode: string; translationSource: string;
@@ -614,6 +621,7 @@ function VersePage({
   insetTop: number; insetBottom: number;
   getColor: (tr: string, b: string, ch: number, v: number) => string | undefined;
   onSelectVerse: (sv: SelectedVerse) => void;
+  onScrollDismiss: () => void;
 }) {
   const t = useT();
   const [chapterData, setChapterData] = useState<Chapter | null>(null);
@@ -690,6 +698,7 @@ function VersePage({
     <ScrollView
       ref={scrollRef}
       showsVerticalScrollIndicator={false}
+      onScrollBeginDrag={onScrollDismiss}
       contentContainerStyle={[styles.pageScroll, { paddingTop: insetTop, paddingBottom: insetBottom }]}
     >
       <Text style={styles.chapterHeader}>{bookTitle} {chapter}</Text>
@@ -901,6 +910,7 @@ const styles = StyleSheet.create({
   popupDivider: { height: 1, backgroundColor: 'rgba(30,27,46,0.08)', marginVertical: 12 },
   actionRow: { flexDirection: 'row', justifyContent: 'space-between' },
   actionBtn: { alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 4, minWidth: 56 },
+  actionIcon: { height: 22, alignItems: 'center', justifyContent: 'center' },
   actionLabel: { fontSize: 11, color: TXT, fontFamily: FONTS.lato, fontWeight: '500' },
 
   // Bottom bar

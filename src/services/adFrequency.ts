@@ -36,7 +36,7 @@ const HOTSTART_MIN_BG_MS = 15_000; // must be backgrounded ≥15s to count as a 
 const TABS = new Set(['prayer', 'bible', 'plan', 'profile']);
 // Flow + utility screens: never count, never interrupt.
 const EXCLUDED = new Set([
-  'PrayerFlow', 'GospelPsalm', 'MoodFlow', 'PlanDayWalk', 'PlanVerseRead', 'PlanDayDone',
+  'PrayerFlow', 'GospelPsalm', 'MoodDashboard', 'PlanDayWalk', 'PlanVerseRead', 'PlanDayDone',
   'RemoveAds', 'HelpCenter', 'HelpAnswer', 'AboutUs', 'Policy', 'Notifications', 'AddWidget',
 ]);
 

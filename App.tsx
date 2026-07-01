@@ -63,6 +63,7 @@ import { GospelsPsalmsProvider } from './src/state/GospelsPsalmsContext';
 import AchievementUnlockSheet from './src/components/AchievementUnlockSheet';
 import { LoginPromptProvider } from './src/state/LoginPromptContext';
 import LoginPromptHost from './src/components/LoginPromptHost';
+import MoodCheckInSheet from './src/components/MoodCheckInSheet';
 import DeepLinkHandler from './src/navigation/DeepLinkHandler';
 import PrefetchManager from './src/components/PrefetchManager';
 import WidgetSync from './src/components/WidgetSync';
@@ -175,6 +176,11 @@ export default function App() {
                                               frequency-capped). Inside the nav so
                                               SignInSheet's legal links work. */}
                                           <LoginPromptHost />
+                                          {/* Daily mood check-in bottom sheet.
+                                              Self-triggers once/day off the
+                                              MoodCheckInProvider flag; renders
+                                              null until due. */}
+                                          <MoodCheckInSheet />
                                           {/* Mirrors today's verse + the card's
                                               background image to the home-screen
                                               widget. Null render; needs DailyVerses

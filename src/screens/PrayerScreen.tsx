@@ -21,7 +21,6 @@ import StreakBorderAnim from '../components/shared/StreakBorderAnim';
 import { ROSE, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { useAuth } from '../state/AuthContext';
 import { usePrayer } from '../state/PrayerContext';
-import { useMoodCheckIn } from '../state/MoodCheckInContext';
 import { useActivity } from '../state/ActivityContext';
 import { useDailyVerses } from '../state/DailyVersesContext';
 import { useTranslation } from '../state/TranslationsContext';
@@ -552,16 +551,8 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   const continuePctWidth = Math.max(continuePct, 4);
   useEffect(() => { markToday(); }, [markToday]);
 
-  // Mood check-in: pop the daily flow once per day after the loading screen
-  // (or every 8 h if the user dismissed without picking).
-  const moodCheckIn = useMoodCheckIn();
-  useEffect(() => {
-    if (!moodCheckIn.ready) return;
-    if (!moodCheckIn.shouldShow()) return;
-    moodCheckIn.markShown();
-    const timer = setTimeout(() => navigation.navigate('MoodFlow'), 250);
-    return () => clearTimeout(timer);
-  }, [moodCheckIn.ready]);
+  // The daily mood check-in is now a global bottom sheet that self-triggers from
+  // MoodCheckInProvider (once/day). No per-screen navigation trigger needed.
   const pct = (mDone ? 50 : 0) + (eDone ? 50 : 0);
 
   // Tick once per minute so the wait-state countdown updates without forcing

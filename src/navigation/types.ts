@@ -31,8 +31,7 @@ export type RootStackParamList = {
   Streak: undefined;
   PrayerFlow: { kind: 'morning' | 'evening'; day?: number };
   GospelPsalm: { slot: 'morning' | 'evening' };
-  MoodFlow: undefined;
-  MoodCalendar: undefined;
+  MoodDashboard: undefined;
   RemoveAds: undefined;
   HelpCenter: undefined;
   HelpAnswer: { id: string };

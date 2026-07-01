@@ -5,30 +5,59 @@ export type Mood =
   | 'angry' | 'weak' | 'anxious' | 'fearful' | 'faithful'
   | 'sad' | 'calm' | 'happy' | 'blessed';
 
-export const MOOD_LIST: Mood[] = [
-  'angry', 'weak', 'anxious',
-  'fearful', 'faithful', 'sad',
-  'calm', 'happy', 'blessed',
-];
-
 export const MOOD_LABEL: Record<Mood, string> = {
   angry: 'Angry', weak: 'Weak', anxious: 'Anxious',
   fearful: 'Fearful', faithful: 'Faithful', sad: 'Sad',
   calm: 'Calm', happy: 'Happy', blessed: 'Blessed',
 };
 
-// Soft, flat pastel palette — the "cute" look the user asked for (vs the old
-// harsh saturated gradients). Each face is one calm pastel + a glossy highlight
-// + rosy cheeks, with simple rounded features.
+// Heavy → radiant ordering for the mood SLIDER (single source of truth for
+// slider index ↔ mood). The colours below form ONE clean cold→warm ramp in this
+// order: cold/blue (heavy) on the left, warm/gold-rose (radiant) on the right.
+// angry is heaviest & coldest; sad sits just after it (left of fearful/anxious,
+// per design); the cold→warm crossover is the mint→gold step at weak→calm.
+export const MOOD_SLIDER_ORDER: Mood[] = [
+  'angry', 'sad', 'fearful', 'anxious', 'weak', 'calm', 'faithful', 'happy', 'blessed',
+];
+
+export function indexToMood(i: number): Mood {
+  const clamped = Math.max(0, Math.min(MOOD_SLIDER_ORDER.length - 1, Math.round(i)));
+  return MOOD_SLIDER_ORDER[clamped];
+}
+export function moodToIndex(m: Mood): number {
+  const i = MOOD_SLIDER_ORDER.indexOf(m);
+  return i < 0 ? 0 : i;
+}
+
+// Pastel cell / legend / slider colour per mood — ONE cold→warm ramp read in
+// MOOD_SLIDER_ORDER. Identical to the face palette `C` so the big emoji, the
+// slider gradient, and the calendar cells all agree. `faithful` renders praying
+// hands (no face fill) so its colour lives only here (warm gold, the crossover
+// into the radiant half).
+export const MOOD_COLOR: Record<Mood, string> = {
+  angry:   '#8C8FD6',   // indigo — heaviest / coldest
+  sad:     '#9DB0EC',   // cornflower blue
+  fearful: '#A9C3E6',   // soft blue
+  anxious: '#98C9D8',   // cyan-teal
+  weak:    '#A6D8C4',   // mint (cold→warm crossover)
+  calm:    '#CBE3A2',   // soft green
+  faithful:'#F4CE71',   // warm gold
+  happy:   '#F7B858',   // amber
+  blessed: '#F49CB6',   // rose — radiant / warmest
+};
+
+// Face fill palette. Matches MOOD_COLOR so the rendered face colour tracks the
+// slider position (cold on the left, warm on the right). `palm` is the
+// praying-hands skin tone used by the `faithful` gesture.
 const C = {
-  angry:   '#F2978E',   // soft coral
-  weak:    '#A6D6C5',   // soft mint (under the weather)
-  anxious: '#F7C46B',   // warm amber
-  fearful: '#C6BBEA',   // soft lavender
-  sad:     '#AEB8E6',   // periwinkle
-  calm:    '#F7CDB4',   // peach
-  happy:   '#F7C85F',   // sunny yellow
-  blessed: '#F4A6C0',   // rose
+  angry:   '#8C8FD6',   // indigo (cold / heavy)
+  sad:     '#9DB0EC',   // cornflower blue
+  fearful: '#A9C3E6',   // soft blue
+  anxious: '#98C9D8',   // cyan-teal
+  weak:    '#A6D8C4',   // mint
+  calm:    '#CBE3A2',   // soft green
+  happy:   '#F7B858',   // amber
+  blessed: '#F49CB6',   // rose (warm / radiant)
   palm:    '#F2C39C',   // praying-hands skin tone
 };
 

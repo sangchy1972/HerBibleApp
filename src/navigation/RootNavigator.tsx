@@ -4,8 +4,7 @@ import TabNavigator from './TabNavigator';
 import StreakScreen from '../screens/StreakScreen';
 import PrayerFlow from '../screens/PrayerFlow';
 import GospelPsalmReader from '../screens/GospelPsalmReader';
-import MoodFlow from '../screens/MoodFlow';
-import MoodCalendarScreen from '../screens/MoodCalendarScreen';
+import MoodDashboardScreen from '../screens/MoodDashboardScreen';
 import RemoveAdsScreen from '../screens/RemoveAdsScreen';
 import HelpCenterScreen from '../screens/HelpCenterScreen';
 import HelpAnswerScreen from '../screens/HelpAnswerScreen';
@@ -68,14 +67,8 @@ export default function RootNavigator() {
         options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', animationDuration: 320 }}
       />
       <Stack.Screen
-        name="MoodFlow"
-        component={MoodFlow}
-        // 800 → 320 — same fix applied to MoodFlow.
-        options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', animationDuration: 320 }}
-      />
-      <Stack.Screen
-        name="MoodCalendar"
-        component={MoodCalendarScreen}
+        name="MoodDashboard"
+        component={MoodDashboardScreen}
         options={{ animation: 'slide_from_right', animationDuration: 240 }}
       />
       <Stack.Screen

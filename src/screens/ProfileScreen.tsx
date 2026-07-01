@@ -356,7 +356,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
   const onStatTap = [
     () => navigation.navigate('Streak'),
     () => setShowCalendarSheet(true),
-    () => navigation.navigate('MoodCalendar'),
+    () => navigation.navigate('MoodDashboard'),
   ];
 
   // Earliest entry in activityDates → "First Prayer awarded on …".

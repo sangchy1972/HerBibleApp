@@ -42,9 +42,13 @@ export function daysInYear(year: number): number {
 
 /** 1-based day of the year (Jan 1 → 1). */
 export function dayOfYear(d: Date): number {
-  const start = new Date(d.getFullYear(), 0, 0);
-  const diff = d.getTime() - start.getTime();
-  return Math.floor(diff / 86_400_000);
+  // Use UTC date components for BOTH endpoints so the subtraction is DST-immune.
+  // The old version subtracted two local-time Dates, so across a spring-forward
+  // transition the gap was N days minus 1h and floored to N-1 — making the year
+  // progress ("day X/365") off by one for DST timezones for half the year.
+  const start = Date.UTC(d.getFullYear(), 0, 0);
+  const cur = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  return Math.floor((cur - start) / 86_400_000);
 }
 
 type PickMap = Record<string, Mood>;

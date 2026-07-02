@@ -75,6 +75,7 @@ import LoadingOverlay from './src/components/LoadingOverlay';
 import { initFirebase, logScreenView } from './src/services/firebase';
 import { initAds } from './src/services/ads';
 import { initAdFrequency, noteNavigation } from './src/services/adFrequency';
+import { initIap } from './src/services/iap';
 
 export default function App() {
   // Enable Firebase Analytics + Crashlytics collection once on launch, and
@@ -85,7 +86,7 @@ export default function App() {
   // so it never competes with the loading screens / first render.
   React.useEffect(() => {
     initFirebase();
-    const task = InteractionManager.runAfterInteractions(() => { initAds(); initAdFrequency(); });
+    const task = InteractionManager.runAfterInteractions(() => { initAds(); initAdFrequency(); initIap(); });
     return () => task.cancel();
   }, []);
 

@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import Logo from '../components/shared/Logo';
 import type { RootStackScreenProps } from '../navigation/types';
 import { useT } from '../i18n/useT';
+import { initIap, fetchPrices, purchasePlan, restorePurchases } from '../services/iap';
 
 type PlanId = 'lifetime' | 'annual' | 'monthly';
 
@@ -38,7 +39,9 @@ const PLANS: PlanRow[] = [
   { id: 'monthly',  labelKey: 'paywall.plan.monthly',  priceKey: 'paywall.plan.monthly.priceLine' },
 ];
 
-const PRICES: Record<PlanId, string> = {
+// Static fallback display prices, only shown until (or if) the store answers
+// with real localized prices via fetchPrices().
+const FALLBACK_PRICES: Record<PlanId, string> = {
   lifetime: 'NT$670',
   annual:   'NT$420',
   monthly:  'NT$84',
@@ -48,26 +51,60 @@ export default function RemoveAdsScreen({ navigation }: RootStackScreenProps<'Re
   const t = useT();
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState<PlanId>('lifetime');
+  const [prices, setPrices] = useState<Record<PlanId, string>>(FALLBACK_PRICES);
+  const [busy, setBusy] = useState(false);
 
-  const onSubscribe = () => {
-    // TODO: wire StoreKit / Play Billing. Library choice is deliberately
-    // deferred — `react-native-iap` was removed from deps because its
-    // autolinked native module triggers Play Integrity checks on
-    // non-certified Android emulators, surfacing a verbose `-17
-    // CLIENT_TRANSIENT_ERROR`. Add the chosen lib (expo-iap when stable
-    // for SDK 54, or react-native-iap behind an explicit init guard) at
-    // the same time the real product IDs land.
-    const row = PLANS.find(p => p.id === selected);
-    const planLabel = row ? t(row.labelKey) : '';
-    const priceLine = row ? t(row.priceKey, { price: PRICES[row.id], pct: row.pct ?? 0 }) : '';
-    Alert.alert(
-      t('paywall.alert.comingSoon.title'),
-      t('paywall.alert.comingSoon.body', { plan: planLabel, price: priceLine }),
-    );
+  // Localized store prices (StoreKit / Play Billing). initIap() is idempotent —
+  // normally already connected from App launch, this is just the safety call.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      await initIap();
+      const p = await fetchPrices();
+      if (alive && Object.keys(p).length) setPrices(prev => ({ ...prev, ...p }));
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const onSubscribe = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const outcome = await purchasePlan(selected);
+      if (outcome === 'purchased') {
+        Alert.alert(
+          t('paywall.alert.success.title'),
+          t('paywall.alert.success.body'),
+          [{ text: t('common.continue'), onPress: () => navigation.goBack() }],
+        );
+      } else if (outcome === 'pending') {
+        Alert.alert(t('paywall.alert.pending.title'), t('paywall.alert.pending.body'));
+      } else if (outcome === 'error' || outcome === 'unavailable') {
+        Alert.alert(t('paywall.alert.error.title'), t('paywall.alert.error.body'));
+      }
+      // 'cancelled' → user closed the store sheet; no alert.
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const onRestore = () => {
-    Alert.alert(t('paywall.alert.restore.title'), t('paywall.alert.restore.body'));
+  const onRestore = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const restored = await restorePurchases();
+      if (restored) {
+        Alert.alert(
+          t('paywall.alert.restore.done.title'),
+          t('paywall.alert.restore.done.body'),
+          [{ text: t('common.continue'), onPress: () => navigation.goBack() }],
+        );
+      } else {
+        Alert.alert(t('paywall.alert.restore.none.title'), t('paywall.alert.restore.none.body'));
+      }
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -116,7 +153,7 @@ export default function RemoveAdsScreen({ navigation }: RootStackScreenProps<'Re
                     </View>
                   )}
                 </View>
-                <Text style={styles.planPrice}>{t(p.priceKey, { price: PRICES[p.id] })}</Text>
+                <Text style={styles.planPrice}>{t(p.priceKey, { price: prices[p.id] })}</Text>
                 {p.hintKey && (
                   <Text style={styles.planHint}>{t(p.hintKey, { pct: p.pct ?? 0 })}</Text>
                 )}
@@ -129,13 +166,15 @@ export default function RemoveAdsScreen({ navigation }: RootStackScreenProps<'Re
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-        <TouchableOpacity onPress={onSubscribe} activeOpacity={0.85} style={styles.cta}>
-          <Text style={styles.ctaText}>{t('common.continue')}</Text>
+        <TouchableOpacity onPress={onSubscribe} activeOpacity={0.85} style={[styles.cta, busy && styles.ctaBusy]} disabled={busy}>
+          {busy
+            ? <ActivityIndicator color="#FFFFFF" />
+            : <Text style={styles.ctaText}>{t('common.continue')}</Text>}
         </TouchableOpacity>
         <View style={styles.legalRow}>
-          <TouchableOpacity onPress={() => Linking.openURL('https://example.com/terms')}><Text style={styles.legal}>{t('paywall.terms')}</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('Policy', { id: 'terms' })}><Text style={styles.legal}>{t('paywall.terms')}</Text></TouchableOpacity>
           <Text style={styles.legalSep}>·</Text>
-          <TouchableOpacity onPress={() => Linking.openURL('https://example.com/privacy')}><Text style={styles.legal}>{t('paywall.privacy')}</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('Policy', { id: 'privacy' })}><Text style={styles.legal}>{t('paywall.privacy')}</Text></TouchableOpacity>
         </View>
       </View>
     </View>
@@ -255,6 +294,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  ctaBusy: { opacity: 0.7 },
   ctaText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', letterSpacing: 0.3 },
   legalRow: {
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center',

@@ -1187,6 +1187,18 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'paywall.alert.restore.title':   { en: 'Restore purchases',                                     context: 'Placeholder alert title for the Restore button before IAP is wired.' },
   'paywall.alert.restore.body':    { en: 'Once IAP is wired, this will restore any active subscription tied to your store account.', context: 'Placeholder alert body for the Restore button.' },
 
+  // RemoveAdsScreen alerts (live IAP flow — expo-iap)
+  'paywall.alert.success.title':      { en: 'Thank you!',                                          context: 'Alert title after a successful Remove-Ads purchase.' },
+  'paywall.alert.success.body':       { en: 'Ads are now removed. Enjoy your quiet time in the Word.', context: 'Alert body after a successful purchase. Warm, devotional tone.' },
+  'paywall.alert.pending.title':      { en: 'Purchase pending',                                    context: 'Alert title when the store reports the payment is still processing (e.g. Play cash payment, Ask to Buy).' },
+  'paywall.alert.pending.body':       { en: 'Your payment is still processing. Ads will be removed automatically once it completes.', context: 'Alert body for a pending purchase.' },
+  'paywall.alert.error.title':        { en: 'Something went wrong',                                context: 'Alert title when the purchase failed or the store is unreachable.' },
+  'paywall.alert.error.body':         { en: "The purchase couldn't be completed. Please try again in a moment.", context: 'Alert body for a failed purchase.' },
+  'paywall.alert.restore.done.title': { en: 'Purchases restored',                                  context: 'Alert title when Restore found an owned product and re-enabled ad-free.' },
+  'paywall.alert.restore.done.body':  { en: 'Welcome back — ads are removed on this device.',      context: 'Alert body after a successful restore.' },
+  'paywall.alert.restore.none.title': { en: 'Nothing to restore',                                  context: 'Alert title when Restore found no owned products on this store account.' },
+  'paywall.alert.restore.none.body':  { en: "We couldn't find a previous purchase on this store account.", context: 'Alert body when there is nothing to restore.' },
+
   // PlanScreen inline plan-progress
   'plan.continue':                 { en: 'Continue',                                              context: 'Verb. CTA on an in-progress plan row to resume reading. Distinct from common.continue (general).' },
   'plan.review':                   { en: 'Review',                                                context: 'Verb. CTA on a completed plan row to look back through its days.' },

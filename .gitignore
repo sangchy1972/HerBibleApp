@@ -60,3 +60,6 @@ android/cn-mirrors.init.gradle
 # Daily-verse staging (not committed — CDN files go to pd-text-corpus repo)
 _incoming_verses/
 _cdn_ready/
+
+# Google Play service-account key for `eas submit` — secret, never commit
+play-service-account.json

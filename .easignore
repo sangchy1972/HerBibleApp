@@ -35,3 +35,4 @@ _cdn_ready/
 # these out forces EAS to prebuild fresh from app.json on every build.
 /android
 /ios
+play-service-account.json

@@ -280,7 +280,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'weekly.later':                  { en: 'Maybe later',   context: 'Secondary dismiss link below the Gospel & Psalms next card — returns home without starting.' },
   'weekly.subPrefix':              { en: 'Your',           context: 'Sub-text "Your <Nth> prayer of the week!" — leading word.' },
   'weekly.subSuffix':              { en: 'day of prayer this week!', context: 'Sub-text trailing words. Full pattern: Your <ordinal> day of prayer this week! The number counts DAYS prayed (morning+evening same day = one day), not sessions.' },
-  'weekly.openReminder':           { en: 'Open Daily Verse Reminder', context: 'CTA inside the weekly progress card — opens the reminder time picker.' },
+  'weekly.openReminder':           { en: 'Set a Daily Prayer Reminder', context: 'CTA inside the weekly progress card — opens the "Make Prayer a Habit" reminder time picker.' },
   // Proactive "set your prayer reminders" nudge (users who never enabled reminders)
   'nudge.setReminder.title':       { en: 'Set your prayer reminders', context: 'Title of the popup nudging the user to set reminder times.' },
   'nudge.setReminder.body':        { en: 'Pick a morning and evening time and we\'ll gently remind you to pray.', context: 'Body of the set-reminders popup.' },

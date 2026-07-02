@@ -396,6 +396,10 @@ interface NotificationsState {
     morning: { hour: number; minute: number },
     evening: { hour: number; minute: number },
   ) => Promise<boolean>;
+  /** Enable ONE reminder slot at a specific time and request OS permission, in a
+   *  single persist. Returns whether permission ended up granted. Used by the
+   *  post-prayer "Make Prayer a Habit" sheet. */
+  enableReminderAt: (key: NotifKey, hour: number, minute: number) => Promise<boolean>;
 }
 
 const Ctx = createContext<NotificationsState | null>(null);
@@ -594,6 +598,22 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     return granted;
   }, [settings, persist]);
 
+  const enableReminderAt = useCallback(async (key: NotifKey, hour: number, minute: number): Promise<boolean> => {
+    const current = await Notifications.getPermissionsAsync();
+    let granted = current.granted;
+    if (!granted && current.canAskAgain) {
+      granted = (await Notifications.requestPermissionsAsync()).granted;
+    }
+    setPermissionGranted(granted);
+    const next = { ...settings, [key]: { hour, minute, enabled: true } };
+    persist(next);
+    logEvent('reminder_toggle', { key, enabled: true, source: 'habit' });
+    // Instant confirmation push (parity with the settings toggle) — only when
+    // permission actually granted.
+    if (granted) fireEnableConfirmation(next[key], lang).catch(() => {});
+    return granted;
+  }, [settings, persist, lang]);
+
   const value = useMemo<NotificationsState>(() => ({
     ready,
     settings,
@@ -602,7 +622,8 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     setSchedule,
     requestPermissionAndEnableDefaults,
     configureReminders,
-  }), [ready, settings, permissionGranted, setEnabled, setSchedule, requestPermissionAndEnableDefaults, configureReminders]);
+    enableReminderAt,
+  }), [ready, settings, permissionGranted, setEnabled, setSchedule, requestPermissionAndEnableDefaults, configureReminders, enableReminderAt]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

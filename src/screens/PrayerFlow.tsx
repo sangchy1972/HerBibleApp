@@ -131,7 +131,7 @@ function ScrollWheel<T>({ values, value, onChange, format }: {
   );
 }
 
-function TimePickerSheet({ onConfirm, onClose }: { onConfirm: () => void; onClose: () => void }) {
+function TimePickerSheet({ onConfirm, onClose }: { onConfirm: (hour: number, minute: number) => void; onClose: () => void }) {
   const t = useT();
   const [hour, setHour] = useState<number>(8);
   const [minute, setMinute] = useState<number>(0);
@@ -156,7 +156,13 @@ function TimePickerSheet({ onConfirm, onClose }: { onConfirm: () => void; onClos
         <TouchableOpacity onPress={onClose} style={styles.sheetBtnBack}>
           <Text style={[styles.sheetBtnText, { color: TXTSUB }]}>{t('prayerFlow.time.back')}</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={onConfirm} style={[styles.sheetBtnConfirm, { backgroundColor: ROSE }]}>
+        <TouchableOpacity
+          onPress={() => {
+            const h24 = ampm === 'PM' ? (hour === 12 ? 12 : hour + 12) : (hour === 12 ? 0 : hour);
+            onConfirm(h24, minute);
+          }}
+          style={[styles.sheetBtnConfirm, { backgroundColor: ROSE }]}
+        >
           <Text style={[styles.sheetBtnText, { color: '#fff', fontWeight: '700' }]}>{t('prayerFlow.time.confirm')}</Text>
         </TouchableOpacity>
       </View>
@@ -283,6 +289,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const { markToday } = useActivity();
   const ratePrompt = useRatePrompt();
   const { notifRationaleShown, markNotifRationaleShown } = useOnboarding();
+  const { enableReminderAt } = useNotifications();
   const { kind } = route.params;
   const morning = kind === 'morning';
   // Past-day replay: when a specific `day` is passed (from See Past Days), we
@@ -817,8 +824,18 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   };
 
   const handleWeeklyOpenReminder = () => {
-    setShowWeekly(false);
-    setTimeout(() => setShowSheet(true), 200);
+    // Keep the weekly/sapling celebration visible — the habit sheet overlays it.
+    // (Previously this hid the weekly screen, which re-exposed the maroon Amen
+    // screen underneath, so the sheet appeared to "jump back" a screen.)
+    setShowSheet(true);
+  };
+
+  // Set the daily reminder to the chosen time + request permission, then close
+  // the sheet back to the weekly screen.
+  const handleHabitConfirm = async (hour: number, minute: number) => {
+    // Arm the slot matching the prayer the user just finished (morning vs night).
+    try { await enableReminderAt(morning ? 'morning' : 'night', hour, minute); } catch { /* API may throw on unsupported runtimes */ }
+    handleSheetClose();
   };
 
   const handleWeeklyBack = () => {
@@ -835,8 +852,11 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   };
 
   const handleSheetClose = () => {
+    // Return to the weekly/sapling screen (still mounted underneath) rather than
+    // exiting the whole flow — the user reaches it FROM weekly and expects to
+    // land back there, then leaves via that screen's own Back / Continue.
     setShowSheet(false);
-    setTimeout(finishFlow, 280);
+    setShowTimePicker(false);
   };
 
   const handleRatePromptClose = () => {
@@ -1336,7 +1356,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                 </TouchableOpacity>
               </View>
             ) : (
-              <TimePickerSheet onConfirm={handleSheetClose} onClose={() => setShowTimePicker(false)} />
+              <TimePickerSheet onConfirm={handleHabitConfirm} onClose={() => setShowTimePicker(false)} />
             )}
           </Animated.View>
         </View>

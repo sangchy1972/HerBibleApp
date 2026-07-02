@@ -283,6 +283,11 @@ function onError(idx: number, e: any): void {
     if (noFill[idx] < NOFILL_LIMIT) {
       nextAt[idx] = Date.now() + jitter(ladderRetryBase(noFill[idx]));
     } else {
+      // Hold the exhausted tier off FIRST: if onTierExhausted can't move the
+      // window yet (the other slot is still trying), the ticker would otherwise
+      // re-request this unit every second with no backoff. A window move
+      // overwrites this via resetWindowCounts/coolWindow.
+      nextAt[idx] = Date.now() + jitter(FLOOR_COOLDOWN_MS);
       onTierExhausted(idx);
     }
   }

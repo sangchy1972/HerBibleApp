@@ -33,14 +33,17 @@ try {
   /* native module not in this build → no-op everywhere below */
 }
 
-// Real interstitial ad units (user-provided; first of the planned waterfall).
-// Per-platform — AdMob unit IDs are NOT interchangeable across iOS/Android, and
-// each lives under its own platform App ID (see app.json
-// react-native-google-mobile-ads androidAppId / iosAppId).
+// Real interstitial ad units for the simple single-unit path (everyone who is
+// NOT routed to the US waterfall controller: non-US Android, all iOS, and any
+// device whose region can't be detected). Android uses a DEDICATED unit so its
+// global traffic no longer pollutes the US ladder's unit-0 (3482477831) stats
+// in the AdMob console. Per-platform — AdMob unit IDs are NOT interchangeable
+// across iOS/Android, and each lives under its own platform App ID (see
+// app.json react-native-google-mobile-ads androidAppId / iosAppId).
 const REAL_INTERSTITIAL_UNIT_ID = Platform.select({
   ios:     'ca-app-pub-4656643588243987/9512513187',
-  android: 'ca-app-pub-4656643588243987/3482477831',
-  default: 'ca-app-pub-4656643588243987/3482477831',
+  android: 'ca-app-pub-4656643588243987/5238876625',
+  default: 'ca-app-pub-4656643588243987/5238876625',
 }) as string;
 // In a DEV build ALWAYS use Google's TEST interstitial so we never serve / click
 // our own LIVE ad (that gets the AdMob account flagged). The production build
@@ -82,7 +85,23 @@ export function areAdsRemoved(): boolean {
 // controller. NOTE: this is the DEVICE region, a client-side proxy for the
 // ad-serving country (which AdMob ultimately decides by IP). Good enough for
 // the US-only rollout; swap for a real geo/IP signal later if needed.
+const REGION_RE = /[_-]([A-Za-z]{2})(?:[_@.-]|$)/;
+
+// US IANA timezones (Hermes Intl gives the real device tz on both platforms).
+// Third-level fallback for devices whose locale carries no region (bare "en").
+const US_TZ_RE = /^(America\/(New_York|Detroit|Kentucky\/|Indiana\/|Chicago|Menominee|North_Dakota\/|Denver|Boise|Phoenix|Los_Angeles|Anchorage|Juneau|Sitka|Metlakatla|Yakutat|Nome|Adak)|Pacific\/Honolulu)/;
+
 function deviceRegion(): string | null {
+  // 1) Hermes Intl — the only source that works reliably under the NEW
+  //    ARCHITECTURE (bridgeless): NativeModules.SettingsManager is undefined on
+  //    iOS and I18nManager.localeIdentifier is unreliable on Android there,
+  //    which silently routed every user away from the US controller.
+  try {
+    const loc = Intl.DateTimeFormat().resolvedOptions().locale;   // e.g. "en-US"
+    const m = String(loc || '').match(REGION_RE);
+    if (m) return m[1].toUpperCase();
+  } catch { /* fall through */ }
+  // 2) Legacy NativeModules constants (old architecture builds).
   try {
     const { SettingsManager, I18nManager } = NativeModules as any;
     let loc: string | undefined;
@@ -92,10 +111,16 @@ function deviceRegion(): string | null {
     } else {
       loc = I18nManager?.localeIdentifier;
     }
-    if (!loc) return null;
-    const m = String(loc).match(/[_-]([A-Za-z]{2})(?:[_@.-]|$)/);
-    return m ? m[1].toUpperCase() : null;
-  } catch { return null; }
+    const m = loc ? String(loc).match(REGION_RE) : null;
+    if (m) return m[1].toUpperCase();
+  } catch { /* fall through */ }
+  // 3) Timezone heuristic for region-less locales (bare "en" is common on US
+  //    Android devices) — a US tz is a good-enough proxy for the US rollout.
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz && US_TZ_RE.test(tz)) return 'US';
+  } catch { /* fall through */ }
+  return null;
 }
 
 export function isUsUser(): boolean {
@@ -124,9 +149,18 @@ export async function initAds(): Promise<void> {
     }
     await mobileAdsFn().initialize();
     initialized = true;
-    // US users → the 26-unit waterfall controller. Everyone else → the simple
-    // single-unit preload (other-country logic ships later).
-    if (isUsUser() && InterstitialAdCls) {
+    // US ANDROID users → the 26-unit waterfall controller (the HB_int_splash_*
+    // ladder ids are Android units; requesting them from iOS would be invalid
+    // AND skip the real iOS unit). Everyone else — including iOS US users until
+    // an iOS ladder exists — takes the simple single-unit preload.
+    // NOT in __DEV__: the ladder ids are LIVE units with no TestIds equivalent —
+    // same account-safety policy as INTERSTITIAL_UNIT_ID above. Verify the
+    // controller with a release build (internal testing track) or by registering
+    // the device as an AdMob test device.
+    const region = deviceRegion();
+    const useController = region === 'US' && Platform.OS === 'android' && !!InterstitialAdCls && !__DEV__;
+    logEvent('ads_route', { region: region ?? 'unknown', path: useController ? 'us_controller' : 'preload' });
+    if (useController) {
       startUsController({ Interstitial: InterstitialAdCls, AdEventType: AdEventTypeEnum, isAdsRemoved: () => adsRemoved });
     } else {
       preload();

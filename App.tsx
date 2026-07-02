@@ -63,8 +63,11 @@ import { GospelsPsalmsProvider } from './src/state/GospelsPsalmsContext';
 import AchievementUnlockSheet from './src/components/AchievementUnlockSheet';
 import { LoginPromptProvider } from './src/state/LoginPromptContext';
 import { NudgeCoordinatorProvider } from './src/state/NudgeCoordinatorContext';
+import { SetReminderTimeProvider } from './src/state/SetReminderTimeContext';
 import LoginPromptHost from './src/components/LoginPromptHost';
 import MoodCheckInSheet from './src/components/MoodCheckInSheet';
+import SetReminderTimeHost from './src/components/SetReminderTimeHost';
+import WidgetInstallHost from './src/components/WidgetInstallHost';
 import DeepLinkHandler from './src/navigation/DeepLinkHandler';
 import PrefetchManager from './src/components/PrefetchManager';
 import WidgetSync from './src/components/WidgetSync';
@@ -158,6 +161,7 @@ export default function App() {
                                         <ReminderInterstitialProvider>
                                         <LoginPromptProvider>
                                         <NudgeCoordinatorProvider>
+                                        <SetReminderTimeProvider>
                                         <NavigationContainer ref={navRef} theme={NAV_THEME} onStateChange={onNavStateChange} onReady={() => setAppReady(true)}>
                                           <StatusBar style="dark" />
                                           <RootNavigator />
@@ -183,6 +187,14 @@ export default function App() {
                                               MoodCheckInProvider flag; renders
                                               null until due. */}
                                           <MoodCheckInSheet />
+                                          {/* Proactive "set your prayer reminders"
+                                              nudge for users who finished onboarding
+                                              without enabling reminders (coordinator-
+                                              managed, gated on notifications-off). */}
+                                          <SetReminderTimeHost />
+                                          {/* One-time widget-install nudge
+                                              (engaged users, day 3+). */}
+                                          <WidgetInstallHost />
                                           {/* Mirrors today's verse + the card's
                                               background image to the home-screen
                                               widget. Null render; needs DailyVerses
@@ -203,6 +215,7 @@ export default function App() {
                                             <LoadingOverlay appReady={appReady} onHide={hideLoading} />
                                           )}
                                         </NavigationContainer>
+                                        </SetReminderTimeProvider>
                                         </NudgeCoordinatorProvider>
                                         </LoginPromptProvider>
                                         </ReminderInterstitialProvider>

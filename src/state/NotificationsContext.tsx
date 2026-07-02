@@ -5,6 +5,8 @@ import * as Notifications from 'expo-notifications';
 import { useUILanguage, type UILanguageCode } from './UILanguageContext';
 import { lookupString } from '../i18n/lookup';
 import { logEvent, setUserProps } from '../services/firebase';
+import { usePrayer } from './PrayerContext';
+import { useCurrentDayYmd } from '../hooks/useCurrentDayYmd';
 
 // ─── Public types ─────────────────────────────────────────────────────────
 
@@ -56,6 +58,44 @@ const VARIANTS_PER_SLOT: Record<NotifKey, number> = {
 };
 const ACTION_CATEGORY = 'her-bible.prayer';
 const ANDROID_CHANNEL = 'her-bible.daily';
+// One-shot "finish your evening prayer to complete today" nudge — scheduled for
+// 20:00 on days where morning is done but evening isn't; cancelled the instant
+// evening completes or the day rolls. Stable id → replaces, never stacks.
+const COMPLETE_STREAK_ID = 'her-bible.notif.completeStreak';
+
+async function syncCompleteStreakNudge(mDone: boolean, eDone: boolean, todayYmd: string, lang: UILanguageCode): Promise<void> {
+  const cancel = () => Notifications.cancelScheduledNotificationAsync(COMPLETE_STREAK_ID).catch(() => {});
+  let granted = false;
+  try { granted = (await Notifications.getPermissionsAsync()).granted; } catch { return; }
+  if (!granted || !mDone || eDone) { await cancel(); return; }
+  const [y, m, d] = todayYmd.split('-').map(Number);
+  const when = new Date(y, m - 1, d, 20, 30, 0, 0);   // 20:30 — spaced from the 20:00 night reminder + 21:00 verse push
+  if (when.getTime() <= Date.now()) { await cancel(); return; }   // already past 20:30 → skip today
+  const v = (d % 3) + 1;                                            // 3 rotating copy variants
+  await Notifications.scheduleNotificationAsync({
+    identifier: COMPLETE_STREAK_ID,
+    content: {
+      title: lookupString(`notif.push.completeStreak.title.${v}`, lang),
+      body:  lookupString(`notif.push.completeStreak.body.${v}`, lang),
+      sound: 'default',
+      categoryIdentifier: ACTION_CATEGORY,
+      data: { slot: 'completeStreak' },
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: when,
+      ...(Platform.OS === 'android' ? { channelId: ANDROID_CHANNEL } : {}),
+    },
+  }).catch(() => {});
+}
+
+// Serialize complete-streak (re)scheduling so a fast cancel (evening done) can't
+// be overtaken by a slow schedule on the same stable id, which would otherwise
+// leave a stale "finish your evening prayer" push after the user already did.
+let completeStreakChain: Promise<void> = Promise.resolve();
+function requestCompleteStreakSync(mDone: boolean, eDone: boolean, todayYmd: string, lang: UILanguageCode): void {
+  completeStreakChain = completeStreakChain.then(() => syncCompleteStreakNudge(mDone, eDone, todayYmd, lang)).catch(() => {});
+}
 const BRAND_ROSE = '#E8619A';
 
 // ─── Pure helpers (no React) ──────────────────────────────────────────────
@@ -334,6 +374,10 @@ function hydrateFromStorage(raw: string | null): NotifMap {
 interface NotificationsState {
   ready: boolean;
   settings: NotifMap;
+  /** Live OS notification-permission status (refreshed on mount + foreground +
+   *  after any grant). "Reminders actually active" = permissionGranted && a slot
+   *  is enabled — DEFAULTS have slots enabled, so this flag is the real signal. */
+  permissionGranted: boolean;
   /** Returns true when the toggle actually flipped — false if permission denial blocked it. */
   setEnabled: (key: NotifKey, value: boolean) => Promise<boolean>;
   setSchedule: (key: NotifKey, hour: number, minute: number) => void;
@@ -345,6 +389,13 @@ interface NotificationsState {
    * whether permission ended up granted.
    */
   requestPermissionAndEnableDefaults: () => Promise<boolean>;
+  /** Atomically set BOTH reminder times + enable them and request OS permission,
+   *  in a single persist (no stale-settings race). Returns whether permission
+   *  ended up granted. Used by the "set your reminders" nudge. */
+  configureReminders: (
+    morning: { hour: number; minute: number },
+    evening: { hour: number; minute: number },
+  ) => Promise<boolean>;
 }
 
 const Ctx = createContext<NotificationsState | null>(null);
@@ -357,6 +408,9 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   // wouldn't trigger that re-fire; current code only re-runs on settings
   // change which is coincidence rather than intent.
   const [ready, setReady] = useState(false);
+  const [permissionGranted, setPermissionGranted] = useState(false);
+  const prayer = usePrayer();
+  const todayYmd = useCurrentDayYmd();
 
   // 1) Hydrate persisted settings from disk (once, on mount).
   useEffect(() => {
@@ -365,6 +419,25 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       .catch(() => { /* fall through — defaults are already in state */ })
       .finally(() => setReady(true));
   }, []);
+
+  // 1b) Track OS notification permission on mount + every foreground, so
+  //     consumers (reminder toggle, set-time popup) know whether reminders can
+  //     actually fire (DEFAULTS enable slots even before permission is granted).
+  useEffect(() => {
+    const check = () => Notifications.getPermissionsAsync()
+      .then(p => setPermissionGranted(!!p.granted))
+      .catch(() => {});
+    check();
+    const sub = AppState.addEventListener('change', s => { if (s === 'active') check(); });
+    return () => sub.remove();
+  }, []);
+
+  // 1c) Complete-streak evening nudge — reschedule/cancel whenever prayer state
+  //     or the calendar day changes (morning done + evening pending → 20:00 push).
+  useEffect(() => {
+    if (!ready) return;
+    requestCompleteStreakSync(prayer.mDone, prayer.eDone, todayYmd, lang);
+  }, [ready, prayer.mDone, prayer.eDone, todayYmd, lang]);
 
   // 2) Configure the Android notification channel (once, on mount).
   //    Re-runs on lang change so the channel display name in system
@@ -458,6 +531,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   // alert with a shortcut to system Settings.
   const setEnabled = useCallback(async (key: NotifKey, value: boolean): Promise<boolean> => {
     if (value && !(await ensureNotificationPermission(lang))) return false;
+    if (value) setPermissionGranted(true);   // got past the permission gate → granted
     const next = { ...settings, [key]: { ...settings[key], enabled: value } };
     persist(next);
     logEvent('reminder_toggle', { key, enabled: value, source: 'settings' });
@@ -485,6 +559,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       const next = await Notifications.requestPermissionsAsync();
       granted = next.granted;
     }
+    setPermissionGranted(granted);
     if (granted) {
       // Turn on the two daily reminders so the opt-in delivers value
       // immediately; the sync effect schedules them off this state change.
@@ -498,13 +573,36 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     return granted;
   }, [settings, persist]);
 
+  const configureReminders = useCallback(async (
+    m: { hour: number; minute: number },
+    e: { hour: number; minute: number },
+  ): Promise<boolean> => {
+    const current = await Notifications.getPermissionsAsync();
+    let granted = current.granted;
+    if (!granted && current.canAskAgain) {
+      granted = (await Notifications.requestPermissionsAsync()).granted;
+    }
+    setPermissionGranted(granted);
+    // One atomic persist: both times + enabled. If permission was denied the
+    // times are still stored (they apply the moment permission is later granted).
+    persist({
+      ...settings,
+      morning: { hour: m.hour, minute: m.minute, enabled: true },
+      night:   { hour: e.hour, minute: e.minute, enabled: true },
+    });
+    logEvent('reminder_toggle', { key: 'configure', enabled: true, source: 'nudge' });
+    return granted;
+  }, [settings, persist]);
+
   const value = useMemo<NotificationsState>(() => ({
     ready,
     settings,
+    permissionGranted,
     setEnabled,
     setSchedule,
     requestPermissionAndEnableDefaults,
-  }), [ready, settings, setEnabled, setSchedule, requestPermissionAndEnableDefaults]);
+    configureReminders,
+  }), [ready, settings, permissionGranted, setEnabled, setSchedule, requestPermissionAndEnableDefaults, configureReminders]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

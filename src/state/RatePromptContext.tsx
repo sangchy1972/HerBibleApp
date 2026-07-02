@@ -1,19 +1,14 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Hard-coded cadence rules:
-// - First prompt: after the user finishes their first prayer ever.
-// - User taps "No"   → never again.
-// - User taps "Yes"  → trigger the in-app review, then ask again in 30 days.
-//                      We can't read what rating they actually gave (Play /
-//                      App Store APIs deliberately don't expose it), so we
-//                      just keep the 30-day cadence until they tap "No".
-// - User dismissed  → ask again in 7 days.
-// - Once `markRated` is called (after a confirmed in-app review submission),
-//   we stop forever.
-const FIRST_DELAY_MS = 0;          // immediate after first prayer
-const DISMISS_DELAY_MS = 7 * 86_400_000;
-const YES_DELAY_MS = 30 * 86_400_000;
+// Cadence rules (per product, denser re-ask):
+// - First prompt: right after the user finishes their first prayer ever.
+// - "Yes"      → trigger the in-app review, then NEVER ask again.
+// - "No"       → ask again in ~30 days (and keep the 30-day cadence).
+// - Dismissed  → escalating gap: 3, 4, 5, 6, 7 … capped at 15 days.
+// - `markRated` (confirmed review submitted) → stop forever.
+const NO_DELAY_MS = 30 * 86_400_000;   // No → ~30 days
+const DAY_MS = 86_400_000;
 
 const STORAGE_KEY = 'ratePrompt:v1';
 
@@ -32,6 +27,19 @@ const DEFAULT: Persisted = {
   rated: false,
   promptCount: 0,
 };
+
+// Pure cadence decision — exported so it can be unit-tested without React.
+export function rateShouldAsk(
+  s: Pick<Persisted, 'rated' | 'choice' | 'lastShownAt' | 'promptCount'>,
+  now = Date.now(),
+): boolean {
+  if (s.rated) return false;
+  if (s.choice === 'yes') return false;                       // Yes → never again
+  if (s.promptCount === 0) return true;                        // first time (after first prayer)
+  if (s.choice === 'no') return now - s.lastShownAt >= NO_DELAY_MS;   // No → 30 days
+  const gapDays = Math.min(15, 2 + s.promptCount);             // dismissed → 3,4,5,…,15
+  return now - s.lastShownAt >= gapDays * DAY_MS;
+}
 
 interface RatePromptState {
   ready: boolean;
@@ -62,14 +70,7 @@ export function RatePromptProvider({ children }: { children: React.ReactNode }) 
 
   const value = useMemo<RatePromptState>(() => ({
     ready,
-    shouldAsk: () => {
-      if (state.rated) return false;
-      if (state.choice === 'no') return false;
-      const now = Date.now();
-      if (state.promptCount === 0) return now - state.lastShownAt >= FIRST_DELAY_MS;
-      if (state.choice === 'yes') return now - state.lastShownAt >= YES_DELAY_MS;
-      return now - state.lastShownAt >= DISMISS_DELAY_MS;
-    },
+    shouldAsk: () => rateShouldAsk(state),
     markShown: () => persist({ ...state, lastShownAt: Date.now(), promptCount: state.promptCount + 1 }),
     markYes:   () => persist({ ...state, choice: 'yes', lastShownAt: Date.now() }),
     markNo:    () => persist({ ...state, choice: 'no',  lastShownAt: Date.now() }),

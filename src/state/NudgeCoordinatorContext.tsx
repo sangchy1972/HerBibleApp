@@ -1,6 +1,13 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
-import { type NudgeId, type ArbiterReq, MAX_BUDGETED_PER_OPEN, pickActiveNudge } from './nudgePriority';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  type NudgeId, type ArbiterReq,
+  MAX_BUDGETED_PER_OPEN, MAX_BLOCKING_PER_OPEN, BUDGETED_NUDGE_FLOOR_MS, pickActiveNudge,
+} from './nudgePriority';
+import { useReminderInterstitial } from './ReminderInterstitialContext';
+
+const LAST_BUDGETED_KEY = 'nudge:lastBudgetedAt:v1';
 
 // Coordinator for BLOCKING prompts (bottom sheets / modal overlays) mounted at
 // the app root. Guarantees at most one is on screen at a time, chosen by
@@ -32,15 +39,26 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
   const requests = useRef<Map<NudgeId, NudgeRequest>>(new Map());
   const [activeId, setActiveId] = useState<NudgeId | null>(null);
   const budgetUsed = useRef(0);
+  const shownThisOpen = useRef(0);          // TOTAL blocking prompts shown this open (the 2-cap)
+  const lastBudgetedAt = useRef(0);         // persisted; drives the 6h floor between budgeted nudges
   // Bumped on any change that should re-run arbitration.
   const [version, setVersion] = useState(0);
   const bump = useCallback(() => setVersion(v => v + 1), []);
 
-  // Reset the per-open budget on every return to the foreground — a fresh open
-  // may surface one new budgeted nudge.
+  // Suppress ALL coordinator prompts while the full-screen "Follow Him" opt-in
+  // (a pre-tab gate that replaces the tabs) is showing — otherwise a sheet could
+  // render on top of it (both are notif-off surfaces, so they collide).
+  const reminder = useReminderInterstitial();
+  const reminderGateUp = reminder.ready && reminder.shouldShow;
+
+  useEffect(() => {
+    AsyncStorage.getItem(LAST_BUDGETED_KEY).then(v => { if (v) lastBudgetedAt.current = Number(v) || 0; }).catch(() => {});
+  }, []);
+
+  // Reset the per-open counters on every return to the foreground.
   useEffect(() => {
     const sub = AppState.addEventListener('change', s => {
-      if (s === 'active') { budgetUsed.current = 0; bump(); }
+      if (s === 'active') { budgetUsed.current = 0; shownThisOpen.current = 0; bump(); }
     });
     return () => sub.remove();
   }, [bump]);
@@ -69,16 +87,26 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
   // preempted; the next one is chosen after it dismisses.
   useEffect(() => {
     if (activeId !== null) return;
+    if (reminderGateUp) return;   // pre-tab Follow-Him gate up → suppress everything
+    const now = Date.now();
+    const withinFloor = now - lastBudgetedAt.current < BUDGETED_NUDGE_FLOOR_MS;
+    const budgetRemaining = withinFloor ? 0 : (MAX_BUDGETED_PER_OPEN - budgetUsed.current);
+    const blockingRemaining = MAX_BLOCKING_PER_OPEN - shownThisOpen.current;
     const reqs: ArbiterReq[] = [...requests.current.values()].map(r => ({
       id: r.id, priority: r.priority, eligible: r.canShow(), ignoresBudget: r.ignoresBudget,
     }));
-    const pick = pickActiveNudge(reqs, MAX_BUDGETED_PER_OPEN - budgetUsed.current);
+    const pick = pickActiveNudge(reqs, budgetRemaining, blockingRemaining);
     if (pick) {
       const req = requests.current.get(pick);
-      if (req && !req.ignoresBudget) budgetUsed.current += 1;
+      shownThisOpen.current += 1;                     // counts toward the 2-cap
+      if (req && !req.ignoresBudget) {
+        budgetUsed.current += 1;
+        lastBudgetedAt.current = now;
+        AsyncStorage.setItem(LAST_BUDGETED_KEY, String(now)).catch(() => {});
+      }
       setActiveId(pick);
     }
-  }, [version, activeId]);
+  }, [version, activeId, reminderGateUp]);
 
   const value = useMemo<NudgeCoordinatorState>(() => ({
     requestSlot,

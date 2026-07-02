@@ -27,6 +27,10 @@ import { useTranslation } from '../state/TranslationsContext';
 import { useReadChapters } from '../state/ReadChaptersContext';
 import { usePlanCompletion } from '../state/PlanCompletionContext';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
+import { useGospelsPsalms } from '../state/GospelsPsalmsContext';
+import { useAchievements } from '../state/AchievementsContext';
+import HomeNudgeBanner from '../components/home/HomeNudgeBanner';
+import { pickHomeBanner, type HomeBannerKind } from '../state/homeNudges';
 import { nextUncompletedDay } from '../components/PlanRowCard';
 import PlanProgressCard from '../components/PlanProgressCard';
 import GospelPsalmCards from '../components/GospelPsalmCards';
@@ -467,7 +471,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   // header has to read from the same source. Using `currentStreak` (the
   // active consecutive run) here was the cause of "header shows 0, tap
   // shows 4" — the user has 4 lifetime complete days but no active streak.
-  const { morning, setMorning, mDone, eDone, wasCompleteOn, totalComplete } = usePrayer();
+  const { morning, setMorning, mDone, eDone, wasCompleteOn, totalComplete, everPrayed } = usePrayer();
   // Warm the badge-art cache from the home screen — the earliest point in the
   // app, so the CDN images are on disk well before the first badge is awarded
   // (e.g. prayer.first on the first Amen). Idempotent + once-per-launch.
@@ -488,7 +492,11 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   // `records`; the "in progress" derivation is local: any plan with at
   // least one day completed but no `finishedAt` is active.
   const { records: planRecords } = usePlanCompletion();
-  const { getSummary } = useFeaturedPlans();
+  const { getSummary, summary } = useFeaturedPlans();
+  const gp = useGospelsPsalms();
+  const { daysSinceFirstLaunch } = useAchievements();
+  // In-memory (session) dismissals for the home nudge banner.
+  const [bannerDismissed, setBannerDismissed] = useState<HomeBannerKind[]>([]);
   const inProgressPlanRows = useMemo(() => {
     const activeSlugs = Object.entries(planRecords)
       .filter(([, r]) => r.completedDays.length > 0 && !r.finishedAt)
@@ -565,6 +573,31 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   const today = now;
   const { lang } = useUILanguage();
   const dateStr = today.toLocaleDateString(localeFor(lang), { weekday: 'long', month: 'short', day: 'numeric' });
+
+  // ── Home nudge banner (single slot, priority-ordered) ─────────────────────
+  const bannerSlot: 'morning' | 'evening' = now.getHours() >= 18 || now.getHours() < 4 ? 'evening' : 'morning';
+  const bannerKind = pickHomeBanner({
+    daysSinceFirstLaunch,
+    everPrayed,
+    mDone, eDone,
+    hour: now.getHours(),
+    gospelReady: gp.ready,
+    gospelSlotDone: bannerSlot === 'morning' ? gp.morningDone : gp.eveningDone,
+    hasAnyPlan: Object.keys(planRecords).length > 0,
+    hasSuggestablePlan: summary.length > 0,
+    dismissed: bannerDismissed,
+  });
+  const bannerSpec = useMemo(() => {
+    if (!bannerKind) return null;
+    switch (bannerKind) {
+      case 'coachPray':      return { icon: 'sunrise' as const,   title: t('homeNudge.coach.pray'),            cta: undefined as string | undefined, onPress: () => navigation.navigate('PrayerFlow', { kind: bannerSlot }) };
+      case 'completeStreak': return { icon: 'moon' as const,      title: t('homeNudge.completeStreak.title'),  cta: t('homeNudge.completeStreak.cta'), onPress: () => navigation.navigate('PrayerFlow', { kind: 'evening' }) };
+      case 'notPrayed':      return { icon: 'heart' as const,     title: t('homeNudge.notPrayed.title'),       cta: t('homeNudge.notPrayed.cta'),      onPress: () => navigation.navigate('PrayerFlow', { kind: bannerSlot }) };
+      case 'gospel':         return { icon: 'book-open' as const, title: t('homeNudge.gospel.title'),          cta: t('homeNudge.gospel.cta'),         onPress: () => navigation.navigate('GospelPsalm', { slot: bannerSlot }) };
+      case 'planRec':        return { icon: 'compass' as const,   title: t('homeNudge.planRec.title'),         cta: t('homeNudge.planRec.cta'),        onPress: () => { const s = summary[0]; if (s) navigation.navigate('FeaturedPlanDetail', { slug: s.slug }); } };
+    }
+  }, [bannerKind, bannerSlot, t, navigation, summary]);
+  const dismissBanner = (k: HomeBannerKind) => setBannerDismissed(d => (d.includes(k) ? d : [...d, k]));
 
   // ── Slot rules ───────────────────────────────────────────────────────────
   // Morning window opens at 06:00, closes (effectively) when evening opens.
@@ -866,6 +899,21 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
         </View>
       </View>
       </TabSection>
+
+      {/* Proactive nudge banner — a single, priority-ordered "what to do next"
+          hint (first prayer / finish streak / haven't prayed / read Gospel /
+          pick a plan). Self-clears when the action is done; X hides it. */}
+      {bannerSpec && (
+        <TabSection delay={15}>
+          <HomeNudgeBanner
+            icon={bannerSpec.icon}
+            title={bannerSpec.title}
+            ctaLabel={bannerSpec.cta}
+            onPress={bannerSpec.onPress}
+            onDismiss={() => { if (bannerKind) dismissBanner(bannerKind); }}
+          />
+        </TabSection>
+      )}
 
       {/* Progress bar */}
       <TabSection delay={30}>{/* 90 → 30 — see useTabFocusEntrance perf note */}

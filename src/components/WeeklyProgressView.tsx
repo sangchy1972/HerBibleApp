@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import LottieView from 'lottie-react-native';
-import Animated, { FadeIn, SlideInDown, Easing } from 'react-native-reanimated';
+import Animated, {
+  FadeIn, SlideInDown, Easing, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, interpolate,
+} from 'react-native-reanimated';
 import { ROSE, LAV, TXT, TXTSUB, FONTS } from '../constants/theme';
 import { usePrayer } from '../state/PrayerContext';
+import { useNotifications } from '../state/NotificationsContext';
 import { useT } from '../i18n/useT';
 import { useGospelsPsalms } from '../state/GospelsPsalmsContext';
 
@@ -83,6 +86,11 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack, on
   const { recordOn, mDone, eDone } = usePrayer();
   const { count, weekFlags, bothFlags, todayIdx } = countPrayersThisWeek(recordOn);
   const accent = morning ? ROSE : LAV;
+  // Reminders already active? (OS permission granted AND a daily slot enabled.)
+  // If so, we hide the "Open Daily Verse Reminder" CTA entirely — no point
+  // nudging a user who's already set up.
+  const { permissionGranted, settings } = useNotifications();
+  const remindersOn = permissionGranted && (settings.morning.enabled || settings.night.enabled);
 
   // Day completion is what drives the hero + today's calendar glyph — NOT which
   // slot was just prayed. Per user: the FIRST prayer of the day (morning OR
@@ -162,16 +170,16 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack, on
           {t('weekly.subPrefix')} <Text style={[styles.subStrong, { color: accent }]}>{ordinal(count)}</Text> {t('weekly.subSuffix')}
         </Text>
 
-        <TouchableOpacity onPress={onOpenReminder} activeOpacity={0.85} style={[styles.reminderBtn, { backgroundColor: accent }]}>
-          <View style={styles.reminderIcon}>
-            <PrayingHandsGlyph color={accent} small />
-            <View style={styles.reminderDot} />
-          </View>
-          <Text style={styles.reminderText}>{t('weekly.openReminder')}</Text>
-          <View style={styles.reminderToggle}>
-            <View style={styles.reminderKnob} />
-          </View>
-        </TouchableOpacity>
+        {!remindersOn && (
+          <TouchableOpacity onPress={onOpenReminder} activeOpacity={0.85} style={[styles.reminderBtn, { backgroundColor: accent }]}>
+            <View style={styles.reminderIcon}>
+              <PrayingHandsGlyph color={accent} small />
+              <View style={styles.reminderDot} />
+            </View>
+            <Text style={styles.reminderText}>{t('weekly.openReminder')}</Text>
+            <ReminderToggleHint />
+          </TouchableOpacity>
+        )}
       </Animated.View>
 
       {/* Below the card: when today's Gospel & Psalms isn't read, a "next"
@@ -301,6 +309,34 @@ function PrayingHandsGlyph({ color, small }: { color: string; small?: boolean })
   );
 }
 
+// Coach hint: a finger keeps flipping the toggle ON (~2.9s loop) so the user
+// notices they can open the daily reminder. Only rendered when reminders are OFF.
+function ReminderToggleHint() {
+  const t = useSharedValue(0);
+  useEffect(() => {
+    t.value = withRepeat(withSequence(
+      withTiming(0, { duration: 550 }),                                        // rest at OFF
+      withTiming(1, { duration: 620, easing: Easing.inOut(Easing.cubic) }),    // finger flips it ON
+      withTiming(1, { duration: 900 }),                                        // rest at ON
+      withTiming(0, { duration: 0 }),                                          // reset to OFF
+    ), -1, false);
+  }, [t]);
+  const TRAVEL = 18;   // 40 track − 2×2 padding − 18 knob
+  const knobStyle = useAnimatedStyle(() => ({ transform: [{ translateX: t.value * TRAVEL }] }));
+  const handStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: t.value * TRAVEL },
+      { scale: interpolate(t.value, [0, 0.5, 1], [1, 0.84, 1]) },
+    ],
+  }));
+  return (
+    <View style={styles.reminderToggle}>
+      <Animated.View style={[styles.reminderKnobAnim, knobStyle]} />
+      <Animated.Text style={[styles.reminderHand, handStyle]}>{'\u{1F446}'}</Animated.Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   // Base color is the lightest stop of the gradient so a flash of solid
   // background during initial paint matches the gradient's top-left.
@@ -414,6 +450,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   reminderKnob: { width: 18, height: 18, borderRadius: 9, backgroundColor: '#FFFFFF' },
+  reminderKnobAnim: { position: 'absolute', left: 2, top: 2, width: 18, height: 18, borderRadius: 9, backgroundColor: '#FFFFFF' },
+  reminderHand: { position: 'absolute', left: 1, top: 11, fontSize: 20 },
   backBtn: {
     marginHorizontal: 16,
     marginTop: 50,                                                                // 50 px below the card per user (was pushed to screen bottom by a flex:1 spacer)

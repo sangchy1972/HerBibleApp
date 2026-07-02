@@ -40,6 +40,8 @@ const MIGRATION_WINDOW_MS = 3000;
 interface AchievementsState {
   earned: EarnedMap;
   earnedCount: number;
+  /** Whole days since the user's first launch (0 on day one). Drives day-N nudges. */
+  daysSinceFirstLaunch: number;
   awardQueue: Achievement[];
   dismissAward: () => void;
   // Useful for screen-driven manual refresh; the context already auto-evaluates
@@ -283,8 +285,8 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
   const earnedCount = useMemo(() => Object.keys(earned).length, [earned]);
 
   const value = useMemo<AchievementsState>(() => ({
-    earned, earnedCount, awardQueue, dismissAward, recompute,
-  }), [earned, earnedCount, awardQueue, dismissAward, recompute]);
+    earned, earnedCount, daysSinceFirstLaunch, awardQueue, dismissAward, recompute,
+  }), [earned, earnedCount, daysSinceFirstLaunch, awardQueue, dismissAward, recompute]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

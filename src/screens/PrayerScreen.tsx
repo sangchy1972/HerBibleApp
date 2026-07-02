@@ -248,7 +248,11 @@ function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTa
   const handleMorePress = () => {
     moreBtnRef.current?.measureInWindow((x, y, w, h) => onMore({ x, y, w, h }));
   };
-  const [liked, setLiked] = React.useState(false);
+  // Liked state is PER-SLOT — Morning and Evening show different verses and must
+  // like/unlike independently. A single shared boolean made liking one mark both.
+  const [likedSlots, setLikedSlots] = React.useState<{ morning: boolean; evening: boolean }>({ morning: false, evening: false });
+  const slotKey: 'morning' | 'evening' = morning ? 'morning' : 'evening';
+  const liked = likedSlots[slotKey];
   // Soft darkening gradient sitting on top of the CDN photo. Goes from a
   // subtle wash at the top (~20%) to a heavier veil at the bottom (~55%)
   // so the verse text + action labels stay legible while the photo still
@@ -377,7 +381,7 @@ function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTa
           </View>
         </TouchableOpacity>
         <View style={styles.heroActions}>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => setLiked(l => !l)}>
+          <TouchableOpacity style={styles.actionBtn} onPress={() => setLikedSlots(s => ({ ...s, [slotKey]: !s[slotKey] }))}>
             <HeartIcon filled={liked} color={liked ? '#FFB3CC' : iconColor} />
             <Text style={[styles.actionLabel, { color: liked ? '#FFB3CC' : iconColor }]}>{formatLikes(likes + (liked ? 1 : 0))}</Text>
           </TouchableOpacity>

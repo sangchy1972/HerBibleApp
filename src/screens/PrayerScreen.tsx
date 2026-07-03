@@ -28,9 +28,8 @@ import { useReadChapters } from '../state/ReadChaptersContext';
 import { usePlanCompletion } from '../state/PlanCompletionContext';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import { useGospelsPsalms } from '../state/GospelsPsalmsContext';
-import { useAchievements } from '../state/AchievementsContext';
-import HomeNudgeBanner from '../components/home/HomeNudgeBanner';
-import { pickHomeBanner, type HomeBannerKind } from '../state/homeNudges';
+import DailyRhythmBar from '../components/home/DailyRhythmBar';
+import { computeRhythm } from '../state/dailyRhythm';
 import { nextUncompletedDay } from '../components/PlanRowCard';
 import PlanProgressCard from '../components/PlanProgressCard';
 import GospelPsalmCards from '../components/GospelPsalmCards';
@@ -267,11 +266,12 @@ function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTa
   // an identical photo veil. Morning is the new wine-red/burgundy (darker +
   // more transparent than the old magenta-pink) the user preferred.
   const colors = morning
-    // Veil alphas halved (+50% more transparent per user) so the photo reads
-    // clearly through the card: morning 0.30/0.58 → 0.15/0.29, evening
-    // 0.40/0.70 → 0.20/0.35. Kept in sync with PrayerFlow's reading-view scrim.
-    ? (['rgba(74,20,36,0.15)', 'rgba(28,8,16,0.29)'] as const)
-    : (['rgba(45,22,96,0.20)', 'rgba(16,5,37,0.35)'] as const);
+    // Veil strength history: original 0.30/0.58 & 0.40/0.70 → halved to
+    // 0.15/0.29 & 0.20/0.35 (read as "no scrim" on bright photos) → settled
+    // midway per user: morning 0.22/0.44, evening 0.30/0.52. Kept in sync
+    // with PrayerFlow's reading-view scrim.
+    ? (['rgba(74,20,36,0.22)', 'rgba(28,8,16,0.44)'] as const)
+    : (['rgba(45,22,96,0.30)', 'rgba(16,5,37,0.52)'] as const);
   const iconColor = 'rgba(255,255,255,0.92)';
 
   // Per-day social proof. Likes 1001 – 5000, comments 36 – 135. Different
@@ -496,11 +496,8 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   // `records`; the "in progress" derivation is local: any plan with at
   // least one day completed but no `finishedAt` is active.
   const { records: planRecords } = usePlanCompletion();
-  const { getSummary, summary } = useFeaturedPlans();
+  const { getSummary } = useFeaturedPlans();
   const gp = useGospelsPsalms();
-  const { daysSinceFirstLaunch } = useAchievements();
-  // In-memory (session) dismissals for the home nudge banner.
-  const [bannerDismissed, setBannerDismissed] = useState<HomeBannerKind[]>([]);
   const inProgressPlanRows = useMemo(() => {
     const activeSlugs = Object.entries(planRecords)
       .filter(([, r]) => r.completedDays.length > 0 && !r.finishedAt)
@@ -578,30 +575,62 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   const { lang } = useUILanguage();
   const dateStr = today.toLocaleDateString(localeFor(lang), { weekday: 'long', month: 'short', day: 'numeric' });
 
-  // ── Home nudge banner (single slot, priority-ordered) ─────────────────────
-  const bannerSlot: 'morning' | 'evening' = now.getHours() >= 18 || now.getHours() < 4 ? 'evening' : 'morning';
-  const bannerKind = pickHomeBanner({
-    daysSinceFirstLaunch,
-    everPrayed,
-    mDone, eDone,
+  // ── Daily Rhythm bar (permanent; replaces the dismissable nudge banner) ───
+  const todayYmdStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const rhythm = useMemo(() => computeRhythm({
     hour: now.getHours(),
+    todayYmd: todayYmdStr,
+    mDone, eDone,
     gospelReady: gp.ready,
-    gospelSlotDone: bannerSlot === 'morning' ? gp.morningDone : gp.eveningDone,
-    hasAnyPlan: Object.keys(planRecords).length > 0,
-    hasSuggestablePlan: summary.length > 0,
-    dismissed: bannerDismissed,
-  });
-  const bannerSpec = useMemo(() => {
-    if (!bannerKind) return null;
-    switch (bannerKind) {
-      case 'coachPray':      return { icon: 'sunrise' as const,   title: t('homeNudge.coach.pray'),            cta: undefined as string | undefined, onPress: () => navigation.navigate('PrayerFlow', { kind: bannerSlot }) };
-      case 'completeStreak': return { icon: 'moon' as const,      title: t('homeNudge.completeStreak.title'),  cta: t('homeNudge.completeStreak.cta'), onPress: () => navigation.navigate('PrayerFlow', { kind: 'evening' }) };
-      case 'notPrayed':      return { icon: 'heart' as const,     title: t('homeNudge.notPrayed.title'),       cta: t('homeNudge.notPrayed.cta'),      onPress: () => navigation.navigate('PrayerFlow', { kind: bannerSlot }) };
-      case 'gospel':         return { icon: 'book-open' as const, title: t('homeNudge.gospel.title'),          cta: t('homeNudge.gospel.cta'),         onPress: () => navigation.navigate('GospelPsalm', { slot: bannerSlot }) };
-      case 'planRec':        return { icon: 'compass' as const,   title: t('homeNudge.planRec.title'),         cta: t('homeNudge.planRec.cta'),        onPress: () => { const s = summary[0]; if (s) navigation.navigate('FeaturedPlanDetail', { slug: s.slug }); } };
+    gospelMorningDone: gp.morningDone,
+    gospelEveningDone: gp.eveningDone,
+    gospelPlanComplete: gp.planComplete,
+    planRecords,
+  }), [now, todayYmdStr, mDone, eDone, gp.ready, gp.morningDone, gp.eveningDone, gp.planComplete, planRecords]);
+  // Resolve the bar's text/icon/action from the machine state. Step states
+  // navigate on tap; rest states pop a friendly hint instead (never a dead
+  // tap). The plan step falls back to the explore tab whenever the chosen
+  // slug can't resolve to a summary — never a dead detail screen.
+  const rhythmSpec = useMemo(() => {
+    const s = rhythm.state;
+    const exploreNav = () => navigation.navigate('Tabs', { screen: 'plan', params: { tab: 'explore' } });
+    if (s.kind === 'step') {
+      switch (s.step) {
+        case 'prayerMorning': return {
+          icon: 'sunrise' as const,
+          text: !everPrayed ? t('rhythm.prayer.first') : now.getHours() >= 18 ? t('rhythm.prayer.morningLate') : t('rhythm.prayer.morning'),
+          hint: null, onPress: () => navigation.navigate('PrayerFlow', { kind: 'morning' as const }),
+        };
+        case 'prayerEvening': return {
+          icon: 'moon' as const,
+          text: !everPrayed ? t('rhythm.prayer.first') : t('rhythm.prayer.evening'),
+          hint: null, onPress: () => navigation.navigate('PrayerFlow', { kind: 'evening' as const }),
+        };
+        case 'gospelMorning': return {
+          icon: 'book-open' as const, text: t('rhythm.gospel.morning'),
+          hint: null, onPress: () => navigation.navigate('GospelPsalm', { slot: 'morning' as const }),
+        };
+        case 'gospelEvening': return {
+          icon: 'book' as const, text: t('rhythm.gospel.evening'),
+          hint: null, onPress: () => navigation.navigate('GospelPsalm', { slot: 'evening' as const }),
+        };
+        case 'plan': {
+          const planTitle = rhythm.planSlug ? getSummary(rhythm.planSlug)?.title : undefined;
+          if (rhythm.planMode === 'ongoing' && rhythm.planSlug && planTitle) {
+            const slug = rhythm.planSlug;
+            return {
+              icon: 'map' as const, text: t('rhythm.plan.ongoing', { name: planTitle }),
+              hint: null, onPress: () => navigation.navigate('FeaturedPlanDetail', { slug }),
+            };
+          }
+          return { icon: 'compass' as const, text: t('rhythm.plan.explore'), hint: null, onPress: exploreNav };
+        }
+      }
     }
-  }, [bannerKind, bannerSlot, t, navigation, summary]);
-  const dismissBanner = (k: HomeBannerKind) => setBannerDismissed(d => (d.includes(k) ? d : [...d, k]));
+    if (s.kind === 'allDone') return { icon: 'heart' as const, text: t('rhythm.allDone'), hint: t('rhythm.hint.allDone'), onPress: null };
+    if (s.kind === 'deadZone') return { icon: 'moon' as const, text: t('rhythm.deadZone'), hint: t('rhythm.hint.deadZone'), onPress: null };
+    return { icon: 'clock' as const, text: t('rhythm.waitEvening'), hint: t('rhythm.hint.evening'), onPress: null };
+  }, [rhythm, everPrayed, now, t, navigation, getSummary]);
 
   // ── Slot rules ───────────────────────────────────────────────────────────
   // Morning window opens at 06:00, closes (effectively) when evening opens.
@@ -904,20 +933,23 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
       </View>
       </TabSection>
 
-      {/* Proactive nudge banner — a single, priority-ordered "what to do next"
-          hint (first prayer / finish streak / haven't prayed / read Gospel /
-          pick a plan). Self-clears when the action is done; X hides it. */}
-      {bannerSpec && (
-        <TabSection delay={15}>
-          <HomeNudgeBanner
-            icon={bannerSpec.icon}
-            title={bannerSpec.title}
-            ctaLabel={bannerSpec.cta}
-            onPress={bannerSpec.onPress}
-            onDismiss={() => { if (bannerKind) dismissBanner(bannerKind); }}
+      {/* Daily Rhythm bar — permanent 5-step tracker (morning/evening prayer,
+          morning/evening Gospel & Psalm, reading plan). Text suggests the next
+          time-appropriate step; dots celebrate completions. Never dismissed. */}
+      <TabSection delay={15}>
+        <View style={{ paddingHorizontal: P }}>
+          <DailyRhythmBar
+            todayYmd={todayYmdStr}
+            dots={rhythm.dots}
+            doneCount={rhythm.doneCount}
+            allDone={rhythm.state.kind === 'allDone'}
+            icon={rhythmSpec.icon}
+            text={rhythmSpec.text}
+            hintText={rhythmSpec.hint}
+            onPress={rhythmSpec.onPress}
           />
-        </TabSection>
-      )}
+        </View>
+      </TabSection>
 
       {/* Progress bar */}
       <TabSection delay={30}>{/* 90 → 30 — see useTabFocusEntrance perf note */}

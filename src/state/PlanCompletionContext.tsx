@@ -8,6 +8,8 @@ interface PlanRecord {
   completedDays: number[];      // 1-indexed days that have been Mark-Day-Complete'd
   firstStartedAt: number;       // ms timestamp of the first time any day was completed
   finishedAt?: number;          // ms timestamp once completedDays.length === total
+  lastDayYmd?: string;          // local YYYY-MM-DD of the most recent day completion
+                                // (absent on pre-existing records — treat as "not today")
 }
 
 type PlanRecords = Record<string, PlanRecord>;   // slug → record
@@ -59,11 +61,14 @@ export function PlanCompletionProvider({ children }: { children: React.ReactNode
       if (current.completedDays.includes(day)) return;
       const completedDays = [...current.completedDays, day].sort((a, b) => a - b);
       const justFinished = completedDays.length >= total && !current.finishedAt;
+      const d = new Date();
+      const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const next: PlanRecord = {
         ...current,
         completedDays,
         firstStartedAt: current.firstStartedAt || Date.now(),
         finishedAt: completedDays.length >= total ? Date.now() : current.finishedAt,
+        lastDayYmd: ymd,
       };
       persist({ ...records, [slug]: next });
       logEvent('plan_day_complete', { slug, day });

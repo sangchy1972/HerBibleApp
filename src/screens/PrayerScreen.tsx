@@ -753,6 +753,17 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
     };
   });
 
+  // The overlay is pointerEvents-none (can't block touches even if stuck),
+  // but a watchdog still guarantees it never LOOKS stuck: any path that
+  // fails to reach a normal hide (cancelled animation, dropped callback)
+  // gets force-hidden shortly after the nominal choreography ends.
+  const starWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hideStarOverlay = useCallback(() => {
+    if (starWatchdogRef.current) { clearTimeout(starWatchdogRef.current); starWatchdogRef.current = null; }
+    setStarOverlayVisible(false);
+  }, []);
+  useEffect(() => () => { if (starWatchdogRef.current) clearTimeout(starWatchdogRef.current); }, []);
+
   const playStreakPunch = useCallback(() => {
     // Streak number scale 1 → 2 over 0.3s, +1 increment after 0.2s, hold 0.2s,
     // then scale back over 0.2s. Total ~0.7s.
@@ -762,8 +773,8 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
     );
     setTimeout(() => setDisplayedStreak(totalComplete), 200);
     // Hide the overlay once the streak punch has landed.
-    setTimeout(() => setStarOverlayVisible(false), 900);
-  }, [totalComplete, streakScale]);
+    setTimeout(hideStarOverlay, 900);
+  }, [totalComplete, streakScale, hideStarOverlay]);
 
   const playCelebration = useCallback(() => {
     // 1. Pop the %: 1 → 2 → 1 over 0.5s, with cubic on both halves.
@@ -781,17 +792,23 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
     });
     // 3. Reveal the star, fly it, fade it out, then punch the streak.
     setStarOverlayVisible(true);
+    // Failsafe: nominal chain is 500+600+900 ≈ 2s; force-hide at 4s no
+    // matter which link broke (a re-armed run replaces the timer).
+    if (starWatchdogRef.current) clearTimeout(starWatchdogRef.current);
+    starWatchdogRef.current = setTimeout(() => setStarOverlayVisible(false), 4000);
     starProgress.value = 0;
     starOpacity.value = 0;
     setTimeout(() => {
       starOpacity.value = withTiming(1, { duration: 120 });
       starProgress.value = withTiming(1, { duration: 600, easing: Easing.in(Easing.cubic) }, (finished) => {
-        if (!finished) return;
         starOpacity.value = withTiming(0, { duration: 120 });
-        runOnJS(playStreakPunch)();
+        // Cancelled mid-flight (a competing celebration or a day reset) →
+        // hide instead of the old dead-end `return` that stranded the star.
+        if (finished) runOnJS(playStreakPunch)();
+        else runOnJS(hideStarOverlay)();
       });
     }, 500);
-  }, [pctTextScale, starProgress, starOpacity, playStreakPunch]);
+  }, [pctTextScale, starProgress, starOpacity, playStreakPunch, hideStarOverlay]);
 
   useFocusEffect(useCallback(() => {
     if (pct !== prevPctRef.current) {
@@ -896,6 +913,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   };
 
   return (
+    <View style={styles.screenRoot}>
     <ScrollView
       showsVerticalScrollIndicator={false}
       contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 4 }]}
@@ -1209,14 +1227,24 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
 
       {/* Shooting-star celebration overlay. Modal lifts the layer above the
           tab content so the sparkle can fly across the whole screen. */}
-      <Modal visible={starOverlayVisible} transparent animationType="none" hardwareAccelerated>
+    </ScrollView>
+      {/* Celebration star — IN-SCREEN overlay, deliberately NOT a Modal.
+          An RN Modal is a native full-screen window that swallows every touch
+          in the app while visible, no matter what pointerEvents its children
+          set — so any path that left `starOverlayVisible` stuck true (e.g. the
+          flight animation getting cancelled) froze the ENTIRE screen behind an
+          invisible wall (reported as the midnight lock-up). A plain sibling
+          View with pointerEvents="none" can never intercept anything, killing
+          that whole failure class. Anchors are measured in window coordinates,
+          which map 1:1 onto this screen-root overlay. */}
+      {starOverlayVisible && (
         <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
           <Animated.View style={[styles.starOverlay, starStyle]}>
             <Sparkle size={28} />
           </Animated.View>
         </View>
-      </Modal>
-    </ScrollView>
+      )}
+    </View>
   );
 }
 
@@ -1234,6 +1262,10 @@ function Sparkle({ size }: { size: number }) {
 }
 
 const styles = StyleSheet.create({
+  // Screen root wraps the ScrollView so the celebration star can live in a
+  // sibling pointerEvents-none overlay (window-coordinate aligned) instead of
+  // a touch-swallowing Modal.
+  screenRoot: { flex: 1 },
   scroll: {
     paddingTop: 5,
   },

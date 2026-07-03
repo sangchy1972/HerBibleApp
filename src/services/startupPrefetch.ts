@@ -89,19 +89,32 @@ async function prefetchPlanDetails(
   }
 }
 
-export interface StartupPrefetchInput {
+export interface AudioPrefetchInput {
   todayDay: number;
   uiLang: string;
+}
+
+export interface SecondaryPrefetchInput {
   /** Featured plan slugs to warm (covers + detail bodies). Keep this small. */
   featuredSlugs: string[];
   loadPlan: (slug: string) => Promise<unknown>;
 }
 
-// Run phases 3 → 4 in order. Resolves when done; never throws.
-export async function runStartupPrefetch(input: StartupPrefetchInput): Promise<void> {
-  const { todayDay, uiLang, featuredSlugs, loadPlan } = input;
-  try { await prefetchNarration(todayDay, uiLang); } catch {}
-  await sleep(200);
+// WAVE A — today's prayer narration audio + follow-along timings. Kicked off as
+// EARLY as possible (while the splash/loading screen is still up), gated only on
+// today's verse + language being known. The clips download SEQUENTIALLY (see
+// prefetchNarration's per-verse loop, one clip at a time with pacing) and are
+// native I/O, so this warms the cache without ever fanning out a concurrent
+// burst or blocking the JS/UI thread during launch. Never throws.
+export async function runAudioPrefetch(input: AudioPrefetchInput): Promise<void> {
+  try { await prefetchNarration(input.todayDay, input.uiLang); } catch {}
+}
+
+// WAVE B — secondary, less latency-sensitive assets (plan covers + detail
+// bodies). Deferred well past first render so image decode + JSON fetches never
+// compete with the launch frame or the audio warm-up above. Never throws.
+export async function runSecondaryPrefetch(input: SecondaryPrefetchInput): Promise<void> {
+  const { featuredSlugs, loadPlan } = input;
   try { await prefetchPlanCovers(featuredSlugs); } catch {}
   try { await prefetchPlanDetails(featuredSlugs, loadPlan); } catch {}
 }

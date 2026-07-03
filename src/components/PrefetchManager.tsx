@@ -4,7 +4,7 @@ import { useUILanguage } from '../state/UILanguageContext';
 import { useDailyVerses } from '../state/DailyVersesContext';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
-import { runStartupPrefetch } from '../services/startupPrefetch';
+import { runAudioPrefetch, runSecondaryPrefetch } from '../services/startupPrefetch';
 
 // Quietly warms the content the user is bound to reach soon (prayer-flow
 // narration + timestamps, plan covers + detail bodies) so slow-network users
@@ -27,9 +27,14 @@ import { runStartupPrefetch } from '../services/startupPrefetch';
 // small on purpose — pulling all ~113 covers at launch would be wasteful.
 const FEATURED_COUNT = 6;
 
-// Delay after interactions settle before the first network call. Gives the
-// launch frame + nav transition + SDK init a clear runway.
-const DEFER_MS = 1200;
+// WAVE A (audio) — short delay so narration starts DURING the splash screen, but
+// still lets the critical first fetches (daily-verse data + backgrounds manifest)
+// grab the radio first. Deliberately NOT behind runAfterInteractions (that would
+// wait until the launch animation settles, i.e. past the splash).
+const AUDIO_DEFER_MS = 400;
+// WAVE B (secondary) — well past first render, so plan covers/details never
+// compete with the launch frame, SDK init, or the audio warm-up.
+const SECONDARY_DEFER_MS = 1200;
 
 export default function PrefetchManager({ appReady }: { appReady: boolean }) {
   const { lang } = useUILanguage();
@@ -37,34 +42,51 @@ export default function PrefetchManager({ appReady }: { appReady: boolean }) {
   const { summary, loadPlan } = useFeaturedPlans();
   const { loaded: backgroundsLoaded } = usePrayerBackgrounds();
 
-  // Run once per language per cold start (idempotent anyway — every download
-  // is cache-checked — but this avoids re-scheduling on unrelated re-renders).
-  const doneLangs = useRef<Set<string>>(new Set());
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // ── WAVE A: today's prayer narration — as early as the splash screen ───────
+  // Gated ONLY on today's verse + language (available very early), NOT on
+  // appReady / backgroundsLoaded, so the audio the user is most likely to tap
+  // first is already downloading behind the loading overlay. Downloads are
+  // native + sequential (one clip at a time), so this never janks launch.
+  const audioDone = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!todayDay || !lang) return;
+    const key = `${lang}:${todayDay}`;
+    if (audioDone.current.has(key)) return;
+    audioDone.current.add(key);
 
+    let cancelled = false;
+    const t = setTimeout(() => {
+      if (!cancelled) void runAudioPrefetch({ todayDay, uiLang: lang });
+    }, AUDIO_DEFER_MS);
+
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [todayDay, lang]);
+
+  // ── WAVE B: plan covers + detail bodies — deferred past first render ────────
+  const secondaryDone = useRef<Set<string>>(new Set());
+  const secondaryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!appReady || !backgroundsLoaded) return;   // wait for first frame + phases 1-2 underway
     if (summary.length === 0) return;              // bundled summary not ready
-    if (doneLangs.current.has(lang)) return;
-    doneLangs.current.add(lang);
+    if (secondaryDone.current.has(lang)) return;
+    secondaryDone.current.add(lang);
 
     let cancelled = false;
     const featuredSlugs = summary.slice(0, FEATURED_COUNT).map((p) => p.slug);
 
     const handle = InteractionManager.runAfterInteractions(() => {
-      timerRef.current = setTimeout(() => {
+      secondaryTimer.current = setTimeout(() => {
         if (cancelled) return;
-        // Fire-and-forget; runStartupPrefetch never throws.
-        void runStartupPrefetch({ todayDay, uiLang: lang, featuredSlugs, loadPlan });
-      }, DEFER_MS);
+        void runSecondaryPrefetch({ featuredSlugs, loadPlan });
+      }, SECONDARY_DEFER_MS);
     });
 
     return () => {
       cancelled = true;
       handle.cancel?.();
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (secondaryTimer.current) clearTimeout(secondaryTimer.current);
     };
-  }, [appReady, backgroundsLoaded, summary, lang, todayDay, loadPlan]);
+  }, [appReady, backgroundsLoaded, summary, lang, loadPlan]);
 
   return null;
 }

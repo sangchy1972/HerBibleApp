@@ -474,7 +474,7 @@ export function isUsControllerActive(): boolean {
  * brand-new user — or, if PAID never fires, bootstrapping on close), then refill.
  * Returns true if a show was initiated.
  */
-export function usOnShowOpportunity(placement: 'prayer_end' | 'plan_end' | 'nav' | 'app_open' | 'unknown' = 'unknown'): boolean {
+export function usOnShowOpportunity(placement: 'prayer_end' | 'gospel_end' | 'plan_end' | 'nav' | 'app_open' | 'unknown' = 'unknown'): boolean {
   if (adsOff()) return false;
   ensureDay();
   if (showing) return false;

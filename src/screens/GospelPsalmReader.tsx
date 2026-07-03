@@ -18,6 +18,7 @@ import { fetchChapter, type Verse } from '../services/bibleService';
 import { localizeBookName } from '../constants/bibleBookNames';
 import { useT } from '../i18n/useT';
 import { logEvent } from '../services/firebase';
+import { maybeShowInterstitial } from '../services/ads';
 import type { RootStackScreenProps } from '../navigation/types';
 import { GOSPELS_PSALMS_PLAN, type PsalmRef, type GPlanDay } from '../constants/gospelsPsalmsPlan';
 
@@ -287,7 +288,14 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
           morningDone={morningDone || slot === 'morning'}
           eveningDone={eveningDone || slot === 'evening'}
           accent={accent}
-          onContinue={() => navigation.goBack()}
+          onContinue={() => {
+            // Interstitial at this natural break — reading is complete and the
+            // user is returning home. Frequency-capped (60s floor) + remove-ads
+            // aware inside the service, so it won't double-pop with a just-shown
+            // prayer_end ad. Home renders beneath, so closing the ad lands there.
+            maybeShowInterstitial('gospel_end');
+            navigation.goBack();
+          }}
         />
       )}
     </View>

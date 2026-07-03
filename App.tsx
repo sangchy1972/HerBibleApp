@@ -72,6 +72,7 @@ import DeepLinkHandler from './src/navigation/DeepLinkHandler';
 import PrefetchManager from './src/components/PrefetchManager';
 import WidgetSync from './src/components/WidgetSync';
 import LoadingOverlay from './src/components/LoadingOverlay';
+import { setAudioModeAsync } from 'expo-audio';
 import { initFirebase, logScreenView } from './src/services/firebase';
 import { initAds } from './src/services/ads';
 import { initAdFrequency, noteNavigation } from './src/services/adFrequency';
@@ -88,6 +89,16 @@ export default function App() {
     initFirebase();
     const task = InteractionManager.runAfterInteractions(() => { initAds(); initAdFrequency(); initIap(); });
     return () => task.cancel();
+  }, []);
+
+  // Configure the iOS audio session ONCE, globally, at launch — play through the
+  // hardware silent/mute switch (`playsInSilentMode`) and mix rather than duck.
+  // Previously this lived only inside PrayerFlow, so Bible narration, Gospel &
+  // Psalm, and plan-chapter audio played in the default category that the mute
+  // switch silences → no sound on iOS when the phone was on silent. Setting it
+  // app-wide fixes every audio surface. No-ops safely on Android.
+  React.useEffect(() => {
+    setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers' }).catch(() => {});
   }, []);
 
   // One central screen-view hook: log the active route on every navigation

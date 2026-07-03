@@ -168,8 +168,7 @@
         }
       ],
       "./plugins/withAsyncStorageMaxSize.js",
-      "./plugins/withIosNonModularHeaders.js",
-      "./plugins/withRemoveMediaPermissions.js"
+      "./plugins/withIosNonModularHeaders.js"
     ],
     "extra": {
       "eas": {

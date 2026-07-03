@@ -239,6 +239,11 @@ function request(idx: number): void {
       onError(idx, e);
     }));
     ad.load();
+    // Unit-level request observability: AdMob's per-unit console stats lag by
+    // hours, which makes the waterfall look dead while it's actually in
+    // Phase 0. This shows up in Firebase DebugView within minutes. Volume is
+    // modest — a handful per session (backoff clocks gate re-requests).
+    logEvent('us_ad_request', { unit_idx: idx, floor: floorOf(idx), established: established ? 1 : 0, win_lo: win.lo, win_hi: win.hi ?? -1 });
   } catch { inFlight.delete(idx); }
 }
 

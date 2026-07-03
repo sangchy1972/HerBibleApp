@@ -22,6 +22,10 @@ export type TranslationMap = Record<string, string>;
 
 export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
   'zh-Hans': {
+    'onboarding.welcome.title': '欢迎来到 Her Bible',
+    'onboarding.welcome.sub': '一个温柔的空间，陪伴你与神同行。请先选择你的语言。',
+    'onboarding.intro.title': '让 Her Bible 更懂你',
+    'onboarding.intro.sub': '几个小问题，帮助我们更好地引导你的读经与祷告。不到一分钟。',
     'onboarding.goal.title': '你为什么来到 Her Bible?',
     'onboarding.goal.sub': '我们会据此为你定制每日经文。',
     'onboarding.goal.opt.closer': '更亲近神',
@@ -1095,6 +1099,10 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'moodDashboard.dayDetail.edit': '编辑',
   },
   'zh-Hant': {
+    'onboarding.welcome.title': '歡迎來到 Her Bible',
+    'onboarding.welcome.sub': '一個溫柔的空間，陪伴你與神同行。請先選擇你的語言。',
+    'onboarding.intro.title': '讓 Her Bible 更懂你',
+    'onboarding.intro.sub': '幾個小問題，幫助我們更好地引導你的讀經與禱告。不到一分鐘。',
     'onboarding.goal.title': '你為什麼來到 Her Bible?',
     'onboarding.goal.sub': '我們會據此為你定制每日經文。',
     'onboarding.goal.opt.closer': '更親近神',
@@ -2151,6 +2159,10 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'moodDashboard.dayDetail.edit': '編輯',
   },
   'de': {
+    'onboarding.welcome.title': 'Willkommen bei Her Bible',
+    'onboarding.welcome.sub': 'Ein sanfter Raum für deinen Weg mit Gott. Wähle zuerst deine Sprache.',
+    'onboarding.intro.title': 'Machen wir Her Bible zu deiner App',
+    'onboarding.intro.sub': 'Ein paar kurze Fragen helfen uns, deine Lektüre und dein Gebet zu begleiten. Es dauert weniger als eine Minute.',
     'onboarding.goal.title': 'Was führt dich zu Her Bible?',
     'onboarding.goal.sub': 'Wir richten deine täglichen Verse danach aus.',
     'onboarding.goal.opt.closer': 'Gott näherkommen',
@@ -3207,6 +3219,10 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'moodDashboard.dayDetail.edit': 'Bearbeiten',
   },
   'fr': {
+    'onboarding.welcome.title': 'Bienvenue sur Her Bible',
+    'onboarding.welcome.sub': 'Un espace doux pour ton chemin avec Dieu. Choisis d\'abord ta langue.',
+    'onboarding.intro.title': 'Faisons de Her Bible la tienne',
+    'onboarding.intro.sub': 'Quelques questions rapides nous aident à guider ta lecture et ta prière. Moins d\'une minute.',
     'onboarding.goal.title': 'Qu\'est-ce qui vous amène à Her Bible ?',
     'onboarding.goal.sub': 'Nous adapterons vos versets quotidiens en conséquence.',
     'onboarding.goal.opt.closer': 'Me rapprocher de Dieu',
@@ -4267,6 +4283,10 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'moodDashboard.dayDetail.edit': 'Modifier',
   },
   'es': {
+    'onboarding.welcome.title': 'Bienvenida a Her Bible',
+    'onboarding.welcome.sub': 'Un espacio tierno para tu caminar con Dios. Primero, elige tu idioma.',
+    'onboarding.intro.title': 'Hagamos que Her Bible sea tuya',
+    'onboarding.intro.sub': 'Unas preguntas rápidas nos ayudan a guiar tu lectura y oración. Toma menos de un minuto.',
     'onboarding.goal.title': '¿Qué te trae a Her Bible?',
     'onboarding.goal.sub': 'Adaptaremos tus versículos diarios a esto.',
     'onboarding.goal.opt.closer': 'Acercarme más a Dios',
@@ -5323,6 +5343,10 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'moodDashboard.dayDetail.edit': 'Editar',
   },
   'pt': {
+    'onboarding.welcome.title': 'Bem-vinda ao Her Bible',
+    'onboarding.welcome.sub': 'Um espaço acolhedor para a sua caminhada com Deus. Primeiro, escolha seu idioma.',
+    'onboarding.intro.title': 'Vamos deixar o Her Bible com a sua cara',
+    'onboarding.intro.sub': 'Algumas perguntas rápidas nos ajudam a guiar sua leitura e oração. Leva menos de um minuto.',
     'onboarding.goal.title': 'O que te traz à Her Bible?',
     'onboarding.goal.sub': 'Vamos adaptar os teus versículos diários a isto.',
     'onboarding.goal.opt.closer': 'Aproximar-me de Deus',

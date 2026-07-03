@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Mood } from '../components/MoodEmoji';
 import { logEvent } from '../services/firebase';
+import { useOnboarding } from './OnboardingContext';
 
 const STORAGE_KEY_V2 = 'mood:v2';
 const STORAGE_KEY_V1 = 'mood:v1';
@@ -94,18 +95,27 @@ export function MoodCheckInProvider({ children }: { children: React.ReactNode })
     AsyncStorage.setItem(STORAGE_KEY_V2, JSON.stringify(next)).catch(() => {});
   };
 
-  // Open the daily prompt once per mount when it's due. Runs the moment the
-  // store is hydrated. markShown() is folded in so a dismiss-without-save
-  // respects the 8h / next-day cadence.
+  // Open the daily prompt once per mount when it's due — but ONLY after the
+  // user is in the app proper (onboarding done, per user). The gate sits
+  // BEFORE firedRef is burned: on a first launch obDone is false while the
+  // questionnaire runs, and when finish() flips it the effect re-runs (this
+  // provider never remounts) and fires then. This also stops lastShownAt from
+  // being persisted while the sheet would be buried under onboarding, which
+  // used to suppress that day's legitimate prompt. The 600ms delay lets the
+  // tabs land before the sheet animates in.
+  const { ready: obReady, done: obDone } = useOnboarding();
   useEffect(() => {
-    if (!ready || firedRef.current) return;
+    if (!ready || !obReady || !obDone || firedRef.current) return;
     firedRef.current = true;
     if (computeShouldShow(state)) {
-      setPromptVisible(true);
-      persist({ ...state, lastShownAt: Date.now() });
+      const timer = setTimeout(() => {
+        setPromptVisible(true);
+        persist({ ...state, lastShownAt: Date.now() });
+      }, 600);
+      return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready]);
+  }, [ready, obReady, obDone]);
 
   const value = useMemo<MoodCheckInState>(() => {
     const today = todayKey();

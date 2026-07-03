@@ -10,22 +10,26 @@ import { ROSE, LAV, TXT, TXTSUB, BG, FONTS } from '../constants/theme';
 import { useT } from '../i18n/useT';
 import { useOnboarding, type OnboardingAnswers } from '../state/OnboardingContext';
 import { useNotifications } from '../state/NotificationsContext';
-import { useUILanguage } from '../state/UILanguageContext';
+import { useUILanguage, UI_LANGUAGES } from '../state/UILanguageContext';
 import { logEvent, setUserProps } from '../services/firebase';
 import TimePickerSheet from '../components/TimePickerSheet';
 import SignInSheet from '../components/SignInSheet';
 
-// New-user questionnaire (first launch only — gated in RootNavigator). Seven
-// questions + one encouragement interstitial, in the Her Bible white/pink
-// theme. Single-select questions auto-advance on tap; topics is multi-select;
-// the final screen is the notification soft pre-prompt → OS permission.
-// Answers persist via OnboardingContext and tailor later content.
+// New-user onboarding (first launch only — gated in RootNavigator). Flow v2:
+// welcome + language picker → short intro interstitial → questionnaire →
+// notification soft pre-prompt → login. Single-select questions auto-advance
+// on tap; topics is multi-select. Answers persist via OnboardingContext and
+// tailor later content. The mood check-in is gated on onboarding.done
+// (MoodCheckInContext), so it only ever asks AFTER the user lands in the app.
 
-const TOTAL = 9;
+const TOTAL = 11;
 
-// Analytics step names (snake_case, index-aligned). Mirrors the funnel order so
-// `onboarding_step_view.step_name` is stable for BigQuery.
-const STEP_NAMES = ['goal', 'age', 'bible', 'encourage', 'topics', 'time', 'remind', 'notify', 'login'] as const;
+// Analytics step names (snake_case, index-aligned). `step_name` is the
+// canonical funnel key for BigQuery — indexes shifted in flow v2 (language +
+// intro prepended), so events also carry flow_version: 2. Never renumber
+// names; future steps get NEW names.
+const STEP_NAMES = ['language', 'intro', 'goal', 'age', 'bible', 'encourage', 'topics', 'time', 'remind', 'notify', 'login'] as const;
+const FLOW_VERSION = 2;
 
 const GOAL_OPTS = [
   { k: 'closer',     icon: 'heart-outline' },
@@ -60,27 +64,31 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
   const t = useT();
   const { saveAnswers } = useOnboarding();
   const { settings, setSchedule, requestPermissionAndEnableDefaults } = useNotifications();
-  const { lang } = useUILanguage();
+  const { lang, setLang } = useUILanguage();
 
   const [step, setStep] = useState(0);
+  const stepName = STEP_NAMES[step];
   const [a, setA] = useState<OnboardingAnswers>({ topics: [] });
   const [editing, setEditing] = useState<'morning' | 'night' | null>(null);
   const [showSignIn, setShowSignIn] = useState(false);
   const notifsOnRef = useRef(false);   // set at the notify step; read by finishAll
+  // Language detected (or previously persisted) at mount — used to log whether
+  // the user kept the default or actively switched on the welcome step.
+  const initialLangRef = useRef(lang);
 
-  // Analytics. `onboarding_start` once; `onboarding_step_view` on every step
-  // (incl. step 0 on mount) → powers the per-screen funnel / drop-off in
-  // Firebase + BigQuery.
-  useEffect(() => { logEvent('onboarding_start', { app_language: lang }); }, []);   // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { logEvent('onboarding_step_view', { step_index: step, step_name: STEP_NAMES[step] }); }, [step]);
+  // Analytics. `onboarding_start` once (app_language here = the DETECTED
+  // language, pre-choice; the chosen one arrives via the `language` answer);
+  // `onboarding_step_view` on every step → per-screen funnel in BigQuery.
+  useEffect(() => { logEvent('onboarding_start', { app_language: lang, flow_version: FLOW_VERSION }); }, []);   // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { logEvent('onboarding_step_view', { step_index: step, step_name: STEP_NAMES[step], flow_version: FLOW_VERSION }); }, [step]);
   // The final login screen is itself a login prompt — log it + record the source
   // so a sign-in here is attributed to onboarding in AuthContext's sign_up event.
   useEffect(() => {
-    if (step === 8) {
+    if (stepName === 'login') {
       AsyncStorage.setItem('loginPrompt:lastTrigger', 'onboarding').catch(() => {});
       logEvent('login_prompt_shown', { trigger: 'onboarding' });
     }
-  }, [step]);
+  }, [stepName]);
 
   const goNext = () => setStep((s) => Math.min(TOTAL - 1, s + 1));
   const goBack = () => setStep((s) => Math.max(0, s - 1));
@@ -99,12 +107,18 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
   };
 
   // Continue button (steps that aren't single-select auto-advance): log the
-  // multi-select answers as the user moves forward, then advance.
+  // step's answer as the user moves forward, then advance.
   const continueFrom = () => {
-    if (step === 4) {
+    if (stepName === 'language') {
+      logEvent('onboarding_answer', {
+        step_name: 'language',
+        value: lang,
+        was_default: lang === initialLangRef.current ? 'true' : 'false',
+      });
+    } else if (stepName === 'topics') {
       const topics = a.topics ?? [];
       logEvent('onboarding_answer', { step_name: 'topics', value: topics.join(','), value_count: topics.length });
-    } else if (step === 6) {
+    } else if (stepName === 'remind') {
       logEvent('onboarding_answer', {
         step_name: 'remind',
         value: `${to12h(settings.morning.hour, settings.morning.minute)}|${to12h(settings.night.hour, settings.night.minute)}`,
@@ -132,6 +146,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
     const topics = a.topics ?? [];
     logEvent('onboarding_complete', {
       method,
+      flow_version: FLOW_VERSION,
       last_step_index: step,
       notifications_enabled: notifsOn ? 'true' : 'false',
       goal: a.goal ?? '',
@@ -155,27 +170,70 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 6 }]}>
-      {/* Top bar: back (hidden on first step) + Skip-everything. */}
+      {/* Top bar: back (hidden on first step) + Skip-everything (hidden on the
+          welcome/language step — skipping before a language is confirmed would
+          strand a possibly-wrong-language user; a spacer keeps the layout). */}
       <View style={styles.topBar}>
         {step > 0 ? (
           <TouchableOpacity onPress={goBack} hitSlop={12} style={styles.backBtn}>
             <Feather name="chevron-left" size={24} color={TXTSUB} />
           </TouchableOpacity>
         ) : <View style={styles.backBtn} />}
-        <TouchableOpacity onPress={() => finishAll('skipped')} hitSlop={12}>
-          <Text style={styles.skip}>{t('onboarding.skip')}</Text>
-        </TouchableOpacity>
+        {stepName !== 'language' ? (
+          <TouchableOpacity onPress={() => finishAll('skipped')} hitSlop={12}>
+            <Text style={styles.skip}>{t('onboarding.skip')}</Text>
+          </TouchableOpacity>
+        ) : <View style={styles.backBtn} />}
       </View>
 
-      {/* Progress. */}
-      <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: `${((step + 1) / TOTAL) * 100}%` }]} />
-      </View>
+      {/* Progress — hidden on the welcome step (it's a cover, not a question). */}
+      {stepName !== 'language' ? (
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: `${((step + 1) / TOTAL) * 100}%` }]} />
+        </View>
+      ) : (
+        <View style={[styles.progressTrack, { backgroundColor: 'transparent' }]} />
+      )}
 
       <Animated.View key={step} entering={FadeInDown.duration(300)} style={styles.content}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
-          {step === 0 && (
+          {stepName === 'language' && (
+            <>
+              <View style={styles.center}>
+                <LinearGradient colors={['#F9D9E6', '#F4A6C0', ROSE]} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={styles.welcomeHero}>
+                  <Ionicons name="heart" size={40} color="#FFFFFF" style={{ opacity: 0.92 }} />
+                </LinearGradient>
+                <Text style={[styles.h, { textAlign: 'center', marginTop: 18 }]}>{t('onboarding.welcome.title')}</Text>
+                <Text style={[styles.sub, { textAlign: 'center', paddingHorizontal: 12 }]}>{t('onboarding.welcome.sub')}</Text>
+              </View>
+              {/* Language rows — nativeName labels never need translation. The
+                  detected (or previously persisted) language is pre-selected;
+                  tapping another row switches the WHOLE screen live via
+                  setLang, which is itself the confirmation the choice took. */}
+              {UI_LANGUAGES.map((l) => {
+                const sel = lang === l.code;
+                return (
+                  <TouchableOpacity key={l.code} activeOpacity={0.85} onPress={() => setLang(l.code)} style={[styles.row, sel && styles.rowSel]}>
+                    <Text style={[styles.rowText, sel && styles.rowTextSel, { flex: 1 }]}>{l.nativeName}</Text>
+                    {sel && <Ionicons name="checkmark" size={18} color={accent} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </>
+          )}
+
+          {stepName === 'intro' && (
+            <View style={styles.center}>
+              <LinearGradient colors={['#F9D9E6', '#F4A6C0', ROSE]} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={styles.hero}>
+                <Ionicons name="chatbubble-ellipses-outline" size={58} color="#FFFFFF" style={{ opacity: 0.92 }} />
+              </LinearGradient>
+              <Text style={[styles.h, { textAlign: 'center', marginTop: 22 }]}>{t('onboarding.intro.title')}</Text>
+              <Text style={[styles.sub, { textAlign: 'center', paddingHorizontal: 16 }]}>{t('onboarding.intro.sub')}</Text>
+            </View>
+          )}
+
+          {stepName === 'goal' && (
             <>
               <Text style={styles.h}>{t('onboarding.goal.title')}</Text>
               <Text style={styles.sub}>{t('onboarding.goal.sub')}</Text>
@@ -192,7 +250,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
             </>
           )}
 
-          {step === 1 && (
+          {stepName === 'age' && (
             <>
               <Text style={styles.h}>{t('onboarding.age.title')}</Text>
               <Text style={styles.sub}>{t('onboarding.age.sub')}</Text>
@@ -208,7 +266,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
             </>
           )}
 
-          {step === 2 && (
+          {stepName === 'bible' && (
             <>
               <Text style={styles.h}>{t('onboarding.bible.title')}</Text>
               <Text style={styles.sub}>{t('onboarding.bible.sub')}</Text>
@@ -227,7 +285,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
             </>
           )}
 
-          {step === 3 && (
+          {stepName === 'encourage' && (
             <View style={styles.center}>
               <LinearGradient colors={['#F9D9E6', '#F4A6C0', ROSE]} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={styles.hero}>
                 <Ionicons name="book-outline" size={58} color="#FFFFFF" style={{ opacity: 0.92 }} />
@@ -237,7 +295,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
             </View>
           )}
 
-          {step === 4 && (
+          {stepName === 'topics' && (
             <>
               <Text style={styles.h}>{t('onboarding.topics.title')}</Text>
               <Text style={styles.sub}>{t('onboarding.topics.sub')}</Text>
@@ -254,7 +312,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
             </>
           )}
 
-          {step === 5 && (
+          {stepName === 'time' && (
             <>
               <Text style={styles.h}>{t('onboarding.time.title')}</Text>
               <Text style={styles.sub}>{t('onboarding.time.sub')}</Text>
@@ -271,7 +329,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
             </>
           )}
 
-          {step === 6 && (
+          {stepName === 'remind' && (
             <>
               <Text style={styles.h}>{t('onboarding.remind.title')}</Text>
               <Text style={styles.sub}>{t('onboarding.remind.sub')}</Text>
@@ -292,7 +350,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
             </>
           )}
 
-          {step === 7 && (
+          {stepName === 'notify' && (
             <>
               <Text style={[styles.h, { fontSize: 27 }]}>{t('onboarding.notify.title')}</Text>
               <Text style={styles.sub}>{t('onboarding.notify.sub')}</Text>
@@ -309,7 +367,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
             </>
           )}
 
-          {step === 8 && (
+          {stepName === 'login' && (
             <View style={{ alignItems: 'center' }}>
               <LinearGradient colors={['#F9D9E6', '#F4A6C0', ROSE]} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={styles.loginHero}>
                 <Ionicons name="bookmark" size={42} color="#FFFFFF" style={{ opacity: 0.92 }} />
@@ -331,7 +389,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
 
       {/* Bottom CTA — varies by step. */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 14 }]}>
-        {step === 7 ? (
+        {stepName === 'notify' ? (
           <Animated.View entering={FadeIn.duration(300)}>
             <TouchableOpacity activeOpacity={0.9} onPress={onNotifyRemind} style={styles.cta}>
               <Text style={styles.ctaText}>{t('onboarding.notify.cta')}</Text>
@@ -340,7 +398,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
               <Text style={styles.laterText}>{t('onboarding.notify.later')}</Text>
             </TouchableOpacity>
           </Animated.View>
-        ) : step === 8 ? (
+        ) : stepName === 'login' ? (
           <Animated.View entering={FadeIn.duration(300)}>
             <TouchableOpacity activeOpacity={0.9} onPress={() => setShowSignIn(true)} style={styles.cta}>
               <Text style={styles.ctaText}>{t('onboarding.login.cta')}</Text>
@@ -349,7 +407,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
               <Text style={styles.laterText}>{t('onboarding.notify.later')}</Text>
             </TouchableOpacity>
           </Animated.View>
-        ) : (step === 3 || step === 4 || step === 6) ? (
+        ) : (stepName === 'language' || stepName === 'intro' || stepName === 'encourage' || stepName === 'topics' || stepName === 'remind') ? (
           <TouchableOpacity activeOpacity={0.9} onPress={continueFrom} style={styles.cta}>
             <Text style={styles.ctaText}>{t('common.continue')}</Text>
           </TouchableOpacity>
@@ -392,7 +450,7 @@ const styles = StyleSheet.create({
     fontSize: 24, color: TXT, fontFamily: FONTS.loraBold, fontWeight: '600',
     lineHeight: 31, letterSpacing: -0.2, marginBottom: 7,
   },
-  sub: { fontSize: 13.5, color: TXTSUB, fontFamily: FONTS.lato, lineHeight: 20, marginBottom: 16 },
+  sub: { fontSize: 15, color: TXTSUB, fontFamily: FONTS.lato, lineHeight: 22, marginBottom: 16 },   // 13.5 → 15 (+10 % content type per user)
   // Single-line option row.
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
@@ -400,7 +458,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14, paddingHorizontal: 14, marginBottom: 9,
   },
   rowSel: { backgroundColor: '#FBEAF0', borderWidth: 1.5, borderColor: ROSE },
-  rowText: { flex: 1, fontSize: 15, color: TXT, fontFamily: FONTS.lato },
+  rowText: { flex: 1, fontSize: 16.5, color: TXT, fontFamily: FONTS.lato },   // 15 → 16.5 (+10 %)
   rowTextSel: { fontWeight: '700' },
   // Two-line card (bible level / time commitment).
   card: {
@@ -408,10 +466,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF', borderRadius: 15, borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.08)',
     paddingVertical: 13, paddingHorizontal: 14, marginBottom: 9,
   },
-  cardTitle: { fontSize: 15, color: TXT, fontFamily: FONTS.lato },
-  cardSub: { fontSize: 12.5, color: 'rgba(30,27,46,0.42)', fontFamily: FONTS.lato, marginTop: 2 },
-  timeNum: { fontSize: 18, color: ROSE, fontFamily: FONTS.loraBold, fontWeight: '600', width: 64 },
-  timeSub: { flex: 1, fontSize: 13, color: 'rgba(30,27,46,0.55)', fontFamily: FONTS.lato },
+  cardTitle: { fontSize: 16.5, color: TXT, fontFamily: FONTS.lato },   // 15 → 16.5 (+10 %)
+  cardSub: { fontSize: 14, color: 'rgba(30,27,46,0.42)', fontFamily: FONTS.lato, marginTop: 2 },   // 12.5 → 14 (+10 %)
+  timeNum: { fontSize: 20, color: ROSE, fontFamily: FONTS.loraBold, fontWeight: '600', width: 72 },   // 18 → 20 (+10 %); width 64 → 72 so "30 min" fits in de/fr
+  timeSub: { flex: 1, fontSize: 14.5, color: 'rgba(30,27,46,0.55)', fontFamily: FONTS.lato },   // 13 → 14.5 (+10 %)
   // Chips (topics, multi-select).
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
   chip: {
@@ -419,7 +477,7 @@ const styles = StyleSheet.create({
     borderRadius: 22, paddingVertical: 10, paddingHorizontal: 16,
   },
   chipSel: { backgroundColor: ROSE, borderColor: ROSE },
-  chipText: { fontSize: 14, color: TXT, fontFamily: FONTS.lato },
+  chipText: { fontSize: 15.5, color: TXT, fontFamily: FONTS.lato },   // 14 → 15.5 (+10 %)
   chipTextSel: { color: '#FFFFFF', fontWeight: '700' },
   // Encouragement interstitial.
   hero: { width: '100%', height: 200, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
@@ -430,15 +488,18 @@ const styles = StyleSheet.create({
     paddingVertical: 15, paddingHorizontal: 16, marginBottom: 11,
   },
   timeLabel: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  timeLabelText: { fontSize: 15, color: TXT, fontFamily: FONTS.lato },
-  timePill: { fontSize: 15, fontWeight: '700', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 12, overflow: 'hidden' },
+  timeLabelText: { fontSize: 16.5, color: TXT, fontFamily: FONTS.lato },   // 15 → 16.5 (+10 %, matches rowText)
+  timePill: { fontSize: 16.5, fontWeight: '700', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 12, overflow: 'hidden' },   // 15 → 16.5 (+10 %)
   // Notification hero + mock banner.
   notifHero: { width: '100%', height: 188, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginTop: 4, overflow: 'hidden' },
   loginHero: { width: 92, height: 92, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginTop: 12 },
+  // Welcome/language step brand mark — same gradient family, slightly smaller
+  // so the 7 language rows fit without scrolling on compact phones.
+  welcomeHero: { width: 84, height: 84, borderRadius: 26, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
   loginBenefits: { alignSelf: 'stretch', marginTop: 22, gap: 14, paddingHorizontal: 4 },
   benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 13 },
   benefitIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: '#FBEAF0', alignItems: 'center', justifyContent: 'center' },
-  benefitText: { flex: 1, fontSize: 14.5, color: TXT, fontFamily: FONTS.lato, lineHeight: 20 },
+  benefitText: { flex: 1, fontSize: 16, color: TXT, fontFamily: FONTS.lato, lineHeight: 22 },   // 14.5 → 16 (+10 %)
   banner: {
     position: 'absolute', left: 14, right: 14, bottom: 14,
     flexDirection: 'row', alignItems: 'center', gap: 10,

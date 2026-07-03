@@ -289,7 +289,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const { markToday } = useActivity();
   const ratePrompt = useRatePrompt();
   const { notifRationaleShown, markNotifRationaleShown } = useOnboarding();
-  const { enableReminderAt } = useNotifications();
+  const { enableReminderAt, permissionGranted } = useNotifications();
   const { kind } = route.params;
   const morning = kind === 'morning';
   // Past-day replay: when a specific `day` is passed (from See Past Days), we
@@ -366,12 +366,12 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // skies. Skipped entirely when no image is available — the gradient
   // fallback below carries enough contrast on its own.
   const scrimColors = morning
-    // Wine-red (burgundy) instead of the old magenta-pink. Alphas halved
-    // (+50% more transparent per user) so the photo shows through clearly:
-    // morning 0.30/0.58 → 0.15/0.29, evening 0.40/0.70 → 0.20/0.35. Kept in
-    // sync with the home card's veil (PrayerScreen).
-    ? (['rgba(74,20,36,0.15)', 'rgba(28,8,16,0.29)'] as const)
-    : (['rgba(45,22,96,0.20)', 'rgba(16,5,37,0.35)'] as const);
+    // Wine-red (burgundy) instead of the old magenta-pink. Strength history:
+    // original 0.30/0.58 & 0.40/0.70 → halved (read as "no scrim" on bright
+    // photos) → settled midway per user: morning 0.22/0.44, evening
+    // 0.30/0.52. Kept in sync with the home card's veil (PrayerScreen).
+    ? (['rgba(74,20,36,0.22)', 'rgba(28,8,16,0.44)'] as const)
+    : (['rgba(45,22,96,0.30)', 'rgba(16,5,37,0.52)'] as const);
   // Background-music source for this slot. `audioFor` returns either a
   // local cached `file://` URI (prefetched on app launch via
   // PrayerBackgroundsContext) or null when no audio is available yet.
@@ -1197,8 +1197,11 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               onPress={() => {
                 if (isRedoRef.current) {
                   navigation.goBack();
-                } else if (isFirstEverRef.current) {
-                  // First-ever prayer (any kind) → onboarding rationale.
+                } else if (isFirstEverRef.current && !permissionGranted) {
+                  // First-ever prayer (any kind) AND notifications still OFF →
+                  // show the one-time onboarding rationale. If permission is
+                  // already granted we skip it entirely and go straight to the
+                  // completion screen — never nag a user who already opted in.
                   setShowNotifRationale(true);
                 } else {
                   // Morning OR evening completion → Weekly progress screen

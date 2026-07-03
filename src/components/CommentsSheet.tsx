@@ -15,7 +15,7 @@ import { useT } from '../i18n/useT';
 // of them (the component remounts per open, so the useMemo re-rolls). Localized
 // to the active UI language.
 
-const AVATAR_COLORS = ['#E8619A', '#7B6CF6', '#F2A65A', '#3FAE6A', '#5B8DEF', '#E36588', '#46B3A6', '#C9772E'];
+const AVATAR_COLORS = ['#E63F69', '#7B6CF6', '#F2A65A', '#3FAE6A', '#5B8DEF', '#E36588', '#46B3A6', '#C9772E'];
 const SCREEN_H = Dimensions.get('window').height;
 
 function initialOf(name: string): string {

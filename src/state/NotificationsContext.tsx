@@ -79,7 +79,7 @@ let completeStreakChain: Promise<void> = Promise.resolve();
 function requestCompleteStreakSync(mDone: boolean, eDone: boolean, todayYmd: string, lang: UILanguageCode): void {
   completeStreakChain = completeStreakChain.then(() => syncCompleteStreakNudge(mDone, eDone, todayYmd, lang)).catch(() => {});
 }
-const BRAND_ROSE = '#E8619A';
+const BRAND_ROSE = '#E63F69';
 
 // ─── Pure helpers (no React) ──────────────────────────────────────────────
 

@@ -934,7 +934,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
               <Image source={{ uri: user.photoUri }} style={styles.avatar} />
             ) : (
               <LinearGradient
-                colors={['#F9A8C9', '#E8619A']}
+                colors={['#F9A8C9', '#E63F69']}
                 style={styles.avatar}
               >
                 <Text style={styles.avatarText}>{initials}</Text>
@@ -1644,7 +1644,7 @@ const styles = StyleSheet.create({
   // plans.
   inProgressEmpty: {
     marginTop: 12,
-    backgroundColor: 'rgba(232,97,154,0.06)',
+    backgroundColor: 'rgba(230,63,105,0.06)',
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 18,

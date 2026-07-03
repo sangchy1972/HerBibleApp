@@ -131,7 +131,7 @@ export default function PlanVerseRead({ route, navigation }: RootStackScreenProp
                   { color: inFocus ? TXT : 'rgba(30,27,46,0.38)' },
                   inFocus ? styles.focusHl : null,
                 ]}>
-                  <Text style={[styles.verseNum, { color: inFocus ? ROSE : 'rgba(232,97,154,0.45)' }]}>{v.verse}{'  '}</Text>
+                  <Text style={[styles.verseNum, { color: inFocus ? ROSE : 'rgba(230,63,105,0.45)' }]}>{v.verse}{'  '}</Text>
                   {v.text}
                 </Text>
               </View>
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   // One block per verse — 18px gap matches the reader / plan-walk verse rhythm.
   verseBlock: { marginBottom: 18 },
   // Pink highlight on the focus verses (rounded, like the reader's highlight).
-  focusHl: { backgroundColor: 'rgba(232,97,154,0.18)', borderRadius: 6 },
+  focusHl: { backgroundColor: 'rgba(230,63,105,0.18)', borderRadius: 6 },
   // Verse number — Lato bold 14, colour set inline (ROSE for focus / dim rose).
   verseNum: { fontFamily: FONTS.latoBold, fontWeight: '700', fontSize: 14 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 36, gap: 14 },

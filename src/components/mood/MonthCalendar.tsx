@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   // Today gets a rose ring + a rose fill so it reads as "you are here".
-  todayRing: { borderWidth: 2, borderColor: '#E8619A', backgroundColor: '#E8619A' },
+  todayRing: { borderWidth: 2, borderColor: '#E63F69', backgroundColor: '#E63F69' },
   num: { fontSize: 14, fontWeight: '600' },
   todayNum: { fontWeight: '800' },
 });

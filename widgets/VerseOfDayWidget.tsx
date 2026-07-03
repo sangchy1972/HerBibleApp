@@ -35,7 +35,7 @@ const MORNING_BG = require('../assets/widget/bg-morning.webp');
 const EVENING_BG = require('../assets/widget/bg-evening.webp');
 
 const WHITE = '#FFFFFF';
-const ROSE = '#E8619A';
+const ROSE = '#E63F69';
 
 // Time-of-day floor gradient, shown behind the image while a remote bg is
 // still downloading (or if it ever fails) — the widget is never a gray box.
@@ -59,7 +59,7 @@ const MOON_SVG =
   '<path fill="#FFFFFF" d="M20.5 14.8A8.2 8.2 0 1 1 9.2 3.5 6.4 6.4 0 0 0 20.5 14.8z"/></svg>';
 const HEART_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' +
-  '<path fill="#E8619A" d="M12 20.6S3.7 15.3 3.7 9.3A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 8.3 1.7c0 6-8.3 11.3-8.3 11.3z"/></svg>';
+  '<path fill="#E63F69" d="M12 20.6S3.7 15.3 3.7 9.3A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 8.3 1.7c0 6-8.3 11.3-8.3 11.3z"/></svg>';
 
 interface Props {
   verse?: string | null;

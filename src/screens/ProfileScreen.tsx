@@ -571,7 +571,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
             {user?.photoUri ? (
               <Image source={{ uri: user.photoUri }} style={styles.avatar} />
             ) : (
-              <LinearGradient colors={['#F9A8C9', '#E8619A']} style={styles.avatar}>
+              <LinearGradient colors={['#F9A8C9', '#E63F69']} style={styles.avatar}>
                 <Text style={styles.avatarText}>{initials}</Text>
               </LinearGradient>
             )}

@@ -745,7 +745,7 @@ function VersePage({
                 { color: inRange ? TXT : 'rgba(30,27,46,0.35)' },                  // dim verses outside the focus range
                 hlColor ? { backgroundColor: hlColor, borderRadius: 6 } : null,
               ]}>
-                <Text style={[styles.bibleVerseNum, { color: inRange ? ROSE : 'rgba(232,97,154,0.45)' }]}>{v.verse}{'  '}</Text>
+                <Text style={[styles.bibleVerseNum, { color: inRange ? ROSE : 'rgba(230,63,105,0.45)' }]}>{v.verse}{'  '}</Text>
                 {v.text}
               </Text>
             </TouchableOpacity>
@@ -885,7 +885,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderLeftWidth: 3,
     borderLeftColor: ROSE,
-    backgroundColor: 'rgba(232,97,154,0.06)',
+    backgroundColor: 'rgba(230,63,105,0.06)',
     borderRadius: 8,
   },
   explainHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },

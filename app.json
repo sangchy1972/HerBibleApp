@@ -94,7 +94,7 @@
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#E8619A"
+          "color": "#E63F69"
         }
       ],
       "expo-apple-authentication",

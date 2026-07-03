@@ -46,7 +46,7 @@ const BG_NUDGE_IDS: Record<RichSlot, string> = {
   night:   'her-bible.notifee.bgnudge.night',
 };
 const IOS_CATEGORY = 'her-bible.prayer.rich';
-const BRAND_ROSE = '#E8619A';
+const BRAND_ROSE = '#E63F69';
 
 // Bundled photos — offline-safe (resolvable even when the app is killed and a
 // scheduled trigger fires with no network), unlike a CDN URL. Reuses the

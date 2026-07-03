@@ -17,7 +17,7 @@ export const DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 export const WEEK = [true, true, true, false, false, false, false];
 
 export const PSALMS_CARDS = [
-  { psalm: 'Psalm 46', subtitle: 'God is our refuge and strength', tag: 'Strength', ac: '#E8619A', acl: 'rgba(232,97,154,.13)' },
+  { psalm: 'Psalm 46', subtitle: 'God is our refuge and strength', tag: 'Strength', ac: '#E63F69', acl: 'rgba(230,63,105,.13)' },
   { psalm: 'Psalm 121', subtitle: 'I lift my eyes to the hills', tag: 'Protection', ac: '#866BC0', acl: 'rgba(157,127,224,.13)' },
   { psalm: 'Psalm 27', subtitle: 'The Lord is my light', tag: 'Faith', ac: '#E07830', acl: 'rgba(224,120,48,.13)' },
 ];

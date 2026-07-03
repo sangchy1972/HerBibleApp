@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 36 },
   backBtn: { width: 32, height: 32, alignItems: 'flex-start', justifyContent: 'center' },
   skip: { fontSize: 14, fontWeight: '600', color: ROSE, fontFamily: FONTS.lato },
-  progressTrack: { height: 5, borderRadius: 3, backgroundColor: 'rgba(232,97,154,0.16)', marginTop: 8, marginBottom: 18 },
+  progressTrack: { height: 5, borderRadius: 3, backgroundColor: 'rgba(230,63,105,0.16)', marginTop: 8, marginBottom: 18 },
   progressFill: { height: '100%', borderRadius: 3, backgroundColor: ROSE },
   content: { flex: 1 },
   scroll: { paddingBottom: 12 },

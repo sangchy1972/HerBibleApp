@@ -1,4 +1,4 @@
-export const ROSE = '#E8619A';
+export const ROSE = '#E63F69';
 export const LAV = '#866BC0';
 export const TXT = '#1E1B2E';
 export const TXTSUB = 'rgba(30,27,46,0.50)';

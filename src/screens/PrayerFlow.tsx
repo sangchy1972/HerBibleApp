@@ -1367,7 +1367,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                 <Text style={styles.sheetDesc}>{t('prayerFlow.habit.desc')}</Text>
                 <TouchableOpacity
                   onPress={() => setShowTimePicker(true)}
-                  style={[styles.setTimeBtn, { backgroundColor: 'rgba(232,97,154,0.10)' }]}
+                  style={[styles.setTimeBtn, { backgroundColor: 'rgba(230,63,105,0.10)' }]}
                 >
                   <Text style={[styles.setTimeText, { color: ROSE }]}>{t('prayerFlow.habit.setTime')}</Text>
                 </TouchableOpacity>
@@ -1954,11 +1954,11 @@ function PhoneMockup() {
       <Path d={rr(108, 27, 28, 7, 3.5)} fill="rgba(30,27,46,0.16)" />
 
       {/* Motion hint — a soft rose chevron: the banner just slid down from the top. */}
-      <Path d="M113 52 L122 60 L131 52" fill="none" stroke="rgba(232,97,154,0.45)"
+      <Path d="M113 52 L122 60 L131 52" fill="none" stroke="rgba(230,63,105,0.45)"
             strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
 
       {/* The notification banner — the single thing this illustration is about. */}
-      <Path d={rr(64, 74, 116, 50, 13)} fill="rgba(232,97,154,0.10)" />{/* lift shadow */}
+      <Path d={rr(64, 74, 116, 50, 13)} fill="rgba(230,63,105,0.10)" />{/* lift shadow */}
       <Path d={rr(64, 71, 116, 50, 13)} fill="#FFFFFF" stroke="rgba(30,27,46,0.05)" strokeWidth={1} />
       {/* app icon */}
       <Path d={rr(75, 82, 26, 26, 7)} fill={ROSE} />

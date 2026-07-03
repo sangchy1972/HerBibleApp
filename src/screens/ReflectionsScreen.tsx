@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   versePreview: {
-    backgroundColor: 'rgba(232,97,154,0.06)',
+    backgroundColor: 'rgba(230,63,105,0.06)',
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 14,

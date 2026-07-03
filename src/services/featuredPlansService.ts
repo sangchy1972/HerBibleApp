@@ -75,7 +75,7 @@ function slimPlan(raw: any, fileSlug: string): FullPlan {
     goal: p.goal || '',
     duration: p.duration_days,
     minutes: p.estimated_minutes_per_day,
-    colorPrimary: p.cover?.color_primary || '#E8619A',
+    colorPrimary: p.cover?.color_primary || '#E63F69',
     colorSecondary: p.cover?.color_secondary || '#9D7FE0',
     primary: p.category.primary,
     primaryLabel: p.category.primary_label,

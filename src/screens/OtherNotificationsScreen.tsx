@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   // Static "On" pill — these reminders are always on (no toggle).
   onPill: {
     paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12,
-    backgroundColor: 'rgba(232,97,154,0.12)',
+    backgroundColor: 'rgba(230,63,105,0.12)',
   },
   onPillText: { ...LORA_BOLD, fontSize: 12.5, color: ROSE },
 });

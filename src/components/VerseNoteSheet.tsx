@@ -115,7 +115,7 @@ export default function VerseNoteSheet({ verseRef, verseText, existingNote, onCl
                 </TouchableOpacity>
                 <Text style={styles.title}>{isEdit ? t('verseNote.title.edit') : t('verseNote.title.new')}</Text>
                 <TouchableOpacity onPress={save} hitSlop={10}>
-                  <Text style={[styles.saveBtn, !dirty && { color: 'rgba(232,97,154,0.45)' }]}>{t('verseNote.save')}</Text>
+                  <Text style={[styles.saveBtn, !dirty && { color: 'rgba(230,63,105,0.45)' }]}>{t('verseNote.save')}</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.versePreview}>
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   cancel: { fontSize: 17, color: TXTSUB, fontWeight: '500' },                   // +10%
   saveBtn: { fontSize: 17, color: ROSE, fontWeight: '700' },                    // +10%
   versePreview: {
-    backgroundColor: 'rgba(232,97,154,0.06)',
+    backgroundColor: 'rgba(230,63,105,0.06)',
     borderRadius: 14,
     paddingVertical: 14,
     paddingHorizontal: 16,

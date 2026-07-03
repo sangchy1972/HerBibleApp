@@ -230,11 +230,11 @@ function BackgroundDecor({ morning }: { morning: boolean }) {
   // look like distinct shapes instead of soft washes.
   const blobs = morning
     ? {
-        a: 'rgba(232,97,154,0.14)',                                                // ROSE @ 14 % (was 22)
+        a: 'rgba(230,63,105,0.14)',                                                // ROSE @ 14 % (was 22)
         b: 'rgba(255,255,255,0.28)',                                               // white @ 28 % (was 32)
         c: 'rgba(249,168,201,0.28)',                                               // soft pink @ 28 % (was 45)
         d: 'rgba(252,217,232,0.32)',                                               // very-light pink @ 32 % (was 55)
-        e: 'rgba(232,97,154,0.10)',                                                // ROSE @ 10 % (was 16)
+        e: 'rgba(230,63,105,0.10)',                                                // ROSE @ 10 % (was 16)
       }
     : {
         a: 'rgba(134,107,192,0.14)',                                               // LAV @ 14 %

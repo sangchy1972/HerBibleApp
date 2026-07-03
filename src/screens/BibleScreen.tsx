@@ -1414,7 +1414,7 @@ export default function BibleScreen() {
                   // highlight or selected this verse — both of those are
                   // explicit intents that should win visually.
                   isAudioActive && !hlColor && !isSel && {
-                    backgroundColor: 'rgba(232,97,154,0.14)',                  // ROSE @ 14 % alpha
+                    backgroundColor: 'rgba(230,63,105,0.14)',                  // ROSE @ 14 % alpha
                     borderRadius: 6,
                   },
                   dimmed && { opacity: 0.32 },
@@ -1992,7 +1992,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderLeftWidth: 3,
     borderLeftColor: ROSE,
-    backgroundColor: 'rgba(232,97,154,0.06)',
+    backgroundColor: 'rgba(230,63,105,0.06)',
     borderRadius: 8,
   },
   explainHeader: {
@@ -2217,7 +2217,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 10,                 // 4 → 7 → 10 (+3 px more per user — 1 and 6 sit even further from the pink frame)
     marginBottom: 10,
-    backgroundColor: 'rgba(232,97,154,0.06)',
+    backgroundColor: 'rgba(230,63,105,0.06)',
     borderRadius: 12,
   },
   // width / height supplied inline by BookDrawer (responsive 6-per-row grid).

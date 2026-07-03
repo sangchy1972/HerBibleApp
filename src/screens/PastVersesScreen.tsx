@@ -13,10 +13,13 @@ import { useT } from '../i18n/useT';
 import { localeFor } from '../i18n/locale';
 import type { RootStackScreenProps } from '../navigation/types';
 
-// How many calendar days back to show. 14 covers two weeks of morning + night
-// pairs — enough for the user to scroll through recent reading without
-// scrolling forever.
+// Max calendar days back to show. 14 covers two weeks of morning + night pairs
+// — enough for the user to scroll through recent reading without scrolling
+// forever. The ACTUAL depth is capped per-user (see MIN_HISTORY_DAYS below).
 const HISTORY_DAYS = 14;
+// A brand-new user only sees the last few days of "past" verses (not two weeks
+// of pre-install history). Depth grows with usage up to HISTORY_DAYS.
+const MIN_HISTORY_DAYS = 3;
 
 function SunGlyph({ color }: { color: string }) {
   return (
@@ -76,14 +79,19 @@ export default function PastVersesScreen({ navigation }: RootStackScreenProps<'P
   const insets = useSafeAreaInsets();
   const t = useT();
   const { lang } = useUILanguage();
-  const { getVerse, todayDay } = useDailyVerses();
+  const { getVerse, todayDay, daysSinceFirstLaunch } = useDailyVerses();
   const { current: translation } = useTranslation();
   const [shareTarget, setShareTarget] = useState<Row | null>(null);
 
   const rows = useMemo<Row[]>(() => {
     const out: Row[] = [];
     const today = new Date();
-    for (let i = 0; i < HISTORY_DAYS; i++) {
+    // Only PAST days — today lives on the home screen and (in the 00:00–06:00
+    // dead zone) can't be prayed, so it must not be re-openable here. Start at
+    // yesterday (i = 1). Depth is capped: a new user sees MIN_HISTORY_DAYS,
+    // growing with usage up to HISTORY_DAYS — never two weeks of pre-install days.
+    const depth = Math.min(HISTORY_DAYS, Math.max(MIN_HISTORY_DAYS, daysSinceFirstLaunch));
+    for (let i = 1; i <= depth; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
       const dayOfCycle = todayDay - i;             // getVerse handles negative values via modulus
@@ -105,7 +113,7 @@ export default function PastVersesScreen({ navigation }: RootStackScreenProps<'P
       }
     }
     return out;
-  }, [getVerse, todayDay, translation.code, t, lang]);
+  }, [getVerse, todayDay, daysSinceFirstLaunch, translation.code, t, lang]);
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 8 }]}>

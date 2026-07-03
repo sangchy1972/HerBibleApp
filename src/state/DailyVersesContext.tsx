@@ -22,6 +22,10 @@ interface DailyVersesState {
   // 1-based day-of-cycle for "today", anchored to the user's first launch.
   // Cycles through the loaded coverage so users past day N never see a blank.
   todayDay: number;
+  // UNCAPPED calendar days since first launch (todayDay is cycled, so it can't
+  // report this). Used to limit how far back "See past verses" goes for a new
+  // user. 0 on the very first day.
+  daysSinceFirstLaunch: number;
 }
 
 const DailyVersesContext = createContext<DailyVersesState | null>(null);
@@ -188,7 +192,17 @@ export function DailyVersesProvider({ children }: { children: React.ReactNode })
     [verses, coverageDays, holidayVerses, todayHolidayId, todayDay],
   );
 
-  const value = useMemo<DailyVersesState>(() => ({ getVerse, todayDay }), [getVerse, todayDay]);
+  // Uncapped elapsed days since first launch (todayDay is cycled → can't derive
+  // this from it). 0 on install day.
+  const daysSinceFirstLaunch = useMemo(
+    () => (firstLaunch ? daysBetween(firstLaunch, todayYmd) : 0),
+    [firstLaunch, todayYmd],
+  );
+
+  const value = useMemo<DailyVersesState>(
+    () => ({ getVerse, todayDay, daysSinceFirstLaunch }),
+    [getVerse, todayDay, daysSinceFirstLaunch],
+  );
   return <DailyVersesContext.Provider value={value}>{children}</DailyVersesContext.Provider>;
 }
 

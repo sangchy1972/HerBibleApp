@@ -27,6 +27,7 @@ import { useTranslation } from '../state/TranslationsContext';
 import { useReadChapters } from '../state/ReadChaptersContext';
 import { usePlanCompletion } from '../state/PlanCompletionContext';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
+import { useSavedVerses } from '../state/SavedVersesContext';
 import { useGospelsPsalms } from '../state/GospelsPsalmsContext';
 import DailyRhythmBar from '../components/home/DailyRhythmBar';
 import { computeRhythm } from '../state/dailyRhythm';
@@ -247,11 +248,22 @@ function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTa
   const handleMorePress = () => {
     moreBtnRef.current?.measureInWindow((x, y, w, h) => onMore({ x, y, w, h }));
   };
-  // Liked state is PER-SLOT — Morning and Evening show different verses and must
-  // like/unlike independently. A single shared boolean made liking one mark both.
-  const [likedSlots, setLikedSlots] = React.useState<{ morning: boolean; evening: boolean }>({ morning: false, evening: false });
-  const slotKey: 'morning' | 'evening' = morning ? 'morning' : 'evening';
-  const liked = likedSlots[slotKey];
+  // The heart IS the Save toggle — same saved-verses store the prayer flow's
+  // Save button writes, so hearting here shows "Saved" there (and vice versa),
+  // persists across restarts, and is naturally per-slot (morning and evening
+  // verses have different refs). The previous local boolean was cosmetic only,
+  // which made the two screens disagree.
+  const { verses: savedVerses, addVerse, removeVerse, hasVerse } = useSavedVerses();
+  const liked = !!verseRef && hasVerse(verseRef);
+  const toggleLiked = () => {
+    if (!verseRef || !verseText) return;
+    if (liked) {
+      const existing = savedVerses.find(s => s.ref === verseRef);
+      if (existing) removeVerse(existing.id);
+    } else {
+      addVerse(verseRef, verseText);
+    }
+  };
   // Soft darkening gradient sitting on top of the CDN photo. Goes from a
   // subtle wash at the top (~20%) to a heavier veil at the bottom (~55%)
   // so the verse text + action labels stay legible while the photo still
@@ -381,7 +393,7 @@ function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTa
           </View>
         </TouchableOpacity>
         <View style={styles.heroActions}>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => setLikedSlots(s => ({ ...s, [slotKey]: !s[slotKey] }))}>
+          <TouchableOpacity style={styles.actionBtn} onPress={toggleLiked}>
             <HeartIcon filled={liked} color={liked ? '#FFB3CC' : iconColor} />
             <Text style={[styles.actionLabel, { color: liked ? '#FFB3CC' : iconColor }]}>{formatLikes(likes + (liked ? 1 : 0))}</Text>
           </TouchableOpacity>

@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
-import { Linking } from 'react-native';
+import { Linking, AppState } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import notifee, { EventType } from '@notifee/react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import type { RootStackParamList } from './types';
@@ -106,6 +108,11 @@ function routeForUrl(url: string): { screen: keyof RootStackParamList; params?: 
 // within the same app process.
 let lastHandledNotifKey: string | null = null;
 
+// One-shot guard so the Notifee cold-start replay (getInitialNotification +
+// pending route) routes at most once per process, even across remounts.
+let notifeeColdStartHandled = false;
+const PENDING_ROUTE_KEY = 'notif:pendingRoute';
+
 function notifResponseKey(response: Notifications.NotificationResponse): string {
   const req = response.notification.request;
   // `notification.date` is the delivery timestamp; distinguishes repeat
@@ -148,6 +155,65 @@ export default function DeepLinkHandler() {
     const sub = Notifications.addNotificationResponseReceivedListener(handle);
 
     return () => { mounted = false; sub.remove(); };
+  }, [navigation]);
+
+  // Handle taps on the RICH Notifee morning/evening reminders (their own event
+  // system, separate from expo's above). Covers three arrival paths:
+  //   • warm tap (app alive)              → onForegroundEvent
+  //   • cold-start body tap (app killed)  → getInitialNotification
+  //   • PRAY action from killed/bg state  → pending route persisted by the
+  //     index.ts background handler, drained here
+  useEffect(() => {
+    let mounted = true;
+
+    const routeSlot = (slot: unknown, src: string) => {
+      if (!mounted) return;
+      const dest = routeForSlot(slot);
+      if (!dest) return;
+      logEvent('notification_tap', { slot: slot === 'night' ? 'evening' : String(slot ?? 'unknown'), src });
+      (navigation.navigate as any)(dest.screen, dest.params);
+    };
+
+    const drainPending = async (src: string) => {
+      try {
+        const pending = await AsyncStorage.getItem(PENDING_ROUTE_KEY);
+        if (!pending) return false;
+        await AsyncStorage.removeItem(PENDING_ROUTE_KEY);   // clear BEFORE routing → no double
+        const { slot } = JSON.parse(pending);
+        routeSlot(slot, src);
+        return true;
+      } catch { return false; }
+    };
+
+    // Cold start (once per process): a persisted PRAY-action route wins; else the
+    // Notifee notification that launched the app (body tap).
+    if (!notifeeColdStartHandled) {
+      notifeeColdStartHandled = true;
+      (async () => {
+        if (await drainPending('bg_action')) return;
+        try {
+          const initial = await notifee.getInitialNotification();
+          const slot = initial?.notification?.data?.slot;
+          if (slot) routeSlot(slot, 'cold');
+        } catch { /* no launching notification */ }
+      })();
+    }
+
+    // Warm taps (body or PRAY action) while the app is alive.
+    const unsubFg = notifee.onForegroundEvent(({ type, detail }) => {
+      if (type === EventType.PRESS || type === EventType.ACTION_PRESS) {
+        const slot = detail.notification?.data?.slot;
+        if (slot) routeSlot(slot, 'fg');
+      }
+    });
+
+    // PRAY action pressed while backgrounded-but-not-killed → the background
+    // handler wrote a pending route; drain it when we return to the foreground.
+    const appSub = AppState.addEventListener('change', s => {
+      if (s === 'active') drainPending('bg_resume');
+    });
+
+    return () => { mounted = false; unsubFg(); appSub.remove(); };
   }, [navigation]);
 
   // Handle deep-link URLs: email magic-link completion, widget taps, etc.

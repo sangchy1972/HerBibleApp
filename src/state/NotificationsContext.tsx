@@ -7,6 +7,9 @@ import { lookupString } from '../i18n/lookup';
 import { logEvent, setUserProps } from '../services/firebase';
 import { usePrayer } from './PrayerContext';
 import { useCurrentDayYmd } from '../hooks/useCurrentDayYmd';
+import { NOTIF_IDS, SLOTS, pickDailyVariant, type NotifKey } from './reminderContent';
+import { syncNotifeeReminders, scheduleBackgroundNudge, cancelBackgroundNudge } from './notifeeReminders';
+import { shouldScheduleBackgroundNudge, activeSlotFor } from './backgroundNudge';
 
 // ─── Public types ─────────────────────────────────────────────────────────
 
@@ -14,7 +17,9 @@ import { useCurrentDayYmd } from '../hooks/useCurrentDayYmd';
 // to avoid Play Store reviewer "incomplete feature" flags. If quiz lands
 // later: restore the union member here + DEFAULTS entry + NOTIF_IDS entry +
 // NotificationsScreen's SECTIONS row + add new push.quiz.* catalog keys.
-export type NotifKey = 'morning' | 'night' | 'plan';
+// NotifKey / NOTIF_IDS / SLOTS / pickDailyVariant now live in ./reminderContent
+// (shared, pure) so the Notifee scheduler and this expo scheduler stay in sync.
+export type { NotifKey };
 
 export interface NotifSettings {
   enabled: boolean;
@@ -34,28 +39,6 @@ const DEFAULTS: NotifMap = {
   plan:    { enabled: false, hour: 19, minute: 0 },
 };
 
-// Stable identifiers — `scheduleNotificationAsync` with the same identifier
-// replaces the prior pending schedule, so cancel-then-reschedule never
-// stacks duplicates. Order of this map also drives `pickDailyVariant`'s
-// salt — adding a slot is therefore safe without manual salt bookkeeping.
-const NOTIF_IDS: Record<NotifKey, string> = {
-  morning: 'her-bible.notif.morning',
-  night:   'her-bible.notif.night',
-  plan:    'her-bible.notif.plan',
-};
-
-const SLOTS = Object.keys(NOTIF_IDS) as NotifKey[];
-
-// Per-slot variant counts. All three slots rotate through 10 copies so an
-// active user rarely sees the same reminder twice in a fortnight.
-// MUST stay in sync with the `notif.push.<slot>.{title,body}.<n>` keys present
-// in the i18n catalog — picking a variant with no string would fall back to the
-// raw key text in the notification.
-const VARIANTS_PER_SLOT: Record<NotifKey, number> = {
-  morning: 10,
-  night: 10,
-  plan: 10,
-};
 const ACTION_CATEGORY = 'her-bible.prayer';
 const ANDROID_CHANNEL = 'her-bible.daily';
 // One-shot "finish your evening prayer to complete today" nudge — scheduled for
@@ -99,20 +82,6 @@ function requestCompleteStreakSync(mDone: boolean, eDone: boolean, todayYmd: str
 const BRAND_ROSE = '#E8619A';
 
 // ─── Pure helpers (no React) ──────────────────────────────────────────────
-
-// Deterministic 1..N variant pick keyed on day-of-year: the same slot on the
-// same calendar day always yields the same content, while morning vs night vs
-// plan differ on that day (salt = slot index in NOTIF_IDS). The value is baked
-// into the scheduled notification, so rotation across days only happens when the
-// schedule is rebuilt — which the foreground re-sync effect (5) now does on
-// every app open, so an active user sees fresh content each day.
-function pickDailyVariant(slot: NotifKey): number {
-  const now = new Date();
-  const yearStart = new Date(now.getFullYear(), 0, 0);
-  const dayOfYear = Math.floor((now.getTime() - yearStart.getTime()) / 86_400_000);
-  const salt = SLOTS.indexOf(slot);
-  return ((dayOfYear + salt) % VARIANTS_PER_SLOT[slot]) + 1;
-}
 
 function buildScheduleRequest(slot: NotifKey, cfg: NotifSettings, lang: UILanguageCode): Notifications.NotificationRequestInput {
   const variant = pickDailyVariant(slot);
@@ -176,11 +145,36 @@ async function syncScheduledNotifications(settings: NotifMap, lang: UILanguageCo
       if (__DEV__) console.warn(`[notifications] cancel ${slot} (likely first-launch):`, err);
     }),
   ));
-  await Promise.all(SLOTS.filter(slot => settings[slot].enabled).map(slot =>
+  // morning + night are now RICH Notifee notifications (see notifeeReminders).
+  // We still cancel their expo ids above every sync so an upgraded install's
+  // legacy expo morning/night schedules are torn down and can't double-fire
+  // alongside the Notifee ones. Expo now only owns the plain-text `plan` slot.
+  await Promise.all(SLOTS.filter(slot => slot === 'plan' && settings[slot].enabled).map(slot =>
     Notifications.scheduleNotificationAsync(buildScheduleRequest(slot, settings[slot], lang)).catch(err => {
       if (__DEV__) console.warn(`[notifications] failed to schedule ${slot}:`, err);
     }),
   ));
+}
+
+// Read the live OS permission (Notifee shares the same grant) so the Notifee
+// sync only schedules when notifications are actually allowed.
+async function notifPermissionGranted(): Promise<boolean> {
+  try { return (await Notifications.getPermissionsAsync()).granted; } catch { return false; }
+}
+
+// (Re)schedule the rich Notifee morning/night reminders to match settings.
+// Reads permission first (Notifee never prompts — prompting stays on expo).
+function syncRichReminders(settings: NotifMap, lang: UILanguageCode): void {
+  notifPermissionGranted().then(granted => {
+    syncNotifeeReminders(
+      {
+        morning: { hour: settings.morning.hour, minute: settings.morning.minute, enabled: settings.morning.enabled },
+        night:   { hour: settings.night.hour,   minute: settings.night.minute,   enabled: settings.night.enabled },
+      },
+      granted,
+      lang,
+    );
+  }).catch(() => {});
 }
 
 // ─── Always-on "Other notifications" (no user toggle / time picker) ─────────
@@ -441,6 +435,11 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (!ready) return;
     requestCompleteStreakSync(prayer.mDone, prayer.eDone, todayYmd, lang);
+    // Cancel any pending background re-engagement nudge the instant the slot is
+    // prayed, so a "time to pray" reminder never fires ~60s after the user has
+    // already prayed (would violate the no-reminder-after-praying rule).
+    if (prayer.mDone) cancelBackgroundNudge('morning');
+    if (prayer.eDone) cancelBackgroundNudge('night');
   }, [ready, prayer.mDone, prayer.eDone, todayYmd, lang]);
 
   // 2) Configure the Android notification channel (once, on mount).
@@ -491,6 +490,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (!ready) return;
     syncScheduledNotifications(settings, lang);
+    syncRichReminders(settings, lang);  // rich Notifee morning/night reminders
     requestExtraSync(settings, lang);   // always-on extras + win-back (serialized; gated on OS permission inside)
   }, [ready, settings, lang]);
 
@@ -512,9 +512,56 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       // Debounced so rapid app-switching can't trigger a cancel/schedule storm.
       requestExtraSync(settings, lang, 60_000);
       if (SLOTS.some(s => settings[s].enabled)) syncScheduledNotifications(settings, lang);
+      // Re-bake the rich Notifee reminders too so their daily-variant content
+      // (baked once into the trigger) advances to the current day's copy.
+      if (settings.morning.enabled || settings.night.enabled) syncRichReminders(settings, lang);
     });
     return () => sub.remove();
   }, [ready, settings, lang]);
+
+  // 6) Background re-engagement nudge. When the user LEAVES the app near a
+  //    prayer reminder time WITHOUT having prayed that slot, schedule a one-off
+  //    big Notifee reminder ~1 min later — so shortly after they put the phone
+  //    down / pick it back up, the reminder meets them. Gated once/day/slot via
+  //    AsyncStorage so it never spams; eligibility decided by the pure
+  //    shouldScheduleBackgroundNudge (unit-tested).
+  useEffect(() => {
+    if (!ready) return;
+    const BG_GATE_KEY = 'notif:bgNudge:v1';
+    const sub = AppState.addEventListener('change', state => {
+      if (state !== 'background') return;
+      const now = new Date();
+      const slot = activeSlotFor(now);                 // 'morning' | 'night'
+      const cfg = settings[slot];
+      if (!cfg.enabled || !permissionGranted) return;   // cheap early-outs before I/O
+      const alreadyPrayed = slot === 'morning' ? prayer.mDone : prayer.eDone;
+      if (alreadyPrayed) return;
+      (async () => {
+        try {
+          const raw = await AsyncStorage.getItem(BG_GATE_KEY);
+          const gate: Record<string, Record<string, boolean>> = raw ? JSON.parse(raw) : {};
+          const firedTodayForSlot = !!gate[todayYmd]?.[slot];
+          const ok = shouldScheduleBackgroundNudge({
+            now,
+            slot,
+            reminderMinutes: cfg.hour * 60 + cfg.minute,
+            slotEnabled: cfg.enabled,
+            permissionGranted,
+            alreadyPrayed,
+            firedTodayForSlot,
+          });
+          if (!ok) return;
+          // Mark the gate BEFORE scheduling so a rapid background/foreground
+          // churn can't double-schedule. Store ONLY today's slot flags (prunes
+          // every prior day → the blob stays tiny).
+          await AsyncStorage.setItem(BG_GATE_KEY, JSON.stringify({ [todayYmd]: { ...(gate[todayYmd] || {}), [slot]: true } }));
+          await scheduleBackgroundNudge(slot, lang);
+          logEvent('bg_nudge_scheduled', { slot });
+        } catch { /* never crash on a background transition */ }
+      })();
+    });
+    return () => sub.remove();
+  }, [ready, settings, permissionGranted, prayer.mDone, prayer.eDone, todayYmd, lang]);
 
   // Durable analytics dimension — whether ANY reminder is currently on. Kept
   // live (ob_notifications only reflects the onboarding-time choice).

@@ -27,6 +27,15 @@ _cdn_ready/
 *.aab
 *.apk
 
+# Local toolchain / caches. These are gitignored, but because a .easignore
+# exists EAS ignores .gitignore entirely and uses ONLY this file — so anything
+# gitignored that isn't ALSO listed here gets uploaded. `.jdk17/` is a local
+# 310 MB JDK (EAS provides its own), which is what bloated the archive to 189 MB.
+.jdk17/
+.expo/
+.gradle/
+.kotlin/
+
 # Native projects — this app is managed / CNG (config plugins in app.json).
 # A leftover local android/ or ios/ from a manual `expo prebuild` / `run:*`
 # must NOT be uploaded: if EAS receives a native dir it treats the build as

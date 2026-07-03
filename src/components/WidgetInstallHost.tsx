@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Feather from '@expo/vector-icons/Feather';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -28,7 +28,10 @@ export default function WidgetInstallHost() {
 
   useEffect(() => { AsyncStorage.getItem(SHOWN_KEY).then(v => setShown(!!v)).catch(() => setShown(false)); }, []);
 
-  const eligible = shown === false && daysSinceFirstLaunch >= 3 && everPrayed;
+  // Android ONLY. iOS has no API to programmatically add a home-screen widget,
+  // and the app ships no iOS WidgetKit widget — so nudging iOS users to "add the
+  // widget" leads nowhere. Gated off on iOS until a real iOS widget exists.
+  const eligible = Platform.OS === 'android' && shown === false && daysSinceFirstLaunch >= 3 && everPrayed;
 
   useEffect(() => {
     if (eligible) coord.requestSlot({ id: 'widgetInstall', priority: NUDGE_PRIORITY.widgetInstall, canShow: () => true });

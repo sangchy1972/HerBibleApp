@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTabFocusScrollReset } from '../components/shared/useTabFocusEntrance';
 import TabSection from '../components/shared/TabSection';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, Modal, Share } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, Modal, Share, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -719,10 +719,11 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
       </View>
       </TabSection>
 
-      {/* Widget banner — now its own section (Learning Bible's Quiz / Did You
-          Know were never-shipped "coming soon" placeholders, removed per user).
-          Mirrors the Remove Ads banner above: "+" thumbnail, a pink title + one
-          gray line, and a chevron — no eyebrow, no third "Pick a size…" line. */}
+      {/* Widget banner — ANDROID ONLY. iOS provides no API to programmatically
+          add a home-screen widget, and the app ships no iOS WidgetKit widget, so
+          on iOS this leads nowhere. Hidden on iOS until a real widget is built.
+          Mirrors the Remove Ads banner: "+" thumbnail, pink title + one gray line. */}
+      {Platform.OS === 'android' && (
       <TabSection delay={150}>{/* 450 → 150 */}
       <TouchableOpacity
         onPress={() => navigation.navigate('AddWidget')}
@@ -746,6 +747,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
         </LinearGradient>
       </TouchableOpacity>
       </TabSection>
+      )}
 
       {/* Account — settings-style list of horizontal rows. */}
       <TabSection delay={180}>{/* 550 → 180 */}

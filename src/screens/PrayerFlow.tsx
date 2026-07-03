@@ -49,7 +49,7 @@ import { useUILanguage } from '../state/UILanguageContext';
 const LOTTIE_PRAYER_HANDS = require('../../assets/lottie/prayer-hands.json');
 const LOTTIE_CONFETTI = require('../../assets/lottie/confetti.json');
 import { prepareVerseAudio, prepareHolidayVerseAudio, verseIdFor } from '../services/dailyVerseAudioService';
-import { DAILY_VERSE_AUDIO_LANG } from '../constants/dailyVerseAudioCdn';
+import { DAILY_VERSE_AUDIO_LANG, resolveDailyVerseAudioLang, isDailyVerseAudioAvailable } from '../constants/dailyVerseAudioCdn';
 import { fetchStepTimings, type SentenceTiming } from '../services/verseHighlight';
 import HighlightedText from '../components/HighlightedText';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -469,7 +469,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // page's clip from 0. The bg music keeps playing throughout — separate
   // players, separate controls.
   const { lang: uiLang } = useUILanguage();
-  const listenLangOk = uiLang === DAILY_VERSE_AUDIO_LANG;
+  // Narration language for this UI language (en/es/pt today), or null when
+  // none is recorded. The full Listen gate ALSO checks per-verse availability
+  // below (`listenOk`) once today's verseId is known.
+  const audioLang = resolveDailyVerseAudioLang(uiLang);
   const [listenOn, setListenOn] = useState(false);
   // Audio cursor — the page whose clip the narrator is on. Converges to the
   // settled page (never drives an animated scroll except on auto-advance).
@@ -501,12 +504,23 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // order; any step null = no highlight for it). Loaded alongside the audio.
   const [stepTimings, setStepTimings] = useState<(SentenceTiming[] | null)[] | null>(null);
 
-  const verseId = (listenLangOk && dailyVerse) ? verseIdFor(dailyVerse.day, dailyVerse.segment) : null;
   const verseDay = dailyVerse?.day ?? null;
   // Holiday verses carry a `holidayId` and live in a SEPARATE audio
   // folder/manifest (their m_NNN/e_NNN ids collide with the regular set), so
   // route narration to the holiday pipeline when today's verse is a holiday.
   const isHolidayVerse = !!dailyVerse && (dailyVerse as { holidayId?: string }).holidayId != null;
+  // Listen availability = language recorded AND per-verse: the holiday bucket
+  // is English-only, and the regular set may have per-language upload holes
+  // (isDailyVerseAudioAvailable) — a visible button that 404s is worse than
+  // no button. verseId stays null when unavailable, which disables the whole
+  // download/timings pipeline below.
+  const verseIdRaw = dailyVerse ? verseIdFor(dailyVerse.day, dailyVerse.segment) : null;
+  const listenOk = !!audioLang && !!verseIdRaw && (
+    isHolidayVerse
+      ? audioLang === DAILY_VERSE_AUDIO_LANG
+      : isDailyVerseAudioAvailable(audioLang, verseIdRaw)
+  );
+  const verseId = listenOk ? verseIdRaw : null;
 
   // Resolve + download today's narration. keepIds = today's morning + evening
   // so doing one slot's flow doesn't prune the other's cached files;
@@ -522,18 +536,20 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
       verseIdFor(verseDay, 'morning'), verseIdFor(verseDay, 'evening'),
       verseIdFor(todayDay, 'morning'), verseIdFor(todayDay, 'evening'),
     ]));
-    const prepare = isHolidayVerse ? prepareHolidayVerseAudio : prepareVerseAudio;
-    prepare(verseId, keep)
+    // verseId is only non-null when listenOk passed, which guarantees
+    // audioLang; the ?? fallback just satisfies the type.
+    const lang = audioLang ?? DAILY_VERSE_AUDIO_LANG;
+    (isHolidayVerse ? prepareHolidayVerseAudio(verseId, keep) : prepareVerseAudio(verseId, keep, lang))
       .then(uris => { if (alive) setReadUris(uris); })
       .catch(() => { if (alive) setReadUris(null); });
     // Sentence timings for highlight — best-effort, independent of audio so a
     // timings failure never blocks playback.
     setStepTimings(null);
-    fetchStepTimings(verseId, isHolidayVerse)
+    fetchStepTimings(verseId, isHolidayVerse, lang)
       .then(ts => { if (alive) setStepTimings(ts); })
       .catch(() => { if (alive) setStepTimings(null); });
     return () => { alive = false; };
-  }, [verseId, verseDay, isHolidayVerse, todayDay]);
+  }, [verseId, verseDay, isHolidayVerse, todayDay, audioLang]);
 
   // Source is keyed on the cursor (NOT on listenOn) so pausing keeps the
   // clip mounted at its position — resume continues mid-clip. Changing the
@@ -954,9 +970,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             </TouchableOpacity>
             {/* Listen / 导读 — TTS read-through of the 4 steps, separate from
                 the bg-music control (they play simultaneously). Shown only
-                when narration exists for the active language (English today).
+                when narration exists for the active language AND this verse
+                (en/es/pt; per-verse upload holes hide it too).
                 Disabled until today's audio has resolved. */}
-            {listenLangOk && (
+            {listenOk && (
               <TouchableOpacity
                 onPress={toggleListen}
                 style={[styles.chromeBtn, styles.chromeBtnWhite, !readUris && { opacity: 0.5 }]}

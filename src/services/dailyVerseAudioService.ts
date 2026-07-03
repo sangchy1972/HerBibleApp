@@ -49,9 +49,13 @@ export function remoteStepUrls(
   return urls;
 }
 
-function verseDir(verseId: string): Directory | null {
+// Cache dir is LANGUAGE-SCOPED (`<lang>_<verseId>`): es/pt mirror the English
+// filenames 1:1, so a shared per-verse dir would happily serve a cached
+// English mp3 to a user who just switched their UI language to Spanish.
+// Legacy pre-language dirs (bare `<verseId>`) simply age out via the prune.
+function verseDir(verseId: string, lang: string): Directory | null {
   try {
-    return new Directory(Paths.cache, AUDIO_CACHE_SUBDIR, verseId);
+    return new Directory(Paths.cache, AUDIO_CACHE_SUBDIR, `${lang}_${verseId}`);
   } catch {
     return null;
   }
@@ -105,12 +109,16 @@ async function cacheTimingSiblings(dir: Directory | null, mp3Urls: string[]): Pr
 // length-4 array in page order: the raw parsed JSON for any step already on
 // disk, null where not cached yet. Never throws — a missing/corrupt file just
 // yields null for that step (caller falls back to the network).
-export function readCachedStepTimingsRaw(verseId: string, isHoliday: boolean): (unknown[] | null)[] {
+export function readCachedStepTimingsRaw(
+  verseId: string,
+  isHoliday: boolean,
+  lang: string = DAILY_VERSE_AUDIO_LANG,
+): (unknown[] | null)[] {
   const out: (unknown[] | null)[] = [null, null, null, null];
   try {
     const manifest = isHoliday ? HOLIDAY_VERSE_AUDIO_MANIFEST : DAILY_VERSE_AUDIO_MANIFEST;
     const entry = manifest.verses?.[verseId];
-    const dir = isHoliday ? holidayVerseDir(verseId) : verseDir(verseId);
+    const dir = isHoliday ? holidayVerseDir(verseId) : verseDir(verseId, lang);
     if (!entry || !dir) return out;
     DAILY_VERSE_AUDIO_STEPS.forEach((step, i) => {
       try {
@@ -155,7 +163,7 @@ export async function prepareVerseAudio(
   const urls = remoteStepUrls(manifest, verseId, lang);
   if (!urls) return null;
 
-  const dir = verseDir(verseId);
+  const dir = verseDir(verseId, lang);
   const resolved: string[] = [];
   const pending: { url: string; target: File }[] = [];
   for (let i = 0; i < urls.length; i++) {
@@ -171,7 +179,10 @@ export async function prepareVerseAudio(
     }
   }
 
-  const keep = new Set(keepVerseIds.length ? keepVerseIds : [verseId]);
+  // Prune matches on DIR names, which are now `<lang>_<verseId>` — keep both
+  // slots for the ACTIVE language; other languages' (and legacy un-prefixed)
+  // dirs count as "other" and age out here.
+  const keep = new Set((keepVerseIds.length ? keepVerseIds : [verseId]).map(id => `${lang}_${id}`));
   // Always run the background task — even when every mp3 is already cached — so
   // the timing .json siblings get cached too (highlight reliability).
   void (async () => {

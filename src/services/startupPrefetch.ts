@@ -1,7 +1,7 @@
 import { Image, Dimensions } from 'react-native';
 import { prepareVerseAudio, verseIdFor } from './dailyVerseAudioService';
 import { fetchStepTimings } from './verseHighlight';
-import { resolveDailyVerseAudioLang } from '../constants/dailyVerseAudioCdn';
+import { resolveDailyVerseAudioLang, isDailyVerseAudioAvailable } from '../constants/dailyVerseAudioCdn';
 import { cfImage } from './cfImage';
 import { PLAN_COVER_CDN_BASE } from '../constants/plansApi';
 
@@ -50,12 +50,15 @@ async function prefetchNarration(todayDay: number, uiLang: string): Promise<void
   const eveningId = verseIdFor(todayDay, 'evening');
   const keep = [morningId, eveningId];     // prune everything except today
   for (const verseId of keep) {
+    // Per-verse upload holes (es/pt have a few) → the Listen button is hidden
+    // for that verse anyway, so don't burn bandwidth on guaranteed 404s.
+    if (!isDailyVerseAudioAvailable(lang, verseId)) continue;
     // Downloads the 4 step clips into the day-scoped cache (stream-first;
     // the download happens in the background inside prepareVerseAudio).
     await prepareVerseAudio(verseId, keep, lang).catch(() => {});
     // Sentence timings live as a sibling .json next to each clip; warm the
     // in-memory cache so the highlight is ready the instant playback starts.
-    await fetchStepTimings(verseId, false).catch(() => {});
+    await fetchStepTimings(verseId, false, lang).catch(() => {});
     await sleep(150);                       // gentle pacing between verses
   }
 }

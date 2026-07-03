@@ -5,8 +5,9 @@
 // under `dailyverse_4steps_audio/`. No gating — it's free narration of
 // already-free content, same posture as the bg music + Bible audio.
 //
-// **English only for now.** TTS was generated for `en`; the listen button
-// is hidden for other UI languages until those are recorded.
+// **en / es / pt today.** The listen button is hidden for other UI languages
+// until their audio is uploaded (see AVAILABLE_DAILY_VERSE_AUDIO_LANGS below,
+// and the per-verse MISSING holes for partial uploads).
 //
 // Filenames carry an unpredictable middle slug, so the app can't build
 // them directly — it reads a bundled manifest (constants/
@@ -27,13 +28,28 @@ export const DAILY_VERSE_AUDIO_BASE =
 export const DAILY_VERSE_AUDIO_LANG = 'en';
 
 // Languages that have narration mp3s + timestamp .json uploaded to the CDN
-// under <BASE>/<lang>/…. Today only `en` is recorded. When more languages
-// are uploaded to Cloudflare, add their codes here (and ship a matching
-// per-language entry in the bundled manifest) and the rest of the pipeline —
-// URL building, prefetch, the Listen gate — picks them up automatically. The
-// folder path itself is ALREADY parameterised, so no path code changes are
-// needed at upload time, just this set + the manifest.
-export const AVAILABLE_DAILY_VERSE_AUDIO_LANGS = new Set<string>(['en']);
+// under <BASE>/<lang>/…. es/pt mirror the ENGLISH filenames 1:1 (same slugs),
+// so the single bundled manifest serves all three — only this set (plus the
+// per-verse holes below) gates what we offer. When another language lands on
+// Cloudflare, add its code here after a full-coverage probe.
+export const AVAILABLE_DAILY_VERSE_AUDIO_LANGS = new Set<string>(['en', 'es', 'pt']);
+
+// Per-language upload HOLES at VERSE granularity — any missing step mp3 hides
+// that verse's Listen for that language (a shown button that 404s mid-flow is
+// worse than no button). Verified by a full HEAD sweep of every manifest
+// filename on 2026-07-02: es is missing e_025 (2 steps) + ALL of m_026–m_050;
+// pt is missing e_025 (2 steps). DELETE entries once the files are uploaded —
+// nothing else needs to change.
+const MISSING_DAILY_VERSE_AUDIO: Record<string, ReadonlySet<string>> = {
+  es: new Set([
+    'e_025',
+    'm_026', 'm_027', 'm_028', 'm_029', 'm_030', 'm_031', 'm_032', 'm_033',
+    'm_034', 'm_035', 'm_036', 'm_037', 'm_038', 'm_039', 'm_040', 'm_041',
+    'm_042', 'm_043', 'm_044', 'm_045', 'm_046', 'm_047', 'm_048', 'm_049',
+    'm_050',
+  ]),
+  pt: new Set(['e_025']),
+};
 
 // Resolve a UI language to the narration language we should fetch: the UI
 // language itself when its audio exists, otherwise null (caller skips the
@@ -42,6 +58,13 @@ export const AVAILABLE_DAILY_VERSE_AUDIO_LANGS = new Set<string>(['en']);
 // won't be offered).
 export function resolveDailyVerseAudioLang(uiLang: string): string | null {
   return AVAILABLE_DAILY_VERSE_AUDIO_LANGS.has(uiLang) ? uiLang : null;
+}
+
+// Verse-level availability: the language is recorded AND this specific verse
+// has no upload hole. Callers gate the Listen button + prefetch on this.
+export function isDailyVerseAudioAvailable(lang: string, verseId: string): boolean {
+  if (!AVAILABLE_DAILY_VERSE_AUDIO_LANGS.has(lang)) return false;
+  return !MISSING_DAILY_VERSE_AUDIO[lang]?.has(verseId);
 }
 
 // Step keys in PRAYER-FLOW PAGE ORDER (page 0..3). Mirrors PrayerFlow's

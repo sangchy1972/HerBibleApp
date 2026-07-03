@@ -11,7 +11,7 @@
 // part of the on-screen verse body, so it simply matches nothing and the
 // highlight pauses for those seconds. That's expected.
 
-import { DAILY_VERSE_AUDIO_STEPS } from '../constants/dailyVerseAudioCdn';
+import { DAILY_VERSE_AUDIO_STEPS, DAILY_VERSE_AUDIO_LANG } from '../constants/dailyVerseAudioCdn';
 import {
   loadManifest, loadHolidayManifest, remoteStepUrls, readCachedStepTimingsRaw,
 } from './dailyVerseAudioService';
@@ -79,18 +79,23 @@ function parseTimings(raw: unknown): SentenceTiming[] {
 export async function fetchStepTimings(
   verseId: string,
   isHoliday: boolean,
+  lang: string = DAILY_VERSE_AUDIO_LANG,
 ): Promise<(SentenceTiming[] | null)[] | null> {
-  const cacheKey = `${isHoliday ? 'h' : 'd'}:${verseId}`;
+  // Language rides the memo key + the disk/network paths: es/pt timing .json
+  // siblings mirror the English filenames, so a lang-blind lookup would pin
+  // English sentence timings onto Spanish audio after a UI-language switch.
+  // (Holiday narration is English-only — its paths ignore `lang`.)
+  const cacheKey = `${isHoliday ? 'h' : 'd'}:${lang}:${verseId}`;
   const hit = timingsCache.get(cacheKey);
   if (hit) return hit;
 
   // Disk-first: the timing .json siblings are cached next to the audio (by
   // prepareVerseAudio / the launch prefetch), so they're instant + offline.
   // We only hit the network for steps not yet on disk.
-  const localRaw = readCachedStepTimingsRaw(verseId, isHoliday);
+  const localRaw = readCachedStepTimingsRaw(verseId, isHoliday, lang);
 
   const manifest = await (isHoliday ? loadHolidayManifest() : loadManifest());
-  const mp3Urls = manifest ? remoteStepUrls(manifest, verseId) : null;
+  const mp3Urls = manifest ? remoteStepUrls(manifest, verseId, isHoliday ? DAILY_VERSE_AUDIO_LANG : lang) : null;
   // No manifest/urls: still serve whatever timings are already on disk.
   if (!mp3Urls) {
     if (!localRaw.some(Boolean)) return null;

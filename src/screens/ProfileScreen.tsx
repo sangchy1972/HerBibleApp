@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTabFocusScrollReset } from '../components/shared/useTabFocusEntrance';
 import TabSection from '../components/shared/TabSection';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, Linking, Modal, Share } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, Modal, Share } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -381,11 +381,13 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
   };
 
   const pickPhoto = async () => {
-    // Google Play / iOS App Store guidance: surface a clear in-app rationale
-    // BEFORE invoking the OS permission prompt, so the user understands what
-    // they're consenting to and why. Only after they tap "Allow" do we call
-    // the OS API. We also handle the "permanently denied" case by routing to
-    // Settings instead of looping the user through dead OS dialogs.
+    // In-app consent moment before opening the picker (store-guidance UX).
+    // NO OS permission is requested: launchImageLibraryAsync uses the system
+    // Photo Picker (Android) / PHPicker (iOS), which are permissionless —
+    // REQUIRED, because the manifest deliberately ships without the
+    // READ_MEDIA_* family (Play photo/video-permissions policy; the old
+    // getMediaLibraryPermissionsAsync gate would now deny forever and
+    // dead-end this flow).
     const explain = (): Promise<boolean> =>
       new Promise((resolve) => {
         Alert.alert(
@@ -402,21 +404,6 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
     const consented = await explain();
     if (!consented) return;
 
-    let perm = await ImagePicker.getMediaLibraryPermissionsAsync();
-    if (!perm.granted && perm.canAskAgain) {
-      perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    }
-    if (!perm.granted) {
-      Alert.alert(
-        t('profile.photo.permission.title'),
-        t('profile.photo.permission.body'),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          { text: t('common.openSettings'), onPress: () => Linking.openSettings() },
-        ],
-      );
-      return;
-    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,

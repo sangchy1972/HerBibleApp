@@ -372,6 +372,13 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     // 0.30/0.52. Kept in sync with the home card's veil (PrayerScreen).
     ? (['rgba(74,20,36,0.22)', 'rgba(28,8,16,0.44)'] as const)
     : (['rgba(45,22,96,0.30)', 'rgba(16,5,37,0.52)'] as const);
+  // Follow-along narration highlight — brand ROSE in the morning, LAV in the
+  // evening (per user; the old rgba(0,0,0,0.32) dark pill read muddy over the
+  // photos). 0.55 keeps the white sentence text at comfortable contrast.
+  const spokenHl = [
+    styles.spokenLine,
+    { backgroundColor: morning ? 'rgba(230,63,105,0.55)' : 'rgba(134,107,192,0.55)' },
+  ];
   // Background-music source for this slot. `audioFor` returns either a
   // local cached `file://` URI (prefetched on app launch via
   // PrayerBackgroundsContext) or null when no audio is available yet.
@@ -1024,7 +1031,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                 timings={timingFor(0)}
                 active={listenOn && listenStep === 0}
                 style={styles.pageVerse}
-                highlightStyle={styles.spokenLine}
+                highlightStyle={spokenHl}
               />
               {/* Save / Notes / Share — mirrors the home verse-card affordances.
                   Lives inside the verse page so it scrolls away with the next
@@ -1075,7 +1082,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                     // 18.3 / lh 29.7) per user — same serif voice across the
                     // Reflection / Practice / Prayer deep pages.
                     style={[styles.pageBody, styles.prayerBody]}
-                    highlightStyle={styles.spokenLine}
+                    highlightStyle={spokenHl}
                   />
                 ))}
               </Animated.View>
@@ -1100,7 +1107,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                   // Today's/Tonight's Practice body matches the Closing Prayer
                   // body (Merriweather 18.3 / lh 29.7) per user.
                   style={[styles.pageBody, styles.prayerBody]}
-                  highlightStyle={styles.spokenLine}
+                  highlightStyle={spokenHl}
                 />
                 <TouchableOpacity
                   style={styles.reflectBtn}
@@ -1130,7 +1137,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                   timings={timingFor(3)}
                   active={listenOn && listenStep === 3}
                   style={[styles.pageBody, styles.prayerBody]}
-                  highlightStyle={styles.spokenLine}
+                  highlightStyle={spokenHl}
                 />
                 {/* Amen sits at the END of the prayer content (per user): scroll
                     through the prayer, then the button with 100 px of breathing
@@ -1566,10 +1573,10 @@ const styles = StyleSheet.create({
   // Soft translucent-white pill over the photo bg + full-opacity text so the
   // spoken line lifts off the dimmed-white body without recoloring it.
   spokenLine: {
-    // Dark translucent pill (not white) so the currently-spoken sentence stays
-    // visible over BOTH dark and bright photo backgrounds; text stays white.
+    // Base for the currently-spoken sentence — text stays white; the tint
+    // (morning ROSE / evening LAV, per user — the old dark pill read muddy)
+    // is applied inline via `spokenHl` in the component.
     color: '#FFFFFF',
-    backgroundColor: 'rgba(0,0,0,0.32)',
   },
   // Mirrors PrayerScreen's `startBtn` for height/radius/text — but stays
   // content-hugging (alignSelf 'flex-start') per user, not stretched to the

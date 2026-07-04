@@ -178,6 +178,20 @@ function pickByDate(list: string[], salt: string): string | null {
   return pickForYmd(list, salt, ymdForOffset(0));
 }
 
+// Absolute day count for a local YYYY-MM-DD (UTC-based math → DST-immune), used
+// for SEQUENTIAL rotation: each item is shown in list ORDER, one per calendar
+// day, wrapping at the end — so every background photo gets its turn in sequence
+// (day 0 → list[0], day 1 → list[1] … list[n-1] → back to list[0]) instead of the
+// hash's jump-around that repeated some photos before others ever appeared.
+function dayNumber(ymdStr: string): number {
+  const [y, m, d] = ymdStr.split('-').map(Number);
+  return Math.floor(Date.UTC(y, m - 1, d) / 86_400_000);
+}
+function pickSequential(list: string[], ymdStr: string): string | null {
+  if (!list.length) return null;
+  return list[((dayNumber(ymdStr) % list.length) + list.length) % list.length];
+}
+
 export function PrayerBackgroundsProvider({ children }: { children: React.ReactNode }) {
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -275,8 +289,8 @@ export function PrayerBackgroundsProvider({ children }: { children: React.ReactN
         // Cache TODAY's pick (in use now) and pre-cache TOMORROW's (so the
         // midnight rollover renders instantly instead of re-fetching). Everything
         // else is pruned — footprint stays at ≤4 tiny files, self-cleaning.
-        const todayFn = pickForYmd(list, `img:${slot}`, ymdForOffset(0));
-        const tomorrowFn = pickForYmd(list, `img:${slot}`, ymdForOffset(1));
+        const todayFn = pickSequential(list, ymdForOffset(0));
+        const tomorrowFn = pickSequential(list, ymdForOffset(1));
         const keep: string[] = [];
         for (const fn of [todayFn, tomorrowFn]) {
           if (!fn || keep.includes(fn)) continue;
@@ -316,7 +330,7 @@ export function PrayerBackgroundsProvider({ children }: { children: React.ReactN
     loaded,
     imageFor: (slot) => {
       if (!manifest) return slot === 'morning' ? DEFAULT_MORNING_IMG : DEFAULT_EVENING_IMG;
-      const fn = pickByDate(manifest.images[slot], `img:${slot}`);
+      const fn = pickSequential(manifest.images[slot], ymdForOffset(0));
       if (!fn) return slot === 'morning' ? DEFAULT_MORNING_IMG : DEFAULT_EVENING_IMG;
       // 1) Local disk cache (instant, offline-safe, persists across launches) —
       //    populated by the effect above once the small variant has landed.

@@ -160,15 +160,22 @@ function fnv1a(str: string): number {
   return h >>> 0;
 }
 
-function todayLocalYmd(): string {
+// Local YYYY-MM-DD `offset` days from today (0 = today, 1 = tomorrow).
+function ymdForOffset(offset: number): string {
   const d = new Date();
+  d.setDate(d.getDate() + offset);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function pickByDate(list: string[], salt: string): string | null {
+// Deterministic daily pick for a specific date string — same input → same photo,
+// morning vs evening differ via the salt.
+function pickForYmd(list: string[], salt: string, ymdStr: string): string | null {
   if (!list.length) return null;
-  // Salt the date so morning and evening get different picks on the same day.
-  return list[fnv1a(todayLocalYmd() + ':' + salt) % list.length];
+  return list[fnv1a(ymdStr + ':' + salt) % list.length];
+}
+
+function pickByDate(list: string[], salt: string): string | null {
+  return pickForYmd(list, salt, ymdForOffset(0));
 }
 
 export function PrayerBackgroundsProvider({ children }: { children: React.ReactNode }) {
@@ -264,15 +271,24 @@ export function PrayerBackgroundsProvider({ children }: { children: React.ReactN
     let cancelled = false;
     (async () => {
       for (const slot of ['morning', 'evening'] as const) {
-        const fn = pickByDate(manifest.images[slot], `img:${slot}`);
-        if (!fn) continue;
-        const displayUrl = cfImage(`${manifest.base_url}/${slot}/${fn}`, SCREEN_W);
-        Image.prefetch(displayUrl).catch(() => {});   // warm native cache for the first paint
-        const target = imageCacheFile(slot, fn);
-        if (!target) continue;
-        const ok = await downloadIfMissing(displayUrl, target);
-        if (ok && !cancelled) setImgReady(v => v + 1);
-        pruneImagesNotIn(slot, [fn]);                 // keep only today's pick per slot
+        const list = manifest.images[slot];
+        // Cache TODAY's pick (in use now) and pre-cache TOMORROW's (so the
+        // midnight rollover renders instantly instead of re-fetching). Everything
+        // else is pruned — footprint stays at ≤4 tiny files, self-cleaning.
+        const todayFn = pickForYmd(list, `img:${slot}`, ymdForOffset(0));
+        const tomorrowFn = pickForYmd(list, `img:${slot}`, ymdForOffset(1));
+        const keep: string[] = [];
+        for (const fn of [todayFn, tomorrowFn]) {
+          if (!fn || keep.includes(fn)) continue;
+          keep.push(fn);
+          const displayUrl = cfImage(`${manifest.base_url}/${slot}/${fn}`, SCREEN_W);
+          if (fn === todayFn) Image.prefetch(displayUrl).catch(() => {});   // warm native cache for today's first paint
+          const target = imageCacheFile(slot, fn);
+          if (!target) continue;
+          const ok = await downloadIfMissing(displayUrl, target);
+          if (ok && !cancelled) setImgReady(v => v + 1);
+        }
+        pruneImagesNotIn(slot, keep);   // keep only today + tomorrow
       }
     })();
     return () => { cancelled = true; };

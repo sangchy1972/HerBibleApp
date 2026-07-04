@@ -17,6 +17,9 @@ const SCREEN_W = Dimensions.get('window').width;
 // at their raw path; we upload under `backgrounds/` so no /v1/ prefix.
 const MANIFEST_URL = 'https://covers.everlandapps.com/backgrounds/manifest.json';
 const STORAGE_KEY  = 'prayer-bg:manifest:v1';
+// Persist the CF-transform probe result so 2nd+ launches immediately cache the
+// SMALL variant (not the multi-MB original) without waiting to re-probe.
+const CF_READY_KEY = 'prayer-bg:cfReady:v1';
 
 interface Manifest {
   version: number;
@@ -103,10 +106,11 @@ function pruneAudioNotIn(slot: Slot, keep: string[]): void {
 }
 
 // Downloads `url` into `target` if not already present. Resolves to `true`
-// when the file ends up on disk (cached or freshly downloaded). The caller
-// uses the result to gate cleanup so we never delete yesterday's track
-// before today's is safely landed.
-async function prefetchAudio(url: string, target: File): Promise<boolean> {
+// when the file ends up on disk (cached or freshly downloaded). Generic — used
+// for BOTH the audio tracks and the background images below. The caller uses the
+// result to gate cleanup so we never delete yesterday's file before today's is
+// safely landed.
+async function downloadIfMissing(url: string, target: File): Promise<boolean> {
   try {
     if (target.exists) return true;
     const parent = target.parentDirectory;
@@ -116,6 +120,33 @@ async function prefetchAudio(url: string, target: File): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+// Background-image disk cache — mirrors the audio cache above. RN's <Image>/
+// <ImageBackground> disk cache is volatile (evicted aggressively, unreliable on
+// iOS), so today's hero photo re-downloaded from the CDN on many cold starts.
+// We instead mirror today's SMALL transformed variant into the app cache dir and
+// serve it as a local file:// URI → instant, offline-safe, persistent across
+// launches. Keyed by manifest filename so a new daily pick downloads fresh while
+// yesterday's is pruned. Footprint: ~2 files × ~60–150 KB.
+const IMG_CACHE_SUBDIR = 'prayer-bg';
+function imageCacheFile(slot: Slot, fn: string): File | null {
+  try {
+    return new File(Paths.cache, IMG_CACHE_SUBDIR, slot, fn);
+  } catch {
+    return null;
+  }
+}
+function pruneImagesNotIn(slot: Slot, keep: string[]): void {
+  try {
+    const dir = new Directory(Paths.cache, IMG_CACHE_SUBDIR, slot);
+    if (!dir.exists) return;
+    for (const entry of dir.list()) {
+      if (entry instanceof File && !keep.includes(entry.name)) {
+        try { entry.delete(); } catch {}
+      }
+    }
+  } catch {}
 }
 
 // FNV-1a 32-bit string hash — deterministic, no deps. Good enough for
@@ -149,6 +180,14 @@ export function PrayerBackgroundsProvider({ children }: { children: React.ReactN
   // photos rock-solid even if the dashboard feature gets toggled off:
   // worst case we just serve the full-size original like before.
   const [cfReady, setCfReady] = useState(false);
+  // Bumped each time a background photo finishes caching to disk, so the memo
+  // below re-runs and imageFor starts returning the local file:// URI.
+  const [imgReady, setImgReady] = useState(0);
+  // Hydrate the persisted CF-transform result on mount so the disk-cache effect
+  // can run with the correct variant on the very first render of a 2nd+ launch.
+  useEffect(() => {
+    AsyncStorage.getItem(CF_READY_KEY).then(v => { if (v === '1') setCfReady(true); }).catch(() => {});
+  }, []);
   // `todayYmd` ticks when the calendar day rolls over (AppState resume +
   // midnight setTimeout). Used as a memo dependency below so consumers
   // re-render and `imageFor` / `audioFor` re-pick today's filename — without
@@ -206,26 +245,37 @@ export function PrayerBackgroundsProvider({ children }: { children: React.ReactN
       for (const fn of list) {
         const target = audioCacheFile(slot, fn);
         if (!target) continue;
-        prefetchAudio(`${manifest.base_url}/audio/${slot}/${fn}`, target);
+        downloadIfMissing(`${manifest.base_url}/audio/${slot}/${fn}`, target);
       }
       pruneAudioNotIn(slot, list);
     }
   }, [manifest]);
 
-  // Eagerly warm the native Image cache for today's morning AND evening
-  // photos as soon as the manifest is in. Without this, the photos only
-  // start downloading when the <Image> first mounts — so a user who finishes
-  // the morning prayer and swipes to "Evening" sees a blank gray card until
-  // the photo lands. Image.prefetch is fire-and-forget; failures don't
-  // matter because the <Image> will retry on its own mount path.
+  // Mirror today's morning + evening hero photos to the DISK cache (small
+  // transformed variant) so the card renders instantly from a local file:// on
+  // every entry + cold start, instead of re-fetching from the CDN through RN's
+  // volatile <Image> cache. Also warms the native cache via Image.prefetch as a
+  // belt-and-suspenders for the very first paint. Gated on cfReady === true so
+  // the cached bytes are the ~60–150 KB variant, never the multi-MB original.
+  // Bumps `imgReady` on each successful cache so consumers re-pick the local
+  // file (imageFor is memoized and wouldn't otherwise notice the new file).
   useEffect(() => {
-    if (!manifest) return;
-    for (const slot of ['morning', 'evening'] as const) {
-      const fn = pickByDate(manifest.images[slot], `img:${slot}`);
-      if (!fn) continue;
-      const url = `${manifest.base_url}/${slot}/${fn}`;
-      Image.prefetch(cfReady ? cfImage(url, SCREEN_W) : url).catch(() => {});
-    }
+    if (!manifest || cfReady !== true) return;   // wait for the probe → cache the small variant
+    let cancelled = false;
+    (async () => {
+      for (const slot of ['morning', 'evening'] as const) {
+        const fn = pickByDate(manifest.images[slot], `img:${slot}`);
+        if (!fn) continue;
+        const displayUrl = cfImage(`${manifest.base_url}/${slot}/${fn}`, SCREEN_W);
+        Image.prefetch(displayUrl).catch(() => {});   // warm native cache for the first paint
+        const target = imageCacheFile(slot, fn);
+        if (!target) continue;
+        const ok = await downloadIfMissing(displayUrl, target);
+        if (ok && !cancelled) setImgReady(v => v + 1);
+        pruneImagesNotIn(slot, [fn]);                 // keep only today's pick per slot
+      }
+    })();
+    return () => { cancelled = true; };
   }, [manifest, todayYmd, cfReady]);
 
   // One-shot probe: does this zone serve /cdn-cgi/image/ transforms? Uses a
@@ -238,7 +288,11 @@ export function PrayerBackgroundsProvider({ children }: { children: React.ReactN
     const probeUrl = cfImage(`${manifest.base_url}/morning/${fn}`, 64);
     if (probeUrl.indexOf('/cdn-cgi/') === -1) return;       // host not in transform list
     fetch(probeUrl, { method: 'HEAD' })
-      .then(r => setCfReady(r.ok && (r.headers.get('content-type') || '').includes('image')))
+      .then(r => {
+        const ok = r.ok && (r.headers.get('content-type') || '').includes('image');
+        setCfReady(ok);
+        AsyncStorage.setItem(CF_READY_KEY, ok ? '1' : '0').catch(() => {});
+      })
       .catch(() => setCfReady(false));
   }, [manifest]);
 
@@ -248,9 +302,14 @@ export function PrayerBackgroundsProvider({ children }: { children: React.ReactN
       if (!manifest) return slot === 'morning' ? DEFAULT_MORNING_IMG : DEFAULT_EVENING_IMG;
       const fn = pickByDate(manifest.images[slot], `img:${slot}`);
       if (!fn) return slot === 'morning' ? DEFAULT_MORNING_IMG : DEFAULT_EVENING_IMG;
+      // 1) Local disk cache (instant, offline-safe, persists across launches) —
+      //    populated by the effect above once the small variant has landed.
+      const cached = imageCacheFile(slot, fn);
+      if (cached && cached.exists) return { uri: cached.uri };
+      // 2) CDN fallback while the cache warms. Hero card + PrayerFlow render at
+      //    screen width — a 1080-px variant (~60–150 KB) replaces multi-MB
+      //    originals on slow networks (once the cfReady probe confirms transforms).
       const url = `${manifest.base_url}/${slot}/${fn}`;
-      // Hero card + PrayerFlow render at screen width — a 1080-px variant
-      // (typically 60–150 KB) replaces multi-MB originals on slow networks.
       return { uri: cfReady ? cfImage(url, SCREEN_W) : url };
     },
     audioFor: (slot) => {
@@ -282,7 +341,7 @@ export function PrayerBackgroundsProvider({ children }: { children: React.ReactN
       if (otherSlotLeftover) return { uri: otherSlotLeftover.uri };
       return DEFAULT_AUDIO;
     },
-  }), [manifest, loaded, todayYmd, cfReady]);
+  }), [manifest, loaded, todayYmd, cfReady, imgReady]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

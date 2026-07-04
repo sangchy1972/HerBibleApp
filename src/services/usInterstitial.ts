@@ -69,9 +69,10 @@ const ANDROID_SUFFIX: string[] = [
   '7992170076', // 24 $480
   '6679088408', // 25 $500
 ];
-// iOS units (HB_ios_splash_00 … _25) — created under the iOS App ID. Index 0
-// matches ads.ts REAL_INTERSTITIAL_UNIT_ID.ios (9512513187), a cross-check that
-// the mapping is aligned.
+// iOS units (HB_ios_splash_00 … _25) — created under the iOS App ID. These are
+// the US-ladder units only; non-US iOS traffic uses a SEPARATE dedicated unit
+// (ads.ts REAL_INTERSTITIAL_UNIT_ID.ios = HB_ios_splash_ww_00) so it never
+// pollutes idx-0's stats — same split as Android.
 const IOS_SUFFIX: string[] = [
   '9512513187', // 0  no floor · safety net
   '7128278021', // 1  $300 · new-user top probe

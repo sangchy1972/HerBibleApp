@@ -41,7 +41,10 @@ try {
 // across iOS/Android, and each lives under its own platform App ID (see
 // app.json react-native-google-mobile-ads androidAppId / iosAppId).
 const REAL_INTERSTITIAL_UNIT_ID = Platform.select({
-  ios:     'ca-app-pub-4656643588243987/9512513187',
+  // Dedicated non-US units per platform (HB_ios_splash_ww_00 / a dedicated
+  // Android ww unit) so worldwide traffic never pollutes the US ladder's unit-0
+  // stats in the AdMob console.
+  ios:     'ca-app-pub-4656643588243987/8692353122',
   android: 'ca-app-pub-4656643588243987/5238876625',
   default: 'ca-app-pub-4656643588243987/5238876625',
 }) as string;

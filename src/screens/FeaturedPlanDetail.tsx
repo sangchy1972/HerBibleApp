@@ -198,6 +198,26 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
     goToDay(cur.n);
   };
 
+  // Top CTA semantics (per user): "Start Reading Plan" means BEGIN the plan —
+  // it always enters Day 1, ignoring whatever day is selected in the strip
+  // below, with no "not today's reading" confirmation (there's nothing to
+  // confirm; a plan starts at its beginning). Once Day 1 is done the label
+  // flips to "Continue Reading Plan" and the button carries the reader to the
+  // FIRST INCOMPLETE day. A fully-finished plan circles back to Day 1 (re-read)
+  // under the Start label. Day-strip taps + the walk row keep their selected-day
+  // behavior (incl. the out-of-schedule confirm) — the CTA is the guided path.
+  const completedDays = records[slug]?.completedDays || [];
+  const hasStarted = completedDays.length > 0;
+  const nextUnreadDay = useMemo(() => {
+    for (let d = 1; d <= summary.duration; d++) {
+      if (!completedDays.includes(d)) return d;
+    }
+    return null;   // every day complete
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [completedDays.join(','), summary.duration]);
+  const ctaContinues = hasStarted && nextUnreadDay != null;
+  const onCtaPress = () => goToDay(ctaContinues ? nextUnreadDay! : 1);
+
   const onVerseTap = (v: PlanVerseRef) => {
     const bookSlug = bookCodeToSlug(v.bookCode);
     if (!bookSlug) return;
@@ -271,16 +291,17 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
         {!!summary.goal && <Text style={ds.goal}>{summary.goal}</Text>}
       </Animated.View>
 
-      {/* Start Reading Plan — placed BEFORE the Daily Plan list (per user),
-          with 20px top + bottom margin. */}
+      {/* Start / Continue Reading Plan — placed BEFORE the Daily Plan list
+          (per user), with 20px top + bottom margin. Always Day 1 before the
+          plan is started; first incomplete day afterwards. Never confirms. */}
       <Animated.View entering={FadeIn.delay(130).duration(260)}>
         <TouchableOpacity
           style={[ds.startReadingBtn, { backgroundColor: ac, marginTop: 20, marginBottom: 20 }, !plan && { opacity: 0.5 }]}
-          onPress={startActiveDay}
+          onPress={onCtaPress}
           disabled={!plan}
           activeOpacity={0.9}
         >
-          <Text style={ds.startReadingText}>{t('plan.startReading')}</Text>
+          <Text style={ds.startReadingText}>{t(ctaContinues ? 'plan.continueReading' : 'plan.startReading')}</Text>
         </TouchableOpacity>
       </Animated.View>
 

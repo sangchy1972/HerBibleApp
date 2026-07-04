@@ -1074,6 +1074,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'plan.dailyWalkCaption':         { en: 'DAILY WALK',                                            context: 'Small all-caps caption next to the day-walk row icon on plan detail. Allcaps mimics a tag/eyebrow style.' },
   'plan.timeMinCaps':              { en: '~{min} MIN',                                            context: 'Time-badge label on the day card (e.g. "~8 MIN"). All-caps reads as a chip badge.' },
   'plan.startReading':             { en: 'Start Reading Plan',                                    context: 'Primary CTA on plan detail. Verb phrase: begin reading the plan now.' },
+  'plan.continueReading':          { en: 'Continue Reading Plan',                                 context: 'Primary CTA on plan detail once Day 1 is complete — resumes at the first unread day.' },
   'plan.notFound':                 { en: 'Plan not found.',                                       context: 'Empty-state on FeaturedPlanDetail when the slug doesnt resolve to a known plan.' },
   'plan.loadFailed':               { en: 'Plan content failed to load. Pull to retry or check your connection.', context: 'Error banner on plan detail when the CDN fetch failed. "Pull to retry" matches the iOS pull-to-refresh gesture.' },
   'plan.dayLoadError': { en: 'Plan content isn\'t available yet. Please try again later.', context: 'PlanDayWalk error state when the plan body fails to load.' },

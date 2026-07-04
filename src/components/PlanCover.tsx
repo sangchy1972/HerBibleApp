@@ -3,10 +3,16 @@
 // serves as the loading + 404 fallback. The image sits on top of the
 // gradient with the same dimensions, so a successful load hides the
 // gradient; a missing or still-loading image keeps the gradient visible
-// and the layout stable.
-import React, { useState } from 'react';
+// and the layout stable. While the image is LOADING, a glare band sweeps
+// top-right → bottom-left over the gradient so the placeholder reads as
+// "in flight" rather than a dead color block.
+import React, { useEffect, useState } from 'react';
 import { View, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withRepeat, withTiming,
+  cancelAnimation, Easing, useReducedMotion,
+} from 'react-native-reanimated';
 import { ROSE, LAV } from '../constants/theme';
 import { PLAN_COVER_CDN_BASE } from '../constants/plansApi';
 import { cfImage } from '../services/cfImage';
@@ -24,6 +30,43 @@ type CoverShape =
 // (PlanCategoryScreen) — so a plan thumbnail reads identically wherever it
 // appears. Spread onto <PlanCover {...PLAN_ROW_COVER} />.
 export const PLAN_ROW_COVER = { width: 118, height: 83, radius: 7 } as const;
+
+// Loading glare: a soft white band that sweeps diagonally from the top-right
+// corner to the bottom-left, looping until the cover resolves. Mounted ONLY
+// while an image is actually in flight (unmounts on load/permanent-404), so
+// long lists never carry idle loops. Honors OS reduce-motion.
+function GlareSweep({ width, height }: { width: number; height: number }) {
+  const reduceMotion = useReducedMotion();
+  const p = useSharedValue(0);
+  useEffect(() => {
+    if (reduceMotion) return;
+    p.value = 0;
+    p.value = withRepeat(withTiming(1, { duration: 1300, easing: Easing.inOut(Easing.quad) }), -1);
+    return () => cancelAnimation(p);
+  }, [reduceMotion, p]);
+  const band = Math.max(width, height);
+  const sweep = useAnimatedStyle(() => ({
+    // 0 → 1 slides the band from off-card top-RIGHT to off-card bottom-LEFT.
+    transform: [
+      { translateX: (0.5 - p.value) * 2.4 * width },
+      { translateY: (p.value - 0.5) * 2.4 * height },
+      { rotate: '24deg' },
+    ],
+  }));
+  if (reduceMotion) return null;
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, width, height, overflow: 'hidden' }}>
+      <Animated.View style={[{ position: 'absolute', left: (width - band * 0.9) / 2, top: -band * 0.75, width: band * 0.9, height: band * 2.5 }, sweep]}>
+        <LinearGradient
+          colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.34)', 'rgba(255,255,255,0)']}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          style={{ flex: 1 }}
+        />
+      </Animated.View>
+    </View>
+  );
+}
 
 interface Props {
   /** Optional cover record (bundled summary uses string; CDN summary uses object). */
@@ -55,6 +98,11 @@ function PlanCoverImpl({ cover, slug, gradient, width, height, radius }: Props) 
   // transformed URL errors (e.g. Image Transformations disabled on the zone),
   // fall back to the original full-size URL so covers never disappear.
   const [transformFailed, setTransformFailed] = useState(false);
+  // Cover lifecycle for the glare: sweeping only while genuinely in flight.
+  // `loaded` stops it on success; `failed` stops it once BOTH the transformed
+  // and the original URL have errored (the gradient is then the final state).
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
   const uri = originalUri && !transformFailed ? cfImage(originalUri, width) : originalUri;
 
   return (
@@ -70,9 +118,14 @@ function PlanCoverImpl({ cover, slug, gradient, width, height, radius }: Props) 
           source={{ uri }}
           style={{ width, height }}
           resizeMode="cover"
-          onError={() => { if (!transformFailed) setTransformFailed(true); }}
+          onLoad={() => setLoaded(true)}
+          onError={() => {
+            if (!transformFailed) setTransformFailed(true);
+            else setFailed(true);
+          }}
         />
       ) : null}
+      {uri && !loaded && !failed ? <GlareSweep width={width} height={height} /> : null}
     </View>
   );
 }

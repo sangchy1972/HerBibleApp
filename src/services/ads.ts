@@ -149,16 +149,17 @@ export async function initAds(): Promise<void> {
     }
     await mobileAdsFn().initialize();
     initialized = true;
-    // US ANDROID users → the 26-unit waterfall controller (the HB_int_splash_*
-    // ladder ids are Android units; requesting them from iOS would be invalid
-    // AND skip the real iOS unit). Everyone else — including iOS US users until
-    // an iOS ladder exists — takes the simple single-unit preload.
+    // US users (iOS OR Android) → the 26-unit waterfall controller. The ladder
+    // is platform-selected INSIDE usInterstitial (HB_int_splash_* on Android,
+    // HB_ios_splash_* on iOS), so each binary requests only its own units — the
+    // same JS ships in both. Everyone else (non-US, or region-undetectable) takes
+    // the simple single-unit preload (REAL_INTERSTITIAL_UNIT_ID, also per-platform).
     // NOT in __DEV__: the ladder ids are LIVE units with no TestIds equivalent —
     // same account-safety policy as INTERSTITIAL_UNIT_ID above. Verify the
-    // controller with a release build (internal testing track) or by registering
+    // controller with a release build (internal/TestFlight) or by registering
     // the device as an AdMob test device.
     const region = deviceRegion();
-    const useController = region === 'US' && Platform.OS === 'android' && !!InterstitialAdCls && !__DEV__;
+    const useController = region === 'US' && (Platform.OS === 'ios' || Platform.OS === 'android') && !!InterstitialAdCls && !__DEV__;
     logEvent('ads_route', { region: region ?? 'unknown', path: useController ? 'us_controller' : 'preload' });
     if (useController) {
       startUsController({ Interstitial: InterstitialAdCls, AdEventType: AdEventTypeEnum, isAdsRemoved: () => adsRemoved });

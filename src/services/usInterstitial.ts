@@ -26,16 +26,22 @@
 // ads-removed getter are injected to avoid a circular import.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent } from './firebase';
 
 // ── Constants (spec §0) ──────────────────────────────────────────────────────
 const PUB = 'ca-app-pub-4656643588243987';
 
-// idx → AdMob ad unit id (HB_int_splash_0 … _25). Verified against the AdMob
-// console + the provided mapping spreadsheet.
-const UNIT_SUFFIX: string[] = [
+// idx → AdMob interstitial unit suffix, PER PLATFORM. iOS and Android unit IDs
+// are NOT interchangeable — each lives under its own platform App ID (app.json
+// androidAppId / iosAppId). The ladder is selected by Platform.OS at RUNTIME, so
+// the SAME JS bundle ships in both the AAB and the IPA and each binary
+// automatically requests its own set — there's no build-time switch to get
+// wrong. Both ladders are index-aligned by eCPM floor:
+//   0 = no-floor safety net · 1 = $300 new-user probe · 2…25 = $40…$500.
+// Android = HB_int_splash_0…25 ; iOS = HB_ios_splash_00…25.
+const ANDROID_SUFFIX: string[] = [
   '3482477831', // 0  no floor · safety net
   '7490462459', // 1  $300 · new-user top probe
   '8088924338', // 2  $40
@@ -63,6 +69,38 @@ const UNIT_SUFFIX: string[] = [
   '7992170076', // 24 $480
   '6679088408', // 25 $500
 ];
+// iOS units (HB_ios_splash_00 … _25) — created under the iOS App ID. Index 0
+// matches ads.ts REAL_INTERSTITIAL_UNIT_ID.ios (9512513187), a cross-check that
+// the mapping is aligned.
+const IOS_SUFFIX: string[] = [
+  '9512513187', // 0  no floor · safety net
+  '7128278021', // 1  $300 · new-user top probe
+  '9525165051', // 2  $40
+  '8212083387', // 3  $60
+  '5815196351', // 4  $80
+  '1781984941', // 5  $100
+  '9468903270', // 6  $120
+  '8627016351', // 7  $140
+  '5202355204', // 8  $160
+  '7313934680', // 9  $180
+  '4461428682', // 10 $200
+  '7359090158', // 11 $220
+  '9522183676', // 12 $240
+  '9929413171', // 13 $260
+  '6896020332', // 14 $280
+  '5582938666', // 15 $300
+  '1643693655', // 16 $320
+  '2925021129', // 17 $340
+  '1393401895', // 18 $360
+  '2765203630', // 19 $380
+  '8356441665', // 20 $400
+  '6512876953', // 21 $420
+  '5199795283', // 22 $440
+  '5443337860', // 23 $460
+  '5008223593', // 24 $480
+  '4130256191', // 25 $500
+];
+const UNIT_SUFFIX: string[] = Platform.OS === 'ios' ? IOS_SUFFIX : ANDROID_SUFFIX;
 const UNIT_IDS = UNIT_SUFFIX.map(s => `${PUB}/${s}`);
 
 const MIN_IDX = 2;            // lowest ladder tier ($40)

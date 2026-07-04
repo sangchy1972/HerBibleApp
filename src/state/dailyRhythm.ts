@@ -41,10 +41,11 @@ export interface RhythmInput {
   todayYmd: string;             // local YYYY-MM-DD
   mDone: boolean;
   eDone: boolean;
-  gospelReady: boolean;         // G&P content loaded
-  gospelMorningDone: boolean;   // current G&P plan-day, morning half
-  gospelEveningDone: boolean;
-  gospelPlanComplete: boolean;  // full 89-day G&P plan finished
+  gospelReady: boolean;            // G&P content loaded
+  gospelMorningDone: boolean;      // morning slot read today (per-slot day)
+  gospelEveningDone: boolean;      // evening slot read today
+  gospelMorningComplete: boolean;  // morning slot finished all 89 (retired)
+  gospelEveningComplete: boolean;  // evening slot finished all 89 (retired)
   planRecords: Record<string, PlanRecordLike>;
 }
 
@@ -81,8 +82,8 @@ export function computeRhythm(i: RhythmInput): RhythmView {
   const done: Record<RhythmStepId, boolean> = {
     prayerMorning: i.mDone,
     prayerEvening: i.eDone,
-    gospelMorning: i.gospelPlanComplete || i.gospelMorningDone,
-    gospelEvening: i.gospelPlanComplete || i.gospelEveningDone,
+    gospelMorning: i.gospelMorningComplete || i.gospelMorningDone,
+    gospelEvening: i.gospelEveningComplete || i.gospelEveningDone,
     plan: planDoneToday,
   };
 
@@ -92,15 +93,16 @@ export function computeRhythm(i: RhythmInput): RhythmView {
   const actionable: Record<RhythmStepId, boolean> = {
     prayerMorning: !done.prayerMorning && i.hour >= 6,
     prayerEvening: !done.prayerEvening && i.hour >= 18,
-    gospelMorning: !done.gospelMorning && i.gospelReady && !i.gospelPlanComplete,
-    gospelEvening: !done.gospelEvening && i.gospelReady && !i.gospelPlanComplete,
+    gospelMorning: !done.gospelMorning && i.gospelReady && !i.gospelMorningComplete,
+    gospelEvening: !done.gospelEvening && i.gospelReady && !i.gospelEveningComplete,
     plan: !done.plan,
   };
 
   // Gospel steps drop out of the all-done math while content isn't loaded —
   // an offline first launch shouldn't be un-completable.
   const unavailable = (id: RhythmStepId): boolean =>
-    (id === 'gospelMorning' || id === 'gospelEvening') && !i.gospelReady && !i.gospelPlanComplete;
+    (id === 'gospelMorning' && !i.gospelReady && !i.gospelMorningComplete) ||
+    (id === 'gospelEvening' && !i.gospelReady && !i.gospelEveningComplete);
 
   // Evening-first from 18:00. In the 00–06 dead zone both prayers are locked,
   // so prayer order is moot — morning-first is right for the (possibly freshly
@@ -124,8 +126,9 @@ export function computeRhythm(i: RhythmInput): RhythmView {
 
   const dots: RhythmDotState[] = RHYTHM_STEPS.map(id => {
     if (done[id]) {
-      return i.gospelPlanComplete && (id === 'gospelMorning' || id === 'gospelEvening')
-        ? 'retired' : 'done';
+      if (id === 'gospelMorning' && i.gospelMorningComplete) return 'retired';
+      if (id === 'gospelEvening' && i.gospelEveningComplete) return 'retired';
+      return 'done';
     }
     if (state.kind === 'step' && state.step === id) return 'current';
     if (!actionable[id]) return 'locked';

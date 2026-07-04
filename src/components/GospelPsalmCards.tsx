@@ -45,22 +45,29 @@ function SlotCard({ slot, done, title, subtitle, onPress }: {
 export default function GospelPsalmCards({ onOpen }: { onOpen: (slot: Slot) => void }) {
   const t = useT();
   const { current: translation } = useTranslation();
-  const { ready, day, total, today, morningDone, eveningDone, planComplete } = useGospelsPsalms();
+  const { ready, morning, evening, planComplete } = useGospelsPsalms();
   if (!ready) return null;
 
-  const cardTitle = t('gp.cardTitle', { day, total });
-  // Localized book names so the subtitle follows the UI language, not English.
-  const gospelBook = localizeBookName(translation.code, today.gospel.bookSlug, today.gospel.bookName);
+  // No numeric (N/89) on the cards (per user) — just the plan name.
+  const cardTitle = t('gp.cardTitle');
+  // Per-slot readings — morning and evening advance independently now, so the
+  // two cards may reference DIFFERENT plan days. Localized book names so the
+  // subtitle follows the UI language, not English.
+  const gospelBook = localizeBookName(translation.code, morning.today.gospel.bookSlug, morning.today.gospel.bookName);
   const psalmBook = localizeBookName(translation.code, 'psalms', 'Psalms');
-  const mSub = `${gospelBook} ${today.gospel.chapter} · ${psalmBook} ${today.morningPsalm.chapter}`;
-  const eSub = `${psalmBook} ${today.eveningPsalm.chapter}`;
+  const mSub = morning.complete
+    ? t('gp.slotComplete')
+    : `${gospelBook} ${morning.today.gospel.chapter} · ${psalmBook} ${morning.today.morningPsalm.chapter}`;
+  const eSub = evening.complete
+    ? t('gp.slotComplete')
+    : `${psalmBook} ${evening.today.eveningPsalm.chapter}`;
 
   return (
     <View>
       <Text style={styles.sectionTitle}>{t('gp.section')}</Text>
       {planComplete && <Text style={styles.completeNote}>{t('gp.planComplete')}</Text>}
-      <SlotCard slot="morning" done={morningDone} title={cardTitle} subtitle={mSub} onPress={() => onOpen('morning')} />
-      <SlotCard slot="evening" done={eveningDone} title={cardTitle} subtitle={eSub} onPress={() => onOpen('evening')} />
+      <SlotCard slot="morning" done={morning.doneToday || morning.complete} title={cardTitle} subtitle={mSub} onPress={() => onOpen('morning')} />
+      <SlotCard slot="evening" done={evening.doneToday || evening.complete} title={cardTitle} subtitle={eSub} onPress={() => onOpen('evening')} />
     </View>
   );
 }

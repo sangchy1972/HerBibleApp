@@ -3,8 +3,10 @@ import { AppState } from 'react-native';
 
 // Local-timezone YYYY-MM-DD string. Day boundaries are local — morning prayer
 // should roll forward when the user's wall clock crosses midnight, regardless
-// of UTC.
-function todayYmd(): string {
+// of UTC. Exported for callers that need the FRESH value at call time (e.g.
+// GospelsPsalms markDone stamps completion dates — a stale hook closure there
+// could stamp the wrong day; see the v1 stuck-progress bug).
+export function todayYmd(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }

@@ -55,10 +55,14 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
   const { slot } = route.params;
   const insets = useSafeAreaInsets();
   const t = useT();
-  const { today, day, total, markDone, morningDone, eveningDone } = useGospelsPsalms();
+  const { total, round, markDone, morning: mView, evening: eView, planComplete } = useGospelsPsalms();
   const prayerBg = usePrayerBackgrounds();
   const { current: translation } = useTranslation();
   const morning = slot === 'morning';
+  // Per-slot view — morning and evening advance independently, so THIS
+  // reader renders its own slot's current day.
+  const sv = morning ? mView : eView;
+  const today = sv.today;
   const accent = morning ? ROSE : LAV;
 
   const [sections, setSections] = useState<Section[] | null>(null);
@@ -142,9 +146,13 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
     f('psalms', d.eveningPsalm.chapter);
   }, [translation.code, translation.source]);
   useEffect(() => {
-    warmDay(today);
-    if (day < total) warmDay(GOSPELS_PSALMS_PLAN[day]); // day is 1-based → index `day` = tomorrow
-  }, [today, day, total, warmDay]);
+    // Warm BOTH slots' current day + their tomorrows — the two slots may sit
+    // on different plan days now. fetchChapter dedupes, so overlap costs nil.
+    warmDay(mView.today);
+    if (mView.day < total) warmDay(GOSPELS_PSALMS_PLAN[mView.day]); // day is 1-based → index = tomorrow
+    warmDay(eView.today);
+    if (eView.day < total) warmDay(GOSPELS_PSALMS_PLAN[eView.day]);
+  }, [mView.today, mView.day, eView.today, eView.day, total, warmDay]);
 
   const heroImg = useMemo(() => prayerBg.imageFor(slot), [prayerBg, slot]);
 
@@ -165,7 +173,7 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
   const [showDone, setShowDone] = useState(false);
   const onAmen = () => {
     markDone(slot);
-    logEvent('gospel_psalm_complete', { slot, day: today.day });
+    logEvent('gospel_psalm_complete', { slot, day: sv.day, round });
     setShowDone(true);
   };
 
@@ -283,10 +291,11 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
       {showDone && (
         <GPDoneCard
           slot={slot}
-          day={day}
+          day={sv.day}
           total={total}
-          morningDone={morningDone || slot === 'morning'}
-          eveningDone={eveningDone || slot === 'evening'}
+          slotComplete={sv.complete}
+          planComplete={planComplete}
+          nextRound={round + 1}
           accent={accent}
           onContinue={() => {
             // Interstitial at this natural break — reading is complete and the
@@ -302,18 +311,18 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
   );
 }
 
-// Completion celebration shown after Amen. Confirms the slot is read, shows the
-// day's morning/evening status, and explains the pacing so the counter never
-// looks "stuck".
+// Completion celebration shown after Amen. Single-slot (morning and evening
+// advance independently now, so cross-slot pills would mislead): confirms the
+// reading, then one message — round complete / this slot's 89 all done /
+// "day N+1 continues tomorrow" — so the pacing never looks "stuck".
 function GPDoneCard({
-  slot, day, total, morningDone, eveningDone, accent, onContinue,
+  slot, day, total, slotComplete, planComplete, nextRound, accent, onContinue,
 }: {
   slot: Slot; day: number; total: number;
-  morningDone: boolean; eveningDone: boolean; accent: string; onContinue: () => void;
+  slotComplete: boolean; planComplete: boolean; nextRound: number;
+  accent: string; onContinue: () => void;
 }) {
   const t = useT();
-  const bothDone = morningDone && eveningDone;
-  const nextDay = Math.min(total, day + 1);
   const gradient = slot === 'morning'
     ? (['#FEF1F6', '#FBDCE9', '#FCE1ED'] as const)
     : (['#F1EDF8', '#DDD2EF', '#E5DBF4'] as const);
@@ -322,13 +331,11 @@ function GPDoneCard({
   useEffect(() => { pop.value = withSpring(1, { damping: 9, stiffness: 140, mass: 0.7 }); }, [pop]);
   const popStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }));
 
-  const StatusPill = ({ label, done }: { label: string; done: boolean }) => (
-    <View style={[styles.doneStatusPill, done ? { backgroundColor: `${accent}1A` } : styles.doneStatusPending]}>
-      <Feather name={done ? 'check-circle' : 'circle'} size={16} color={done ? accent : TXTSUB} />
-      <Text style={[styles.doneStatusText, { color: done ? accent : TXTSUB }]}>{label}</Text>
-      {!done && <Text style={styles.donePendingText}>· {t('gpDone.pending')}</Text>}
-    </View>
-  );
+  const message = planComplete
+    ? t('gpDone.roundComplete', { round: nextRound })
+    : slotComplete
+      ? t(slot === 'morning' ? 'gpDone.morningAllDone' : 'gpDone.eveningAllDone')
+      : t('gpDone.nextTomorrow', { next: Math.min(total, day + 1) });
 
   return (
     <View style={styles.doneOverlay}>
@@ -344,13 +351,8 @@ function GPDoneCard({
         {t('gpDone.dayOf', { day, total })}
       </Animated.Text>
 
-      <Animated.View entering={FadeInDown.duration(360).delay(280)} style={styles.doneStatusRow}>
-        <StatusPill label={t('gp.morning')} done={morningDone} />
-        <StatusPill label={t('gp.evening')} done={eveningDone} />
-      </Animated.View>
-
       <Animated.Text entering={FadeInDown.duration(360).delay(360)} style={styles.doneMsg}>
-        {bothDone ? t('gpDone.bothDone', { day, next: nextDay }) : t('gpDone.oneLeft', { day })}
+        {message}
       </Animated.Text>
 
       <Animated.View entering={FadeInDown.duration(360).delay(440)} style={styles.doneBtnWrap}>
@@ -444,14 +446,6 @@ const styles = StyleSheet.create({
     fontSize: 14, fontFamily: FONTS.lato, color: TXTSUB, letterSpacing: 0.5,
     textTransform: 'uppercase', marginBottom: 22,
   },
-  doneStatusRow: { flexDirection: 'row', gap: 10, marginBottom: 22 },
-  doneStatusPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20,
-  },
-  doneStatusPending: { backgroundColor: 'rgba(30,27,46,0.06)' },
-  doneStatusText: { fontSize: 14, fontWeight: '700', fontFamily: FONTS.latoBold },
-  donePendingText: { fontSize: 13, color: TXTSUB, fontFamily: FONTS.lato },
   doneMsg: {
     fontSize: 15.5, fontFamily: FONTS.lato, color: 'rgba(30,27,46,0.72)',
     textAlign: 'center', lineHeight: 23, marginBottom: 30, paddingHorizontal: 10,

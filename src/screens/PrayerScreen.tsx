@@ -594,11 +594,12 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
     todayYmd: todayYmdStr,
     mDone, eDone,
     gospelReady: gp.ready,
-    gospelMorningDone: gp.morningDone,
-    gospelEveningDone: gp.eveningDone,
-    gospelPlanComplete: gp.planComplete,
+    gospelMorningDone: gp.morning.doneToday,
+    gospelEveningDone: gp.evening.doneToday,
+    gospelMorningComplete: gp.morning.complete,
+    gospelEveningComplete: gp.evening.complete,
     planRecords,
-  }), [now, todayYmdStr, mDone, eDone, gp.ready, gp.morningDone, gp.eveningDone, gp.planComplete, planRecords]);
+  }), [now, todayYmdStr, mDone, eDone, gp.ready, gp.morning, gp.evening, planRecords]);
   // Resolve the bar's text/icon/action from the machine state. Step states
   // navigate on tap; rest states pop a friendly hint instead (never a dead
   // tap). The plan step falls back to the explore tab whenever the chosen

@@ -10,7 +10,8 @@ const base: RhythmInput = {
   gospelReady: true,
   gospelMorningDone: false,
   gospelEveningDone: false,
-  gospelPlanComplete: false,
+  gospelMorningComplete: false,
+  gospelEveningComplete: false,
   planRecords: {},
 };
 
@@ -50,11 +51,18 @@ describe('computeRhythm — next-step selection', () => {
     expect(v.dots[3]).toBe('locked');
   });
 
-  it('gospel 89-day plan complete → steps retired, count as done, never suggested', () => {
-    const v = computeRhythm({ ...base, mDone: true, gospelPlanComplete: true });
+  it('gospel 89-day plan complete (both slots) → steps retired, count as done, never suggested', () => {
+    const v = computeRhythm({ ...base, mDone: true, gospelMorningComplete: true, gospelEveningComplete: true });
     expect(v.state).toEqual({ kind: 'step', step: 'plan' });
     expect(v.dots[2]).toBe('retired');
     expect(v.dots[3]).toBe('retired');
+  });
+
+  it('catch-up phase: evening slot complete, morning lagging → dot 4 retired, morning gospel still suggested', () => {
+    const v = computeRhythm({ ...base, mDone: true, gospelEveningComplete: true });
+    expect(v.state).toEqual({ kind: 'step', step: 'gospelMorning' });
+    expect(v.dots[2]).toBe('current');   // morning gospel is the live suggestion
+    expect(v.dots[3]).toBe('retired');   // evening slot permanently checked, never nagged
   });
 
   it('plan done today (lastDayYmd) → step 5 done', () => {

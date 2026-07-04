@@ -100,9 +100,11 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack, on
   const dayComplete = mDone && eDone;
 
   // Today's Gospel & Psalms — if the slot matching this prayer isn't read yet,
-  // surface a "next" card with a Continue button below the weekly card.
-  const { ready: gpReady, day: gpDay, total: gpTotal, morningDone, eveningDone } = useGospelsPsalms();
-  const showNext = gpReady && !(morning ? morningDone : eveningDone);
+  // surface a "next" card with a Continue button below the weekly card. A slot
+  // that has finished all 89 readings is never nagged.
+  const { ready: gpReady, todayFor } = useGospelsPsalms();
+  const gpSlot = todayFor(morning ? 'morning' : 'evening');
+  const showNext = gpReady && !gpSlot.doneToday && !gpSlot.complete;
 
   // Headline (resolves to a catalog key so every language renders its own form):
   //   • day complete (both done) → weekly milestone tier, regardless of which
@@ -192,9 +194,8 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack, on
             <View style={styles.nextCard}>
               <View style={styles.nextMeta}>
                 <Text style={[styles.nextLabel, { color: accent }]}>{t('weekly.next.label')}</Text>
-                <Text style={styles.nextTitle} numberOfLines={1}>
-                  {t('gp.section')}<Text style={styles.nextProgress}>  {gpDay}/{gpTotal}</Text>
-                </Text>
+                {/* No numeric N/89 progress (per user) — just the plan name. */}
+                <Text style={styles.nextTitle} numberOfLines={1}>{t('gp.section')}</Text>
               </View>
               {/* Continue sits full-width at the BOTTOM of the card so tapping it
                   reads as "carry straight on into Gospel & Psalm" (per user). */}
@@ -487,7 +488,6 @@ const styles = StyleSheet.create({
   nextMeta: { minWidth: 0 },
   nextLabel: { fontSize: 12.65, fontFamily: FONTS.lato, fontWeight: '600', letterSpacing: 1.2, marginBottom: 4, textAlign: 'center' },  // Lato 600; centered with the title per user
   nextTitle: { fontSize: 20.24, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold, textAlign: 'center' },   // 17.6 → 20.24 (+15 %), centered per user
-  nextProgress: { fontSize: 16.1, color: TXTSUB, fontFamily: FONTS.lato, fontWeight: '600' },                        // "1/89" inline; +15 % to track the title
   nextContinueBtn: {
     marginTop: 20,                                                               // 16 → 20 (a little more breathing room in the taller card)
     alignSelf: 'stretch',

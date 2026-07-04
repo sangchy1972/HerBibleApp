@@ -33,6 +33,17 @@ try {
   /* native module not in this build → no-op everywhere below */
 }
 
+// App Tracking Transparency (iOS only). Guarded require so a build made before
+// the module was added doesn't crash at import; Android has no ATT so this stays
+// null and the call below is skipped.
+let requestTrackingPermissions: null | (() => Promise<{ status: string }>) = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  requestTrackingPermissions = require('expo-tracking-transparency').requestTrackingPermissionsAsync;
+} catch {
+  /* module not in this build */
+}
+
 // Real interstitial ad units for the simple single-unit path (everyone who is
 // NOT routed to the US waterfall controller: non-US Android, all iOS, and any
 // device whose region can't be detected). Android uses a DEDICATED unit so its
@@ -149,6 +160,15 @@ export async function initAds(): Promise<void> {
         await AdsConsentObj.requestInfoUpdate();
         await AdsConsentObj.loadAndShowConsentFormIfRequired();
       } catch { /* consent failure → fall through; SDK serves per region defaults */ }
+    }
+    // iOS App Tracking Transparency — prompt for tracking BEFORE the GMA SDK
+    // reads the IDFA. On "granted" AdMob serves personalized ads + the real
+    // IDFA; on denied/restricted it serves non-personalized (the app still works
+    // fully). REQUIRED by Apple because App Privacy declares tracking (IDFA).
+    // Runs after UMP so EEA users see the GDPR form then the ATT prompt. No-op on
+    // Android. Awaited so the SDK inits with the resolved authorization status.
+    if (Platform.OS === 'ios' && requestTrackingPermissions) {
+      try { await requestTrackingPermissions(); } catch { /* never block ads/app on ATT */ }
     }
     await mobileAdsFn().initialize();
     initialized = true;

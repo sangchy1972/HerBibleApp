@@ -8,11 +8,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#F9D9E6"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.holy.bible.kjv.audio.prayer",
@@ -101,7 +96,9 @@
       [
         "react-native-android-widget",
         {
-          "fonts": ["./assets/fonts/Lora_400Regular.ttf"],
+          "fonts": [
+            "./assets/fonts/Lora_400Regular.ttf"
+          ],
           "widgets": [
             {
               "name": "verseOfDay",
@@ -142,7 +139,12 @@
           ]
         }
       ],
-      ["expo-audio", { "recordAudioAndroid": false }],
+      [
+        "expo-audio",
+        {
+          "recordAudioAndroid": false
+        }
+      ],
       [
         "react-native-google-mobile-ads",
         {
@@ -223,7 +225,16 @@
         }
       ],
       "./plugins/withAsyncStorageMaxSize.js",
-      "./plugins/withIosNonModularHeaders.js"
+      "./plugins/withIosNonModularHeaders.js",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 150,
+          "resizeMode": "contain",
+          "backgroundColor": "#F9D9E6"
+        }
+      ]
     ],
     "extra": {
       "eas": {

@@ -301,9 +301,14 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
             // Interstitial at this natural break — reading is complete and the
             // user is returning home. Frequency-capped (60s floor) + remove-ads
             // aware inside the service, so it won't double-pop with a just-shown
-            // prayer_end ad. Home renders beneath, so closing the ad lands there.
+            // prayer_end ad.
             maybeShowInterstitial('gospel_end');
-            navigation.goBack();
+            // popToTop, NOT goBack: tapping a reminder while a reader is open
+            // can stack PrayerFlow→(replace)→a second reader on top of a stale
+            // first one — goBack would land on that stale reader instead of
+            // home. popToTop always lands on Tabs; in the normal single-reader
+            // stack it's identical to goBack.
+            navigation.popToTop();
           }}
         />
       )}

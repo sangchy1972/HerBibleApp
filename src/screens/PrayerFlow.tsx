@@ -850,6 +850,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     // Keep the weekly/sapling celebration visible — the habit sheet overlays it.
     // (Previously this hid the weekly screen, which re-exposed the maroon Amen
     // screen underneath, so the sheet appeared to "jump back" a screen.)
+    habitDragY.value = 0;   // reset BEFORE showing so frame 1 sits at translateY 0
     setShowSheet(true);
   };
 
@@ -932,6 +933,37 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     });
   const noteSheetAnimStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: noteDragY.value }],
+  }));
+
+  // Swipe-down dismiss for the habit/time-picker sheet — same pan pattern as
+  // the note sheet above (project convention: every bottom sheet must be
+  // swipe-dismissible; backdrop tap + handle alone is a regression). A swipe
+  // on the TIME PICKER steps back to the habit sheet (mirroring its explicit
+  // close affordance); on the habit sheet it dismisses the whole overlay.
+  const habitDragY = useSharedValue(0);
+  const habitSwipeClose = () => {
+    habitDragY.value = 0;
+    if (showTimePicker) setShowTimePicker(false);
+    else handleSheetClose();
+  };
+  const habitPan = Gesture.Pan()
+    .activeOffsetY(12)
+    .onUpdate((e) => {
+      'worklet';
+      if (e.translationY > 0) habitDragY.value = e.translationY;
+    })
+    .onEnd((e) => {
+      'worklet';
+      if (e.translationY > 120 || e.velocityY > 800) {
+        habitDragY.value = withTiming(800, { duration: 560 }, (f) => {
+          if (f) runOnJS(habitSwipeClose)();
+        });
+      } else {
+        habitDragY.value = withTiming(0, { duration: 480 });
+      }
+    });
+  const habitSheetAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: habitDragY.value }],
   }));
 
   return (
@@ -1366,26 +1398,34 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               onPress={() => !showTimePicker && handleSheetClose()}
             />
           </Animated.View>
-          <Animated.View entering={SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic))}>
-            {!showTimePicker ? (
-              <View style={[styles.sheet, styles.habitSheet]}>
-                <View style={styles.sheetHandle} />
-                <Text style={styles.sheetHeading}>{t('prayerFlow.habit.title')}</Text>
-                <Text style={styles.sheetDesc}>{t('prayerFlow.habit.desc')}</Text>
-                <TouchableOpacity
-                  onPress={() => setShowTimePicker(true)}
-                  style={[styles.setTimeBtn, { backgroundColor: 'rgba(230,63,105,0.10)' }]}
-                >
-                  <Text style={[styles.setTimeText, { color: ROSE }]}>{t('prayerFlow.habit.setTime')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={handleSheetClose}>
-                  <Text style={styles.notNowText}>{t('prayerFlow.habit.notNow')}</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TimePickerSheet onConfirm={handleHabitConfirm} onClose={() => setShowTimePicker(false)} />
-            )}
-          </Animated.View>
+          {/* Swipe-down dismissible (habitPan) per the every-sheet convention:
+              a swipe on the habit sheet closes the overlay; on the time picker
+              it steps back to the habit sheet (same as its explicit close). */}
+          <GestureDetector gesture={habitPan}>
+            <Animated.View
+              entering={SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic))}
+              style={habitSheetAnimStyle}
+            >
+              {!showTimePicker ? (
+                <View style={[styles.sheet, styles.habitSheet]}>
+                  <View style={styles.sheetHandle} />
+                  <Text style={styles.sheetHeading}>{t('prayerFlow.habit.title')}</Text>
+                  <Text style={styles.sheetDesc}>{t('prayerFlow.habit.desc')}</Text>
+                  <TouchableOpacity
+                    onPress={() => setShowTimePicker(true)}
+                    style={[styles.setTimeBtn, { backgroundColor: 'rgba(230,63,105,0.10)' }]}
+                  >
+                    <Text style={[styles.setTimeText, { color: ROSE }]}>{t('prayerFlow.habit.setTime')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleSheetClose}>
+                    <Text style={styles.notNowText}>{t('prayerFlow.habit.notNow')}</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TimePickerSheet onConfirm={handleHabitConfirm} onClose={() => setShowTimePicker(false)} />
+              )}
+            </Animated.View>
+          </GestureDetector>
         </View>
       )}
     </View>

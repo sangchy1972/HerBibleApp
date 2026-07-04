@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import LottieView from 'lottie-react-native';
@@ -10,6 +10,7 @@ import { ROSE, LAV, TXT, TXTSUB, FONTS } from '../constants/theme';
 import { usePrayer } from '../state/PrayerContext';
 import { useNotifications } from '../state/NotificationsContext';
 import { useT } from '../i18n/useT';
+import { useUILanguage } from '../state/UILanguageContext';
 import { useGospelsPsalms } from '../state/GospelsPsalmsContext';
 
 // Hero animation (replaces the old assets/weekly-jesus.png placeholder slot):
@@ -22,13 +23,30 @@ const FIRE_LOTTIE = require('../../assets/lottie/fire-streak.json');
 
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-function ordinal(n: number): string {
-  if (n >= 11 && n <= 13) return `${n}th`;
-  switch (n % 10) {
-    case 1: return `${n}st`;
-    case 2: return `${n}nd`;
-    case 3: return `${n}rd`;
-    default: return `${n}th`;
+// Language-aware ordinal for the "Your <Nth> day of prayer" line. The catalog
+// splits the sentence into subPrefix/subSuffix around this token, so each
+// language needs ITS OWN ordinal form — the old English-only suffixes leaked
+// into every locale ("这是你本周的第 2nd 次祷告！", "Dein 2nd Gebet…").
+// zh counts with a bare numeral (第 2 次), German ordinals are "2.",
+// French feminine "1re/2e" (prière), Spanish/Portuguese feminine "2.ª/2ª"
+// (oración/oração).
+function ordinalFor(lang: string, n: number): string {
+  switch (lang) {
+    case 'zh-Hans':
+    case 'zh-Hant': return String(n);
+    case 'de': return `${n}.`;
+    case 'fr': return n === 1 ? '1re' : `${n}e`;
+    case 'es': return `${n}.ª`;
+    case 'pt': return `${n}ª`;
+    default: {
+      if (n >= 11 && n <= 13) return `${n}th`;
+      switch (n % 10) {
+        case 1: return `${n}st`;
+        case 2: return `${n}nd`;
+        case 3: return `${n}rd`;
+        default: return `${n}th`;
+      }
+    }
   }
 }
 
@@ -83,6 +101,8 @@ interface Props {
 
 export default function WeeklyProgressView({ morning, onOpenReminder, onBack, onStartGospelPsalm }: Props) {
   const t = useT();
+  const { lang } = useUILanguage();
+  const { height: winH } = useWindowDimensions();
   const { recordOn, mDone, eDone } = usePrayer();
   const { count, weekFlags, bothFlags, todayIdx } = countPrayersThisWeek(recordOn);
   const accent = morning ? ROSE : LAV;
@@ -101,10 +121,16 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack, on
 
   // Today's Gospel & Psalms — if the slot matching this prayer isn't read yet,
   // surface a "next" card with a Continue button below the weekly card. A slot
-  // that has finished all 89 readings is never nagged.
+  // that has finished all 89 readings is never nagged. FROZEN at mount: this
+  // screen is a snapshot of the session just finished — without the freeze, a
+  // midnight rollover while the user lingers silently morphed Back into a
+  // NEXT card for the new day (and gpReady is hydrated long before anyone can
+  // finish a prayer, so freezing never hides a legitimate card).
   const { ready: gpReady, todayFor } = useGospelsPsalms();
-  const gpSlot = todayFor(morning ? 'morning' : 'evening');
-  const showNext = gpReady && !gpSlot.doneToday && !gpSlot.complete;
+  const [showNext] = useState(() => {
+    const gpSlot = todayFor(morning ? 'morning' : 'evening');
+    return gpReady && !gpSlot.doneToday && !gpSlot.complete;
+  });
 
   // Headline (resolves to a catalog key so every language renders its own form):
   //   • day complete (both done) → weekly milestone tier, regardless of which
@@ -132,7 +158,17 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack, on
           no hard color boundaries (no native blur lib needed). */}
       <BackgroundDecor morning={morning} />
 
-      <Hero dayComplete={dayComplete} />
+      {/* Scroll container: hero + weekly card + reminder CTA + next card +
+          Maybe later stack past ~740pt — on SE-class (4.7") screens the
+          bottom CTAs fell off-screen with no way to reach them. Tall screens
+          render identically (content shorter than the viewport → no scroll);
+          the hero uses a dp height (38% of the window) because %-heights
+          collapse inside a ScrollView's content container. */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+      <Hero dayComplete={dayComplete} height={winH * 0.38} />
 
       <Animated.View
         entering={SlideInDown.duration(500).delay(200).easing(Easing.out(Easing.cubic))}
@@ -169,7 +205,7 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack, on
 
         <Text style={styles.headline}>{headline}</Text>
         <Text style={styles.sub}>
-          {t('weekly.subPrefix')} <Text style={[styles.subStrong, { color: accent }]}>{ordinal(count)}</Text> {t('weekly.subSuffix')}
+          {t('weekly.subPrefix')} <Text style={[styles.subStrong, { color: accent }]}>{ordinalFor(lang, count)}</Text> {t('weekly.subSuffix')}
         </Text>
 
         {!remindersOn && (
@@ -213,6 +249,7 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack, on
           </TouchableOpacity>
         )}
       </Animated.View>
+      </ScrollView>
     </View>
   );
 }
@@ -262,9 +299,9 @@ function BackgroundDecor({ morning }: { morning: boolean }) {
   );
 }
 
-function Hero({ dayComplete }: { dayComplete: boolean }) {
+function Hero({ dayComplete, height }: { dayComplete: boolean; height: number }) {
   return (
-    <View style={styles.hero}>
+    <View style={[styles.hero, { height }]}>
       <LottieView
         source={dayComplete ? FIRE_LOTTIE : HERO_LOTTIE}                         // both prayers done = streak fire; first of the day = growing sapling (per user)
         autoPlay
@@ -342,8 +379,11 @@ const styles = StyleSheet.create({
   // Base color is the lightest stop of the gradient so a flash of solid
   // background during initial paint matches the gradient's top-left.
   root: { flex: 1, backgroundColor: '#FBE5EF' },
+  // Bottom padding so the last CTA clears the home indicator when the content
+  // scrolls on small screens; on tall screens it's invisible whitespace.
+  scrollContent: { paddingBottom: 28 },
   hero: {
-    height: '38%',
+    // height set inline (38% of the window in dp — see the render comment).
     marginTop: 30,                                                               // +30 px from the top edge per user
     justifyContent: 'center',
     alignItems: 'center',

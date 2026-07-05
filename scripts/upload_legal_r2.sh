@@ -20,6 +20,11 @@ BUCKET="herbible-plans-7languages"          # custom domain: covers.everlandapps
 PREFIX="legal"
 
 # Resolve a usable wrangler: $WRANGLER env override → on PATH → npx fallback.
+# npm_config_ignore_scripts: wrangler depends on sharp, whose prebuilt-binary
+# download fails behind a proxy and then dies building from source — which made
+# `npx wrangler` fail SILENTLY (this bit us on 2026-07-04: login + upload both
+# no-oped). wrangler itself never needs sharp for R2 uploads.
+export npm_config_ignore_scripts=true
 if [ -n "${WRANGLER:-}" ] && [ -x "${WRANGLER}" ]; then WR=( "$WRANGLER" )
 elif command -v wrangler >/dev/null 2>&1; then WR=( wrangler )
 else WR=( npx --yes wrangler ); fi

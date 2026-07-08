@@ -1093,6 +1093,12 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               ref={meditationScrollRef}
               showsVerticalScrollIndicator={false}
               nestedScrollEnabled
+              // Android overscroll glow eats the boundary swipe, so the pager
+              // only advanced after the ScrollView finished its stretch/settle
+              // — that's the "needs 3 swipes to reach Today's Practice" bug.
+              // "never" hands the edge gesture straight to PagerView in ONE
+              // swipe (and lets short, non-scrolling pages advance instantly).
+              overScrollMode="never"
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >
@@ -1126,6 +1132,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               ref={actionScrollRef}
               showsVerticalScrollIndicator={false}
               nestedScrollEnabled
+              overScrollMode="never"   // see meditation page — one-swipe page hand-off
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >
@@ -1158,6 +1165,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               ref={prayerScrollRef}
               showsVerticalScrollIndicator={false}
               nestedScrollEnabled
+              overScrollMode="never"   // see meditation page — one-swipe page hand-off
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >

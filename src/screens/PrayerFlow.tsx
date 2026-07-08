@@ -1099,6 +1099,11 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               // "never" hands the edge gesture straight to PagerView in ONE
               // swipe (and lets short, non-scrolling pages advance instantly).
               overScrollMode="never"
+              // iOS counterpart of overScrollMode="never": the rubber-band
+              // bounce at the content edge also swallows the hand-off swipe, so
+              // iOS needed multiple swipes too. bounces=false lets the edge
+              // gesture pass straight to PagerView in one swipe.
+              bounces={false}
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >
@@ -1133,6 +1138,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               showsVerticalScrollIndicator={false}
               nestedScrollEnabled
               overScrollMode="never"   // see meditation page — one-swipe page hand-off
+              bounces={false}          // iOS counterpart — see meditation page
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >
@@ -1166,6 +1172,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               showsVerticalScrollIndicator={false}
               nestedScrollEnabled
               overScrollMode="never"   // see meditation page — one-swipe page hand-off
+              bounces={false}          // iOS counterpart — see meditation page
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >

@@ -191,12 +191,12 @@ const styles = StyleSheet.create({
   textBlock: { position: 'absolute', left: 28, right: 28, alignItems: 'center' },
   shadow: { textShadowColor: 'rgba(0,0,0,0.45)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 },
   date: {
-    fontFamily: FONTS.merriweatherBold, fontSize: 26, fontWeight: '700',
+    fontFamily: FONTS.merriweatherBold, fontSize: 28.6, fontWeight: '700',      // 26 → 28.6 (+10 % per user)
     textAlign: 'center', marginBottom: 16,
   },
-  sentence: { fontFamily: FONTS.merriweather, fontSize: 22, lineHeight: 32, textAlign: 'center' },
-  source: { fontFamily: FONTS.merriweather, fontSize: 16, lineHeight: 24, textAlign: 'center', marginTop: 14 },
-  brand: { position: 'absolute', left: 0, right: 0, bottom: 79, alignItems: 'center', justifyContent: 'center' },
-  brandLogo: { width: 44, height: 44, borderRadius: 12, marginBottom: 8 },
-  brandName: { fontFamily: FONTS.loraBold, fontSize: 18, fontWeight: '600', letterSpacing: 0.4 },
+  sentence: { fontFamily: FONTS.merriweather, fontSize: 24.2, lineHeight: 35.2, textAlign: 'center' },   // 22/32 → 24.2/35.2 (+10 %)
+  source: { fontFamily: FONTS.merriweather, fontSize: 17.6, lineHeight: 26.4, textAlign: 'center', marginTop: 14 },   // 16/24 → 17.6/26.4 (+10 %)
+  brand: { position: 'absolute', left: 0, right: 0, bottom: 89, alignItems: 'center', justifyContent: 'center' },   // 79 → 89 (+10 px per user)
+  brandLogo: { width: 48.4, height: 48.4, borderRadius: 13.2, marginBottom: 8 },   // 44 → 48.4 (+10 %)
+  brandName: { fontFamily: FONTS.loraBold, fontSize: 19.8, fontWeight: '600', letterSpacing: 0.4 },   // 18 → 19.8 (+10 %)
 });

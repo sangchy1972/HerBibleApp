@@ -1,0 +1,798 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Her Bible · 113 个计划封面与内容分析</title>
+<style>
+:root{--paper:#FBF7F1;--ink:#2A2320;--sub:#8A7F76;--line:#E7DDD0;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+ font-family:"Songti SC","Noto Serif SC",Georgia,"Times New Roman",serif;
+ line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:44px 26px 90px}
+.kicker{letter-spacing:.32em;font-size:12px;color:var(--sub);text-transform:uppercase;
+ font-family:Georgia,serif}
+h1{font-size:40px;line-height:1.15;margin:8px 0 6px;letter-spacing:.01em}
+h1 small{display:block;font-size:16px;color:var(--sub);font-weight:400;margin-top:10px;letter-spacing:.02em}
+.lead{font-size:15.5px;color:#5a5049;max-width:820px;margin:18px 0 0}
+.rule{height:2px;background:var(--ink);margin:26px 0 10px}
+.rule.thin{height:1px;background:var(--line)}
+/* analysis cards */
+.analysis{margin:34px 0 10px}
+.analysis h2{font-size:22px;margin:0 0 14px;letter-spacing:.02em}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.card b{display:block;font-size:15px;margin-bottom:4px}
+.card p{margin:0;font-size:13.5px;color:#5a5049}
+.card .n{font-family:Georgia,serif;color:#B99C74;font-size:13px;letter-spacing:.1em}
+/* palette legend */
+.pal{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px}
+.chip{border-radius:12px;padding:14px 16px;border:1px solid rgba(0,0,0,.06)}
+.chip b{font-size:14px}.chip span{font-family:Georgia,serif;font-size:11.5px;opacity:.75}
+/* section headers */
+h2.sec{display:flex;align-items:center;gap:12px;font-size:26px;margin:46px 0 8px;
+ color:var(--ink);letter-spacing:.02em;border-bottom:2px solid var(--ink);padding-bottom:8px}
+h2.sec .dot{width:14px;height:14px;border-radius:50%}
+h2.sec em{margin-left:auto;font-style:normal;font-size:13px;color:var(--sub);font-family:Georgia,serif;letter-spacing:.06em}
+/* table */
+table.grid{width:100%;border-collapse:collapse;margin:6px 0 8px;font-size:14px}
+.grid thead th{text-align:left;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--sub);font-family:Georgia,serif;font-weight:600;padding:10px 10px;border-bottom:1px solid var(--line)}
+.grid td{padding:16px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.grid tr:hover td{background:#fff}
+.c-idx{width:44px;color:var(--sub);font-family:Georgia,serif}
+.c-idx b{color:var(--ink);font-size:16px}.c-idx .pid{font-size:10.5px;opacity:.7}
+.c-cov{width:150px}
+.c-name{width:210px}.c-name .tt{font-size:15px;font-weight:600;line-height:1.35}
+.c-name .mm{font-size:11.5px;color:var(--sub);margin-top:5px;font-family:Georgia,serif;letter-spacing:.03em}
+.c-desc{font-size:13.5px;color:#4c433d;line-height:1.72}
+.c-cover{width:150px}
+.bigword{font-size:19px;font-weight:700;letter-spacing:.02em}
+.motif{font-size:11.5px;color:var(--sub);margin-top:6px}
+/* the mini magazine cover mockup */
+.cov{background:linear-gradient(160deg,var(--base) 0%,var(--base2) 100%);
+ border-radius:10px;padding:14px 12px 12px;aspect-ratio:3/4;display:flex;flex-direction:column;
+ border:1px solid rgba(0,0,0,.05);box-shadow:0 2px 10px rgba(0,0,0,.05);position:relative;overflow:hidden}
+.cov::after{content:"";position:absolute;inset:5px;border:1px solid color-mix(in srgb,var(--ink) 22%,transparent);border-radius:7px;pointer-events:none}
+.cov-kick{font-family:Georgia,serif;font-size:8px;letter-spacing:.16em;text-transform:uppercase;
+ color:var(--accent);z-index:1}
+.cov-word{font-family:"Songti SC","Noto Serif SC",serif;color:var(--ink);font-weight:700;
+ font-size:26px;line-height:1.05;margin-top:auto;letter-spacing:.01em;z-index:1;
+ text-shadow:0 1px 0 rgba(255,255,255,.35)}
+.cov-rule{height:2px;width:26px;background:var(--accent);margin:8px 0 7px;z-index:1}
+.cov-day{font-family:Georgia,serif;font-size:8px;letter-spacing:.12em;color:var(--ink);opacity:.7;z-index:1}
+@media(max-width:820px){.c-name,.c-cover{width:auto}.cov-word{font-size:22px}h1{font-size:30px}}
+</style></head><body><div class="wrap">
+<div class="kicker">Her Bible · Content & Cover System</div>
+<h1>113 个阅读计划:内容全览与封面改造建议
+<small>把现在的渐变色占位封面,升级为「书刊 / 杂志感」的大字排版封面</small></h1>
+<p class="lead">目前 113 个计划的封面都是纯渐变色占位(CDN 上没有一张真图),所以列表看起来单调。下面先给出一套<strong>统一的编辑排版(editorial)封面系统</strong>,再按五大主题分区,逐一列出每个计划的内容简介(≤200 字)与封面大字建议。左侧「封面建议(预览)」一列是按这套系统<strong>实时渲染的迷你封面样机</strong>,直接就能看到成品长什么样。</p>
+
+<div class="analysis">
+<div class="rule"></div>
+<h2>为什么「大字排版封面」最适合这批计划</h2>
+<div class="cards">
+<div class="card"><span class="n">01</span><b>内容是文字与情绪驱动的</b><p>这些是灵修默想,不是风景或人物故事。一个有分量的中文大词 + 衬线字体,比一张具象照片更能传达安静、深度与共鸣。</p></div>
+<div class="card"><span class="n">02</span><b>缩略图也读得清</b><p>在计划列表里封面很小。大字排版在拇指大小下依然清晰,而照片缩小后往往糊成一团、辨识度低。</p></div>
+<div class="card"><span class="n">03</span><b>113 个能保持统一</b><p>同一套模板换字换色即可,天然成体系、显专业;若每张都找不同照片,风格会散、也贵。</p></div>
+<div class="card"><span class="n">04</span><b>可批量自动生成</b><p>做成一个带变量的 SVG/HTML 模板,113 张一次性导出,像背景图那样上传 R2,几乎零边际成本。</p></div>
+</div>
+
+<div class="rule thin" style="margin-top:26px"></div>
+<h2>封面模板:五个固定元素</h2>
+<div class="cards">
+<div class="card"><b>① 主视觉大字</b><p>2–6 个中文字的核心词(如「松开紧握的手」),衬线体、占据封面下半部,是绝对主角。</p></div>
+<div class="card"><b>② 顶部小标(kicker)</b><p>一行英文小字 = 分类标签(如 ANXIETY & FEAR),字距拉开,营造刊物感。</p></div>
+<div class="card"><b>③ 天数徽章</b><p>「5天 · DEVOTIONAL」放在角落,一眼看出时长与属性。</p></div>
+<div class="card"><b>④ 细线 + 内框</b><p>一条短强调线 + 一圈内描边,是杂志封面的经典语言,让排版更"成册"。</p></div>
+<div class="card"><b>⑤ 单一主题色</b><p>每个主题家族一个色系(见下),同区计划同色不同字 → 列表里自然分组。</p></div>
+</div>
+
+<div class="rule thin" style="margin-top:26px"></div>
+<h2>五大主题配色</h2>
+<div class="pal">
+<div class="chip" style="background:#EFE2D3"><b>情绪疗愈</b> &nbsp;<span>暖棕 / 藕色 · #5B4636</span></div>
+<div class="chip" style="background:#F1D9E1"><b>身份与关系</b> &nbsp;<span>玫瑰粉 · #7A3B52</span></div>
+<div class="chip" style="background:#DEE2CB"><b>人生季节</b> &nbsp;<span>橄榄大地绿 · #55603F</span></div>
+<div class="chip" style="background:#CFDBE3"><b>个人成长</b> &nbsp;<span>雾蓝 · #3B5568</span></div>
+<div class="chip" style="background:#EEE2C6"><b>与神同行</b> &nbsp;<span>暖金米色 · #7A5E2E</span></div>
+</div>
+<p class="lead" style="margin-top:20px"><strong>生产建议:</strong>按 App 里 PlanCover 的封面比例(竖版,建议 3:4 或 4:5,如 1080×1440)做一个模板;字体中文用思源宋体 / 站酷仓耳一类衬线,英文用 Georgia / Playfair;导出 webp,按 <code>covers/&lt;slug&gt;.webp</code> 命名上传到你现有的 R2(<code>covers.everlandapps.com</code>),再把每个计划 summary 里的 <code>cover</code> 字段填上对应 URL 即可。可选:主题色底纹上加一点很淡的纸纹或水彩晕染,质感更足。</p>
+</div>
+
+<div class="rule"></div>
+
+<h2 class="sec" style="--ink:#5B4636;--base:#EFE2D3"><span class="dot" style="background:#8A6F52"></span>情绪疗愈 <em>31 个计划</em></h2>
+<table class="grid"><thead><tr><th class="c-idx">#</th><th class="c-cov">封面建议(预览)</th><th class="c-name">计划</th><th class="c-desc">内容简介</th><th class="c-cover">封面大字 · 点缀</th></tr></thead><tbody>
+<tr><td class="c-idx"><b>1</b><br><span class="pid">EG07</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">ANGER &amp; BITTERNESS</div>
+      <div class="cov-word">咽不下的痛</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">The Hurt I Still Cannot Swallow</div><div class="mm">Anger &amp; Bitterness · 3天</div></td><td class="c-desc">写给外表平静、内心却仍压着未消化委屈与愤怒的女性。三天学习把说不出口的伤带到神面前,承认愤怒的真实,不再假装无事。</td><td class="c-cover"><div class="bigword">「咽不下的痛」</div><div class="motif">点缀:含刺玫瑰线描</div></td></tr>
+<tr><td class="c-idx"><b>2</b><br><span class="pid">EG08</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">ANGER &amp; BITTERNESS</div>
+      <div class="cov-word">沉默的硬化</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">When Unspoken Hurt Begins to Harden the Heart</div><div class="mm">Anger &amp; Bitterness · 5天</div></td><td class="c-desc">给从不发火、却在反复受伤中越来越戒备、越来越疲惫的她。五天面对压抑的伤如何悄悄让心变硬,学习在神里重新柔软。</td><td class="c-cover"><div class="bigword">「沉默的硬化」</div><div class="motif">点缀:龟裂的心形</div></td></tr>
+<tr><td class="c-idx"><b>3</b><br><span class="pid">EG09</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">ANGER &amp; BITTERNESS</div>
+      <div class="cov-word">别让伤住下来</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Do Not Let What Hurt You Keep Living in Your Heart</div><div class="mm">Anger &amp; Bitterness · 7天</div></td><td class="c-desc">七天更深走进伤害、界限与饶恕,处理疼痛被搁置后心的缓慢硬化,让曾伤你的人不再继续住在你心里。</td><td class="c-cover"><div class="bigword">「别让伤住下来」</div><div class="motif">点缀:打开的笼门</div></td></tr>
+<tr><td class="c-idx"><b>4</b><br><span class="pid">E03</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">ANXIETY &amp; WORRY</div>
+      <div class="cov-word">焦虑里的平安</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">A Path of Peace in Anxiety</div><div class="mm">Anxiety &amp; Worry · 5天</div></td><td class="c-desc">当内心无法安定,五天用神的真理一步步把翻涌的思绪带回平安,让心思被真理护卫。</td><td class="c-cover"><div class="bigword">「焦虑里的平安」</div><div class="motif">点缀:风暴中的锚</div></td></tr>
+<tr><td class="c-idx"><b>5</b><br><span class="pid">E11</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">ANXIETY &amp; FEAR</div>
+      <div class="cov-word">松开紧握的手</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">From Control to Surrender</div><div class="mm">Anxiety &amp; Fear · 5天</div></td><td class="c-desc">当把一切扛在肩上已让你精疲力竭,五天从紧握的拳头走向向神张开的手,学习交托。</td><td class="c-cover"><div class="bigword">「松开紧握的手」</div><div class="motif">点缀:张开的手掌</div></td></tr>
+<tr><td class="c-idx"><b>6</b><br><span class="pid">EG01</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">ANXIETY &amp; FEAR</div>
+      <div class="cov-word">焦虑逼近时</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">When Anxiety Is Closing In</div><div class="mm">Anxiety &amp; Fear · 3天</div></td><td class="c-desc">给此刻被淹没、比起解释更需要神临近的她。三天单单经历神就在身边。</td><td class="c-cover"><div class="bigword">「焦虑逼近时」</div><div class="motif">点缀:靠近的光晕</div></td></tr>
+<tr><td class="c-idx"><b>7</b><br><span class="pid">EG02</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">ANXIETY &amp; FEAR</div>
+      <div class="cov-word">夜里静不下</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">The Thoughts That Keep Me Up at Night</div><div class="mm">Anxiety &amp; Fear · 5天</div></td><td class="c-desc">给白天撑起一切、夜里却因停不下的思绪难以入眠的女性,五天让神安静你的心。</td><td class="c-cover"><div class="bigword">「夜里静不下」</div><div class="motif">点缀:月与安眠</div></td></tr>
+<tr><td class="c-idx"><b>8</b><br><span class="pid">EG03</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">ANXIETY &amp; FEAR</div>
+      <div class="cov-word">赎回我的心</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Reclaiming Your Heart from Fear</div><div class="mm">Anxiety &amp; Fear · 7天</div></td><td class="c-desc">七天更深挖出焦虑底下的不安、紧绷与想掌控的心,重新夺回被恐惧占据的心。</td><td class="c-cover"><div class="bigword">「赎回我的心」</div><div class="motif">点缀:破开的锁链</div></td></tr>
+<tr><td class="c-idx"><b>9</b><br><span class="pid">E08</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">COMPARISON &amp; ENVY</div>
+      <div class="cov-word">走出比较</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Freedom from the Bondage of Comparison</div><div class="mm">Comparison &amp; Envy · 5天</div></td><td class="c-desc">当别人的光刺痛了你,五天走出嫉妒,回到神为你量定的那一份。</td><td class="c-cover"><div class="bigword">「走出比较」</div><div class="motif">点缀:归零的天平</div></td></tr>
+<tr><td class="c-idx"><b>10</b><br><span class="pid">E09</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">FEAR &amp; PANIC</div>
+      <div class="cov-word">惧怕中学信靠</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Learning Trust in the Midst of Fear</div><div class="mm">Fear &amp; Panic · 5天</div></td><td class="c-desc">即使恐惧尚未离开,五天从狂跳的心走进祂翅膀的荫下,在神同在里学信靠。</td><td class="c-cover"><div class="bigword">「惧怕中学信靠」</div><div class="motif">点缀:羽翼庇荫</div></td></tr>
+<tr><td class="c-idx"><b>11</b><br><span class="pid">E04</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">FORGIVENESS &amp; RECONCIL</div>
+      <div class="cov-word">饶恕的自由</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Entering the Freedom of Forgiveness</div><div class="mm">Forgiveness &amp; Reconciliation · 7天</div></td><td class="c-desc">饶恕不是淡化伤口,而是慢慢走回神面前的自由。七天从苦毒走向释放。</td><td class="c-cover"><div class="bigword">「饶恕的自由」</div><div class="motif">点缀:解开的绳结</div></td></tr>
+<tr><td class="c-idx"><b>12</b><br><span class="pid">E01</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">GRIEF &amp; LOSS</div>
+      <div class="cov-word">眼泪成祷告</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">When Tears Become Prayer</div><div class="mm">Grief &amp; Loss · 3天</div></td><td class="c-desc">当你连一句完整的话都说不出,三天让你的眼泪本身被神听见。</td><td class="c-cover"><div class="bigword">「眼泪成祷告」</div><div class="motif">点缀:一滴清泪</div></td></tr>
+<tr><td class="c-idx"><b>13</b><br><span class="pid">E10</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">GRIEF &amp; DISAPPOINTMENT</div>
+      <div class="cov-word">向神哀歌</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Coming to God in Lament</div><div class="mm">Grief &amp; Disappointment · 5天</div></td><td class="c-desc">给被催着太快坚强的人,五天给你的悲伤一个安静诉说的地方。</td><td class="c-cover"><div class="bigword">「向神哀歌」</div><div class="motif">点缀:低垂的枝</div></td></tr>
+<tr><td class="c-idx"><b>14</b><br><span class="pid">EG04</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">GRIEF &amp; DISAPPOINTMENT</div>
+      <div class="cov-word">让泪成祷告</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Let Your Tears Become Prayer</div><div class="mm">Grief &amp; Disappointment · 3天</div></td><td class="c-desc">给外表仍在运转、内里却疲惫脆弱、快要落泪的她,三天把眼泪带到神面前。</td><td class="c-cover"><div class="bigword">「让泪成祷告」</div><div class="motif">点缀:泪与烛光</div></td></tr>
+<tr><td class="c-idx"><b>15</b><br><span class="pid">EG05</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">GRIEF &amp; DISAPPOINTMENT</div>
+      <div class="cov-word">不如所愿</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">When Life Did Not Turn Out the Way You Hoped</div><div class="mm">Grief &amp; Disappointment · 5天</div></td><td class="c-desc">给怀着失望、未得应允的渴望、以及故事未如愿之痛的她,五天把遗憾交给神。</td><td class="c-cover"><div class="bigword">「不如所愿」</div><div class="motif">点缀:褪色地图</div></td></tr>
+<tr><td class="c-idx"><b>16</b><br><span class="pid">EG06</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">GRIEF &amp; DISAPPOINTMENT</div>
+      <div class="cov-word">盼望迟延时</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">When Hope Feels Delayed</div><div class="mm">Grief &amp; Disappointment · 7天</div></td><td class="c-desc">七天温柔走过失望与漫长等待,让心回到仍然临在、仍施怜悯的神。</td><td class="c-cover"><div class="bigword">「盼望迟延时」</div><div class="motif">点缀:缓慢日晷</div></td></tr>
+<tr><td class="c-idx"><b>17</b><br><span class="pid">E02</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">JOY &amp; GRATITUDE</div>
+      <div class="cov-word">感恩里的喜乐</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Renewed Joy through Gratitude</div><div class="mm">Joy &amp; Gratitude · 3天</div></td><td class="c-desc">喜乐未必一次回来,有时借感恩慢慢苏醒。三天学习带着感谢醒来。</td><td class="c-cover"><div class="bigword">「感恩里的喜乐」</div><div class="motif">点缀:晨光小窗</div></td></tr>
+<tr><td class="c-idx"><b>18</b><br><span class="pid">EG16</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">JOY &amp; GRATITUDE</div>
+      <div class="cov-word">日常小神迹</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Discovering Everyday Miracles</div><div class="mm">Joy &amp; Gratitude · 3天</div></td><td class="c-desc">给渴望在平凡里重新感到美、认出神温柔临近的她,三天重寻惊喜。</td><td class="c-cover"><div class="bigword">「日常小神迹」</div><div class="motif">点缀:放大镜下的花</div></td></tr>
+<tr><td class="c-idx"><b>19</b><br><span class="pid">EG17</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">JOY &amp; GRATITUDE</div>
+      <div class="cov-word">把心带回感恩</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Returning the Heart to Gratitude</div><div class="mm">Joy &amp; Gratitude · 5天</div></td><td class="c-desc">给活得太快太满、以致感恩不再容易的她,五天让感谢重新流动。</td><td class="c-cover"><div class="bigword">「把心带回感恩」</div><div class="motif">点缀:满溢的杯</div></td></tr>
+<tr><td class="c-idx"><b>20</b><br><span class="pid">EG18</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">JOY &amp; GRATITUDE</div>
+      <div class="cov-word">让喜乐住下</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Let Joy and Gratitude Dwell in Daily Life</div><div class="mm">Joy &amp; Gratitude · 7天</div></td><td class="c-desc">七天重新发现恩典,邀请喜乐与感恩回到每一天的生活里。</td><td class="c-cover"><div class="bigword">「让喜乐住下」</div><div class="motif">点缀:家中暖灯</div></td></tr>
+<tr><td class="c-idx"><b>21</b><br><span class="pid">E06</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">LONELINESS &amp; BELONGING</div>
+      <div class="cov-word">孤独中遇见</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Encountering God&#x27;s Presence in Loneliness</div><div class="mm">Loneliness &amp; Belonging · 5天</div></td><td class="c-desc">当孤独像雾笼罩你,五天从&#x27;独自一人&#x27;走到&#x27;被完全认识&#x27;。</td><td class="c-cover"><div class="bigword">「孤独中遇见」</div><div class="motif">点缀:雾中身影</div></td></tr>
+<tr><td class="c-idx"><b>22</b><br><span class="pid">EG10</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">LONELINESS &amp; EMPTINESS</div>
+      <div class="cov-word">无人真正懂</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">When No One Really Understands</div><div class="mm">Loneliness &amp; Emptiness · 3天</div></td><td class="c-desc">给未必孤身、却渴望被真正理解的她,三天在神的全知里得着被懂的安慰。</td><td class="c-cover"><div class="bigword">「无人真正懂」</div><div class="motif">点缀:两条平行线</div></td></tr>
+<tr><td class="c-idx"><b>23</b><br><span class="pid">EG11</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">LONELINESS &amp; EMPTINESS</div>
+      <div class="cov-word">热闹散后的空</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Why Does My Heart Still Feel Empty After Everything Ends</div><div class="mm">Loneliness &amp; Emptiness · 5天</div></td><td class="c-desc">给外表不空、夜深却莫名空洞的她,五天把心的空处带回神的丰盛。</td><td class="c-cover"><div class="bigword">「热闹散后的空」</div><div class="motif">点缀:一把空椅</div></td></tr>
+<tr><td class="c-idx"><b>24</b><br><span class="pid">EG12</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">LONELINESS &amp; EMPTINESS</div>
+      <div class="cov-word">把空处交给神</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Bringing the Empty Places of My Heart Back to God</div><div class="mm">Loneliness &amp; Emptiness · 7天</div></td><td class="c-desc">七天更深走进孤独与空虚,引心回到神的丰盛与同在。</td><td class="c-cover"><div class="bigword">「把空处交给神」</div><div class="motif">点缀:被填满的器皿</div></td></tr>
+<tr><td class="c-idx"><b>25</b><br><span class="pid">E07</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">SHAME &amp; HIDDENNESS</div>
+      <div class="cov-word">从羞耻释放</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Set Free from Shame</div><div class="mm">Shame &amp; Hiddenness · 5天</div></td><td class="c-desc">羞耻总驱人躲藏,福音温柔把我们带回光中。五天脱下遮掩,穿上义袍。</td><td class="c-cover"><div class="bigword">「从羞耻释放」</div><div class="motif">点缀:落叶后的光</div></td></tr>
+<tr><td class="c-idx"><b>26</b><br><span class="pid">R10</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">GRIEF &amp; DISAPPOINTMENT</div>
+      <div class="cov-word">痛后的养心</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Caring for the Soul after a Painful Season</div><div class="mm">Grief &amp; Disappointment · 7天</div></td><td class="c-desc">有些修复不在瞬间,而在神长久温柔的看顾中。七天被主轻轻托住,走向安静重建。</td><td class="c-cover"><div class="bigword">「痛后的养心」</div><div class="motif">点缀:修补的陶器</div></td></tr>
+<tr><td class="c-idx"><b>27</b><br><span class="pid">E12</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">WEARINESS &amp; BURNOUT</div>
+      <div class="cov-word">安静的勇气</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Learning the Courage of Stillness</div><div class="mm">Weariness &amp; Burnout · 3天</div></td><td class="c-desc">当你习惯了不停奔忙,安静会成为需要学习的勇气。三天重拾静默。</td><td class="c-cover"><div class="bigword">「安静的勇气」</div><div class="motif">点缀:静止水面</div></td></tr>
+<tr><td class="c-idx"><b>28</b><br><span class="pid">E05</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">WEARINESS &amp; BURNOUT</div>
+      <div class="cov-word">倦怠中得力</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Renewed Strength in Burnout</div><div class="mm">Weariness &amp; Burnout · 5天</div></td><td class="c-desc">神不只在乎你重新高产,更要把你带回忠心的节奏。五天从耗竭走向可持续。</td><td class="c-cover"><div class="bigword">「倦怠中得力」</div><div class="motif">点缀:重新充盈的弧光</div></td></tr>
+<tr><td class="c-idx"><b>29</b><br><span class="pid">EG13</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">WEARINESS &amp; BURNOUT</div>
+      <div class="cov-word">关机的权利</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">The Right to Disconnect</div><div class="mm">Weariness &amp; Burnout · 3天</div></td><td class="c-desc">给累到想把一切关掉、静一静、暂停回应的她,三天允许自己安息。</td><td class="c-cover"><div class="bigword">「关机的权利」</div><div class="motif">点缀:拔掉的插头</div></td></tr>
+<tr><td class="c-idx"><b>30</b><br><span class="pid">EG14</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">WEARINESS &amp; BURNOUT</div>
+      <div class="cov-word">放下沉重的翅膀</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Setting Down Heavy Wings</div><div class="mm">Weariness &amp; Burnout · 5天</div></td><td class="c-desc">给长久为他人撑持、却忘了自己也需要被托住的她,五天学习被神背负。</td><td class="c-cover"><div class="bigword">「放下沉重的翅膀」</div><div class="motif">点缀:垂落的羽翼</div></td></tr>
+<tr><td class="c-idx"><b>31</b><br><span class="pid">EG15</span></td><td class="c-cov"><div class="cov" style="--base:#EFE2D3;--base2:#F4EADD;--ink:#5B4636;--accent:#8A6F52">
+      <div class="cov-kick">WEARINESS &amp; BURNOUT</div>
+      <div class="cov-word">慢下来听神</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Slowing Down Enough to Hear God</div><div class="mm">Weariness &amp; Burnout · 7天</div></td><td class="c-desc">七天帮你慢到能重新听见神,把生活的步调交回祂手中。</td><td class="c-cover"><div class="bigword">「慢下来听神」</div><div class="motif">点缀:放缓的钟摆</div></td></tr>
+</tbody></table>
+<h2 class="sec" style="--ink:#7A3B52;--base:#F1D9E1"><span class="dot" style="background:#A9647E"></span>身份与关系 <em>34 个计划</em></h2>
+<table class="grid"><thead><tr><th class="c-idx">#</th><th class="c-cov">封面建议(预览)</th><th class="c-name">计划</th><th class="c-desc">内容简介</th><th class="c-cover">封面大字 · 点缀</th></tr></thead><tbody>
+<tr><td class="c-idx"><b>69</b><br><span class="pid">R08</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">CHARACTER FORMATION</div>
+      <div class="cov-word">母女在恩典重逢</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Daughter and Mother: Meeting Again in Grace</div><div class="mm">Character Formation · 7天</div></td><td class="c-desc">给爱着母亲、靠近时却常受伤、疲惫或纠结的她。七天从期待与失望中退一步,重新用恩典看待母亲与自己。</td><td class="c-cover"><div class="bigword">「母女在恩典重逢」</div><div class="motif">点缀:相触的双手</div></td></tr>
+<tr><td class="c-idx"><b>70</b><br><span class="pid">R12</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">CALLING AND SERVICE</div>
+      <div class="cov-word">她在带领</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">She Leads: Strength for the Woman Who Carries Responsibility</div><div class="mm">Calling and Service · 7天</div></td><td class="c-desc">给长久扛着、带领、维系众人却少被看见疲惫的她。七天回到主前支取安静的力量,学习不靠硬撑地带领。</td><td class="c-cover"><div class="bigword">「她在带领」</div><div class="motif">点缀:稳握的舵</div></td></tr>
+<tr><td class="c-idx"><b>71</b><br><span class="pid">R11</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">CHARACTER FORMATION</div>
+      <div class="cov-word">继母的勇气</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Stepmother&#x27;s Courage: Growing Roots in a Blended Family</div><div class="mm">Character Formation · 5天</div></td><td class="c-desc">给在重组家庭里努力去爱、却屡遇疏离与不确定归属的她。五天放下&#x27;快点做对&#x27;的压力,借忍耐、祷告与稳定的爱扎根。</td><td class="c-cover"><div class="bigword">「继母的勇气」</div><div class="motif">点缀:交织的根</div></td></tr>
+<tr><td class="c-idx"><b>72</b><br><span class="pid">S09</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">FIRST-YEAR POSTPARTUM</div>
+      <div class="cov-word">初为人母</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">First-Time Mother: Gently Held in Your Exhaustion</div><div class="mm">First-Year Postpartum · 7天</div></td><td class="c-desc">给深爱宝宝、却被疲惫、眼泪与陌生的自己压住的新手妈妈。七天温柔陪你走过最脆弱的时刻,提醒你神没忘记那位正在成为母亲的女子。</td><td class="c-cover"><div class="bigword">「初为人母」</div><div class="motif">点缀:襁褓微光</div></td></tr>
+<tr><td class="c-idx"><b>73</b><br><span class="pid">R01</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">DAUGHTER OF GOD</div>
+      <div class="cov-word">你是神所爱的女儿</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">In God&#x27;s Eyes, You Are His Beloved Daughter</div><div class="mm">Daughter of God · 5天</div></td><td class="c-desc">给长久活在比较、评价与&#x27;还不够&#x27;声音下的她。五天重新安静,回到神的目光,记得你首先是祂所爱的女儿。</td><td class="c-cover"><div class="bigword">「你是神所爱的女儿」</div><div class="motif">点缀:被光注视</div></td></tr>
+<tr><td class="c-idx"><b>74</b><br><span class="pid">RI01</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">DAUGHTER OF GOD</div>
+      <div class="cov-word">撕下标签</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Peeling Off the Labels</div><div class="mm">Daughter of God · 3天</div></td><td class="c-desc">当别人的期待与标签在心里住得太久,三天让神带你回到祂一直按名所认识的那个自己。</td><td class="c-cover"><div class="bigword">「撕下标签」</div><div class="motif">点缀:撕落的标签</div></td></tr>
+<tr><td class="c-idx"><b>75</b><br><span class="pid">RI02</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">DAUGHTER OF GOD</div>
+      <div class="cov-word">不再活在比较里</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">No More Living in Comparison</div><div class="mm">Daughter of God · 5天</div></td><td class="c-desc">当外貌、成就、关系与人生进度不断把你拉进比较,五天让心重新回到稳定。</td><td class="c-cover"><div class="bigword">「不再活在比较里」</div><div class="motif">点缀:归零的尺</div></td></tr>
+<tr><td class="c-idx"><b>76</b><br><span class="pid">RI03</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">DAUGHTER OF GOD</div>
+      <div class="cov-word">成为神所说的你</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Becoming Who God Says You Are</div><div class="mm">Daughter of God · 7天</div></td><td class="c-desc">七天更深走过讨好、完美主义与长期的不够感,变得更稳、更诚实、更扎根于神所说的你。</td><td class="c-cover"><div class="bigword">「成为神所说的你」</div><div class="motif">点缀:稳立的树</div></td></tr>
+<tr><td class="c-idx"><b>77</b><br><span class="pid">R06</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">IN LOVE</div>
+      <div class="cov-word">约会中的智慧</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Wisdom in Dating: Letting the Lord Lead Your Heart</div><div class="mm">In Love · 5天</div></td><td class="c-desc">给渴望被爱又怕受伤、怕选错、怕太快交付自己的她。五天把渴望与界限都带到主前,学习更清明稳定地去爱。</td><td class="c-cover"><div class="bigword">「约会中的智慧」</div><div class="motif">点缀:心与罗盘</div></td></tr>
+<tr><td class="c-idx"><b>78</b><br><span class="pid">RI04</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">LOVE &amp; DATING</div>
+      <div class="cov-word">心的锚</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">An Anchor for Your Heart</div><div class="mm">Love &amp; Dating · 3天</div></td><td class="c-desc">当吸引、盼望与不确定同时涌来,三天帮你把心锚定在神里。</td><td class="c-cover"><div class="bigword">「心的锚」</div><div class="motif">点缀:一枚小锚</div></td></tr>
+<tr><td class="c-idx"><b>79</b><br><span class="pid">RI05</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">LOVE &amp; DATING</div>
+      <div class="cov-word">别将就</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Don’t Settle for Less Than Love</div><div class="mm">Love &amp; Dating · 5天</div></td><td class="c-desc">给厌倦&#x27;差一点的关系&#x27;的女性。五天面对那些难以放手却从不稳定的关系,学习用智慧守护己心。</td><td class="c-cover"><div class="bigword">「别将就」</div><div class="motif">点缀:半开的心锁</div></td></tr>
+<tr><td class="c-idx"><b>80</b><br><span class="pid">RI06</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">LOVE &amp; DATING</div>
+      <div class="cov-word">把爱建在磐石</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Building Love on Solid Ground</div><div class="mm">Love &amp; Dating · 7天</div></td><td class="c-desc">七天更深走过现代约会的困惑、拉扯与不确定,把爱建在更坚实的根基上。</td><td class="c-cover"><div class="bigword">「把爱建在磐石」</div><div class="motif">点缀:磐石地基</div></td></tr>
+<tr><td class="c-idx"><b>81</b><br><span class="pid">RI07</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">MARRIAGE &amp; WIFEHOOD</div>
+      <div class="cov-word">温柔的话坚定的爱</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Gentle Words, Strong Love</div><div class="mm">Marriage &amp; Wifehood · 3天</div></td><td class="c-desc">三天在婚姻的摩擦、受伤与疲惫中,重新发现言语如何再次成为爱的一部分。</td><td class="c-cover"><div class="bigword">「温柔的话坚定的爱」</div><div class="motif">点缀:两只茶杯</div></td></tr>
+<tr><td class="c-idx"><b>82</b><br><span class="pid">RI08</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">MARRIAGE &amp; WIFEHOOD</div>
+      <div class="cov-word">重新找到彼此</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Finding Each Other Again</div><div class="mm">Marriage &amp; Wifehood · 5天</div></td><td class="c-desc">当婚姻被忙碌、失望与沉默拉薄,五天面对距离,重新开始连结。</td><td class="c-cover"><div class="bigword">「重新找到彼此」</div><div class="motif">点缀:靠拢的两环</div></td></tr>
+<tr><td class="c-idx"><b>83</b><br><span class="pid">RI09</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">MARRIAGE &amp; WIFEHOOD</div>
+      <div class="cov-word">在婚姻守住自己</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Holding On to Yourself in Marriage</div><div class="mm">Marriage &amp; Wifehood · 7天</div></td><td class="c-desc">七天更深走过婚姻中的情绪劳动、耗竭与身份张力,深深去爱却不失去自己。</td><td class="c-cover"><div class="bigword">「在婚姻守住自己」</div><div class="motif">点缀:完整的圆</div></td></tr>
+<tr><td class="c-idx"><b>84</b><br><span class="pid">R04</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">MOTHER</div>
+      <div class="cov-word">母亲的心</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">A Mother&#x27;s Heart: Mothering in Grace</div><div class="mm">Mother · 7天</div></td><td class="c-desc">给在爱、愧疚、疲惫与掌控欲间被拉扯的母亲。七天在&#x27;做得更好&#x27;的压力下重新呼吸,学习在恩典里爱孩子、也在恩典里生活。</td><td class="c-cover"><div class="bigword">「母亲的心」</div><div class="motif">点缀:心与暖巢</div></td></tr>
+<tr><td class="c-idx"><b>85</b><br><span class="pid">RI10</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">MOTHERHOOD</div>
+      <div class="cov-word">跳出完美妈妈陷阱</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Breaking Free from the Perfect Mom Trap</div><div class="mm">Motherhood · 3天</div></td><td class="c-desc">三天帮母亲松开对完美的紧握,回到恩典。</td><td class="c-cover"><div class="bigword">「跳出完美妈妈陷阱」</div><div class="motif">点缀:松开的结</div></td></tr>
+<tr><td class="c-idx"><b>86</b><br><span class="pid">RI11</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">MOTHERHOOD</div>
+      <div class="cov-word">不完美的好妈妈</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Not Perfect, Still a Good Mom</div><div class="mm">Motherhood · 5天</div></td><td class="c-desc">五天帮你相信:即使不是完美母亲,你也能好好地爱,从更丰盛的地方去爱。</td><td class="c-cover"><div class="bigword">「不完美的好妈妈」</div><div class="motif">点缀:缺角却暖的心</div></td></tr>
+<tr><td class="c-idx"><b>87</b><br><span class="pid">RI12</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">MOTHERHOOD</div>
+      <div class="cov-word">母职始于信靠</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Motherhood Begins with Trust</div><div class="mm">Motherhood · 7天</div></td><td class="c-desc">七天更深走过母职中的掌控、忧虑、牺牲与身份失落,学习信靠这缓慢的功课。</td><td class="c-cover"><div class="bigword">「母职始于信靠」</div><div class="motif">点缀:放飞的风筝</div></td></tr>
+<tr><td class="c-idx"><b>88</b><br><span class="pid">S07</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">NEWLYWED SEASON</div>
+      <div class="cov-word">新婚之春</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Newlywed Spring: For the Woman Learning to Be a Wife</div><div class="mm">Newlywed Season · 7天</div></td><td class="c-desc">给新婚初期、发现喜乐、亲密、沟通与建立家不如想象般轻松的她。七天在日常真实节奏里学习相爱,悄悄为新家立下属灵根基。</td><td class="c-cover"><div class="bigword">「新婚之春」</div><div class="motif">点缀:新居门牌</div></td></tr>
+<tr><td class="c-idx"><b>89</b><br><span class="pid">RI16</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">SINGLE &amp; WHOLE</div>
+      <div class="cov-word">独处这份礼物</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">The Gift of Solitude</div><div class="mm">Single &amp; Whole · 3天</div></td><td class="c-desc">三天把独自一人的重量带回神,让独处不再像缺失,而像神同在能与你相遇的空间。</td><td class="c-cover"><div class="bigword">「独处这份礼物」</div><div class="motif">点缀:一人一椅一窗</div></td></tr>
+<tr><td class="c-idx"><b>90</b><br><span class="pid">RI17</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">SINGLE &amp; WHOLE</div>
+      <div class="cov-word">等待中仍完整</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Whole While You Wait</div><div class="mm">Single &amp; Whole · 5天</div></td><td class="c-desc">五天在等待、时间焦虑、比较与不够感中,把心带回神,从此刻就活出完整。</td><td class="c-cover"><div class="bigword">「等待中仍完整」</div><div class="motif">点缀:沙漏与花</div></td></tr>
+<tr><td class="c-idx"><b>91</b><br><span class="pid">RI18</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">SINGLE &amp; WHOLE</div>
+      <div class="cov-word">单身这场圣冒险</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">The Sacred Adventure of Singleness</div><div class="mm">Single &amp; Whole · 7天</div></td><td class="c-desc">七天更深走过单身中的孤独、压力、渴望、自由与信靠,把这一季当作神认真带你走的旅程。</td><td class="c-cover"><div class="bigword">「单身这场圣冒险」</div><div class="motif">点缀:独行的星图</div></td></tr>
+<tr><td class="c-idx"><b>92</b><br><span class="pid">R03</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">SINGLENESS</div>
+      <div class="cov-word">单身仍完整</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Still Whole in Singleness</div><div class="mm">Singleness · 5天</div></td><td class="c-desc">给常因单身感到孤独、被落下、觉得真正人生还没开始的她。五天把这份重量带回神,重新相信当下的生命并不缺席。</td><td class="c-cover"><div class="bigword">「单身仍完整」</div><div class="motif">点缀:完整的月</div></td></tr>
+<tr><td class="c-idx"><b>93</b><br><span class="pid">R07</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">CHARACTER FORMATION</div>
+      <div class="cov-word">姊妹之约</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">A Covenant of Sisters: Finding True Friendship in Christ</div><div class="mm">Character Formation · 5天</div></td><td class="c-desc">给身边不缺人、却仍感到不被了解、孤单的她。五天从表面连结走进更深的姊妹情,建立带着诚实、分量与属灵支持的友谊。</td><td class="c-cover"><div class="bigword">「姊妹之约」</div><div class="motif">点缀:交叠双手</div></td></tr>
+<tr><td class="c-idx"><b>94</b><br><span class="pid">RI19</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">SISTERHOOD &amp; FRIENDSHI</div>
+      <div class="cov-word">属灵同伴</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Spiritual Companions</div><div class="mm">Sisterhood &amp; Friendship · 3天</div></td><td class="c-desc">三天重新发现友谊可以真正稳定并滋养灵魂。</td><td class="c-cover"><div class="bigword">「属灵同伴」</div><div class="motif">点缀:并肩身影</div></td></tr>
+<tr><td class="c-idx"><b>95</b><br><span class="pid">RI20</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">SISTERHOOD &amp; FRIENDSHI</div>
+      <div class="cov-word">医治友谊的嫉妒</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Healing Jealousy in Friendship</div><div class="mm">Sisterhood &amp; Friendship · 5天</div></td><td class="c-desc">五天面对友谊中的嫉妒、失衡与敏感,让爱重新变得干净。</td><td class="c-cover"><div class="bigword">「医治友谊的嫉妒」</div><div class="motif">点缀:澄清的水</div></td></tr>
+<tr><td class="c-idx"><b>96</b><br><span class="pid">RI21</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">SISTERHOOD &amp; FRIENDSHI</div>
+      <div class="cov-word">彼此磨砺的友谊</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Friendship That Sharpens and Strengthens</div><div class="mm">Sisterhood &amp; Friendship · 7天</div></td><td class="c-desc">七天借诚实、安全、界限与修复,建立更成熟、给人生命的姊妹情。</td><td class="c-cover"><div class="bigword">「彼此磨砺的友谊」</div><div class="motif">点缀:相磨的铁</div></td></tr>
+<tr><td class="c-idx"><b>97</b><br><span class="pid">R09</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">LIFE TRANSITIONS</div>
+      <div class="cov-word">照顾年迈父母</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Caring for Aging Parents: Between Love and Exhaustion</div><div class="mm">Life Transitions · 7天</div></td><td class="c-desc">给照顾年迈父母、同时背负爱、疲惫、愧疚、悲伤甚至旧伤的她。七天在真实压力下继续去爱,更稳地站在永恒的盼望中。</td><td class="c-cover"><div class="bigword">「照顾年迈父母」</div><div class="motif">点缀:相扶的手</div></td></tr>
+<tr><td class="c-idx"><b>98</b><br><span class="pid">R02</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">MARRIAGE &amp; WIFE</div>
+      <div class="cov-word">让爱重新生长</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Let Love Grow Again: For the Wife in a Tired Marriage</div><div class="mm">Marriage &amp; Wife · 7天</div></td><td class="c-desc">给婚姻里爱未消失、却在失望、忙碌与沉默中疲乏的妻子。七天回到关系更深的核心,学习让爱在主里重新生长。</td><td class="c-cover"><div class="bigword">「让爱重新生长」</div><div class="motif">点缀:抽芽的枝</div></td></tr>
+<tr><td class="c-idx"><b>99</b><br><span class="pid">RI13</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">WORK &amp; CALLING</div>
+      <div class="cov-word">职场中的信心</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Faith in the Room</div><div class="mm">Work &amp; Calling · 3天</div></td><td class="c-desc">三天记得神就在会议室、工位与高压的日子里同在。</td><td class="c-cover"><div class="bigword">「职场中的信心」</div><div class="motif">点缀:桌上微光</div></td></tr>
+<tr><td class="c-idx"><b>100</b><br><span class="pid">RI14</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">WORK &amp; CALLING</div>
+      <div class="cov-word">挣脱讨好</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Breaking Free from People-Pleasing</div><div class="mm">Work &amp; Calling · 5天</div></td><td class="c-desc">给厌倦过度付出与表现的女性。五天松开职场讨好的紧箍,学习更自由、更真实地出现。</td><td class="c-cover"><div class="bigword">「挣脱讨好」</div><div class="motif">点缀:断开的线</div></td></tr>
+<tr><td class="c-idx"><b>101</b><br><span class="pid">RI15</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">WORK &amp; CALLING</div>
+      <div class="cov-word">重新定义成功</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Redefining Success</div><div class="mm">Work &amp; Calling · 7天</div></td><td class="c-desc">七天更深走过成就焦虑、倦怠与空虚,重新发现成功真正的意义。</td><td class="c-cover"><div class="bigword">「重新定义成功」</div><div class="motif">点缀:换掉的奖杯</div></td></tr>
+<tr><td class="c-idx"><b>102</b><br><span class="pid">R05</span></td><td class="c-cov"><div class="cov" style="--base:#F1D9E1;--base2:#F8ECF0;--ink:#7A3B52;--accent:#A9647E">
+      <div class="cov-kick">WORKPLACE</div>
+      <div class="cov-word">职场中的呼召</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Her Calling at Work: Walking with the Lord in Your Work</div><div class="mm">Workplace · 5天</div></td><td class="c-desc">给因工作越来越累、不确定为何还在坚持的她。五天在压力、价值疑问与疲惫中记得主未离开你的办公桌,呼召仍在日常工作中。</td><td class="c-cover"><div class="bigword">「职场中的呼召」</div><div class="motif">点缀:灯下书桌</div></td></tr>
+</tbody></table>
+<h2 class="sec" style="--ink:#55603F;--base:#DEE2CB"><span class="dot" style="background:#7C8659"></span>人生季节 <em>25 个计划</em></h2>
+<table class="grid"><thead><tr><th class="c-idx">#</th><th class="c-cov">封面建议(预览)</th><th class="c-name">计划</th><th class="c-desc">内容简介</th><th class="c-cover">封面大字 · 点缀</th></tr></thead><tbody>
+<tr><td class="c-idx"><b>32</b><br><span class="pid">S10</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">SOJOURNER AND PILGRIM</div>
+      <div class="cov-word">两地之间</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Her Cross-Cultural Journey</div><div class="mm">Sojourner and Pilgrim · 5天</div></td><td class="c-desc">给生活在异乡、语言与归属之间的女性。五天讲道式旅程:命名漂泊的心,提醒她是被召而非只是被差,把身份扎根得比地理更深,引向神家中的属灵归宿。</td><td class="c-cover"><div class="bigword">「两地之间」</div><div class="motif">点缀:行囊与地平线</div></td></tr>
+<tr><td class="c-idx"><b>33</b><br><span class="pid">S12</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">A NEW CALLING</div>
+      <div class="cov-word">退休这份礼物</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">The Gift of Retirement</div><div class="mm">A New Calling · 5天</div></td><td class="c-desc">给步入退休的她,五天把空出的日历视为礼物与呼召:主永不退休的呼召、栽培年轻女性、款待的服事、以收成眼光看晚年。</td><td class="c-cover"><div class="bigword">「退休这份礼物」</div><div class="motif">点缀:空白日历页</div></td></tr>
+<tr><td class="c-idx"><b>34</b><br><span class="pid">S08</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">LONGING AND HOPE</div>
+      <div class="cov-word">等待一个孩子</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Longing for a Child</div><div class="mm">Longing and Hope · 7天</div></td><td class="c-desc">给等待、渴望或哀伤中盼望孩子的她。七天牧养式陪伴:被听见、被看见、诚实、哀哭、怜悯、分辨、盼望,扎根于垂听哈拿的神。</td><td class="c-cover"><div class="bigword">「等待一个孩子」</div><div class="motif">点缀:空摇篮微光</div></td></tr>
+<tr><td class="c-idx"><b>35</b><br><span class="pid">S11</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">BEREAVEMENT AND GRIEF</div>
+      <div class="cov-word">走过失丧</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Walking Through Loss</div><div class="mm">Bereavement and Grief · 7天</div></td><td class="c-desc">给正走过至亲离世的她。七天温柔陪伴:承认一切已改变、与同哭的耶稣同坐、面对空椅、走向未选择的未来、以爱继续活着、望向重逢的清晨。</td><td class="c-cover"><div class="bigword">「走过失丧」</div><div class="motif">点缀:空椅与晨光</div></td></tr>
+<tr><td class="c-idx"><b>36</b><br><span class="pid">LS01</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">EARLY LIGHT</div>
+      <div class="cov-word">第一份工作</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">A Spiritual Guide to Your First Job</div><div class="mm">Early Light · 3天</div></td><td class="c-desc">给踏入职场第一季的她,三天在压力、野心与不确定中,学习以神稳定的同在面对新工作。</td><td class="c-cover"><div class="bigword">「第一份工作」</div><div class="motif">点缀:崭新工牌</div></td></tr>
+<tr><td class="c-idx"><b>37</b><br><span class="pid">LS02</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">EARLY LIGHT</div>
+      <div class="cov-word">喧嚣中听祂</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Hearing His Voice in a Noisy World</div><div class="mm">Early Light · 5天</div></td><td class="c-desc">给在众声、选项与嘈杂中寻找方向、渴望更清楚听见神的她,五天寻得安静的指引。</td><td class="c-cover"><div class="bigword">「喧嚣中听祂」</div><div class="motif">点缀:消音的声波</div></td></tr>
+<tr><td class="c-idx"><b>38</b><br><span class="pid">LS03</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">EARLY LIGHT</div>
+      <div class="cov-word">不一样的廿几岁</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">A Different Kind of Twenties</div><div class="mm">Early Light · 7天</div></td><td class="c-desc">给二十多岁、想要的不只是拼劲与势头的女性,七天让神塑造你成长、选择与成为的方式。</td><td class="c-cover"><div class="bigword">「不一样的廿几岁」</div><div class="motif">点缀:分岔小径</div></td></tr>
+<tr><td class="c-idx"><b>39</b><br><span class="pid">S06</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">EMPTY NEST</div>
+      <div class="cov-word">空巢后的新篇</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">New Chapter After Empty Nest</div><div class="mm">Empty Nest · 5天</div></td><td class="c-desc">给孩子离家、房间安静下来的母亲。五天:凡事有时的放手、旷野中的新事、你不只是母亲更是神所爱的女儿、力量为下一代被存留、前方更大的呼召。</td><td class="c-cover"><div class="bigword">「空巢后的新篇」</div><div class="motif">点缀:半空的门框</div></td></tr>
+<tr><td class="c-idx"><b>40</b><br><span class="pid">LS10</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">EVENING GRACE</div>
+      <div class="cov-word">在年轻世界变老</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Growing Older in a World Obsessed with Youth</div><div class="mm">Evening Grace · 3天</div></td><td class="c-desc">给学习把年龄当恩典而非抹去的她,三天在迷恋青春的文化里重新看待老去。</td><td class="c-cover"><div class="bigword">「在年轻世界变老」</div><div class="motif">点缀:一圈年轮</div></td></tr>
+<tr><td class="c-idx"><b>41</b><br><span class="pid">LS11</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">EVENING GRACE</div>
+      <div class="cov-word">晚年仍在成为</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Still Becoming in the Later Years</div><div class="mm">Evening Grace · 5天</div></td><td class="c-desc">给晚季的女性,五天记得神仍在塑造、呼召、使你成长,超越先前的角色。</td><td class="c-cover"><div class="bigword">「晚年仍在成为」</div><div class="motif">点缀:迟开的花</div></td></tr>
+<tr><td class="c-idx"><b>42</b><br><span class="pid">LS12</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">EVENING GRACE</div>
+      <div class="cov-word">被恩典熟成</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">A Life Ripened by Grace</div><div class="mm">Evening Grace · 7天</div></td><td class="c-desc">给回望神多年信实的她,七天带着平安与盼望安住在人生后段。</td><td class="c-cover"><div class="bigword">「被恩典熟成」</div><div class="motif">点缀:成熟果实</div></td></tr>
+<tr><td class="c-idx"><b>43</b><br><span class="pid">LS04</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">FULL BLOOM</div>
+      <div class="cov-word">钱、家与日常</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Wisdom for Money, Home, and Everyday Life</div><div class="mm">Full Bloom · 3天</div></td><td class="c-desc">给背负日常实际重担的她,三天在金钱、家务与平凡决定中寻求神的智慧。</td><td class="c-cover"><div class="bigword">「钱、家与日常」</div><div class="motif">点缀:钥匙与硬币</div></td></tr>
+<tr><td class="c-idx"><b>44</b><br><span class="pid">LS05</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">FULL BLOOM</div>
+      <div class="cov-word">平衡木上的恩典</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Grace on the Balance Beam</div><div class="mm">Full Bloom · 5天</div></td><td class="c-desc">给努力兼顾工作、爱与责任却怕失去重心的她,五天在忙乱中守住属灵中心。</td><td class="c-cover"><div class="bigword">「平衡木上的恩典」</div><div class="motif">点缀:一根平衡木</div></td></tr>
+<tr><td class="c-idx"><b>45</b><br><span class="pid">LS06</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">FULL BLOOM</div>
+      <div class="cov-word">压力下绽放</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Blooming Under Pressure</div><div class="mm">Full Bloom · 7天</div></td><td class="c-desc">给在高压季节里不只想生存的女性,七天看神如何在压力中长出深度、美丽与力量。</td><td class="c-cover"><div class="bigword">「压力下绽放」</div><div class="motif">点缀:石缝里的花</div></td></tr>
+<tr><td class="c-idx"><b>46</b><br><span class="pid">LS07</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">HARVEST SEASON</div>
+      <div class="cov-word">慢来的仍美</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">What Took Time Is Still Beautiful</div><div class="mm">Harvest Season · 3天</div></td><td class="c-desc">给学习以更温柔眼光看待缓慢成长与迟来果实的她,三天珍视长久成形的美。</td><td class="c-cover"><div class="bigword">「慢来的仍美」</div><div class="motif">点缀:慢煮的茶</div></td></tr>
+<tr><td class="c-idx"><b>47</b><br><span class="pid">LS08</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">HARVEST SEASON</div>
+      <div class="cov-word">身体在变</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">When Your Body Changes and So Does Life</div><div class="mm">Harvest Season · 5天</div></td><td class="c-desc">给经历身体变化、精力转移与内在提问的女性,五天在新的人生阶段遇见神。</td><td class="c-cover"><div class="bigword">「身体在变」</div><div class="motif">点缀:变化的月相</div></td></tr>
+<tr><td class="c-idx"><b>48</b><br><span class="pid">LS09</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">HARVEST SEASON</div>
+      <div class="cov-word">中年重启</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">The Midlife Reset</div><div class="mm">Harvest Season · 7天</div></td><td class="c-desc">给中年、感到神不是结束而是以更深智慧重排她故事的女性,七天理清下一章的优先次序。</td><td class="c-cover"><div class="bigword">「中年重启」</div><div class="motif">点缀:重排的书签</div></td></tr>
+<tr><td class="c-idx"><b>49</b><br><span class="pid">S05</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">LONG WAIT</div>
+      <div class="cov-word">等候中的盼望</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Hope in Waiting</div><div class="mm">Long Wait · 7天</div></td><td class="c-desc">给祷告多年未蒙应允的她。七天学习不硬心地等候、不假装地盼望、不失信地哀伤,把心安息在仍在动工的神。</td><td class="c-cover"><div class="bigword">「等候中的盼望」</div><div class="motif">点缀:静候的门</div></td></tr>
+<tr><td class="c-idx"><b>50</b><br><span class="pid">S03</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">MIDLIFE RENEWAL</div>
+      <div class="cov-word">深处的金</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Golden Depths</div><div class="mm">Midlife Renewal · 5天</div></td><td class="c-desc">给35–55岁、感到中年缓慢的她。五天:年老仍结果子、从母胎背你到白发、内在日日更新、旱季仍茂盛、瓦器裂缝透出基督的光。</td><td class="c-cover"><div class="bigword">「深处的金」</div><div class="motif">点缀:深根老树</div></td></tr>
+<tr><td class="c-idx"><b>51</b><br><span class="pid">S02</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">SUMMER BLOOM</div>
+      <div class="cov-word">夏日的抉择</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Summer Choices</div><div class="mm">Summer Bloom · 7天</div></td><td class="c-desc">给二三十岁、同时站在多个十字路口的她。七天:不倚靠自己的聪明、求问天父、脚步蒙神引导、&#x27;这是正路&#x27;、多谋士则安、安静再决定、最终交托。</td><td class="c-cover"><div class="bigword">「夏日的抉择」</div><div class="motif">点缀:多岔路口</div></td></tr>
+<tr><td class="c-idx"><b>52</b><br><span class="pid">LS13</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">THRESHOLD SEASONS</div>
+      <div class="cov-word">重来不从零</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Starting Over Without Starting from Zero</div><div class="mm">Threshold Seasons · 3天</div></td><td class="c-desc">给重新开始的她,三天记得神不会浪费她已经历的一切。</td><td class="c-cover"><div class="bigword">「重来不从零」</div><div class="motif">点缀:接续的线</div></td></tr>
+<tr><td class="c-idx"><b>53</b><br><span class="pid">LS14</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">THRESHOLD SEASONS</div>
+      <div class="cov-word">旧生活不合身</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">When Your Old Life No Longer Fits</div><div class="mm">Threshold Seasons · 5天</div></td><td class="c-desc">给感到改变正在展开的她,五天在&#x27;过渡的中间地带&#x27;忠心而活。</td><td class="c-cover"><div class="bigword">「旧生活不合身」</div><div class="motif">点缀:换季衣橱</div></td></tr>
+<tr><td class="c-idx"><b>54</b><br><span class="pid">LS15</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">THRESHOLD SEASONS</div>
+      <div class="cov-word">重新开始的圣工</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">The Holy Work of Beginning Again</div><div class="mm">Threshold Seasons · 7天</div></td><td class="c-desc">给站在改变门槛上的女性,七天不只在过渡之后、更在过渡之中遇见神。</td><td class="c-cover"><div class="bigword">「重新开始的圣工」</div><div class="motif">点缀:门槛之光</div></td></tr>
+<tr><td class="c-idx"><b>55</b><br><span class="pid">S04</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">TWILIGHT FAITH</div>
+      <div class="cov-word">黄昏的智慧</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Evening Wisdom</div><div class="mm">Twilight Faith · 5天</div></td><td class="c-desc">给55岁以上、松开紧握、思想传承、望向有福盼望的她。五天:数算年日得智慧、真信塑造后代、年老仍前行、晚年正是神显力量之时、有福的盼望照亮余程。</td><td class="c-cover"><div class="bigword">「黄昏的智慧」</div><div class="motif">点缀:黄昏灯塔</div></td></tr>
+<tr><td class="c-idx"><b>56</b><br><span class="pid">S01</span></td><td class="c-cov"><div class="cov" style="--base:#DEE2CB;--base2:#EDF0E1;--ink:#55603F;--accent:#7C8659">
+      <div class="cov-kick">YOUTH</div>
+      <div class="cov-word">青春之春</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Spring of Youth</div><div class="mm">Youth · 5天</div></td><td class="c-desc">给正值青春、迷茫受压、渴望方向的年轻女性。五天:青春当睁眼享受、趁年少记念造你的主、不必被世界模塑、藏神话语护脚步、青年可作榜样。</td><td class="c-cover"><div class="bigword">「青春之春」</div><div class="motif">点缀:初绽花苞</div></td></tr>
+</tbody></table>
+<h2 class="sec" style="--ink:#3B5568;--base:#CFDBE3"><span class="dot" style="background:#5E7A8F"></span>个人成长 <em>12 个计划</em></h2>
+<table class="grid"><thead><tr><th class="c-idx">#</th><th class="c-cov">封面建议(预览)</th><th class="c-name">计划</th><th class="c-desc">内容简介</th><th class="c-cover">封面大字 · 点缀</th></tr></thead><tbody>
+<tr><td class="c-idx"><b>57</b><br><span class="pid">G10</span></td><td class="c-cov"><div class="cov" style="--base:#CFDBE3;--base2:#E6EDF2;--ink:#3B5568;--accent:#5E7A8F">
+      <div class="cov-kick">BODY CARE</div>
+      <div class="cov-word">身体是圣殿</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Body as Temple</div><div class="mm">Body Care · 7天</div></td><td class="c-desc">给长久与身体交战的她。七天不是要你突然爱上自己,而是慢慢归回:诚实述说身体的故事、在饮食里学感恩、在活动中领受恩典、把软弱病痛交给基督、望向复活的盼望。</td><td class="c-cover"><div class="bigword">「身体是圣殿」</div><div class="motif">点缀:殿宇轮廓</div></td></tr>
+<tr><td class="c-idx"><b>58</b><br><span class="pid">G07</span></td><td class="c-cov"><div class="cov" style="--base:#CFDBE3;--base2:#E6EDF2;--ink:#3B5568;--accent:#5E7A8F">
+      <div class="cov-kick">BOUNDARIES</div>
+      <div class="cov-word">爱里的界限</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Boundaries in Love</div><div class="mm">Boundaries · 5天</div></td><td class="c-desc">给付出到枯竭的她。五天看见界限不是冷漠,而是爱得以持久的方式:内在耗竭真实、神也设界限、耶稣未回应每个要求、说不后的内疚未必来自圣灵、真爱既担当也守住本分。</td><td class="c-cover"><div class="bigword">「爱里的界限」</div><div class="motif">点缀:温柔的篱笆</div></td></tr>
+<tr><td class="c-idx"><b>59</b><br><span class="pid">G02</span></td><td class="c-cov"><div class="cov" style="--base:#CFDBE3;--base2:#E6EDF2;--ink:#3B5568;--accent:#5E7A8F">
+      <div class="cov-kick">CALLING &amp; PURPOSE</div>
+      <div class="cov-word">寻找呼召之路</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Seeking the Path of Calling</div><div class="mm">Calling &amp; Purpose · 5天</div></td><td class="c-desc">给追问&#x27;我这一生该做什么&#x27;的她。五天面对看不见前路的焦虑、安息于神的旨意、诚实说出不配感、留意神已放在手中的、为下一步鼓起勇气。</td><td class="c-cover"><div class="bigword">「寻找呼召之路」</div><div class="motif">点缀:脚下的光</div></td></tr>
+<tr><td class="c-idx"><b>60</b><br><span class="pid">G11</span></td><td class="c-cov"><div class="cov" style="--base:#CFDBE3;--base2:#E6EDF2;--ink:#3B5568;--accent:#5E7A8F">
+      <div class="cov-kick">CHARACTER</div>
+      <div class="cov-word">学习领受恩典</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Learning to Receive Grace</div><div class="mm">Character · 5天</div></td><td class="c-desc">给懂得照顾别人却难以接受照顾的她。五天:命名抗拒、恩典是领受而非赚取、无愧地接受关怀、在耶稣脚前看爱从饶恕升起、张手回到父那里。</td><td class="c-cover"><div class="bigword">「学习领受恩典」</div><div class="motif">点缀:张开的手心</div></td></tr>
+<tr><td class="c-idx"><b>61</b><br><span class="pid">G03</span></td><td class="c-cov"><div class="cov" style="--base:#CFDBE3;--base2:#E6EDF2;--ink:#3B5568;--accent:#5E7A8F">
+      <div class="cov-kick">CHARACTER &amp; THE FRUIT </div>
+      <div class="cov-word">被圣灵塑造</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Shaped by the Spirit</div><div class="mm">Character &amp; The Fruit of the Spirit · 7天</div></td><td class="c-desc">七天走过圣灵九样果子,从&#x27;制造美德&#x27;转向&#x27;住在基督里&#x27;,让果子一样样长出。</td><td class="c-cover"><div class="bigword">「被圣灵塑造」</div><div class="motif">点缀:九果枝条</div></td></tr>
+<tr><td class="c-idx"><b>62</b><br><span class="pid">G01</span></td><td class="c-cov"><div class="cov" style="--base:#CFDBE3;--base2:#E6EDF2;--ink:#3B5568;--accent:#5E7A8F">
+      <div class="cov-kick">SELF-IMAGE &amp; CHARACTER</div>
+      <div class="cov-word">在基督里成为新造</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Becoming New in Christ</div><div class="mm">Self-Image &amp; Character · 5天</div></td><td class="c-desc">五天走过在基督里真实渐进的更新:诚实命名旧我、把新身份当礼物领受、活出神已在塑造的生命。</td><td class="c-cover"><div class="bigword">「在基督里成为新造」</div><div class="motif">点缀:蜕变的蝶</div></td></tr>
+<tr><td class="c-idx"><b>63</b><br><span class="pid">G06</span></td><td class="c-cov"><div class="cov" style="--base:#CFDBE3;--base2:#E6EDF2;--ink:#3B5568;--accent:#5E7A8F">
+      <div class="cov-kick">MISSION &amp; CALLING</div>
+      <div class="cov-word">平凡日子的使命</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Living Mission in Ordinary Days</div><div class="mm">Mission &amp; Calling · 5天</div></td><td class="c-desc">给追问&#x27;人生就这样吗&#x27;的她。五天从空转走向确信:平凡生活正是神使命展开的舞台——从身份、成为见证、从小处开始、为永恒奔跑。</td><td class="c-cover"><div class="bigword">「平凡日子的使命」</div><div class="motif">点缀:微光的日常</div></td></tr>
+<tr><td class="c-idx"><b>64</b><br><span class="pid">G05</span></td><td class="c-cov"><div class="cov" style="--base:#CFDBE3;--base2:#E6EDF2;--ink:#3B5568;--accent:#5E7A8F">
+      <div class="cov-kick">SELF-IMAGE &amp; TRUE BEAU</div>
+      <div class="cov-word">真正的美</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">3天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">True Beauty</div><div class="mm">Self-Image &amp; True Beauty · 3天</div></td><td class="c-desc">三天从外貌的疲惫审判,走向神看为宝贵、不会褪去的深美——被造物主看见、重新定义与爱的美。</td><td class="c-cover"><div class="bigword">「真正的美」</div><div class="motif">点缀:素净镜面</div></td></tr>
+<tr><td class="c-idx"><b>65</b><br><span class="pid">G04</span></td><td class="c-cov"><div class="cov" style="--base:#CFDBE3;--base2:#E6EDF2;--ink:#3B5568;--accent:#5E7A8F">
+      <div class="cov-kick">SOUL CARE &amp; REST</div>
+      <div class="cov-word">心灵的安歇处</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">A Resting Place for the Soul</div><div class="mm">Soul Care &amp; Rest · 5天</div></td><td class="c-desc">五天从不安的奔忙走进神所赐的安息:命名躁动、遇见牧者、领受安息日为礼物、带重担来到耶稣、建立每日安静的小节奏。</td><td class="c-cover"><div class="bigword">「心灵的安歇处」</div><div class="motif">点缀:静谧牧场</div></td></tr>
+<tr><td class="c-idx"><b>66</b><br><span class="pid">G08</span></td><td class="c-cov"><div class="cov" style="--base:#CFDBE3;--base2:#E6EDF2;--ink:#3B5568;--accent:#5E7A8F">
+      <div class="cov-kick">SOUL CARE</div>
+      <div class="cov-word">受伤后重建</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Rebuilding Life After Hurt</div><div class="mm">Soul Care · 7天</div></td><td class="c-desc">给受过伤、想不假装地前行的她。七天:命名伤口、听懂痛塑造的语言、记得神看见全部、把身后的路交托、谨慎面对饶恕、让所受的安慰成为能给的安慰。</td><td class="c-cover"><div class="bigword">「受伤后重建」</div><div class="motif">点缀:重砌的砖</div></td></tr>
+<tr><td class="c-idx"><b>67</b><br><span class="pid">G12</span></td><td class="c-cov"><div class="cov" style="--base:#CFDBE3;--base2:#E6EDF2;--ink:#3B5568;--accent:#5E7A8F">
+      <div class="cov-kick">SPEECH &amp; WISDOM</div>
+      <div class="cov-word">言语的力量</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">The Power of Words</div><div class="mm">Speech &amp; Wisdom · 5天</div></td><td class="c-desc">给厌倦为言语后悔的她。五天:话有分量、言语显出内心、闲话可被祷告打断、温柔能消解怒气、称赞能重塑一个家。</td><td class="c-cover"><div class="bigword">「言语的力量」</div><div class="motif">点缀:泉涌之口</div></td></tr>
+<tr><td class="c-idx"><b>68</b><br><span class="pid">G09</span></td><td class="c-cov"><div class="cov" style="--base:#CFDBE3;--base2:#E6EDF2;--ink:#3B5568;--accent:#5E7A8F">
+      <div class="cov-kick">STEWARDSHIP</div>
+      <div class="cov-word">财务的好管家</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">5天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Faithful Stewardship in Finances</div><div class="mm">Stewardship · 5天</div></td><td class="c-desc">给愿让信仰进入预算、奉献与日常金钱决定的她。五天:神是主人我们是管家、钱不可作主、奉献成为喜乐、计划里有智慧、最深的投资在永恒。</td><td class="c-cover"><div class="bigword">「财务的好管家」</div><div class="motif">点缀:天平与麦穗</div></td></tr>
+</tbody></table>
+<h2 class="sec" style="--ink:#7A5E2E;--base:#EEE2C6"><span class="dot" style="background:#A98A4E"></span>与神同行 <em>11 个计划</em></h2>
+<table class="grid"><thead><tr><th class="c-idx">#</th><th class="c-cov">封面建议(预览)</th><th class="c-name">计划</th><th class="c-desc">内容简介</th><th class="c-cover">封面大字 · 点缀</th></tr></thead><tbody>
+<tr><td class="c-idx"><b>103</b><br><span class="pid">FA01</span></td><td class="c-cov"><div class="cov" style="--base:#EEE2C6;--base2:#F6EEDB;--ink:#7A5E2E;--accent:#A98A4E">
+      <div class="cov-kick">DRAW NEAR</div>
+      <div class="cov-word">禁食的女人</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Women Who Fasted: 7 Days to Rediscover Hunger for God</div><div class="mm">Draw Near · 7天</div></td><td class="c-desc">七天透过圣经中女性、祷告、眼泪与转折点重新认识禁食,学习把饥渴、重担与渴望诚实带到神面前。</td><td class="c-cover"><div class="bigword">「禁食的女人」</div><div class="motif">点缀:空盘与烛</div></td></tr>
+<tr><td class="c-idx"><b>104</b><br><span class="pid">PR01</span></td><td class="c-cov"><div class="cov" style="--base:#EEE2C6;--base2:#F6EEDB;--ink:#7A5E2E;--accent:#A98A4E">
+      <div class="cov-kick">DRAW NEAR</div>
+      <div class="cov-word">重新学祷告</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Learning to Pray Again: 7 Days to Rebuild a Life of Prayer</div><div class="mm">Draw Near · 7天</div></td><td class="c-desc">七天让祷告不再是表演或急救语言,而是可一天天重建的、与神真实稳定的生活。</td><td class="c-cover"><div class="bigword">「重新学祷告」</div><div class="motif">点缀:合十的手</div></td></tr>
+<tr><td class="c-idx"><b>105</b><br><span class="pid">SB01</span></td><td class="c-cov"><div class="cov" style="--base:#EEE2C6;--base2:#F6EEDB;--ink:#7A5E2E;--accent:#A98A4E">
+      <div class="cov-kick">DRAW NEAR</div>
+      <div class="cov-word">重新学安息</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Learning to Rest Again: 7 Days to Receive God&#x27;s Rest</div><div class="mm">Draw Near · 7天</div></td><td class="c-desc">七天重新领受安息日——不是守规条或单纯放松,而是信靠、敬拜与圣洁歇息的节奏,给忘了如何停下的人。</td><td class="c-cover"><div class="bigword">「重新学安息」</div><div class="motif">点缀:静置的灯</div></td></tr>
+<tr><td class="c-idx"><b>106</b><br><span class="pid">SM01</span></td><td class="c-cov"><div class="cov" style="--base:#EEE2C6;--base2:#F6EEDB;--ink:#7A5E2E;--accent:#A98A4E">
+      <div class="cov-kick">DRAW NEAR</div>
+      <div class="cov-word">把话语带身边</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">14天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Keep It Close: 14 Days to Begin Memorizing Scripture</div><div class="mm">Draw Near · 14天</div></td><td class="c-desc">温柔的两周入门计划,给想在真实生活里记住神话语的女性:轻松起步,记住七节心爱经文,带进平凡日子。</td><td class="c-cover"><div class="bigword">「把话语带身边」</div><div class="motif">点缀:折角的经卷</div></td></tr>
+<tr><td class="c-idx"><b>107</b><br><span class="pid">HS01</span></td><td class="c-cov"><div class="cov" style="--base:#EEE2C6;--base2:#F6EEDB;--ink:#7A5E2E;--accent:#A98A4E">
+      <div class="cov-kick">GOD&#x27;S PRESENCE</div>
+      <div class="cov-word">与圣灵同行</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Walking with the Holy Spirit: 7 Days to Know, Hear, and Follow Him</div><div class="mm">God&#x27;s Presence · 7天</div></td><td class="c-desc">七天回到耶稣的应许与使徒的教导,重新认识圣灵是谁、如何工作,以及在日常里与祂同行是什么样子。</td><td class="c-cover"><div class="bigword">「与圣灵同行」</div><div class="motif">点缀:微风与火</div></td></tr>
+<tr><td class="c-idx"><b>108</b><br><span class="pid">LM01</span></td><td class="c-cov"><div class="cov" style="--base:#EEE2C6;--base2:#F6EEDB;--ink:#7A5E2E;--accent:#A98A4E">
+      <div class="cov-kick">GOD&#x27;S PRESENCE</div>
+      <div class="cov-word">在哀歌中遇见神</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">7天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Meeting God in Lament: 7 Days of Prayer in Pain</div><div class="mm">God&#x27;s Presence · 7天</div></td><td class="c-desc">七天贴近哀歌诗篇、耶利米哀歌、约伯与受苦的基督,学习圣经如何带我们穿越痛苦、沉默、疑问与盼望,不转身离开神。</td><td class="c-cover"><div class="bigword">「在哀歌中遇见神」</div><div class="motif">点缀:破晓的裂缝</div></td></tr>
+<tr><td class="c-idx"><b>109</b><br><span class="pid">PS01</span></td><td class="c-cov"><div class="cov" style="--base:#EEE2C6;--base2:#F6EEDB;--ink:#7A5E2E;--accent:#A98A4E">
+      <div class="cov-kick">GOD&#x27;S PRESENCE</div>
+      <div class="cov-word">与神同行·诗篇</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">30天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Walking with God Through the Psalms</div><div class="mm">God&#x27;s Presence · 30天</div></td><td class="c-desc">30天透过精选诗篇学习诚实祷告、深深敬拜,把人生每个季节带回神面前,建立聆听、祷告与赞美的稳定节奏。</td><td class="c-cover"><div class="bigword">「与神同行·诗篇」</div><div class="motif">点缀:竖琴线描</div></td></tr>
+<tr><td class="c-idx"><b>110</b><br><span class="pid">LK01</span></td><td class="c-cov"><div class="cov" style="--base:#EEE2C6;--base2:#F6EEDB;--ink:#7A5E2E;--accent:#A98A4E">
+      <div class="cov-kick">HER STORY</div>
+      <div class="cov-word">与耶稣同行·路加</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">21天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Walking with Jesus in Luke</div><div class="mm">Her Story · 21天</div></td><td class="c-desc">21天走过路加福音,特别为想借耶稣身边女性更深认识祂的女性。日复一日与路加记念的女性同行,看她们如何被神看见、被基督遇见、被恩典恢复、被托付见证。</td><td class="c-cover"><div class="bigword">「与耶稣同行·路加」</div><div class="motif">点缀:展开的福音书</div></td></tr>
+<tr><td class="c-idx"><b>111</b><br><span class="pid">WS01</span></td><td class="c-cov"><div class="cov" style="--base:#EEE2C6;--base2:#F6EEDB;--ink:#7A5E2E;--accent:#A98A4E">
+      <div class="cov-kick">HER STORY</div>
+      <div class="cov-word">圣经中的女人</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">90天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">The Women of Scripture, and the Women We Are Today</div><div class="mm">Her Story · 90天</div></td><td class="c-desc">90天走过圣经中30位女性的一生,看神如何在渴望、失败、勇气、悲伤、忠心与恢复中与人相遇,并认出祂仍在你自己的故事中说话、看顾、工作。</td><td class="c-cover"><div class="bigword">「圣经中的女人」</div><div class="motif">点缀:三十盏灯</div></td></tr>
+<tr><td class="c-idx"><b>112</b><br><span class="pid">GF01</span></td><td class="c-cov"><div class="cov" style="--base:#EEE2C6;--base2:#F6EEDB;--ink:#7A5E2E;--accent:#A98A4E">
+      <div class="cov-kick">LIVING FAITH</div>
+      <div class="cov-word">发现恩赐忠心服事</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">14天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">Discover Your Gifts and Serve Faithfully</div><div class="mm">Living Faith · 14天</div></td><td class="c-desc">14天双语查经,帮你认出神所赐的恩赐,并开始在爱中忠心服事。</td><td class="c-cover"><div class="bigword">「发现恩赐忠心服事」</div><div class="motif">点缀:礼盒缎带</div></td></tr>
+<tr><td class="c-idx"><b>113</b><br><span class="pid">PV01</span></td><td class="c-cov"><div class="cov" style="--base:#EEE2C6;--base2:#F6EEDB;--ink:#7A5E2E;--accent:#A98A4E">
+      <div class="cov-kick">LIVING FAITH</div>
+      <div class="cov-word">箴言31天</div>
+      <div class="cov-rule"></div>
+      <div class="cov-day">31天 · DEVOTIONAL</div>
+    </div></td><td class="c-name"><div class="tt">31 Days in Proverbs: Walking with God in Real Life</div><div class="mm">Living Faith · 31天</div></td><td class="c-desc">用31天读箴言,发现神的智慧如何稳固你的言语、选择、关系与日常生活。</td><td class="c-cover"><div class="bigword">「箴言31天」</div><div class="motif">点缀:智慧之钥</div></td></tr>
+</tbody></table>
+<div class="rule" style="margin-top:40px"></div>
+<p class="lead" style="color:var(--sub);font-size:12.5px">共 113 个计划 · 情绪疗愈 31 · 身份与关系 34 · 人生季节 25 · 个人成长 12 · 与神同行 11 &nbsp;|&nbsp; 简介据各计划 title / subtitle / goal 归纳,每条 ≤200 字。左列迷你封面为按建议系统实时渲染的样机,非最终成图。</p>
+</div></body></html>

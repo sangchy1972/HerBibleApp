@@ -16,24 +16,25 @@ import {
 
 const { height } = Dimensions.get('window');
 const APP_ICON = require('../../assets/icon.png');
+// The SAME asset + size the native splash shows (app.json expo-splash-screen:
+// image splash-icon.png, imageWidth 150, background #F9D9E6). Stage-1 renders
+// an EXACT replica so the OS splash → overlay hand-off is invisible — the user
+// perceives ONE icon screen, not two (per user 2026-07-09: the Android 12+
+// system splash can't be removed, so we make it seamless instead).
+const SPLASH_ICON = require('../../assets/splash-icon.png');
 
-// Deliberate, two-stage launch (per user — never feel rushed, never flash white):
-//   • STAGE 1 "brand"  — pink + Her Bible logo, identical look to the native
-//     splash (app.json splash.backgroundColor is the SAME pink #F9D9E6), so the
-//     hand-off from the OS splash is seamless with NO white frame. Shown for at
-//     least BRAND_MIN_MS while the rotation + photo are resolved in the
-//     background — and crucially we do NOT render the daily line here, so it can
-//     never "switch" a moment after appearing.
-//   • STAGE 2 "content" — once the line + image are chosen, cross-fade to the
-//     verse-on-photo screen and hold it for at least CONTENT_MIN_MS before
-//     fading into the app.
-// Pink top of the brand gradient == the native splash colour → seamless.
+// Two-stage launch, tightened per user (2026-07-09 — total overlay ≈3s, the
+// old 2000/3000 floors made launches feel 6-7s):
+//   • STAGE 1 "brand" — pixel-match of the native splash (flat #F9D9E6 +
+//     splash-icon at 150). Only a short bridge while the rotation + photo
+//     resolve; no daily line here so nothing ever visibly "switches".
+//   • STAGE 2 "content" — verse-on-photo, held ≥CONTENT_MIN_MS and until the
+//     app's own verse/prayer content is ready (slow phones wait longer).
 const BRAND_TOP = '#F9D9E6';
 const BRAND_GRADIENT = ['#F9D9E6', '#F4A6C0'] as const;
-const BRAND_MIN_MS = 2000;     // stage-1: just long enough to prep stage-2 (per user)
-const CONTENT_MIN_MS = 3000;   // stage-2: ≥3s, but also waits until the app's own
-                               // verse/prayer content is ready (slow phones wait longer)
-const MAX_VISIBLE_MS = 12000;  // hard safety cap — never hang the launch
+const BRAND_MIN_MS = 300;      // stage-1: just a seamless bridge off the OS splash
+const CONTENT_MIN_MS = 2200;   // stage-2 floor — overlay totals ≈3s incl. fades
+const MAX_VISIBLE_MS = 8000;   // hard safety cap — never hang the launch
 
 // English ordinal suffix ("17th"); other locales use their own date format.
 function enOrdinal(d: number): string {
@@ -91,7 +92,7 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   useEffect(() => {
     if (phase !== 'brand' || !brandElapsed || !contentReady) return;
     setPhase('content');
-    contentOpacity.value = withTiming(1, { duration: 450, easing: Easing.out(Easing.cubic) });
+    contentOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.cubic) });
     const tm = setTimeout(() => setContentElapsed(true), CONTENT_MIN_MS);
     return () => clearTimeout(tm);
   }, [phase, brandElapsed, contentReady, contentOpacity]);
@@ -101,7 +102,7 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   const fadeOut = useCallback(() => {
     if (hidingRef.current) return;
     hidingRef.current = true;
-    opacity.value = withTiming(0, { duration: 420, easing: Easing.in(Easing.quad) }, (fin) => {
+    opacity.value = withTiming(0, { duration: 320, easing: Easing.in(Easing.quad) }, (fin) => {
       if (fin) runOnJS(onHide)();
     });
   }, [opacity, onHide]);
@@ -130,12 +131,12 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
 
   return (
     <Animated.View style={[StyleSheet.absoluteFillObject, styles.root, fade]}>
-      {/* STAGE 1 — pink + centered logo, matching the native splash (always the
-          base layer; the content layer fades in on top of it). */}
-      <LinearGradient colors={BRAND_GRADIENT} style={StyleSheet.absoluteFillObject} />
+      {/* STAGE 1 — EXACT replica of the native splash (flat pink, same
+          splash-icon at the native 150px) so OS splash → overlay reads as one
+          continuous screen. No wordmark: the native splash has none, and any
+          difference is what made launch feel like "two icon screens". */}
       <View style={styles.brandCenter}>
-        <Image source={APP_ICON} style={styles.brandCenterLogo} />
-        <Text style={styles.brandCenterName}>Her Bible</Text>
+        <Image source={SPLASH_ICON} style={styles.brandCenterIcon} resizeMode="contain" />
       </View>
 
       {/* STAGE 2 — verse on photo (or pink), cross-faded in once ready. */}
@@ -171,10 +172,9 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
 
 const styles = StyleSheet.create({
   root: { backgroundColor: BRAND_TOP, zIndex: 1000, elevation: 1000 },
-  // Stage-1 centered brand (matches the native splash's centered logo → no jump).
+  // Stage-1 centered icon — pixel-matches the native splash (150px contain).
   brandCenter: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
-  brandCenterLogo: { width: 92, height: 92, borderRadius: 22, marginBottom: 18 },
-  brandCenterName: { fontFamily: FONTS.loraBold, fontSize: 24, fontWeight: '600', letterSpacing: 0.4, color: TXT },
+  brandCenterIcon: { width: 150, height: 150 },
   // Stage-2 text block (upper third).
   textBlock: { position: 'absolute', left: 28, right: 28, alignItems: 'center' },
   shadow: { textShadowColor: 'rgba(0,0,0,0.45)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 },

@@ -167,7 +167,9 @@ function buildBig(o: BigOpts): Notification {
 // back to the slot's rotating devotional copy only if the verse can't be
 // resolved offline (should be rare — bundled verses always exist).
 async function verseTitleBody(slot: RichSlot, lang: UILanguageCode): Promise<{ title: string; body: string }> {
-  const v = await todayVerseForNotif(lang);
+  // morning slot → morning-segment verse, night slot → evening-segment verse,
+  // matching the card (and applying the holiday override inside todayVerseForNotif).
+  const v = await todayVerseForNotif(lang, slot === 'morning' ? 'morning' : 'evening');
   if (v && v.text) return { title: v.reference || lookupString('notif.channel.name', lang), body: v.text };
   const n = VARIANTS_PER_SLOT[slot];
   const k = ((pickDailyVariant(slot) - 1) % n) + 1;
@@ -324,19 +326,28 @@ export function syncHourlyVerseBanner(granted: boolean, lang: UILanguageCode): v
     // Tear down every hour id first — handles a changed window + the "off" case.
     for (let h = 0; h < 24; h++) { try { await notifee.cancelTriggerNotification(hourlyId(h)); } catch { /* none */ } }
     if (!granted) return;
-    const verse = await todayVerseForNotif(lang);
-    const body = verse?.text || '';
-    if (!body) return;   // nothing to show yet (cache not warmed) — try again next sync
-    const title = verse?.reference || lookupString('notif.channel.name', lang);
+    // Resolve BOTH segments once — morning hours show the morning-segment verse,
+    // afternoon/evening hours the evening-segment verse, matching the card
+    // (holiday override applied inside todayVerseForNotif).
+    const morningVerse = await todayVerseForNotif(lang, 'morning');
+    const eveningVerse = await todayVerseForNotif(lang, 'evening');
+    if (!morningVerse?.text && !eveningVerse?.text) return;   // cache not warmed — retry next sync
     const morningPic = (await todayBgPictureUri('morning')) ?? PICTURES.morning;
     const eveningPic = (await todayBgPictureUri('evening')) ?? PICTURES.night;
+    const fallbackTitle = lookupString('notif.channel.name', lang);
     for (let h = HOURLY_START_HOUR; h <= HOURLY_END_HOUR; h++) {
-      const picture: Picture = h < 15 ? morningPic : eveningPic;
-      const dataSlot: RichSlot = h < 15 ? 'morning' : 'night';
+      const isMorning = h < 15;
+      const verse = (isMorning ? morningVerse : eveningVerse) ?? morningVerse ?? eveningVerse;
+      if (!verse?.text) continue;
+      const picture: Picture = isMorning ? morningPic : eveningPic;
+      const dataSlot: RichSlot = isMorning ? 'morning' : 'night';
       try {
         await notifee.createTriggerNotification(
           buildBig({
-            id: hourlyId(h), title, body, dataSlot, picture, lang,
+            id: hourlyId(h),
+            title: verse.reference || fallbackTitle,
+            body: verse.text,
+            dataSlot, picture, lang,
             channelId: HOURLY_CHANNEL, timeoutAfter: HOURLY_TIMEOUT_MS, threadId: HOURLY_THREAD,
           }),
           timestampTrigger(nextOccurrence(h, HOURLY_MINUTE).getTime(), true),

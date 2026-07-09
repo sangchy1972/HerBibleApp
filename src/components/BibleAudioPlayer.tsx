@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Share, Dimensions, ActivityIndicator } from 'react-native';
 import Slider from '@react-native-community/slider';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { ROSE, TXT, TXTSUB, FONTS } from '../constants/theme';
 import { useT } from '../i18n/useT';
 import { verseAtTime, type ChapterTimestamps } from '../services/bibleAudioService';
 
-// Full-screen Bible-narration player. A Modal (so it covers the tab bar) that
-// drives the SAME expo-audio player instance the BibleReader holds — opening
-// it doesn't restart or duplicate playback, and closing it (back / Read)
-// leaves the audio running so the in-reader karaoke highlight continues.
+// Half-screen Bible-narration bottom sheet. A Modal (so it covers the tab bar)
+// that drives the SAME expo-audio player instance the BibleReader holds —
+// opening it doesn't restart or duplicate playback, and closing it (back /
+// Read) leaves the audio running so the in-reader karaoke highlight continues.
 //
 // Prev/Next move by VERSE using the chapter timestamps: seek to the previous/
 // next verse's start. At the chapter's first/last verse they hand off to the
@@ -20,8 +20,10 @@ import { verseAtTime, type ChapterTimestamps } from '../services/bibleAudioServi
 // With no timestamps they degrade to chapter nav so the buttons never
 // dead-end.
 
-const { width, height: SCREEN_H } = Dimensions.get('window');
-const COVER = Math.min(width - 120, 300);
+const { height: SCREEN_H } = Dimensions.get('window');
+// Half-screen bottom sheet (per user 2026-07-09 — was full-screen with a big
+// placeholder cover; the cover is gone so the controls fit comfortably).
+const SHEET_H = Math.round(SCREEN_H * 0.5);
 const SPEEDS = [1.0, 1.25, 1.5, 2.0, 0.75];
 
 function fmt(sec: number): string {
@@ -52,6 +54,10 @@ interface Props {
   visible: boolean;
   bookName: string;
   chapter: number;
+  /** Narration language (= translation.code). EN audio is read a touch slowly,
+   *  so it gets a hidden 1.1× base rate; the user still sees "1x" and adjusts
+   *  relative to that base. Other languages play at true speed. */
+  narrationLang: string;
   player: PlayerLike;
   status: AudioLike;
   timestamps: ChapterTimestamps | null;
@@ -62,7 +68,7 @@ interface Props {
 }
 
 export default function BibleAudioPlayer({
-  visible, bookName, chapter, player, status, timestamps,
+  visible, bookName, chapter, narrationLang, player, status, timestamps,
   onClose, onPrevChapter, onNextChapter, onQueue,
 }: Props) {
   const insets = useSafeAreaInsets();
@@ -81,24 +87,42 @@ export default function BibleAudioPlayer({
   const curVerse = verseAtTime(timestamps, status?.currentTime || 0);
   const curIdx = curVerse != null ? verses.findIndex(v => v.verse === curVerse) : -1;
 
-  // Re-apply the chosen speed whenever the underlying player swaps (chapter
-  // change resets the native rate to 1.0, but the user's choice should stick).
+  // Hidden per-language base rate: EN narration ships slightly slow, so its
+  // real rate = displayed × 1.1 (user still sees/starts at "1x"). Re-applied
+  // whenever the underlying player swaps (chapter change resets the native
+  // rate to 1.0, but the user's choice should stick).
+  const baseRate = narrationLang === 'en' ? 1.1 : 1.0;
   useEffect(() => {
-    try { player.setPlaybackRate(SPEEDS[speedIdx]); } catch {}
-  }, [player, speedIdx]);
+    try { player.setPlaybackRate(SPEEDS[speedIdx] * baseRate); } catch {}
+  }, [player, speedIdx, baseRate]);
 
-  // Slide-up entrance — driven manually (Modal animationType="none") so we
-  // control the duration. 600 ms ≈ 2× the native modal slide, per user ("too
-  // fast — slow it down by half").
-  const slideY = useSharedValue(SCREEN_H);
+  // Slide-up entrance + swipe-down dismiss share one translateY (same pattern
+  // as ProfileScreen's useSheetPan — every bottom sheet must be swipe-down
+  // dismissible). The pan gesture is attached ONLY to the handle/top-bar zone
+  // so it can never fight the horizontal progress slider below.
+  const slideY = useSharedValue(SHEET_H);
   useEffect(() => {
     if (visible) {
-      slideY.value = SCREEN_H;
-      slideY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) });
+      slideY.value = SHEET_H;
+      slideY.value = withTiming(0, { duration: 450, easing: Easing.out(Easing.cubic) });
     } else {
-      slideY.value = SCREEN_H;     // park below for the next open
+      slideY.value = SHEET_H;      // park below for the next open
     }
   }, [visible, slideY]);
+  const pan = Gesture.Pan()
+    .activeOffsetY(12)
+    .onUpdate((e) => {
+      'worklet';
+      if (e.translationY > 0) slideY.value = e.translationY;
+    })
+    .onEnd((e) => {
+      'worklet';
+      if (e.translationY > 120 || e.velocityY > 800) {
+        slideY.value = withTiming(SHEET_H, { duration: 260 }, (f) => { if (f) runOnJS(onClose)(); });
+      } else {
+        slideY.value = withTiming(0, { duration: 220 });
+      }
+    });
   const slideStyle = useAnimatedStyle(() => ({ transform: [{ translateY: slideY.value }] }));
 
   const cycleSpeed = () => setSpeedIdx(i => (i + 1) % SPEEDS.length);
@@ -129,34 +153,29 @@ export default function BibleAudioPlayer({
 
   return (
     <Modal visible={visible} animationType="none" transparent onRequestClose={onClose} statusBarTranslucent>
-      <Animated.View style={[styles.root, { paddingTop: insets.top }, slideStyle]}>
-        {/* Top bar */}
-        <View style={styles.topbar}>
-          {/* Dismiss icon = chevron-down — visually mirrors the slide-down
-              dismissal direction, the same way Apple/Spotify mini-player
-              sheets do it. (Was chevron-left, which read as nav-back even
-              though it actually closes the sheet.) */}
-          <TouchableOpacity onPress={onClose} hitSlop={12} style={styles.topBtn}>
-            <Feather name="chevron-down" size={28} color={TXT} />
-          </TouchableOpacity>
-          <Text style={styles.topTitle}>{t('bibleAudio.playing')}</Text>
-          <TouchableOpacity onPress={onShare} hitSlop={12} style={styles.topBtn}>
-            <Feather name="share" size={22} color={TXT} />
-          </TouchableOpacity>
-        </View>
+      <View style={styles.overlay}>
+        {/* Backdrop — tap anywhere above the sheet to dismiss. */}
+        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
+
+        <Animated.View style={[styles.sheet, { paddingBottom: insets.bottom + 10 }, slideStyle]}>
+          {/* Handle + top bar carry the swipe-down-to-dismiss gesture (kept off
+              the body so it can never fight the horizontal progress slider). */}
+          <GestureDetector gesture={pan}>
+            <View>
+              <View style={styles.handle} />
+              <View style={styles.topbar}>
+                <TouchableOpacity onPress={onClose} hitSlop={12} style={styles.topBtn}>
+                  <Feather name="chevron-down" size={28} color={TXT} />
+                </TouchableOpacity>
+                <Text style={styles.topTitle}>{t('bibleAudio.playing')}</Text>
+                <TouchableOpacity onPress={onShare} hitSlop={12} style={styles.topBtn}>
+                  <Feather name="share" size={22} color={TXT} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </GestureDetector>
 
         <View style={styles.body}>
-          {/* Placeholder cover — warm sunrise gradient + sound glyph. Swap for
-              real per-book art later by dropping an <Image> here. */}
-          <LinearGradient
-            colors={['#F6B26B', '#E8728C', '#7B5AA6']}
-            start={{ x: 0.1, y: 0 }}
-            end={{ x: 0.9, y: 1 }}
-            style={styles.cover}
-          >
-            <Feather name="headphones" size={COVER * 0.28} color="rgba(255,255,255,0.9)" />
-          </LinearGradient>
-
           <Text style={styles.chapterName}>{bookName} {chapter}</Text>
 
           <TouchableOpacity onPress={onClose} style={styles.readBtn} activeOpacity={0.85}>
@@ -234,52 +253,61 @@ export default function BibleAudioPlayer({
             </TouchableOpacity>
           </View>
         </View>
-      </Animated.View>
+        </Animated.View>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#FBF7F6' },
+  // Half-screen bottom sheet over a dimmed backdrop (was a full-screen page
+  // with a large placeholder cover — cover removed per user, freeing the room).
+  overlay: { flex: 1, justifyContent: 'flex-end' },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(20,16,28,0.38)' },
+  sheet: {
+    height: SHEET_H,
+    backgroundColor: '#FBF7F6',
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    elevation: 14,
+  },
+  handle: {
+    alignSelf: 'center',
+    width: 42, height: 4.5, borderRadius: 3,
+    backgroundColor: 'rgba(30,27,46,0.18)',
+    marginTop: 10,
+  },
   topbar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    height: 52,
+    height: 44,
   },
   topBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   topTitle: { fontSize: 22, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT },
-  body: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
-  cover: {
-    width: COVER,
-    height: COVER,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
-    shadowRadius: 14,
-    elevation: 6,
-  },
+  body: { flex: 1, alignItems: 'center', paddingHorizontal: 32 },
   chapterName: {
     fontSize: 26,
     fontWeight: '600',
     fontFamily: FONTS.loraBold,
     color: TXT,
-    marginTop: 34,
+    marginTop: 2,
   },
   readBtn: {
-    marginTop: 18,
+    marginTop: 10,
     paddingHorizontal: 34,
-    paddingVertical: 12,
+    paddingVertical: 9,
     borderRadius: 22,
     borderWidth: 1.5,
     borderColor: 'rgba(30,27,46,0.4)',
   },
   readText: { fontSize: 16, fontWeight: '600', color: TXT, fontFamily: FONTS.lora },
-  progressWrap: { width: '100%', marginTop: 46, marginHorizontal: -28 },        // -18 → -28 (another -10 px each side per user) — widens the progress bar still more
+  progressWrap: { width: '100%', marginTop: 20, marginHorizontal: -28 },        // tightened for the half sheet (was 46 on the full page)
   time: { fontSize: 14, color: TXTSUB, fontFamily: FONTS.lato, marginLeft: 4 },
   sliderWrap: { width: '100%', height: 40, marginTop: 2, justifyContent: 'center' },
   slider: { width: '100%', height: 40 },
@@ -300,9 +328,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 18,
+    marginTop: 10,
     marginHorizontal: -30,                                                      // -20 → -30 (another -10 px each side per user) — spreads the 1x/prev/play/next/list row wider still
-    paddingBottom: 24,
+    paddingBottom: 6,
   },
   sideBtn: { width: 56, alignItems: 'center', justifyContent: 'center' },
   speedText: { fontSize: 17, fontWeight: '700', color: TXT, fontFamily: FONTS.latoBold },

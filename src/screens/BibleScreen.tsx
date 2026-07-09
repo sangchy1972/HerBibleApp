@@ -1690,6 +1690,7 @@ export default function BibleScreen() {
         visible={showPlayer}
         bookName={currentBook?.name || bookSlug}
         chapter={chapter}
+        narrationLang={translation.code}
         player={audioPlayer}
         status={audioStatus}
         timestamps={audioTimestamps}

@@ -13,7 +13,7 @@
 
 import { DAILY_VERSE_AUDIO_STEPS, DAILY_VERSE_AUDIO_LANG } from '../constants/dailyVerseAudioCdn';
 import {
-  loadManifest, loadHolidayManifest, remoteStepUrls, readCachedStepTimingsRaw,
+  loadManifest, loadHolidayManifest, remoteStepUrls, remoteHolidayStepUrls, readCachedStepTimingsRaw,
 } from './dailyVerseAudioService';
 
 export interface SentenceTiming { text: string; start: number; end: number; }
@@ -84,7 +84,7 @@ export async function fetchStepTimings(
   // Language rides the memo key + the disk/network paths: es/pt timing .json
   // siblings mirror the English filenames, so a lang-blind lookup would pin
   // English sentence timings onto Spanish audio after a UI-language switch.
-  // (Holiday narration is English-only — its paths ignore `lang`.)
+  // Holiday narration is now EN/ES/PT too, so it honors `lang` as well.
   const cacheKey = `${isHoliday ? 'h' : 'd'}:${lang}:${verseId}`;
   const hit = timingsCache.get(cacheKey);
   if (hit) return hit;
@@ -95,7 +95,11 @@ export async function fetchStepTimings(
   const localRaw = readCachedStepTimingsRaw(verseId, isHoliday, lang);
 
   const manifest = await (isHoliday ? loadHolidayManifest() : loadManifest());
-  const mp3Urls = manifest ? remoteStepUrls(manifest, verseId, isHoliday ? DAILY_VERSE_AUDIO_LANG : lang) : null;
+  // Holiday URLs live under a different base (+ UPPERCASE lang folder), so build
+  // them with the holiday URL builder — not the regular remoteStepUrls.
+  const mp3Urls = manifest
+    ? (isHoliday ? remoteHolidayStepUrls(manifest, verseId, lang) : remoteStepUrls(manifest, verseId, lang))
+    : null;
   // No manifest/urls: still serve whatever timings are already on disk.
   if (!mp3Urls) {
     if (!localRaw.some(Boolean)) return null;

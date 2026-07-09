@@ -49,7 +49,7 @@ import { useUILanguage } from '../state/UILanguageContext';
 const LOTTIE_PRAYER_HANDS = require('../../assets/lottie/prayer-hands.json');
 const LOTTIE_CONFETTI = require('../../assets/lottie/confetti.json');
 import { prepareVerseAudio, prepareHolidayVerseAudio, verseIdFor } from '../services/dailyVerseAudioService';
-import { DAILY_VERSE_AUDIO_LANG, resolveDailyVerseAudioLang, isDailyVerseAudioAvailable } from '../constants/dailyVerseAudioCdn';
+import { DAILY_VERSE_AUDIO_LANG, resolveDailyVerseAudioLang, isDailyVerseAudioAvailable, isHolidayVerseAudioAvailable } from '../constants/dailyVerseAudioCdn';
 import { fetchStepTimings, type SentenceTiming } from '../services/verseHighlight';
 import HighlightedText from '../components/HighlightedText';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -524,7 +524,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const verseIdRaw = dailyVerse ? verseIdFor(dailyVerse.day, dailyVerse.segment) : null;
   const listenOk = !!audioLang && !!verseIdRaw && (
     isHolidayVerse
-      ? audioLang === DAILY_VERSE_AUDIO_LANG
+      ? isHolidayVerseAudioAvailable(audioLang)
       : isDailyVerseAudioAvailable(audioLang, verseIdRaw)
   );
   const verseId = listenOk ? verseIdRaw : null;
@@ -546,7 +546,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     // verseId is only non-null when listenOk passed, which guarantees
     // audioLang; the ?? fallback just satisfies the type.
     const lang = audioLang ?? DAILY_VERSE_AUDIO_LANG;
-    (isHolidayVerse ? prepareHolidayVerseAudio(verseId, keep) : prepareVerseAudio(verseId, keep, lang))
+    (isHolidayVerse ? prepareHolidayVerseAudio(verseId, keep, lang) : prepareVerseAudio(verseId, keep, lang))
       .then(uris => { if (alive) setReadUris(uris); })
       .catch(() => { if (alive) setReadUris(null); });
     // Sentence timings for highlight — best-effort, independent of audio so a

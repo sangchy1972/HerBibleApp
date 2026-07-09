@@ -91,12 +91,22 @@ export function dailyVerseAudioUrl(filename: string, lang: string = DAILY_VERSE_
 // Holiday-verse narration. Separate bucket prefix from the regular daily-verse
 // audio because the holiday verseIds (m_001…e_010 = holiday day index) COLLIDE
 // with the regular ones — same id, different audio — so they need a distinct
-// folder + manifest + on-device cache. English only, same as the regular set.
-//   <BASE>/en/<filename>, e.g.
-//   …/holiday_dailyverse_4steps_audio/en/m_009_christmas-day_morning_01_scripture.mp3
+// folder + manifest + on-device cache. Now EN/ES/PT, mirroring the regular set:
+// es/pt reuse the ENGLISH filenames 1:1, so the single bundled manifest serves
+// all three. NOTE the language folder is UPPERCASE here (EN/ES/PT) — that's how
+// the files are actually laid out under this prefix, unlike the lowercase
+// regular-audio folders.
+//   <BASE>/<LANG>/<filename>, e.g.
+//   …/dailyverse_4steps_audio_7languages_holidays/EN/e_001_new-years-day_evening_01_scripture.mp3
 export const HOLIDAY_VERSE_AUDIO_BASE =
-  'https://audio.everlandapps.com/holiday_dailyverse_4steps_audio';
+  'https://audio.everlandapps.com/dailyverse_4steps_audio_7languages_holidays';
+
+// Holiday audio ships in the same three languages as the regular narration.
+export function isHolidayVerseAudioAvailable(lang: string): boolean {
+  return AVAILABLE_DAILY_VERSE_AUDIO_LANGS.has(lang);
+}
 
 export function holidayVerseAudioUrl(filename: string, lang: string = DAILY_VERSE_AUDIO_LANG): string {
-  return `${HOLIDAY_VERSE_AUDIO_BASE}/${lang}/${filename}`;
+  // Language folder is UPPERCASE on the CDN (EN/ES/PT).
+  return `${HOLIDAY_VERSE_AUDIO_BASE}/${lang.toUpperCase()}/${filename}`;
 }

@@ -8,7 +8,9 @@ import { HOLIDAY_VERSE_AUDIO_BASE, DAILY_VERSE_AUDIO_LANG } from './dailyVerseAu
 
 export const HOLIDAY_VERSE_AUDIO_MANIFEST: DailyVerseAudioManifest = {
   version: 1,
-  base_url: `${HOLIDAY_VERSE_AUDIO_BASE}/${DAILY_VERSE_AUDIO_LANG}`,
+  // Informational only — real URLs are built per-language via holidayVerseAudioUrl
+  // (UPPERCASE lang folder). Kept pointing at the EN folder for reference.
+  base_url: `${HOLIDAY_VERSE_AUDIO_BASE}/${DAILY_VERSE_AUDIO_LANG.toUpperCase()}`,
   step_order: ['scripture', 'reflection', 'simple-step', 'prayer'],
   verses: {
     "e_001": {

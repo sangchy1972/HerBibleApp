@@ -118,7 +118,7 @@ export function readCachedStepTimingsRaw(
   try {
     const manifest = isHoliday ? HOLIDAY_VERSE_AUDIO_MANIFEST : DAILY_VERSE_AUDIO_MANIFEST;
     const entry = manifest.verses?.[verseId];
-    const dir = isHoliday ? holidayVerseDir(verseId) : verseDir(verseId, lang);
+    const dir = isHoliday ? holidayVerseDir(verseId, lang) : verseDir(verseId, lang);
     if (!entry || !dir) return out;
     DAILY_VERSE_AUDIO_STEPS.forEach((step, i) => {
       try {
@@ -214,22 +214,25 @@ export async function loadHolidayManifest(): Promise<DailyVerseAudioManifest | n
   return m.verses && Object.keys(m.verses).length > 0 ? m : null;
 }
 
-function holidayVerseDir(verseId: string): Directory | null {
+// Language-scoped like verseDir (`<lang>_<verseId>`): es/pt mirror the English
+// holiday filenames 1:1, so a shared per-verse dir would serve a cached English
+// mp3 to a user who switched to Spanish. Legacy bare-`<verseId>` dirs age out.
+function holidayVerseDir(verseId: string, lang: string): Directory | null {
   try {
-    return new Directory(Paths.cache, HOLIDAY_AUDIO_CACHE_SUBDIR, verseId);
+    return new Directory(Paths.cache, HOLIDAY_AUDIO_CACHE_SUBDIR, `${lang}_${verseId}`);
   } catch {
     return null;
   }
 }
 
-function remoteHolidayStepUrls(manifest: DailyVerseAudioManifest, verseId: string): string[] | null {
+export function remoteHolidayStepUrls(manifest: DailyVerseAudioManifest, verseId: string, lang: string = DAILY_VERSE_AUDIO_LANG): string[] | null {
   const entry = manifest.verses?.[verseId];
   if (!entry) return null;
   const urls: string[] = [];
   for (const step of DAILY_VERSE_AUDIO_STEPS) {
     const fn = entry[step];
     if (!fn) return null;
-    urls.push(holidayVerseAudioUrl(fn));
+    urls.push(holidayVerseAudioUrl(fn, lang));
   }
   return urls;
 }
@@ -251,13 +254,14 @@ function pruneOtherHolidayVerses(keep: Set<string>): void {
 export async function prepareHolidayVerseAudio(
   verseId: string,
   keepVerseIds: string[],
+  lang: string = DAILY_VERSE_AUDIO_LANG,
 ): Promise<string[] | null> {
   const manifest = await loadHolidayManifest();
   if (!manifest) return null;
-  const urls = remoteHolidayStepUrls(manifest, verseId);
+  const urls = remoteHolidayStepUrls(manifest, verseId, lang);
   if (!urls) return null;
 
-  const dir = holidayVerseDir(verseId);
+  const dir = holidayVerseDir(verseId, lang);
   const resolved: string[] = [];
   const pending: { url: string; target: File }[] = [];
   for (let i = 0; i < urls.length; i++) {
@@ -273,7 +277,8 @@ export async function prepareHolidayVerseAudio(
     }
   }
 
-  const keep = new Set(keepVerseIds.length ? keepVerseIds : [verseId]);
+  // Dirs are `<lang>_<verseId>`, so the keep set must be lang-scoped too.
+  const keep = new Set((keepVerseIds.length ? keepVerseIds : [verseId]).map(id => `${lang}_${id}`));
   void (async () => {
     for (const { url, target } of pending) {
       await downloadIfMissing(url, target).catch(() => {});

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { Image, Platform, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { cfImage } from '../services/cfImage';
+import { cfImage, cfCoverImage } from '../services/cfImage';
 // expo-file-system 19.x — used to mirror today's CDN audio into the app's
 // cache directory so PrayerFlow plays from a local `file://` URI on the
 // second+ entries (instant start, no 1-5 s CDN download wait).
@@ -43,7 +43,20 @@ interface BackgroundsState {
   audioFor: (slot: Slot) => any;
   /** True once the manifest has resolved (cached or fresh). */
   loaded: boolean;
+  /**
+   * Today's background as an HTTPS url COVER-CROPPED to the landscape home-screen
+   * widget shape — or null when it can't be produced safely. The widget's
+   * ImageWidget stretches (no scale-type) and can't read file:// uris, so it
+   * needs an https, already-correct-aspect image. Returns null when Cloudflare
+   * transforms aren't available (cfReady=false) so the widget falls back to its
+   * bundled landscape art instead of a distorted/failed image.
+   */
+  widgetBgUrlFor: (slot: Slot) => string | null;
 }
+
+// Target box for the widget cover-crop — ~2:1 matches the default 4×2 widget.
+const WIDGET_BG_W = 384;
+const WIDGET_BG_H = 192;
 
 const Ctx = createContext<BackgroundsState | null>(null);
 
@@ -370,6 +383,15 @@ export function PrayerBackgroundsProvider({ children }: { children: React.ReactN
       const otherSlotLeftover = anyCachedAudio(slot === 'morning' ? 'evening' : 'morning');
       if (otherSlotLeftover) return { uri: otherSlotLeftover.uri };
       return DEFAULT_AUDIO;
+    },
+    widgetBgUrlFor: (slot) => {
+      // Cover-crop needs Cloudflare transforms; without them the widget uses its
+      // bundled landscape art (also undistorted). Never returns a file:// uri —
+      // the widget's ImageWidget only accepts http/https/data/require sources.
+      if (!manifest || !cfReady) return null;
+      const fn = pickSequential(manifest.images[slot], ymdForOffset(0));
+      if (!fn) return null;
+      return cfCoverImage(`${manifest.base_url}/${slot}/${fn}`, WIDGET_BG_W, WIDGET_BG_H);
     },
   }), [manifest, loaded, todayYmd, cfReady, imgReady]);
 

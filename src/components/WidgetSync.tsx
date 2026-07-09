@@ -16,15 +16,15 @@ import { syncVerseWidget } from '../../widgets/syncVerseWidget';
 // iOS (syncVerseWidget short-circuits). Failures are swallowed.
 export default function WidgetSync() {
   const { getVerse, todayDay } = useDailyVerses();
-  const { imageFor, loaded } = usePrayerBackgrounds();
+  const { widgetBgUrlFor, loaded } = usePrayerBackgrounds();
   const t = useT();
   const last = useRef('');
 
   useEffect(() => {
-    const bgFor = (slot: 'morning' | 'evening'): string | null => {
-      const img = imageFor(slot);
-      return img && typeof img === 'object' && typeof img.uri === 'string' ? img.uri : null;
-    };
+    // Widget-specific bg: an HTTPS, cover-cropped-to-landscape url (or null →
+    // the widget uses its bundled landscape art). NOT imageFor — that returns a
+    // portrait file:// the ImageWidget can't read and would stretch anyway.
+    const bgFor = (slot: 'morning' | 'evening'): string | null => widgetBgUrlFor(slot);
     const seg = (slot: 'morning' | 'evening') => {
       const v = getVerse(todayDay, slot);
       return v ? { verse: v.modernText, reference: v.reference.full_reference, bg: bgFor(slot) } : null;
@@ -37,7 +37,7 @@ export default function WidgetSync() {
     if (ser === last.current) return;
     last.current = ser;
     void syncVerseWidget(cache);
-  }, [getVerse, todayDay, imageFor, loaded, t]);
+  }, [getVerse, todayDay, widgetBgUrlFor, loaded, t]);
 
   return null;
 }

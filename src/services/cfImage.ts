@@ -49,3 +49,28 @@ export function cfImage(url: string, cssWidth: number, quality = 80): string {
     return url;
   }
 }
+
+/**
+ * Cover-CROP a CDN image to an exact box (width × height, dp), preserving aspect
+ * ratio and cropping the overflow — `fit=cover` + `gravity=auto`. Used by the
+ * home-screen widget, whose landscape box would otherwise STRETCH the portrait
+ * verse-card background (react-native-android-widget's ImageWidget scales the
+ * bitmap straight to its box with no scale-type). Requires Cloudflare Image
+ * Transformations on the zone; callers must keep a non-transform fallback.
+ * @param cssW target width in dp   @param cssH target height in dp
+ */
+export function cfCoverImage(url: string, cssW: number, cssH: number, quality = 80): string {
+  try {
+    const m = url.match(/^https:\/\/([^/]+)(\/.*)$/);
+    if (!m) return url;
+    const [, host, path] = m;
+    if (!TRANSFORM_HOSTS.has(host)) return url;
+    if (path.startsWith('/cdn-cgi/')) return url;
+    const dpr = Math.min(3, Math.max(1, PixelRatio.get()));
+    const w = bucketFor(Math.ceil(cssW * dpr));
+    const h = Math.round(w * (cssH / cssW));   // keep the requested box ratio
+    return `https://${host}/cdn-cgi/image/width=${w},height=${h},fit=cover,gravity=auto,quality=${quality},format=auto${path}`;
+  } catch {
+    return url;
+  }
+}

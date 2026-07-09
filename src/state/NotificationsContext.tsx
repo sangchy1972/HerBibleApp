@@ -8,8 +8,9 @@ import { logEvent, setUserProps } from '../services/firebase';
 import { usePrayer } from './PrayerContext';
 import { useCurrentDayYmd } from '../hooks/useCurrentDayYmd';
 import { NOTIF_IDS, SLOTS, pickDailyVariant, type NotifKey } from './reminderContent';
-import { syncNotifeeReminders, scheduleBackgroundNudge, cancelBackgroundNudge } from './notifeeReminders';
+import { syncNotifeeReminders, syncNotifeeExtras, scheduleBackgroundNudge, scheduleReengageNudge, cancelBackgroundNudge } from './notifeeReminders';
 import { shouldScheduleBackgroundNudge, activeSlotFor } from './backgroundNudge';
+import { shouldScheduleReengage } from './reengageNudge';
 
 // ─── Public types ─────────────────────────────────────────────────────────
 
@@ -174,6 +175,11 @@ function syncRichReminders(settings: NotifMap, lang: UILanguageCode): void {
       granted,
       lang,
     );
+    // The four fixed-time devotional extras are now Notifee BIG PICTURES too
+    // (verse10/gospel14/afternoon16/verse21) — always-on, gated only on OS
+    // permission. Their legacy plain-text expo schedules are torn down in
+    // syncExtraNotifications so they never double-fire after an upgrade.
+    syncNotifeeExtras(granted, lang);
   }).catch(() => {});
 }
 
@@ -286,20 +292,15 @@ async function syncExtraNotifications(settings: NotifMap, lang: UILanguageCode):
 
   await cancelAllExtras();
 
-  // Seed the "taken" set with the user's enabled reminder times so the extras
-  // stagger around them too, then claim a free slot for each (extras first, then
-  // win-back) — so e.g. win-back's 10:00 base lands at 10:10 behind verse10.
+  // The four fixed-time devotional extras (verse10/gospel14/afternoon16/verse21)
+  // are now Notifee BIG PICTURES (see notifeeReminders.syncNotifeeExtras). We
+  // STILL cancel their legacy expo ids in cancelAllExtras() above so an upgraded
+  // install's old plain-text schedules are torn down and can't double-fire next
+  // to the new big-picture versions. Expo now owns ONLY the win-back series here.
   const taken = new Set<number>();
   for (const s of SLOTS) if (settings[s].enabled) taken.add(settings[s].hour * 60 + settings[s].minute);
-  const extraSlots: Record<ExtraKey, { hour: number; minute: number }> = {} as Record<ExtraKey, { hour: number; minute: number }>;
-  for (const k of EXTRA_KEYS) extraSlots[k] = nextFreeSlot(EXTRA_CONFIG[k].hour, EXTRA_CONFIG[k].minute, taken);
   const wb = nextFreeSlot(WINBACK_HOUR, 0, taken);
 
-  await Promise.all(EXTRA_KEYS.map(k =>
-    Notifications.scheduleNotificationAsync(buildExtraRequest(k, lang, extraSlots[k].hour, extraSlots[k].minute)).catch(err => {
-      if (__DEV__) console.warn(`[notifications] failed to schedule extra ${k}:`, err);
-    }),
-  ));
   const now = Date.now();
   await Promise.all(WINBACK_DAYS.map(d => {
     const date = new Date();
@@ -513,8 +514,10 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       requestExtraSync(settings, lang, 60_000);
       if (SLOTS.some(s => settings[s].enabled)) syncScheduledNotifications(settings, lang);
       // Re-bake the rich Notifee reminders too so their daily-variant content
-      // (baked once into the trigger) advances to the current day's copy.
-      if (settings.morning.enabled || settings.night.enabled) syncRichReminders(settings, lang);
+      // (baked once into the trigger) advances to the current day's copy. Called
+      // unconditionally now: the four big-picture EXTRAS are always-on (not gated
+      // by the morning/night toggles), so they must re-bake on every foreground.
+      syncRichReminders(settings, lang);
     });
     return () => sub.remove();
   }, [ready, settings, lang]);
@@ -528,36 +531,66 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (!ready) return;
     const BG_GATE_KEY = 'notif:bgNudge:v1';
+    // General re-engagement gate — {ymd,count,lastMs}; cap + cooldown live in
+    // reengageNudge.shouldScheduleReengage.
+    const REENGAGE_KEY = 'notif:reengage:v1';
     const sub = AppState.addEventListener('change', state => {
       if (state !== 'background') return;
       const now = new Date();
-      const slot = activeSlotFor(now);                 // 'morning' | 'night'
-      const cfg = settings[slot];
-      if (!cfg.enabled || !permissionGranted) return;   // cheap early-outs before I/O
-      const alreadyPrayed = slot === 'morning' ? prayer.mDone : prayer.eDone;
-      if (alreadyPrayed) return;
       (async () => {
-        try {
-          const raw = await AsyncStorage.getItem(BG_GATE_KEY);
-          const gate: Record<string, Record<string, boolean>> = raw ? JSON.parse(raw) : {};
-          const firedTodayForSlot = !!gate[todayYmd]?.[slot];
-          const ok = shouldScheduleBackgroundNudge({
-            now,
-            slot,
-            reminderMinutes: cfg.hour * 60 + cfg.minute,
-            slotEnabled: cfg.enabled,
-            permissionGranted,
-            alreadyPrayed,
-            firedTodayForSlot,
-          });
-          if (!ok) return;
-          // Mark the gate BEFORE scheduling so a rapid background/foreground
-          // churn can't double-schedule. Store ONLY today's slot flags (prunes
-          // every prior day → the blob stays tiny).
-          await AsyncStorage.setItem(BG_GATE_KEY, JSON.stringify({ [todayYmd]: { ...(gate[todayYmd] || {}), [slot]: true } }));
-          await scheduleBackgroundNudge(slot, lang);
-          logEvent('bg_nudge_scheduled', { slot });
-        } catch { /* never crash on a background transition */ }
+        // ── 1) Prayer re-engagement nudge (unchanged) — only near an unprayed
+        //       slot's reminder time, once/day/slot. Takes priority over the
+        //       general banner so the two never fire ~60s apart.
+        let prayerNudgeScheduled = false;
+        const slot = activeSlotFor(now);                 // 'morning' | 'night'
+        const cfg = settings[slot];
+        const alreadyPrayed = slot === 'morning' ? prayer.mDone : prayer.eDone;
+        if (cfg.enabled && permissionGranted && !alreadyPrayed) {
+          try {
+            const raw = await AsyncStorage.getItem(BG_GATE_KEY);
+            const gate: Record<string, Record<string, boolean>> = raw ? JSON.parse(raw) : {};
+            const firedTodayForSlot = !!gate[todayYmd]?.[slot];
+            if (shouldScheduleBackgroundNudge({
+              now, slot,
+              reminderMinutes: cfg.hour * 60 + cfg.minute,
+              slotEnabled: cfg.enabled,
+              permissionGranted, alreadyPrayed, firedTodayForSlot,
+            })) {
+              // Mark the gate BEFORE scheduling so rapid background/foreground
+              // churn can't double-schedule. Store ONLY today's slot flags.
+              await AsyncStorage.setItem(BG_GATE_KEY, JSON.stringify({ [todayYmd]: { ...(gate[todayYmd] || {}), [slot]: true } }));
+              await scheduleBackgroundNudge(slot, lang);
+              logEvent('bg_nudge_scheduled', { slot });
+              prayerNudgeScheduled = true;
+            }
+          } catch { /* fall through to the general banner */ }
+        }
+
+        // ── 2) General re-engagement BIG banner (~1 min after leaving the app).
+        //       The Play-compliant proxy for "show a banner whenever the user
+        //       opens the phone": we can't listen for OS unlock, so we fire a
+        //       minute after they leave OUR app — waiting for them next time they
+        //       look at the screen. Gated by daily cap + cooldown + quiet hours.
+        //       Skipped if the prayer nudge already armed one this transition.
+        if (!prayerNudgeScheduled && permissionGranted) {
+          try {
+            const raw = await AsyncStorage.getItem(REENGAGE_KEY);
+            const parsed = raw ? JSON.parse(raw) as { ymd: string; count: number; lastMs: number | null } : null;
+            const day = parsed && parsed.ymd === todayYmd ? parsed : { ymd: todayYmd, count: 0, lastMs: null };
+            if (shouldScheduleReengage({
+              now,
+              permissionGranted,
+              firedTodayCount: day.count,
+              lastFiredAtMs: day.lastMs,
+            })) {
+              const rslot = activeSlotFor(now);
+              // Persist BEFORE scheduling so churn can't over-count / double-fire.
+              await AsyncStorage.setItem(REENGAGE_KEY, JSON.stringify({ ymd: todayYmd, count: day.count + 1, lastMs: now.getTime() }));
+              await scheduleReengageNudge(rslot, lang, day.count);   // count → copy variety
+              logEvent('reengage_scheduled', { slot: rslot, index: day.count });
+            }
+          } catch { /* never crash on a background transition */ }
+        }
       })();
     });
     return () => sub.remove();

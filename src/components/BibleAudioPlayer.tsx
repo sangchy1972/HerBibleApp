@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from 'react-native-reanimated';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import { useAudioPlayerStatus, type AudioPlayer } from 'expo-audio';
 import { ROSE, TXT, TXTSUB, FONTS } from '../constants/theme';
 import { useT } from '../i18n/useT';
 import { verseAtTime, type ChapterTimestamps } from '../services/bibleAudioService';
@@ -33,23 +34,6 @@ function fmt(sec: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-interface AudioLike {
-  playing?: boolean;
-  currentTime?: number;
-  duration?: number;
-  // expo-audio status flags — used to swap the play button for a spinner
-  // before the chapter audio is ready. `isLoaded` flips true once a duration
-  // is known; `isBuffering` may flip back on/off as the stream catches up.
-  isLoaded?: boolean;
-  isBuffering?: boolean;
-}
-interface PlayerLike {
-  play: () => void;
-  pause: () => void;
-  seekTo: (s: number) => Promise<void> | void;
-  setPlaybackRate: (r: number) => void;
-}
-
 interface Props {
   visible: boolean;
   bookName: string;
@@ -58,8 +42,10 @@ interface Props {
    *  so it gets a hidden 1.1× base rate; the user still sees "1x" and adjusts
    *  relative to that base. Other languages play at true speed. */
   narrationLang: string;
-  player: PlayerLike;
-  status: AudioLike;
+  /** The reader's own player instance — this sheet subscribes to its status
+   *  ITSELF (cheap: a handful of elements, only while open), so the giant
+   *  reader screen never has to hold a per-tick status subscription. */
+  player: AudioPlayer;
   timestamps: ChapterTimestamps | null;
   onClose: () => void;            // back + Read → return to the reader
   onPrevChapter: () => void;
@@ -68,11 +54,12 @@ interface Props {
 }
 
 export default function BibleAudioPlayer({
-  visible, bookName, chapter, narrationLang, player, status, timestamps,
+  visible, bookName, chapter, narrationLang, player, timestamps,
   onClose, onPrevChapter, onNextChapter, onQueue,
 }: Props) {
   const insets = useSafeAreaInsets();
   const t = useT();
+  const status = useAudioPlayerStatus(player);
   const [speedIdx, setSpeedIdx] = useState(0);     // index into SPEEDS (1.0 default)
   const [seeking, setSeeking] = useState(false);
   const [seekValue, setSeekValue] = useState(0);

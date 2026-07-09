@@ -29,7 +29,7 @@ import VerseNoteSheet from '../components/VerseNoteSheet';
 import TabSection from '../components/shared/TabSection';
 import { fetchTranslationIndex, fetchChapter, fetchCommentaryChapter, streamingSearchVerses, type BookSummary, type Verse, type VerseHit, type SearchProgress } from '../services/bibleService';
 import { CORPUS_CDN_ROOT } from '../constants/corpus';
-import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import { useAudioPlayer, useAudioPlayerStatus, type AudioPlayer } from 'expo-audio';
 import { bibleAudioUrl } from '../constants/bibleAudioCdn';
 import { loadTimestamps, verseAtTime, type ChapterTimestamps } from '../services/bibleAudioService';
 import BibleAudioPlayer from '../components/BibleAudioPlayer';
@@ -647,6 +647,26 @@ const THEMES: Record<string, { bg: string; txt: string; sub: string }> = {
   dark: { bg: '#1A1620', txt: '#F5F0EC', sub: '#9C95A6' },
 };
 
+// Render-null leaf that owns the HIGH-FREQUENCY expo-audio status
+// subscription. useAudioPlayerStatus re-renders its component on every
+// ~250ms tick while playing — parked here it re-renders nothing, and the
+// giant reader above only hears about COARSE changes: the play/pause flip
+// and the karaoke verse advancing (once every few seconds). Same isolation
+// pattern as PrayerFlow's NarratedBody.
+function AudioStatusBridge({ player, timestamps, onPlayingChange, onVerseChange }: {
+  player: AudioPlayer;
+  timestamps: ChapterTimestamps | null;
+  onPlayingChange: (playing: boolean) => void;
+  onVerseChange: (verse: number | null) => void;
+}) {
+  const status = useAudioPlayerStatus(player);
+  const playing = !!status.playing;
+  const verse = playing && timestamps ? verseAtTime(timestamps, status.currentTime || 0) : null;
+  useEffect(() => { onPlayingChange(playing); }, [playing, onPlayingChange]);
+  useEffect(() => { onVerseChange(verse); }, [verse, onVerseChange]);
+  return null;
+}
+
 export default function BibleScreen() {
   // Per-section entrance animations (header / verse list) — see the two
   // <TabSection> wrappers below. The per-chapter scroll-to-top (line ~1040)
@@ -1150,13 +1170,32 @@ export default function BibleScreen() {
   // degradation while the narration backlog is being filled.
   const audioSrc = bibleAudioUrl(translation.code, bookSlug, chapter);
   const audioPlayer = useAudioPlayer(audioSrc);
-  const audioStatus = useAudioPlayerStatus(audioPlayer);
-  const audioPlaying = audioStatus.playing;
+  // COARSE audio state only — the high-frequency useAudioPlayerStatus
+  // subscription lives in the render-null <AudioStatusBridge> leaf (bottom of
+  // the JSX). Subscribing HERE re-rendered this entire screen on every ~250ms
+  // currentTime tick while narration played, visibly janking page swipes and
+  // scrolling (user-reported, 2026-07-09). These two values change rarely:
+  // playing flips on user action, the verse advances every few seconds.
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [activeAudioVerse, setActiveAudioVerse] = useState<number | null>(null);
+  const onAudioPlayingChange = useCallback((p: boolean) => setAudioPlaying(p), []);
+  const onAudioVerseChange = useCallback((v: number | null) => setActiveAudioVerse(v), []);
+
+  // Pause narration whenever the app leaves the foreground — audio must not
+  // keep playing behind the launcher/lock screen (we run no media-session
+  // foreground service, so Android would otherwise keep the raw player going
+  // indefinitely). Deliberately no auto-resume: the user taps play again.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', s => {
+      if (s !== 'active') { try { audioPlayer.pause(); } catch {} }
+    });
+    return () => sub.remove();
+  }, [audioPlayer]);
 
   // Per-verse timestamps for karaoke-style highlighting. Fetched once per
-  // chapter (cached in AsyncStorage by the service), then we binary-search
-  // it on every status update — cheap even on long chapters because verse
-  // counts top out around 50.
+  // chapter (cached in AsyncStorage by the service), then binary-searched
+  // inside the bridge on every status update — cheap even on long chapters
+  // because verse counts top out around 50.
   const [audioTimestamps, setAudioTimestamps] = useState<ChapterTimestamps | null>(null);
   useEffect(() => {
     let alive = true;
@@ -1165,14 +1204,6 @@ export default function BibleScreen() {
     });
     return () => { alive = false; };
   }, [translation.code, bookSlug, chapter]);
-
-  // The verse number the audio is currently inside. `null` when audio is
-  // paused, not playing this chapter, or has no timestamps. Used by the
-  // verse renderer to apply a soft ROSE tint to the active line.
-  const activeAudioVerse = useMemo(() => {
-    if (!audioStatus.playing || !audioTimestamps) return null;
-    return verseAtTime(audioTimestamps, audioStatus.currentTime || 0);
-  }, [audioStatus.playing, audioStatus.currentTime, audioTimestamps]);
 
   // Auto-scroll the active verse into view as the audio walks through the
   // chapter. Only fires when the verse number CHANGES — otherwise every
@@ -1264,7 +1295,7 @@ export default function BibleScreen() {
     // Genuine "user chose to listen" tap (pink headphones button) — distinct
     // from auto-resume on chapter change. book/chapter/translation = what's played.
     logEvent('bible_audio_play', { book: bookSlug, chapter, translation: translation.code });
-    if (!audioStatus.playing) { try { audioPlayer.play(); } catch {} }
+    if (!audioPlayer.playing) { try { audioPlayer.play(); } catch {} }
   };
   // Player verse-nav at a chapter boundary advances the chapter AND flags it
   // to auto-resume — the chapter-change effect below pauses on the swap, and
@@ -1686,13 +1717,19 @@ export default function BibleScreen() {
       </TouchableOpacity>
 
       {/* Full-screen narration player (Modal — covers the tab bar). */}
+      {/* Render-null leaf owning the high-frequency status subscription. */}
+      <AudioStatusBridge
+        player={audioPlayer}
+        timestamps={audioTimestamps}
+        onPlayingChange={onAudioPlayingChange}
+        onVerseChange={onAudioVerseChange}
+      />
       <BibleAudioPlayer
         visible={showPlayer}
         bookName={currentBook?.name || bookSlug}
         chapter={chapter}
         narrationLang={translation.code}
         player={audioPlayer}
-        status={audioStatus}
         timestamps={audioTimestamps}
         onClose={() => setShowPlayer(false)}
         onPrevChapter={playerPrevChapter}

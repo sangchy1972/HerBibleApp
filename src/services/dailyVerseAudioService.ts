@@ -20,7 +20,20 @@ import { HOLIDAY_VERSE_AUDIO_MANIFEST } from '../constants/holidayVerseAudioMani
 // pruned the moment a new verse's files land, so the device footprint stays
 // at ~2-4 MB instead of growing 480 files deep.
 
-const AUDIO_CACHE_SUBDIR = 'dailyverse-audio';
+// v2 root (2026-07-09): the v1 caches could hold TRUNCATED files — on Android,
+// expo-file-system streams downloads straight into the destination, so an
+// interrupted download leaves a partial mp3 that `exists` and then plays one
+// sentence before going silent (clock keeps running — the header is intact,
+// the audio data isn't). Downloads are now verified (see downloadIfMissing);
+// the old roots are purged once below so poisoned files can't keep serving.
+const AUDIO_CACHE_SUBDIR = 'dailyverse-audio2';
+
+// One-time heal: deferred purge of the pre-verification roots.
+setTimeout(() => {
+  for (const legacy of ['dailyverse-audio', 'holiday-dailyverse-audio']) {
+    try { new Directory(Paths.cache, legacy).delete(); } catch { /* gone already */ }
+  }
+}, 4000);
 
 // Returns the bundled manifest, or null while it's still the empty
 // placeholder (no audio recorded/mapped yet) so the listen button stays
@@ -76,12 +89,31 @@ function pruneOtherVerses(keep: Set<string>): void {
   } catch { /* best-effort */ }
 }
 
+// Verified download: fetch into a `.part` temp file, check the byte count
+// against the server's Content-Length, and only then move into the final
+// name. On Android the SDK streams straight into the destination file, so an
+// interrupted transfer used to leave a truncated file that `exists` — cached
+// poison that "plays one sentence then goes silent". The temp+verify+move
+// dance makes the final name appear only for complete files, and also catches
+// a flaky proxy returning a short body with a 200.
 async function downloadIfMissing(url: string, target: File): Promise<boolean> {
   try {
     if (target.exists) return true;
     const parent = target.parentDirectory;
     if (!parent.exists) parent.create({ intermediates: true, idempotent: true });
-    await File.downloadFileAsync(url, target);
+    const tmp = new File(parent, `${target.name}.part`);
+    try { if (tmp.exists) tmp.delete(); } catch { /* stale part from a kill */ }
+    await File.downloadFileAsync(url, tmp);
+    if (!tmp.exists || tmp.size === 0) return false;
+    try {
+      const head = await fetch(url, { method: 'HEAD' });
+      const expected = Number(head.headers.get('content-length') || 0);
+      if (expected > 0 && tmp.size !== expected) {
+        try { tmp.delete(); } catch {}
+        return false;                        // truncated body — do NOT cache
+      }
+    } catch { /* HEAD unavailable → trust the completed download */ }
+    tmp.move(target);
     return target.exists;
   } catch {
     return false;
@@ -207,7 +239,7 @@ export function verseIdFor(day: number, segment: 'morning' | 'evening'): string 
 // cache subdir because holiday verseIds (m_001…e_010 = holiday day index)
 // collide with the regular ones. Same stream-first / cache-in-background /
 // prune-others behaviour; reuses downloadIfMissing.
-const HOLIDAY_AUDIO_CACHE_SUBDIR = 'holiday-dailyverse-audio';
+const HOLIDAY_AUDIO_CACHE_SUBDIR = 'holiday-dailyverse-audio2';   // v2 — see the truncation note on AUDIO_CACHE_SUBDIR
 
 export async function loadHolidayManifest(): Promise<DailyVerseAudioManifest | null> {
   const m = HOLIDAY_VERSE_AUDIO_MANIFEST;

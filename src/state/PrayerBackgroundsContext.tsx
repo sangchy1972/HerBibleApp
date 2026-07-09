@@ -76,7 +76,16 @@ const DEFAULT_AUDIO       = null;
 // re-downloading 1–1.6 MB over HTTPS every time. Keyed by filename, so a
 // future manifest change with a new audio filename gets a fresh download
 // while rotated-out filenames are pruned via pruneAudioNotIn below.
-const AUDIO_CACHE_SUBDIR = 'prayer-audio';
+// v2 roots (2026-07-09): v1 could hold TRUNCATED files — Android streams
+// downloads straight into the destination, so an interrupted transfer left a
+// partial file that `exists` and then played/rendered broken forever.
+// Downloads are now verified (see downloadIfMissing); purge the old roots once.
+const AUDIO_CACHE_SUBDIR = 'prayer-audio2';
+setTimeout(() => {
+  for (const legacy of ['prayer-audio', 'prayer-bg']) {
+    try { new Directory(Paths.cache, legacy).delete(); } catch { /* gone already */ }
+  }
+}, 4000);
 function audioCacheFile(slot: Slot, fn: string): File | null {
   try {
     return new File(Paths.cache, AUDIO_CACHE_SUBDIR, slot, fn);
@@ -94,7 +103,9 @@ function anyCachedAudio(slot: Slot): File | null {
     const dir = new Directory(Paths.cache, AUDIO_CACHE_SUBDIR, slot);
     if (!dir.exists) return null;
     for (const entry of dir.list()) {
-      if (entry instanceof File) return entry;
+      // Skip in-flight/stale `.part` temp files — only fully-verified
+      // downloads carry their final name.
+      if (entry instanceof File && !entry.name.endsWith('.part')) return entry;
     }
     return null;
   } catch {
@@ -128,7 +139,23 @@ async function downloadIfMissing(url: string, target: File): Promise<boolean> {
     if (target.exists) return true;
     const parent = target.parentDirectory;
     if (!parent.exists) parent.create({ intermediates: true, idempotent: true });
-    await File.downloadFileAsync(url, target);
+    // Verified download: temp `.part` → byte-count check vs Content-Length →
+    // move into the final name. Android streams straight into the destination,
+    // so without this an interrupted transfer leaves a truncated file that
+    // `exists` and gets served forever (music/image cut off mid-way).
+    const tmp = new File(parent, `${target.name}.part`);
+    try { if (tmp.exists) tmp.delete(); } catch { /* stale part from a kill */ }
+    await File.downloadFileAsync(url, tmp);
+    if (!tmp.exists || tmp.size === 0) return false;
+    try {
+      const head = await fetch(url, { method: 'HEAD' });
+      const expected = Number(head.headers.get('content-length') || 0);
+      if (expected > 0 && tmp.size !== expected) {
+        try { tmp.delete(); } catch {}
+        return false;                        // truncated body — do NOT cache
+      }
+    } catch { /* HEAD unavailable → trust the completed download */ }
+    tmp.move(target);
     return target.exists;
   } catch {
     return false;
@@ -142,7 +169,7 @@ async function downloadIfMissing(url: string, target: File): Promise<boolean> {
 // serve it as a local file:// URI → instant, offline-safe, persistent across
 // launches. Keyed by manifest filename so a new daily pick downloads fresh while
 // yesterday's is pruned. Footprint: ~2 files × ~60–150 KB.
-const IMG_CACHE_SUBDIR = 'prayer-bg';
+const IMG_CACHE_SUBDIR = 'prayer-bg2';   // v2 — see the truncation note on AUDIO_CACHE_SUBDIR
 function imageCacheFile(slot: Slot, fn: string): File | null {
   try {
     return new File(Paths.cache, IMG_CACHE_SUBDIR, slot, fn);

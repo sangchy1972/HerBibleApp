@@ -38,11 +38,20 @@ export const AVAILABLE_DAILY_VERSE_AUDIO_LANGS = new Set<string>(['en', 'es', 'p
 // that verse's Listen for that language (a shown button that 404s mid-flow is
 // worse than no button). ADD a verseId here if a language's upload is partial.
 //
-// 2026-07-08: the prior holes were filled and verified live — es e_025 (all 4
-// steps) + es m_026–m_050, and pt e_025 — so the map is now EMPTY: es/pt have
-// full daily-verse narration coverage. Re-add entries only if a future upload
-// gap appears.
-const MISSING_DAILY_VERSE_AUDIO: Record<string, ReadonlySet<string>> = {};
+// 2026-07-09: a FULL .mp3 HEAD sweep (check_daily_verse_audio.sh) found es
+// m_026–m_050 return 404 for ALL FOUR steps — the timing .json siblings were
+// uploaded but the audio .mp3s were NOT (an earlier spot-check only hit the
+// .json and wrongly cleared these). es e_025 + pt are complete. DELETE the es
+// entries once the m_026–m_050 mp3s are actually uploaded (re-run the sweep to
+// confirm) — nothing else needs to change.
+const MISSING_DAILY_VERSE_AUDIO: Record<string, ReadonlySet<string>> = {
+  es: new Set([
+    'm_026', 'm_027', 'm_028', 'm_029', 'm_030', 'm_031', 'm_032', 'm_033',
+    'm_034', 'm_035', 'm_036', 'm_037', 'm_038', 'm_039', 'm_040', 'm_041',
+    'm_042', 'm_043', 'm_044', 'm_045', 'm_046', 'm_047', 'm_048', 'm_049',
+    'm_050',
+  ]),
+};
 
 // Resolve a UI language to the narration language we should fetch: the UI
 // language itself when its audio exists, otherwise null (caller skips the

@@ -23,17 +23,19 @@ const APP_ICON = require('../../assets/icon.png');
 // system splash can't be removed, so we make it seamless instead).
 const SPLASH_ICON = require('../../assets/splash-icon.png');
 
-// Two-stage launch, tightened per user (2026-07-09 — total overlay ≈3s, the
-// old 2000/3000 floors made launches feel 6-7s):
-//   • STAGE 1 "brand" — pixel-match of the native splash (flat #F9D9E6 +
-//     splash-icon at 150). Only a short bridge while the rotation + photo
-//     resolve; no daily line here so nothing ever visibly "switches".
-//   • STAGE 2 "content" — verse-on-photo, held ≥CONTENT_MIN_MS and until the
-//     app's own verse/prayer content is ready (slow phones wait longer).
+// Two-segment launch (per user 2026-07-09):
+//   • STAGE 1 "brand" — splash-icon at the EXACT native size/position (so the
+//     OS splash hands off invisibly) + the "Her Bible" wordmark below it. This
+//     stage absorbs ALL variable waiting: it stays up until the app underneath
+//     is fully ready (nav + contexts + today's verse) AND the quote/photo have
+//     resolved. One perceived screen: icon + wordmark.
+//   • STAGE 2 "content" — the verse-on-photo screen, shown for EXACTLY
+//     CONTENT_HOLD_MS (3s, per user "不能超过 3s") and then it leaves — no
+//     readiness checks here anymore, everything was ready before we entered.
 const BRAND_TOP = '#F9D9E6';
 const BRAND_GRADIENT = ['#F9D9E6', '#F4A6C0'] as const;
-const BRAND_MIN_MS = 300;      // stage-1: just a seamless bridge off the OS splash
-const CONTENT_MIN_MS = 2200;   // stage-2 floor — overlay totals ≈3s incl. fades
+const BRAND_MIN_MS = 400;      // stage-1 floor — enough for the wordmark to register
+const CONTENT_HOLD_MS = 3000;  // stage-2: exactly 3s, never longer
 const MAX_VISIBLE_MS = 8000;   // hard safety cap — never hang the launch
 
 // English ordinal suffix ("17th"); other locales use their own date format.
@@ -65,7 +67,6 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   const [phase, setPhase] = useState<'brand' | 'content'>('brand');
   const [rot, setRot] = useState<number | null>(null);
   const [brandElapsed, setBrandElapsed] = useState(false);
-  const [contentElapsed, setContentElapsed] = useState(false);
   const [imgBroken, setImgBroken] = useState(false);
 
   const opacity = useSharedValue(1);          // whole-overlay fade at the very end
@@ -87,15 +88,14 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   // Content can be shown without any switch once the rotation has resolved.
   const contentReady = rot != null;
 
-  // Stage 1 → Stage 2: brand shown ≥3s AND content chosen → cross-fade in the
-  // verse screen and start its own ≥3s dwell.
+  // Stage 1 → Stage 2: ONLY once everything is ready (quote resolved AND the
+  // app underneath fully loaded) — stage-1 absorbs all variable waiting, so
+  // stage-2 can be a fixed-length showcase.
   useEffect(() => {
-    if (phase !== 'brand' || !brandElapsed || !contentReady) return;
+    if (phase !== 'brand' || !brandElapsed || !contentReady || !contextsReady) return;
     setPhase('content');
     contentOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.cubic) });
-    const tm = setTimeout(() => setContentElapsed(true), CONTENT_MIN_MS);
-    return () => clearTimeout(tm);
-  }, [phase, brandElapsed, contentReady, contentOpacity]);
+  }, [phase, brandElapsed, contentReady, contextsReady, contentOpacity]);
 
   // Single-shot fade-out → onHide. Guarded so the dismiss effect and the safety
   // cap can't restart the animation or call onHide twice.
@@ -107,10 +107,13 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
     });
   }, [opacity, onHide]);
 
-  // Stage 2 → app: content shown ≥3s AND the app is actually ready.
+  // Stage 2 → app: exactly CONTENT_HOLD_MS, then leave. No readiness checks —
+  // stage-2 is only entered once the app is ready (see the transition above).
   useEffect(() => {
-    if (phase === 'content' && contentElapsed && contextsReady) fadeOut();
-  }, [phase, contentElapsed, contextsReady, fadeOut]);
+    if (phase !== 'content') return;
+    const tm = setTimeout(fadeOut, CONTENT_HOLD_MS);
+    return () => clearTimeout(tm);
+  }, [phase, fadeOut]);
 
   // Hard safety cap — force away even if something never signals ready.
   useEffect(() => { const cap = setTimeout(fadeOut, MAX_VISIBLE_MS); return () => clearTimeout(cap); }, [fadeOut]);
@@ -131,12 +134,13 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
 
   return (
     <Animated.View style={[StyleSheet.absoluteFillObject, styles.root, fade]}>
-      {/* STAGE 1 — EXACT replica of the native splash (flat pink, same
-          splash-icon at the native 150px) so OS splash → overlay reads as one
-          continuous screen. No wordmark: the native splash has none, and any
-          difference is what made launch feel like "two icon screens". */}
+      {/* STAGE 1 — the icon pixel-matches the native splash (flat pink, same
+          splash-icon at 150px, same centered position), so the OS splash hands
+          off invisibly; the "Her Bible" wordmark simply appears beneath the
+          unmoving icon — reads as the SAME screen completing, not a new one. */}
       <View style={styles.brandCenter}>
         <Image source={SPLASH_ICON} style={styles.brandCenterIcon} resizeMode="contain" />
+        <Text style={styles.brandCenterName}>Her Bible</Text>
       </View>
 
       {/* STAGE 2 — verse on photo (or pink), cross-faded in once ready. */}
@@ -172,9 +176,17 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
 
 const styles = StyleSheet.create({
   root: { backgroundColor: BRAND_TOP, zIndex: 1000, elevation: 1000 },
-  // Stage-1 centered icon — pixel-matches the native splash (150px contain).
+  // Stage-1: icon pixel-matches the native splash (150px contain, dead
+  // center); the wordmark hangs below WITHOUT shifting the icon (absolute,
+  // pushed down from center) so the OS-splash hand-off stays invisible.
   brandCenter: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   brandCenterIcon: { width: 150, height: 150 },
+  brandCenterName: {
+    position: 'absolute',
+    top: '50%',
+    marginTop: 92,                          // icon half-height (75) + 17px gap — icon stays exactly where the OS splash drew it
+    fontFamily: FONTS.loraBold, fontSize: 24, fontWeight: '600', letterSpacing: 0.4, color: TXT,
+  },
   // Stage-2 text block (upper third).
   textBlock: { position: 'absolute', left: 28, right: 28, alignItems: 'center' },
   shadow: { textShadowColor: 'rgba(0,0,0,0.45)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 },

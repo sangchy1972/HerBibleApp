@@ -21,11 +21,11 @@ import { RHYTHM_STEPS, type RhythmDotState } from '../../state/dailyRhythm';
 // while the tab is focused — a midnight reset snaps silently.
 
 const RETIRED_LAV = '#866BC059';   // LAV @ 35% — "graduated" gospel steps
-const DOT = 18;
+const DOT = 20.7;                  // 18 → 20.7 (+15 % per user)
 
 function DotGlyph({ state, index }: { state: RhythmDotState; index: number }) {
   if (state === 'done' || state === 'retired') {
-    return <Feather name="check" size={11} color="#FFFFFF" />;
+    return <Feather name="check" size={12.5} color="#FFFFFF" />;   // 11 → 12.5 (+15 %)
   }
   const color = state === 'current' ? ROSE
     : state === 'locked' ? 'rgba(30,27,46,0.28)'
@@ -273,10 +273,12 @@ export default function DailyRhythmBar({
         accessibilityLabel={`${shown.text}. ${doneCount} / 5.`}
       >
         <Animated.View style={[styles.msg, msgStyle]}>
-          <Feather name={shown.icon} size={16} color={ROSE} />
+          <Feather name={shown.icon} size={18.5} color={ROSE} />{/* 16 → 18.5 (+15 %) */}
+          {/* Two lines allowed (longer de/fr strings wrap instead of shrinking
+              to a squint); adjustsFontSizeToFit still guards the extremes. */}
           <Text
             style={styles.title}
-            numberOfLines={1}
+            numberOfLines={2}
             adjustsFontSizeToFit
             minimumFontScale={0.8}
           >
@@ -285,7 +287,7 @@ export default function DailyRhythmBar({
         </Animated.View>
         <View style={styles.dotsRow} importantForAccessibility="no-hide-descendants">
           <Animated.View pointerEvents="none" style={[styles.spark, sparkStyle]}>
-            <Sparkle size={20} />
+            <Sparkle size={23} />
           </Animated.View>
           {dots.map((d, k) => (
             <RhythmDot
@@ -328,6 +330,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 9.8,
+    minHeight: 59,                       // was ~42 visual → 59 (+40 % per user)
     paddingVertical: 12,
     paddingLeft: 14,
     paddingRight: 12,
@@ -338,20 +341,20 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   msg: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 8, marginRight: 10 },
-  title: { flex: 1, fontSize: 13.5, fontWeight: '600', color: TXT, fontFamily: FONTS.latoBold },
-  dotsRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  title: { flex: 1, fontSize: 14.9, lineHeight: 19.5, fontWeight: '600', color: TXT, fontFamily: FONTS.latoBold },   // 13.5 → 14.9 (+10 %); lineHeight for the 2-line case
+  dotsRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },   // 6 → 7 (tracks the +15 % dots)
   dotSlot: { width: DOT, height: DOT, alignItems: 'center', justifyContent: 'center' },
   dot: {
     width: DOT, height: DOT, borderRadius: DOT / 2,
     alignItems: 'center', justifyContent: 'center',
   },
-  dotNum: { fontSize: 10, fontWeight: '600', fontFamily: FONTS.latoBold },
+  dotNum: { fontSize: 11.5, fontWeight: '600', fontFamily: FONTS.latoBold },   // 10 → 11.5 (+15 %)
   ripple: {
     position: 'absolute',
     width: DOT, height: DOT, borderRadius: DOT / 2,
     borderWidth: 1.5, borderColor: ROSE,
   },
-  spark: { position: 'absolute', top: -14, left: '50%', marginLeft: -10 },
+  spark: { position: 'absolute', top: -14, left: '50%', marginLeft: -11.5 },   // centers the 23px sparkle
   // Toast hint — mirrors the hero card's wait-state hint visuals.
   hintOverlay: {
     flex: 1,

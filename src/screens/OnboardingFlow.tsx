@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Feather from '@expo/vector-icons/Feather';
+import LottieView from 'lottie-react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Animated, {
   FadeInDown, FadeIn, FadeInUp, FadeInRight,
@@ -51,6 +52,10 @@ const OB_FALLBACK_PRICES: Record<PlanId, string> = { lifetime: 'NT$670', annual:
 const TRIAL_SHEET_H = Math.round(Dimensions.get('window').height * 0.56);
 const GIFT_BOX = require('../../assets/paywall/gift-box.png');
 const HERO_IMG = require('../../assets/onboarding-hero.webp');
+// Full-screen celebration behind the intro step. This is the SAME animation as
+// the user's "Free Flex Confetti" dotLottie (byte-identical once extracted), so
+// we reuse the asset already in the bundle instead of adding a duplicate.
+const LOTTIE_CONFETTI = require('../../assets/lottie/confetti.json');
 
 // Press feedback: every primary CTA scales down on press-in and springs back
 // on release, so taps always FEEL acknowledged (per user).
@@ -319,6 +324,28 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 6 }]}>
+      {/* FULL-SCREEN confetti on the intro step. Rendered FIRST so every sibling
+          (hero photo, title, sub, Continue) paints on top of it — the Lottie is
+          strictly a backdrop. It starts on mount, i.e. the same moment the hero
+          + text fade in. Plays ONCE at 0.8×. Negative insets bleed it past the
+          root's 20px horizontal padding + top inset so it truly covers the
+          screen; pointerEvents="none" so it can never swallow a tap. */}
+      {stepName === 'intro' && (
+        <View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFillObject, { left: -20, right: -20, top: -(insets.top + 6) }]}
+        >
+          <LottieView
+            source={LOTTIE_CONFETTI}
+            autoPlay
+            loop={false}
+            speed={0.8}
+            resizeMode="cover"
+            style={StyleSheet.absoluteFillObject}
+          />
+        </View>
+      )}
+
       {/* Top bar: back (hidden on first step) + Skip-everything (hidden on the
           welcome/language step — skipping before a language is confirmed would
           strand a possibly-wrong-language user; a spacer keeps the layout). */}

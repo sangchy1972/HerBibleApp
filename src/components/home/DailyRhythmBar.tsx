@@ -1,24 +1,27 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, AccessibilityInfo } from 'react-native';
-import Feather from '@expo/vector-icons/Feather';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from 'react-native-svg';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withDelay, withSequence,
   cancelAnimation, Easing, runOnJS,
 } from 'react-native-reanimated';
 import { useIsFocused } from '@react-navigation/native';
-import { ROSE, TXT, FONTS } from '../../constants/theme';
+import { ROSE, BTN_RADIUS, TXT, FONTS } from '../../constants/theme';
+import { useT } from '../../i18n/useT';
 import { RHYTHM_STEPS, isRhythmStepDone, type RhythmDotState } from '../../state/dailyRhythm';
 
 // Permanent Daily Rhythm bar (presentational). PrayerScreen computes the
 // rhythm view (state machine in src/state/dailyRhythm.ts) and hands us the
-// resolved text/icon/action; this component owns only the visuals:
-//   • white card matching the screen's other cards (no border),
-//   • a 5-SEGMENT progress bar pinned along the card's inner bottom — one
-//     segment per rhythm step, replacing the old 1–5 numbered dots AND the
-//     screen's separate "Today's Progress" section (merged per user). The
-//     track/fill/divider styles are carried over from that section verbatim
-//     (height 6, rose fill, white ticks) — only the tick count changed (1→4).
+// resolved text/action; this component owns only the visuals:
+//   • a soft pink→white→lavender gradient card (borderless, per user) with
+//     the suggestion text and — on actionable steps — a small rose "Start"
+//     pill on the right (decorative: the WHOLE card is the touch target),
+//   • a 5-SEGMENT progress bar hugging the card's inner bottom with a live
+//     percentage at its right — one segment per rhythm step (20% each),
+//     replacing the old 1–5 numbered dots AND the screen's separate
+//     "Today's Progress" section (merged per user). Track/fill/tick styles
+//     carried over from that section verbatim (height 6, rose fill, white
+//     ticks) — only the tick count changed (1→4).
 //   • a left→right fill sweep when a step completes, a sparkle when the whole
 //     day completes, and a soft crossfade when the suggestion changes.
 // Animations only fire for a false→true completion on the SAME calendar day
@@ -64,17 +67,17 @@ function Sparkle({ size }: { size: number }) {
 }
 
 export default function DailyRhythmBar({
-  todayYmd, dots, doneCount, allDone, icon, text, hintText, onPress,
+  todayYmd, dots, doneCount, allDone, text, hintText, onPress,
 }: {
   todayYmd: string;
   dots: RhythmDotState[];              // length 5, canonical order
   doneCount: number;
   allDone: boolean;
-  icon: keyof typeof Feather.glyphMap;
   text: string;
   hintText: string | null;             // rest states: tap pops this instead of navigating
   onPress: (() => void) | null;        // step states: navigate
 }) {
+  const t = useT();
   const isFocused = useIsFocused();
   const [reduceMotion, setReduceMotion] = useState(false);
   useEffect(() => {
@@ -89,6 +92,10 @@ export default function DailyRhythmBar({
   // the correct widths on measure; no flash of wrong geometry.
   const [trackW, setTrackW] = useState(0);
   const segW = trackW > 0 ? trackW / SEGMENTS : 0;
+  // Card size for the gradient backdrop — measured explicitly because an
+  // absolute-filled Svg does NOT re-size when the card grows (it froze at the
+  // pre-track layout, leaving the bottom strip unpainted).
+  const [card, setCard] = useState({ w: 0, h: 0 });
 
   // ── Completion detection (spec §5 guards) ─────────────────────────────────
   // Snapshot {ymd, dots}; animate a segment only on a not-done → done flip
@@ -143,23 +150,23 @@ export default function DailyRhythmBar({
     transform: [{ translateY: sparkY.value }, { scale: sparkScale.value }],
   }));
 
-  // ── Text/icon crossfade on suggestion change (spec §5c) ───────────────────
+  // ── Text crossfade on suggestion change (spec §5c) ────────────────────────
   // Manual two-phase swap (out 160ms ↑, swap, in 200ms ↓) — no keyed remount,
   // so the row never double-stacks mid-transition. `latest` wins if the
   // suggestion changes again mid-flight.
-  const [shown, setShown] = useState({ icon, text });
-  const latest = useRef({ icon, text });
+  const [shown, setShown] = useState({ text });
+  const latest = useRef({ text });
   const msgOpacity = useSharedValue(1);
   const msgY = useSharedValue(0);
   const applyLatest = () => setShown({ ...latest.current });
   useEffect(() => {
-    latest.current = { icon, text };
-    if (shown.icon === icon && shown.text === text) return;
-    if (reduceMotion) { setShown({ icon, text }); return; }
+    latest.current = { text };
+    if (shown.text === text) return;
+    if (reduceMotion) { setShown({ text }); return; }
     cancelAnimation(msgOpacity); cancelAnimation(msgY);
     msgOpacity.value = withTiming(0, { duration: 160 }, (fin) => { if (fin) runOnJS(applyLatest)(); });
     msgY.value = withTiming(-6, { duration: 160 });
-  }, [icon, text]);   // eslint-disable-line react-hooks/exhaustive-deps
+  }, [text]);   // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     // `shown` just swapped → slide the new line in from below.
     if (reduceMotion) { msgOpacity.value = 1; msgY.value = 0; return; }
@@ -184,17 +191,40 @@ export default function DailyRhythmBar({
     hintTimer.current = setTimeout(() => setHint(null), 3200);
   };
 
+  const pct = Math.round((doneCount / SEGMENTS) * 100);
+
   return (
     <View style={styles.wrap}>
       <TouchableOpacity
         style={styles.bar}
         activeOpacity={0.85}
         onPress={handlePress}
+        onLayout={(e) => {
+          const { width, height } = e.nativeEvent.layout;
+          setCard((c) => (c.w === width && c.h === height ? c : { w: width, h: height }));
+        }}
         accessibilityRole="button"
-        accessibilityLabel={`${shown.text}. ${doneCount} / ${SEGMENTS}.`}
+        accessibilityLabel={`${shown.text}. ${pct}%.`}
       >
+        {/* Theme-tinted backdrop: light pink → near-white → light lavender
+            (much paler than the reference banner, per user). SVG at the
+            MEASURED card size, NOT expo-linear-gradient and NOT an
+            absolute-filled Svg: the former leaked past the card and washed
+            the whole screen (Android HWUI clip bug), the latter froze at the
+            first layout and left the card's bottom strip unpainted. */}
+        {card.w > 0 && (
+          <Svg width={card.w} height={card.h} style={styles.cardBg} pointerEvents="none">
+            <Defs>
+              <SvgLinearGradient id="rhythmCardBg" x1="0" y1="0" x2="1" y2="0.9">
+                <Stop offset="0" stopColor="#FDE7F0" />
+                <Stop offset="0.5" stopColor="#FFF8FA" />
+                <Stop offset="1" stopColor="#ECE7F8" />
+              </SvgLinearGradient>
+            </Defs>
+            <Rect x="0" y="0" width={card.w} height={card.h} fill="url(#rhythmCardBg)" />
+          </Svg>
+        )}
         <Animated.View style={[styles.msg, msgStyle]}>
-          <Feather name={shown.icon} size={18.5} color={ROSE} />
           {/* Two lines allowed (longer de/fr strings wrap instead of shrinking
               to a squint); adjustsFontSizeToFit still guards the extremes. */}
           <Text
@@ -205,37 +235,49 @@ export default function DailyRhythmBar({
           >
             {shown.text}
           </Text>
+          {/* Decorative Start pill — the whole card is the touch target, so
+              this is a plain View (no nested touchable to fight the parent).
+              Hidden in rest states where there is nothing to start. */}
+          {onPress != null && (
+            <View style={styles.startBtn}>
+              <Text style={styles.startBtnText}>{t('rhythm.start')}</Text>
+            </View>
+          )}
         </Animated.View>
 
-        {/* 5-segment progress bar — inside the touchable (never intercepts the
-            card's tap) and hidden from the a11y tree (the label above already
-            reads "n / 5"). Segment k = RHYTHM_STEPS[k]; filled ⇔ done/retired,
-            so completing ANY flow always advances exactly its own segment.
-            The sparkle is a SIBLING of the track — inside it, the track's
-            overflow:hidden would clip its rise. */}
-        <View style={styles.trackWrap} pointerEvents="none" importantForAccessibility="no-hide-descendants">
-          <View style={styles.track} onLayout={(e) => setTrackW(e.nativeEvent.layout.width)}>
-            {RHYTHM_STEPS.map((id, k) => (
-              <SegmentFill
-                key={id}
-                filled={isRhythmStepDone(dots[k])}
-                animateAt={celebrates[k]}
-                x={k * segW}
-                segW={segW}
-                color={dots[k] === 'retired' ? RETIRED_LAV : ROSE}
-                reduceMotion={reduceMotion}
-              />
-            ))}
-            {/* Four structural ticks (20/40/60/80%) — same white midline the old
-                bar drew at 50%, generalized to the 5 segments. Rendered last so
-                they stay visible over the fills. */}
-            {[1, 2, 3, 4].map(n => (
-              <View key={n} style={[styles.tick, { left: `${(n * 100) / SEGMENTS}%` }]} />
-            ))}
+        {/* 5-segment progress bar + live % — hugging the card's inner bottom
+            (spacer above pushes it down), inside the touchable (never
+            intercepts the tap) and hidden from the a11y tree (the card label
+            already reads the %). Segment k = RHYTHM_STEPS[k]; filled ⇔
+            done/retired, so completing ANY flow always advances exactly its
+            own segment. The sparkle is a SIBLING of the track — inside it,
+            the track's overflow:hidden would clip its rise. */}
+        <View style={styles.trackRow} pointerEvents="none" importantForAccessibility="no-hide-descendants">
+          <View style={styles.trackWrap}>
+            <View style={styles.track} onLayout={(e) => setTrackW(e.nativeEvent.layout.width)}>
+              {RHYTHM_STEPS.map((id, k) => (
+                <SegmentFill
+                  key={id}
+                  filled={isRhythmStepDone(dots[k])}
+                  animateAt={celebrates[k]}
+                  x={k * segW}
+                  segW={segW}
+                  color={dots[k] === 'retired' ? RETIRED_LAV : ROSE}
+                  reduceMotion={reduceMotion}
+                />
+              ))}
+              {/* Four structural ticks (20/40/60/80%) — same white midline the
+                  old bar drew at 50%, generalized to the 5 segments. Rendered
+                  last so they stay visible over the fills. */}
+              {[1, 2, 3, 4].map(n => (
+                <View key={n} style={[styles.tick, { left: `${(n * 100) / SEGMENTS}%` }]} />
+              ))}
+            </View>
+            <Animated.View style={[styles.spark, sparkStyle]}>
+              <Sparkle size={23} />
+            </Animated.View>
           </View>
-          <Animated.View style={[styles.spark, sparkStyle]}>
-            <Sparkle size={23} />
-          </Animated.View>
+          <Text style={styles.pctText}>{pct}%</Text>
         </View>
       </TouchableOpacity>
 
@@ -258,31 +300,41 @@ export default function DailyRhythmBar({
 
 const styles = StyleSheet.create({
   // Same gutter as every section below (P=17 applied by the parent wrapper in
-  // PrayerScreen) — the bar itself is a plain white card matching the
-  // PlanProgressCard/Continue-Reading card language: radius 9.8, soft shadow,
-  // NO border.
+  // PrayerScreen). The card is a soft theme gradient (see the LinearGradient
+  // in JSX) with NO border and NO shadow/elevation — Android's elevation
+  // ambient shadow read as a "grey outline" around the old white card (user
+  // report), so the card is deliberately flat.
   wrap: { marginTop: 6, marginBottom: 4 },
   bar: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 9.8,
-    minHeight: 59,
-    paddingVertical: 12,
+    borderRadius: 11.8,                  // 9.8 → 11.8 (+20 % per user)
+    minHeight: 68,                       // 59 → 68 (+15 % per user)
+    paddingTop: 13,
+    paddingBottom: 7,                    // slim — the bar hugs the card bottom
     paddingHorizontal: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1,
+    justifyContent: 'space-between',     // text top, progress row bottom
+    overflow: 'hidden',                  // rounds the gradient's corners
   },
-  msg: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  cardBg: { position: 'absolute', top: 0, left: 0 },
+  msg: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   title: { flex: 1, fontSize: 16.7, lineHeight: 21.8, fontWeight: '600', color: TXT, fontFamily: FONTS.latoBold },   // 14.9 → 16.7 (+12 % per user — the dots' width is the text's now)
+  // Decorative Start pill (whole card is tappable) — rose, canonical CTA
+  // radius, bold label like every other rose button.
+  startBtn: {
+    backgroundColor: ROSE,
+    borderRadius: BTN_RADIUS,
+    paddingHorizontal: 14,
+    paddingVertical: 6.5,
+  },
+  startBtnText: { fontSize: 13.5, fontWeight: '700', color: '#FFFFFF', fontFamily: FONTS.latoBold, letterSpacing: 0.2 },
   // Track / fill / tick — carried over VERBATIM from PrayerScreen's removed
   // "Today's Progress" bar (height 6, radius 7, 10% ink track, rose fill,
   // white 1.5px ticks inset 0.9). Only the tick count changed (1 → 4).
   // Segment fills use radius 0 — the track's overflow:hidden rounds the outer
   // ends, and interior edges must sit flush against the ticks (a per-segment
   // radius would notch dark slivers beside every tick).
-  trackWrap: { marginTop: 10, position: 'relative' },
+  trackRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
+  trackWrap: { flex: 1, position: 'relative' },
+  pctText: { fontSize: 12.8, fontWeight: '600', color: ROSE, fontFamily: FONTS.latoBold, minWidth: 34, textAlign: 'right' },
   track: {
     height: 6,
     borderRadius: 7,

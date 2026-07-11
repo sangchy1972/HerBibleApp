@@ -972,7 +972,6 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
             dots={rhythm.dots}
             doneCount={rhythm.doneCount}
             allDone={rhythm.state.kind === 'allDone'}
-            icon={rhythmSpec.icon}
             text={rhythmSpec.text}
             hintText={rhythmSpec.hint}
             onPress={rhythmSpec.onPress}

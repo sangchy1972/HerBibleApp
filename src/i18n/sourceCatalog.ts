@@ -298,6 +298,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'rhythm.plan.ongoing':           { en: 'Continue {name}', context: 'Rhythm bar prompt to keep reading an ongoing plan. {name} = plan title.' },
   'rhythm.plan.explore':           { en: 'Discover a reading plan for you', context: 'Rhythm bar prompt when no reading plan is in progress.' },
   'rhythm.allDone':                { en: 'Today\'s rhythm complete — well done', context: 'Rhythm bar line when all five daily steps are finished.' },
+  'rhythm.start':                  { en: 'Start', context: 'Small pill button at the right of the rhythm bar — begins the suggested step. Keep ≤7 letters; use a short synonym like "Go" if the natural translation is longer.' },
   'rhythm.deadZone':               { en: 'Rest well — prayers return at 6', context: 'Rhythm bar line between midnight and 06:00 when only locked prayers remain.' },
   'rhythm.waitEvening':            { en: 'All set for now — evening opens at 6', context: 'Rhythm bar line when everything available is done before the 18:00 evening window.' },
   'rhythm.hint.evening':           { en: 'Evening prayer opens at 6:00 pm — see you then.', context: 'Toast when tapping the bar while waiting for the evening window.' },

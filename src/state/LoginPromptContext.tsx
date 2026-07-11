@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext';
 import { useAchievements } from './AchievementsContext';
 import { useNotes } from './NotesContext';
 import { useHighlights } from './HighlightsContext';
+import { useOnboarding } from './OnboardingContext';
 import { logEvent } from '../services/firebase';
 
 // Soft login nudges. The onboarding flow already shows a dedicated login screen
@@ -11,6 +12,9 @@ import { logEvent } from '../services/firebase';
 // context drives the POST-onboarding reminders, gated so we never nag:
 //   • one-time triggers — first badge, first note, first highlight, day-1 open;
 //   • a periodic nudge on later opens;
+//   • NEVER while onboarding is still in progress, and the open-triggered
+//     day1/periodic nudge NEVER in the same session onboarding finished
+//     (the user just answered the dedicated login step moments ago);
 //   • NEVER more than once per 3 days (across all triggers);
 //   • NEVER once the user is signed in.
 // Each shown prompt logs `login_prompt_shown {trigger}`; the actual conversion
@@ -40,13 +44,18 @@ export function LoginPromptProvider({ children }: { children: React.ReactNode })
   const { earnedCount } = useAchievements();
   const { notes } = useNotes();
   const { count: highlightCount } = useHighlights();
+  const { ready: obReady, done: obDone } = useOnboarding();
   const isLoggedIn = !!user;
 
   const [promptVisible, setPromptVisible] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
   const loggedInRef = useRef(isLoggedIn);
   loggedInRef.current = isLoggedIn;
   const armedRef = useRef(false);
+  // Whether onboarding was ALREADY done when this session started — the
+  // open-triggered nudge must not fire in the session onboarding completes.
+  const obDoneAtLaunchRef = useRef<boolean | null>(null);
   const firedRef = useRef<Set<string>>(new Set());
   const lastAtRef = useRef(0);
   const firstOpenRef = useRef(Date.now());
@@ -68,10 +77,8 @@ export function LoginPromptProvider({ children }: { children: React.ReactNode })
     logEvent('login_prompt_shown', { trigger });
   }, []);
 
-  // Hydrate persisted state, then arm after a delay (so a returning user's
-  // hydrated counts become the baseline and don't fire a spurious "first_*").
+  // Hydrate persisted state.
   useEffect(() => {
-    let alive = true;
     (async () => {
       try {
         const [lastAt, fired, firstOpen] = await Promise.all([
@@ -84,17 +91,31 @@ export function LoginPromptProvider({ children }: { children: React.ReactNode })
         if (firstOpen) firstOpenRef.current = Number(firstOpen);
         else AsyncStorage.setItem(FIRST_OPEN_KEY, String(firstOpenRef.current)).catch(() => {});
       } catch {}
-      setTimeout(() => {
-        if (!alive) return;
-        baselineRef.current = { badges: earnedCount, notes: notes.length, highlights: highlightCount };
-        armedRef.current = true;
-        // Day-1 vs periodic nudge on this open (capped to 1/3-days inside maybePrompt).
-        maybePrompt(Date.now() - firstOpenRef.current < DAY_MS ? 'day1' : 'periodic');
-      }, ARM_DELAY_MS);
+      setHydrated(true);
     })();
-    return () => { alive = false; };
-    // eslint-disable-line react-hooks/exhaustive-deps
   }, []);
+
+  // Remember whether onboarding was already done at launch.
+  useEffect(() => {
+    if (obReady && obDoneAtLaunchRef.current === null) obDoneAtLaunchRef.current = obDone;
+  }, [obReady, obDone]);
+
+  // Arm only once onboarding is finished (a delay lets a returning user's
+  // hydrated counts become the baseline so they don't fire a spurious "first_*").
+  useEffect(() => {
+    if (!hydrated || !obReady || !obDone || armedRef.current) return;
+    const timer = setTimeout(() => {
+      baselineRef.current = { badges: earnedCount, notes: notes.length, highlights: highlightCount };
+      armedRef.current = true;
+      // Day-1 vs periodic nudge on this open (capped to 1/3-days inside
+      // maybePrompt) — skipped in the session onboarding just completed.
+      if (obDoneAtLaunchRef.current) {
+        maybePrompt(Date.now() - firstOpenRef.current < DAY_MS ? 'day1' : 'periodic');
+      }
+    }, ARM_DELAY_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, obReady, obDone]);
 
   // Milestone observers — fire only on the genuine 0→1 crossing past the armed
   // baseline (so existing data on a returning user doesn't trigger them).

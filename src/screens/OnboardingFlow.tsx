@@ -26,9 +26,10 @@ import { warmupGoogleSignIn } from '../services/firebaseAuth';
 import { maybeShowOnboardingInterstitial } from '../services/ads';
 import { initIap, fetchPrices, purchasePlan, restorePurchases, type PlanId } from '../services/iap';
 
-// New-user onboarding (first launch only — gated in RootNavigator). Flow v2:
+// New-user onboarding (first launch only — gated in RootNavigator). Flow v4:
 // welcome + language picker → short intro interstitial → questionnaire →
-// notification soft pre-prompt → login. Single-select questions auto-advance
+// notification soft pre-prompt → login page → paywall (the subscription pitch
+// comes LAST, only after the login choice). Single-select questions auto-advance
 // on tap; topics is multi-select. Answers persist via OnboardingContext and
 // tailor later content. The mood check-in is gated on onboarding.done
 // (MoodCheckInContext), so it only ever asks AFTER the user lands in the app.
@@ -37,10 +38,12 @@ const TOTAL = 12;
 
 // Analytics step names (snake_case, index-aligned). `step_name` is the
 // canonical funnel key for BigQuery — indexes shifted in flow v2 (language +
-// intro prepended) and again in v3 (paywall inserted after remind), so events
-// carry flow_version. Never renumber names; future steps get NEW names.
-const STEP_NAMES = ['language', 'intro', 'goal', 'age', 'bible', 'encourage', 'topics', 'time', 'remind', 'paywall', 'notify', 'login'] as const;
-const FLOW_VERSION = 3;
+// intro prepended), v3 (paywall inserted after remind) and v4 (paywall moved
+// to the END — the subscription pitch must come only after the login choice,
+// right before entering the app, per user). Events carry flow_version.
+// Never renumber names; future steps get NEW names.
+const STEP_NAMES = ['language', 'intro', 'goal', 'age', 'bible', 'encourage', 'topics', 'time', 'remind', 'notify', 'login', 'paywall'] as const;
+const FLOW_VERSION = 4;
 
 // Onboarding paywall plans — product ids/labels shared with RemoveAdsScreen.
 // `save` renders the amber "Save N%" badge (annual vs 12× monthly); lifetime
@@ -188,10 +191,11 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
   }, [stepName]);
 
   // ── Login page (step 'login') — full-page sign-in, no bottom sheet ────────
-  // OAuth success finishes onboarding (AuthContext logs the sign_up event).
+  // OAuth success moves on to the final paywall step (AuthContext logs the
+  // sign_up event); onboarding itself finishes when the paywall resolves.
   const [loginError, setLoginError] = useState<string | null>(null);
   const { busy: loginBusy, onGoogle, onApple } = useProviderSignIn({
-    onSuccess: () => finishAll('completed'),
+    onSuccess: () => goNext(),
     onError: (msg) => setLoginError(msg),
   });
   // Email magic-link sub-flow, inline on the page: 'providers' = the button
@@ -257,18 +261,19 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
       const r = await purchasePlan(plan);
       if (r === 'purchased' || r === 'pending') {
         setShowTrialSheet(false);
-        goNext();
+        finishAll('completed');   // paywall is the last step — done, enter the app
       }
     } finally { setPayBusy(false); }
   };
   const onRestore = async () => {
     if (payBusy) return;
     setPayBusy(true);
-    try { if (await restorePurchases()) { setShowTrialSheet(false); goNext(); } }
+    try { if (await restorePurchases()) { setShowTrialSheet(false); finishAll('completed'); } }
     finally { setPayBusy(false); }
   };
-  // Declining the trial sheet (X / backdrop / swipe-down) continues onboarding.
-  const declineTrial = () => { setShowTrialSheet(false); goNext(); };
+  // Declining the trial sheet (X / backdrop / swipe-down) finishes onboarding
+  // — the paywall is the final step, so the user lands in the app.
+  const declineTrial = () => { setShowTrialSheet(false); finishAll('completed'); };
   // Trial-sheet swipe-down dismiss (project rule: every bottom sheet).
   const trialDragY = useSharedValue(TRIAL_SHEET_H);
   useEffect(() => {
@@ -335,7 +340,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
   };
 
   // Notify step: fire the OS permission prompt + enable reminders, then advance
-  // to the login screen (onboarding finishes there, not here).
+  // to the login page (onboarding finishes after the final paywall step).
   const onNotifyRemind = async () => {
     let granted = false;
     try { granted = await requestPermissionAndEnableDefaults(); } catch { /* declined / no module */ }
@@ -417,9 +422,9 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
           </TouchableOpacity>
         ) : <View style={styles.backBtn} />}
         {stepName === 'login' ? (
-          // Login page: the only dismissal is the top-right X (finishes
-          // onboarding without an account) — mirrors the reference layout.
-          <TouchableOpacity onPress={() => finishAll('completed')} hitSlop={12} style={[styles.backBtn, { alignItems: 'flex-end' }]}>
+          // Login page: the only dismissal is the top-right X — it moves on
+          // to the final paywall step (mirrors the reference layout).
+          <TouchableOpacity onPress={goNext} hitSlop={12} style={[styles.backBtn, { alignItems: 'flex-end' }]}>
             <Feather name="x" size={24} color={TXTSUB} />
           </TouchableOpacity>
         ) : stepName !== 'language' && stepName !== 'paywall' ? (
@@ -846,7 +851,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
               <Image source={GIFT_BOX} style={styles.trialGiftImg} resizeMode="contain" />
               <Text style={styles.trialTitle}>{t('obTrial.title')}</Text>
               {(['b1', 'b2', 'b3'] as const).map((k, i) => (
-                <Animated.View key={k} entering={FadeInRight.duration(450).delay(120 + i * 60)} style={styles.payBenefitRow}>
+                <Animated.View key={k} entering={FadeInRight.duration(450).delay(120 + i * 60)} style={[styles.payBenefitRow, styles.trialBenefitRow]}>
                   <Feather name="check" size={18} color={ROSE} />
                   <Text style={styles.payBenefitText}>{t(`obTrial.${k}`)}</Text>
                 </Animated.View>
@@ -1021,6 +1026,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(30,27,46,0.06)', alignItems: 'center', justifyContent: 'center',
   },
   trialGiftImg: { width: 96, height: 96, marginTop: 8, marginBottom: 14 },
+  // Air between the trial sheet's benefit lines (they sit directly on
+  // payBenefitRow, which has no vertical spacing of its own).
+  trialBenefitRow: { marginBottom: 13 },
   trialTitle: {
     fontSize: 28, fontFamily: FONTS.loraBold, fontWeight: '600', color: TXT, marginBottom: 16,
   },

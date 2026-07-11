@@ -16,7 +16,7 @@ import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import * as ImagePicker from 'expo-image-picker';
 import Glass from '../components/shared/Glass';
 import Logo from '../components/shared/Logo';
-import { ROSE, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
+import { ROSE, BTN_RADIUS, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { getHighlightColor } from '../constants/highlightColors';
 import { TRANSLATIONS, useTranslation } from '../state/TranslationsContext';
 import { useUILanguage, UI_LANGUAGES, type UILanguageCode } from '../state/UILanguageContext';
@@ -1721,7 +1721,7 @@ const styles = StyleSheet.create({
   },
   signInBtn: {
     paddingVertical: 14,
-    borderRadius: 24,
+    borderRadius: BTN_RADIUS,
     alignItems: 'center',
     marginTop: 8,
   },
@@ -1870,7 +1870,7 @@ const styles = StyleSheet.create({
   langDlgConfirm: {
     flex: 1.4,
     height: 46,
-    borderRadius: 23,
+    borderRadius: BTN_RADIUS,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: ROSE,
     paddingHorizontal: 8,

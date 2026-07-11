@@ -11,6 +11,10 @@ export const BG = '#FBF7F6';
 // next to these.)
 export const SCREEN_BG = '#F2F2F2';
 export const P = 17; // horizontal padding
+// Canonical corner radius for solid-accent CTA buttons (matches the Prayer
+// home's "Start Morning Prayer" button). Every rose primary button uses this
+// so the app reads as one system; heights may still vary per context.
+export const BTN_RADIUS = 17;
 
 // `serif*` aliases all map to **Source Serif 4 Variable** — the same
 // TTF file is used for every weight, with the actual weight controlled

@@ -14,7 +14,7 @@ import Animated, {
   interpolateColor, Easing,
   FadeIn, FadeOut, SlideInUp, SlideInDown,
 } from 'react-native-reanimated';
-import { ROSE, LAV, TXT, TXTSUB, P, FONTS, SERIF_BODY, SCREEN_BG } from '../constants/theme';
+import { ROSE, BTN_RADIUS, LAV, TXT, TXTSUB, P, FONTS, SERIF_BODY, SCREEN_BG } from '../constants/theme';
 import { RECENT_SEARCHES } from '../constants/data';
 import { useTranslation, TRANSLATIONS } from '../state/TranslationsContext';
 import { useT } from '../i18n/useT';
@@ -1895,7 +1895,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
     height: 56,
-    borderRadius: 28,
+    borderRadius: BTN_RADIUS,
     backgroundColor: ROSE,
     marginTop: 40,
     marginHorizontal: P,
@@ -1960,7 +1960,7 @@ const styles = StyleSheet.create({
   },
   unreadConfirmBtn: {
     height: 48,
-    borderRadius: 24,
+    borderRadius: BTN_RADIUS,
     backgroundColor: ROSE,
     alignItems: 'center',
     justifyContent: 'center',

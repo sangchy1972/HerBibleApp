@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, FlatList, type LayoutChangeEvent, type ListRenderItem } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
-import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
+import { ROSE, BTN_RADIUS, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import type { PlanSummary } from '../constants/featuredPlansSummary';
 import { useT } from '../i18n/useT';
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     paddingHorizontal: 19,
     paddingVertical: 9,
-    borderRadius: 19,
+    borderRadius: BTN_RADIUS,
     backgroundColor: ROSE,                 // pink Start buttons per user (was neutral gray)
   },
   startBtnText: { fontSize: 14, fontWeight: '700', color: '#fff', fontFamily: FONTS.latoBold },

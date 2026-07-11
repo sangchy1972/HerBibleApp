@@ -18,7 +18,7 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withDelay, withRepeat, withSequence,
   Easing, SlideInDown, FadeIn, runOnJS, interpolateColor,
 } from 'react-native-reanimated';
-import { ROSE, LAV, TXT, TXTSUB, FONTS } from '../constants/theme';
+import { ROSE, BTN_RADIUS, LAV, TXT, TXTSUB, FONTS } from '../constants/theme';
 import { maybeShowInterstitial } from '../services/ads';
 import { logEvent } from '../services/firebase';
 import { usePrayer } from '../state/PrayerContext';
@@ -1905,7 +1905,7 @@ const styles = StyleSheet.create({
   sheetBtnConfirm: {
     flex: 2,
     paddingVertical: 15,
-    borderRadius: 24,
+    borderRadius: BTN_RADIUS,
     alignItems: 'center',
   },
   sheetBtnText: {
@@ -2079,7 +2079,7 @@ const rationaleStyles = StyleSheet.create({
   allowBtn: {
     flex: 2,
     height: 49.41,
-    borderRadius: 17.07,
+    borderRadius: BTN_RADIUS,
     backgroundColor: ROSE,
     alignItems: 'center',
     justifyContent: 'center',

@@ -20,7 +20,7 @@ import { getMoodVerse } from '../constants/moodContent';
 import { monthStats } from '../state/moodStats';
 import { localeFor } from '../i18n/locale';
 import { useT } from '../i18n/useT';
-import { ROSE, TXT, FONTS } from '../constants/theme';
+import { ROSE, BTN_RADIUS, TXT, FONTS } from '../constants/theme';
 
 const SCREEN_H = Dimensions.get('window').height;
 const TOP_GAP = 50;   // sheets rise to ~full height, leaving 50px at the top
@@ -237,6 +237,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.loraBold, fontWeight: '600', color: TXT,
     fontSize: 24, lineHeight: 32, textAlign: 'center',
   },
-  doneBtn: { marginTop: 26, backgroundColor: ROSE, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
+  doneBtn: { marginTop: 26, backgroundColor: ROSE, height: 52, borderRadius: BTN_RADIUS, alignItems: 'center', justifyContent: 'center' },
   doneBtnText: { color: '#fff', fontSize: 18, fontWeight: '700', letterSpacing: 0.3 },
 });

@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform, 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import WidgetPreview from '../components/WidgetPreview';
-import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
+import { ROSE, BTN_RADIUS, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { useDailyVerses } from '../state/DailyVersesContext';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useT } from '../i18n/useT';
@@ -199,10 +199,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: 'rgba(30,27,46,0.06)',
   },
   installBtn: {
-    // Mirrors PrayerScreen.startBtn 1:1 — same height + radius so this CTA
-    // reads as the same primary button as "Start Morning Prayer".
+    // Mirrors PrayerScreen.startBtn — same primary-CTA radius as "Start Morning Prayer".
     height: 47.06,
-    borderRadius: 24.39,
+    borderRadius: BTN_RADIUS,
     backgroundColor: ROSE,
     alignItems: 'center',
     justifyContent: 'center',
@@ -269,7 +268,7 @@ const styles = StyleSheet.create({
   mAdd: {
     flex: 1,
     height: 46,
-    borderRadius: 23,
+    borderRadius: BTN_RADIUS,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: ROSE,
   },

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
-import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
+import { ROSE, BTN_RADIUS, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import Logo from '../components/shared/Logo';
 import type { RootStackScreenProps } from '../navigation/types';
 import { useT } from '../i18n/useT';
@@ -286,10 +286,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: 'rgba(30,27,46,0.06)',
   },
   cta: {
-    // Mirrors PrayerScreen.startBtn 1:1 — same height + radius so the
-    // "Continue" CTA reads as the same primary button as "Start Morning Prayer".
+    // Mirrors PrayerScreen.startBtn — same primary-CTA radius as "Start Morning Prayer".
     height: 47.06,
-    borderRadius: 24.39,
+    borderRadius: BTN_RADIUS,
     backgroundColor: ROSE,
     alignItems: 'center',
     justifyContent: 'center',

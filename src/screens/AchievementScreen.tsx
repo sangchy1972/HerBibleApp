@@ -11,7 +11,7 @@ import { useBadges } from '../state/BadgesContext';
 import { useTranslation } from '../state/TranslationsContext';
 import { useAuth } from '../state/AuthContext';
 import { useT } from '../i18n/useT';
-import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
+import { ROSE, BTN_RADIUS, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import type { RootStackScreenProps } from '../navigation/types';
 
 // Pull a small numeric "label" from the badge condition so the inset reads
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   signInText: { flex: 1, fontSize: 13, color: ROSE, fontFamily: FONTS.lato },
-  signInBtn: { backgroundColor: ROSE, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 22 },
+  signInBtn: { backgroundColor: ROSE, paddingHorizontal: 18, paddingVertical: 9, borderRadius: BTN_RADIUS },
   signInBtnText: { color: '#fff', fontSize: 14, fontWeight: '700', fontFamily: FONTS.latoBold },
   scroll: { paddingHorizontal: P, paddingTop: 18 },
   sectionHeader: {
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   sheetClose: {
     marginTop: 22,
     backgroundColor: ROSE,
-    borderRadius: 28,
+    borderRadius: BTN_RADIUS,
     paddingVertical: 15,
     alignItems: 'center',
   },

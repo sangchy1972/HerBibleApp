@@ -7,7 +7,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import type { NavigationProp, RouteProp } from '@react-navigation/native';
-import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
+import { ROSE, BTN_RADIUS, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import { usePlanCompletion } from '../state/PlanCompletionContext';
 import { PLAN_SECTIONS, PLAN_SECTION_LABELS, EMOTION_TAGS, type PlanSectionId } from '../constants/plansApi';
@@ -296,7 +296,7 @@ export default function PlanScreen() {
                     style={[styles.exploreCta, { backgroundColor: ROSE, alignSelf: 'center' }]}
                     activeOpacity={0.85}
                   >
-                    <Text style={{ color: '#fff', fontSize: 15.1, fontWeight: '600' }}>{t('plan.exploreMore.cta')}</Text>
+                    <Text style={{ color: '#fff', fontSize: 15.1, fontWeight: '700' }}>{t('plan.exploreMore.cta')}</Text>
                   </TouchableOpacity>
                 </>
               ) : (
@@ -304,7 +304,7 @@ export default function PlanScreen() {
                   <Text style={styles.emptyTitle}>{t('plan.empty.notStarted.title')}</Text>
                   <Text style={styles.emptyDesc}>{t('plan.empty.notStarted.desc')}</Text>
                   <TouchableOpacity onPress={() => setTab('explore')} style={[styles.exploreCta, { backgroundColor: ROSE }]}>
-                    <Text style={{ color: '#fff', fontSize: 15.1, fontWeight: '600' }}>{t('plan.empty.notStarted.cta')}</Text>
+                    <Text style={{ color: '#fff', fontSize: 15.1, fontWeight: '700' }}>{t('plan.empty.notStarted.cta')}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -431,7 +431,7 @@ export default function PlanScreen() {
                   <Text style={styles.emptyTitle}>{t('plan.empty.completed.title')}</Text>
                   <Text style={styles.emptyDesc}>{t('plan.empty.completed.desc')}</Text>
                   <TouchableOpacity onPress={() => setTab('explore')} style={[styles.exploreCta, { backgroundColor: ROSE }]}>
-                    <Text style={{ color: '#fff', fontSize: 15.1, fontWeight: '600' }}>{t('plan.empty.completed.cta')}</Text>
+                    <Text style={{ color: '#fff', fontSize: 15.1, fontWeight: '700' }}>{t('plan.empty.completed.cta')}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     paddingHorizontal: 19,
     paddingVertical: 9,
-    borderRadius: 19,
+    borderRadius: BTN_RADIUS,
     backgroundColor: ROSE,                                                      // app accent (primary action) per user — was grey
   },
   startBtnText: { fontSize: 14, fontWeight: '700', fontFamily: FONTS.latoBold, color: '#fff' },
@@ -642,7 +642,7 @@ const styles = StyleSheet.create({
     marginTop: 21,                                                             // +5 px per user (was 16)
     paddingHorizontal: 26,
     paddingVertical: 12,
-    borderRadius: 11,
+    borderRadius: BTN_RADIUS,
   },
   // Detail
   // Plan-detail layout styles live in `./planDetailStyles.ts` (shared with

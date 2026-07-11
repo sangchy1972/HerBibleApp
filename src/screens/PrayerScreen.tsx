@@ -18,7 +18,7 @@ import Animated, {
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 import FireFlame from '../components/shared/FireFlame';
 import StreakBorderAnim from '../components/shared/StreakBorderAnim';
-import { ROSE, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
+import { ROSE, BTN_RADIUS, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { useAuth } from '../state/AuthContext';
 import { usePrayer } from '../state/PrayerContext';
 import { useActivity } from '../state/ActivityContext';
@@ -1552,7 +1552,7 @@ const styles = StyleSheet.create({
     marginTop: 11,                      // → 11 (per user — card ↔ Start CTA gap)
     marginBottom: 10,
     height: 46.94,                      // 49.41 → 46.94 (-5 % per user)
-    borderRadius: 17.07,                // 24.39 → 17.07 (-30 % per user)
+    borderRadius: BTN_RADIUS,           // canonical CTA radius (was 17.07 after the -30 % pass)
     alignSelf: 'stretch',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1667,7 +1667,7 @@ const styles = StyleSheet.create({
   },
   pastPromptTitle: { fontSize: 19, fontWeight: '700', color: TXT, textAlign: 'center', marginBottom: 10, fontFamily: FONTS.loraBold },
   pastPromptBody: { fontSize: 14.5, lineHeight: 21, color: TXTSUB, textAlign: 'center', marginBottom: 20 },
-  pastPromptConfirm: { height: 48, borderRadius: 24, backgroundColor: ROSE, alignItems: 'center', justifyContent: 'center' },
+  pastPromptConfirm: { height: 48, borderRadius: BTN_RADIUS, backgroundColor: ROSE, alignItems: 'center', justifyContent: 'center' },
   pastPromptConfirmText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   pastPromptCancel: { height: 46, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
   pastPromptCancelText: { color: TXTSUB, fontSize: 15, fontWeight: '600' },
@@ -1700,7 +1700,7 @@ const styles = StyleSheet.create({
   inProgressExploreBtn: {
     alignSelf: 'stretch',
     backgroundColor: ROSE,
-    borderRadius: 22,
+    borderRadius: BTN_RADIUS,
     paddingVertical: 11,
     alignItems: 'center',
   },

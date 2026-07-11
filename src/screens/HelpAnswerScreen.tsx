@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
-import { ROSE, TXT, TXTSUB, P } from '../constants/theme';
+import { ROSE, BTN_RADIUS, TXT, TXTSUB, P } from '../constants/theme';
 import { HELP_ITEMS, SUPPORT_EMAIL } from '../constants/helpContent';
 import { useT } from '../i18n/useT';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   },
   contactBtn: {
     backgroundColor: ROSE,
-    borderRadius: 28,
+    borderRadius: BTN_RADIUS,
     paddingVertical: 16,
     flexDirection: 'row',
     alignItems: 'center',

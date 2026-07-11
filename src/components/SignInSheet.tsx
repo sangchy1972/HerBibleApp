@@ -4,7 +4,7 @@ import Svg, { Path, G } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Animated, { FadeIn, SlideInDown, Easing, useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
-import { ROSE, TXT, TXTSUB, P } from '../constants/theme';
+import { ROSE, BTN_RADIUS, TXT, TXTSUB, P } from '../constants/theme';
 import { isConfigured } from '../constants/oauth';
 import { useAuth } from '../state/AuthContext';
 import { warmupGoogleSignIn } from '../services/firebaseAuth';
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, fontSize: 16, color: TXT, backgroundColor: '#fff', marginBottom: 14,
   },
   emailSendBtn: {
-    height: 52, borderRadius: 28, backgroundColor: ROSE,
+    height: 52, borderRadius: BTN_RADIUS, backgroundColor: ROSE,
     alignItems: 'center', justifyContent: 'center', marginBottom: 4,
   },
   emailSendText: { fontSize: 16, fontWeight: '700', color: '#fff', letterSpacing: 0.2 },

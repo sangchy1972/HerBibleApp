@@ -11,7 +11,7 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSpring, withRepeat, withSequence, runOnJS, Easing,
 } from 'react-native-reanimated';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import { ROSE, LAV, TXT, TXTSUB, BG, FONTS } from '../constants/theme';
+import { ROSE, BTN_RADIUS, LAV, TXT, TXTSUB, BG, FONTS } from '../constants/theme';
 import { useT } from '../i18n/useT';
 import { useOnboarding, type OnboardingAnswers } from '../state/OnboardingContext';
 import { useNotifications } from '../state/NotificationsContext';
@@ -1056,7 +1056,7 @@ const styles = StyleSheet.create({
   bannerBody: { fontSize: 12, color: 'rgba(30,27,46,0.62)', fontFamily: FONTS.lato },
   // Footer CTA.
   footer: { paddingTop: 6 },
-  cta: { backgroundColor: ROSE, borderRadius: 28, alignItems: 'center', justifyContent: 'center', paddingVertical: 16 },
+  cta: { backgroundColor: ROSE, borderRadius: BTN_RADIUS, alignItems: 'center', justifyContent: 'center', paddingVertical: 16 },
   ctaText: { fontSize: 16.5, fontWeight: '700', color: '#FFFFFF', fontFamily: FONTS.latoBold, letterSpacing: 0.2 },
   laterBtn: { alignItems: 'center', paddingVertical: 12, marginTop: 4 },
   laterText: { fontSize: 14, color: 'rgba(30,27,46,0.45)', fontFamily: FONTS.lato },

@@ -50,6 +50,7 @@ const OB_FALLBACK_PRICES: Record<PlanId, string> = { lifetime: 'NT$670', annual:
 
 const TRIAL_SHEET_H = Math.round(Dimensions.get('window').height * 0.56);
 const GIFT_BOX = require('../../assets/paywall/gift-box.png');
+const HERO_IMG = require('../../assets/onboarding-hero.webp');
 
 // Press feedback: every primary CTA scales down on press-in and springs back
 // on release, so taps always FEEL acknowledged (per user).
@@ -374,9 +375,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
 
           {stepName === 'intro' && (
             <View style={styles.center}>
-              <LinearGradient colors={['#F9D9E6', '#F4A6C0', ROSE]} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={styles.hero}>
-                <Ionicons name="chatbubble-ellipses-outline" size={58} color="#FFFFFF" style={{ opacity: 0.92 }} />
-              </LinearGradient>
+              <Image source={HERO_IMG} style={styles.hero} resizeMode="cover" />
               <Text style={[styles.h, { textAlign: 'center', marginTop: 22 }]}>{t('onboarding.intro.title')}</Text>
               <Text style={[styles.sub, { textAlign: 'center', paddingHorizontal: 16 }]}>{t('onboarding.intro.sub')}</Text>
             </View>
@@ -442,9 +441,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
 
           {stepName === 'encourage' && (
             <View style={styles.center}>
-              <LinearGradient colors={['#F9D9E6', '#F4A6C0', ROSE]} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={styles.hero}>
-                <Ionicons name="book-outline" size={58} color="#FFFFFF" style={{ opacity: 0.92 }} />
-              </LinearGradient>
+              <Image source={HERO_IMG} style={styles.hero} resizeMode="cover" />
               <Text style={[styles.h, { textAlign: 'center', marginTop: 22 }]}>{t('onboarding.encourage.title')}</Text>
               <Text style={[styles.sub, { textAlign: 'center', paddingHorizontal: 16 }]}>{t('onboarding.encourage.sub')}</Text>
             </View>
@@ -746,7 +743,7 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 17, color: TXT, fontFamily: FONTS.lato },   // 15.5 → 17 (2nd +10 %)
   chipTextSel: { color: '#FFFFFF', fontWeight: '700' },
   // Encouragement interstitial.
-  hero: { width: '100%', height: 200, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
+  hero: { width: '100%', aspectRatio: 1.5, borderRadius: 22, marginTop: 6 },
   // Time-picker rows (reminder step).
   timeRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

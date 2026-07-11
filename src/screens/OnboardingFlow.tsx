@@ -321,6 +321,8 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
   };
 
   const accent = ROSE;
+  // Split the encourage line around the emphasised phrase (see the JSX below).
+  const encourageSubParts = t('onboarding.encourage.sub').split('{highlight}');
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 6 }]}>
@@ -330,7 +332,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
           + text fade in. Plays ONCE at 0.8×. Negative insets bleed it past the
           root's 20px horizontal padding + top inset so it truly covers the
           screen; pointerEvents="none" so it can never swallow a tap. */}
-      {stepName === 'intro' && (
+      {stepName === 'encourage' && (
         <View
           pointerEvents="none"
           style={[StyleSheet.absoluteFillObject, { left: -20, right: -20, top: -(insets.top + 6) }]}
@@ -480,7 +482,18 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
             <View style={styles.center}>
               <Image source={HERO_IMG} style={styles.hero} resizeMode="cover" />
               <Text style={[styles.h, { textAlign: 'center', marginTop: 22 }]}>{t('onboarding.encourage.title')}</Text>
-              <Text style={[styles.sub, { textAlign: 'center', paddingHorizontal: 16 }]}>{t('onboarding.encourage.sub')}</Text>
+              {/* "2 million women" is pulled out of the sentence via a {highlight}
+                  token so it can be rendered bigger/bold/rose in EVERY language
+                  (word order differs per locale — a hardcoded split would only
+                  work in English). If a translation lacks the token, split()
+                  returns one part and the line renders plain — graceful. */}
+              <Text style={[styles.sub, styles.encourageSub, { textAlign: 'center', paddingHorizontal: 16 }]}>
+                {encourageSubParts[0]}
+                {encourageSubParts.length > 1 && (
+                  <Text style={styles.encourageSubHL}>{t('onboarding.encourage.subHighlight')}</Text>
+                )}
+                {encourageSubParts[1] ?? ''}
+              </Text>
             </View>
           )}
 
@@ -754,6 +767,12 @@ const styles = StyleSheet.create({
     lineHeight: 31, letterSpacing: -0.2, marginTop: 20, marginBottom: 7,
   },
   sub: { fontSize: 15, color: TXTSUB, fontFamily: FONTS.lato, lineHeight: 22, marginBottom: 16 },   // 13.5 → 15 (+10 % content type per user)
+  // Encourage step's line: +20 % type and the SAME colour as the option rows
+  // (TXT, not the muted TXTSUB). lineHeight is raised so the larger inline
+  // highlight below isn't clipped.
+  encourageSub: { fontSize: 18, lineHeight: 32, color: TXT },   // 15 → 18 (+20 % per user)
+  // "2 million women" — bold, +40 % over the line, in the option-button rose.
+  encourageSubHL: { fontSize: 25.2, color: ROSE, fontFamily: FONTS.latoBold, fontWeight: '700' },   // 18 × 1.4
   // Single-line option row.
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
@@ -786,7 +805,10 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 17, color: TXT, fontFamily: FONTS.lato },   // 15.5 → 17 (2nd +10 %)
   chipTextSel: { color: '#FFFFFF', fontWeight: '700' },
   // Encouragement interstitial.
-  hero: { width: '100%', aspectRatio: 1.5, borderRadius: 22, marginTop: 6 },
+  // aspectRatio matches the hero photo EXACTLY (1280×980), so resizeMode="cover"
+  // fills the box without cropping a single pixel — per user "不用切割". Corner
+  // radius unchanged.
+  hero: { width: '100%', aspectRatio: 1.3061, borderRadius: 22, marginTop: 6 },
   // Time-picker rows (reminder step).
   timeRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

@@ -67,17 +67,22 @@ const INTERSTITIAL_UNIT_ID: string = __DEV__
   ? (TestIdsObj?.INTERSTITIAL ?? 'ca-app-pub-3940256099942544/1033173712')
   : REAL_INTERSTITIAL_UNIT_ID;
 
-// Dedicated FIRST-OPEN onboarding interstitial (text/image/rich-media only —
-// the unit has no video formats configured). Loaded in PARALLEL with the
+// Dedicated FIRST-OPEN onboarding interstitials (text/image/rich-media only —
+// the units have no video formats configured). Loaded in PARALLEL with the
 // regular preload/US-controller as a third independent request, and shown
 // with PRIORITY during onboarding: the flow attempts it right after the
 // welcome screen and again on every step transition until it has shown once
 // (per user: it MUST show once before onboarding completes, then never
-// again). Same __DEV__ test-unit policy as above. NOTE: one ID supplied — if
-// it's Android-scoped, iOS simply no-fills; swap in an iOS twin when created.
+// again). Per-platform units under their own App IDs; same __DEV__ test-unit
+// policy as above.
+const REAL_ONBOARDING_UNIT_ID = Platform.select({
+  android: 'ca-app-pub-4656643588243987/5004598985',
+  ios:     'ca-app-pub-4656643588243987/7247618944',
+  default: 'ca-app-pub-4656643588243987/5004598985',
+}) as string;
 const ONBOARDING_INTERSTITIAL_UNIT_ID: string = __DEV__
   ? (TestIdsObj?.INTERSTITIAL ?? 'ca-app-pub-3940256099942544/1033173712')
-  : 'ca-app-pub-4656643588243987/5004598985';
+  : REAL_ONBOARDING_UNIT_ID;
 
 // Persisted "user removed ads" flag — flip to true from the Remove-Ads IAP once
 // that's wired (call setAdsRemoved(true) on a successful purchase / restore).

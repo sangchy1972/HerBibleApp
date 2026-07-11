@@ -22,6 +22,13 @@ const APP_ICON = require('../../assets/icon.png');
 // perceives ONE icon screen, not two (per user 2026-07-09: the Android 12+
 // system splash can't be removed, so we make it seamless instead).
 const SPLASH_ICON = require('../../assets/splash-icon.png');
+// FIRST-LAUNCH backdrop for stage 2. None of the 10 CDN loading photos are
+// bundled (~25 MB — see constants/loadingImages), and they're only downloaded in
+// the BACKGROUND on first run, so a brand-new user used to land on a bare pink
+// gradient and never saw the verse photo at all. This already-bundled
+// atmospheric photo (90 KB, also the verse-card fallback) fills that gap at zero
+// added app size; the rotating CDN art takes over from the second launch.
+const BUNDLED_LOADING_BG = require('../../assets/follow_him_day.webp');
 
 // Two-segment launch (per user 2026-07-09):
 //   • STAGE 1 "brand" — splash-icon at the EXACT native size/position (so the
@@ -50,11 +57,11 @@ const ICON_LIFT = Math.round(height * 0.06);
 const ICON_MOVE_MS = 600;                               // icon rise + shrink
 
 const NAME_DELAY_MS = ICON_MOVE_MS;                     // wordmark starts as the icon settles
-const NAME_FADE_MS = 1000;                              // user: lengthen to 1 s
-const TAGLINE_GAP_MS = 1000;                            // user: 1 s AFTER the wordmark has appeared
-const TAGLINE_DELAY_MS = NAME_DELAY_MS + NAME_FADE_MS + TAGLINE_GAP_MS;   // 2600
-const TAGLINE_FADE_MS = 1000;                           // user: same 1 s animation
-const BRAND_ANIM_END_MS = TAGLINE_DELAY_MS + TAGLINE_FADE_MS;             // 3600
+const NAME_FADE_MS = 600;                               // 1000 → 600 (user: launch was too long)
+const TAGLINE_GAP_MS = 300;                             // 1000 → 300 (user)
+const TAGLINE_DELAY_MS = NAME_DELAY_MS + NAME_FADE_MS + TAGLINE_GAP_MS;   // 1500
+const TAGLINE_FADE_MS = 600;                            // same as the wordmark
+const BRAND_ANIM_END_MS = TAGLINE_DELAY_MS + TAGLINE_FADE_MS;             // 2100
 
 // Gap between the settled icon's bottom edge and the wordmark.
 const ICON_TEXT_GAP = 22;
@@ -183,7 +190,11 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   const line = LOADING_LINES[idx];
   const imgFile = rot != null ? imageFileFor(rot) : LOADING_IMAGE_FILES[0];
   const cachedUri = cachedLoadingImage(imgFile);
-  const onPhoto = !!cachedUri && !imgBroken;
+  // Cached CDN art when we have it (2nd launch onward), otherwise the bundled
+  // photo — so there is ALWAYS a photo behind the verse, never a bare gradient.
+  // The pink gradient now only appears if even the bundled image fails to decode.
+  const photoSource = cachedUri ? { uri: cachedUri } : BUNDLED_LOADING_BG;
+  const onPhoto = !imgBroken;
   const fg = onPhoto ? '#FFFFFF' : TXT;
   const fgSub = onPhoto ? 'rgba(255,255,255,0.85)' : TXTSUB;
   const sentence = line.text[lang] || line.text.en || '';
@@ -207,7 +218,7 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
       {phase === 'content' && (
         <Animated.View style={[StyleSheet.absoluteFillObject, contentFade]}>
           {onPhoto ? (
-            <ImageBackground source={{ uri: cachedUri! }} style={StyleSheet.absoluteFillObject} resizeMode="cover" onError={() => setImgBroken(true)}>
+            <ImageBackground source={photoSource} style={StyleSheet.absoluteFillObject} resizeMode="cover" onError={() => setImgBroken(true)}>
               <LinearGradient
                 colors={['rgba(10,8,24,0.58)', 'rgba(10,8,24,0.42)', 'rgba(10,8,24,0.68)']}
                 locations={[0, 0.5, 1]}

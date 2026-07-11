@@ -3,12 +3,12 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform, Pressable, Activity
 import Svg, { Path, G } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as AppleAuthentication from 'expo-apple-authentication';
 import Animated, { FadeIn, SlideInDown, Easing, useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
 import { ROSE, TXT, TXTSUB, P } from '../constants/theme';
 import { isConfigured } from '../constants/oauth';
 import { useAuth } from '../state/AuthContext';
-import { googleAuthAvailable, facebookAuthAvailable, warmupGoogleSignIn } from '../services/firebaseAuth';
+import { warmupGoogleSignIn } from '../services/firebaseAuth';
+import { useProviderSignIn } from '../hooks/useProviderSignIn';
 import { useT } from '../i18n/useT';
 import { useNavigation, type NavigationProp } from '@react-navigation/native';
 import type { RootStackParamList } from '../navigation/types';
@@ -18,15 +18,13 @@ interface Props {
   onError?: (msg: string) => void;
 }
 
-type Provider = 'apple' | 'google' | 'facebook';
-
 export default function SignInSheet({ onClose, onError }: Props) {
-  const { signIn, signInWithGoogle, signInWithFacebook, sendEmailLink } = useAuth();
+  const { sendEmailLink } = useAuth();
   const t = useT();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-  // Which provider is mid-flight. Drives the in-button spinner AND disables
-  // every provider row so a slow native picker can't be double-fired.
-  const [busy, setBusy] = useState<Provider | null>(null);
+  // Shared OAuth flows (Google / Apple / Facebook) — `busy` = the provider
+  // mid-flight; drives the in-button spinner + disables the sibling rows.
+  const { busy, onGoogle, onApple, onFacebook } = useProviderSignIn({ onSuccess: onClose, onError });
   // Email magic-link sub-flow: 'providers' = the OAuth list, 'email' = the
   // email-entry form, then `emailSent` swaps to the "check your inbox" state.
   const [mode, setMode] = useState<'providers' | 'email'>('providers');
@@ -68,88 +66,6 @@ export default function SignInSheet({ onClose, onError }: Props) {
     const onHide = Keyboard.addListener(hideEvt, () => setKbHeight(0));
     return () => { onShow.remove(); onHide.remove(); };
   }, []);
-
-  // Google + Facebook both go through Firebase Authentication via native SDKs
-  // (Google account picker / Facebook login dialog → Firebase credential →
-  // stable uid + email). See onGoogle / onFacebook below.
-
-  const onGoogle = async () => {
-    if (busy) return;
-    if (!googleAuthAvailable()) {
-      // Native module not compiled into this build yet (e.g. an old dev client).
-      // A fresh build with @react-native-firebase/auth + google-signin enables it.
-      onError?.('Google sign-in is unavailable in this build.');
-      return;
-    }
-    setBusy('google');
-    try {
-      await signInWithGoogle();
-      onClose();   // signed into Firebase → close the sheet
-    } catch (e: any) {
-      if (e?.message === 'CANCELLED') return;   // user dismissed the picker — stay silent
-      // Surface the real code (DEVELOPER_ERROR = SHA-1 mismatch,
-      // auth/network-request-failed = blocked/VPN, FIREBASE_TIMEOUT = stalled)
-      // so the actual cause is visible instead of a silent forever-spinner.
-      const code = e?.code || e?.message || 'unknown';
-      onError?.(`Google sign-in failed (${code}). Please try again.`);
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const onFacebook = async () => {
-    if (busy) return;
-    if (!facebookAuthAvailable()) {
-      // Native module not compiled into this build yet, or Firebase auth absent.
-      onError?.('Facebook sign-in is unavailable in this build.');
-      return;
-    }
-    setBusy('facebook');
-    try {
-      await signInWithFacebook();
-      onClose();   // signed into Firebase → close the sheet
-    } catch (e: any) {
-      if (e?.message === 'CANCELLED') return;   // user dismissed the dialog — stay silent
-      onError?.('Facebook sign-in failed. Please try again.');
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  // Apple is iOS-only. fullName + email come back ONLY on the very first
-  // sign-in for a given Apple ID + bundle pair — re-signs return only the
-  // stable user identifier. We handle that by falling back to the email
-  // prefix for the display name on subsequent sign-ins. Cancel is silent.
-  const onApple = async () => {
-    if (busy) return;
-    if (!isConfigured.apple()) {
-      onError?.(t('signIn.error.appleIOSOnly'));
-      return;
-    }
-    setBusy('apple');
-    try {
-      const credential = await AppleAuthentication.signInAsync({
-        requestedScopes: [
-          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-          AppleAuthentication.AppleAuthenticationScope.EMAIL,
-        ],
-      });
-      const email = credential.email ?? `${credential.user}@privaterelay.appleid.com`;
-      const fullName = [credential.fullName?.givenName, credential.fullName?.familyName]
-        .filter(Boolean)
-        .join(' ')
-        .trim();
-      const name = fullName || email.split('@')[0];
-      signIn({ name, email });
-      onClose();
-    } catch (e: unknown) {
-      const code = (e as { code?: string })?.code;
-      if (code === 'ERR_REQUEST_CANCELED') return;          // user dismissed — no toast
-      onError?.(t('signIn.error.appleFailed'));
-    } finally {
-      setBusy(null);
-    }
-  };
 
   return (
     <View style={[styles.overlay, kbHeight ? { paddingBottom: kbHeight } : null]}>
@@ -358,7 +274,7 @@ function LegalText({
 }
 
 
-function GoogleGlyph() {
+export function GoogleGlyph() {
   return (
     <Svg width={20} height={20} viewBox="0 0 48 48">
       <G>
@@ -377,8 +293,8 @@ function GoogleGlyph() {
 // ships the canonical SF-Symbols-style Apple mark and renders identically
 // across iOS / Android. `marginTop: -2` nudges the optical centre to
 // match the Google + Facebook glyphs sitting beside it in the row.
-function AppleGlyph() {
-  return <Ionicons name="logo-apple" size={20} color="#FFFFFF" style={{ marginTop: -2 }} />;
+export function AppleGlyph({ color = '#FFFFFF' }: { color?: string }) {
+  return <Ionicons name="logo-apple" size={20} color={color} style={{ marginTop: -2 }} />;
 }
 
 function FacebookGlyph() {

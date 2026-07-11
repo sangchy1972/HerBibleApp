@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal, ActivityIndicator, Linking, Dimensions, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal, ActivityIndicator, Linking, Dimensions, Image, Platform, TextInput } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,7 +18,11 @@ import { useNotifications } from '../state/NotificationsContext';
 import { useUILanguage, UI_LANGUAGES } from '../state/UILanguageContext';
 import { logEvent, setUserProps } from '../services/firebase';
 import TimePickerSheet from '../components/TimePickerSheet';
-import SignInSheet from '../components/SignInSheet';
+import { GoogleGlyph, AppleGlyph } from '../components/SignInSheet';
+import Logo from '../components/shared/Logo';
+import { useProviderSignIn } from '../hooks/useProviderSignIn';
+import { useAuth } from '../state/AuthContext';
+import { warmupGoogleSignIn } from '../services/firebaseAuth';
 import { maybeShowOnboardingInterstitial } from '../services/ads';
 import { initIap, fetchPrices, purchasePlan, restorePurchases, type PlanId } from '../services/iap';
 
@@ -48,6 +52,10 @@ const PAY_PLANS: ReadonlyArray<{ id: PlanId; labelKey: string; save?: number; be
 ];
 // Static fallbacks until (or if) the store answers with localized prices.
 const OB_FALLBACK_PRICES: Record<PlanId, string> = { lifetime: 'NT$670', annual: 'NT$420', monthly: 'NT$84' };
+
+// Hosted legal pages — linked from the paywall footer and the login page.
+const LEGAL_TERMS_URL = 'https://covers.everlandapps.com/legal/support.html';
+const LEGAL_PRIVACY_URL = 'https://covers.everlandapps.com/legal/privacy.html';
 
 const TRIAL_SHEET_H = Math.round(Dimensions.get('window').height * 0.56);
 const GIFT_BOX = require('../../assets/paywall/gift-box.png');
@@ -102,6 +110,21 @@ function PulseCta({ onPress, style, children, disabled }: {
   );
 }
 
+// Login-page provider button: the SAME white card as the questionnaire option
+// rows (radius / border / padding all match styles.row), content centered.
+// While `busy`, the brand glyph swaps for a spinner; `disabled` dims the
+// sibling rows so only one OAuth flow runs at a time.
+function LoginProviderRow({ glyph, label, onPress, busy, disabled }: {
+  glyph: React.ReactNode; label: string; onPress: () => void; busy?: boolean; disabled?: boolean;
+}) {
+  return (
+    <PressBounce onPress={onPress} disabled={disabled} style={[styles.loginProviderRow, disabled && !busy ? { opacity: 0.5 } : null]}>
+      {busy ? <ActivityIndicator size="small" color={ROSE} /> : glyph}
+      <Text style={styles.loginProviderText}>{label}</Text>
+    </PressBounce>
+  );
+}
+
 const GOAL_OPTS = [
   { k: 'closer',     icon: 'heart-outline' },
   { k: 'peace',      icon: 'water-outline' },
@@ -141,7 +164,6 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
   const stepName = STEP_NAMES[step];
   const [a, setA] = useState<OnboardingAnswers>({ topics: [] });
   const [editing, setEditing] = useState<'morning' | 'night' | null>(null);
-  const [showSignIn, setShowSignIn] = useState(false);
   const notifsOnRef = useRef(false);   // set at the notify step; read by finishAll
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);   // pending single-select auto-advance
   // Language detected (or previously persisted) at mount — used to log whether
@@ -159,8 +181,39 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
     if (stepName === 'login') {
       AsyncStorage.setItem('loginPrompt:lastTrigger', 'onboarding').catch(() => {});
       logEvent('login_prompt_shown', { trigger: 'onboarding' });
+      // Pre-warm Google's native stack while the user reads the page, so the
+      // account picker appears instantly on tap instead of stalling.
+      warmupGoogleSignIn();
     }
   }, [stepName]);
+
+  // ── Login page (step 'login') — full-page sign-in, no bottom sheet ────────
+  // OAuth success finishes onboarding (AuthContext logs the sign_up event).
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const { busy: loginBusy, onGoogle, onApple } = useProviderSignIn({
+    onSuccess: () => finishAll('completed'),
+    onError: (msg) => setLoginError(msg),
+  });
+  // Email magic-link sub-flow, inline on the page: 'providers' = the button
+  // stack, 'email' = the entry form, then `emailSent` = "check your inbox".
+  const { sendEmailLink } = useAuth();
+  const [loginMode, setLoginMode] = useState<'providers' | 'email'>('providers');
+  const [email, setEmail] = useState('');
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const onSendEmail = async () => {
+    if (emailBusy || !emailValid) return;
+    setEmailBusy(true);
+    try {
+      await sendEmailLink(email.trim());
+      setEmailSent(true);
+    } catch {
+      setLoginError(t('signIn.email.error'));
+    } finally {
+      setEmailBusy(false);
+    }
+  };
 
   const goNext = () => {
     const next = Math.min(TOTAL - 1, step + 1);
@@ -291,9 +344,9 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
     goNext();
   };
 
-  // Finish the whole flow (from the login step, or an early Skip). Emits
-  // onboarding_complete (full profile) + durable user properties. Sign-in and
-  // the sign_up event are handled by AuthContext via the SignInSheet.
+  // Finish the whole flow (login-page X / OAuth success, or an early Skip).
+  // Emits onboarding_complete (full profile) + durable user properties; the
+  // sign_up event itself is logged by AuthContext when auth flips on.
   const finishAll = (method: 'completed' | 'skipped') => {
     saveAnswers(a);
     const notifsOn = notifsOnRef.current;
@@ -358,12 +411,18 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
           <TouchableOpacity onPress={() => setShowTrialSheet(true)} hitSlop={12} style={styles.backBtn}>
             <Feather name="x" size={24} color={TXTSUB} />
           </TouchableOpacity>
-        ) : step > 0 ? (
+        ) : step > 0 && stepName !== 'login' ? (
           <TouchableOpacity onPress={goBack} hitSlop={12} style={styles.backBtn}>
             <Feather name="chevron-left" size={24} color={TXTSUB} />
           </TouchableOpacity>
         ) : <View style={styles.backBtn} />}
-        {stepName !== 'language' && stepName !== 'paywall' ? (
+        {stepName === 'login' ? (
+          // Login page: the only dismissal is the top-right X (finishes
+          // onboarding without an account) — mirrors the reference layout.
+          <TouchableOpacity onPress={() => finishAll('completed')} hitSlop={12} style={[styles.backBtn, { alignItems: 'flex-end' }]}>
+            <Feather name="x" size={24} color={TXTSUB} />
+          </TouchableOpacity>
+        ) : stepName !== 'language' && stepName !== 'paywall' ? (
           <TouchableOpacity onPress={() => finishAll('skipped')} hitSlop={12}>
             <Text style={styles.skip}>{t('onboarding.skip')}</Text>
           </TouchableOpacity>
@@ -372,7 +431,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
 
       {/* Progress — hidden on the welcome step (a cover, not a question) and
           on the paywall (an offer, not a step the user "progresses" through). */}
-      {stepName !== 'language' && stepName !== 'paywall' ? (
+      {stepName !== 'language' && stepName !== 'paywall' && stepName !== 'login' ? (
         <View style={styles.progressTrack}>
           <View style={[styles.progressFill, { width: `${((step + 1) / TOTAL) * 100}%` }]} />
         </View>
@@ -626,20 +685,92 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
           )}
 
           {stepName === 'login' && (
-            <View style={{ alignItems: 'center' }}>
-              <LinearGradient colors={['#F9D9E6', '#F4A6C0', ROSE]} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={styles.loginHero}>
-                <Ionicons name="bookmark" size={42} color="#FFFFFF" style={{ opacity: 0.92 }} />
-              </LinearGradient>
-              <Text style={[styles.h, { fontSize: 26, textAlign: 'center', marginTop: 22 }]}>{t('onboarding.login.title')}</Text>
-              <Text style={[styles.sub, { textAlign: 'center', paddingHorizontal: 10 }]}>{t('onboarding.login.sub')}</Text>
-              <View style={styles.loginBenefits}>
-                {([['create-outline', 'b1'], ['color-wand-outline', 'b2'], ['sync-outline', 'b3']] as const).map(([icon, k]) => (
-                  <View key={k} style={styles.benefitRow}>
-                    <View style={styles.benefitIcon}><Ionicons name={icon} size={19} color={ROSE} /></View>
-                    <Text style={styles.benefitText}>{t(`onboarding.login.${k}`)}</Text>
-                  </View>
-                ))}
+            <View>
+              {/* Brand row — icon logo + pink wordmark (reference layout). */}
+              <View style={styles.loginBrandRow}>
+                <Logo size={30} />
+                <Text style={styles.loginBrandName}>Her Bible</Text>
               </View>
+              <Text style={styles.loginTitle}>{t('onboarding.login.title')}</Text>
+              <Text style={[styles.sub, { marginBottom: 0 }]}>{t('onboarding.login.sub')}</Text>
+
+              {loginMode === 'providers' ? (
+                <>
+                  <View style={{ marginTop: 34 }}>
+                    {Platform.OS === 'ios' && (
+                      // Apple HIG: Sign in with Apple sits at-or-above the others.
+                      <LoginProviderRow
+                        glyph={<AppleGlyph color={TXT} />}
+                        label={t('signIn.apple')}
+                        onPress={onApple}
+                        busy={loginBusy === 'apple'}
+                        disabled={loginBusy !== null}
+                      />
+                    )}
+                    <LoginProviderRow
+                      glyph={<GoogleGlyph />}
+                      label={t('signIn.google')}
+                      onPress={onGoogle}
+                      busy={loginBusy === 'google'}
+                      disabled={loginBusy !== null}
+                    />
+                    <LoginProviderRow
+                      glyph={<Feather name="mail" size={20} color={TXT} />}
+                      label={t('signIn.email')}
+                      onPress={() => { setLoginError(null); setLoginMode('email'); }}
+                      disabled={loginBusy !== null}
+                    />
+                  </View>
+                  {loginError && <Text style={styles.loginError}>{loginError}</Text>}
+                  {/* Legal line — the {terms} / {privacy} tokens in the i18n
+                      template become tappable links to the hosted pages. */}
+                  <Text style={styles.loginLegal}>
+                    {t('signIn.legal').split(/(\{terms\}|\{privacy\})/g).map((p, i) => {
+                      if (p === '{terms}') return <Text key={i} style={styles.loginLegalLink} onPress={() => Linking.openURL(LEGAL_TERMS_URL).catch(() => {})}>{t('signIn.legal.terms')}</Text>;
+                      if (p === '{privacy}') return <Text key={i} style={styles.loginLegalLink} onPress={() => Linking.openURL(LEGAL_PRIVACY_URL).catch(() => {})}>{t('signIn.legal.privacy')}</Text>;
+                      return p;
+                    })}
+                  </Text>
+                </>
+              ) : (
+                <View style={{ marginTop: 26 }}>
+                  <TouchableOpacity onPress={() => { setLoginMode('providers'); setEmailSent(false); }} hitSlop={10} style={styles.loginEmailBack}>
+                    <Feather name="chevron-left" size={22} color={TXTSUB} />
+                    <Text style={styles.loginEmailBackText}>{t('signIn.email.back')}</Text>
+                  </TouchableOpacity>
+                  {!emailSent ? (
+                    <>
+                      <Text style={styles.loginEmailTitle}>{t('signIn.email.title')}</Text>
+                      <TextInput
+                        value={email}
+                        onChangeText={setEmail}
+                        placeholder={t('signIn.email.placeholder')}
+                        placeholderTextColor={TXTSUB}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="email"
+                        editable={!emailBusy}
+                        style={styles.loginEmailInput}
+                        onSubmitEditing={onSendEmail}
+                        returnKeyType="send"
+                      />
+                      <PressBounce onPress={onSendEmail} disabled={!emailValid || emailBusy} style={[styles.cta, (!emailValid || emailBusy) ? { opacity: 0.5 } : null]}>
+                        {emailBusy ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.ctaText}>{t('signIn.email.send')}</Text>}
+                      </PressBounce>
+                    </>
+                  ) : (
+                    <View style={{ alignItems: 'center', paddingVertical: 8 }}>
+                      <Feather name="mail" size={34} color={ROSE} style={{ marginBottom: 12 }} />
+                      <Text style={styles.loginEmailTitle}>{t('signIn.email.sent.title')}</Text>
+                      <Text style={styles.loginEmailSentBody}>{t('signIn.email.sent.body', { email: email.trim() })}</Text>
+                      <TouchableOpacity onPress={() => setEmailSent(false)} hitSlop={8}>
+                        <Text style={styles.loginEmailChange}>{t('signIn.email.changeEmail')}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              )}
             </View>
           )}
         </ScrollView>
@@ -656,15 +787,6 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
               <Text style={styles.laterText}>{t('onboarding.notify.later')}</Text>
             </TouchableOpacity>
           </Animated.View>
-        ) : stepName === 'login' ? (
-          <Animated.View entering={FadeIn.duration(300)}>
-            <PressBounce onPress={() => setShowSignIn(true)} style={styles.cta}>
-              <Text style={styles.ctaText}>{t('onboarding.login.cta')}</Text>
-            </PressBounce>
-            <TouchableOpacity onPress={() => finishAll('completed')} hitSlop={10} style={styles.laterBtn}>
-              <Text style={styles.laterText}>{t('onboarding.notify.later')}</Text>
-            </TouchableOpacity>
-          </Animated.View>
         ) : stepName === 'paywall' ? (
           <Animated.View entering={FadeIn.duration(300)}>
             <PressBounce onPress={() => buyPlan(selectedPlan)} style={styles.cta} disabled={payBusy}>
@@ -678,11 +800,11 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
                 <Text style={styles.payLink}>{t('obPaywall.restore')}</Text>
               </TouchableOpacity>
               <Text style={styles.payLinkDot}>·</Text>
-              <TouchableOpacity onPress={() => Linking.openURL('https://covers.everlandapps.com/legal/support.html').catch(() => {})} hitSlop={8}>
+              <TouchableOpacity onPress={() => Linking.openURL(LEGAL_TERMS_URL).catch(() => {})} hitSlop={8}>
                 <Text style={styles.payLink}>{t('obPaywall.terms')}</Text>
               </TouchableOpacity>
               <Text style={styles.payLinkDot}>·</Text>
-              <TouchableOpacity onPress={() => Linking.openURL('https://covers.everlandapps.com/legal/privacy.html').catch(() => {})} hitSlop={8}>
+              <TouchableOpacity onPress={() => Linking.openURL(LEGAL_PRIVACY_URL).catch(() => {})} hitSlop={8}>
                 <Text style={styles.payLink}>{t('obPaywall.privacy')}</Text>
               </TouchableOpacity>
             </View>
@@ -740,11 +862,6 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
         </View>
       </Modal>
 
-      {/* Final login screen's sign-in sheet. Closing it (success OR cancel)
-          finishes onboarding; the sign_up event is fired by AuthContext. */}
-      {showSignIn && (
-        <SignInSheet onClose={() => { setShowSignIn(false); finishAll('completed'); }} />
-      )}
     </View>
   );
 }
@@ -820,7 +937,33 @@ const styles = StyleSheet.create({
   timePill: { fontSize: 18, fontWeight: '700', paddingVertical: 9, paddingHorizontal: 17, borderRadius: 12, overflow: 'hidden' },   // 16.5 → 18 (2nd +10 %)
   // Notification hero + mock banner.
   notifHero: { width: '100%', height: 188, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginTop: 4, overflow: 'hidden' },
-  loginHero: { width: 92, height: 92, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginTop: 12 },
+  // ── Login page (reference layout: brand row → big title → provider stack) ──
+  loginBrandRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 14 },
+  loginBrandName: { fontSize: 21, color: ROSE, fontFamily: FONTS.loraBold, fontWeight: '600' },
+  loginTitle: {
+    fontSize: 30, color: TXT, fontFamily: FONTS.latoBold, fontWeight: '700',
+    lineHeight: 39, letterSpacing: -0.3, marginTop: 20, marginBottom: 8,
+  },
+  // Provider button = the questionnaire option card (same radius / border /
+  // padding / 18-pt type as styles.row), content centered.
+  loginProviderRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
+    backgroundColor: '#FFFFFF', borderRadius: 15, borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.08)',
+    paddingVertical: 16.8, paddingHorizontal: 14, marginBottom: 9,
+  },
+  loginProviderText: { fontSize: 18, color: TXT, fontFamily: FONTS.latoBold, fontWeight: '700' },
+  loginError: { fontSize: 13.5, color: ROSE, fontFamily: FONTS.lato, textAlign: 'center', marginTop: 8 },
+  loginLegal: { fontSize: 12.5, lineHeight: 19, color: TXTSUB, fontFamily: FONTS.lato, textAlign: 'center', marginTop: 18, paddingHorizontal: 6 },
+  loginLegalLink: { color: ROSE, fontWeight: '600' },
+  loginEmailBack: { flexDirection: 'row', alignItems: 'center', gap: 2, alignSelf: 'flex-start', marginBottom: 12, paddingVertical: 4 },
+  loginEmailBackText: { fontSize: 15, color: TXTSUB, fontFamily: FONTS.lato, fontWeight: '500' },
+  loginEmailTitle: { fontSize: 18, color: TXT, fontFamily: FONTS.latoBold, fontWeight: '700', textAlign: 'center', marginBottom: 14 },
+  loginEmailInput: {
+    height: 54, borderRadius: 15, borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.08)',
+    paddingHorizontal: 16, fontSize: 17, color: TXT, fontFamily: FONTS.lato, backgroundColor: '#FFFFFF', marginBottom: 14,
+  },
+  loginEmailSentBody: { fontSize: 14.5, lineHeight: 21, color: TXTSUB, fontFamily: FONTS.lato, textAlign: 'center', marginBottom: 16, paddingHorizontal: 8 },
+  loginEmailChange: { fontSize: 14, fontWeight: '700', color: ROSE, fontFamily: FONTS.latoBold },
   // Welcome/language step brand mark — same gradient family, slightly smaller
   // so the 7 language rows fit without scrolling on compact phones.
   welcomeHero: { width: 84, height: 84, borderRadius: 26, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
@@ -882,10 +1025,6 @@ const styles = StyleSheet.create({
     fontSize: 28, fontFamily: FONTS.loraBold, fontWeight: '600', color: TXT, marginBottom: 16,
   },
   trialPriceLine: { fontSize: 14, color: TXTSUB, fontFamily: FONTS.lato, textAlign: 'center', marginTop: 16, marginBottom: 12 },
-  loginBenefits: { alignSelf: 'stretch', marginTop: 22, gap: 14, paddingHorizontal: 4 },
-  benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 13 },
-  benefitIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: '#FBEAF0', alignItems: 'center', justifyContent: 'center' },
-  benefitText: { flex: 1, fontSize: 16, color: TXT, fontFamily: FONTS.lato, lineHeight: 22 },   // 14.5 → 16 (+10 %)
   banner: {
     position: 'absolute', left: 14, right: 14, bottom: 14,
     flexDirection: 'row', alignItems: 'center', gap: 10,

@@ -365,7 +365,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
                 const sel = lang === l.code;
                 return (
                   <TouchableOpacity key={l.code} activeOpacity={0.85} onPress={() => setLang(l.code)} style={[styles.row, sel && styles.rowSel]}>
-                    <Text style={[styles.rowText, sel && styles.rowTextSel, { flex: 1 }]}>{l.nativeName}</Text>
+                    <Text style={[styles.rowText, { flex: 1 }]}>{l.nativeName}</Text>
                     {sel && <Ionicons name="checkmark" size={18} color={accent} />}
                   </TouchableOpacity>
                 );
@@ -390,8 +390,8 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
                 return (
                   <Animated.View key={o.k} entering={FadeInRight.duration(500).delay(i * 70)}>
                     <TouchableOpacity activeOpacity={0.85} onPress={() => pickSingle('goal', o.k)} style={[styles.row, sel && styles.rowSel]}>
-                      <Ionicons name={o.icon as any} size={23} color={accent} />
-                      <Text style={[styles.rowText, sel && styles.rowTextSel]}>{t(`onboarding.goal.opt.${o.k}`)}</Text>
+                      <Ionicons name={o.icon as any} size={25} color={accent} style={[styles.rowIconBold, { textShadowColor: accent }]} />
+                      <Text style={styles.rowText}>{t(`onboarding.goal.opt.${o.k}`)}</Text>
                       {sel && <Ionicons name="checkmark" size={20} color={accent} />}
                     </TouchableOpacity>
                   </Animated.View>
@@ -409,7 +409,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
                 return (
                   <Animated.View key={o} entering={FadeInRight.duration(500).delay(i * 70)}>
                     <TouchableOpacity activeOpacity={0.85} onPress={() => pickSingle('age', o)} style={[styles.row, sel && styles.rowSel]}>
-                      <Text style={[styles.rowText, sel && styles.rowTextSel, { flex: 1 }]}>{o}</Text>
+                      <Text style={[styles.rowText, { flex: 1 }]}>{o}</Text>
                       {sel && <Ionicons name="checkmark" size={20} color={accent} />}
                     </TouchableOpacity>
                   </Animated.View>
@@ -428,7 +428,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
                   <Animated.View key={o.k} entering={FadeInRight.duration(500).delay(i * 70)}>
                     <TouchableOpacity activeOpacity={0.85} onPress={() => pickSingle('bibleLevel', o.k)} style={[styles.card, sel && styles.rowSel]}>
                       <View style={{ flex: 1 }}>
-                        <Text style={[styles.cardTitle, sel && styles.rowTextSel]}>{t(`onboarding.bible.opt.${o.k}`)}</Text>
+                        <Text style={[styles.cardTitle]}>{t(`onboarding.bible.opt.${o.k}`)}</Text>
                         {o.sub && <Text style={styles.cardSub}>{t(`onboarding.bible.opt.${o.k}.sub`)}</Text>}
                       </View>
                       {sel && <Ionicons name="checkmark" size={20} color={accent} />}
@@ -703,26 +703,32 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: BG, paddingHorizontal: 20 },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 36 },
   backBtn: { width: 32, height: 32, alignItems: 'flex-start', justifyContent: 'center' },
-  skip: { fontSize: 14, fontWeight: '600', color: ROSE, fontFamily: FONTS.lato },
+  skip: { fontSize: 16.8, fontWeight: '600', color: ROSE, fontFamily: FONTS.lato },   // 14 → 16.8 (+20 % per user)
   progressTrack: { height: 5, borderRadius: 3, backgroundColor: 'rgba(230,63,105,0.16)', marginTop: 8, marginBottom: 18 },
   progressFill: { height: '100%', borderRadius: 3, backgroundColor: ROSE },
   content: { flex: 1 },
   scroll: { paddingBottom: 12 },
   center: { alignItems: 'center' },
+  // Question titles now use the SAME typeface as the option rows (Lato, in its
+  // bold cut) instead of the Lora serif — per user, so the whole step reads in
+  // one type family. marginTop 20 = the requested extra space above the title.
   h: {
-    fontSize: 24, color: TXT, fontFamily: FONTS.loraBold, fontWeight: '600',
-    lineHeight: 31, letterSpacing: -0.2, marginBottom: 7,
+    fontSize: 24, color: TXT, fontFamily: FONTS.latoBold, fontWeight: '700',
+    lineHeight: 31, letterSpacing: -0.2, marginTop: 20, marginBottom: 7,
   },
   sub: { fontSize: 15, color: TXTSUB, fontFamily: FONTS.lato, lineHeight: 22, marginBottom: 16 },   // 13.5 → 15 (+10 % content type per user)
   // Single-line option row.
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     backgroundColor: '#FFFFFF', borderRadius: 15, borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.08)',
-    paddingVertical: 14, paddingHorizontal: 14, marginBottom: 9,
+    paddingVertical: 16.8, paddingHorizontal: 14, marginBottom: 9,   // 14 → 16.8 (row height +15 % per user)
   },
   rowSel: { backgroundColor: '#FBEAF0', borderWidth: 1.5, borderColor: ROSE },
   rowText: { flex: 1, fontSize: 18, color: TXT, fontFamily: FONTS.lato },   // 16.5 → 18 (2nd +10 % round per user)
-  rowTextSel: { fontWeight: '700' },
+  // Ionicons is an icon FONT, so there's no strokeWidth to raise. A tight
+  // same-colour shadow thickens the glyph instead — the "+20 % bolder" the user
+  // asked for. (True stroke control would mean swapping to SVG icons.)
+  rowIconBold: { textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 0.7 },
   // Two-line card (bible level / time commitment).
   card: {
     flexDirection: 'row', alignItems: 'center', gap: 12,

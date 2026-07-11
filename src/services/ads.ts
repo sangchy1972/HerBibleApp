@@ -67,6 +67,18 @@ const INTERSTITIAL_UNIT_ID: string = __DEV__
   ? (TestIdsObj?.INTERSTITIAL ?? 'ca-app-pub-3940256099942544/1033173712')
   : REAL_INTERSTITIAL_UNIT_ID;
 
+// Dedicated FIRST-OPEN onboarding interstitial (text/image/rich-media only —
+// the unit has no video formats configured). Loaded in PARALLEL with the
+// regular preload/US-controller as a third independent request, and shown
+// with PRIORITY during onboarding: the flow attempts it right after the
+// welcome screen and again on every step transition until it has shown once
+// (per user: it MUST show once before onboarding completes, then never
+// again). Same __DEV__ test-unit policy as above. NOTE: one ID supplied — if
+// it's Android-scoped, iOS simply no-fills; swap in an iOS twin when created.
+const ONBOARDING_INTERSTITIAL_UNIT_ID: string = __DEV__
+  ? (TestIdsObj?.INTERSTITIAL ?? 'ca-app-pub-3940256099942544/1033173712')
+  : 'ca-app-pub-4656643588243987/5004598985';
+
 // Persisted "user removed ads" flag — flip to true from the Remove-Ads IAP once
 // that's wired (call setAdsRemoved(true) on a successful purchase / restore).
 const REMOVE_ADS_KEY = 'ads:removed:v1';
@@ -80,6 +92,12 @@ let initialized = false;
 let interstitial: any = null;
 let loaded = false;
 let lastShownAt = 0;
+
+// Onboarding interstitial state — independent of the regular path.
+let onboardingInterstitial: any = null;
+let onboardingLoaded = false;
+let onboardingShown = false;
+let onboardingRetries = 0;
 
 export async function setAdsRemoved(value: boolean): Promise<void> {
   adsRemoved = value;
@@ -181,6 +199,11 @@ export async function initAds(): Promise<void> {
     // same account-safety policy as INTERSTITIAL_UNIT_ID above. Verify the
     // controller with a release build (internal/TestFlight) or by registering
     // the device as an AdMob test device.
+    // Onboarding unit loads FIRST and in parallel with whichever route below —
+    // an extra independent request, so the first-open ad is ready as early as
+    // the SDK allows (the biggest fill-speed lever available: consent + ATT +
+    // initialize() are policy-ordered and can't be skipped or reordered).
+    preloadOnboarding();
     const region = deviceRegion();
     const useController = region === 'US' && (Platform.OS === 'ios' || Platform.OS === 'android') && !!InterstitialAdCls && !__DEV__;
     logEvent('ads_route', { region: region ?? 'unknown', path: useController ? 'us_controller' : 'preload' });
@@ -208,6 +231,46 @@ function preload(): void {
     interstitial.addAdEventListener(AdEventTypeEnum.ERROR, () => { loaded = false; });
     interstitial.load();
   } catch { /* swallow — maybeShow will just no-op until one loads */ }
+}
+
+function preloadOnboarding(): void {
+  if (!InterstitialAdCls || adsRemoved || onboardingShown) return;
+  try {
+    onboardingInterstitial = InterstitialAdCls.createForAdRequest(ONBOARDING_INTERSTITIAL_UNIT_ID, {});
+    onboardingLoaded = false;
+    onboardingInterstitial.addAdEventListener(AdEventTypeEnum.LOADED, () => { onboardingLoaded = true; });
+    onboardingInterstitial.addAdEventListener(AdEventTypeEnum.CLOSED, () => { onboardingLoaded = false; });
+    onboardingInterstitial.addAdEventListener(AdEventTypeEnum.ERROR, () => {
+      onboardingLoaded = false;
+      // Fresh units no-fill often; a few spaced retries raise the odds it's
+      // ready before onboarding ends. Latches off for good once shown.
+      if (onboardingRetries < 3 && !onboardingShown) {
+        onboardingRetries += 1;
+        setTimeout(() => { if (!onboardingShown) preloadOnboarding(); }, 8000);
+      }
+    });
+    onboardingInterstitial.load();
+  } catch { /* attempts simply no-op */ }
+}
+
+// Show the dedicated first-open interstitial ONCE. Returns true if it showed.
+// Callers (the onboarding flow) attempt right after the welcome screen and
+// then on each later step transition until it succeeds — it can never fire
+// twice (onboardingShown latches) and never fires after onboarding because
+// the flow stops calling. Bypasses the 60s cap (nothing can have shown
+// before it on a first open) but SETS lastShownAt so the next regular
+// interstitial keeps its distance.
+export function maybeShowOnboardingInterstitial(): boolean {
+  if (adsRemoved || !initialized || onboardingShown) return false;
+  if (!onboardingInterstitial || !onboardingLoaded) return false;
+  if (AppState.currentState !== 'active') return false;
+  try {
+    onboardingInterstitial.show();
+    onboardingShown = true;
+    lastShownAt = Date.now();
+    logEvent('ad_impression_custom', { format: 'interstitial', placement: 'onboarding_first' });
+    return true;
+  } catch { return false; }
 }
 
 // Show an interstitial at a natural break (e.g. after Amen, after finishing a

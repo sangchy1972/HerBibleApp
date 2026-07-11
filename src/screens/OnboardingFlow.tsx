@@ -1,11 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal, ActivityIndicator, Linking, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import Animated, {
+  FadeInDown, FadeIn, FadeInUp, FadeInRight,
+  useSharedValue, useAnimatedStyle, withTiming, withSpring, withRepeat, withSequence, runOnJS, Easing,
+} from 'react-native-reanimated';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { ROSE, LAV, TXT, TXTSUB, BG, FONTS } from '../constants/theme';
 import { useT } from '../i18n/useT';
 import { useOnboarding, type OnboardingAnswers } from '../state/OnboardingContext';
@@ -14,6 +18,8 @@ import { useUILanguage, UI_LANGUAGES } from '../state/UILanguageContext';
 import { logEvent, setUserProps } from '../services/firebase';
 import TimePickerSheet from '../components/TimePickerSheet';
 import SignInSheet from '../components/SignInSheet';
+import { maybeShowOnboardingInterstitial } from '../services/ads';
+import { initIap, fetchPrices, purchasePlan, restorePurchases, type PlanId } from '../services/iap';
 
 // New-user onboarding (first launch only — gated in RootNavigator). Flow v2:
 // welcome + language picker → short intro interstitial → questionnaire →
@@ -22,14 +28,72 @@ import SignInSheet from '../components/SignInSheet';
 // tailor later content. The mood check-in is gated on onboarding.done
 // (MoodCheckInContext), so it only ever asks AFTER the user lands in the app.
 
-const TOTAL = 11;
+const TOTAL = 12;
 
 // Analytics step names (snake_case, index-aligned). `step_name` is the
 // canonical funnel key for BigQuery — indexes shifted in flow v2 (language +
-// intro prepended), so events also carry flow_version: 2. Never renumber
-// names; future steps get NEW names.
-const STEP_NAMES = ['language', 'intro', 'goal', 'age', 'bible', 'encourage', 'topics', 'time', 'remind', 'notify', 'login'] as const;
-const FLOW_VERSION = 2;
+// intro prepended) and again in v3 (paywall inserted after remind), so events
+// carry flow_version. Never renumber names; future steps get NEW names.
+const STEP_NAMES = ['language', 'intro', 'goal', 'age', 'bible', 'encourage', 'topics', 'time', 'remind', 'paywall', 'notify', 'login'] as const;
+const FLOW_VERSION = 3;
+
+// Onboarding paywall plans — product ids/labels shared with RemoveAdsScreen.
+// `save` renders the amber "Save N%" badge (annual vs 12× monthly); lifetime
+// carries the rose "Best Value" badge instead.
+const PAY_PLANS: ReadonlyArray<{ id: PlanId; labelKey: string; save?: number; best?: boolean }> = [
+  { id: 'lifetime', labelKey: 'paywall.plan.lifetime', best: true },
+  { id: 'annual',   labelKey: 'paywall.plan.annual',   save: 58 },
+  { id: 'monthly',  labelKey: 'paywall.plan.monthly' },
+];
+// Static fallbacks until (or if) the store answers with localized prices.
+const OB_FALLBACK_PRICES: Record<PlanId, string> = { lifetime: 'NT$670', annual: 'NT$420', monthly: 'NT$84' };
+
+const TRIAL_SHEET_H = Math.round(Dimensions.get('window').height * 0.56);
+
+// Press feedback: every primary CTA scales down on press-in and springs back
+// on release, so taps always FEEL acknowledged (per user).
+function PressBounce({ onPress, style, children, disabled }: {
+  onPress: () => void; style?: object | object[]; children: React.ReactNode; disabled?: boolean;
+}) {
+  const s = useSharedValue(1);
+  const anim = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
+  return (
+    <Animated.View style={anim}>
+      <TouchableOpacity
+        activeOpacity={0.9}
+        disabled={disabled}
+        onPressIn={() => { s.value = withTiming(0.93, { duration: 90 }); }}
+        onPressOut={() => { s.value = withSpring(1, { damping: 11, stiffness: 240 }); }}
+        onPress={onPress}
+        style={style}
+      >
+        {children}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+// Trial-sheet CTA: continuously pulses (scale 1 ⇄ 1.05) to draw the eye, and
+// still gives the press-in/out feedback on top.
+function PulseCta({ onPress, style, children, disabled }: {
+  onPress: () => void; style?: object | object[]; children: React.ReactNode; disabled?: boolean;
+}) {
+  const s = useSharedValue(1);
+  useEffect(() => {
+    s.value = withRepeat(withSequence(
+      withTiming(1.05, { duration: 620, easing: Easing.inOut(Easing.quad) }),
+      withTiming(1, { duration: 620, easing: Easing.inOut(Easing.quad) }),
+    ), -1);
+  }, [s]);
+  const anim = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
+  return (
+    <Animated.View style={anim}>
+      <TouchableOpacity activeOpacity={0.9} disabled={disabled} onPress={onPress} style={style}>
+        {children}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
 
 const GOAL_OPTS = [
   { k: 'closer',     icon: 'heart-outline' },
@@ -90,8 +154,81 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
     }
   }, [stepName]);
 
-  const goNext = () => setStep((s) => Math.min(TOTAL - 1, s + 1));
+  const goNext = () => {
+    const next = Math.min(TOTAL - 1, step + 1);
+    setStep(next);
+    // Dedicated first-open interstitial: MUST show once before onboarding
+    // completes (per user). First attempt fires when leaving the welcome
+    // screen; if the unit hasn't filled yet we retry on every later
+    // transition — except INTO the paywall, so an ad never stomps the pitch.
+    // maybeShowOnboardingInterstitial latches after one success, and nothing
+    // calls it after onboarding, so it can never fire twice or late.
+    if (STEP_NAMES[next] !== 'paywall') {
+      try { maybeShowOnboardingInterstitial(); } catch { /* never block the flow */ }
+    }
+  };
   const goBack = () => setStep((s) => Math.max(0, s - 1));
+
+  // ── Onboarding paywall (step 'paywall') ───────────────────────────────────
+  const [selectedPlan, setSelectedPlan] = useState<PlanId>('lifetime');
+  const [obPrices, setObPrices] = useState<Record<PlanId, string>>(OB_FALLBACK_PRICES);
+  const [payBusy, setPayBusy] = useState(false);
+  const [showTrialSheet, setShowTrialSheet] = useState(false);
+  useEffect(() => {
+    if (stepName !== 'paywall') return;
+    (async () => {
+      try {
+        await initIap();
+        const p = await fetchPrices();
+        setObPrices(prev => ({ ...prev, ...p }));
+      } catch { /* fallback prices stand */ }
+    })();
+  }, [stepName]);
+  const buyPlan = async (plan: PlanId) => {
+    if (payBusy) return;
+    setPayBusy(true);
+    logEvent('onboarding_paywall_buy_tap', { plan, flow_version: FLOW_VERSION });
+    try {
+      const r = await purchasePlan(plan);
+      if (r === 'purchased' || r === 'pending') {
+        setShowTrialSheet(false);
+        goNext();
+      }
+    } finally { setPayBusy(false); }
+  };
+  const onRestore = async () => {
+    if (payBusy) return;
+    setPayBusy(true);
+    try { if (await restorePurchases()) { setShowTrialSheet(false); goNext(); } }
+    finally { setPayBusy(false); }
+  };
+  // Declining the trial sheet (X / backdrop / swipe-down) continues onboarding.
+  const declineTrial = () => { setShowTrialSheet(false); goNext(); };
+  // Trial-sheet swipe-down dismiss (project rule: every bottom sheet).
+  const trialDragY = useSharedValue(TRIAL_SHEET_H);
+  useEffect(() => {
+    if (showTrialSheet) {
+      trialDragY.value = TRIAL_SHEET_H;
+      trialDragY.value = withTiming(0, { duration: 420, easing: Easing.out(Easing.cubic) });
+    } else {
+      trialDragY.value = TRIAL_SHEET_H;
+    }
+  }, [showTrialSheet, trialDragY]);
+  const trialPan = Gesture.Pan()
+    .activeOffsetY(12)
+    .onUpdate((e) => {
+      'worklet';
+      if (e.translationY > 0) trialDragY.value = e.translationY;
+    })
+    .onEnd((e) => {
+      'worklet';
+      if (e.translationY > 120 || e.velocityY > 800) {
+        trialDragY.value = withTiming(TRIAL_SHEET_H, { duration: 240 }, (f) => { if (f) runOnJS(declineTrial)(); });
+      } else {
+        trialDragY.value = withTiming(0, { duration: 220 });
+      }
+    });
+  const trialSheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: trialDragY.value }] }));
 
   // Single-select: store + log the answer + auto-advance after a brief highlight.
   const pickSingle = (field: keyof OnboardingAnswers, value: string | number) => {
@@ -174,20 +311,27 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
           welcome/language step — skipping before a language is confirmed would
           strand a possibly-wrong-language user; a spacer keeps the layout). */}
       <View style={styles.topBar}>
-        {step > 0 ? (
+        {stepName === 'paywall' ? (
+          // Paywall: the ONLY dismissal is the X — it opens the free-trial
+          // offer sheet (declining that continues onboarding). No back, no Skip.
+          <TouchableOpacity onPress={() => setShowTrialSheet(true)} hitSlop={12} style={styles.backBtn}>
+            <Feather name="x" size={24} color={TXTSUB} />
+          </TouchableOpacity>
+        ) : step > 0 ? (
           <TouchableOpacity onPress={goBack} hitSlop={12} style={styles.backBtn}>
             <Feather name="chevron-left" size={24} color={TXTSUB} />
           </TouchableOpacity>
         ) : <View style={styles.backBtn} />}
-        {stepName !== 'language' ? (
+        {stepName !== 'language' && stepName !== 'paywall' ? (
           <TouchableOpacity onPress={() => finishAll('skipped')} hitSlop={12}>
             <Text style={styles.skip}>{t('onboarding.skip')}</Text>
           </TouchableOpacity>
         ) : <View style={styles.backBtn} />}
       </View>
 
-      {/* Progress — hidden on the welcome step (it's a cover, not a question). */}
-      {stepName !== 'language' ? (
+      {/* Progress — hidden on the welcome step (a cover, not a question) and
+          on the paywall (an offer, not a step the user "progresses" through). */}
+      {stepName !== 'language' && stepName !== 'paywall' ? (
         <View style={styles.progressTrack}>
           <View style={[styles.progressFill, { width: `${((step + 1) / TOTAL) * 100}%` }]} />
         </View>
@@ -204,7 +348,11 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
                 <LinearGradient colors={['#F9D9E6', '#F4A6C0', ROSE]} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={styles.welcomeHero}>
                   <Ionicons name="heart" size={40} color="#FFFFFF" style={{ opacity: 0.92 }} />
                 </LinearGradient>
-                <Text style={[styles.h, { textAlign: 'center', marginTop: 18 }]}>{t('onboarding.welcome.title')}</Text>
+                {/* Brand tagline — fades in while rising from just below its
+                    resting spot over 0.7s (per user; NOT an off-screen slide). */}
+                <Animated.Text entering={FadeInUp.duration(700)} style={styles.tagline}>
+                  {t('onboarding.welcome.tagline')}
+                </Animated.Text>
                 <Text style={[styles.sub, { textAlign: 'center', paddingHorizontal: 12 }]}>{t('onboarding.welcome.sub')}</Text>
               </View>
               {/* Language rows — nativeName labels never need translation. The
@@ -237,14 +385,16 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
             <>
               <Text style={styles.h}>{t('onboarding.goal.title')}</Text>
               <Text style={styles.sub}>{t('onboarding.goal.sub')}</Text>
-              {GOAL_OPTS.map((o) => {
+              {GOAL_OPTS.map((o, i) => {
                 const sel = a.goal === o.k;
                 return (
-                  <TouchableOpacity key={o.k} activeOpacity={0.85} onPress={() => pickSingle('goal', o.k)} style={[styles.row, sel && styles.rowSel]}>
-                    <Ionicons name={o.icon as any} size={21} color={accent} />
-                    <Text style={[styles.rowText, sel && styles.rowTextSel]}>{t(`onboarding.goal.opt.${o.k}`)}</Text>
-                    {sel && <Ionicons name="checkmark" size={18} color={accent} />}
-                  </TouchableOpacity>
+                  <Animated.View key={o.k} entering={FadeInRight.duration(500).delay(i * 70)}>
+                    <TouchableOpacity activeOpacity={0.85} onPress={() => pickSingle('goal', o.k)} style={[styles.row, sel && styles.rowSel]}>
+                      <Ionicons name={o.icon as any} size={23} color={accent} />
+                      <Text style={[styles.rowText, sel && styles.rowTextSel]}>{t(`onboarding.goal.opt.${o.k}`)}</Text>
+                      {sel && <Ionicons name="checkmark" size={20} color={accent} />}
+                    </TouchableOpacity>
+                  </Animated.View>
                 );
               })}
             </>
@@ -254,13 +404,15 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
             <>
               <Text style={styles.h}>{t('onboarding.age.title')}</Text>
               <Text style={styles.sub}>{t('onboarding.age.sub')}</Text>
-              {AGE_OPTS.map((o) => {
+              {AGE_OPTS.map((o, i) => {
                 const sel = a.age === o;
                 return (
-                  <TouchableOpacity key={o} activeOpacity={0.85} onPress={() => pickSingle('age', o)} style={[styles.row, sel && styles.rowSel]}>
-                    <Text style={[styles.rowText, sel && styles.rowTextSel, { flex: 1 }]}>{o}</Text>
-                    {sel && <Ionicons name="checkmark" size={18} color={accent} />}
-                  </TouchableOpacity>
+                  <Animated.View key={o} entering={FadeInRight.duration(500).delay(i * 70)}>
+                    <TouchableOpacity activeOpacity={0.85} onPress={() => pickSingle('age', o)} style={[styles.row, sel && styles.rowSel]}>
+                      <Text style={[styles.rowText, sel && styles.rowTextSel, { flex: 1 }]}>{o}</Text>
+                      {sel && <Ionicons name="checkmark" size={20} color={accent} />}
+                    </TouchableOpacity>
+                  </Animated.View>
                 );
               })}
             </>
@@ -270,16 +422,18 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
             <>
               <Text style={styles.h}>{t('onboarding.bible.title')}</Text>
               <Text style={styles.sub}>{t('onboarding.bible.sub')}</Text>
-              {BIBLE_OPTS.map((o) => {
+              {BIBLE_OPTS.map((o, i) => {
                 const sel = a.bibleLevel === o.k;
                 return (
-                  <TouchableOpacity key={o.k} activeOpacity={0.85} onPress={() => pickSingle('bibleLevel', o.k)} style={[styles.card, sel && styles.rowSel]}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.cardTitle, sel && styles.rowTextSel]}>{t(`onboarding.bible.opt.${o.k}`)}</Text>
-                      {o.sub && <Text style={styles.cardSub}>{t(`onboarding.bible.opt.${o.k}.sub`)}</Text>}
-                    </View>
-                    {sel && <Ionicons name="checkmark" size={18} color={accent} />}
-                  </TouchableOpacity>
+                  <Animated.View key={o.k} entering={FadeInRight.duration(500).delay(i * 70)}>
+                    <TouchableOpacity activeOpacity={0.85} onPress={() => pickSingle('bibleLevel', o.k)} style={[styles.card, sel && styles.rowSel]}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.cardTitle, sel && styles.rowTextSel]}>{t(`onboarding.bible.opt.${o.k}`)}</Text>
+                        {o.sub && <Text style={styles.cardSub}>{t(`onboarding.bible.opt.${o.k}.sub`)}</Text>}
+                      </View>
+                      {sel && <Ionicons name="checkmark" size={20} color={accent} />}
+                    </TouchableOpacity>
+                  </Animated.View>
                 );
               })}
             </>
@@ -300,12 +454,14 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
               <Text style={styles.h}>{t('onboarding.topics.title')}</Text>
               <Text style={styles.sub}>{t('onboarding.topics.sub')}</Text>
               <View style={styles.chips}>
-                {TOPIC_OPTS.map((k) => {
+                {TOPIC_OPTS.map((k, i) => {
                   const sel = (a.topics ?? []).includes(k);
                   return (
-                    <TouchableOpacity key={k} activeOpacity={0.85} onPress={() => toggleTopic(k)} style={[styles.chip, sel && styles.chipSel]}>
-                      <Text style={[styles.chipText, sel && styles.chipTextSel]}>{t(`onboarding.topics.opt.${k}`)}</Text>
-                    </TouchableOpacity>
+                    <Animated.View key={k} entering={FadeInRight.duration(500).delay(i * 50)}>
+                      <TouchableOpacity activeOpacity={0.85} onPress={() => toggleTopic(k)} style={[styles.chip, sel && styles.chipSel]}>
+                        <Text style={[styles.chipText, sel && styles.chipTextSel]}>{t(`onboarding.topics.opt.${k}`)}</Text>
+                      </TouchableOpacity>
+                    </Animated.View>
                   );
                 })}
               </View>
@@ -316,14 +472,16 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
             <>
               <Text style={styles.h}>{t('onboarding.time.title')}</Text>
               <Text style={styles.sub}>{t('onboarding.time.sub')}</Text>
-              {TIME_OPTS.map((min) => {
+              {TIME_OPTS.map((min, i) => {
                 const sel = a.timeCommitment === min;
                 return (
-                  <TouchableOpacity key={min} activeOpacity={0.85} onPress={() => pickSingle('timeCommitment', min)} style={[styles.card, sel && styles.rowSel]}>
-                    <Text style={styles.timeNum}>{min} {t('onboarding.time.min')}</Text>
-                    <Text style={[styles.timeSub, sel && { color: TXT }]}>{t(`onboarding.time.opt.${min}`)}</Text>
-                    {sel && <Ionicons name="checkmark" size={18} color={accent} style={{ marginLeft: 8 }} />}
-                  </TouchableOpacity>
+                  <Animated.View key={min} entering={FadeInRight.duration(500).delay(i * 70)}>
+                    <TouchableOpacity activeOpacity={0.85} onPress={() => pickSingle('timeCommitment', min)} style={[styles.card, sel && styles.rowSel]}>
+                      <Text style={styles.timeNum}>{min} {t('onboarding.time.min')}</Text>
+                      <Text style={[styles.timeSub, sel && { color: TXT }]}>{t(`onboarding.time.opt.${min}`)}</Text>
+                      {sel && <Ionicons name="checkmark" size={20} color={accent} style={{ marginLeft: 8 }} />}
+                    </TouchableOpacity>
+                  </Animated.View>
                 );
               })}
             </>
@@ -333,20 +491,72 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
             <>
               <Text style={styles.h}>{t('onboarding.remind.title')}</Text>
               <Text style={styles.sub}>{t('onboarding.remind.sub')}</Text>
-              <TouchableOpacity activeOpacity={0.85} onPress={() => setEditing('morning')} style={styles.timeRow}>
-                <View style={styles.timeLabel}>
-                  <Ionicons name="sunny-outline" size={21} color={ROSE} />
-                  <Text style={styles.timeLabelText}>{t('onboarding.remind.morning')}</Text>
-                </View>
-                <Text style={[styles.timePill, { backgroundColor: '#FBEAF0', color: ROSE }]}>{to12h(settings.morning.hour, settings.morning.minute)}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity activeOpacity={0.85} onPress={() => setEditing('night')} style={styles.timeRow}>
-                <View style={styles.timeLabel}>
-                  <Ionicons name="moon-outline" size={20} color={LAV} />
-                  <Text style={styles.timeLabelText}>{t('onboarding.remind.evening')}</Text>
-                </View>
-                <Text style={[styles.timePill, { backgroundColor: '#EEE9F8', color: LAV }]}>{to12h(settings.night.hour, settings.night.minute)}</Text>
-              </TouchableOpacity>
+              <Animated.View entering={FadeInRight.duration(500)}>
+                <TouchableOpacity activeOpacity={0.85} onPress={() => setEditing('morning')} style={styles.timeRow}>
+                  <View style={styles.timeLabel}>
+                    <Ionicons name="sunny-outline" size={23} color={ROSE} />
+                    <Text style={styles.timeLabelText}>{t('onboarding.remind.morning')}</Text>
+                  </View>
+                  <Text style={[styles.timePill, { backgroundColor: '#FBEAF0', color: ROSE }]}>{to12h(settings.morning.hour, settings.morning.minute)}</Text>
+                </TouchableOpacity>
+              </Animated.View>
+              <Animated.View entering={FadeInRight.duration(500).delay(70)}>
+                <TouchableOpacity activeOpacity={0.85} onPress={() => setEditing('night')} style={styles.timeRow}>
+                  <View style={styles.timeLabel}>
+                    <Ionicons name="moon-outline" size={22} color={LAV} />
+                    <Text style={styles.timeLabelText}>{t('onboarding.remind.evening')}</Text>
+                  </View>
+                  <Text style={[styles.timePill, { backgroundColor: '#EEE9F8', color: LAV }]}>{to12h(settings.night.hour, settings.night.minute)}</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </>
+          )}
+
+          {stepName === 'paywall' && (
+            <>
+              <Text style={styles.payTitle}>{t('obPaywall.title')}</Text>
+              {/* Benefits — a few words each (per user, modeled on the reference). */}
+              <View style={styles.payBenefits}>
+                {(['b1', 'b2', 'b3', 'b4'] as const).map((k, i) => (
+                  <Animated.View key={k} entering={FadeInRight.duration(500).delay(i * 60)} style={styles.payBenefitRow}>
+                    <Feather name="check" size={19} color={ROSE} />
+                    <Text style={styles.payBenefitText}>{t(`obPaywall.${k}`)}</Text>
+                  </Animated.View>
+                ))}
+              </View>
+              {/* Plan cards — lifetime (Best Value) / annual (Save 58%) / monthly. */}
+              {PAY_PLANS.map((p, i) => {
+                const sel = selectedPlan === p.id;
+                return (
+                  <Animated.View key={p.id} entering={FadeInRight.duration(500).delay(200 + i * 70)}>
+                    <TouchableOpacity
+                      activeOpacity={0.85}
+                      onPress={() => setSelectedPlan(p.id)}
+                      style={[styles.payPlan, sel && styles.payPlanSel]}
+                    >
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <Text style={[styles.payPlanLabel, sel && { color: ROSE }]}>{t(p.labelKey)}</Text>
+                        <Text style={styles.payPlanSub}>
+                          {t(`${p.labelKey}.priceLine`, { price: obPrices[p.id] })}
+                        </Text>
+                      </View>
+                      <View style={[styles.payRadio, sel && styles.payRadioSel]}>
+                        {sel && <Feather name="check" size={13} color="#FFFFFF" />}
+                      </View>
+                      {p.best && (
+                        <View style={[styles.payBadge, { backgroundColor: ROSE }]}>
+                          <Text style={styles.payBadgeText}>{t('obPaywall.badge.best')}</Text>
+                        </View>
+                      )}
+                      {p.save != null && (
+                        <View style={[styles.payBadge, { backgroundColor: '#F2A63B' }]}>
+                          <Text style={styles.payBadgeText}>{t('obPaywall.badge.save', { pct: p.save })}</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  </Animated.View>
+                );
+              })}
             </>
           )}
 
@@ -391,26 +601,48 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
       <View style={[styles.footer, { paddingBottom: insets.bottom + 14 }]}>
         {stepName === 'notify' ? (
           <Animated.View entering={FadeIn.duration(300)}>
-            <TouchableOpacity activeOpacity={0.9} onPress={onNotifyRemind} style={styles.cta}>
+            <PressBounce onPress={onNotifyRemind} style={styles.cta}>
               <Text style={styles.ctaText}>{t('onboarding.notify.cta')}</Text>
-            </TouchableOpacity>
+            </PressBounce>
             <TouchableOpacity onPress={goNext} hitSlop={10} style={styles.laterBtn}>
               <Text style={styles.laterText}>{t('onboarding.notify.later')}</Text>
             </TouchableOpacity>
           </Animated.View>
         ) : stepName === 'login' ? (
           <Animated.View entering={FadeIn.duration(300)}>
-            <TouchableOpacity activeOpacity={0.9} onPress={() => setShowSignIn(true)} style={styles.cta}>
+            <PressBounce onPress={() => setShowSignIn(true)} style={styles.cta}>
               <Text style={styles.ctaText}>{t('onboarding.login.cta')}</Text>
-            </TouchableOpacity>
+            </PressBounce>
             <TouchableOpacity onPress={() => finishAll('completed')} hitSlop={10} style={styles.laterBtn}>
               <Text style={styles.laterText}>{t('onboarding.notify.later')}</Text>
             </TouchableOpacity>
           </Animated.View>
+        ) : stepName === 'paywall' ? (
+          <Animated.View entering={FadeIn.duration(300)}>
+            <PressBounce onPress={() => buyPlan(selectedPlan)} style={styles.cta} disabled={payBusy}>
+              {payBusy
+                ? <ActivityIndicator color="#FFFFFF" />
+                : <Text style={styles.ctaText}>{t('obPaywall.cta')}</Text>}
+            </PressBounce>
+            {/* 3.1.2 compliance row: restore + terms + privacy. */}
+            <View style={styles.payLinksRow}>
+              <TouchableOpacity onPress={onRestore} hitSlop={8}>
+                <Text style={styles.payLink}>{t('obPaywall.restore')}</Text>
+              </TouchableOpacity>
+              <Text style={styles.payLinkDot}>·</Text>
+              <TouchableOpacity onPress={() => Linking.openURL('https://covers.everlandapps.com/legal/support.html').catch(() => {})} hitSlop={8}>
+                <Text style={styles.payLink}>{t('obPaywall.terms')}</Text>
+              </TouchableOpacity>
+              <Text style={styles.payLinkDot}>·</Text>
+              <TouchableOpacity onPress={() => Linking.openURL('https://covers.everlandapps.com/legal/privacy.html').catch(() => {})} hitSlop={8}>
+                <Text style={styles.payLink}>{t('obPaywall.privacy')}</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
         ) : (stepName === 'language' || stepName === 'intro' || stepName === 'encourage' || stepName === 'topics' || stepName === 'remind') ? (
-          <TouchableOpacity activeOpacity={0.9} onPress={continueFrom} style={styles.cta}>
+          <PressBounce onPress={continueFrom} style={styles.cta}>
             <Text style={styles.ctaText}>{t('common.continue')}</Text>
-          </TouchableOpacity>
+          </PressBounce>
         ) : null}
       </View>
 
@@ -425,6 +657,42 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
             onClose={() => setEditing(null)}
           />
         )}
+      </Modal>
+
+      {/* Free-trial offer sheet — shown when the paywall's X is tapped (one
+          last soft pitch before onboarding continues). Declining it in ANY way
+          (X, backdrop, swipe-down) moves on to the next step. */}
+      <Modal visible={showTrialSheet} transparent animationType="none" onRequestClose={declineTrial} statusBarTranslucent>
+        <View style={styles.trialOverlay}>
+          <TouchableOpacity style={styles.trialBackdrop} activeOpacity={1} onPress={declineTrial} />
+          <GestureDetector gesture={trialPan}>
+            <Animated.View style={[styles.trialSheet, trialSheetStyle]}>
+              <View style={styles.trialHandle} />
+              <TouchableOpacity onPress={declineTrial} hitSlop={12} style={styles.trialClose}>
+                <Feather name="x" size={20} color={TXTSUB} />
+              </TouchableOpacity>
+              {/* Gift mark — placeholder vector until the brand pink gift-box
+                  PNG lands at assets/paywall/gift-box.png (then swap to
+                  <Image source={require(...)}). */}
+              <View style={styles.trialGift}>
+                <Feather name="gift" size={44} color={ROSE} />
+              </View>
+              <Text style={styles.trialTitle}>{t('obTrial.title')}</Text>
+              {(['b1', 'b2', 'b3'] as const).map((k, i) => (
+                <Animated.View key={k} entering={FadeInRight.duration(450).delay(120 + i * 60)} style={styles.payBenefitRow}>
+                  <Feather name="check" size={18} color={ROSE} />
+                  <Text style={styles.payBenefitText}>{t(`obTrial.${k}`)}</Text>
+                </Animated.View>
+              ))}
+              <Text style={styles.trialPriceLine}>{t('obTrial.priceLine', { price: obPrices.annual })}</Text>
+              <PulseCta onPress={() => buyPlan('annual')} style={styles.cta} disabled={payBusy}>
+                {payBusy
+                  ? <ActivityIndicator color="#FFFFFF" />
+                  : <Text style={styles.ctaText}>{t('obTrial.cta')}</Text>}
+              </PulseCta>
+            </Animated.View>
+          </GestureDetector>
+        </View>
       </Modal>
 
       {/* Final login screen's sign-in sheet. Closing it (success OR cancel)
@@ -458,7 +726,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14, paddingHorizontal: 14, marginBottom: 9,
   },
   rowSel: { backgroundColor: '#FBEAF0', borderWidth: 1.5, borderColor: ROSE },
-  rowText: { flex: 1, fontSize: 16.5, color: TXT, fontFamily: FONTS.lato },   // 15 → 16.5 (+10 %)
+  rowText: { flex: 1, fontSize: 18, color: TXT, fontFamily: FONTS.lato },   // 16.5 → 18 (2nd +10 % round per user)
   rowTextSel: { fontWeight: '700' },
   // Two-line card (bible level / time commitment).
   card: {
@@ -466,10 +734,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF', borderRadius: 15, borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.08)',
     paddingVertical: 13, paddingHorizontal: 14, marginBottom: 9,
   },
-  cardTitle: { fontSize: 16.5, color: TXT, fontFamily: FONTS.lato },   // 15 → 16.5 (+10 %)
-  cardSub: { fontSize: 14, color: 'rgba(30,27,46,0.42)', fontFamily: FONTS.lato, marginTop: 2 },   // 12.5 → 14 (+10 %)
-  timeNum: { fontSize: 20, color: ROSE, fontFamily: FONTS.loraBold, fontWeight: '600', width: 72 },   // 18 → 20 (+10 %); width 64 → 72 so "30 min" fits in de/fr
-  timeSub: { flex: 1, fontSize: 14.5, color: 'rgba(30,27,46,0.55)', fontFamily: FONTS.lato },   // 13 → 14.5 (+10 %)
+  cardTitle: { fontSize: 18, color: TXT, fontFamily: FONTS.lato },   // 16.5 → 18 (2nd +10 %)
+  cardSub: { fontSize: 15.5, color: 'rgba(30,27,46,0.42)', fontFamily: FONTS.lato, marginTop: 2 },   // 14 → 15.5 (2nd +10 %)
+  timeNum: { fontSize: 22, color: ROSE, fontFamily: FONTS.loraBold, fontWeight: '600', width: 80 },   // 20 → 22 (2nd +10 %); width 72 → 80
+  timeSub: { flex: 1, fontSize: 16, color: 'rgba(30,27,46,0.55)', fontFamily: FONTS.lato },   // 14.5 → 16 (2nd +10 %)
   // Chips (topics, multi-select).
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
   chip: {
@@ -477,7 +745,7 @@ const styles = StyleSheet.create({
     borderRadius: 22, paddingVertical: 10, paddingHorizontal: 16,
   },
   chipSel: { backgroundColor: ROSE, borderColor: ROSE },
-  chipText: { fontSize: 15.5, color: TXT, fontFamily: FONTS.lato },   // 14 → 15.5 (+10 %)
+  chipText: { fontSize: 17, color: TXT, fontFamily: FONTS.lato },   // 15.5 → 17 (2nd +10 %)
   chipTextSel: { color: '#FFFFFF', fontWeight: '700' },
   // Encouragement interstitial.
   hero: { width: '100%', height: 200, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
@@ -488,14 +756,75 @@ const styles = StyleSheet.create({
     paddingVertical: 15, paddingHorizontal: 16, marginBottom: 11,
   },
   timeLabel: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  timeLabelText: { fontSize: 16.5, color: TXT, fontFamily: FONTS.lato },   // 15 → 16.5 (+10 %, matches rowText)
-  timePill: { fontSize: 16.5, fontWeight: '700', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 12, overflow: 'hidden' },   // 15 → 16.5 (+10 %)
+  timeLabelText: { fontSize: 18, color: TXT, fontFamily: FONTS.lato },   // 16.5 → 18 (2nd +10 %)
+  timePill: { fontSize: 18, fontWeight: '700', paddingVertical: 9, paddingHorizontal: 17, borderRadius: 12, overflow: 'hidden' },   // 16.5 → 18 (2nd +10 %)
   // Notification hero + mock banner.
   notifHero: { width: '100%', height: 188, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginTop: 4, overflow: 'hidden' },
   loginHero: { width: 92, height: 92, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginTop: 12 },
   // Welcome/language step brand mark — same gradient family, slightly smaller
   // so the 7 language rows fit without scrolling on compact phones.
   welcomeHero: { width: 84, height: 84, borderRadius: 26, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  // Brand tagline under the welcome mark — 70% of the reference screenshot's
+  // display size (per user), Lora 600 (never 700 on Android).
+  tagline: {
+    fontSize: 28, lineHeight: 36, fontFamily: FONTS.loraBold, fontWeight: '600',
+    color: TXT, textAlign: 'center', marginTop: 18, paddingHorizontal: 8, marginBottom: 6,
+  },
+  // ── Onboarding paywall ──
+  payTitle: {
+    fontSize: 30, fontFamily: FONTS.loraBold, fontWeight: '600', color: TXT,
+    marginTop: 2, marginBottom: 16,
+  },
+  payBenefits: { gap: 11, marginBottom: 22 },
+  payBenefitRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  payBenefitText: { fontSize: 16.5, color: TXT, fontFamily: FONTS.lato },
+  payPlan: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: '#FFFFFF', borderRadius: 15, borderWidth: 1.5, borderColor: 'rgba(30,27,46,0.08)',
+    paddingVertical: 15, paddingHorizontal: 16, marginBottom: 11,
+  },
+  payPlanSel: { borderColor: ROSE, backgroundColor: '#FBEAF0' },
+  payPlanLabel: { fontSize: 18, fontWeight: '700', color: TXT, fontFamily: FONTS.latoBold },
+  payPlanSub: { fontSize: 14.5, color: TXTSUB, fontFamily: FONTS.lato, marginTop: 3 },
+  payRadio: {
+    width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: 'rgba(30,27,46,0.25)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  payRadioSel: { backgroundColor: ROSE, borderColor: ROSE },
+  payBadge: {
+    position: 'absolute', top: -9, right: 14,
+    paddingHorizontal: 10, paddingVertical: 3, borderRadius: 9,
+  },
+  payBadgeText: { fontSize: 11.5, fontWeight: '700', color: '#FFFFFF', fontFamily: FONTS.latoBold },
+  payLinksRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 },
+  payLink: { fontSize: 12.5, color: TXTSUB, fontFamily: FONTS.lato, textDecorationLine: 'underline' },
+  payLinkDot: { color: TXTSUB, fontSize: 12.5 },
+  // ── Free-trial offer sheet ──
+  trialOverlay: { flex: 1, justifyContent: 'flex-end' },
+  trialBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(20,16,28,0.42)' },
+  trialSheet: {
+    height: TRIAL_SHEET_H,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 22, borderTopRightRadius: 22,
+    paddingHorizontal: 24, paddingBottom: 22,
+  },
+  trialHandle: {
+    alignSelf: 'center', width: 42, height: 4.5, borderRadius: 3,
+    backgroundColor: 'rgba(30,27,46,0.18)', marginTop: 10, marginBottom: 4,
+  },
+  trialClose: {
+    position: 'absolute', top: 16, right: 16, zIndex: 2,
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: 'rgba(30,27,46,0.06)', alignItems: 'center', justifyContent: 'center',
+  },
+  trialGift: {
+    width: 84, height: 84, borderRadius: 24, backgroundColor: '#FBEAF0',
+    alignItems: 'center', justifyContent: 'center', marginTop: 8, marginBottom: 14,
+  },
+  trialTitle: {
+    fontSize: 28, fontFamily: FONTS.loraBold, fontWeight: '600', color: TXT, marginBottom: 16,
+  },
+  trialPriceLine: { fontSize: 14, color: TXTSUB, fontFamily: FONTS.lato, textAlign: 'center', marginTop: 16, marginBottom: 12 },
   loginBenefits: { alignSelf: 'stretch', marginTop: 22, gap: 14, paddingHorizontal: 4 },
   benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 13 },
   benefitIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: '#FBEAF0', alignItems: 'center', justifyContent: 'center' },

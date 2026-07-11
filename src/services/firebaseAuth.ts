@@ -91,7 +91,19 @@ export async function googleSignIn(): Promise<void> {
   const idToken = result?.data?.idToken ?? result?.idToken;
   if (!idToken) throw new Error('NO_ID_TOKEN');
   const credential = authMod.GoogleAuthProvider.credential(idToken);
-  await authMod().signInWithCredential(credential);
+  // Guard against an indefinite hang: on some devices — and notably behind a
+  // VPN/proxy — the Firebase Auth credential exchange can stall and never
+  // resolve, leaving the sign-in spinner turning forever with no error. Race it
+  // against a timeout so the UI fails visibly instead (see SignInSheet, which
+  // surfaces the error code so the real cause is diagnosable).
+  await withTimeout(authMod().signInWithCredential(credential), 25000);
+}
+
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('FIREBASE_TIMEOUT')), ms)),
+  ]);
 }
 
 export function facebookAuthAvailable(): boolean {

@@ -87,7 +87,11 @@ export default function SignInSheet({ onClose, onError }: Props) {
       onClose();   // signed into Firebase → close the sheet
     } catch (e: any) {
       if (e?.message === 'CANCELLED') return;   // user dismissed the picker — stay silent
-      onError?.('Google sign-in failed. Please try again.');
+      // Surface the real code (DEVELOPER_ERROR = SHA-1 mismatch,
+      // auth/network-request-failed = blocked/VPN, FIREBASE_TIMEOUT = stalled)
+      // so the actual cause is visible instead of a silent forever-spinner.
+      const code = e?.code || e?.message || 'unknown';
+      onError?.(`Google sign-in failed (${code}). Please try again.`);
     } finally {
       setBusy(null);
     }

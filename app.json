@@ -58,6 +58,7 @@
     "plugins": [
       "./plugins/withAndroidPackageQueries.js",
       "./plugins/withNativeDebugSymbols.js",
+      "./plugins/withNotifeeMavenRepo.js",
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
       "@react-native-firebase/crashlytics",

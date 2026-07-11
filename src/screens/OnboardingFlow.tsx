@@ -110,7 +110,7 @@ const AGE_OPTS = ['18-24', '25-34', '35-49', '50-64', '65+'] as const;
 const BIBLE_OPTS = [
   { k: 'new',      sub: true },
   { k: 'basics',   sub: true },
-  { k: 'familiar', sub: false },
+  { k: 'familiar', sub: true },
   { k: 'regular',  sub: true },
 ] as const;
 
@@ -138,6 +138,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
   const [editing, setEditing] = useState<'morning' | 'night' | null>(null);
   const [showSignIn, setShowSignIn] = useState(false);
   const notifsOnRef = useRef(false);   // set at the notify step; read by finishAll
+  const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);   // pending single-select auto-advance
   // Language detected (or previously persisted) at mount — used to log whether
   // the user kept the default or actively switched on the welcome step.
   const initialLangRef = useRef(lang);
@@ -169,7 +170,11 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
       try { maybeShowOnboardingInterstitial(); } catch { /* never block the flow */ }
     }
   };
-  const goBack = () => setStep((s) => Math.max(0, s - 1));
+  const goBack = () => {
+    // A pending auto-advance must not fire after the user backs out.
+    if (advanceTimerRef.current) { clearTimeout(advanceTimerRef.current); advanceTimerRef.current = null; }
+    setStep((s) => Math.max(0, s - 1));
+  };
 
   // ── Onboarding paywall (step 'paywall') ───────────────────────────────────
   const [selectedPlan, setSelectedPlan] = useState<PlanId>('lifetime');
@@ -232,11 +237,16 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
     });
   const trialSheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: trialDragY.value }] }));
 
-  // Single-select: store + log the answer + auto-advance after a brief highlight.
+  // Single-select: store + log the answer, hold the highlight 0.5s so the
+  // user SEES what she picked, then auto-advance. Tapping another option
+  // during the hold switches the answer and restarts the hold — the pending
+  // timer is cancelled so the flow can never double-advance.
+  useEffect(() => () => { if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current); }, []);
   const pickSingle = (field: keyof OnboardingAnswers, value: string | number) => {
     setA((prev) => ({ ...prev, [field]: value }));
     logEvent('onboarding_answer', { step_name: STEP_NAMES[step], question: String(field), value: String(value) });
-    setTimeout(goNext, 200);
+    if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    advanceTimerRef.current = setTimeout(() => { advanceTimerRef.current = null; goNext(); }, 500);
   };
   const toggleTopic = (k: string) => {
     setA((prev) => {

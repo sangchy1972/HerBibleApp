@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal, ActivityIndicator, Linking, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal, ActivityIndicator, Linking, Dimensions, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -49,6 +49,7 @@ const PAY_PLANS: ReadonlyArray<{ id: PlanId; labelKey: string; save?: number; be
 const OB_FALLBACK_PRICES: Record<PlanId, string> = { lifetime: 'NT$670', annual: 'NT$420', monthly: 'NT$84' };
 
 const TRIAL_SHEET_H = Math.round(Dimensions.get('window').height * 0.56);
+const GIFT_BOX = require('../../assets/paywall/gift-box.png');
 
 // Press feedback: every primary CTA scales down on press-in and springs back
 // on release, so taps always FEEL acknowledged (per user).
@@ -671,12 +672,9 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
               <TouchableOpacity onPress={declineTrial} hitSlop={12} style={styles.trialClose}>
                 <Feather name="x" size={20} color={TXTSUB} />
               </TouchableOpacity>
-              {/* Gift mark — placeholder vector until the brand pink gift-box
-                  PNG lands at assets/paywall/gift-box.png (then swap to
-                  <Image source={require(...)}). */}
-              <View style={styles.trialGift}>
-                <Feather name="gift" size={44} color={ROSE} />
-              </View>
+              {/* Brand gift box — user-provided art, cleaned (green-screen
+                  fringe + dark ribbon outline removed, alpha re-feathered). */}
+              <Image source={GIFT_BOX} style={styles.trialGiftImg} resizeMode="contain" />
               <Text style={styles.trialTitle}>{t('obTrial.title')}</Text>
               {(['b1', 'b2', 'b3'] as const).map((k, i) => (
                 <Animated.View key={k} entering={FadeInRight.duration(450).delay(120 + i * 60)} style={styles.payBenefitRow}>
@@ -817,10 +815,7 @@ const styles = StyleSheet.create({
     width: 34, height: 34, borderRadius: 17,
     backgroundColor: 'rgba(30,27,46,0.06)', alignItems: 'center', justifyContent: 'center',
   },
-  trialGift: {
-    width: 84, height: 84, borderRadius: 24, backgroundColor: '#FBEAF0',
-    alignItems: 'center', justifyContent: 'center', marginTop: 8, marginBottom: 14,
-  },
+  trialGiftImg: { width: 96, height: 96, marginTop: 8, marginBottom: 14 },
   trialTitle: {
     fontSize: 28, fontFamily: FONTS.loraBold, fontWeight: '600', color: TXT, marginBottom: 16,
   },

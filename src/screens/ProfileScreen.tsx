@@ -267,7 +267,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
   // and the content lifts into place in waves on every focus.
   const mainScrollRef = useRef<ScrollView>(null);
   useTabFocusScrollReset(mainScrollRef);
-  const { user, signOut, updateProfile } = useAuth();
+  const { user, signOut, deleteAccount, updateProfile } = useAuth();
   const { verses: savedVerses, removeVerse } = useSavedVerses();
   const { dates: activityDates } = useActivity();
   const { totalComplete } = usePrayer();
@@ -774,9 +774,23 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
 
       {user && (
         <Glass style={[styles.settingsCard, { marginTop: 16 }]}>
-          <SettingRow icon="log-out" label={t('profile.signOut.row')} danger isLast onPress={() => Alert.alert(t('profile.signOut.title'), t('profile.signOut.body'), [
+          <SettingRow icon="log-out" label={t('profile.signOut.row')} danger onPress={() => Alert.alert(t('profile.signOut.title'), t('profile.signOut.body'), [
             { text: t('profile.signOut.confirmCancel'), style: 'cancel' },
             { text: t('profile.signOut.confirmConfirm'), style: 'destructive', onPress: signOut },
+          ])} />
+          {/* In-app account deletion — required by Apple App Store Guideline
+              5.1.1(v) for any app that offers account creation. */}
+          <SettingRow icon="trash-2" label={t('profile.deleteAccount.row')} danger isLast onPress={() => Alert.alert(t('profile.deleteAccount.title'), t('profile.deleteAccount.body'), [
+            { text: t('profile.deleteAccount.confirmCancel'), style: 'cancel' },
+            { text: t('profile.deleteAccount.confirmConfirm'), style: 'destructive', onPress: async () => {
+              try {
+                await deleteAccount();
+                showToast(t('profile.deleteAccount.done'), 2800);
+              } catch (e: any) {
+                const key = e?.message === 'REQUIRES_RECENT_LOGIN' ? 'profile.deleteAccount.reauth' : 'profile.deleteAccount.error';
+                showToast(t(key), 2800);
+              }
+            } },
           ])} />
         </Glass>
       )}

@@ -166,6 +166,38 @@ export async function firebaseSignOut(): Promise<void> {
   try { if (authMod) await authMod().signOut(); } catch {}
 }
 
+// Permanently delete the signed-in Firebase account (Apple App Store Guideline
+// 5.1.1(v) requires in-app account deletion). Firebase blocks delete() on a
+// stale session with `auth/requires-recent-login`; we transparently re-auth the
+// Google provider (the common case + the reviewer's demo path) and retry. For
+// other providers we surface REQUIRES_RECENT_LOGIN so the UI can ask the user to
+// sign in again. Returns quietly if there is no Firebase user (e.g. the legacy
+// Apple/local path has no server account — the caller still clears local data).
+export async function deleteAccount(): Promise<void> {
+  if (!authMod) throw new Error('FIREBASE_AUTH_UNAVAILABLE');
+  const user = authMod().currentUser;
+  if (!user) return;   // no server-side account to delete
+  try {
+    await user.delete();
+  } catch (e: any) {
+    if (e?.code !== 'auth/requires-recent-login') throw e;
+    const providerId = user.providerData?.[0]?.providerId;
+    if (providerId === 'google.com' && GoogleSignin) {
+      // Re-authenticate with a fresh Google credential, then delete.
+      ensureConfigured();
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const result = await GoogleSignin.signIn();
+      const idToken = result?.data?.idToken ?? result?.idToken;
+      if (!idToken) throw new Error('REQUIRES_RECENT_LOGIN');
+      const credential = authMod.GoogleAuthProvider.credential(idToken);
+      await user.reauthenticateWithCredential(credential);
+      await user.delete();
+      return;
+    }
+    throw new Error('REQUIRES_RECENT_LOGIN');
+  }
+}
+
 // Subscribe to Firebase auth state. Calls back with a mapped AuthUser or null.
 // Returns an unsubscribe function. No-ops (and reports null once) if the native
 // auth module isn't present.

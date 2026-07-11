@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { onAuthChanged, googleSignIn, facebookSignIn, firebaseSignOut, sendEmailSignInLink, completeEmailSignIn, type AuthUser } from '../services/firebaseAuth';
+import { onAuthChanged, googleSignIn, facebookSignIn, firebaseSignOut, deleteAccount as fbDeleteAccount, sendEmailSignInLink, completeEmailSignIn, type AuthUser } from '../services/firebaseAuth';
 import { setAnalyticsUser, logEvent, setUserProps } from '../services/firebase';
 
 export interface User {
@@ -23,6 +23,10 @@ interface AuthState {
   /** Legacy local sign-in — still used by Apple until it migrates to Firebase. */
   signIn: (u: User) => void;
   signOut: () => void;
+  /** Permanently delete the account (Firebase user, if any) AND clear all local
+   *  identity/data. Throws 'REQUIRES_RECENT_LOGIN' if the provider needs a fresh
+   *  sign-in first (caller should ask the user to sign in again and retry). */
+  deleteAccount: () => Promise<void>;
   updateProfile: (patch: Partial<User>) => void;
 }
 
@@ -116,6 +120,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAnalyticsUser(null);
   }, []);
 
+  // Delete the server account first (throws on failure so the UI can react),
+  // THEN wipe every trace of local identity + data and sign out. Order matters:
+  // if the delete fails (e.g. needs re-auth) we must NOT pretend it succeeded.
+  const deleteAccount = useCallback(async () => {
+    await fbDeleteAccount();   // deletes the Firebase user (or no-ops for Apple/local)
+    setLocalUser(null);
+    setPhotoOverride(undefined);
+    await AsyncStorage.multiRemove([LOCAL_USER_KEY, PHOTO_OVERRIDE_KEY, 'auth:signed-up:v1']).catch(() => {});
+    try { await firebaseSignOut(); } catch {}
+    setAnalyticsUser(null);
+    logEvent('account_delete');
+  }, []);
+
   const updateProfile = useCallback((patch: Partial<User>) => {
     if (patch.photoUri !== undefined) {
       setPhotoOverride(patch.photoUri);
@@ -132,8 +149,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo<AuthState>(() => ({
-    user, signInWithGoogle, signInWithFacebook, sendEmailLink, completeEmailLink, signIn, signOut, updateProfile,
-  }), [user, signInWithGoogle, signInWithFacebook, sendEmailLink, completeEmailLink, signIn, signOut, updateProfile]);
+    user, signInWithGoogle, signInWithFacebook, sendEmailLink, completeEmailLink, signIn, signOut, deleteAccount, updateProfile,
+  }), [user, signInWithGoogle, signInWithFacebook, sendEmailLink, completeEmailLink, signIn, signOut, deleteAccount, updateProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

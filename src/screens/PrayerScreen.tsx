@@ -1044,12 +1044,23 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           future search for the label still surfaces the intentional removal
           and doesn't trigger a "regression" re-add. */}
 
+      </TabSection>
+
       {/* Gospel & Psalm — 89-day plan entry. Two cards (Morning + Evening)
           sit directly below the Start prayer CTA, above Plans In Progress. */}
+      {/* Each block below gets its OWN <TabSection>. They used to share one
+          giant animated wrapper with the toggle + hero, which meant a height
+          change anywhere in the block (the Gospel cards hydrating, a plan
+          being started) invalidated the native touch regions of every element
+          under it on Android — they rendered but ate every tap. One wrapper
+          per block keeps each animated subtree small and self-contained. */}
+      <TabSection delay={45}>
       <View style={[styles.section, { paddingTop: 18 }]}>
         <GospelPsalmCards onOpen={(slot) => navigation.navigate('GospelPsalm', { slot })} />
       </View>
+      </TabSection>
 
+      <TabSection delay={60}>
       {/* Plans In Progress — up to 2 active plans. Sits ABOVE Continue
           Reading per user; section title matches Continue Reading 1:1.
           The card on each row shows "Day N" (next day to read) instead of
@@ -1085,7 +1096,9 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           </View>
         )}
       </View>
+      </TabSection>
 
+      <TabSection delay={75}>
       {/* Continue Reading — wrapped in a white card matching PlanProgressCard
           above (same #FFF bg, 9.8 radius, paddingVertical 11.4, shadow), so
           the home screen reads as a consistent stack of cards. Progress is

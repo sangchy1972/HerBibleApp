@@ -46,28 +46,39 @@ export default function GospelPsalmCards({ onOpen }: { onOpen: (slot: Slot) => v
   const t = useT();
   const { current: translation } = useTranslation();
   const { ready, morning, evening, planComplete } = useGospelsPsalms();
-  if (!ready) return null;
 
-  // No numeric (N/89) on the cards (per user) — just the plan name.
+  // NEVER return null while the store hydrates. This block used to render
+  // nothing until AsyncStorage resolved and then pop ~250 px of content into
+  // the middle of the home screen. Besides the visible jump, that late growth
+  // happened INSIDE PrayerScreen's Reanimated entrance wrapper and left every
+  // element below it with a stale native touch region on Android — the cards,
+  // "Explore Plans", "Plans In Progress" and "Continue Reading" all rendered
+  // but swallowed every tap. Rendering the real structure from the first frame
+  // (subtitle blanked to a space so the row height is identical) keeps the
+  // layout fixed, so nothing below ever shifts.
   const cardTitle = t('gp.cardTitle');
   // Per-slot readings — morning and evening advance independently now, so the
   // two cards may reference DIFFERENT plan days. Localized book names so the
   // subtitle follows the UI language, not English.
   const gospelBook = localizeBookName(translation.code, morning.today.gospel.bookSlug, morning.today.gospel.bookName);
   const psalmBook = localizeBookName(translation.code, 'psalms', 'Psalms');
-  const mSub = morning.complete
-    ? t('gp.slotComplete')
-    : `${gospelBook} ${morning.today.gospel.chapter} · ${psalmBook} ${morning.today.morningPsalm.chapter}`;
-  const eSub = evening.complete
-    ? t('gp.slotComplete')
-    : `${psalmBook} ${evening.today.eveningPsalm.chapter}`;
+  const mSub = !ready
+    ? ' '
+    : morning.complete
+      ? t('gp.slotComplete')
+      : `${gospelBook} ${morning.today.gospel.chapter} · ${psalmBook} ${morning.today.morningPsalm.chapter}`;
+  const eSub = !ready
+    ? ' '
+    : evening.complete
+      ? t('gp.slotComplete')
+      : `${psalmBook} ${evening.today.eveningPsalm.chapter}`;
 
   return (
     <View>
       <Text style={styles.sectionTitle}>{t('gp.section')}</Text>
-      {planComplete && <Text style={styles.completeNote}>{t('gp.planComplete')}</Text>}
-      <SlotCard slot="morning" done={morning.doneToday || morning.complete} title={cardTitle} subtitle={mSub} onPress={() => onOpen('morning')} />
-      <SlotCard slot="evening" done={evening.doneToday || evening.complete} title={cardTitle} subtitle={eSub} onPress={() => onOpen('evening')} />
+      {ready && planComplete && <Text style={styles.completeNote}>{t('gp.planComplete')}</Text>}
+      <SlotCard slot="morning" done={ready && (morning.doneToday || morning.complete)} title={cardTitle} subtitle={mSub} onPress={() => onOpen('morning')} />
+      <SlotCard slot="evening" done={ready && (evening.doneToday || evening.complete)} title={cardTitle} subtitle={eSub} onPress={() => onOpen('evening')} />
     </View>
   );
 }

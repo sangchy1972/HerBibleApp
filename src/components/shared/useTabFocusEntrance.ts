@@ -25,57 +25,77 @@ import {
 // PrayerScreen / PlanScreen edits.
 const ENTRANCE_DURATION_MS = 220;
 const TRANSLATE_FROM = 18;
+// Extra slack after the timing nominally ends before we hand the view back to
+// plain RN — covers the delay + duration + a couple of frames of jitter.
+const SETTLE_SLACK_MS = 80;
+// The resting style. A PLAIN object (not a worklet style) on purpose — see the
+// long note below.
+const RESTING_STYLE = { opacity: 1 } as const;
+
 export function useTabFocusEntrance(delay = 0) {
   const translateY = useSharedValue(TRANSLATE_FROM);
   const opacity = useSharedValue(0);
-  // 0 while the entrance is (or is about to be) animating; flips to 1 the
-  // moment it finishes. Once settled we STOP applying a transform at all —
-  // see the touch-target note in useAnimatedStyle below.
-  const settled = useSharedValue(0);
   // True until the FIRST focus has fired; subsequent focuses are no-ops so
   // the user isn't waiting for animations to finish before they can tap.
   const firstFocus = useRef(true);
+  const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ANDROID TOUCH BUG (the "visible but untappable" home-screen cards).
+  //
+  // While a view carries a Reanimated animated style, Reanimated OWNS that
+  // view: it pushes props straight to the native view off the React commit
+  // path. On Fabric/Android the native TOUCH REGIONS of that view's subtree
+  // then stay pinned to the layout that existed when the animation attached.
+  // That is fine for a static subtree — but PrayerScreen's block GROWS after
+  // mount (GospelPsalmCards renders null until AsyncStorage resolves, then
+  // pushes ~250 px of content in). Result: everything is DRAWN in the right
+  // place, but the hit regions below the growth point are stale —
+  //   • the Gospel & Psalm cards never had a hit region (didn't exist at
+  //     first layout) → completely dead,
+  //   • Plans In Progress / Continue Reading kept the region they had ~250 px
+  //     higher up → taps on the real button land nowhere.
+  // Which is exactly the reported symptom, and why it used to be flaky
+  // ("sometimes") — a warm AsyncStorage read landed before first layout.
+  //
+  // Fix: the entrance is a ONE-SHOT. Once it's done we drop the animated
+  // style entirely and return a plain style object, which detaches the view
+  // from Reanimated and hands layout + hit-testing back to RN. Any later
+  // growth is then measured normally. We keep the same <Animated.View>
+  // element type so the swap doesn't remount the subtree.
+  // ─────────────────────────────────────────────────────────────────────────
+  const [settled, setSettled] = useState(false);
 
   useFocusEffect(useCallback(() => {
     if (!firstFocus.current) return undefined;
     firstFocus.current = false;
     translateY.value = TRANSLATE_FROM;
     opacity.value = 0;
-    settled.value = 0;
     translateY.value = withDelay(
       delay,
-      withTiming(0, { duration: ENTRANCE_DURATION_MS, easing: Easing.out(Easing.cubic) }, (finished) => {
-        // Mark settled from the UI thread when (and only when) the timing
-        // actually completes. Drives the transform-removal below.
-        if (finished) settled.value = 1;
-      }),
+      withTiming(0, { duration: ENTRANCE_DURATION_MS, easing: Easing.out(Easing.cubic) }),
     );
     opacity.value = withDelay(
       delay,
       withTiming(1, { duration: ENTRANCE_DURATION_MS, easing: Easing.out(Easing.cubic) }),
     );
+    // Deliberately NOT cleared on blur — if the user leaves mid-entrance we
+    // still want the view to settle into the plain (touchable) style.
+    settleTimer.current = setTimeout(
+      () => setSettled(true),
+      delay + ENTRANCE_DURATION_MS + SETTLE_SLACK_MS,
+    );
     return undefined;
-  }, [delay, translateY, opacity, settled]));
+  }, [delay, translateY, opacity]));
 
-  return useAnimatedStyle(() => {
-    // ANDROID TOUCH FIX: while animating we apply `translateY`; once the
-    // entrance settles we REMOVE the transform entirely (empty array) rather
-    // than leaving a no-op `translateY: 0`. On Android, a view that keeps a
-    // lingering transform can hold a STALE native touch hit-rect — the frame-
-    // by-frame settle to 0 doesn't force the platform to re-invalidate it, so
-    // taps land on the pre-animation position (or nowhere). This bit the two
-    // bottom cards worst (Plans In Progress / Continue Reading) because they
-    // animate last — largest delay = last to settle = most likely to keep a
-    // stale rect. Switching to `transform: []` is a real prop change that
-    // forces Android to recompute the hit-rect at the resting position.
-    if (settled.value) {
-      return { opacity: 1, transform: [] };
-    }
-    return {
-      opacity: opacity.value,
-      transform: [{ translateY: translateY.value }],
-    };
-  });
+  useEffect(() => () => { if (settleTimer.current) clearTimeout(settleTimer.current); }, []);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  return settled ? RESTING_STYLE : animStyle;
 }
 
 // Resets the given scroll ref to y=0 every time the screen is focused. Kept

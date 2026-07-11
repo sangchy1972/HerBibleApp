@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Dimensions,
   Keyboard, Platform, Linking, Modal, AppState,
+  type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent,
 } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
@@ -706,6 +707,82 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     }
   };
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // EDGE HAND-OFF: swipe past the end of a deep page → next page, in one go.
+  //
+  // Why this is needed. Android's ScrollView.onInterceptTouchEvent only lets a
+  // vertical drag through to its parent when the view CANNOT scroll at all
+  // ("if (getScrollY() == 0 && !canScrollVertically(1)) return false"). The
+  // moment a deep page has been scrolled even one pixel, scrollY != 0, so the
+  // inner ScrollView claims every subsequent vertical gesture and calls
+  // requestDisallowInterceptTouchEvent(true) on its parents — PagerView never
+  // sees the swipe. iOS behaves the same way (the inner UIScrollView's pan wins).
+  // overScrollMode="never" / bounces={false} killed the overscroll animation
+  // that used to eat the gesture, but NOT this: sitting at the bottom of
+  // Reflection or Today's Practice, the pager stays starved and the user swipes
+  // over and over with nothing happening.
+  //
+  // So we do the hand-off in JS. A drag that STARTS and ENDS at the same edge
+  // moved the content nowhere — meaning the user pushed against the end of the
+  // page — so we drive the pager ourselves. Direction falls out for free: at the
+  // bottom, a downward drag DOES move the offset, so it ends away from the edge
+  // and we correctly do nothing. Same, mirrored, at the top for going back.
+  // Pages whose content fits the screen are left alone: they can't scroll, so
+  // Android already hands those to the pager natively.
+  const PAGE_COUNT = 4;
+  const EDGE_EPS = 2;                                   // px slop for "at the edge"
+  const dragStart = useRef<{ top: boolean; bottom: boolean; scrollable: boolean } | null>(null);
+
+  const edgeState = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+    const max = contentSize.height - layoutMeasurement.height;
+    return {
+      top: contentOffset.y <= EDGE_EPS,
+      bottom: contentOffset.y >= max - EDGE_EPS,
+      scrollable: max > EDGE_EPS,
+    };
+  };
+
+  // A deep page whose content FITS the screen needs no inner scrolling at all.
+  // Leaving the ScrollView enabled in that case still lets its pan gesture win
+  // over PagerView on iOS (the pan recognizes even when there's nothing to
+  // scroll), which swallows the swipe. Measuring the overflow and switching
+  // scrollEnabled off means the gesture goes straight to the pager — those
+  // pages now turn on the FIRST swipe.
+  const [pageScrollable, setPageScrollable] = useState<Record<number, boolean>>({});
+  const pageMetrics = useRef<Record<number, { layoutH: number; contentH: number }>>({});
+  const measurePage = (i: number, patch: { layoutH?: number; contentH?: number }) => {
+    const prev = pageMetrics.current[i] ?? { layoutH: 0, contentH: 0 };
+    const m = { ...prev, ...patch };
+    pageMetrics.current[i] = m;
+    if (!m.layoutH || !m.contentH) return;
+    const scrollable = m.contentH > m.layoutH + EDGE_EPS;
+    setPageScrollable(prev => (prev[i] === scrollable ? prev : { ...prev, [i]: scrollable }));
+  };
+
+  const deepPageScrollProps = (pageIndex: number) => ({
+    scrollEnabled: pageScrollable[pageIndex] ?? true,
+    onLayout: (e: LayoutChangeEvent) => measurePage(pageIndex, { layoutH: e.nativeEvent.layout.height }),
+    onContentSizeChange: (_w: number, h: number) => measurePage(pageIndex, { contentH: h }),
+    onScrollBeginDrag: (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      dragStart.current = edgeState(e);
+    },
+    onScrollEndDrag: (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const start = dragStart.current;
+      dragStart.current = null;
+      if (!start || !start.scrollable) return;           // short page — pager has it
+      const end = edgeState(e);
+      // Pushed against the bottom with nowhere to go → advance.
+      if (start.bottom && end.bottom && pageIndex < PAGE_COUNT - 1) {
+        pagerRef.current?.setPage(pageIndex + 1);
+        return;
+      }
+      // Pushed against the top with nowhere to go → go back.
+      if (start.top && end.top && pageIndex > 0) {
+        pagerRef.current?.setPage(pageIndex - 1);
+      }
+    },
+  });
 
   // Closing scene timing: hands move in, then 8 sparkles twinkle continuously
   // for ~4s (6 cycles × ~700ms each) before fading out. Closing text appears
@@ -1104,6 +1181,8 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               // iOS needed multiple swipes too. bounces=false lets the edge
               // gesture pass straight to PagerView in one swipe.
               bounces={false}
+              // Drives the page hand-off from JS — see the EDGE HAND-OFF note.
+              {...deepPageScrollProps(1)}
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >
@@ -1139,6 +1218,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               nestedScrollEnabled
               overScrollMode="never"   // see meditation page — one-swipe page hand-off
               bounces={false}          // iOS counterpart — see meditation page
+              {...deepPageScrollProps(2)}
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >
@@ -1173,6 +1253,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               nestedScrollEnabled
               overScrollMode="never"   // see meditation page — one-swipe page hand-off
               bounces={false}          // iOS counterpart — see meditation page
+              {...deepPageScrollProps(3)}
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >

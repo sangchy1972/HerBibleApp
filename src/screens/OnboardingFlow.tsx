@@ -387,7 +387,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 6 }]}>
-      {/* FULL-SCREEN confetti on the intro step. Rendered FIRST so every sibling
+      {/* FULL-SCREEN confetti on the encourage step. Rendered FIRST so every sibling
           (hero photo, title, sub, Continue) paints on top of it — the Lottie is
           strictly a backdrop. It starts on mount, i.e. the same moment the hero
           + text fade in. Plays ONCE at 0.8×. Negative insets bleed it past the
@@ -437,8 +437,9 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
         ) : <View style={styles.backBtn} />}
       </View>
 
-      {/* Progress — hidden on the welcome step (a cover, not a question) and
-          on the paywall (an offer, not a step the user "progresses" through). */}
+      {/* Progress — hidden on the welcome step (a cover, not a question), on
+          the login page and on the paywall (offers, not steps the user
+          "progresses" through). */}
       {stepName !== 'language' && stepName !== 'paywall' && stepName !== 'login' ? (
         <View style={styles.progressTrack}>
           <View style={[styles.progressFill, { width: `${((step + 1) / TOTAL) * 100}%` }]} />

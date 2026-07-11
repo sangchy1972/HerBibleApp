@@ -67,6 +67,9 @@ const HERO_IMG = require('../../assets/onboarding-hero.webp');
 // the user's "Free Flex Confetti" dotLottie (byte-identical once extracted), so
 // we reuse the asset already in the bundle instead of adding a duplicate.
 const LOTTIE_CONFETTI = require('../../assets/lottie/confetti.json');
+// The REAL app icon — used in the mock notification banner so the preview looks
+// like an actual Her Bible notification rather than a generic glyph.
+const APP_ICON = require('../../assets/icon.png');
 
 // Press feedback: every primary CTA scales down on press-in and springs back
 // on release, so taps always FEEL acknowledged (per user).
@@ -678,11 +681,15 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
               <Text style={styles.sub}>{t('onboarding.notify.sub')}</Text>
               <LinearGradient colors={['#F9D9E6', '#F4A6C0', ROSE]} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={styles.notifHero}>
                 <Ionicons name="notifications-outline" size={44} color="#FFFFFF" style={{ opacity: 0.5 }} />
+                {/* Mock heads-up notification. Pinned to the TOP of the hero —
+                    that's where real notifications drop from. Uses the REAL app
+                    icon and the REAL morning-reminder copy (notif.push.morning),
+                    so the preview matches what the user will actually receive. */}
                 <View style={styles.banner}>
-                  <View style={styles.bannerIcon}><Ionicons name="book" size={17} color="#FFFFFF" /></View>
+                  <Image source={APP_ICON} style={styles.bannerIcon} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.bannerApp}>Her Bible</Text>
-                    <Text style={styles.bannerBody} numberOfLines={1}>{t('onboarding.notify.banner')}</Text>
+                    <Text style={styles.bannerBody} numberOfLines={2}>{t('notif.push.morning.body.1')}</Text>
                   </View>
                 </View>
               </LinearGradient>
@@ -941,7 +948,9 @@ const styles = StyleSheet.create({
   timeLabelText: { fontSize: 18, color: TXT, fontFamily: FONTS.lato },   // 16.5 → 18 (2nd +10 %)
   timePill: { fontSize: 18, fontWeight: '700', paddingVertical: 9, paddingHorizontal: 17, borderRadius: 12, overflow: 'hidden' },   // 16.5 → 18 (2nd +10 %)
   // Notification hero + mock banner.
-  notifHero: { width: '100%', height: 188, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginTop: 4, overflow: 'hidden' },
+  // paddingTop reserves the strip the (now top-pinned) mock banner occupies, so
+  // the centred bell glyph settles BELOW it instead of colliding with it.
+  notifHero: { width: '100%', height: 188, borderRadius: 22, alignItems: 'center', justifyContent: 'center', paddingTop: 72, marginTop: 4, overflow: 'hidden' },
   // ── Login page (reference layout: brand row → big title → provider stack) ──
   loginBrandRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 14 },
   loginBrandName: { fontSize: 21, color: ROSE, fontFamily: FONTS.loraBold, fontWeight: '600' },
@@ -1034,11 +1043,14 @@ const styles = StyleSheet.create({
   },
   trialPriceLine: { fontSize: 14, color: TXTSUB, fontFamily: FONTS.lato, textAlign: 'center', marginTop: 16, marginBottom: 12 },
   banner: {
-    position: 'absolute', left: 14, right: 14, bottom: 14,
+    // TOP of the hero (was bottom) — real notifications slide down from the top.
+    position: 'absolute', left: 14, right: 14, top: 14,
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: 'rgba(255,255,255,0.96)', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 12,
+    backgroundColor: 'rgba(255,255,255,0.96)', borderRadius: 14,
+    paddingVertical: 12.5, paddingHorizontal: 12,   // 10 → 12.5, with the bigger icon = ~+25 % bar height
   },
-  bannerIcon: { width: 34, height: 34, borderRadius: 9, backgroundColor: ROSE, alignItems: 'center', justifyContent: 'center' },
+  // The real app icon (no rose tile behind it — the artwork already is the icon).
+  bannerIcon: { width: 42, height: 42, borderRadius: 11 },   // 34 → 42
   bannerApp: { fontSize: 12.5, fontWeight: '700', color: TXT, fontFamily: FONTS.lato },
   bannerBody: { fontSize: 12, color: 'rgba(30,27,46,0.62)', fontFamily: FONTS.lato },
   // Footer CTA.

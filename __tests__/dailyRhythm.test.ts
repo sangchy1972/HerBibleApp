@@ -1,4 +1,4 @@
-import { computeRhythm, pickOngoingPlan, type RhythmInput } from '../src/state/dailyRhythm';
+import { computeRhythm, pickOngoingPlan, isRhythmStepDone, type RhythmInput } from '../src/state/dailyRhythm';
 
 const TODAY = '2026-07-02';
 
@@ -161,5 +161,28 @@ describe('pickOngoingPlan', () => {
   it('mode is ongoing/explore accordingly in the view', () => {
     expect(computeRhythm({ ...base, planRecords: { a: plan() } }).planMode).toBe('ongoing');
     expect(computeRhythm(base).planMode).toBe('explore');
+  });
+});
+
+describe('isRhythmStepDone', () => {
+  it('counts done and retired as complete, everything else as not', () => {
+    expect(isRhythmStepDone('done')).toBe(true);
+    expect(isRhythmStepDone('retired')).toBe(true);
+    expect(isRhythmStepDone('current')).toBe(false);
+    expect(isRhythmStepDone('pending')).toBe(false);
+    expect(isRhythmStepDone('locked')).toBe(false);
+  });
+
+  it('agrees with doneCount for a mixed day', () => {
+    const v = computeRhythm({
+      hour: 10, todayYmd: '2026-07-11',
+      mDone: true, eDone: false,
+      gospelReady: true,
+      gospelMorningDone: false, gospelEveningDone: false,
+      gospelMorningComplete: true, gospelEveningComplete: false,
+      planRecords: {},
+    });
+    expect(v.dots.filter(isRhythmStepDone).length).toBe(v.doneCount);
+    expect(v.doneCount).toBe(2);   // morning prayer + retired morning gospel
   });
 });

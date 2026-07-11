@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, LayoutChangeEvent, Dimensions, Modal, TextInput, Image, ImageBackground,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, LayoutChangeEvent, Dimensions, Modal, Image, ImageBackground,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,13 +9,9 @@ import Svg, { Path, Line, Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, {
-  useSharedValue, useAnimatedStyle, useAnimatedProps, withTiming, withRepeat, withDelay, withSequence,
+  useSharedValue, useAnimatedStyle, withTiming, withRepeat, withDelay, withSequence,
   interpolateColor, runOnJS, Easing, FadeIn, FadeOut,
 } from 'react-native-reanimated';
-
-// AnimatedTextInput is the standard pattern for streaming a worklet-driven
-// number into a Text-like component without a JS re-render per frame.
-const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 import FireFlame from '../components/shared/FireFlame';
 import StreakBorderAnim from '../components/shared/StreakBorderAnim';
 import { ROSE, BTN_RADIUS, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
@@ -574,6 +570,9 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
 
   // The daily mood check-in is now a global bottom sheet that self-triggers from
   // MoodCheckInProvider (once/day). No per-screen navigation trigger needed.
+  // `pct` is INVISIBLE now (the old "Today's Progress" % readout merged into
+  // the rhythm bar's 5 segments) but stays as the streak-celebration trigger:
+  // both prayers done ⇔ 100 ⇔ the streak day completes. Counting unchanged.
   const pct = (mDone ? 50 : 0) + (eDone ? 50 : 0);
 
   // Tick once per minute so the wait-state countdown updates without forcing
@@ -718,31 +717,28 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
     : hr < 18 ? t('prayer.greeting.afternoonCap')
     : t('prayer.greeting.eveningCap');
 
-  const [trackWidth, setTrackWidth] = useState(0);
-  const progressVal = useSharedValue(pct);
   const prevPctRef = useRef(pct);
 
-  // Celebration choreography — pop the %, fly a sparkle to the streak badge,
-  // then punch the streak number with a delayed +1. Each piece has its own
-  // shared value so they can be sequenced precisely.
-  const pctTextScale = useSharedValue(1);
+  // Celebration choreography — fly a sparkle from the rhythm card to the
+  // streak badge, then punch the streak number with a delayed +1. Each piece
+  // has its own shared value so they can be sequenced precisely.
   const starOpacity = useSharedValue(0);
   const starProgress = useSharedValue(0);   // 0 → 1, position interpolation
   const streakScale = useSharedValue(1);
   const [displayedStreak, setDisplayedStreak] = useState(totalComplete);
   // Window-space anchors captured when the celebration kicks off so the star
-  // flies from the % text to the streak badge regardless of layout.
-  const pctAnchorRef = useRef({ x: 0, y: 0 });
+  // flies from the rhythm card (which absorbed the old % readout) to the
+  // streak badge regardless of layout.
+  const barAnchorRef = useRef({ x: 0, y: 0 });
   const streakAnchorRef = useRef({ x: 0, y: 0 });
-  const pctTextRef = useRef<TextInput>(null);
+  const rhythmBarRef = useRef<View>(null);
   const streakRef = useRef<View>(null);
   const [starOverlayVisible, setStarOverlayVisible] = useState(false);
-  // Star position is driven on JS for the Modal child — Modal doesn't share a
-  // reanimated context with the screen, so we mirror starProgress into JS via
-  // an extra animation completion callback below.
+  // Star position interpolates between the two window-space anchors captured
+  // at launch time (rhythm card → streak badge).
   const starStyle = useAnimatedStyle(() => {
-    const x = pctAnchorRef.current.x + (streakAnchorRef.current.x - pctAnchorRef.current.x) * starProgress.value;
-    const y = pctAnchorRef.current.y + (streakAnchorRef.current.y - pctAnchorRef.current.y) * starProgress.value;
+    const x = barAnchorRef.current.x + (streakAnchorRef.current.x - barAnchorRef.current.x) * starProgress.value;
+    const y = barAnchorRef.current.y + (streakAnchorRef.current.y - barAnchorRef.current.y) * starProgress.value;
     // Centre the 28×28 star on (x, y) and fade it as it lands.
     return {
       opacity: starOpacity.value,
@@ -778,20 +774,16 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   }, [totalComplete, streakScale, hideStarOverlay]);
 
   const playCelebration = useCallback(() => {
-    // 1. Pop the %: 1 → 2 → 1 over 0.5s, with cubic on both halves.
-    pctTextScale.value = withSequence(
-      withTiming(2, { duration: 250, easing: Easing.out(Easing.cubic) }),
-      withTiming(1, { duration: 250, easing: Easing.in(Easing.cubic) }),
-    );
-    // 2. Re-measure both anchors right before the star fires so we hand the
+    // 1. Re-measure both anchors right before the star fires so we hand the
     //    interpolation accurate positions even if the screen has scrolled.
-    pctTextRef.current?.measureInWindow((x, y, w, h) => {
-      pctAnchorRef.current = { x: x + w / 2, y: y + h / 2 };
+    //    Origin = the rhythm card's center (it absorbed the old % readout).
+    rhythmBarRef.current?.measureInWindow((x, y, w, h) => {
+      barAnchorRef.current = { x: x + w / 2, y: y + h / 2 };
     });
     streakRef.current?.measureInWindow((x, y, w, h) => {
       streakAnchorRef.current = { x: x + w / 2, y: y + h / 2 };
     });
-    // 3. Reveal the star, fly it, fade it out, then punch the streak.
+    // 2. Reveal the star, fly it, fade it out, then punch the streak.
     setStarOverlayVisible(true);
     // Failsafe: nominal chain is 500+600+900 ≈ 2s; force-hide at 4s no
     // matter which link broke (a re-armed run replaces the timer).
@@ -809,19 +801,36 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
         else runOnJS(hideStarOverlay)();
       });
     }, 500);
-  }, [pctTextScale, starProgress, starOpacity, playStreakPunch, hideStarOverlay]);
+  }, [starProgress, starOpacity, playStreakPunch, hideStarOverlay]);
 
+  // Streak celebration trigger — fires once when pct crosses to 100 (both
+  // prayers done) while this tab is focused. The 1200ms delay lets the rhythm
+  // bar's returning segment sweep (~540ms) land before the star launches
+  // (same cadence role the old 800ms + 2700ms fill animation played). If the
+  // user leaves the tab inside that window, the pending launch is cancelled
+  // AND prevPctRef is rolled back so the next focus re-arms it — otherwise
+  // the star (and the displayedStreak +1 punch it drives) would be lost.
+  const celebrationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useFocusEffect(useCallback(() => {
     if (pct !== prevPctRef.current) {
-      const startPct = prevPctRef.current;
+      const crossedTo100 = pct === 100 && prevPctRef.current < 100;
       prevPctRef.current = pct;
-      // 10 % faster than before (3000 → 2700 ms).
-      progressVal.value = startPct;
-      progressVal.value = withDelay(800, withTiming(pct, { duration: 2700, easing: Easing.out(Easing.cubic) }, (finished) => {
-        if (finished && pct === 100) runOnJS(playCelebration)();
-      }));
+      if (crossedTo100) {
+        if (celebrationTimerRef.current) clearTimeout(celebrationTimerRef.current);
+        celebrationTimerRef.current = setTimeout(() => {
+          celebrationTimerRef.current = null;
+          playCelebration();
+        }, 1200);
+      }
     }
-  }, [pct, progressVal, playCelebration]));
+    return () => {
+      if (celebrationTimerRef.current) {
+        clearTimeout(celebrationTimerRef.current);
+        celebrationTimerRef.current = null;
+        prevPctRef.current = 0;   // didn't play — re-arm for the next focus
+      }
+    };
+  }, [pct, playCelebration]));
 
   // Sync `displayedStreak` to the source-of-truth `totalComplete` on every
   // change, EXCEPT when the change is exactly the +1 increment that an
@@ -844,19 +853,6 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
     }
   }, [totalComplete]);
 
-  const progressFillStyle = useAnimatedStyle(() => ({
-    width: (progressVal.value / 100) * trackWidth,
-  }));
-  // Pct text — always ROSE pink per user, regardless of progress value.
-  // (Previously the color interpolated to lavender past 50 % to match the
-  // bar gradient; the user prefers a single consistent accent here.)
-  const pctTextStyle = useAnimatedStyle(() => ({
-    color: ROSE,
-    transform: [{ scale: pctTextScale.value }],
-  }));
-  const pctAnimatedProps = useAnimatedProps(() => ({
-    text: `${Math.round(progressVal.value)}%`,
-  } as any));
   const streakNumStyle = useAnimatedStyle(() => ({
     transform: [{ scale: streakScale.value }],
   }));
@@ -966,9 +962,11 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
 
       {/* Daily Rhythm bar — permanent 5-step tracker (morning/evening prayer,
           morning/evening Gospel & Psalm, reading plan). Text suggests the next
-          time-appropriate step; dots celebrate completions. Never dismissed. */}
+          time-appropriate step; the built-in 5-segment progress bar (which
+          absorbed the old "Today's Progress" section) celebrates completions.
+          Never dismissed. The ref is the streak star's launch anchor. */}
       <TabSection delay={15}>
-        <View style={{ paddingHorizontal: P }}>
+        <View style={{ paddingHorizontal: P }} ref={rhythmBarRef} collapsable={false}>
           <DailyRhythmBar
             todayYmd={todayYmdStr}
             dots={rhythm.dots}
@@ -982,38 +980,9 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
         </View>
       </TabSection>
 
-      {/* Progress bar */}
-      <TabSection delay={30}>{/* 90 → 30 — see useTabFocusEntrance perf note */}
-      <View style={styles.progressSection}>
-        <View style={styles.progressHeader}>
-          <Text style={styles.progressLabel}>{t('prayer.todaysProgress')}</Text>
-          {/* Number is driven by progressVal (same source the bar reads), so
-              the count animates in lockstep with the fill. AnimatedTextInput
-              is the standard hack — TextInput is the only RN text node whose
-              `text`/`value` prop accepts animatedProps. */}
-          <AnimatedTextInput
-            ref={pctTextRef}
-            editable={false}
-            underlineColorAndroid="transparent"
-            defaultValue={`${pct}%`}
-            animatedProps={pctAnimatedProps}
-            style={[styles.progressPct, pctTextStyle]}
-          />
-        </View>
-        <View
-          style={styles.progressTrack}
-          onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
-        >
-          {/* Solid theme pink (ROSE) per user — no gradient. */}
-          <Animated.View style={[styles.progressFill, progressFillStyle]} />
-          <View style={styles.progressDivider} />
-        </View>
-      </View>
-      </TabSection>
-
       {/* Morning/Evening toggle + hero card — animated as one group so the
           toggle and the card it controls lift together. */}
-      <TabSection delay={60}>{/* 180 → 60 */}
+      <TabSection delay={30}>{/* fills the slot the merged progress section vacated */}
       <View style={styles.toggle} onLayout={onToggleLayout}>
         {/* Soft-tint indicator — light ROSE / LAV fill at 12 % alpha, no
             border, no BlurView, no specular highlight. The frosted-glass
@@ -1226,8 +1195,6 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
         ) : null}
       </Modal>
 
-      {/* Shooting-star celebration overlay. Modal lifts the layer above the
-          tab content so the sparkle can fly across the whole screen. */}
     </ScrollView>
       {/* Celebration star — IN-SCREEN overlay, deliberately NOT a Modal.
           An RN Modal is a native full-screen window that swallows every touch
@@ -1341,40 +1308,6 @@ const styles = StyleSheet.create({
   // avatar had (22/50 ≈ 0.44 → 18/40 = 0.45). 22 pt in a 40 px circle felt
   // crowded.
   avatarText: { fontSize: 18, fontWeight: '700', color: '#fff' },
-  progressSection: {
-    paddingHorizontal: P + 6,
-    paddingTop: 5,                                                               // → 5 (per user — "Today's Progress" leading gap)
-    marginTop: 5,                                                                // 0 → 5 (+5 px below "Good Morning" per user)
-    marginBottom: 6,                                                             // 10 → 6 (-4 px after the progress bar, per user)
-  },
-  progressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 3,                                                            // → 3 (per user — gap between "Today's Progress" label and the bar)
-  },
-  // Today's Progress row — Lora 600 across both the label and the
-  // percentage. Project rule: `FONTS.loraBold` always pairs with
-  // `fontWeight: '600'`; weight 700 makes Android drop the Lora face and
-  // fall back to system sans, which is the bug the previous '700' here
-  // was producing.
-  progressLabel: {
-    fontSize: 12.80,
-    fontWeight: '600',
-    color: 'rgba(30,27,46,0.55)',
-    letterSpacing: 1.2,
-    fontFamily: FONTS.latoBold,                                                 // Lato 600 per user (latoBold + 600 — same pattern as the Morning/Evening toggle; Lato ships no distinct 600 face)
-  },
-  progressPct: {
-    fontSize: 12.80,
-    fontWeight: '600',
-    fontFamily: FONTS.latoBold,                                                 // Lato 600 per user
-    // TextInput needs explicit dimensions / padding-zero to match a Text node.
-    minWidth: 44,
-    textAlign: 'right',
-    padding: 0,
-    margin: 0,
-  },
   starOverlay: {
     position: 'absolute',
     top: 0,
@@ -1386,34 +1319,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.9,
     shadowRadius: 12,
     elevation: 8,
-  },
-  // Progress bar — height shrunk 10 → 6 (-40 % per user). The track's
-  // corner radius drops in step so the rounded ends stay proportional.
-  // `progressDivider`'s vertical insets shrink with it: 1.5 → 0.9, which
-  // keeps the white midline visible at the same relative scale.
-  progressTrack: {
-    height: 6,
-    borderRadius: 7,
-    backgroundColor: 'rgba(30,27,46,0.10)',
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  progressFill: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    bottom: 0,
-    borderRadius: 7,
-    backgroundColor: ROSE,                                                      // solid theme pink (was a pink→lavender→purple gradient)
-  },
-  progressDivider: {
-    position: 'absolute',
-    left: '50%',
-    top: 0.9,
-    bottom: 0.9,
-    width: 1.5,
-    backgroundColor: 'rgba(255,255,255,0.65)',
-    borderRadius: 2,
   },
   // Morning / Evening toggle — outer wrap shrunk -15 % per user (not the
   // inner indicator chip, which keeps its inset-from-wrapper relationship

@@ -23,6 +23,13 @@ export type RhythmDotState =
   | 'locked';   // cannot start right now (evening prayer before 18:00, prayers
                 // in the 00–06 dead zone, gospel while content isn't ready)
 
+/** A step counts as completed when its dot is done or retired — the single
+ *  definition shared by doneCount, the rhythm bar's flip detection and the
+ *  5-segment progress fill (so a finished flow can never miss its segment). */
+export function isRhythmStepDone(s: RhythmDotState): boolean {
+  return s === 'done' || s === 'retired';
+}
+
 export type RhythmState =
   | { kind: 'step'; step: RhythmStepId }
   | { kind: 'allDone' }      // every available step done today
@@ -139,7 +146,7 @@ export function computeRhythm(i: RhythmInput): RhythmView {
   return {
     state,
     dots,
-    doneCount: dots.filter(d => d === 'done' || d === 'retired').length,
+    doneCount: dots.filter(isRhythmStepDone).length,
     planMode: planSlug ? 'ongoing' : 'explore',
     planSlug,
   };

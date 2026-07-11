@@ -3,136 +3,52 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal, AccessibilityInfo } fr
 import Feather from '@expo/vector-icons/Feather';
 import Svg, { Path } from 'react-native-svg';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, withSpring, withSequence,
-  withDelay, withRepeat, cancelAnimation, Easing, runOnJS,
+  useSharedValue, useAnimatedStyle, withTiming, withDelay, withSequence,
+  cancelAnimation, Easing, runOnJS,
 } from 'react-native-reanimated';
 import { useIsFocused } from '@react-navigation/native';
-import { ROSE, TXT, TXTSUB, FONTS } from '../../constants/theme';
-import { RHYTHM_STEPS, type RhythmDotState } from '../../state/dailyRhythm';
+import { ROSE, TXT, FONTS } from '../../constants/theme';
+import { RHYTHM_STEPS, isRhythmStepDone, type RhythmDotState } from '../../state/dailyRhythm';
 
 // Permanent Daily Rhythm bar (presentational). PrayerScreen computes the
 // rhythm view (state machine in src/state/dailyRhythm.ts) and hands us the
 // resolved text/icon/action; this component owns only the visuals:
-//   • white card matching the screen's other cards (no rose outline),
-//   • 1–5 step dots where the old X button sat,
-//   • "liquid pop" when a dot completes, a left→right wave + sparkle when the
-//     whole day completes, and a soft crossfade when the suggestion changes.
+//   • white card matching the screen's other cards (no border),
+//   • a 5-SEGMENT progress bar pinned along the card's inner bottom — one
+//     segment per rhythm step, replacing the old 1–5 numbered dots AND the
+//     screen's separate "Today's Progress" section (merged per user). The
+//     track/fill/divider styles are carried over from that section verbatim
+//     (height 6, rose fill, white ticks) — only the tick count changed (1→4).
+//   • a left→right fill sweep when a step completes, a sparkle when the whole
+//     day completes, and a soft crossfade when the suggestion changes.
 // Animations only fire for a false→true completion on the SAME calendar day
 // while the tab is focused — a midnight reset snaps silently.
 
 const RETIRED_LAV = '#866BC059';   // LAV @ 35% — "graduated" gospel steps
-const DOT = 20.7;                  // 18 → 20.7 (+15 % per user)
+const SEGMENTS = RHYTHM_STEPS.length;   // 5
 
-function DotGlyph({ state, index }: { state: RhythmDotState; index: number }) {
-  if (state === 'done' || state === 'retired') {
-    return <Feather name="check" size={12.5} color="#FFFFFF" />;   // 11 → 12.5 (+15 %)
-  }
-  const color = state === 'current' ? ROSE
-    : state === 'locked' ? 'rgba(30,27,46,0.28)'
-    : TXTSUB;
-  return <Text style={[styles.dotNum, { color }]}>{index + 1}</Text>;
-}
-
-function dotBase(state: RhythmDotState) {
-  switch (state) {
-    case 'done':    return { backgroundColor: ROSE };
-    case 'retired': return { backgroundColor: RETIRED_LAV };
-    case 'current': return { backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: ROSE };
-    case 'pending': return { backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(30,27,46,0.18)' };
-    case 'locked':  return { backgroundColor: 'rgba(30,27,46,0.05)' };
-  }
-}
-
-// One rhythm dot. `celebrateAt`/`waveAt` are monotonically bumped counters —
-// a change (from a non-zero baseline) triggers the respective choreography.
-function RhythmDot({ state, index, celebrateAt, waveAt, reduceMotion }: {
-  state: RhythmDotState; index: number; celebrateAt: number; waveAt: number; reduceMotion: boolean;
+// One segment's rose fill. `animateAt` is a monotonically bumped counter — a
+// change (from a non-zero baseline) sweeps the fill in; every other change of
+// `filled` (hydration, day rollover, reduce-motion) snaps instantly so a
+// completed step can NEVER render an empty segment.
+function SegmentFill({ filled, animateAt, x, segW, color, reduceMotion }: {
+  filled: boolean; animateAt: number; x: number; segW: number; color: string; reduceMotion: boolean;
 }) {
-  const sx = useSharedValue(1);
-  const sy = useSharedValue(1);
-  const glyph = useSharedValue(1);
-  const rippleScale = useSharedValue(1);
-  const rippleOpacity = useSharedValue(0);
-
-  // Liquid pop: squash/stretch with under-damped springs overshooting in
-  // opposite axes + an expanding ring. (Spec §5a.)
-  const prevCelebrate = useRef(celebrateAt);
+  const w = useSharedValue(filled ? segW : 0);
+  const prevAnimate = useRef(animateAt);
   useEffect(() => {
-    if (celebrateAt === prevCelebrate.current) return;
-    prevCelebrate.current = celebrateAt;
-    if (reduceMotion) return;
-    sx.value = withSequence(
-      withTiming(1.30, { duration: 120, easing: Easing.out(Easing.quad) }),
-      withSpring(1, { damping: 7, stiffness: 200, mass: 0.7 }),
-    );
-    sy.value = withSequence(
-      withTiming(0.72, { duration: 120, easing: Easing.out(Easing.quad) }),
-      withSpring(1, { damping: 7, stiffness: 200, mass: 0.7 }),
-    );
-    glyph.value = 0;
-    glyph.value = withDelay(120, withSpring(1, { damping: 10, stiffness: 260 }));
-    rippleScale.value = 1;
-    rippleOpacity.value = 0.35;
-    rippleScale.value = withTiming(1.9, { duration: 450, easing: Easing.out(Easing.cubic) });
-    rippleOpacity.value = withTiming(0, { duration: 450 });
-  }, [celebrateAt, reduceMotion, sx, sy, glyph, rippleScale, rippleOpacity]);
-
-  // All-done wave: gentle left→right swell across all five dots. (Spec §5b.)
-  const prevWave = useRef(waveAt);
-  useEffect(() => {
-    if (waveAt === prevWave.current) return;
-    prevWave.current = waveAt;
-    if (reduceMotion) return;
-    const swell = withDelay(index * 70, withSequence(
-      withTiming(1.18, { duration: 140, easing: Easing.out(Easing.cubic) }),
-      withSpring(1, { damping: 9, stiffness: 220 }),
-    ));
-    sx.value = swell;
-    sy.value = withDelay(index * 70, withSequence(
-      withTiming(1.18, { duration: 140, easing: Easing.out(Easing.cubic) }),
-      withSpring(1, { damping: 9, stiffness: 220 }),
-    ));
-  }, [waveAt, index, reduceMotion, sx, sy]);
-
-  // Idle pulse on the current dot only — the single allowed loop.
-  useEffect(() => {
-    if (state === 'current' && !reduceMotion) {
-      sx.value = withRepeat(withSequence(
-        withTiming(1.06, { duration: 700, easing: Easing.inOut(Easing.quad) }),
-        withTiming(1, { duration: 700, easing: Easing.inOut(Easing.quad) }),
-        withTiming(1, { duration: 500 }),
-      ), -1);
-      sy.value = withRepeat(withSequence(
-        withTiming(1.06, { duration: 700, easing: Easing.inOut(Easing.quad) }),
-        withTiming(1, { duration: 700, easing: Easing.inOut(Easing.quad) }),
-        withTiming(1, { duration: 500 }),
-      ), -1);
+    const shouldSweep = animateAt !== prevAnimate.current && filled && !reduceMotion && segW > 0;
+    prevAnimate.current = animateAt;
+    cancelAnimation(w);
+    if (shouldSweep) {
+      w.value = 0;
+      w.value = withTiming(segW, { duration: 540, easing: Easing.out(Easing.cubic) });
+    } else {
+      w.value = filled ? segW : 0;   // snap — includes layout width changes
     }
-    return () => {
-      cancelAnimation(sx); cancelAnimation(sy);
-      sx.value = 1; sy.value = 1;
-    };
-  }, [state, reduceMotion, sx, sy]);
-
-  const dotStyle = useAnimatedStyle(() => ({
-    transform: [{ scaleX: sx.value }, { scaleY: sy.value }],
-  }));
-  const glyphStyle = useAnimatedStyle(() => ({ transform: [{ scale: glyph.value }] }));
-  const rippleStyle = useAnimatedStyle(() => ({
-    opacity: rippleOpacity.value,
-    transform: [{ scale: rippleScale.value }],
-  }));
-
-  return (
-    <View style={styles.dotSlot}>
-      <Animated.View pointerEvents="none" style={[styles.ripple, rippleStyle]} />
-      <Animated.View style={[styles.dot, dotBase(state), dotStyle]}>
-        <Animated.View style={glyphStyle}>
-          <DotGlyph state={state} index={index} />
-        </Animated.View>
-      </Animated.View>
-    </View>
-  );
+  }, [filled, animateAt, segW, reduceMotion, w]);
+  const fillStyle = useAnimatedStyle(() => ({ width: w.value }));
+  return <Animated.View style={[styles.segFill, { left: x, backgroundColor: color }, fillStyle]} />;
 }
 
 // Tiny 4-point sparkle (same visual language as the streak celebration star).
@@ -168,12 +84,18 @@ export default function DailyRhythmBar({
     return () => { alive = false; sub?.remove?.(); };
   }, []);
 
+  // Track width, measured once — segment geometry derives from it. Until the
+  // first onLayout, fills render at width 0 (segW=0 → snap path), then snap to
+  // the correct widths on measure; no flash of wrong geometry.
+  const [trackW, setTrackW] = useState(0);
+  const segW = trackW > 0 ? trackW / SEGMENTS : 0;
+
   // ── Completion detection (spec §5 guards) ─────────────────────────────────
-  // Snapshot {ymd, dots}; animate a dot only on a not-done → done flip with an
-  // UNCHANGED ymd while focused. Reconciled on focus regain so completing a
-  // step inside a pushed flow celebrates when the user lands back here.
+  // Snapshot {ymd, dots}; animate a segment only on a not-done → done flip
+  // with an UNCHANGED ymd while focused. Reconciled on focus regain so
+  // completing a step inside a pushed flow sweeps when the user lands back.
   const snap = useRef<{ ymd: string; dots: RhythmDotState[] } | null>(null);
-  const [celebrates, setCelebrates] = useState<number[]>([0, 0, 0, 0, 0]);
+  const [celebrates, setCelebrates] = useState<number[]>(() => Array(SEGMENTS).fill(0));
   const [waveAt, setWaveAt] = useState(0);
   const wasAllDone = useRef(allDone);
   const waveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -185,19 +107,18 @@ export default function DailyRhythmBar({
     const wasComplete = wasAllDone.current;
     wasAllDone.current = allDone;
     if (!prev || prev.ymd !== todayYmd) return;   // first render / day rolled → snap silently
-    const isDone = (s: RhythmDotState) => s === 'done' || s === 'retired';
-    const flipped = RHYTHM_STEPS.map((_, k) => !isDone(prev.dots[k]) && isDone(dots[k]));
+    const flipped = RHYTHM_STEPS.map((_, k) => !isRhythmStepDone(prev.dots[k]) && isRhythmStepDone(dots[k]));
     if (flipped.some(Boolean)) {
       setCelebrates(c => c.map((v, k) => (flipped[k] ? v + 1 : v)));
-      // Whole-day completion chains 350ms after the dot pop finishes (~950ms).
+      // Whole-day sparkle chains once the segment sweep lands (~540ms).
       if (allDone && !wasComplete) {
         if (waveTimer.current) clearTimeout(waveTimer.current);
-        waveTimer.current = setTimeout(() => setWaveAt(w => w + 1), 1300);
+        waveTimer.current = setTimeout(() => setWaveAt(w => w + 1), 800);
       }
     }
   }, [isFocused, todayYmd, dots, allDone]);
 
-  // Sparkle rides the all-done wave.
+  // Sparkle rises from the bar on whole-day completion.
   const sparkOpacity = useSharedValue(0);
   const sparkY = useSharedValue(0);
   const sparkScale = useSharedValue(0.6);
@@ -270,10 +191,10 @@ export default function DailyRhythmBar({
         activeOpacity={0.85}
         onPress={handlePress}
         accessibilityRole="button"
-        accessibilityLabel={`${shown.text}. ${doneCount} / 5.`}
+        accessibilityLabel={`${shown.text}. ${doneCount} / ${SEGMENTS}.`}
       >
         <Animated.View style={[styles.msg, msgStyle]}>
-          <Feather name={shown.icon} size={18.5} color={ROSE} />{/* 16 → 18.5 (+15 %) */}
+          <Feather name={shown.icon} size={18.5} color={ROSE} />
           {/* Two lines allowed (longer de/fr strings wrap instead of shrinking
               to a squint); adjustsFontSizeToFit still guards the extremes. */}
           <Text
@@ -285,20 +206,36 @@ export default function DailyRhythmBar({
             {shown.text}
           </Text>
         </Animated.View>
-        <View style={styles.dotsRow} importantForAccessibility="no-hide-descendants">
-          <Animated.View pointerEvents="none" style={[styles.spark, sparkStyle]}>
+
+        {/* 5-segment progress bar — inside the touchable (never intercepts the
+            card's tap) and hidden from the a11y tree (the label above already
+            reads "n / 5"). Segment k = RHYTHM_STEPS[k]; filled ⇔ done/retired,
+            so completing ANY flow always advances exactly its own segment.
+            The sparkle is a SIBLING of the track — inside it, the track's
+            overflow:hidden would clip its rise. */}
+        <View style={styles.trackWrap} pointerEvents="none" importantForAccessibility="no-hide-descendants">
+          <View style={styles.track} onLayout={(e) => setTrackW(e.nativeEvent.layout.width)}>
+            {RHYTHM_STEPS.map((id, k) => (
+              <SegmentFill
+                key={id}
+                filled={isRhythmStepDone(dots[k])}
+                animateAt={celebrates[k]}
+                x={k * segW}
+                segW={segW}
+                color={dots[k] === 'retired' ? RETIRED_LAV : ROSE}
+                reduceMotion={reduceMotion}
+              />
+            ))}
+            {/* Four structural ticks (20/40/60/80%) — same white midline the old
+                bar drew at 50%, generalized to the 5 segments. Rendered last so
+                they stay visible over the fills. */}
+            {[1, 2, 3, 4].map(n => (
+              <View key={n} style={[styles.tick, { left: `${(n * 100) / SEGMENTS}%` }]} />
+            ))}
+          </View>
+          <Animated.View style={[styles.spark, sparkStyle]}>
             <Sparkle size={23} />
           </Animated.View>
-          {dots.map((d, k) => (
-            <RhythmDot
-              key={RHYTHM_STEPS[k]}
-              state={d}
-              index={k}
-              celebrateAt={celebrates[k]}
-              waveAt={waveAt}
-              reduceMotion={reduceMotion}
-            />
-          ))}
         </View>
       </TouchableOpacity>
 
@@ -326,33 +263,45 @@ const styles = StyleSheet.create({
   // NO border.
   wrap: { marginTop: 6, marginBottom: 4 },
   bar: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 9.8,
-    minHeight: 59,                       // was ~42 visual → 59 (+40 % per user)
+    minHeight: 59,
     paddingVertical: 12,
-    paddingLeft: 14,
-    paddingRight: 12,
+    paddingHorizontal: 14,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
     shadowRadius: 3,
     elevation: 1,
   },
-  msg: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 8, marginRight: 10 },
-  title: { flex: 1, fontSize: 14.9, lineHeight: 19.5, fontWeight: '600', color: TXT, fontFamily: FONTS.latoBold },   // 13.5 → 14.9 (+10 %); lineHeight for the 2-line case
-  dotsRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },   // 6 → 7 (tracks the +15 % dots)
-  dotSlot: { width: DOT, height: DOT, alignItems: 'center', justifyContent: 'center' },
-  dot: {
-    width: DOT, height: DOT, borderRadius: DOT / 2,
-    alignItems: 'center', justifyContent: 'center',
+  msg: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  title: { flex: 1, fontSize: 16.7, lineHeight: 21.8, fontWeight: '600', color: TXT, fontFamily: FONTS.latoBold },   // 14.9 → 16.7 (+12 % per user — the dots' width is the text's now)
+  // Track / fill / tick — carried over VERBATIM from PrayerScreen's removed
+  // "Today's Progress" bar (height 6, radius 7, 10% ink track, rose fill,
+  // white 1.5px ticks inset 0.9). Only the tick count changed (1 → 4).
+  // Segment fills use radius 0 — the track's overflow:hidden rounds the outer
+  // ends, and interior edges must sit flush against the ticks (a per-segment
+  // radius would notch dark slivers beside every tick).
+  trackWrap: { marginTop: 10, position: 'relative' },
+  track: {
+    height: 6,
+    borderRadius: 7,
+    backgroundColor: 'rgba(30,27,46,0.10)',
+    overflow: 'hidden',
+    position: 'relative',
   },
-  dotNum: { fontSize: 11.5, fontWeight: '600', fontFamily: FONTS.latoBold },   // 10 → 11.5 (+15 %)
-  ripple: {
+  segFill: {
     position: 'absolute',
-    width: DOT, height: DOT, borderRadius: DOT / 2,
-    borderWidth: 1.5, borderColor: ROSE,
+    top: 0,
+    bottom: 0,
+  },
+  tick: {
+    position: 'absolute',
+    top: 0.9,
+    bottom: 0.9,
+    width: 1.5,
+    backgroundColor: 'rgba(255,255,255,0.65)',
+    borderRadius: 2,
   },
   spark: { position: 'absolute', top: -14, left: '50%', marginLeft: -11.5 },   // centers the 23px sparkle
   // Toast hint — mirrors the hero card's wait-state hint visuals.

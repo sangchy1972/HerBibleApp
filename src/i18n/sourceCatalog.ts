@@ -354,7 +354,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'onboarding.bible.opt.basics': { en: 'Know the basics', context: 'New-user onboarding questionnaire.' },
   'onboarding.bible.opt.basics.sub': { en: 'A little context with each verse', context: 'New-user onboarding questionnaire.' },
   'onboarding.bible.opt.familiar': { en: 'Fairly familiar', context: 'New-user onboarding questionnaire.' },
-  'onboarding.bible.opt.familiar.sub': { en: 'Richer background and meaning', context: 'New-user onboarding questionnaire.' },
+  'onboarding.bible.opt.familiar.sub': { en: 'Scripture background and what each verse means', context: 'New-user onboarding questionnaire.' },
   'onboarding.bible.opt.regular': { en: 'I read regularly', context: 'New-user onboarding questionnaire.' },
   'onboarding.bible.opt.regular.sub': { en: 'Deeper notes & cross-references', context: 'New-user onboarding questionnaire.' },
   'onboarding.encourage.title': { en: 'You\'re taking a beautiful first step.', context: 'New-user onboarding questionnaire.' },

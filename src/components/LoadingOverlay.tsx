@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, Image, ImageBackground, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS, Easing } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, runOnJS, Easing } from 'react-native-reanimated';
 import { FONTS, TXT, TXTSUB } from '../constants/theme';
 import { useUILanguage } from '../state/UILanguageContext';
 import { useReminderInterstitial } from '../state/ReminderInterstitialContext';
@@ -34,9 +34,44 @@ const SPLASH_ICON = require('../../assets/splash-icon.png');
 //     readiness checks here anymore, everything was ready before we entered.
 const BRAND_TOP = '#F9D9E6';
 const BRAND_GRADIENT = ['#F9D9E6', '#F4A6C0'] as const;
-const BRAND_MIN_MS = 400;      // stage-1 floor — enough for the wordmark to register
+
+// ── Stage-1 brand layout + choreography (per user 2026-07-10) ────────────────
+// The icon MUST start at the native splash's exact size/position (150 px,
+// dead-centre — see app.json expo-splash-screen) or the OS-splash hand-off pops.
+// So instead of statically re-positioning it, we START matched and ANIMATE it
+// up + down to 85 %: the hand-off stays invisible AND it lands where the user
+// wants. The wordmark/tagline then fade in beneath the settled icon.
+const ICON_BASE = 150;                                  // matches the native splash exactly
+const ICON_SCALE = 0.85;                                // user: 85 % of current size
+const ICON_FINAL = ICON_BASE * ICON_SCALE;              // 127.5
+// Lift is PROPORTIONAL to screen height so it adapts across phones (~50 px on a
+// typical ~850 dp-tall device, which is what the user eyeballed).
+const ICON_LIFT = Math.round(height * 0.06);
+const ICON_MOVE_MS = 600;                               // icon rise + shrink
+
+const NAME_DELAY_MS = ICON_MOVE_MS;                     // wordmark starts as the icon settles
+const NAME_FADE_MS = 1000;                              // user: lengthen to 1 s
+const TAGLINE_GAP_MS = 1000;                            // user: 1 s AFTER the wordmark has appeared
+const TAGLINE_DELAY_MS = NAME_DELAY_MS + NAME_FADE_MS + TAGLINE_GAP_MS;   // 2600
+const TAGLINE_FADE_MS = 1000;                           // user: same 1 s animation
+const BRAND_ANIM_END_MS = TAGLINE_DELAY_MS + TAGLINE_FADE_MS;             // 3600
+
+// Gap between the settled icon's bottom edge and the wordmark.
+const ICON_TEXT_GAP = 22;
+// Text block sits below the SETTLED icon: half the final icon + the gap, minus
+// the lift (both measured from the screen's vertical centre).
+const TEXT_TOP = -ICON_LIFT + ICON_FINAL / 2 + ICON_TEXT_GAP;
+
+const NAME_SIZE = 36;                    // 24 → 36 (+50 % per user)
+const TAGLINE_SIZE = NAME_SIZE / 2;      // user: half the wordmark — 18
+const TAGLINE_TEXT = "Lifted by God's Word";
+
+// Stage-1 floor: long enough that the full brand choreography always plays out
+// (otherwise a fast-booting device would jump to stage 2 before the tagline
+// ever appears).
+const BRAND_MIN_MS = BRAND_ANIM_END_MS + 200;   // 3800
 const CONTENT_HOLD_MS = 3000;  // stage-2: exactly 3s, never longer
-const MAX_VISIBLE_MS = 8000;   // hard safety cap — never hang the launch
+const MAX_VISIBLE_MS = 11000;  // hard safety cap — never hang the launch
 
 // English ordinal suffix ("17th"); other locales use their own date format.
 function enOrdinal(d: number): string {
@@ -72,6 +107,28 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   const opacity = useSharedValue(1);          // whole-overlay fade at the very end
   const contentOpacity = useSharedValue(0);   // stage-1 → stage-2 cross-fade
   const hidingRef = useRef(false);
+
+  // Stage-1 choreography. The icon starts EXACTLY where/how big the native
+  // splash drew it (translateY 0, scale 1) so the hand-off is invisible, then
+  // rises + shrinks into place; the wordmark and tagline fade in after it.
+  const iconY = useSharedValue(0);
+  const iconScale = useSharedValue(1);
+  const nameOpacity = useSharedValue(0);
+  const taglineOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    const ease = Easing.out(Easing.cubic);
+    iconY.value = withTiming(-ICON_LIFT, { duration: ICON_MOVE_MS, easing: ease });
+    iconScale.value = withTiming(ICON_SCALE, { duration: ICON_MOVE_MS, easing: ease });
+    nameOpacity.value = withDelay(NAME_DELAY_MS, withTiming(1, { duration: NAME_FADE_MS, easing: ease }));
+    taglineOpacity.value = withDelay(TAGLINE_DELAY_MS, withTiming(1, { duration: TAGLINE_FADE_MS, easing: ease }));
+  }, [iconY, iconScale, nameOpacity, taglineOpacity]);
+
+  const iconStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: iconY.value }, { scale: iconScale.value }],
+  }));
+  const nameStyle = useAnimatedStyle(() => ({ opacity: nameOpacity.value }));
+  const taglineStyle = useAnimatedStyle(() => ({ opacity: taglineOpacity.value }));
 
   // Resolve which line + photo to show (async — reads storage). The line is
   // NEVER shown until this resolves (stage 2 only), so it can't visibly switch.
@@ -139,8 +196,11 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
           off invisibly; the "Her Bible" wordmark simply appears beneath the
           unmoving icon — reads as the SAME screen completing, not a new one. */}
       <View style={styles.brandCenter}>
-        <Image source={SPLASH_ICON} style={styles.brandCenterIcon} resizeMode="contain" />
-        <Text style={styles.brandCenterName}>Her Bible</Text>
+        <Animated.Image source={SPLASH_ICON} style={[styles.brandCenterIcon, iconStyle]} resizeMode="contain" />
+        <View style={styles.brandTextBlock}>
+          <Animated.Text style={[styles.brandCenterName, nameStyle]}>Her Bible</Animated.Text>
+          <Animated.Text style={[styles.brandTagline, taglineStyle]}>{TAGLINE_TEXT}</Animated.Text>
+        </View>
       </View>
 
       {/* STAGE 2 — verse on photo (or pink), cross-faded in once ready. */}
@@ -180,12 +240,27 @@ const styles = StyleSheet.create({
   // center); the wordmark hangs below WITHOUT shifting the icon (absolute,
   // pushed down from center) so the OS-splash hand-off stays invisible.
   brandCenter: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
-  brandCenterIcon: { width: 150, height: 150 },
-  brandCenterName: {
+  // Laid out at the NATIVE splash size (150) and centred; the animated
+  // transform (translateY + scale) lifts it and takes it to 85 %.
+  brandCenterIcon: { width: ICON_BASE, height: ICON_BASE },
+  // Text column pinned below the SETTLED icon (see TEXT_TOP).
+  brandTextBlock: {
     position: 'absolute',
     top: '50%',
-    marginTop: 92,                          // icon half-height (75) + 17px gap — icon stays exactly where the OS splash drew it
-    fontFamily: FONTS.loraBold, fontSize: 24, fontWeight: '600', letterSpacing: 0.4, color: TXT,
+    left: 0,
+    right: 0,
+    marginTop: TEXT_TOP,
+    alignItems: 'center',
+  },
+  brandCenterName: {
+    // NOTE: FONTS.loraBold must pair with fontWeight '600' — '700' makes Android
+    // drop Lora and fall back to system sans (project memory).
+    fontFamily: FONTS.loraBold, fontSize: NAME_SIZE, fontWeight: '600',
+    letterSpacing: 0.4, color: TXT, textAlign: 'center',
+  },
+  brandTagline: {
+    fontFamily: FONTS.lora, fontSize: TAGLINE_SIZE, fontWeight: '400',
+    letterSpacing: 0.3, color: TXTSUB, textAlign: 'center', marginTop: 10,
   },
   // Stage-2 text block (upper third).
   textBlock: { position: 'absolute', left: 28, right: 28, alignItems: 'center' },

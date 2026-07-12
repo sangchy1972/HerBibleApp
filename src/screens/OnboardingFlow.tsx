@@ -963,7 +963,7 @@ const styles = StyleSheet.create({
   // padding / 18-pt type as styles.row), content centered.
   loginProviderRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
-    backgroundColor: '#FFFFFF', borderRadius: 15, borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.08)',
+    backgroundColor: '#FFFFFF', borderRadius: 19.5, borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.08)',   // radius tracks styles.row (user: identical cards)
     paddingVertical: 16.8, paddingHorizontal: 14, marginBottom: 9,
   },
   loginProviderText: { fontSize: 18, color: TXT, fontFamily: FONTS.latoBold, fontWeight: '700' },

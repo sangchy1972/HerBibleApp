@@ -82,7 +82,7 @@ const RISE_MS = 750;            // brand centre → top. Slow-fast-slow (inOut c
 const BG_FADE_MS = 700;         // photo crosses in under the rising brand
 const TAGLINE_OUT_MS = 260;     // tagline belongs to the pink card only
 const ZOOM_TO = 1.10;           // user: 100 % → 110 %
-const ZOOM_MS = 3300;           // spans the whole of stage 2 + the exit fade
+const ZOOM_MS = 4300;           // spans the whole of stage 2 + the exit fade (3300 → 4300, tracks CONTENT_HOLD_MS)
 const DATE_DELAY_MS = 750;      // lands just as the brand finishes rising
 const DATE_FADE_MS = 500;
 const VERSE_DELAY_MS = 1000;
@@ -93,7 +93,7 @@ const RISE_UP_PX = 14;          // date/verse drift up as they fade in
 // (otherwise a fast-booting device would jump to stage 2 before the tagline
 // ever appears).
 const BRAND_MIN_MS = BRAND_ANIM_END_MS + 200;   // 2300
-const CONTENT_HOLD_MS = 3000;  // stage-2: exactly 3s, never longer
+const CONTENT_HOLD_MS = 4000;  // stage-2 dwell. 3000 → 4000 (+1s exactly, per user)
 const MAX_VISIBLE_MS = 11000;  // hard safety cap — never hang the launch
 
 // English ordinal suffix ("July 17th"); other locales use their own date format.

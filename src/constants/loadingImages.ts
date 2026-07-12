@@ -1,27 +1,56 @@
 // Loading-screen background images.
 //
-// The 10 photos live on the public covers domain under /v1/loading/. NONE are
-// bundled (≈25 MB total). Before any CDN image is cached (fresh install), the
-// loading screen shows a white→pink silk GRADIENT fallback (see
-// components/LoadingOverlay). After first launch the rotating CDN images are
-// cached on disk (see services/loadingCache.ts) and shown thereafter.
+// The photos live on the public covers domain under /v1/loading2/. NONE are
+// bundled. Before any CDN image is cached (fresh install) the loading screen
+// falls back to the bundled `follow_him_day.webp` (see components/LoadingOverlay),
+// so there is always a photo behind the verse. From the second launch on, the
+// rotating CDN images are cached on disk (see services/loadingCache.ts) and the
+// pool keeps exactly the current + next image.
+//
+// v2 (2026-07-12, per user): a fresh 28-photo set replaces the old 10. The
+// sources were 2–13 MB straight off Pexels/Unsplash; they're resampled to a
+// 2200 px long edge at q76 (progressive JPEG, EXIF stripped) — 80.8 MB → 7.5 MB,
+// ~270 KB each. The long edge keeps headroom over a 2796 pt phone because the
+// overlay pushes the photo in from 100 % → 110 % while it's on screen.
+//
+// The path is NEW on purpose: the old /v1/loading/ objects stay put, so clients
+// still running the previous build keep working. loadingCache's pruneExcept()
+// deletes the old cached files by name on the first launch of this build.
 //
 // Upload target (public bucket behind covers.everlandapps.com):
-//   covers.everlandapps.com/v1/loading/<filename>.jpg
-export const LOADING_IMG_BASE = 'https://covers.everlandapps.com/v1/loading';
+//   covers.everlandapps.com/v1/loading2/<filename>.jpg
+export const LOADING_IMG_BASE = 'https://covers.everlandapps.com/v1/loading2';
 
-// Filenames as uploaded (kept verbatim). Rotation cycles through this list.
+// Filenames as uploaded. Rotation cycles through this list, one per cold start.
 export const LOADING_IMAGE_FILES: string[] = [
-  '122f7999ed9ff50d5e0f29c67ee36a88.jpg',
-  '2686ea51f9ad6d875e147e323bf6c18d.jpg',
-  '310498ff09484bd20217f0de37ca9364.jpg',
-  '4e059cc5e71f54c4ffb5335a0cee165b.jpg',
-  '628176c4b5e651212e6e5473c42a39f7.jpg',
-  '6c9c724657ce138a8320764517f8a422.jpg',
-  'a20124561a3de40bf0c21aa887bc77e0.jpg',
-  'a6d04288bb8ed44a1695ac5b12c75602.jpg',
-  'f3b276150da56ae8d6566cadfef24eba.jpg',
-  'pexels-vurzie-kim-325095862-27256971.jpg',
+  'loading-01.jpg',
+  'loading-02.jpg',
+  'loading-03.jpg',
+  'loading-04.jpg',
+  'loading-05.jpg',
+  'loading-06.jpg',
+  'loading-07.jpg',
+  'loading-08.jpg',
+  'loading-09.jpg',
+  'loading-10.jpg',
+  'loading-11.jpg',
+  'loading-12.jpg',
+  'loading-13.jpg',
+  'loading-14.jpg',
+  'loading-15.jpg',
+  'loading-16.jpg',
+  'loading-17.jpg',
+  'loading-18.jpg',
+  'loading-19.jpg',
+  'loading-20.jpg',
+  'loading-21.jpg',
+  'loading-22.jpg',
+  'loading-23.jpg',
+  'loading-24.jpg',
+  'loading-25.jpg',
+  'loading-26.jpg',
+  'loading-27.jpg',
+  'loading-28.jpg',
 ];
 
 export function loadingImageUrl(filename: string): string {

@@ -25,6 +25,22 @@
 //   Android  com.google.ads.mediation:vungle:7.7.4.0
 //   iOS      pod 'GoogleMobileAdsMediationVungle'   (CocoaPods resolves the
 //            latest build compatible with the GMA SDK the RN package pins)
+//
+// ⚠️ VERSION COUPLING — do not bump one side without the other.
+// The adapter is compiled against a SPECIFIC major of the Google Mobile Ads SDK,
+// and react-native-google-mobile-ads pins that SDK exactly (package.json →
+// sdkVersions). Adapter 7.7.4.0 needs **GMA 25.x on Android / 13.x on iOS**,
+// which is what react-native-google-mobile-ads@16.4.0 pins (Android 25.4.0,
+// iOS 13.5.0). It does NOT work on the 15.x line (Android 24.6.0 / iOS 12.11.0):
+//   • iOS fails LOUDLY — the adapter's podspec requires `Google-Mobile-Ads-SDK
+//     ~> 13.3` while the RN podspec pins 12.11.0, so `pod install` can't resolve.
+//   • Android fails QUIETLY — Gradle's highest-version-wins drags GMA up to 25.x
+//     via the adapter's transitive dependency, but the RN package's Java is built
+//     against 24.6.0, and GMA 25 DELETED the mediation classes it uses
+//     (VersionInfo, the old onFailure(String) callbacks) → runtime
+//     NoClassDefFoundError / NoSuchMethodError.
+// If you ever need to go back to react-native-google-mobile-ads 15.x, the last
+// adapter that supports GMA 24.x is 7.7.0.1 (Android) / 7.6.3.1 (iOS).
 const { withAppBuildGradle, withDangerousMod } = require('expo/config-plugins');
 const fs = require('fs');
 const path = require('path');

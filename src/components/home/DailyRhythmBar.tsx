@@ -281,7 +281,16 @@ export default function DailyRhythmBar({
           {onPress != null && (
             <View style={styles.rightZone}>
               <View style={styles.startBtn}>
-                <Text style={styles.startBtnText}>{t('rhythm.start')}</Text>
+                {/* ALWAYS one line, any locale: long labels (es "Empezar",
+                    pt "Começar") auto-shrink to fit rather than wrapping. */}
+                <Text
+                  style={styles.startBtnText}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.6}
+                >
+                  {t('rhythm.start')}
+                </Text>
               </View>
             </View>
           )}
@@ -367,8 +376,9 @@ const styles = StyleSheet.create({
   startBtn: {
     backgroundColor: ROSE,
     borderRadius: BTN_RADIUS,
-    paddingHorizontal: 12,
+    paddingHorizontal: 20,
     paddingVertical: 7.5,
+    maxWidth: '100%',                    // never spills out of the 25% zone
   },
   startBtnText: { fontSize: 14.9, fontWeight: '700', color: '#FFFFFF', fontFamily: FONTS.latoBold, letterSpacing: 0.2 },   // 13.5 → 14.9 (+10 % per user)
   // Track / fill / tick — carried over VERBATIM from PrayerScreen's removed

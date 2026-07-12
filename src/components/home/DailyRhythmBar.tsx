@@ -372,8 +372,8 @@ const styles = StyleSheet.create({
   startBtn: {
     backgroundColor: ROSE,
     borderRadius: BTN_RADIUS,
-    paddingHorizontal: 18,
-    paddingVertical: 7.5,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
     marginBottom: 20,                    // in the centered zone this lifts the pill ~10px (per user)
   },
   startBtnText: { fontSize: 14.9, fontWeight: '700', color: '#FFFFFF', fontFamily: FONTS.latoBold, letterSpacing: 0.2 },   // 13.5 → 14.9 (+10 % per user)

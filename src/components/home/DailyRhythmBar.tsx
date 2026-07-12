@@ -58,8 +58,11 @@ function SegmentFill({ filled, animateAt, x, segW, color, reduceMotion }: {
     prevAnimate.current = animateAt;
     cancelAnimation(w);
     if (shouldSweep) {
+      // The sweep fires on focus regain (completion happened inside a flow).
+      // Hold 300ms so it starts AFTER the navigation transition lands — the
+      // user actually SEES it — then play at 0.9× (540 → 600ms), per user.
       w.value = 0;
-      w.value = withTiming(segW, { duration: 540, easing: Easing.out(Easing.cubic) });
+      w.value = withDelay(300, withTiming(segW, { duration: 600, easing: Easing.out(Easing.cubic) }));
     } else {
       w.value = filled ? segW : 0;   // snap — includes layout width changes
     }
@@ -131,10 +134,11 @@ export default function DailyRhythmBar({
     const flipped = RHYTHM_STEPS.map((_, k) => !isRhythmStepDone(prev.dots[k]) && isRhythmStepDone(dots[k]));
     if (flipped.some(Boolean)) {
       setCelebrates(c => c.map((v, k) => (flipped[k] ? v + 1 : v)));
-      // Whole-day sparkle chains once the segment sweep lands (~540ms).
+      // Whole-day sparkle chains once the segment sweep lands (300ms hold
+      // + 600ms sweep ≈ 900ms).
       if (allDone && !wasComplete) {
         if (waveTimer.current) clearTimeout(waveTimer.current);
-        waveTimer.current = setTimeout(() => setWaveAt(w => w + 1), 800);
+        waveTimer.current = setTimeout(() => setWaveAt(w => w + 1), 1200);
       }
     }
   }, [isFocused, todayYmd, dots, allDone]);
@@ -354,7 +358,7 @@ const styles = StyleSheet.create({
   // in JSX) with NO border and NO shadow/elevation — Android's elevation
   // ambient shadow read as a "grey outline" around the old white card (user
   // report), so the card is deliberately flat.
-  wrap: { marginTop: -1, marginBottom: 2 },   // below-greeting -1, below-card 2 (per user)
+  wrap: { marginTop: 4, marginBottom: 2 },   // below-greeting +5 (was -1), below-card 2 (per user)
   bar: {
     borderRadius: 20,
     minHeight: 68,                       // 59 → 68 (+15 % per user)

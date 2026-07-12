@@ -332,7 +332,7 @@ export default function PlanScreen() {
                       gradient={[plan.colorPrimary, plan.colorSecondary]}
                       width={281}
                       height={173}
-                      radius={11}
+                      radius={14.3}
                     />
                     <View style={styles.featuredOverlay}>
                       <View style={styles.featuredTag}>
@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
     top: 0, left: 0, right: 0, bottom: 0,
     padding: 16,
     justifyContent: 'space-between',
-    borderRadius: 11,
+    borderRadius: 14.3,
     // Subtle bottom-to-top dark gradient would be ideal here, but a flat
     // semi-transparent overlay on the bottom half keeps text legible on
     // covers with bright bottoms without pulling in another gradient.

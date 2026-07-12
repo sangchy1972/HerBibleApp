@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     width: '31%',
     aspectRatio: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 11.2,                                                          // 14 → 16 → 11.2 (-30 % per user)
+    borderRadius: 14.6,                                                          // 14 → 16 → 11.2 (-30 % per user) → 14.6 (+30 % card radius per user)
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     // (≈ 79 px) — bumped to a hard 92 to unify with the rest.
     height: 92,
     backgroundColor: '#FFFFFF',
-    borderRadius: 11.2,                                                          // 16 → 11.2 (-30 % per user) — keeps the unified Profile card look
+    borderRadius: 14.6,                                                          // 16 → 11.2 (-30 % per user) → 14.6 (+30 % card radius per user) — keeps the unified Profile card look
     // Border removed per user — Profile cards now use shadow alone.
     paddingVertical: 9,                   // 12 → 9, proportional to height shrink
     paddingHorizontal: 6,
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     gap: 14,
     paddingVertical: 16,
     paddingHorizontal: 18,
-    borderRadius: 16,
+    borderRadius: 20.8,                                                          // 16 → 20.8 (+30 % card radius per user)
     borderWidth: 1.5,
     borderColor: '#E8C893',
     backgroundColor: '#FBF1DE',

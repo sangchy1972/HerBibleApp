@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
     marginTop: -22,                                                              // -32 → -22 (+10 px gap below the lottie per user)
     marginHorizontal: 16,
     backgroundColor: '#FFFFFF',
-    borderRadius: 11,                                                            // 22 → 11 (-50 % per user)
+    borderRadius: 14.3,                                                          // 22 → 11 (-50 % per user) → 14.3 (+30 % card radius per user)
     paddingHorizontal: 22,
     paddingTop: 22,
     paddingBottom: 22,
@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 30,                                                                // 50 → 30 (-20 px gap to the weekly card above per user)
     backgroundColor: '#FFFFFF',
-    borderRadius: 11,
+    borderRadius: 14.3,                                                          // 11 → 14.3 (+30 % card radius per user)
     paddingVertical: 36,                                                          // 20 → 36 (+~30 % card height per user)
     paddingHorizontal: 18,
     shadowColor: '#000',

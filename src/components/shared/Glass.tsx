@@ -10,7 +10,7 @@ interface GlassProps {
 export default function Glass({ children, style, onPress }: GlassProps) {
   const base: ViewStyle = {
     backgroundColor: 'rgba(255,255,255,0.70)',
-    borderRadius: 10,
+    borderRadius: 13,                    // 10 → 13 (+30 % card radius per user)
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.92)',
   };

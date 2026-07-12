@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
 
   miniGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   miniCell: { width: '31.5%', marginBottom: 14 },
-  miniCard: { borderRadius: 14, padding: 8, backgroundColor: 'rgba(30,27,46,0.03)' },
+  miniCard: { borderRadius: 18.2, padding: 8, backgroundColor: 'rgba(30,27,46,0.03)' },
   miniCardOn: { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 4 },
   miniLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 0.6, color: TXTSUB, marginBottom: 6 },
   miniLabelOn: { color: ROSE },

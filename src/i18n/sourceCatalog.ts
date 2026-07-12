@@ -203,6 +203,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'prayer.todaysProgress':         { en: "TODAY'S PROGRESS", context: 'Uppercase eyebrow above the daily progress bar on the Prayer tab.' },
   'prayer.toggle.morning':         { en: 'Morning',        context: 'Tab toggle on Prayer screen — switches the verse card to the morning slot. Followed by a check mark when done.' },
   'prayer.toggle.evening':         { en: 'Evening',        context: 'Tab toggle on Prayer screen — switches the verse card to the evening slot.' },
+  'loading.streak':                { en: 'Your {n} day connected with God', context: 'Launch screen. Shows the user how many consecutive days they have used the app. {n} is an ordinal in English (1st, 2nd, 3rd); other languages receive a plain number and should phrase it naturally (e.g. "Day 3 ..."). Audience is women — use feminine forms where the language marks gender.' },
   'prayer.startMorning':           { en: 'Start Morning Prayer →', context: 'Primary CTA button when morning slot is active. Arrow is decorative — preserve in target language if possible.' },
   'prayer.startNight':             { en: 'Start Night Prayer →',   context: 'Primary CTA button when evening slot is active.' },
   'prayer.wait.nightCountdown':    { en: 'Night Prayer · {countdown}', context: 'Inactive button label showing time until night prayer opens. {countdown} is e.g. "2h 5m".' },

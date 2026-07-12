@@ -886,7 +886,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: ROSE,
     backgroundColor: 'rgba(230,63,105,0.06)',
-    borderRadius: 8,
+    borderRadius: 10.4,
   },
   explainHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   explainLabel: { fontSize: 12, fontWeight: '700', color: TXTSUB, letterSpacing: 1.4, textTransform: 'uppercase' },

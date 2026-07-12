@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   saveBtn: { fontSize: 17, color: ROSE, fontWeight: '700' },                    // +10%
   versePreview: {
     backgroundColor: 'rgba(230,63,105,0.06)',
-    borderRadius: 14,
+    borderRadius: 18.2,                                                          // 14 → 18.2 (+30 % card radius per user)
     paddingVertical: 14,
     paddingHorizontal: 16,
     marginBottom: 14,

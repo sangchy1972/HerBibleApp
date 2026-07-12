@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
   // report), so the card is deliberately flat.
   wrap: { marginTop: 6, marginBottom: 4 },
   bar: {
-    borderRadius: 11.8,                  // 9.8 → 11.8 (+20 % per user)
+    borderRadius: 15.3,                  // 9.8 → 11.8 (+20 % per user) → 15.3 (+30 % card radius per user)
     minHeight: 68,                       // 59 → 68 (+15 % per user)
     paddingTop: 13,
     paddingBottom: 7,                    // slim — the bar hugs the card bottom
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
   },
   hintCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: 23.4,                  // 18 → 23.4 (+30 % card radius per user)
     paddingHorizontal: 22,
     paddingVertical: 18,
     maxWidth: 320,

@@ -9,7 +9,7 @@ import { useT } from '../i18n/useT';
 
 // Home-screen entry for the 89-day Gospels & Psalms plan. Two cards (Morning +
 // Evening) built to MATCH PlanProgressCard byte-for-byte — same card metrics
-// (white, 9.8 radius, 11.4/12 padding, soft shadow), same 92.15² left tile,
+// (white, 12.7 radius, 11.4/12 padding, soft shadow), same 92.15² left tile,
 // and the SAME meta typography (label 13 Lato, title 16 Lato-bold / 21 line)
 // so this section reads as one continuous stack with "Plans In Progress".
 const GREEN = '#3FAE6A';
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   // card byte-matches PlanProgressCard.
   card: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: '#FFFFFF', borderRadius: 9.8,
+    backgroundColor: '#FFFFFF', borderRadius: 12.7,                             // 9.8 → 12.7 (+30 % card radius per user)
     paddingVertical: 10.26, paddingHorizontal: 12, marginTop: 12,                // 11.4 × 0.9 (-10 % card height per user; text unchanged)
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03, shadowRadius: 3, elevation: 1,

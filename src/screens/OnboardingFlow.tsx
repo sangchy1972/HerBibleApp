@@ -906,7 +906,7 @@ const styles = StyleSheet.create({
   // Single-line option row.
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#FFFFFF', borderRadius: 15, borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.08)',
+    backgroundColor: '#FFFFFF', borderRadius: 19.5, borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.08)',
     paddingVertical: 16.8, paddingHorizontal: 14, marginBottom: 9,   // 14 → 16.8 (row height +15 % per user)
   },
   rowSel: { backgroundColor: '#FBEAF0', borderWidth: 1.5, borderColor: ROSE },
@@ -918,7 +918,7 @@ const styles = StyleSheet.create({
   // Two-line card (bible level / time commitment).
   card: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#FFFFFF', borderRadius: 15, borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.08)',
+    backgroundColor: '#FFFFFF', borderRadius: 19.5, borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.08)',
     paddingVertical: 13, paddingHorizontal: 14, marginBottom: 9,
   },
   cardTitle: { fontSize: 18, color: TXT, fontFamily: FONTS.lato },   // 16.5 → 18 (2nd +10 %)
@@ -938,11 +938,11 @@ const styles = StyleSheet.create({
   // aspectRatio matches the hero photo EXACTLY (1280×980), so resizeMode="cover"
   // fills the box without cropping a single pixel — per user "不用切割". Corner
   // radius unchanged.
-  hero: { width: '100%', aspectRatio: 1.3061, borderRadius: 22, marginTop: 6 },
+  hero: { width: '100%', aspectRatio: 1.3061, borderRadius: 28.6, marginTop: 6 },
   // Time-picker rows (reminder step).
   timeRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.08)',
+    backgroundColor: '#FFFFFF', borderRadius: 20.8, borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.08)',
     paddingVertical: 15, paddingHorizontal: 16, marginBottom: 11,
   },
   timeLabel: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -951,7 +951,7 @@ const styles = StyleSheet.create({
   // Notification hero + mock banner.
   // paddingTop reserves the strip the (now top-pinned) mock banner occupies, so
   // the centred bell glyph settles BELOW it instead of colliding with it.
-  notifHero: { width: '100%', height: 188, borderRadius: 22, alignItems: 'center', justifyContent: 'center', paddingTop: 72, marginTop: 4, overflow: 'hidden' },
+  notifHero: { width: '100%', height: 188, borderRadius: 28.6, alignItems: 'center', justifyContent: 'center', paddingTop: 72, marginTop: 4, overflow: 'hidden' },
   // ── Login page (reference layout: brand row → big title → provider stack) ──
   loginBrandRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 14 },
   loginBrandName: { fontSize: 21, color: ROSE, fontFamily: FONTS.loraBold, fontWeight: '600' },
@@ -998,7 +998,7 @@ const styles = StyleSheet.create({
   payBenefitText: { fontSize: 16.5, color: TXT, fontFamily: FONTS.lato },
   payPlan: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#FFFFFF', borderRadius: 15, borderWidth: 1.5, borderColor: 'rgba(30,27,46,0.08)',
+    backgroundColor: '#FFFFFF', borderRadius: 19.5, borderWidth: 1.5, borderColor: 'rgba(30,27,46,0.08)',
     paddingVertical: 15, paddingHorizontal: 16, marginBottom: 11,
   },
   payPlanSel: { borderColor: ROSE, backgroundColor: '#FBEAF0' },

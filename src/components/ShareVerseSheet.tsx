@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
   },
   previewItem: { alignItems: 'center', gap: 6 },
   previewFrame: {
-    borderRadius: 10,
+    borderRadius: 13,                    // 10 → 13 (+30 % card radius per user)
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: 'transparent',          // no outline by default
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
     bottom: 16,
     alignSelf: 'center',
     backgroundColor: 'rgba(30,27,46,0.92)',
-    borderRadius: 14,
+    borderRadius: 18.2,                  // 14 → 18.2 (+30 % card radius per user)
     paddingHorizontal: 18, paddingVertical: 10,
   },
   toastText: { color: '#fff', fontSize: 14, fontWeight: '600' },

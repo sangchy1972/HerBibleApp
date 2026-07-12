@@ -99,7 +99,7 @@ export default function StreakScreen({ navigation }: RootStackScreenProps<'Strea
   // the home-screen "Plans In Progress" card, no border.
   const card = {
     backgroundColor: '#FFFFFF',
-    borderRadius: 9.8,
+    borderRadius: 12.7,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   infoCard: {
     maxHeight: '88%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: 23.4,
     paddingHorizontal: 24,
     paddingTop: 30,                                                              // 50 → 30 (-20 px top margin per user)
     paddingBottom: 28,

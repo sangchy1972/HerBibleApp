@@ -1934,7 +1934,7 @@ const styles = StyleSheet.create({
   unreadCard: {
     width: '100%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 26,
     paddingHorizontal: 22,
     paddingTop: 22,
     paddingBottom: 16,
@@ -2031,7 +2031,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: ROSE,
     backgroundColor: 'rgba(230,63,105,0.06)',
-    borderRadius: 8,
+    borderRadius: 10.4,
   },
   explainHeader: {
     flexDirection: 'row',

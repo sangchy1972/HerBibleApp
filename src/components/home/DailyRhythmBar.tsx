@@ -158,7 +158,12 @@ export default function DailyRhythmBar({
   const latest = useRef({ text });
   const msgOpacity = useSharedValue(1);
   const msgY = useSharedValue(0);
-  const applyLatest = () => setShown({ ...latest.current });
+  const swapWatchdog = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const applyLatest = () => {
+    if (swapWatchdog.current) { clearTimeout(swapWatchdog.current); swapWatchdog.current = null; }
+    setShown({ ...latest.current });
+  };
+  useEffect(() => () => { if (swapWatchdog.current) clearTimeout(swapWatchdog.current); }, []);
   useEffect(() => {
     latest.current = { text };
     if (shown.text === text) return;
@@ -166,6 +171,12 @@ export default function DailyRhythmBar({
     cancelAnimation(msgOpacity); cancelAnimation(msgY);
     msgOpacity.value = withTiming(0, { duration: 160 }, (fin) => { if (fin) runOnJS(applyLatest)(); });
     msgY.value = withTiming(-6, { duration: 160 });
+    // Watchdog: if the animation-completion runOnJS gets dropped (saturated
+    // UI thread, dev fast-refresh), the text would stay at opacity 0 FOREVER
+    // — the card reads as empty. Force the swap shortly after the nominal
+    // out-phase; applyLatest re-triggers the in-phase, which is idempotent.
+    if (swapWatchdog.current) clearTimeout(swapWatchdog.current);
+    swapWatchdog.current = setTimeout(applyLatest, 400);
   }, [text]);   // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     // `shown` just swapped → slide the new line in from below.

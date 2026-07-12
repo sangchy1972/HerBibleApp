@@ -360,8 +360,7 @@ const styles = StyleSheet.create({
     minHeight: 68,                       // 59 → 68 (+15 % per user)
     paddingTop: 12,                      // per user
     paddingBottom: 0,                    // flush — the bar sits on the card's bottom edge (per user)
-    paddingLeft: 12,                     // per user
-    paddingRight: 16,                    // per user
+    paddingHorizontal: 14,
     justifyContent: 'space-between',     // top zone up, progress row pinned down
     overflow: 'hidden',                  // rounds the gradient's corners
   },
@@ -392,7 +391,7 @@ const styles = StyleSheet.create({
   trackWrap: { flex: 1, position: 'relative' },
   track: {
     height: 6,
-    borderRadius: 7,
+    borderRadius: 10,
     backgroundColor: 'rgba(30,27,46,0.10)',
     overflow: 'hidden',
     position: 'relative',
@@ -407,7 +406,7 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 4,                                      // 2.5 → 4, full-height (per user)
-    backgroundColor: 'rgba(255,255,255,0.65)',
+    backgroundColor: 'rgba(255,255,255,1)',
     borderRadius: 2,
   },
   spark: { position: 'absolute', top: -14, left: '50%', marginLeft: -11.5 },   // centers the 23px sparkle

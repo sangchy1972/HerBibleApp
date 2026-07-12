@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, AccessibilityInfo } from 'react-native';
-import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from 'react-native-svg';
+import Svg, { Path, Defs, RadialGradient, Stop, Rect } from 'react-native-svg';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withDelay, withSequence,
   cancelAnimation, Easing, runOnJS,
@@ -29,6 +29,20 @@ import { RHYTHM_STEPS, isRhythmStepDone, type RhythmDotState } from '../../state
 
 const RETIRED_LAV = '#866BC059';   // LAV @ 35% — "graduated" gospel steps
 const SEGMENTS = RHYTHM_STEPS.length;   // 5
+
+// Silk backdrop — five soft radial color pools (theme pinks/lavenders/white)
+// that overlap with no hard boundaries, mesh-gradient style (per user: "more
+// Apple"). Positions/radii are fractions of the card's measured size; each
+// pool fades to fully transparent at its rim so the blends stay seamless.
+const SILK_BASE = '#FDF4F8';
+const SILK_POOLS: ReadonlyArray<{ cx: number; cy: number; r: number; color: string }> = [
+  { cx: 0.10, cy: 0.10, r: 0.55, color: '#F9D9E6' },   // pink, top-left
+  { cx: 0.46, cy: -0.15, r: 0.55, color: '#FFFFFF' },  // white light, top-center
+  { cx: 0.90, cy: 0.15, r: 0.60, color: '#E3DAF5' },   // lavender, top-right
+  { cx: 0.26, cy: 1.10, r: 0.60, color: '#EFE2F3' },   // soft violet, bottom-left
+  { cx: 0.68, cy: 0.95, r: 0.55, color: '#FBDCEB' },   // rose, bottom-right
+  { cx: 1.02, cy: 0.90, r: 0.45, color: '#EBE3F8' },   // lavender, bottom-right corner
+];
 
 // One segment's rose fill. `animateAt` is a monotonically bumped counter — a
 // change (from a non-zero baseline) sweeps the fill in; every other change of
@@ -217,79 +231,98 @@ export default function DailyRhythmBar({
         accessibilityRole="button"
         accessibilityLabel={`${shown.text}. ${pct}%.`}
       >
-        {/* Theme-tinted backdrop: light pink → near-white → light lavender
-            (much paler than the reference banner, per user). SVG at the
-            MEASURED card size, NOT expo-linear-gradient and NOT an
-            absolute-filled Svg: the former leaked past the card and washed
-            the whole screen (Android HWUI clip bug), the latter froze at the
-            first layout and left the card's bottom strip unpainted. */}
+        {/* Silk backdrop — SVG at the MEASURED card size, NOT
+            expo-linear-gradient and NOT an absolute-filled Svg: the former
+            leaked past the card and washed the whole screen (Android HWUI
+            clip bug), the latter froze at the first layout and left the
+            card's bottom strip unpainted. A light base + six overlapping
+            radial pools = boundary-less multi-point blend. */}
         {card.w > 0 && (
           <Svg width={card.w} height={card.h} style={styles.cardBg} pointerEvents="none">
             <Defs>
-              <SvgLinearGradient id="rhythmCardBg" x1="0" y1="0" x2="1" y2="0.9">
-                <Stop offset="0" stopColor="#FDE7F0" />
-                <Stop offset="0.5" stopColor="#FFF8FA" />
-                <Stop offset="1" stopColor="#ECE7F8" />
-              </SvgLinearGradient>
+              {SILK_POOLS.map((p, i) => (
+                <RadialGradient
+                  key={i}
+                  id={`rhythmSilk${i}`}
+                  gradientUnits="userSpaceOnUse"
+                  cx={p.cx * card.w}
+                  cy={p.cy * card.h}
+                  r={p.r * card.w}
+                >
+                  <Stop offset="0" stopColor={p.color} stopOpacity={0.9} />
+                  <Stop offset="1" stopColor={p.color} stopOpacity={0} />
+                </RadialGradient>
+              ))}
             </Defs>
-            <Rect x="0" y="0" width={card.w} height={card.h} fill="url(#rhythmCardBg)" />
+            <Rect x="0" y="0" width={card.w} height={card.h} fill={SILK_BASE} />
+            {SILK_POOLS.map((_, i) => (
+              <Rect key={i} x="0" y="0" width={card.w} height={card.h} fill={`url(#rhythmSilk${i})`} />
+            ))}
           </Svg>
         )}
-        <Animated.View style={[styles.msg, msgStyle]}>
-          {/* Two lines allowed (longer de/fr strings wrap instead of shrinking
-              to a squint); adjustsFontSizeToFit still guards the extremes. */}
-          <Text
-            style={styles.title}
-            numberOfLines={2}
-            adjustsFontSizeToFit
-            minimumFontScale={0.8}
-          >
-            {shown.text}
-          </Text>
-          {/* Decorative Start pill — the whole card is the touch target, so
-              this is a plain View (no nested touchable to fight the parent).
-              Hidden in rest states where there is nothing to start. */}
-          {onPress != null && (
+
+        {/* Left ~78%: text on top, progress bar hugging the bottom.
+            Right ~22%: reserved entirely for the Start pill (per user). */}
+        <View style={styles.leftZone}>
+          <Animated.View style={[styles.msg, msgStyle]}>
+            {/* Two lines allowed (longer de/fr strings wrap and the card grows
+                with them); adjustsFontSizeToFit still guards the extremes. */}
+            <Text
+              style={styles.title}
+              numberOfLines={2}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+            >
+              {shown.text}
+            </Text>
+          </Animated.View>
+
+          {/* 5-segment progress bar + live % — inside the touchable (never
+              intercepts the tap) and hidden from the a11y tree (the card
+              label already reads the %). Segment k = RHYTHM_STEPS[k]; filled
+              ⇔ done/retired, so completing ANY flow always advances exactly
+              its own segment. The sparkle is a SIBLING of the track — inside
+              it, the track's overflow:hidden would clip its rise. */}
+          <View style={styles.trackRow} pointerEvents="none" importantForAccessibility="no-hide-descendants">
+            <View style={styles.trackWrap}>
+              <View style={styles.track} onLayout={(e) => setTrackW(e.nativeEvent.layout.width)}>
+                {RHYTHM_STEPS.map((id, k) => (
+                  <SegmentFill
+                    key={id}
+                    filled={isRhythmStepDone(dots[k])}
+                    animateAt={celebrates[k]}
+                    x={k * segW}
+                    segW={segW}
+                    color={dots[k] === 'retired' ? RETIRED_LAV : ROSE}
+                    reduceMotion={reduceMotion}
+                  />
+                ))}
+                {/* Four structural ticks (20/40/60/80%) — same white midline
+                    the old bar drew at 50%, generalized to the 5 segments.
+                    Rendered last so they stay visible over the fills. */}
+                {[1, 2, 3, 4].map(n => (
+                  <View key={n} style={[styles.tick, { left: `${(n * 100) / SEGMENTS}%` }]} />
+                ))}
+              </View>
+              <Animated.View style={[styles.spark, sparkStyle]}>
+                <Sparkle size={23} />
+              </Animated.View>
+            </View>
+            <Text style={styles.pctText}>{pct}%</Text>
+          </View>
+        </View>
+
+        {/* Decorative Start pill — the whole card is the touch target, so
+            this is a plain View (no nested touchable to fight the parent).
+            Hidden in rest states where there is nothing to start; the left
+            zone then takes the full width. */}
+        {onPress != null && (
+          <View style={styles.rightZone}>
             <View style={styles.startBtn}>
               <Text style={styles.startBtnText}>{t('rhythm.start')}</Text>
             </View>
-          )}
-        </Animated.View>
-
-        {/* 5-segment progress bar + live % — hugging the card's inner bottom
-            (spacer above pushes it down), inside the touchable (never
-            intercepts the tap) and hidden from the a11y tree (the card label
-            already reads the %). Segment k = RHYTHM_STEPS[k]; filled ⇔
-            done/retired, so completing ANY flow always advances exactly its
-            own segment. The sparkle is a SIBLING of the track — inside it,
-            the track's overflow:hidden would clip its rise. */}
-        <View style={styles.trackRow} pointerEvents="none" importantForAccessibility="no-hide-descendants">
-          <View style={styles.trackWrap}>
-            <View style={styles.track} onLayout={(e) => setTrackW(e.nativeEvent.layout.width)}>
-              {RHYTHM_STEPS.map((id, k) => (
-                <SegmentFill
-                  key={id}
-                  filled={isRhythmStepDone(dots[k])}
-                  animateAt={celebrates[k]}
-                  x={k * segW}
-                  segW={segW}
-                  color={dots[k] === 'retired' ? RETIRED_LAV : ROSE}
-                  reduceMotion={reduceMotion}
-                />
-              ))}
-              {/* Four structural ticks (20/40/60/80%) — same white midline the
-                  old bar drew at 50%, generalized to the 5 segments. Rendered
-                  last so they stay visible over the fills. */}
-              {[1, 2, 3, 4].map(n => (
-                <View key={n} style={[styles.tick, { left: `${(n * 100) / SEGMENTS}%` }]} />
-              ))}
-            </View>
-            <Animated.View style={[styles.spark, sparkStyle]}>
-              <Sparkle size={23} />
-            </Animated.View>
           </View>
-          <Text style={styles.pctText}>{pct}%</Text>
-        </View>
+        )}
       </TouchableOpacity>
 
       <Modal
@@ -322,19 +355,25 @@ const styles = StyleSheet.create({
     paddingTop: 13,
     paddingBottom: 7,                    // slim — the bar hugs the card bottom
     paddingHorizontal: 14,
-    justifyContent: 'space-between',     // text top, progress row bottom
+    flexDirection: 'row',                // left = text+bar zone, right = Start
+    alignItems: 'stretch',
     overflow: 'hidden',                  // rounds the gradient's corners
   },
   cardBg: { position: 'absolute', top: 0, left: 0 },
-  msg: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  title: { flex: 1, fontSize: 16.7, lineHeight: 21.8, fontWeight: '600', color: TXT, fontFamily: FONTS.latoBold },   // 14.9 → 16.7 (+12 % per user — the dots' width is the text's now)
+  // Text top, progress row pinned at the bottom; grows with a 2-line title
+  // (the card's minHeight yields — auto height per user).
+  leftZone: { flex: 1, justifyContent: 'space-between' },
+  // The right ~22% belongs entirely to the Start pill, vertically centered.
+  rightZone: { width: '22%', justifyContent: 'center', alignItems: 'flex-end', paddingLeft: 6 },
+  msg: { flexDirection: 'row', alignItems: 'center' },
+  title: { flex: 1, fontSize: 18.4, lineHeight: 24, fontWeight: '600', color: TXT, fontFamily: FONTS.latoBold },   // 16.7 → 18.4 (+10 % per user)
   // Decorative Start pill (whole card is tappable) — rose, canonical CTA
   // radius, bold label like every other rose button.
   startBtn: {
     backgroundColor: ROSE,
     borderRadius: BTN_RADIUS,
-    paddingHorizontal: 14,
-    paddingVertical: 6.5,
+    paddingHorizontal: 15,
+    paddingVertical: 7.5,
   },
   startBtnText: { fontSize: 13.5, fontWeight: '700', color: '#FFFFFF', fontFamily: FONTS.latoBold, letterSpacing: 0.2 },
   // Track / fill / tick — carried over VERBATIM from PrayerScreen's removed

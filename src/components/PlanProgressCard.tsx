@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 14,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12.7,                                                          // 14 → 9.8 (matches heroCard above per user) → 12.7 (+30 % card radius per user)
+    borderRadius: 20,
     paddingVertical: 10.26,                                                      // 11.4 × 0.9 (-10 % card height per user; text size unchanged)
     paddingHorizontal: 12,
     marginTop: 12,

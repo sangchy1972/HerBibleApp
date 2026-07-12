@@ -227,8 +227,8 @@ const styles = StyleSheet.create({
     fontSize: 22, lineHeight: 30, textAlign: 'center', marginTop: 14, marginBottom: 26,
   },
   verseCardWrap: { marginBottom: 8 },
-  verseCard: { borderRadius: 18.2, overflow: 'hidden', paddingTop: 56, paddingBottom: 72, paddingHorizontal: 24, backgroundColor: '#2D0A1A' },   // 14 → 18.2 (+30 % card radius per user)
-  verseCardImg: { borderRadius: 18.2 },
+  verseCard: { borderRadius: 20, overflow: 'hidden', paddingTop: 56, paddingBottom: 72, paddingHorizontal: 24, backgroundColor: '#2D0A1A' },   // 14 → 18.2 (+30 % card radius per user)
+  verseCardImg: { borderRadius: 20 },
   verseDate: { fontSize: 14, color: 'rgba(255,255,255,0.65)', marginBottom: 8 },
   verseRef: { fontSize: 18.3, fontWeight: '700', color: '#fff', letterSpacing: 0.3, marginBottom: 22 },
   verseText: { fontFamily: FONTS.merriweather, fontSize: 17.5, lineHeight: 27, color: 'rgba(255,255,255,0.96)' },

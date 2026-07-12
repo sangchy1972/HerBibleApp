@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   previewCenter: { alignItems: 'center' },
   howCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20.8,
+    borderRadius: 20,
     padding: 18,
     borderWidth: 1,
     borderColor: 'rgba(30,27,46,0.06)',
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
   mCard: {
     width: '100%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 28.6,
+    borderRadius: 20,
     paddingTop: 24,
     paddingBottom: 16,
     paddingHorizontal: 22,

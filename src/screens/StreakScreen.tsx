@@ -100,7 +100,7 @@ export default function StreakScreen({ navigation }: RootStackScreenProps<'Strea
   // every standing card app-wide (per user — elevation read as a grey frame).
   const card = {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12.7,
+    borderRadius: 20,
   };
 
   return (
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   infoCard: {
     maxHeight: '88%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 23.4,
+    borderRadius: 20,
     paddingHorizontal: 24,
     paddingTop: 30,                                                              // 50 → 30 (-20 px top margin per user)
     paddingBottom: 28,

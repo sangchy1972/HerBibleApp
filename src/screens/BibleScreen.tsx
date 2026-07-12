@@ -1934,7 +1934,7 @@ const styles = StyleSheet.create({
   unreadCard: {
     width: '100%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 26,
+    borderRadius: 20,
     paddingHorizontal: 22,
     paddingTop: 22,
     paddingBottom: 16,
@@ -1973,7 +1973,7 @@ const styles = StyleSheet.create({
     left: 22,
     right: 22,
     backgroundColor: '#FFFFFF',
-    borderRadius: 17,
+    borderRadius: 20,
     paddingVertical: 16,
     paddingHorizontal: 18,
     shadowColor: '#000',

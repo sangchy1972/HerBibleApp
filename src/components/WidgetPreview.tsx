@@ -78,12 +78,12 @@ export default function WidgetPreview({ size, width, body, reference, segment = 
 
 const styles = StyleSheet.create({
   shell: {
-    borderRadius: 23.4,                  // 18 → 23.4 (+30 % card radius per user)
+    borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: '#2D3A5A',
   },
   fill: { flex: 1 },
-  img: { borderRadius: 23.4 },           // 18 → 23.4 — mirrors the shell's card radius
+  img: { borderRadius: 20 },           // 18 → 23.4 — mirrors the shell's card radius
   content: { flex: 1, justifyContent: 'space-between' },
   eyebrowRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 7 },
   dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: ROSE, marginRight: 6 },

@@ -160,7 +160,7 @@ const moreStyles = StyleSheet.create({
     position: 'absolute',
     minWidth: 208,
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 20,
     paddingVertical: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
@@ -1378,7 +1378,7 @@ const styles = StyleSheet.create({
     paddingTop: 14,
   },
   heroCard: {
-    borderRadius: 11.9,                                                         // 14 → 9.8 → 5.88 → 7.06 → 9.18 → 11.9 (+30 % per user)
+    borderRadius: 20,
     overflow: 'hidden',
     // Subtle drop shadow per user (-30 % vs a normal card shadow). iOS
     // accepts a shadow on the same node; no Android elevation because it
@@ -1395,7 +1395,7 @@ const styles = StyleSheet.create({
     // veil + content composite cleanly. Without this, RN draws the image at
     // its native rectangle and clips behind the rounded mask, which can
     // ghost a 1-px hairline on the corners during the tab transition.
-    borderRadius: 11.9,
+    borderRadius: 20,
   },
   // All text-to-card-edge distances trimmed −3 px per user. The hero card
   // has three horizontal-padding gates: `heroTop` (label + ref), `heroBody`
@@ -1509,7 +1509,7 @@ const styles = StyleSheet.create({
   },
   hintCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 23.4,
+    borderRadius: 20,
     paddingHorizontal: 22,
     paddingVertical: 18,
     maxWidth: 320,
@@ -1573,7 +1573,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32,
   },
   pastPromptCard: {
-    width: '100%', backgroundColor: '#FFFFFF', borderRadius: 26,
+    width: '100%', backgroundColor: '#FFFFFF', borderRadius: 20,
     paddingHorizontal: 22, paddingTop: 22, paddingBottom: 16,
     shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.18, shadowRadius: 18, elevation: 10,
@@ -1591,7 +1591,7 @@ const styles = StyleSheet.create({
   inProgressEmpty: {
     marginTop: 12,
     backgroundColor: 'rgba(230,63,105,0.06)',
-    borderRadius: 18.2,
+    borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 18,
     alignItems: 'flex-start',
@@ -1635,7 +1635,7 @@ const styles = StyleSheet.create({
   },
   psalmCard: {
     width: 164,
-    borderRadius: 14.3,
+    borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.72)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.92)',
@@ -1682,7 +1682,7 @@ const styles = StyleSheet.create({
   },
   continueCard: {
     marginTop: 13,
-    borderRadius: 16.9,
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.90)',
@@ -1705,7 +1705,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 14,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12.7,
+    borderRadius: 20,
     paddingVertical: 11.4,
     paddingHorizontal: 12,
     marginTop: 12,

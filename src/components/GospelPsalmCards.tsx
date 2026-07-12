@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   // card byte-matches PlanProgressCard.
   card: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: '#FFFFFF', borderRadius: 12.7,                             // 9.8 → 12.7 (+30 % card radius per user)
+    backgroundColor: '#FFFFFF', borderRadius: 20,
     paddingVertical: 10.26, paddingHorizontal: 12, marginTop: 12,                // 11.4 × 0.9 (-10 % card height per user; text unchanged)
   },
   tile: {

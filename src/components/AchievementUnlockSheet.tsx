@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 420,
     backgroundColor: '#FFFFFF',
-    borderRadius: 15.6,                                                          // 24 → 12 (-50 % per user) → 15.6 (+30 % card radius per user)
+    borderRadius: 20,
     paddingHorizontal: 24,
     paddingTop: 30,
     paddingBottom: 24,

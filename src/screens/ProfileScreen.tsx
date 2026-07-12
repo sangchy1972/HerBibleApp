@@ -1311,7 +1311,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 92,                                                                  // unified height across all 4 main Profile cards per user (statCard, achievementPreview, widgetBanner, removeAdsBanner)
     backgroundColor: '#FFFFFF',
-    borderRadius: 14.6,
+    borderRadius: 20,
     borderWidth: 0,
     paddingTop: 10,
     paddingBottom: 14,
@@ -1334,7 +1334,7 @@ const styles = StyleSheet.create({
     marginBottom: 25,
     height: 92,
     backgroundColor: '#FFFFFF',
-    borderRadius: 14.6,
+    borderRadius: 20,
   },
   widgetBannerInner: {
     flex: 1,                                                                     // fills the outer banner's locked 92 px height — the gradient now matches the card outline exactly
@@ -1345,7 +1345,7 @@ const styles = StyleSheet.create({
     gap: 14,
     // Round the gradient fill itself, since the outer wrapper no longer uses
     // overflow:hidden (which would clash with shadow on Android).
-    borderRadius: 14.6,
+    borderRadius: 20,
     overflow: 'hidden',
   },
   // Was a 72-px frame wrapping the mini WidgetPreview; now wraps a bold
@@ -1381,7 +1381,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 14.6,
+    borderRadius: 20,
     height: 92,                                                                  // unified height per user — same as statCard / widgetBanner / removeAdsBanner
     paddingVertical: 14,
     paddingHorizontal: 12,
@@ -1453,7 +1453,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     height: 92,
     backgroundColor: '#FFFFFF',
-    borderRadius: 14.6,
+    borderRadius: 20,
   },
   // Override on top of widgetBannerTitle — Lato 600 per user (reverted from
   // Lora 600). Color matches the slash on the AD icon (#D54A6E) so the whole
@@ -1814,7 +1814,7 @@ const styles = StyleSheet.create({
   langDlgCard: {
     width: '100%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 28.6,
+    borderRadius: 20,
     paddingTop: 24,
     paddingBottom: 16,
     paddingHorizontal: 22,

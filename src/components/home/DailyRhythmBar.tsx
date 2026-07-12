@@ -319,7 +319,6 @@ export default function DailyRhythmBar({
               <Sparkle size={23} />
             </Animated.View>
           </View>
-          <Text style={styles.pctText}>{pct}%</Text>
         </View>
       </TouchableOpacity>
 
@@ -350,8 +349,8 @@ const styles = StyleSheet.create({
   bar: {
     borderRadius: 20,
     minHeight: 68,                       // 59 → 68 (+15 % per user)
-    paddingTop: 13,
-    paddingBottom: 2,                    // 7 → 2 (per user) — the bar hugs the card bottom
+    paddingTop: 9,                       // 13 → 9 (per user)
+    paddingBottom: 0,                    // flush — the bar sits on the card's bottom edge (per user)
     paddingHorizontal: 14,
     justifyContent: 'space-between',     // top zone up, progress row pinned down
     overflow: 'hidden',                  // rounds the gradient's corners
@@ -378,9 +377,8 @@ const styles = StyleSheet.create({
   // Segment fills use radius 0 — the track's overflow:hidden rounds the outer
   // ends, and interior edges must sit flush against the ticks (a per-segment
   // radius would notch dark slivers beside every tick).
-  trackRow: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2 },   // pct gap 2, title gap 2 (per user)
+  trackRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },   // title gap 2 (per user); % readout removed — bar spans the full width
   trackWrap: { flex: 1, position: 'relative' },
-  pctText: { fontSize: 14.7, fontWeight: '700', color: ROSE, fontFamily: FONTS.latoBold, minWidth: 38, textAlign: 'right' },   // 12.8 → 14.7 (+15 %), bold (per user)
   track: {
     height: 6,
     borderRadius: 7,

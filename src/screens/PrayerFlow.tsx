@@ -17,7 +17,7 @@ import Svg, { Path, Circle } from 'react-native-svg';
 import LottieView from 'lottie-react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withDelay, withRepeat, withSequence,
-  Easing, SlideInDown, FadeIn, runOnJS, interpolateColor,
+  Easing, FadeIn, runOnJS, interpolateColor,
 } from 'react-native-reanimated';
 import { ROSE, BTN_RADIUS, LAV, TXT, TXTSUB, FONTS } from '../constants/theme';
 import { maybeShowInterstitial } from '../services/ads';
@@ -927,8 +927,13 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     // Keep the weekly/sapling celebration visible — the habit sheet overlays it.
     // (Previously this hid the weekly screen, which re-exposed the maroon Amen
     // screen underneath, so the sheet appeared to "jump back" a screen.)
-    habitDragY.value = 0;   // reset BEFORE showing so frame 1 sits at translateY 0
+    // Entrance rides habitDragY: start off-screen BEFORE showing (no
+    // first-frame flash — see openNoteSheet), then slide up.
+    habitDragY.value = height;
+    habitBackdropO.value = 0;
     setShowSheet(true);
+    habitDragY.value = withTiming(0, { duration: 420, easing: Easing.out(Easing.cubic) });
+    habitBackdropO.value = withTiming(1, { duration: 220 });
   };
 
   // Set the daily reminder to the chosen time + request permission, then close
@@ -982,16 +987,23 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     setShowNoteSheet(false);
   };
 
-  // Swipe-down gesture for note sheet. The shared value persists across
-  // mounts; if a previous close left it animated off-screen at translateY
-  // 800, the next open would render the sheet below the viewport. Reset it
-  // synchronously in `openNoteSheet` BEFORE flipping the visibility flag
-  // so the sheet's first frame is always at translateY 0.
+  // Swipe-down gesture for note sheet. The SAME shared value drives the
+  // ENTRANCE: it is set to `height` (off-screen) synchronously BEFORE the
+  // visibility flag flips, so the sheet's first committed frame is already
+  // below the viewport, then it slides up. This replaces the old layout
+  // `entering={SlideInDown}` — on the new architecture that painted one frame
+  // at the FINAL position before the animation started (user-reported flash:
+  // sheet appears → vanishes → slides in). Same class of fix as CommentsSheet.
   const noteDragY = useSharedValue(0);
+  const noteBackdropO = useSharedValue(0);
   const openNoteSheet = () => {
-    noteDragY.value = 0;
+    noteDragY.value = height;
+    noteBackdropO.value = 0;
     setShowNoteSheet(true);
+    noteDragY.value = withTiming(0, { duration: 420, easing: Easing.out(Easing.cubic) });
+    noteBackdropO.value = withTiming(1, { duration: 220 });
   };
+  const noteBackdropStyle = useAnimatedStyle(() => ({ opacity: noteBackdropO.value }));
   const notePan = Gesture.Pan()
     .activeOffsetY(12)
     .onUpdate((e) => {
@@ -1018,6 +1030,8 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // on the TIME PICKER steps back to the habit sheet (mirroring its explicit
   // close affordance); on the habit sheet it dismisses the whole overlay.
   const habitDragY = useSharedValue(0);
+  const habitBackdropO = useSharedValue(0);
+  const habitBackdropStyle = useAnimatedStyle(() => ({ opacity: habitBackdropO.value }));
   const habitSwipeClose = () => {
     habitDragY.value = 0;
     if (showTimePicker) setShowTimePicker(false);
@@ -1436,8 +1450,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
         // behavior="height" was flaky on Android.
         <View style={[styles.sheetOverlay, { paddingBottom: kbHeight }]}>
           <Animated.View
-            entering={FadeIn.duration(300)}
-            style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.4)' }]}
+            style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.4)' }, noteBackdropStyle]}
           >
             <TouchableOpacity
               style={StyleSheet.absoluteFillObject}
@@ -1447,7 +1460,6 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
           </Animated.View>
           <GestureDetector gesture={notePan}>
             <Animated.View
-              entering={SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic))}
               style={[styles.noteSheet, kbHeight > 0 ? { height: height - kbHeight - insets.top - 12 } : null, noteSheetAnimStyle]}
             >
               <View style={[styles.noteSheetInner, { paddingBottom: Math.max(insets.bottom, 12) + 24 }]}>
@@ -1485,8 +1497,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
       {showSheet && (
         <View style={styles.sheetOverlay}>
           <Animated.View
-            entering={FadeIn.duration(300)}
-            style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.4)' }]}
+            style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.4)' }, habitBackdropStyle]}
           >
             <TouchableOpacity
               style={StyleSheet.absoluteFillObject}
@@ -1499,7 +1510,6 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               it steps back to the habit sheet (same as its explicit close). */}
           <GestureDetector gesture={habitPan}>
             <Animated.View
-              entering={SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic))}
               style={habitSheetAnimStyle}
             >
               {!showTimePicker ? (

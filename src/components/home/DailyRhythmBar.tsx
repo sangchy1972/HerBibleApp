@@ -366,13 +366,13 @@ const styles = StyleSheet.create({
   // The right ~22% belongs entirely to the Start pill, vertically centered.
   rightZone: { width: '22%', justifyContent: 'center', alignItems: 'flex-end', paddingLeft: 6 },
   msg: { flexDirection: 'row', alignItems: 'center' },
-  title: { flex: 1, fontSize: 16.6, lineHeight: 21.6, fontWeight: '400', color: TXT, fontFamily: FONTS.lato, marginLeft: 3 },   // 18.4 → 16.6 (-10 %), regular 400 (per user); +3px left inset
+  title: { flex: 1, fontSize: 18, lineHeight: 23.4, fontWeight: '400', color: TXT, fontFamily: FONTS.lato, marginLeft: 3 },   // 18, Lato regular 400, +3px left inset (per user)
   // Decorative Start pill (whole card is tappable) — rose, canonical CTA
   // radius, bold label like every other rose button.
   startBtn: {
     backgroundColor: ROSE,
     borderRadius: BTN_RADIUS,
-    paddingHorizontal: 15,
+    paddingHorizontal: 18,
     paddingVertical: 7.5,
     marginBottom: 20,                    // in the centered zone this lifts the pill ~10px (per user)
   },
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
   // Segment fills use radius 0 — the track's overflow:hidden rounds the outer
   // ends, and interior edges must sit flush against the ticks (a per-segment
   // radius would notch dark slivers beside every tick).
-  trackRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 7 },   // 10 → 7 (-3px after the title per user)
+  trackRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },   // gap 8 → 4, title gap 7 → 4 (per user)
   trackWrap: { flex: 1, position: 'relative' },
   pctText: { fontSize: 14.7, fontWeight: '700', color: ROSE, fontFamily: FONTS.latoBold, minWidth: 38, textAlign: 'right' },   // 12.8 → 14.7 (+15 %), bold (per user)
   track: {
@@ -400,9 +400,9 @@ const styles = StyleSheet.create({
   },
   tick: {
     position: 'absolute',
-    top: 0.9,
-    bottom: 0.9,
-    width: 1.5,
+    top: 0,
+    bottom: 0,
+    width: 2.5,                                    // 1.5 → 2.5, full-height (per user)
     backgroundColor: 'rgba(255,255,255,0.65)',
     borderRadius: 2,
   },

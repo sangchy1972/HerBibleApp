@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   bar: {
     borderRadius: 20,
     minHeight: 68,                       // 59 → 68 (+15 % per user)
-    paddingTop: 12,                      // per user
+    paddingTop: 15,                      // 12 → 15 (per user)
     paddingBottom: 0,                    // flush — the bar sits on the card's bottom edge (per user)
     paddingHorizontal: 14,
     justifyContent: 'space-between',     // top zone up, progress row pinned down

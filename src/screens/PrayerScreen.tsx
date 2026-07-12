@@ -1258,10 +1258,10 @@ const styles = StyleSheet.create({
     paddingBottom: 5,
   },
   dateText: {
-    fontSize: 12.65,                                                            // 11.50 → 12.65 (+10 % per user)
+    fontSize: 13.3,                                                             // 12.65 → 13.3 (+5 % per user)
     color: TXTSUB,
     letterSpacing: 1.8,
-    marginBottom: 0,                                                            // -5 → 0 (restored per user)
+    marginBottom: 2,                                                            // +2 px before the greeting (per user)
     fontFamily: FONTS.lora,
   },
   greetText: {

@@ -689,7 +689,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
                 <View style={styles.banner}>
                   <Image source={APP_ICON} style={styles.bannerIcon} />
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.bannerApp}>Her Bible</Text>
+                    <Text style={styles.bannerApp}>HER BIBLE</Text>
                     <Text style={styles.bannerBody} numberOfLines={2}>{t('notif.push.morning.body.1')}</Text>
                   </View>
                 </View>
@@ -702,7 +702,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
               {/* Brand row — icon logo + pink wordmark (reference layout). */}
               <View style={styles.loginBrandRow}>
                 <Logo size={30} />
-                <Text style={styles.loginBrandName}>Her Bible</Text>
+                <Text style={styles.loginBrandName}>HER BIBLE</Text>
               </View>
               <Text style={styles.loginTitle}>{t('onboarding.login.title')}</Text>
               <Text style={[styles.sub, { marginBottom: 0 }]}>{t('onboarding.login.sub')}</Text>

@@ -83,7 +83,7 @@ export default function VerseCardArt({ format, reference, text, width, bgSource 
       <View style={[styles.brandRow, { bottom: Math.round(97.4 * scale), gap: Math.round(logoBase * 0.5) }]}>{/* 92.4 → 97.4 — brand row moved up 5 design-px per user */}
         <Logo size={Math.round(logoBase * 1.6)} />
         <Text style={[styles.brand, bgSource ? styles.brandOnPhoto : null, { fontSize: brandTextFont }]}>
-          Her Bible
+          HER BIBLE
         </Text>
       </View>
     </View>

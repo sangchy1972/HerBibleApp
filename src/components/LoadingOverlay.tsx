@@ -9,8 +9,7 @@ import { useUILanguage } from '../state/UILanguageContext';
 import { useReminderInterstitial } from '../state/ReminderInterstitialContext';
 import { useOnboarding } from '../state/OnboardingContext';
 import { useDailyVerses } from '../state/DailyVersesContext';
-import { useActivity } from '../state/ActivityContext';
-import { useT } from '../i18n/useT';
+import { localeFor } from '../i18n/locale';
 import { LOADING_LINES } from '../constants/loadingContent';
 import { LOADING_IMAGE_FILES } from '../constants/loadingImages';
 import {
@@ -38,7 +37,7 @@ const BUNDLED_LOADING_BG = require('../../assets/follow_him_day.webp');
 // Now it's a single scene. The brand (icon + wordmark) is the SAME element
 // throughout: it settles in the middle of the pink card, then RISES to the top
 // while the photo fades in underneath it and slowly pushes in from 100 % → 110 %.
-// The streak line and the daily verse then fade up below it. Nothing is
+// Today's date and the daily verse then fade up below it. Nothing is
 // duplicated, nothing cross-dissolves into a copy of itself.
 const BRAND_BG = '#F9D9E6';
 const BRAND_GRADIENT = ['#F9D9E6', '#F4A6C0'] as const;
@@ -63,12 +62,12 @@ const TAGLINE_DELAY_MS = NAME_DELAY_MS + NAME_FADE_MS + TAGLINE_GAP_MS;   // 150
 const TAGLINE_FADE_MS = 600;
 const BRAND_ANIM_END_MS = TAGLINE_DELAY_MS + TAGLINE_FADE_MS;             // 2100
 
-const ICON_TEXT_GAP = 22;                               // settled icon's bottom edge → wordmark
+const ICON_TEXT_GAP = 17.6;                             // 22 × 0.8 — user: tighten the icon↔wordmark gap 20 %
 // Text column sits below the SETTLED icon: half the final icon + the gap, minus
 // the lift (both measured from the screen's vertical centre).
 const TEXT_TOP = -ICON_LIFT + ICON_FINAL / 2 + ICON_TEXT_GAP;
 
-const NAME_SIZE = 32.4;                  // 36 × 0.9 — user: wordmark -10 %
+const NAME_SIZE = 27.5;                  // 36 → 32.4 (-10 %) → 27.5 (-15 % again, per user)
 const TAGLINE_SIZE = NAME_SIZE / 2;      // user: half the wordmark
 const TAGLINE_TEXT = "Lifted by God's Word";
 
@@ -84,11 +83,11 @@ const BG_FADE_MS = 700;         // photo crosses in under the rising brand
 const TAGLINE_OUT_MS = 260;     // tagline belongs to the pink card only
 const ZOOM_TO = 1.10;           // user: 100 % → 110 %
 const ZOOM_MS = 3300;           // spans the whole of stage 2 + the exit fade
-const STREAK_DELAY_MS = 750;    // lands just as the brand finishes rising
-const STREAK_FADE_MS = 500;
+const DATE_DELAY_MS = 750;      // lands just as the brand finishes rising
+const DATE_FADE_MS = 500;
 const VERSE_DELAY_MS = 1000;
 const VERSE_FADE_MS = 600;
-const RISE_UP_PX = 14;          // streak/verse drift up as they fade in
+const RISE_UP_PX = 14;          // date/verse drift up as they fade in
 
 // Stage-1 floor: long enough that the full brand choreography always plays out
 // (otherwise a fast-booting device would jump to stage 2 before the tagline
@@ -97,11 +96,17 @@ const BRAND_MIN_MS = BRAND_ANIM_END_MS + 200;   // 2300
 const CONTENT_HOLD_MS = 3000;  // stage-2: exactly 3s, never longer
 const MAX_VISIBLE_MS = 11000;  // hard safety cap — never hang the launch
 
-// English ordinal suffix ("17th"); other locales get a plain number and phrase
-// the sentence their own way (see the `loading.streak` context note).
+// English ordinal suffix ("July 17th"); other locales use their own date format.
 function enOrdinal(d: number): string {
   if (d >= 11 && d <= 13) return `${d}th`;
   return `${d}${({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[d % 10] || 'th'}`;
+}
+function dateLine(lang: string): string {
+  const now = new Date();
+  if (lang === 'en') {
+    return `${now.toLocaleDateString('en-US', { month: 'long' })} ${enOrdinal(now.getDate())}`;
+  }
+  return now.toLocaleDateString(localeFor(lang as Parameters<typeof localeFor>[0]), { month: 'long', day: 'numeric' });
 }
 
 interface Props {
@@ -113,11 +118,9 @@ interface Props {
 
 export default function LoadingOverlay({ appReady, onHide }: Props) {
   const { lang } = useUILanguage();
-  const t = useT();
   const reminder = useReminderInterstitial();
   const onboarding = useOnboarding();
   const { getVerse, todayDay } = useDailyVerses();
-  const { streak } = useActivity();
 
   const [phase, setPhase] = useState<'brand' | 'content'>('brand');
   const [rot, setRot] = useState<number | null>(null);
@@ -140,7 +143,7 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   const stage2 = useSharedValue(0);           // drives the brand's dark → white text colour
   const bgOpacity = useSharedValue(0);
   const bgScale = useSharedValue(1);
-  const streakOpacity = useSharedValue(0);
+  const dateOpacity = useSharedValue(0);
   const verseOpacity = useSharedValue(0);
 
   useEffect(() => {
@@ -180,10 +183,10 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
     // per the user's "速度弧度不要太大".
     bgScale.value = withTiming(ZOOM_TO, { duration: ZOOM_MS, easing: Easing.inOut(Easing.quad) });
     taglineOpacity.value = withTiming(0, { duration: TAGLINE_OUT_MS, easing: Easing.in(Easing.quad) });
-    streakOpacity.value = withDelay(STREAK_DELAY_MS, withTiming(1, { duration: STREAK_FADE_MS, easing: soft }));
+    dateOpacity.value = withDelay(DATE_DELAY_MS, withTiming(1, { duration: DATE_FADE_MS, easing: soft }));
     verseOpacity.value = withDelay(VERSE_DELAY_MS, withTiming(1, { duration: VERSE_FADE_MS, easing: soft }));
   }, [phase, brandElapsed, contentReady, contextsReady,
-      rise, stage2, bgOpacity, bgScale, taglineOpacity, streakOpacity, verseOpacity]);
+      rise, stage2, bgOpacity, bgScale, taglineOpacity, dateOpacity, verseOpacity]);
 
   // Single-shot fade-out → onHide. Guarded so the dismiss effect and the safety
   // cap can't restart the animation or call onHide twice.
@@ -219,10 +222,6 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   const sentence = line.text[lang] || line.text.en || '';
   const source = line.source ? (line.source[lang] || line.source.en || null) : null;
 
-  // Day 1 for a brand-new user; from launch 2 onward this is their real streak.
-  const dayN = Math.max(1, streak);
-  const streakLine = t('loading.streak', { n: lang === 'en' ? enOrdinal(dayN) : dayN });
-
   const fade = useAnimatedStyle(() => ({ opacity: opacity.value }));
   const riseStyle = useAnimatedStyle(() => ({ transform: [{ translateY: rise.value * BRAND_RISE }] }));
   const iconStyle = useAnimatedStyle(() => ({
@@ -237,9 +236,9 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   const taglineStyle = useAnimatedStyle(() => ({ opacity: taglineOpacity.value }));
   const bgFade = useAnimatedStyle(() => ({ opacity: bgOpacity.value }));
   const bgZoom = useAnimatedStyle(() => ({ transform: [{ scale: bgScale.value }] }));
-  const streakStyle = useAnimatedStyle(() => ({
-    opacity: streakOpacity.value,
-    transform: [{ translateY: (1 - streakOpacity.value) * RISE_UP_PX }],
+  const dateStyle = useAnimatedStyle(() => ({
+    opacity: dateOpacity.value,
+    transform: [{ translateY: (1 - dateOpacity.value) * RISE_UP_PX }],
   }));
   const verseStyle = useAnimatedStyle(() => ({
     opacity: verseOpacity.value,
@@ -282,21 +281,21 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
         <Animated.Image source={SPLASH_ICON} style={[styles.brandIcon, iconStyle]} resizeMode="contain" />
         <View style={styles.brandTextBlock}>
           <Animated.Text style={[styles.brandName, onContent && onPhoto && styles.shadow, nameStyle]}>
-            Her Bible
+            HER BIBLE
           </Animated.Text>
           <Animated.Text style={[styles.brandTagline, taglineStyle]}>{TAGLINE_TEXT}</Animated.Text>
         </View>
       </Animated.View>
 
-      {/* LOWER BLOCK — streak, then the day's verse. Bottom-anchored so a long
-          verse grows upward instead of colliding with the brand above. */}
+      {/* LOWER BLOCK — today's date, then the day's verse. Bottom-anchored so a
+          long verse grows upward instead of colliding with the brand above. */}
       {onContent && (
         <View style={styles.lower} pointerEvents="none">
           <Animated.Text
-            numberOfLines={2}
-            style={[styles.streak, { color: fgSub }, onPhoto && styles.shadow, streakStyle]}
+            numberOfLines={1}
+            style={[styles.date, { color: fg }, onPhoto && styles.shadow, dateStyle]}
           >
-            {streakLine}
+            {dateLine(lang)}
           </Animated.Text>
           <Animated.Text
             numberOfLines={5}
@@ -349,14 +348,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 26,
     right: 26,
-    bottom: Math.round(height * 0.15),
+    bottom: Math.round(height * 0.15) + 100,                                    // +100 px per user — the verse sat too low
     alignItems: 'center',
   },
-  // Sits where the reference layout puts its award badge — one quiet line above
-  // the headline.
-  streak: {
-    fontFamily: FONTS.lato, fontSize: 18, letterSpacing: 0.4,
-    textAlign: 'center', marginBottom: 18,
+  // Today's date, in the slot the reference layout gives its award badge.
+  // Same treatment it had on the old verse card.
+  date: {
+    fontFamily: FONTS.merriweatherBold, fontSize: 28.6, fontWeight: '700',
+    letterSpacing: 0.2, textAlign: 'center', marginBottom: 16,
   },
   // The verse is the headline of this card — bigger and bolder than before, to
   // carry the composition the way the reference does.

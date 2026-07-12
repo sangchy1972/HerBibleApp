@@ -92,8 +92,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 14,
     backgroundColor: '#FFFFFF', borderRadius: 12.7,                             // 9.8 → 12.7 (+30 % card radius per user)
     paddingVertical: 10.26, paddingHorizontal: 12, marginTop: 12,                // 11.4 × 0.9 (-10 % card height per user; text unchanged)
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03, shadowRadius: 3, elevation: 1,
   },
   tile: {
     width: 82.01, height: 82.01, borderRadius: 10,                              // 92.15 × 0.89 (-11 % per user)

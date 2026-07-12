@@ -42,11 +42,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginTop: 12,
     // Lighter shadow per user — was too heavy. Halved opacity + tightened radius.
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1,
   },
   meta: { flex: 1, minWidth: 0 },
   dayRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },

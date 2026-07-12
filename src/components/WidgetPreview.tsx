@@ -81,11 +81,6 @@ const styles = StyleSheet.create({
     borderRadius: 23.4,                  // 18 → 23.4 (+30 % card radius per user)
     overflow: 'hidden',
     backgroundColor: '#2D3A5A',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    elevation: 3,
   },
   fill: { flex: 1 },
   img: { borderRadius: 23.4 },           // 18 → 23.4 — mirrors the shell's card radius

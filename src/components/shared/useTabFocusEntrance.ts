@@ -90,6 +90,16 @@ export function useTabFocusEntrance(delay = 0) {
 
   useEffect(() => () => { if (settleTimer.current) clearTimeout(settleTimer.current); }, []);
 
+  // Unconditional mount-level fallback: even if the focus effect never fires
+  // its timer (dev fast-refresh preserving `firstFocus=false` while the
+  // reanimated values sit frozen mid-entrance — the "washed / grey-framed
+  // sections" artifact), every mount settles to the plain full-opacity style
+  // within ~0.5s. Idempotent with the focus-driven settle above.
+  useEffect(() => {
+    const t = setTimeout(() => setSettled(true), delay + ENTRANCE_DURATION_MS + SETTLE_SLACK_MS);
+    return () => clearTimeout(t);
+  }, [delay]);
+
   const animStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
     transform: [{ translateY: translateY.value }],

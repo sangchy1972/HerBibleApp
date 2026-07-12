@@ -129,11 +129,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 4,
     paddingVertical: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,                                                         // 0.04 → 0.05 (matches notesTile)
-    shadowRadius: 4,
-    elevation: 1,
   },
   tileIconWrap: {
     width: 36, height: 36,
@@ -171,11 +166,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     alignItems: 'stretch',                // children fill horizontal — needed so the
                                           // label slot can centre 2-line text properly
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
   },
   // Upper slot — icon hugs the BOTTOM of its slot (toward the label),
   // then `paddingBottom: 8` lifts it back up by 8 px (was 5; bumped +3

@@ -1317,11 +1317,6 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     paddingHorizontal: 11,
     alignItems: 'stretch',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,                                                                // matches widgetBanner / removeAdsBanner / notesTile so the stat cards lift on Android too (per user — iOS shadow props alone render flat on Android)
   },
   // Icon hugs the top center of the card; container height bumped to fit
   // the +15 % icons. marginBottom 0 per user — no gap between icon and the
@@ -1334,17 +1329,12 @@ const styles = StyleSheet.create({
   statLabel: { flex: 3, fontSize: 12.14, color: TXTSUB, fontFamily: FONTS.lato, textAlign: 'center', lineHeight: 15.18 },
   widgetBanner: {
     // Matches notesTile (My Notes cards) 1:1 per user — same radius/height/
-    // shadow AND elevation:1 so it lifts off the page on Android too (the iOS
+    // shadow AND 
     // shadow props alone render flat on Android — Android shadows need elevation).
     marginBottom: 25,
     height: 92,
     backgroundColor: '#FFFFFF',
     borderRadius: 14.6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
   },
   widgetBannerInner: {
     flex: 1,                                                                     // fills the outer banner's locked 92 px height — the gradient now matches the card outline exactly
@@ -1397,11 +1387,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginBottom: 8,
     gap: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,                                                                // matches the other Profile cards so the Faith Achievement card lifts on Android too (per user)
   },
   achievementPreviewTile: { flex: 1, alignItems: 'center' },
   achievementPreviewMore: {
@@ -1469,11 +1454,6 @@ const styles = StyleSheet.create({
     height: 92,
     backgroundColor: '#FFFFFF',
     borderRadius: 14.6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
   },
   // Override on top of widgetBannerTitle — Lato 600 per user (reverted from
   // Lora 600). Color matches the slash on the AD icon (#D54A6E) so the whole

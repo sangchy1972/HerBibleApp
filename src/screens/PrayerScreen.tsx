@@ -1384,10 +1384,6 @@ const styles = StyleSheet.create({
     // accepts a shadow on the same node; no Android elevation because it
     // renders as a gray rectangle during react-navigation tab transitions
     // (same artifact we removed from ProfileScreen's cards).
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.084,                                                       // 0.12 → 0.084 (-30 %)
-    shadowRadius: 5.6,                                                          // 8 → 5.6 (-30 %)
     // Fallback background while the CDN photo is still downloading on the
     // first launch — keeps the card from flashing the screen's gray as the
     // <ImageBackground> mounts. The tonal gradient renders on top so the
@@ -1713,11 +1709,6 @@ const styles = StyleSheet.create({
     paddingVertical: 11.4,
     paddingHorizontal: 12,
     marginTop: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1,
   },
   continueIcon: {
     width: 92.15,                    // match PlanProgressCard's cover (92.15² ) so this card's

@@ -423,11 +423,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
     paddingTop: 22,
     paddingBottom: 22,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.10,
-    shadowRadius: 14,
-    elevation: 6,
   },
   dayRow: {
     flexDirection: 'row',
@@ -519,11 +514,6 @@ const styles = StyleSheet.create({
     borderRadius: 14.3,                                                          // 11 → 14.3 (+30 % card radius per user)
     paddingVertical: 36,                                                          // 20 → 36 (+~30 % card height per user)
     paddingHorizontal: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.10,
-    shadowRadius: 8,
-    elevation: 3,
   },
   nextMeta: { minWidth: 0 },
   nextLabel: { fontSize: 12.65, fontFamily: FONTS.lato, fontWeight: '600', letterSpacing: 1.2, marginBottom: 4, textAlign: 'center' },  // Lato 600; centered with the title per user

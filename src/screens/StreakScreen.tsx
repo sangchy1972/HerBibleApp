@@ -95,16 +95,12 @@ export default function StreakScreen({ navigation }: RootStackScreenProps<'Strea
   })();
   const completeThisWeek = weekKeys.filter(k => wasCompleteOn(k)).length;
 
-  // Mirrors PlanProgressCard 1:1 per user — same bg / radius / shadow as
-  // the home-screen "Plans In Progress" card, no border.
+  // Mirrors PlanProgressCard 1:1 per user — same bg / radius as the
+  // home-screen "Plans In Progress" card; flat (no shadow, no border) like
+  // every standing card app-wide (per user — elevation read as a grey frame).
   const card = {
     backgroundColor: '#FFFFFF',
     borderRadius: 12.7,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1,
   };
 
   return (
@@ -291,11 +287,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 30,                                                              // 50 → 30 (-20 px top margin per user)
     paddingBottom: 28,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 18,
-    elevation: 10,
   },
   infoClose: {
     position: 'absolute',

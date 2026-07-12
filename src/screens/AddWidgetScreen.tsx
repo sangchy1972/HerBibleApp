@@ -228,11 +228,6 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     paddingHorizontal: 22,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    elevation: 8,
   },
   mIcon: {
     width: 56, height: 56, borderRadius: 28,

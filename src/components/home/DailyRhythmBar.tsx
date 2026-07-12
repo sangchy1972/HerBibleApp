@@ -374,8 +374,9 @@ const styles = StyleSheet.create({
     borderRadius: BTN_RADIUS,
     paddingHorizontal: 15,
     paddingVertical: 7.5,
+    marginBottom: 20,                    // in the centered zone this lifts the pill ~10px (per user)
   },
-  startBtnText: { fontSize: 13.5, fontWeight: '700', color: '#FFFFFF', fontFamily: FONTS.latoBold, letterSpacing: 0.2 },
+  startBtnText: { fontSize: 14.9, fontWeight: '700', color: '#FFFFFF', fontFamily: FONTS.latoBold, letterSpacing: 0.2 },   // 13.5 → 14.9 (+10 % per user)
   // Track / fill / tick — carried over VERBATIM from PrayerScreen's removed
   // "Today's Progress" bar (height 6, radius 7, 10% ink track, rose fill,
   // white 1.5px ticks inset 0.9). Only the tick count changed (1 → 4).
@@ -384,7 +385,7 @@ const styles = StyleSheet.create({
   // radius would notch dark slivers beside every tick).
   trackRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
   trackWrap: { flex: 1, position: 'relative' },
-  pctText: { fontSize: 12.8, fontWeight: '600', color: ROSE, fontFamily: FONTS.latoBold, minWidth: 34, textAlign: 'right' },
+  pctText: { fontSize: 14.7, fontWeight: '700', color: ROSE, fontFamily: FONTS.latoBold, minWidth: 38, textAlign: 'right' },   // 12.8 → 14.7 (+15 %), bold (per user)
   track: {
     height: 6,
     borderRadius: 7,

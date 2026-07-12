@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   bar: {
     borderRadius: 20,
     minHeight: 68,                       // 59 → 68 (+15 % per user)
-    paddingTop: 15,                      // 12 → 15 (per user)
+    paddingTop: 13,                      // 15 → 13 (per user)
     paddingBottom: 0,                    // flush — the bar sits on the card's bottom edge (per user)
     paddingHorizontal: 14,
     justifyContent: 'space-between',     // top zone up, progress row pinned down
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 4,                                      // 2.5 → 4, full-height (per user)
-    backgroundColor: 'rgba(255,255,255,1)',
+    backgroundColor: 'rgba(255,255,255,0.9)',
     borderRadius: 2,
   },
   spark: { position: 'absolute', top: -14, left: '50%', marginLeft: -11.5 },   // centers the 23px sparkle

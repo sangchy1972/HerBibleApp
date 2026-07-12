@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
   // Segment fills use radius 0 — the track's overflow:hidden rounds the outer
   // ends, and interior edges must sit flush against the ticks (a per-segment
   // radius would notch dark slivers beside every tick).
-  trackRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },   // title gap 2 (per user); % readout removed — bar spans the full width
+  trackRow: { flexDirection: 'row', alignItems: 'center', marginTop: 0 },   // no gap above the bar (per user); % readout removed — bar spans the full width
   trackWrap: { flex: 1, position: 'relative' },
   track: {
     height: 6,
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     bottom: 0,
-    width: 2.5,                                    // 1.5 → 2.5, full-height (per user)
+    width: 4,                                      // 2.5 → 4, full-height (per user)
     backgroundColor: 'rgba(255,255,255,0.65)',
     borderRadius: 2,
   },

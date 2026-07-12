@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   // in JSX) with NO border and NO shadow/elevation — Android's elevation
   // ambient shadow read as a "grey outline" around the old white card (user
   // report), so the card is deliberately flat.
-  wrap: { marginTop: 2, marginBottom: 4 },   // 6 → 2 (-4 px below the greeting per user)
+  wrap: { marginTop: -1, marginBottom: 4 },   // 6 → 2 → -1 (-4 then -3 px below the greeting per user)
   bar: {
     borderRadius: 20,
     minHeight: 68,                       // 59 → 68 (+15 % per user)
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   // The right ~22% belongs entirely to the Start pill, vertically centered.
   rightZone: { width: '22%', justifyContent: 'center', alignItems: 'flex-end', paddingLeft: 6 },
   msg: { flexDirection: 'row', alignItems: 'center' },
-  title: { flex: 1, fontSize: 18.4, lineHeight: 24, fontWeight: '600', color: TXT, fontFamily: FONTS.latoBold, marginLeft: 3 },   // 16.7 → 18.4 (+10 %); +3px left inset (per user)
+  title: { flex: 1, fontSize: 16.6, lineHeight: 21.6, fontWeight: '400', color: TXT, fontFamily: FONTS.lato, marginLeft: 3 },   // 18.4 → 16.6 (-10 %), regular 400 (per user); +3px left inset
   // Decorative Start pill (whole card is tappable) — rose, canonical CTA
   // radius, bold label like every other rose button.
   startBtn: {

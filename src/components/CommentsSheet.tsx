@@ -11,9 +11,12 @@ import { useT } from '../i18n/useT';
 
 // Bottom-sheet of decorative "community" reactions on the daily verse. The
 // comments + names are canned (see constants/verseComments.ts) — NOT real user
-// data, purely social-proof encouragement. Each open shows a fresh random 5–25
-// of them (the component remounts per open, so the useMemo re-rolls). Localized
-// to the active UI language.
+// data, purely social-proof encouragement. The caller passes `count` — the
+// number the verse card's comment badge advertised — and the sheet renders
+// EXACTLY that many rows (clamped to the pool), so the two can never mismatch
+// (user-reported "card says 50, sheet says 11"). Texts/names still re-roll on
+// every open (the component remounts, so the useMemo re-rolls). Localized to
+// the active UI language.
 
 const AVATAR_COLORS = ['#E63F69', '#7B6CF6', '#F2A65A', '#3FAE6A', '#5B8DEF', '#E36588', '#46B3A6', '#C9772E'];
 const SCREEN_H = Dimensions.get('window').height;
@@ -38,7 +41,7 @@ function sample<T>(arr: readonly T[], n: number): T[] {
 
 interface Row { id: number; name: string; text: string; ago: string; likes: number }
 
-export default function CommentsSheet({ onClose }: { onClose: () => void }) {
+export default function CommentsSheet({ count, onClose }: { count: number; onClose: () => void }) {
   const insets = useSafeAreaInsets();
   const t = useT();
   const { lang } = useUILanguage();
@@ -58,8 +61,7 @@ export default function CommentsSheet({ onClose }: { onClose: () => void }) {
 
   const rows = useMemo<Row[]>(() => {
     const pool = VERSE_COMMENTS[lang] || VERSE_COMMENTS.en;
-    const count = 5 + Math.floor(Math.random() * 21);            // 5..25
-    const texts = sample(pool, count);
+    const texts = sample(pool, Math.min(count, pool.length));
     const names = sample(COMMENT_NAMES, texts.length);           // distinct names where possible
     return texts.map((text, i) => {
       const mins = 1 + Math.floor(Math.random() * 4000);         // up to ~2.7 days ago
@@ -72,7 +74,7 @@ export default function CommentsSheet({ onClose }: { onClose: () => void }) {
         likes: Math.floor(Math.random() * 240),
       };
     });
-  }, [lang]);
+  }, [lang, count]);
 
   return (
     <View style={styles.overlay}>

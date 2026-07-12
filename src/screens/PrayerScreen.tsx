@@ -282,10 +282,13 @@ function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTa
     : (['rgba(45,22,96,0.30)', 'rgba(16,5,37,0.52)'] as const);
   const iconColor = 'rgba(255,255,255,0.92)';
 
-  // Per-day social proof. Likes 1001 – 5000, comments 36 – 135. Different
+  // Per-day social proof. Likes 1001 – 5000, comments 36 – 55. Different
   // salts for morning/evening so the two tabs don't show identical counts.
+  // The comment range is capped at the canned-comment pool size so the sheet
+  // can render EXACTLY this many rows — the count on the card and the list
+  // behind it always match (user-reported 50-vs-11 mismatch).
   const likes = dailyCount(morning ? 1 : 2, 1001, 4000);
-  const comments = dailyCount(morning ? 3 : 4, 36, 100);
+  const comments = dailyCount(morning ? 3 : 4, 36, 20);
 
   // Breathing pulse on the Start CTA — only while the slot is live. Once the
   // user taps Amen and returns here, the button switches to a quiet "done"
@@ -1170,10 +1173,12 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
         />
       </Modal>
 
-      {/* Verse comment sheet — decorative community reactions (canned, random
-          5–25 each open). Remounts per open so it re-rolls a fresh set. */}
+      {/* Verse comment sheet — decorative community reactions (canned).
+          `count` uses the SAME per-day formula + salt as the hero card's
+          badge, so the sheet renders exactly the number the card advertised
+          (texts still re-roll per open; only the count is pinned). */}
       <Modal visible={showComments} transparent animationType="none" statusBarTranslucent onRequestClose={() => setShowComments(false)}>
-        {showComments && <CommentsSheet onClose={() => setShowComments(false)} />}
+        {showComments && <CommentsSheet count={dailyCount(morning ? 3 : 4, 36, 20)} onClose={() => setShowComments(false)} />}
       </Modal>
 
       {/* "See past days" prompt — shown when the verse card is tapped during

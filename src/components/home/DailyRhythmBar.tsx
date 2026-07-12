@@ -358,9 +358,10 @@ const styles = StyleSheet.create({
   bar: {
     borderRadius: 20,
     minHeight: 68,                       // 59 → 68 (+15 % per user)
-    paddingTop: 9,                       // 13 → 9 (per user)
+    paddingTop: 12,                      // per user
     paddingBottom: 0,                    // flush — the bar sits on the card's bottom edge (per user)
-    paddingHorizontal: 14,
+    paddingLeft: 12,                     // per user
+    paddingRight: 16,                    // per user
     justifyContent: 'space-between',     // top zone up, progress row pinned down
     overflow: 'hidden',                  // rounds the gradient's corners
   },

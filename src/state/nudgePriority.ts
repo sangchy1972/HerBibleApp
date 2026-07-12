@@ -9,6 +9,7 @@
 // (`ignoresBudget`) because those are expected and welcome.
 
 export type NudgeId =
+  | 'firstRunTour'
   | 'achievementUnlock'
   | 'followHimOptin'
   | 'setReminderTime'
@@ -21,6 +22,9 @@ export type NudgeId =
 
 // Lower number = higher priority (shown first). See the plan for rationale.
 export const NUDGE_PRIORITY: Record<NudgeId, number> = {
+  // The first-run home tour outranks everything: it runs exactly once, on the
+  // very first open after the questionnaire, and nothing may sit on top of it.
+  firstRunTour:       5,
   achievementUnlock: 10,
   followHimOptin:    20,
   setReminderTime:   30,

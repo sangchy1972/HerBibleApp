@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Mood } from '../components/MoodEmoji';
 import { logEvent } from '../services/firebase';
 import { useOnboarding } from './OnboardingContext';
+import { useFirstRunTour } from './FirstRunTourContext';
 
 const STORAGE_KEY_V2 = 'mood:v2';
 const STORAGE_KEY_V1 = 'mood:v1';
@@ -104,8 +105,21 @@ export function MoodCheckInProvider({ children }: { children: React.ReactNode })
   // used to suppress that day's legitimate prompt. The 600ms delay lets the
   // tabs land before the sheet animates in.
   const { ready: obReady, done: obDone } = useOnboarding();
+  // ...and NOT while the first-run tour is owed (per user: a brand-new user must
+  // never get the mood sheet before she's been shown around). The gate sits
+  // BEFORE firedRef is burned and before `lastShownAt` is persisted, so day 1's
+  // legitimate prompt isn't silently consumed while the sheet is suppressed —
+  // exactly the trap described above for the onboarding case. When the tour ends
+  // `tourPending` flips false, this effect re-runs (the provider never remounts)
+  // and the mood sheet appears then.
+  // `ranThisSession` is in here on purpose: suppressing the sheet only WHILE the
+  // tour is up would just chase her with it the second the tour ends. On a first
+  // run she gets the tour and nothing else; the mood ritual starts from her
+  // second open.
+  const { ready: tourReady, pending: tourPending, active: tourActive, ranThisSession: tourRan } = useFirstRunTour();
+  const tourOwed = tourReady && (tourPending || tourActive || tourRan);
   useEffect(() => {
-    if (!ready || !obReady || !obDone || firedRef.current) return;
+    if (!ready || !obReady || !obDone || tourOwed || firedRef.current) return;
     firedRef.current = true;
     if (computeShouldShow(state)) {
       const timer = setTimeout(() => {
@@ -115,7 +129,7 @@ export function MoodCheckInProvider({ children }: { children: React.ReactNode })
       return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, obReady, obDone]);
+  }, [ready, obReady, obDone, tourOwed]);
 
   const value = useMemo<MoodCheckInState>(() => {
     const today = todayKey();

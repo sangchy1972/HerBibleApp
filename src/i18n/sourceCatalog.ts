@@ -203,6 +203,18 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'prayer.todaysProgress':         { en: "TODAY'S PROGRESS", context: 'Uppercase eyebrow above the daily progress bar on the Prayer tab.' },
   'prayer.toggle.morning':         { en: 'Morning',        context: 'Tab toggle on Prayer screen — switches the verse card to the morning slot. Followed by a check mark when done.' },
   'prayer.toggle.evening':         { en: 'Evening',        context: 'Tab toggle on Prayer screen — switches the verse card to the evening slot.' },
+  // ─── First-run home tour (3-step spotlight, shown once) ───────────────────
+  'tour.rhythm.title':             { en: 'Your daily rhythm', context: 'Coach-mark title over the Daily Rhythm bar at the top of the home screen. Reuses the in-app feature name "Daily Rhythm".' },
+  'tour.rhythm.body':              { en: 'Follow one step at a time — your progress fills in here.', context: 'Coach-mark body for the rhythm bar. The bar has segments that fill as she completes each step of the day.' },
+  'tour.streak.title':             { en: 'Keep your flame lit', context: 'Coach-mark title over the streak badge (flame icon + day count, top-right of the header).' },
+  'tour.streak.body':              { en: 'One prayer a day keeps your flame alive.', context: 'Coach-mark body for the streak badge. Any prayer finished that day continues the streak.' },
+  'tour.verse.title':              { en: 'Ready to pray', context: 'Coach-mark title over the big photo verse card. LAST step of the tour. Audience is women — use the FEMININE form where the language marks gender (Prête / Lista / Pronta).' },
+  'tour.verse.body':               { en: "Tap the card to begin with today's verse.", context: 'Coach-mark body for the verse hero card. Tapping the card opens the prayer flow.' },
+  'tour.next':                     { en: 'Next', context: 'Advance button on the first two coach-marks. Keep it short.' },
+  'tour.finish':                   { en: 'Start praying', context: 'Primary CTA on the LAST coach-mark. Closes the tour and opens the prayer flow.' },
+  'tour.skip':                     { en: 'Skip', context: 'Text-only dismiss link on every coach-mark. Ends the tour for good.' },
+  'tour.progress':                 { en: '{n} of {total}', context: 'Tiny step counter above the coach-mark title, e.g. "1 of 3". Keep both placeholders.' },
+
   'prayer.startMorning':           { en: 'Start Morning Prayer →', context: 'Primary CTA button when morning slot is active. Arrow is decorative — preserve in target language if possible.' },
   'prayer.startNight':             { en: 'Start Night Prayer →',   context: 'Primary CTA button when evening slot is active.' },
   'prayer.wait.nightCountdown':    { en: 'Night Prayer · {countdown}', context: 'Inactive button label showing time until night prayer opens. {countdown} is e.g. "2h 5m".' },

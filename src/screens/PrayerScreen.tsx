@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Feather from '@expo/vector-icons/Feather';
 import Svg, { Path, Line, Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withRepeat, withDelay, withSequence,
   interpolateColor, runOnJS, Easing, FadeIn, FadeOut,
@@ -18,6 +18,7 @@ import { ROSE, BTN_RADIUS, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme
 import { useAuth } from '../state/AuthContext';
 import { usePrayer } from '../state/PrayerContext';
 import { useActivity } from '../state/ActivityContext';
+import { useFirstRunTour } from '../state/FirstRunTourContext';
 import { useDailyVerses } from '../state/DailyVersesContext';
 import { useTranslation } from '../state/TranslationsContext';
 import { useReadChapters } from '../state/ReadChaptersContext';
@@ -209,7 +210,8 @@ function formatCountdown(ms: number): string {
   return `${h}h ${m}m`;
 }
 
-function VerseHeroCard({ morning, ymd, canStart, canReplay, readyToSwitch, onSwitchTab, offerPastDays, onOfferPastDays, waitLabel, waitHint, onBegin, onOpenRef, onShare, onComment, onMore, cardLabel, verseRef, verseText, bgSource }: {
+function VerseHeroCard({ cardRef, morning, ymd, canStart, canReplay, readyToSwitch, onSwitchTab, offerPastDays, onOfferPastDays, waitLabel, waitHint, onBegin, onOpenRef, onShare, onComment, onMore, cardLabel, verseRef, verseText, bgSource }: {
+  cardRef?: React.Ref<View>;
   morning: boolean;
   ymd: string;              // local YYYY-MM-DD — seeds the per-day social-proof counts
   canStart: boolean;        // active slot in window + not yet done
@@ -343,6 +345,11 @@ function VerseHeroCard({ morning, ymd, canStart, canReplay, readyToSwitch, onSwi
 
   return (
     <View>
+      {/* Anchor wrapper for the first-run tour's step 3. A plain View (not the
+          ImageBackground itself, which takes neither ref nor collapsable), and
+          collapsable={false} or Android folds it out of the native tree and
+          measureInWindow returns zeros. */}
+      <View ref={cardRef} collapsable={false}>
       <ImageBackground
         source={bgSource}
         style={styles.heroCard}
@@ -418,6 +425,7 @@ function VerseHeroCard({ morning, ymd, canStart, canReplay, readyToSwitch, onSwi
           </TouchableOpacity>
         </View>
       </ImageBackground>
+      </View>
 
       {canStart ? (
         <Animated.View style={pulseStyle}>
@@ -750,6 +758,58 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   const rhythmBarRef = useRef<View>(null);
   const streakRef = useRef<View>(null);
   const [starOverlayVisible, setStarOverlayVisible] = useState(false);
+
+  // ── First-run home tour ───────────────────────────────────────────────────
+  // This screen owns the three anchors and measures them; <FirstRunTourHost>
+  // (mounted at app root, so it covers the tab bar too) draws the overlay.
+  const tour = useFirstRunTour();
+  const streakChipRef = useRef<View>(null);
+  const heroRef = useRef<View>(null);
+  const isFocused = useIsFocused();
+
+  // Hand the tour's final CTA a way into the prayer flow. Registered as a ref so
+  // the host — which lives above this screen — can fire it without prop-drilling.
+  const setStartPrayer = tour.setStartPrayerHandler;
+  useEffect(() => {
+    setStartPrayer(() => navigation.navigate('PrayerFlow', { kind: morning ? 'morning' : 'evening' }));
+  }, [setStartPrayer, navigation, morning]);
+
+  // Measure once, 700 ms after we're focused and owed a tour. The delay matters:
+  // TabSection's entrance animation settles at delay + 220 + 80 (≤330 ms) and a
+  // Reanimated-owned view can report stale native coords while it's mid-flight,
+  // so measuring early returns rects that are up to 18 px off. It also gives the
+  // CDN hero photo a head start, so step 3 doesn't spotlight an empty card.
+  const tourPending = tour.pending;
+  const tourStart = tour.start;
+  const tourAbort = tour.abort;
+  const tourSetAnchor = tour.setAnchor;
+  useEffect(() => {
+    if (!tourPending || !isFocused) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      if (cancelled) return;
+      const pending = { rhythm: true, streak: true, verse: true };
+      let got = 0;
+      const land = (id: 'rhythm' | 'streak' | 'verse', r: { x: number; y: number; w: number; h: number } | null) => {
+        if (cancelled || !pending[id]) return;
+        pending[id] = false;
+        if (r && r.w > 0 && r.h > 0) { tourSetAnchor(id, r); got += 1; }
+      };
+      const settle = () => {
+        if (cancelled) return;
+        if (got > 0) tourStart(); else tourAbort();   // nothing measurable → retry next cold start
+      };
+      // The rhythm bar's ref sits on a wrapper carrying the section gutter, so
+      // pull the rect back in by P on each side to frame the card itself.
+      rhythmBarRef.current?.measureInWindow((x, y, w, h) => land('rhythm', { x: x + P, y, w: w - 2 * P, h }));
+      streakChipRef.current?.measureInWindow((x, y, w, h) => land('streak', { x, y, w, h }));
+      heroRef.current?.measureInWindow((x, y, w, h) => land('verse', { x, y, w, h }));
+      // measureInWindow's callback can silently never fire on a collapsed view,
+      // so don't wait on it — settle on a timer either way.
+      setTimeout(settle, 400);
+    }, 700);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [tourPending, isFocused, tourSetAnchor, tourStart, tourAbort]);
   // Star position interpolates between the two window-space anchors captured
   // at launch time (rhythm card → streak badge).
   const starStyle = useAnimatedStyle(() => {
@@ -928,6 +988,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   return (
     <View style={styles.screenRoot}>
     <ScrollView
+      ref={mainScrollRef}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 4 }]}
     >
@@ -939,6 +1000,9 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           <Text style={styles.greetText}>{greeting}</Text>
         </View>
         <View style={styles.headerRight}>
+          {/* Anchor for the first-run tour's step 2 — the whole chip, not just
+              the digit (streakRef, which the celebration star flies to). */}
+          <View ref={streakChipRef} collapsable={false}>
           <TouchableOpacity onPress={() => navigation.navigate('Streak')} style={styles.streakBadge}>
             <View style={styles.streakFlame}>
               <FireFlame size={24} />{/* 28 → 24 (-15 % per user); chip unchanged, stays centered */}
@@ -952,6 +1016,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
                 tweak there must be reflected here too. */}
             <StreakBorderAnim width={63} height={34} borderRadius={17} />{/* matches streakBadge after the -10 % w / -15 % h resize */}
           </TouchableOpacity>
+          </View>
           <TouchableOpacity
             onPress={() => navigation.navigate('Tabs', { screen: 'profile' })}
             activeOpacity={0.85}
@@ -1028,6 +1093,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           default section gutter on each side. */}
       <View style={[styles.section, { paddingTop: 15.2, paddingHorizontal: P + 2 }]}>
         <VerseHeroCard
+          cardRef={heroRef}
           morning={morning}
           ymd={todayYmdStr}
           canStart={canStart}

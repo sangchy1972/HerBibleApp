@@ -6,6 +6,7 @@ import {
   MAX_BUDGETED_PER_OPEN, MAX_BLOCKING_PER_OPEN, BUDGETED_NUDGE_FLOOR_MS, pickActiveNudge,
 } from './nudgePriority';
 import { useReminderInterstitial } from './ReminderInterstitialContext';
+import { useFirstRunTour } from './FirstRunTourContext';
 
 const LAST_BUDGETED_KEY = 'nudge:lastBudgetedAt:v1';
 
@@ -51,6 +52,14 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
   const reminder = useReminderInterstitial();
   const reminderGateUp = reminder.ready && reminder.shouldShow;
 
+  // Same idea for the first-run home tour. Priority alone would NOT be enough:
+  // arbitration never preempts a visible prompt, and the mood sheet self-fires
+  // on a 600 ms timer the instant onboarding completes — i.e. before the tour
+  // has even measured its anchors. So we hard-gate on `pending` too, which is
+  // true from the first render after hydration.
+  const tour = useFirstRunTour();
+  const tourGateUp = tour.ready && (tour.pending || tour.active);
+
   useEffect(() => {
     AsyncStorage.getItem(LAST_BUDGETED_KEY).then(v => { if (v) lastBudgetedAt.current = Number(v) || 0; }).catch(() => {});
   }, []);
@@ -88,6 +97,7 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
   useEffect(() => {
     if (activeId !== null) return;
     if (reminderGateUp) return;   // pre-tab Follow-Him gate up → suppress everything
+    if (tourGateUp) return;       // first-run tour owed or running → suppress everything
     const now = Date.now();
     const withinFloor = now - lastBudgetedAt.current < BUDGETED_NUDGE_FLOOR_MS;
     const budgetRemaining = withinFloor ? 0 : (MAX_BUDGETED_PER_OPEN - budgetUsed.current);
@@ -106,7 +116,7 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
       }
       setActiveId(pick);
     }
-  }, [version, activeId, reminderGateUp]);
+  }, [version, activeId, reminderGateUp, tourGateUp]);
 
   const value = useMemo<NudgeCoordinatorState>(() => ({
     requestSlot,

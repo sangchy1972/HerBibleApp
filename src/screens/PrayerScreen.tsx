@@ -362,6 +362,20 @@ function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTa
           style={StyleSheet.absoluteFillObject}
           pointerEvents="none"
         />
+        {/* Readability scrims (YouVersion-style): a pronounced transparent→
+            black fade anchoring the action row at the bottom, and a MUCH
+            fainter black→transparent breath at the top behind the label/ref. */}
+        <LinearGradient
+          colors={['rgba(0,0,0,0.14)', 'rgba(0,0,0,0)']}
+          style={styles.heroScrimTop}
+          pointerEvents="none"
+        />
+        <LinearGradient
+          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.20)', 'rgba(0,0,0,0.50)']}
+          locations={[0, 0.45, 1]}
+          style={styles.heroScrimBottom}
+          pointerEvents="none"
+        />
         <TouchableOpacity onPress={onCardPress} activeOpacity={0.85}>
           <View style={styles.heroTop}>
             <Text style={styles.heroLabel}>{cardLabel}</Text>
@@ -1390,6 +1404,10 @@ const styles = StyleSheet.create({
     // user sees a tinted card, then the photo fades in once it's cached.
     backgroundColor: '#2D0A1A',
   },
+  // Scrim geometry: top breath covers the label/ref zone, bottom fade rises
+  // from the card's bottom edge up past the action row.
+  heroScrimTop: { position: 'absolute', top: 0, left: 0, right: 0, height: '28%' },
+  heroScrimBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '46%' },
   heroCardImage: {
     // Photo must respect the same corner radius as the outer card so the
     // veil + content composite cleanly. Without this, RN draws the image at

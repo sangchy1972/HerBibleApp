@@ -1,8 +1,9 @@
 import type { LanguageCode } from '../state/TranslationsContext';
 
 // Decorative, ANONYMOUS social-proof comments for the verse-card comment sheet.
-// NOT real user data — purely encouraging reactions. The sheet shows a random
-// 5–25 of these (for the active UI language) with random virtual names each open.
+// NOT real user data — purely encouraging reactions. The sheet shows a
+// DETERMINISTIC per-day sample of these (see state/verseCommentsFeed.ts):
+// same day + slot → identical thread on every open.
 
 export const VERSE_COMMENTS: Record<LanguageCode, string[]> = {
   "en": ["Amen 🙏", "Amen!", "Praise God 🙌", "Thank you Jesus", "Thank you God 🙏", "So needed this today", "This blessed me", "Glory to God", "Hallelujah!", "God is good 🙌", "God is good all the time", "Praying 🙏", "Praying for you all", "Speak Lord", "Yes and amen", "Receiving this", "Blessed 🙏", "Such a blessing", "Thank you for this word", "Right on time", "I needed to hear this", "My heart needed this", "He is faithful", "He is so faithful", "Trusting Him today", "Holding onto this", "Saving this verse", "Sharing this 🙏", "Beautiful 🕊️", "So beautiful", "🙏❤️", "🙏🙏🙏", "🕊️", "❤️🙏", "This touched my heart", "Tears 🥹", "God knew I needed this", "On my knees this morning", "Starting my day with this", "Goodnight, resting in Him", "Peace be with you all", "Grace upon grace", "His mercy is new every morning", "Faith over fear", "Let go and let God", "He's working it out", "God's got you", "Stay strong sis 💪", "Keep the faith", "We're praying with you", "Standing in agreement 🙏", "So encouraging", "Needed this reminder", "Truth 🙌", "Powerful word", "Wow 🙏", "Believing God", "In Jesus' name 🙏", "To God be the glory", "Forever grateful", "Grateful heart", "My God is able", "Nothing is impossible with God", "He will make a way", "Sending love and prayers", "Stay blessed 🙏", "Have a blessed day", "Goodnight everyone 🙏", "Reading this with my coffee ☕🙏", "First thing every morning", "Love this community 🙏"],

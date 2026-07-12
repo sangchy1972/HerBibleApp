@@ -37,6 +37,8 @@ import { useTabFocusScrollReset } from '../components/shared/useTabFocusEntrance
 import { useT } from '../i18n/useT';
 import ShareVerseSheet from '../components/ShareVerseSheet';
 import CommentsSheet from '../components/CommentsSheet';
+import { dailyCount, type VerseSlot } from '../state/verseCommentsFeed';
+import { hydrateCommentLikes } from '../state/verseCommentLikes';
 import TabSection from '../components/shared/TabSection';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useUILanguage } from '../state/UILanguageContext';
@@ -193,15 +195,6 @@ const moreStyles = StyleSheet.create({
   },
 });
 
-// Deterministic per-day pseudo-random count: stable within a calendar day,
-// varies day to day. `salt` lets us emit different streams (likes vs comments
-// vs morning vs evening) from the same date.
-function dailyCount(salt: number, min: number, range: number): number {
-  const d = new Date();
-  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate() + salt * 137;
-  return min + Math.floor(Math.abs(Math.sin(seed)) * range);
-}
-
 function formatLikes(n: number): string {
   return n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(n);
 }
@@ -216,8 +209,9 @@ function formatCountdown(ms: number): string {
   return `${h}h ${m}m`;
 }
 
-function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTab, offerPastDays, onOfferPastDays, waitLabel, waitHint, onBegin, onOpenRef, onShare, onComment, onMore, cardLabel, verseRef, verseText, bgSource }: {
+function VerseHeroCard({ morning, ymd, canStart, canReplay, readyToSwitch, onSwitchTab, offerPastDays, onOfferPastDays, waitLabel, waitHint, onBegin, onOpenRef, onShare, onComment, onMore, cardLabel, verseRef, verseText, bgSource }: {
   morning: boolean;
+  ymd: string;              // local YYYY-MM-DD — seeds the per-day social-proof counts
   canStart: boolean;        // active slot in window + not yet done
   canReplay: boolean;       // slot already done — tapping the card re-enters as redo
   readyToSwitch: boolean;   // morning done + evening already open → tap = flip tab
@@ -287,8 +281,8 @@ function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTa
   // The comment range is capped at the canned-comment pool size so the sheet
   // can render EXACTLY this many rows — the count on the card and the list
   // behind it always match (user-reported 50-vs-11 mismatch).
-  const likes = dailyCount(morning ? 1 : 2, 1001, 4000);
-  const comments = dailyCount(morning ? 3 : 4, 36, 20);
+  const likes = dailyCount(ymd, morning ? 1 : 2, 1001, 4000);
+  const comments = dailyCount(ymd, morning ? 3 : 4, 36, 20);
 
   // Breathing pulse on the Start CTA — only while the slot is live. Once the
   // user taps Amen and returns here, the button switches to a quiet "done"
@@ -540,8 +534,13 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   const [showShare, setShowShare] = useState(false);
   // "See past days" prompt shown when tapping the card in the 00:00–06:00 dead zone.
   const [showPastPrompt, setShowPastPrompt] = useState(false);
-  const [showComments, setShowComments] = useState(false);
+  // Comment sheet context, captured AT TAP TIME so the feed the sheet renders
+  // is frozen — a midnight rollover (or tab flip) while it's open can't
+  // re-roll the thread under the user.
+  const [commentsCtx, setCommentsCtx] = useState<{ ymd: string; slot: VerseSlot; count: number } | null>(null);
   const [moreAnchor, setMoreAnchor] = useState<MoreAnchor | null>(null);
+  // Warm the persisted comment-likes cache long before the first tap.
+  useEffect(() => { hydrateCommentLikes(); }, []);
   const labels = dailyLabels(translation.code);
   const segment: 'morning' | 'evening' = morning ? 'morning' : 'evening';
   // Daily verse for the active segment. Bundled fallback guarantees a value
@@ -1030,6 +1029,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
       <View style={[styles.section, { paddingTop: 15.2, paddingHorizontal: P + 2 }]}>
         <VerseHeroCard
           morning={morning}
+          ymd={todayYmdStr}
           canStart={canStart}
           canReplay={slotDone}
           readyToSwitch={readyToSwitch}
@@ -1047,7 +1047,11 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           onBegin={() => navigation.navigate('PrayerFlow', { kind: morning ? 'morning' : 'evening' })}
           onOpenRef={openVerseInBible}
           onShare={() => setShowShare(true)}
-          onComment={() => setShowComments(true)}
+          onComment={() => setCommentsCtx({
+            ymd: todayYmdStr,
+            slot: morning ? 'morning' : 'evening',
+            count: dailyCount(todayYmdStr, morning ? 3 : 4, 36, 20),
+          })}
           onMore={(anchor) => setMoreAnchor(anchor)}
         />
       </View>
@@ -1173,12 +1177,13 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
         />
       </Modal>
 
-      {/* Verse comment sheet — decorative community reactions (canned).
-          `count` uses the SAME per-day formula + salt as the hero card's
-          badge, so the sheet renders exactly the number the card advertised
-          (texts still re-roll per open; only the count is pinned). */}
-      <Modal visible={showComments} transparent animationType="none" statusBarTranslucent onRequestClose={() => setShowComments(false)}>
-        {showComments && <CommentsSheet count={dailyCount(morning ? 3 : 4, 36, 20)} onClose={() => setShowComments(false)} />}
+      {/* Verse comment sheet — decorative community reactions (canned), but
+          DETERMINISTIC per (ymd, slot): the same thread every open, with the
+          user's likes persisted for the day. `count` uses the SAME per-day
+          formula + salt as the hero card's badge, so the sheet renders exactly
+          the number the card advertised. */}
+      <Modal visible={!!commentsCtx} transparent animationType="none" statusBarTranslucent onRequestClose={() => setCommentsCtx(null)}>
+        {commentsCtx && <CommentsSheet {...commentsCtx} onClose={() => setCommentsCtx(null)} />}
       </Modal>
 
       {/* "See past days" prompt — shown when the verse card is tapped during

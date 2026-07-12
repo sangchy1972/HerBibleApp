@@ -5,18 +5,20 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { Easing, useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated';
 import { TXT, TXTSUB, ROSE, FONTS } from '../constants/theme';
-import { VERSE_COMMENTS, COMMENT_NAMES } from '../constants/verseComments';
 import { useUILanguage } from '../state/UILanguageContext';
 import { useT } from '../i18n/useT';
+import { buildCommentFeed, type FeedComment, type VerseSlot } from '../state/verseCommentsFeed';
+import { getLikedIds, toggleCommentLike } from '../state/verseCommentLikes';
 
 // Bottom-sheet of decorative "community" reactions on the daily verse. The
 // comments + names are canned (see constants/verseComments.ts) — NOT real user
-// data, purely social-proof encouragement. The caller passes `count` — the
-// number the verse card's comment badge advertised — and the sheet renders
-// EXACTLY that many rows (clamped to the pool), so the two can never mismatch
-// (user-reported "card says 50, sheet says 11"). Texts/names still re-roll on
-// every open (the component remounts, so the useMemo re-rolls). Localized to
-// the active UI language.
+// data, purely social-proof encouragement. The feed is DETERMINISTIC per
+// (ymd, slot): reopening shows the identical thread, and the user's likes
+// persist (verseCommentLikes, AsyncStorage) — a liked comment stays liked all
+// day (user-reported: "liked one, reopened, everything changed"). `count`
+// comes from the verse card's badge (same per-day formula), so the badge and
+// the list always match. Localized to the active UI language: switching
+// mid-day swaps only the texts; names/ages/likes/order/ids stay put.
 
 const AVATAR_COLORS = ['#E63F69', '#7B6CF6', '#F2A65A', '#3FAE6A', '#5B8DEF', '#E36588', '#46B3A6', '#C9772E'];
 const SCREEN_H = Dimensions.get('window').height;
@@ -29,19 +31,10 @@ function hashIdx(str: string, mod: number): number {
   for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
   return h % mod;
 }
-// Fisher–Yates, returns the first n of a shuffled copy.
-function sample<T>(arr: readonly T[], n: number): T[] {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a.slice(0, Math.max(0, Math.min(n, a.length)));
-}
 
-interface Row { id: number; name: string; text: string; ago: string; likes: number }
-
-export default function CommentsSheet({ count, onClose }: { count: number; onClose: () => void }) {
+export default function CommentsSheet({ ymd, slot, count, onClose }: {
+  ymd: string; slot: VerseSlot; count: number; onClose: () => void;
+}) {
   const insets = useSafeAreaInsets();
   const t = useT();
   const { lang } = useUILanguage();
@@ -59,22 +52,18 @@ export default function CommentsSheet({ count, onClose }: { count: number; onClo
   const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropO.value }));
   const sheetAnim = useAnimatedStyle(() => ({ transform: [{ translateY: sheetTY.value }] }));
 
-  const rows = useMemo<Row[]>(() => {
-    const pool = VERSE_COMMENTS[lang] || VERSE_COMMENTS.en;
-    const texts = sample(pool, Math.min(count, pool.length));
-    const names = sample(COMMENT_NAMES, texts.length);           // distinct names where possible
-    return texts.map((text, i) => {
-      const mins = 1 + Math.floor(Math.random() * 4000);         // up to ~2.7 days ago
-      const ago = mins < 60 ? `${mins}m` : mins < 1440 ? `${Math.floor(mins / 60)}h` : `${Math.floor(mins / 1440)}d`;
-      return {
-        id: i,
-        name: names[i] ?? COMMENT_NAMES[i % COMMENT_NAMES.length],
-        text,
-        ago,
-        likes: Math.floor(Math.random() * 240),
-      };
-    });
-  }, [lang, count]);
+  // Deterministic feed — same (ymd, slot) → identical thread every open.
+  // All inputs are frozen at open (the sheet remounts per open), so this
+  // never re-rolls while visible; a language change swaps texts only.
+  const rows = useMemo<FeedComment[]>(
+    () => buildCommentFeed({ ymd, slot, lang, count }),
+    [ymd, slot, lang, count],
+  );
+
+  // The user's likes, lifted to the sheet + persisted (survive reopen AND
+  // app restart within the day). Synchronous read — no flicker.
+  const [likedIds, setLikedIds] = useState<Set<number>>(() => getLikedIds(ymd, slot));
+  const onToggleLike = (id: number) => setLikedIds(new Set(toggleCommentLike(ymd, slot, id)));
 
   return (
     <View style={styles.overlay}>
@@ -97,7 +86,7 @@ export default function CommentsSheet({ count, onClose }: { count: number; onClo
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 10 }}>
           {rows.map(r => (
-            <CommentRow key={r.id} row={r} />
+            <CommentRow key={r.id} row={r} liked={likedIds.has(r.id)} onToggle={() => onToggleLike(r.id)} />
           ))}
         </ScrollView>
       </Animated.View>
@@ -105,15 +94,14 @@ export default function CommentsSheet({ count, onClose }: { count: number; onClo
   );
 }
 
-// One comment row with a tappable like-heart. Tapping toggles a filled rose
-// heart + bumps the count, with a quick pop animation so the tap clearly
-// registers (the heart had no interaction feedback before — user-reported).
-function CommentRow({ row }: { row: Row }) {
-  const [liked, setLiked] = useState(false);
+// One comment row with a tappable like-heart. Controlled: the sheet owns the
+// liked set (persisted per day/slot); the row keeps only the pop animation so
+// the tap clearly registers.
+function CommentRow({ row, liked, onToggle }: { row: FeedComment; liked: boolean; onToggle: () => void }) {
   const scale = useSharedValue(1);
   const heartStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   const toggle = () => {
-    setLiked((l) => !l);
+    onToggle();
     scale.value = withSequence(
       withTiming(1.35, { duration: 120, easing: Easing.out(Easing.quad) }),
       withTiming(1, { duration: 130, easing: Easing.out(Easing.quad) }),
@@ -128,7 +116,7 @@ function CommentRow({ row }: { row: Row }) {
       <View style={styles.body}>
         <View style={styles.metaRow}>
           <Text style={styles.name} numberOfLines={1}>{row.name}</Text>
-          <Text style={styles.ago} numberOfLines={1}>· {row.ago}</Text>
+          <Text style={styles.ago} numberOfLines={1}>· {row.agoLabel}</Text>
         </View>
         <Text style={styles.text}>{row.text}</Text>
       </View>

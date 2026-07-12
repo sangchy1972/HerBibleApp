@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
   // TOP zone: auto-height (1–2 title lines), split into title | Start (25%).
   topZone: { flexDirection: 'row', alignItems: 'center' },
   // The right 25% belongs entirely to the Start pill, centered on the text.
-  rightZone: { width: '25%', justifyContent: 'center', alignItems: 'flex-end', paddingLeft: 6 },
+  rightZone: { width: '25%', justifyContent: 'center', alignItems: 'flex-end', paddingLeft: 4 },
   msg: { flex: 1, flexDirection: 'row', alignItems: 'center' },
   title: { flex: 1, fontSize: 17.5, lineHeight: 22.8, fontWeight: '400', color: TXT, fontFamily: FONTS.lato, marginLeft: 3 },   // 17.5, Lato regular 400, +3px left inset (per user)
   // Decorative Start pill (whole card is tappable) — rose, canonical CTA
@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7.5,
     maxWidth: '100%',                    // never spills out of the 25% zone
   },
-  startBtnText: { fontSize: 14.9, fontWeight: '700', color: '#FFFFFF', fontFamily: FONTS.latoBold, letterSpacing: 0.2 },   // 13.5 → 14.9 (+10 % per user)
+  startBtnText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF', fontFamily: FONTS.latoBold, letterSpacing: 0.2 },   // 16 (per user)
   // Track / fill / tick — carried over VERBATIM from PrayerScreen's removed
   // "Today's Progress" bar (height 6, radius 7, 10% ink track, rose fill,
   // white 1.5px ticks inset 0.9). Only the tick count changed (1 → 4).

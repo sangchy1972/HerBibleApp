@@ -371,7 +371,7 @@ function VerseHeroCard({ morning, canStart, canReplay, readyToSwitch, onSwitchTa
           pointerEvents="none"
         />
         <LinearGradient
-          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.20)', 'rgba(0,0,0,0.50)']}
+          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.30)', 'rgba(0,0,0,0.70)']}
           locations={[0, 0.45, 1]}
           style={styles.heroScrimBottom}
           pointerEvents="none"
@@ -1407,7 +1407,7 @@ const styles = StyleSheet.create({
   // Scrim geometry: top breath covers the label/ref zone, bottom fade rises
   // from the card's bottom edge up past the action row.
   heroScrimTop: { position: 'absolute', top: 0, left: 0, right: 0, height: '28%' },
-  heroScrimBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '46%' },
+  heroScrimBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%' },
   heroCardImage: {
     // Photo must respect the same corner radius as the outer card so the
     // veil + content composite cleanly. Without this, RN draws the image at

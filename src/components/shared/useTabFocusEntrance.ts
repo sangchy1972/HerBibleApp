@@ -5,6 +5,8 @@ import {
   useAnimatedStyle,
   withTiming,
   withDelay,
+  cancelAnimation,
+  runOnJS,
   Easing,
 } from 'react-native-reanimated';
 
@@ -66,6 +68,27 @@ export function useTabFocusEntrance(delay = 0) {
   // ─────────────────────────────────────────────────────────────────────────
   const [settled, setSettled] = useState(false);
 
+  // Landing the view back on plain RN has ONE hard requirement: Reanimated's
+  // LAST native write must already be the resting value.
+  //
+  // Reanimated pushes props straight to the native view, bypassing RN's shadow
+  // tree. So if we detach while the timing is still ramping, RN diffs its own
+  // (unchanged) opacity, finds nothing to commit, and the native alpha stays
+  // frozen wherever the animation happened to be — the sections render at ~35 %
+  // and the whole screen looks washed out. That is exactly what a plain
+  // setTimeout did: on a cold start the UI thread is busy decoding images so the
+  // animation runs late, while the JS timer fires dead on time.
+  //
+  // Cancelling and assigning the final values makes Reanimated write 1 / 0
+  // natively itself, so the hand-off is clean no matter who won the race.
+  const settle = useCallback(() => {
+    cancelAnimation(opacity);
+    cancelAnimation(translateY);
+    opacity.value = 1;
+    translateY.value = 0;
+    setSettled(true);
+  }, [opacity, translateY]);
+
   useFocusEffect(useCallback(() => {
     if (!firstFocus.current) return undefined;
     firstFocus.current = false;
@@ -75,30 +98,22 @@ export function useTabFocusEntrance(delay = 0) {
       delay,
       withTiming(0, { duration: ENTRANCE_DURATION_MS, easing: Easing.out(Easing.cubic) }),
     );
+    // PRIMARY settle signal: the animation itself says when it's done, so we can
+    // never detach mid-ramp.
     opacity.value = withDelay(
       delay,
-      withTiming(1, { duration: ENTRANCE_DURATION_MS, easing: Easing.out(Easing.cubic) }),
+      withTiming(1, { duration: ENTRANCE_DURATION_MS, easing: Easing.out(Easing.cubic) }, (finished) => {
+        if (finished) runOnJS(settle)();
+      }),
     );
-    // Deliberately NOT cleared on blur — if the user leaves mid-entrance we
-    // still want the view to settle into the plain (touchable) style.
-    settleTimer.current = setTimeout(
-      () => setSettled(true),
-      delay + ENTRANCE_DURATION_MS + SETTLE_SLACK_MS,
-    );
+    // Watchdog, in case that callback never lands (a stalled JS thread, dev fast
+    // refresh resuming with frozen shared values). `settle` cancels first, so
+    // firing early is harmless — it just ends the entrance sooner.
+    settleTimer.current = setTimeout(settle, delay + ENTRANCE_DURATION_MS + SETTLE_SLACK_MS + 500);
     return undefined;
-  }, [delay, translateY, opacity]));
+  }, [delay, translateY, opacity, settle]));
 
   useEffect(() => () => { if (settleTimer.current) clearTimeout(settleTimer.current); }, []);
-
-  // Unconditional mount-level fallback: even if the focus effect never fires
-  // its timer (dev fast-refresh preserving `firstFocus=false` while the
-  // reanimated values sit frozen mid-entrance — the "washed / grey-framed
-  // sections" artifact), every mount settles to the plain full-opacity style
-  // within ~0.5s. Idempotent with the focus-driven settle above.
-  useEffect(() => {
-    const t = setTimeout(() => setSettled(true), delay + ENTRANCE_DURATION_MS + SETTLE_SLACK_MS);
-    return () => clearTimeout(t);
-  }, [delay]);
 
   const animStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,

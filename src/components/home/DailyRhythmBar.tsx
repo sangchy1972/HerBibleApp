@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   // The right ~22% belongs entirely to the Start pill, vertically centered.
   rightZone: { width: '22%', justifyContent: 'center', alignItems: 'flex-end', paddingLeft: 6 },
   msg: { flexDirection: 'row', alignItems: 'center' },
-  title: { flex: 1, fontSize: 16, lineHeight: 20.8, fontWeight: '400', color: TXT, fontFamily: FONTS.lato, marginLeft: 3 },   // 18, Lato regular 400, +3px left inset (per user)
+  title: { flex: 1, fontSize: 17.5, lineHeight: 22.8, fontWeight: '400', color: TXT, fontFamily: FONTS.lato, marginLeft: 3 },   // 17.5, Lato regular 400, +3px left inset (per user)
   // Decorative Start pill (whole card is tappable) — rose, canonical CTA
   // radius, bold label like every other rose button.
   startBtn: {
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
   // Segment fills use radius 0 — the track's overflow:hidden rounds the outer
   // ends, and interior edges must sit flush against the ticks (a per-segment
   // radius would notch dark slivers beside every tick).
-  trackRow: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 4 },   // gap 8 → 4, title gap 7 → 4 (per user)
+  trackRow: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2 },   // pct gap 2, title gap 2 (per user)
   trackWrap: { flex: 1, position: 'relative' },
   pctText: { fontSize: 14.7, fontWeight: '700', color: ROSE, fontFamily: FONTS.latoBold, minWidth: 38, textAlign: 'right' },   // 12.8 → 14.7 (+15 %), bold (per user)
   track: {

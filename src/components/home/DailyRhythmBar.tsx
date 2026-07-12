@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   // in JSX) with NO border and NO shadow/elevation — Android's elevation
   // ambient shadow read as a "grey outline" around the old white card (user
   // report), so the card is deliberately flat.
-  wrap: { marginTop: 6, marginBottom: 4 },
+  wrap: { marginTop: 2, marginBottom: 4 },   // 6 → 2 (-4 px below the greeting per user)
   bar: {
     borderRadius: 20,
     minHeight: 68,                       // 59 → 68 (+15 % per user)

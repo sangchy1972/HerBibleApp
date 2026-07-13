@@ -17,7 +17,7 @@ import type { ReadingPlansCardModel } from '../services/planRecommendations';
 // billable Cloudflare variant) and crop on-device via resizeMode="cover".
 
 const COVER_W = 54;
-const COVER_H = 90;    // 3:5 portrait per spec
+const COVER_H = 81;    // 2:3 portrait (was 3:5 — read too tall, per user)
 
 // Circular progress ring, PlanScreen percent math (completed/total).
 function ProgressRing({ percent }: { percent: number }) {
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   title: {
-    fontSize: 19.85, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold,
+    fontSize: 19.85, fontWeight: '600', color: TXT, fontFamily: FONTS.latoBold, letterSpacing: 0.6,   // Lato 600 + a touch of tracking (per user)
     textAlign: 'center', marginBottom: 6,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 9 },

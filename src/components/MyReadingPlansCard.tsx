@@ -16,8 +16,8 @@ import type { ReadingPlansCardModel } from '../services/planRecommendations';
 // R2 ORIGINALS (noTransform — already cached from the Plan screens, so no
 // billable Cloudflare variant) and crop on-device via resizeMode="cover".
 
-const COVER_W = 54;
-const COVER_H = 81;    // 2:3 portrait (was 3:5 — read too tall, per user)
+const COVER_W = 58;
+const COVER_H = 87;    // strict 2:3 portrait, a touch wider (reference-matched)
 
 // Circular progress ring, PlanScreen percent math (completed/total).
 function ProgressRing({ percent }: { percent: number }) {
@@ -64,7 +64,7 @@ export default function MyReadingPlansCard({ model, onOpenPlan, onExplore }: {
 
       {model.active.map(({ plan, percent, startedAt }) => (
         <TouchableOpacity key={plan.slug} style={styles.row} activeOpacity={0.85} onPress={() => onOpenPlan(plan.slug)}>
-          <PlanCover cover={plan.cover} slug={plan.slug} width={COVER_W} height={COVER_H} radius={10} noTransform />
+          <PlanCover cover={plan.cover} slug={plan.slug} width={COVER_W} height={COVER_H} radius={8} noTransform />
           <View style={styles.rowBody}>
             <Text style={styles.rowTitle} numberOfLines={2}>{plan.title}</Text>
             <Text style={styles.rowMeta}>{fmtDate(startedAt)}</Text>
@@ -83,7 +83,7 @@ export default function MyReadingPlansCard({ model, onOpenPlan, onExplore }: {
           )}
           {model.suggested.map(plan => (
             <TouchableOpacity key={plan.slug} style={styles.row} activeOpacity={0.85} onPress={() => onOpenPlan(plan.slug)}>
-              <PlanCover cover={plan.cover} slug={plan.slug} width={COVER_W} height={COVER_H} radius={10} noTransform />
+              <PlanCover cover={plan.cover} slug={plan.slug} width={COVER_W} height={COVER_H} radius={8} noTransform />
               <View style={styles.rowBody}>
                 <Text style={styles.rowTitle} numberOfLines={2}>{plan.title}</Text>
                 <Text style={styles.rowMeta}>{t('plan.dayCount.other', { n: plan.duration_days || plan.duration })}</Text>
@@ -114,10 +114,10 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   title: {
-    fontSize: 19.85, fontWeight: '600', color: TXT, fontFamily: FONTS.latoBold, letterSpacing: 0.6,   // Lato 600 + a touch of tracking (per user)
+    fontSize: 21, fontWeight: '600', color: TXT, fontFamily: FONTS.latoBold, letterSpacing: 0.6,   // Lato 600 + tracking (per user); sized to the reference
     textAlign: 'center', marginBottom: 6,
   },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 9 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 8 },
   rowBody: { flex: 1, minWidth: 0 },
   rowTitle: { fontSize: 16.5, fontWeight: '700', color: TXT, fontFamily: FONTS.latoBold, lineHeight: 22 },
   rowMeta: { fontSize: 13, color: TXTSUB, fontFamily: FONTS.lato, marginTop: 3 },

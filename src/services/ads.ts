@@ -84,6 +84,61 @@ const ONBOARDING_INTERSTITIAL_UNIT_ID: string = __DEV__
   ? (TestIdsObj?.INTERSTITIAL ?? 'ca-app-pub-3940256099942544/1033173712')
   : REAL_ONBOARDING_UNIT_ID;
 
+// ─── Startup must never hang on the ad stack ────────────────────────────────
+// mobileAds().initialize() initializes EVERY mediation adapter on the classpath
+// (Liftoff today; Pangle / InMobi / Meta when they're switched on). An adapter
+// that is compiled in but NOT yet configured in the AdMob console — or one that
+// is just slow on a bad network — can leave that promise pending forever. It
+// can't crash us (the whole of initAds is inside a try/catch and it's called
+// fire-and-forget off runAfterInteractions, so the UI never waits on it), but an
+// unbounded await here would silently kill the ENTIRE ad pipeline for the
+// session: `initialized` would never flip, so preloadOnboarding / preload /
+// startUsController would never run. Invisible zero-revenue.
+//
+// So every await in the init path is bounded, and on timeout we go ahead anyway:
+// ad requests made before the SDK finishes initializing are queued by the native
+// SDK, and if one really does fail, the ERROR handler already reloads.
+const INIT_TIMEOUT_MS = 8000;      // SDK + adapter initialization
+const CONSENT_TIMEOUT_MS = 6000;   // UMP info update / form
+const ATT_TIMEOUT_MS = 30000;      // waits on a human tapping the iOS prompt
+
+/** Resolves to `fallback` if `p` hasn't settled within `ms`. Never rejects. */
+function bounded<T>(p: Promise<T>, ms: number, fallback: T, label: string): Promise<T> {
+  return new Promise<T>((resolve) => {
+    let done = false;
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true;
+      logEvent('ads_init_timeout', { step: label });
+      resolve(fallback);
+    }, ms);
+    p.then(
+      (v) => { if (!done) { done = true; clearTimeout(timer); resolve(v); } },
+      () => { if (!done) { done = true; clearTimeout(timer); resolve(fallback); } },
+    );
+  });
+}
+
+/** Per-adapter init result, flattened for a Firebase event (params are limited
+ *  in count and length, so this is one compact string, not one event each).
+ *  Exported for the unit test. */
+export function summarizeAdapterStatuses(list: unknown): { ready: number; total: number; detail: string } {
+  if (!Array.isArray(list)) return { ready: 0, total: 0, detail: '' };
+  const parts: string[] = [];
+  let ready = 0;
+  for (const s of list) {
+    const st = s as { name?: string; state?: number };
+    const name = String(st?.name ?? '?')
+      .replace(/^com\.google\.ads\.mediation\./, '')   // com.google.ads.mediation.vungle → vungle
+      .replace(/Adapter$/i, '')
+      .slice(0, 24);
+    const ok = st?.state === 1;                        // AdapterInitializationStateReady
+    if (ok) ready += 1;
+    parts.push(`${name}:${ok ? 'ok' : 'no'}`);
+  }
+  return { ready, total: list.length, detail: parts.join(',').slice(0, 90) };
+}
+
 // Persisted "user removed ads" flag — flip to true from the Remove-Ads IAP once
 // that's wired (call setAdsRemoved(true) on a successful purchase / restore).
 const REMOVE_ADS_KEY = 'ads:removed:v1';
@@ -180,8 +235,11 @@ export async function initAds(): Promise<void> {
     // block ads or the app, so each call is guarded.
     if (AdsConsentObj) {
       try {
-        await AdsConsentObj.requestInfoUpdate();
-        await AdsConsentObj.loadAndShowConsentFormIfRequired();
+        // Bounded: a UMP call that never settles would strand the whole init
+        // chain below it. Falling through just means the SDK serves per-region
+        // defaults — degraded, not broken.
+        await bounded(AdsConsentObj.requestInfoUpdate(), CONSENT_TIMEOUT_MS, null, 'ump_info');
+        await bounded(AdsConsentObj.loadAndShowConsentFormIfRequired(), CONSENT_TIMEOUT_MS, null, 'ump_form');
       } catch { /* consent failure → fall through; SDK serves per region defaults */ }
     }
     // iOS App Tracking Transparency — prompt for tracking BEFORE the GMA SDK
@@ -191,10 +249,28 @@ export async function initAds(): Promise<void> {
     // Runs after UMP so EEA users see the GDPR form then the ATT prompt. No-op on
     // Android. Awaited so the SDK inits with the resolved authorization status.
     if (Platform.OS === 'ios' && requestTrackingPermissions) {
-      try { await requestTrackingPermissions(); } catch { /* never block ads/app on ATT */ }
+      // Generous bound — this one legitimately waits on a human tapping the OS
+      // prompt. It's here only for the case where the prompt never resolves
+      // (app backgrounded mid-prompt), which would otherwise strand ads forever.
+      try {
+        await bounded(requestTrackingPermissions(), ATT_TIMEOUT_MS, { status: 'unknown' }, 'att');
+      } catch { /* never block ads/app on ATT */ }
     }
-    await mobileAdsFn().initialize();
-    initialized = true;
+
+    // The mediation-adapter hazard lives here — see the note on INIT_TIMEOUT_MS.
+    // `statuses` is one entry per adapter the SDK found and tried to bring up.
+    const statuses = await bounded(mobileAdsFn().initialize(), INIT_TIMEOUT_MS, null, 'gma_init');
+    initialized = true;   // proceed even on timeout — see the note above
+
+    // Per-adapter readiness, straight to Firebase. This is how you verify a
+    // mediation config WITHOUT a device: an adapter that's in the binary but has
+    // no AdMob mediation group yet reports NOT_READY here, and once you finish
+    // configuring it in the console it flips to ok on the next launch. Also the
+    // first thing to look at if a network mysteriously never gets fill.
+    if (statuses) {
+      const { ready, total, detail } = summarizeAdapterStatuses(statuses);
+      logEvent('ads_adapters', { ready, total, detail });
+    }
     // US users (iOS OR Android) → the 26-unit waterfall controller. The ladder
     // is platform-selected INSIDE usInterstitial (HB_int_splash_* on Android,
     // HB_ios_splash_* on iOS), so each binary requests only its own units — the

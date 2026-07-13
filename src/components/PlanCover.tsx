@@ -78,9 +78,14 @@ interface Props {
   width: number;
   height: number;
   radius: number;
+  /** Skip the Cloudflare Image Transformation and load the R2 original —
+   *  for slots where the full-size cover is already cached from the Plan
+   *  screens (home's My Reading Plans card), so no billable variant is
+   *  created. Cropping still happens on-device via resizeMode="cover". */
+  noTransform?: boolean;
 }
 
-function PlanCoverImpl({ cover, slug, gradient, width, height, radius }: Props) {
+function PlanCoverImpl({ cover, slug, gradient, width, height, radius, noTransform }: Props) {
   const gradColors: [string, string] = gradient
     ?? (typeof cover === 'object' && cover?.color_primary && cover?.color_secondary
       ? [cover.color_primary, cover.color_secondary]
@@ -103,7 +108,7 @@ function PlanCoverImpl({ cover, slug, gradient, width, height, radius }: Props) 
   // and the original URL have errored (the gradient is then the final state).
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
-  const uri = originalUri && !transformFailed ? cfImage(originalUri, width) : originalUri;
+  const uri = originalUri && !transformFailed && !noTransform ? cfImage(originalUri, width) : originalUri;
 
   return (
     <View style={{ width, height, borderRadius: radius, overflow: 'hidden' }}>
@@ -140,6 +145,7 @@ export default React.memo(PlanCoverImpl, (prev, next) => (
   && prev.width === next.width
   && prev.height === next.height
   && prev.radius === next.radius
+  && prev.noTransform === next.noTransform
   && prev.gradient?.[0] === next.gradient?.[0]
   && prev.gradient?.[1] === next.gradient?.[1]
   // Cover object identity is stable per-plan in the bundled summary, so

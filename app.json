@@ -59,6 +59,7 @@
       "./plugins/withAndroidPackageQueries.js",
       "./plugins/withNativeDebugSymbols.js",
       "./plugins/withNotifeeMavenRepo.js",
+      "./plugins/withKotlinGradlePlugin.js",
       "./plugins/withAdMobMediation.js",
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
@@ -213,7 +214,8 @@
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
             "enableProguardInReleaseBuilds": true,
-            "enableShrinkResourcesInReleaseBuilds": true
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "kotlinVersion": "2.2.20"
           },
           "ios": {
             "useFrameworks": "static",
@@ -235,6 +237,17 @@
           "imageWidth": 150,
           "resizeMode": "contain",
           "backgroundColor": "#F9D9E6"
+        }
+      ],
+      [
+        "react-native-fbsdk-next",
+        {
+          "appID": "0000000000000000",
+          "clientToken": "00000000000000000000000000000000",
+          "displayName": "Her Bible",
+          "autoInitEnabled": false,
+          "isAutoLogAppEventsEnabled": false,
+          "isAdvertiserIDCollectionEnabled": false
         }
       ]
     ],

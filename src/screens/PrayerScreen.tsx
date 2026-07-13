@@ -28,8 +28,6 @@ import { useSavedVerses } from '../state/SavedVersesContext';
 import { useGospelsPsalms } from '../state/GospelsPsalmsContext';
 import DailyRhythmBar from '../components/home/DailyRhythmBar';
 import { computeRhythm } from '../state/dailyRhythm';
-import { nextUncompletedDay } from '../components/PlanRowCard';
-import PlanProgressCard from '../components/PlanProgressCard';
 import GospelPsalmCards from '../components/GospelPsalmCards';
 import { dailyLabels } from '../constants/dailyVersesLabels';
 import { localizeBookName, englishBookName, chaptersInBook } from '../constants/bibleBookNames';
@@ -40,6 +38,9 @@ import ShareVerseSheet from '../components/ShareVerseSheet';
 import CommentsSheet from '../components/CommentsSheet';
 import { dailyCount, type VerseSlot } from '../state/verseCommentsFeed';
 import { hydrateCommentLikes } from '../state/verseCommentLikes';
+import MyReadingPlansCard from '../components/MyReadingPlansCard';
+import { buildReadingPlansCard } from '../services/planRecommendations';
+import { useOnboarding } from '../state/OnboardingContext';
 import TabSection from '../components/shared/TabSection';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useUILanguage } from '../state/UILanguageContext';
@@ -523,18 +524,9 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   // `records`; the "in progress" derivation is local: any plan with at
   // least one day completed but no `finishedAt` is active.
   const { records: planRecords } = usePlanCompletion();
-  const { getSummary } = useFeaturedPlans();
+  const { getSummary, summary: planSummaries } = useFeaturedPlans();
+  const { answers: obAnswers } = useOnboarding();
   const gp = useGospelsPsalms();
-  const inProgressPlanRows = useMemo(() => {
-    const activeSlugs = Object.entries(planRecords)
-      .filter(([, r]) => r.completedDays.length > 0 && !r.finishedAt)
-      .sort(([, a], [, b]) => (b.firstStartedAt || 0) - (a.firstStartedAt || 0))
-      .slice(0, 2)
-      .map(([slug]) => slug);
-    return activeSlugs
-      .map(slug => getSummary(slug))
-      .filter((p): p is NonNullable<ReturnType<typeof getSummary>> => !!p);
-  }, [planRecords, getSummary]);
   // Share + More overlays live at the screen root so their absolute-fill
   // overlays are sized to the screen, not to the verse-card section. Render-
   // ing them inside VerseHeroCard sized them to the card and the share sheet
@@ -612,6 +604,13 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
 
   // ── Daily Rhythm bar (permanent; replaces the dismissable nudge banner) ───
   const todayYmdStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  // "My Reading Plans" card model — active plans (top-3 by progress) +
+  // personalized suggestions from the onboarding answers. Pure + memoized;
+  // see services/planRecommendations.ts for the scoring model.
+  const readingPlansModel = useMemo(
+    () => buildReadingPlansCard({ records: planRecords, summaries: planSummaries, answers: obAnswers, todayYmd: todayYmdStr }),
+    [planRecords, planSummaries, obAnswers, todayYmdStr],
+  );
   const rhythm = useMemo(() => computeRhythm({
     hour: now.getHours(),
     todayYmd: todayYmdStr,
@@ -1147,40 +1146,17 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
       </TabSection>
 
       <TabSection delay={60}>
-      {/* Plans In Progress — up to 2 active plans. Sits ABOVE Continue
-          Reading per user; section title matches Continue Reading 1:1.
-          The card on each row shows "Day N" (next day to read) instead of
-          "Start", so the user knows exactly where to pick up. paddingTop 24 so
-          the gap BETWEEN the Gospel&Psalm block and this one is larger than the
-          gap within a block (title↔card 12) — clear block separation. */}
+      {/* My Reading Plans — one flat card: active plans (top-3 by progress,
+          3:5 cropped covers + progress rings) over personalized suggestions
+          (services/planRecommendations.ts scoring on the onboarding answers),
+          with a footer nudge + outlined More Plans → explore tab. Replaces
+          the old "Plans In Progress" rows + empty-state Explore button. */}
       <View style={[styles.section, { paddingTop: 24 }]}>
-        <Text style={styles.sectionTitle}>{t('prayer.section.plansInProgress')}</Text>
-        {inProgressPlanRows.length > 0 ? (
-          inProgressPlanRows.map(p => {
-            const completedDays = planRecords[p.slug]?.completedDays ?? [];
-            const next = nextUncompletedDay(completedDays, p.duration_days);
-            return (
-              <PlanProgressCard
-                key={p.slug}
-                plan={p}
-                dayLabel={t('plan.dayN', { n: next })}
-                onPress={() => navigation.navigate('FeaturedPlanDetail', { slug: p.slug })}
-              />
-            );
-          })
-        ) : (
-          <View style={styles.inProgressEmpty}>
-            <Text style={styles.inProgressEmptyTitle}>{t('prayer.plansEmpty.title')}</Text>
-            <Text style={styles.inProgressEmptyDesc}>{t('prayer.plansEmpty.desc')}</Text>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Tabs', { screen: 'plan', params: { tab: 'explore', reset: Date.now() } })}
-              style={styles.inProgressExploreBtn}
-              activeOpacity={0.9}
-            >
-              <Text style={styles.inProgressExploreText}>{t('prayer.plansEmpty.cta')}</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        <MyReadingPlansCard
+          model={readingPlansModel}
+          onOpenPlan={(slug) => navigation.navigate('FeaturedPlanDetail', { slug })}
+          onExplore={() => navigation.navigate('Tabs', { screen: 'plan', params: { tab: 'explore', reset: Date.now() } })}
+        />
       </View>
       </TabSection>
 
@@ -1678,46 +1654,8 @@ const styles = StyleSheet.create({
   pastPromptConfirmText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   pastPromptCancel: { height: 46, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
   pastPromptCancelText: { color: TXTSUB, fontSize: 15, fontWeight: '600' },
-  // "Plans In Progress" empty state — pink-tinted card with a one-line nudge
-  // and a primary CTA that drops the user into the Plan tab to pick a plan.
-  // Keeps the home screen feeling alive even when the user has zero active
-  // plans.
-  inProgressEmpty: {
-    marginTop: 12,
-    backgroundColor: 'rgba(230,63,105,0.06)',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 18,
-    alignItems: 'flex-start',
-  },
-  inProgressEmptyTitle: {
-    fontSize: 17.28,                                                            // 16 × 1.08 (+8 % per user)
-    fontWeight: '600',
-    color: TXT,
-    fontFamily: FONTS.loraBold,
-    marginBottom: 6,
-  },
-  inProgressEmptyDesc: {
-    fontSize: 15.12,                                                            // 14 × 1.08 (+8 % per user)
-    color: TXTSUB,
-    fontFamily: FONTS.lato,
-    lineHeight: 21.6,                                                           // 20 × 1.08 to keep rhythm
-    marginBottom: 14,
-  },
-  inProgressExploreBtn: {
-    alignSelf: 'stretch',
-    backgroundColor: ROSE,
-    borderRadius: BTN_RADIUS,
-    paddingVertical: 11,
-    alignItems: 'center',
-  },
-  inProgressExploreText: {
-    color: '#fff',
-    fontSize: 16.2,                                                             // 15 × 1.08 (+8 % per user)
-    fontWeight: '700',
-    letterSpacing: 0.3,
-    fontFamily: FONTS.latoBold,
-  },
+  // (the old "Plans In Progress" empty-state styles were removed with the
+  // section — replaced by components/MyReadingPlansCard.)
   seeAll: {
     fontSize: 14,                    // +10% from 13
     fontFamily: NOTO_MED,            // non-title → Noto Sans

@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
   name: { fontSize: 14, fontWeight: '700', color: TXT, flexShrink: 1 },
   ago: { fontSize: 12, color: TXTSUB, flexShrink: 0 },
-  text: { fontSize: 15, lineHeight: 21, color: TXT, fontFamily: FONTS.lato },
+  text: { fontSize: 15, lineHeight: 21, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4 },
   likeCol: { alignItems: 'center', gap: 2, paddingTop: 2 },
   likeCount: { fontSize: 11, color: TXTSUB },
 });

@@ -34,7 +34,7 @@ export const detailStyles = StyleSheet.create({
   // compete with the title.
   planInfo: {
     fontSize: 14,
-    fontFamily: FONTS.lato,
+    fontFamily: FONTS.lato, letterSpacing: 0.4,
     color: TXTSUB,
     marginBottom: 16,
   },
@@ -63,8 +63,8 @@ export const detailStyles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
   },
-  dayNum: { fontSize: 20, fontWeight: '700', fontFamily: FONTS.latoBold, lineHeight: 25 },
-  dayDate: { fontSize: 13, fontFamily: FONTS.lato, marginTop: 2 },
+  dayNum: { fontSize: 20, fontWeight: '700', fontFamily: FONTS.latoBold, letterSpacing: 0.4, lineHeight: 25 },
+  dayDate: { fontSize: 13, fontFamily: FONTS.lato, letterSpacing: 0.4, marginTop: 2 },
   // Tiny check pip in the top-right of completed day cells. Subtle enough
   // not to disrupt the day strip's visual rhythm; only renders for corpus
   // plans (the demo doesn't track completion).
@@ -148,7 +148,7 @@ export const detailStyles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.85)',
     borderRadius: 13, marginBottom: 9,
   },
-  errorText: { flex: 1, fontSize: 14, fontFamily: FONTS.lato, color: TXTSUB, lineHeight: 20 },
+  errorText: { flex: 1, fontSize: 14, fontFamily: FONTS.lato, letterSpacing: 0.4, color: TXTSUB, lineHeight: 20 },
 
   // "Not today's reading" confirm dialog — custom card (replaces the OS Alert)
   // styled like an iOS-style sheet: dim backdrop, rounded white card, bold
@@ -187,6 +187,6 @@ export const detailStyles = StyleSheet.create({
   dialogActions: { flexDirection: 'row' },
   dialogBtn: { flex: 1, paddingVertical: 15, alignItems: 'center', justifyContent: 'center' },
   dialogVDivider: { width: 1, backgroundColor: 'rgba(30,27,46,0.12)' },
-  dialogBtnNo: { fontSize: 17, fontWeight: '600', color: TXTSUB, fontFamily: FONTS.lato },
-  dialogBtnYes: { fontSize: 17, fontWeight: '700', color: ROSE, fontFamily: FONTS.latoBold },
+  dialogBtnNo: { fontSize: 17, fontWeight: '600', color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.4 },
+  dialogBtnYes: { fontSize: 17, fontWeight: '700', color: ROSE, fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
 });

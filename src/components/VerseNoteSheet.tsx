@@ -201,6 +201,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
     textAlignVertical: 'top',
-    fontFamily: FONTS.lato,                                                      // Lato Regular for the input + placeholder per user
+    fontFamily: FONTS.lato, letterSpacing: 0.4,                                                      // Lato Regular for the input + placeholder per user
   },
 });

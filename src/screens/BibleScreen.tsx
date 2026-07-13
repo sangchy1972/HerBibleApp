@@ -357,7 +357,7 @@ function SearchOverlay({
             <View style={styles.recentHeader}>
               <Text style={styles.recentLabel}>{t('bibleReader.search.recent')}</Text>
               <TouchableOpacity onPress={() => setRecents([])} hitSlop={10}>
-                <Text style={{ fontSize: 15, color: TXTSUB, fontFamily: FONTS.lato }}>{t('bibleReader.search.clear')}</Text>
+                <Text style={{ fontSize: 15, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.4 }}>{t('bibleReader.search.clear')}</Text>
               </TouchableOpacity>
             </View>
             {recents.map(term => (
@@ -2072,7 +2072,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.78)',
     zIndex: 60,
   },
-  dlNoticeText: { flex: 1, color: '#FFFFFF', fontSize: 13.5, lineHeight: 19, fontFamily: FONTS.lato },
+  dlNoticeText: { flex: 1, color: '#FFFFFF', fontSize: 13.5, lineHeight: 19, fontFamily: FONTS.lato, letterSpacing: 0.4 },
   // Soft white-card toast variant — matches the app's translucent Glass
   // pattern (rgba 0.92 + soft border) for in-context confirmations.
   softToast: {
@@ -2208,7 +2208,7 @@ const styles = StyleSheet.create({
   drawerPillText: {
     fontSize: 15,
     fontWeight: '600',
-    fontFamily: FONTS.latoBold,           // Lato bold per user
+    fontFamily: FONTS.latoBold, letterSpacing: 0.4,           // Lato bold per user
   },
   bookRow: {
     flexDirection: 'row',
@@ -2239,14 +2239,14 @@ const styles = StyleSheet.create({
     color: TXTSUB,
     marginBottom: 3,
     fontWeight: '600',
-    fontFamily: FONTS.latoBold,           // bold per user — matches bookName's Lato bold treatment
+    fontFamily: FONTS.latoBold, letterSpacing: 0.4,           // bold per user — matches bookName's Lato bold treatment
   },
   bookName: {
     fontSize: 15,
     fontWeight: '600',                    // 500 → 600 per user
     color: TXT,
     lineHeight: 19,
-    fontFamily: FONTS.latoBold,           // Lato bold per user
+    fontFamily: FONTS.latoBold, letterSpacing: 0.4,           // Lato bold per user
   },
   chapterStrip: {
     flexDirection: 'row',
@@ -2304,9 +2304,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
     fontSize: 17,                     // +15% from 15
     color: TXT,
-    fontFamily: FONTS.lato,           // Lato per user
+    fontFamily: FONTS.lato, letterSpacing: 0.4,           // Lato per user
   },
-  cancelText: { fontSize: 17, fontWeight: '600', paddingHorizontal: 4, fontFamily: FONTS.latoBold },   // Lato bold per user
+  cancelText: { fontSize: 17, fontWeight: '600', paddingHorizontal: 4, fontFamily: FONTS.latoBold, letterSpacing: 0.4 },   // Lato bold per user
   searchScroll: {
     flex: 1,
     paddingHorizontal: P,
@@ -2334,7 +2334,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(30,27,46,0.06)',
   },
-  recentTerm: { flex: 1, fontSize: 17, color: TXT, fontFamily: FONTS.lato },     // Lato per user
+  recentTerm: { flex: 1, fontSize: 17, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4 },     // Lato per user
   resultsLabel: {
     fontSize: 14,                                                          // +15% from 12
     fontWeight: '700',

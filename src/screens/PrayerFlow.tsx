@@ -1674,7 +1674,7 @@ const styles = StyleSheet.create({
     fontSize: 18.4,                                                             // 16.0 → 18.4 (+15 % per user)
     color: 'rgba(255,255,255,0.65)',
     marginBottom: 7.68,                                                         // 9.6 → 7.68 (-20 % per user) — tighter caption ↔ ref pairing
-    fontFamily: FONTS.lato,
+    fontFamily: FONTS.lato, letterSpacing: 0.4,
   },
   pageRef: {
     fontSize: 23.38,                                                            // heroRef 20.33 × 1.15
@@ -1713,7 +1713,7 @@ const styles = StyleSheet.create({
     lineHeight: 30,                                                             // per user
     color: '#FFFFFF',                                                           // pure white per user — deep pages back on the photo bg
     marginBottom: 36,                                                           // 18 → 36 (doubled per user) — more breathing room between meditation / action / prayer paragraphs
-    fontFamily: FONTS.lato,                                                     // Reflection / Action / Prayer body unified to Lato per user (was Merriweather)
+    fontFamily: FONTS.lato, letterSpacing: 0.4,                                                     // Reflection / Action / Prayer body unified to Lato per user (was Merriweather)
   },
   // Highlight applied to the sentence currently being narrated (Listen mode).
   // Soft translucent-white pill over the photo bg + full-opacity text so the
@@ -1791,7 +1791,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.55)',                                             // white @ 55 % — deep pages back on the photo bg
     textAlign: 'center',
     marginTop: 11,                                                              // 16 → 11 (-5 px per user) — closer to the AMEN button above
-    fontFamily: FONTS.lato,                                                     // switched to Lato per user
+    fontFamily: FONTS.lato, letterSpacing: 0.4,                                                     // switched to Lato per user
   },
   amenScreen: {
     flex: 1,

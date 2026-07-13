@@ -45,6 +45,6 @@ const styles = StyleSheet.create({
   },
   meta: { flex: 1, minWidth: 0 },
   dayRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
-  day: { fontSize: 13, color: TXTSUB, fontFamily: FONTS.lato },
-  title: { fontSize: 16, fontWeight: '600', color: TXT, lineHeight: 21, fontFamily: FONTS.latoBold },
+  day: { fontSize: 13, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.4 },
+  title: { fontSize: 16, fontWeight: '600', color: TXT, lineHeight: 21, fontFamily: FONTS.latoBold, letterSpacing: 0.5 },
 });

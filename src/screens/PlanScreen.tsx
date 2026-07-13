@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   // 15 → 16 — matches PrayerScreen.toggleText for visual parity.
-  tabText: { fontSize: 16, fontWeight: '600', fontFamily: FONTS.latoBold },
+  tabText: { fontSize: 16, fontWeight: '600', fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
   // Unified section title — shares the exact treatment with
   // ProfileScreen.sectionTitle (20 / weight 600 / TXT) and PlanScreen.catName
   // below so every header in the app sits at the same visual rank. Used to
@@ -522,7 +522,7 @@ const styles = StyleSheet.create({
     marginBottom: -4,
   },
   planMeta: { flex: 1, minWidth: 0 },
-  planDays: { fontSize: 13, fontFamily: FONTS.lato, color: TXTSUB, marginBottom: 3, fontWeight: '500' },
+  planDays: { fontSize: 13, fontFamily: FONTS.lato, letterSpacing: 0.4, color: TXTSUB, marginBottom: 3, fontWeight: '500' },
   planTitle: { fontSize: 15.5, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT, lineHeight: 21 },
   progressTrack: {
     height: 5,
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
     borderRadius: BTN_RADIUS,
     backgroundColor: ROSE,                                                      // app accent (primary action) per user — was grey
   },
-  startBtnText: { fontSize: 14, fontWeight: '700', fontFamily: FONTS.latoBold, color: '#fff' },
+  startBtnText: { fontSize: 14, fontWeight: '700', fontFamily: FONTS.latoBold, letterSpacing: 0.4, color: '#fff' },
   // Compact "continue" affordance for in-progress rows — replaces the wide
   // pill button so the plan title keeps its two full lines.
   continueArrow: { flexShrink: 0, paddingLeft: 8, paddingVertical: 8, alignItems: 'center', justifyContent: 'center' },
@@ -634,10 +634,10 @@ const styles = StyleSheet.create({
   },
   // catName matches the unified section title (20). Was 21 (-5 % per spec).
   catName: { fontSize: 20, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT },
-  seeAll: { fontSize: 15.4, fontWeight: '700', fontFamily: FONTS.latoBold },   // bold per user
+  seeAll: { fontSize: 15.4, fontWeight: '700', fontFamily: FONTS.latoBold, letterSpacing: 0.4 },   // bold per user
   emptyHint: { textAlign: 'center', paddingVertical: 23, alignItems: 'center' },
   emptyTitle: { fontSize: 17.3, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT, marginBottom: 5 },   // +8 % then +7 % (was 15)
-  emptyDesc: { fontSize: 16.2, fontFamily: FONTS.lato, color: TXTSUB, textAlign: 'center' },                    // +8 % then +7 % (was 14)
+  emptyDesc: { fontSize: 16.2, fontFamily: FONTS.lato, letterSpacing: 0.4, color: TXTSUB, textAlign: 'center' },                    // +8 % then +7 % (was 14)
   exploreCta: {
     marginTop: 21,                                                             // +5 px per user (was 16)
     paddingHorizontal: 26,

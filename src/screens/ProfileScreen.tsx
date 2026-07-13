@@ -1294,7 +1294,7 @@ const styles = StyleSheet.create({
   name: { fontSize: 26, fontWeight: '500', color: TXT, marginBottom: 3 },
   // "Welcome" — Lora bold, matches PrayerScreen.greetText size (24.77) per user.
   welcomeText: { fontSize: 24.77, fontFamily: FONTS.loraBold, fontWeight: '600' },
-  email: { fontSize: 13.5, color: TXTSUB, fontFamily: FONTS.lato },              // 15 → 13.5 (-10 %) + Lato per user
+  email: { fontSize: 13.5, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.4 },              // 15 → 13.5 (-10 %) + Lato per user
   loginBtn: {
     paddingHorizontal: 20,
     paddingVertical: 10.45,                                                      // 11 → 10.45 (-5 % height per user)
@@ -1325,8 +1325,8 @@ const styles = StyleSheet.create({
   // Bottom row splits 1 : 3 — number occupies the left 1/4 (right-aligned
   // inside that slot), label occupies the right 3/4 (left-aligned).
   statBottomRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 4 },
-  statNum: { flex: 1, fontSize: 22, fontWeight: '700', color: TXT, fontFamily: FONTS.latoBold, textAlign: 'right' },
-  statLabel: { flex: 3, fontSize: 12.14, color: TXTSUB, fontFamily: FONTS.lato, textAlign: 'center', lineHeight: 15.18 },
+  statNum: { flex: 1, fontSize: 22, fontWeight: '700', color: TXT, fontFamily: FONTS.latoBold, letterSpacing: 0.4, textAlign: 'right' },
+  statLabel: { flex: 3, fontSize: 12.14, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.4, textAlign: 'center', lineHeight: 15.18 },
   widgetBanner: {
     // Matches notesTile (My Notes cards) 1:1 per user — same radius/height/
     // shadow AND 
@@ -1369,13 +1369,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: TXT,
     marginBottom: 2,
-    fontFamily: FONTS.latoBold,
+    fontFamily: FONTS.latoBold, letterSpacing: 0.5,
   },
   widgetBannerSub: {
     fontSize: 13,
     color: TXTSUB,
     lineHeight: 18,
-    fontFamily: FONTS.lato,
+    fontFamily: FONTS.lato, letterSpacing: 0.4,
   },
   achievementPreview: {
     flexDirection: 'row',
@@ -1400,7 +1400,7 @@ const styles = StyleSheet.create({
     borderLeftColor: 'rgba(30,27,46,0.06)',
     marginLeft: 4,
   },
-  achievementPreviewCount: { fontSize: 22, fontWeight: '800', color: ROSE, lineHeight: 26, fontFamily: FONTS.latoBold },
+  achievementPreviewCount: { fontSize: 22, fontWeight: '800', color: ROSE, lineHeight: 26, fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
   // 11 → 12.1 (+10 % per spec).
   achievementPreviewMoreLabel: { fontSize: 12.1, color: TXTSUB, letterSpacing: 0.4, marginTop: 2, fontFamily: FONTS.lato },
   sectionHeader: {
@@ -1421,7 +1421,7 @@ const styles = StyleSheet.create({
   // section header (Faith Achievement / My Notes / Learning Bible / Account)
   // reads with the home-screen heading voice.
   sectionTitle: { fontSize: 19.85, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold },
-  seeAll: { fontSize: 16.94, fontWeight: '600', fontFamily: FONTS.latoBold },   // mirrors PlanScreen.seeAll 1:1 (Explore "See all ›" links) per user
+  seeAll: { fontSize: 16.94, fontWeight: '600', fontFamily: FONTS.latoBold, letterSpacing: 0.4 },   // mirrors PlanScreen.seeAll 1:1 (Explore "See all ›" links) per user
   notesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1458,7 +1458,7 @@ const styles = StyleSheet.create({
   // Override on top of widgetBannerTitle — Lato 600 per user (reverted from
   // Lora 600). Color matches the slash on the AD icon (#D54A6E) so the whole
   // banner reads in the same warm-red palette. fontSize +5 % per user.
-  removeAdsTitle: { fontSize: 17.64, fontWeight: '600', fontFamily: FONTS.latoBold, color: ROSE },                     // ROSE matches "See all" link color per user; 16 → 16.8 → 17.64 (cumulative +10 %)
+  removeAdsTitle: { fontSize: 17.64, fontWeight: '600', fontFamily: FONTS.latoBold, letterSpacing: 0.5, color: ROSE },                     // ROSE matches "See all" link color per user; 16 → 16.8 → 17.64 (cumulative +10 %)
   removeAdsIcon: {
     // 72 × 71 — height net -1 px from the 72 baseline. widgetBannerInner uses
     // `alignItems: 'center'` so the badge sits vertically centered inside the
@@ -1521,7 +1521,7 @@ const styles = StyleSheet.create({
   settingIconDanger: {
     backgroundColor: 'rgba(216,82,82,0.10)',
   },
-  settingLabel: { flex: 1, fontSize: 16.26, fontWeight: '500', color: TXT, fontFamily: FONTS.lato },                                 // 17.12 → 16.26 (-5 % per user)
+  settingLabel: { flex: 1, fontSize: 16.26, fontWeight: '500', color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4 },                                 // 17.12 → 16.26 (-5 % per user)
   settingValue: { fontSize: 14, color: TXTSUB, marginRight: 6, maxWidth: 120 },
   pickerOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -1835,7 +1835,7 @@ const styles = StyleSheet.create({
     fontSize: 14.5,
     lineHeight: 21,
     color: TXTSUB,
-    fontFamily: FONTS.lato,
+    fontFamily: FONTS.lato, letterSpacing: 0.4,
     marginBottom: 22,
   },
   langDlgActions: { flexDirection: 'row', alignSelf: 'stretch', gap: 10 },
@@ -1846,7 +1846,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(30,27,46,0.06)',
   },
-  langDlgCancelText: { color: TXTSUB, fontSize: 15, fontWeight: '700', fontFamily: FONTS.latoBold },
+  langDlgCancelText: { color: TXTSUB, fontSize: 15, fontWeight: '700', fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
   langDlgConfirm: {
     flex: 1.4,
     height: 46,
@@ -1855,5 +1855,5 @@ const styles = StyleSheet.create({
     backgroundColor: ROSE,
     paddingHorizontal: 8,
   },
-  langDlgConfirmText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', fontFamily: FONTS.latoBold },
+  langDlgConfirmText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
 });

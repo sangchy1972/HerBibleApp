@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.92)',
     fontSize: 17,
     fontWeight: '500',
-    fontFamily: FONTS.lato,
+    fontFamily: FONTS.lato, letterSpacing: 0.4,
   },
   bottom: {
     position: 'absolute',

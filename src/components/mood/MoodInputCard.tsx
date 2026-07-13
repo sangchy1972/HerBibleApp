@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   divider: { height: 1, backgroundColor: 'rgba(30,27,46,0.08)', marginTop: 22, marginBottom: 14 },
   noteLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.2, color: TXTSUB, textTransform: 'uppercase', marginBottom: 8 },
   note: {
-    minHeight: 64, fontSize: 15, lineHeight: 22, color: TXT, fontFamily: FONTS.lato,
+    minHeight: 64, fontSize: 15, lineHeight: 22, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4,
     fontStyle: 'italic',
   },
   saveBtn: {

@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
   // The right 25% belongs entirely to the Start pill, centered on the text.
   rightZone: { width: '25%', justifyContent: 'center', alignItems: 'flex-end', paddingLeft: 4 },
   msg: { flex: 1, flexDirection: 'row', alignItems: 'center' },
-  title: { flex: 1, fontSize: 17.5, lineHeight: 22.8, fontWeight: '400', color: TXT, fontFamily: FONTS.lato, marginLeft: 3 },   // 17.5, Lato regular 400, +3px left inset (per user)
+  title: { flex: 1, fontSize: 17.5, lineHeight: 22.8, fontWeight: '400', color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.5, marginLeft: 3 },   // 17.5, Lato regular 400, +3px left inset (per user)
   // Decorative Start pill (whole card is tappable) — rose, canonical CTA
   // radius, bold label like every other rose button.
   startBtn: {

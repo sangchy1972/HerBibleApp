@@ -883,7 +883,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: BG, paddingHorizontal: 20 },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 36 },
   backBtn: { width: 32, height: 32, alignItems: 'flex-start', justifyContent: 'center' },
-  skip: { fontSize: 16.8, fontWeight: '600', color: ROSE, fontFamily: FONTS.lato },   // 14 → 16.8 (+20 % per user)
+  skip: { fontSize: 16.8, fontWeight: '600', color: ROSE, fontFamily: FONTS.lato, letterSpacing: 0.4 },   // 14 → 16.8 (+20 % per user)
   progressTrack: { height: 5, borderRadius: 3, backgroundColor: 'rgba(230,63,105,0.16)', marginTop: 8, marginBottom: 18 },
   progressFill: { height: '100%', borderRadius: 3, backgroundColor: ROSE },
   content: { flex: 1 },
@@ -896,13 +896,13 @@ const styles = StyleSheet.create({
     fontSize: 24, color: TXT, fontFamily: FONTS.latoBold, fontWeight: '700',
     lineHeight: 31, letterSpacing: -0.2, marginTop: 20, marginBottom: 7,
   },
-  sub: { fontSize: 15, color: TXTSUB, fontFamily: FONTS.lato, lineHeight: 22, marginBottom: 16 },   // 13.5 → 15 (+10 % content type per user)
+  sub: { fontSize: 15, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.4, lineHeight: 22, marginBottom: 16 },   // 13.5 → 15 (+10 % content type per user)
   // Encourage step's line: +20 % type and the SAME colour as the option rows
   // (TXT, not the muted TXTSUB). lineHeight is raised so the larger inline
   // highlight below isn't clipped.
   encourageSub: { fontSize: 18, lineHeight: 32, color: TXT },   // 15 → 18 (+20 % per user)
   // "2 million women" — bold, +40 % over the line, in the option-button rose.
-  encourageSubHL: { fontSize: 25.2, color: ROSE, fontFamily: FONTS.latoBold, fontWeight: '700' },   // 18 × 1.4
+  encourageSubHL: { fontSize: 25.2, color: ROSE, fontFamily: FONTS.latoBold, letterSpacing: 0.4, fontWeight: '700' },   // 18 × 1.4
   // Single-line option row.
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
@@ -910,7 +910,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16.8, paddingHorizontal: 14, marginBottom: 9,   // 14 → 16.8 (row height +15 % per user)
   },
   rowSel: { backgroundColor: '#FBEAF0', borderWidth: 1.5, borderColor: ROSE },
-  rowText: { flex: 1, fontSize: 18, color: TXT, fontFamily: FONTS.lato },   // 16.5 → 18 (2nd +10 % round per user)
+  rowText: { flex: 1, fontSize: 18, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4 },   // 16.5 → 18 (2nd +10 % round per user)
   // Ionicons is an icon FONT, so there's no strokeWidth to raise. A tight
   // same-colour shadow thickens the glyph instead — the "+20 % bolder" the user
   // asked for. (True stroke control would mean swapping to SVG icons.)
@@ -921,10 +921,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF', borderRadius: 20, borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.08)',
     paddingVertical: 13, paddingHorizontal: 14, marginBottom: 9,
   },
-  cardTitle: { fontSize: 18, color: TXT, fontFamily: FONTS.lato },   // 16.5 → 18 (2nd +10 %)
-  cardSub: { fontSize: 15.5, color: 'rgba(30,27,46,0.42)', fontFamily: FONTS.lato, marginTop: 2 },   // 14 → 15.5 (2nd +10 %)
+  cardTitle: { fontSize: 18, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.5 },   // 16.5 → 18 (2nd +10 %)
+  cardSub: { fontSize: 15.5, color: 'rgba(30,27,46,0.42)', fontFamily: FONTS.lato, letterSpacing: 0.4, marginTop: 2 },   // 14 → 15.5 (2nd +10 %)
   timeNum: { fontSize: 22, color: ROSE, fontFamily: FONTS.loraBold, fontWeight: '600', width: 80 },   // 20 → 22 (2nd +10 %); width 72 → 80
-  timeSub: { flex: 1, fontSize: 16, color: 'rgba(30,27,46,0.55)', fontFamily: FONTS.lato },   // 14.5 → 16 (2nd +10 %)
+  timeSub: { flex: 1, fontSize: 16, color: 'rgba(30,27,46,0.55)', fontFamily: FONTS.lato, letterSpacing: 0.4 },   // 14.5 → 16 (2nd +10 %)
   // Chips (topics, multi-select).
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
   chip: {
@@ -932,7 +932,7 @@ const styles = StyleSheet.create({
     borderRadius: 22, paddingVertical: 10, paddingHorizontal: 16,
   },
   chipSel: { backgroundColor: ROSE, borderColor: ROSE },
-  chipText: { fontSize: 17, color: TXT, fontFamily: FONTS.lato },   // 15.5 → 17 (2nd +10 %)
+  chipText: { fontSize: 17, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4 },   // 15.5 → 17 (2nd +10 %)
   chipTextSel: { color: '#FFFFFF', fontWeight: '700' },
   // Encouragement interstitial.
   // aspectRatio matches the hero photo EXACTLY (1280×980), so resizeMode="cover"
@@ -946,7 +946,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15, paddingHorizontal: 16, marginBottom: 11,
   },
   timeLabel: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  timeLabelText: { fontSize: 18, color: TXT, fontFamily: FONTS.lato },   // 16.5 → 18 (2nd +10 %)
+  timeLabelText: { fontSize: 18, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4 },   // 16.5 → 18 (2nd +10 %)
   timePill: { fontSize: 18, fontWeight: '700', paddingVertical: 9, paddingHorizontal: 17, borderRadius: 12, overflow: 'hidden' },   // 16.5 → 18 (2nd +10 %)
   // Notification hero + mock banner.
   // paddingTop reserves the strip the (now top-pinned) mock banner occupies, so
@@ -966,19 +966,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF', borderRadius: 20, borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.08)',   // radius tracks styles.row (user: identical cards)
     paddingVertical: 16.8, paddingHorizontal: 14, marginBottom: 9,
   },
-  loginProviderText: { fontSize: 18, color: TXT, fontFamily: FONTS.latoBold, fontWeight: '700' },
-  loginError: { fontSize: 13.5, color: ROSE, fontFamily: FONTS.lato, textAlign: 'center', marginTop: 8 },
-  loginLegal: { fontSize: 12.5, lineHeight: 19, color: TXTSUB, fontFamily: FONTS.lato, textAlign: 'center', marginTop: 18, paddingHorizontal: 6 },
+  loginProviderText: { fontSize: 18, color: TXT, fontFamily: FONTS.latoBold, letterSpacing: 0.4, fontWeight: '700' },
+  loginError: { fontSize: 13.5, color: ROSE, fontFamily: FONTS.lato, letterSpacing: 0.4, textAlign: 'center', marginTop: 8 },
+  loginLegal: { fontSize: 12.5, lineHeight: 19, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.4, textAlign: 'center', marginTop: 18, paddingHorizontal: 6 },
   loginLegalLink: { color: ROSE, fontWeight: '600' },
   loginEmailBack: { flexDirection: 'row', alignItems: 'center', gap: 2, alignSelf: 'flex-start', marginBottom: 12, paddingVertical: 4 },
-  loginEmailBackText: { fontSize: 15, color: TXTSUB, fontFamily: FONTS.lato, fontWeight: '500' },
-  loginEmailTitle: { fontSize: 18, color: TXT, fontFamily: FONTS.latoBold, fontWeight: '700', textAlign: 'center', marginBottom: 14 },
+  loginEmailBackText: { fontSize: 15, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.4, fontWeight: '500' },
+  loginEmailTitle: { fontSize: 18, color: TXT, fontFamily: FONTS.latoBold, letterSpacing: 0.5, fontWeight: '700', textAlign: 'center', marginBottom: 14 },
   loginEmailInput: {
     height: 54, borderRadius: 15, borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.08)',
-    paddingHorizontal: 16, fontSize: 17, color: TXT, fontFamily: FONTS.lato, backgroundColor: '#FFFFFF', marginBottom: 14,
+    paddingHorizontal: 16, fontSize: 17, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4, backgroundColor: '#FFFFFF', marginBottom: 14,
   },
-  loginEmailSentBody: { fontSize: 14.5, lineHeight: 21, color: TXTSUB, fontFamily: FONTS.lato, textAlign: 'center', marginBottom: 16, paddingHorizontal: 8 },
-  loginEmailChange: { fontSize: 14, fontWeight: '700', color: ROSE, fontFamily: FONTS.latoBold },
+  loginEmailSentBody: { fontSize: 14.5, lineHeight: 21, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.4, textAlign: 'center', marginBottom: 16, paddingHorizontal: 8 },
+  loginEmailChange: { fontSize: 14, fontWeight: '700', color: ROSE, fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
   // Welcome/language step brand mark — same gradient family, slightly smaller
   // so the 7 language rows fit without scrolling on compact phones.
   welcomeHero: { width: 84, height: 84, borderRadius: 26, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
@@ -995,15 +995,15 @@ const styles = StyleSheet.create({
   },
   payBenefits: { gap: 11, marginBottom: 22 },
   payBenefitRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  payBenefitText: { fontSize: 16.5, color: TXT, fontFamily: FONTS.lato },
+  payBenefitText: { fontSize: 16.5, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4 },
   payPlan: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     backgroundColor: '#FFFFFF', borderRadius: 20, borderWidth: 1.5, borderColor: 'rgba(30,27,46,0.08)',
     paddingVertical: 15, paddingHorizontal: 16, marginBottom: 11,
   },
   payPlanSel: { borderColor: ROSE, backgroundColor: '#FBEAF0' },
-  payPlanLabel: { fontSize: 18, fontWeight: '700', color: TXT, fontFamily: FONTS.latoBold },
-  payPlanSub: { fontSize: 14.5, color: TXTSUB, fontFamily: FONTS.lato, marginTop: 3 },
+  payPlanLabel: { fontSize: 18, fontWeight: '700', color: TXT, fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
+  payPlanSub: { fontSize: 14.5, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.4, marginTop: 3 },
   payRadio: {
     width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: 'rgba(30,27,46,0.25)',
     alignItems: 'center', justifyContent: 'center',
@@ -1013,9 +1013,9 @@ const styles = StyleSheet.create({
     position: 'absolute', top: -9, right: 14,
     paddingHorizontal: 10, paddingVertical: 3, borderRadius: 9,
   },
-  payBadgeText: { fontSize: 11.5, fontWeight: '700', color: '#FFFFFF', fontFamily: FONTS.latoBold },
+  payBadgeText: { fontSize: 11.5, fontWeight: '700', color: '#FFFFFF', fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
   payLinksRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 },
-  payLink: { fontSize: 12.5, color: TXTSUB, fontFamily: FONTS.lato, textDecorationLine: 'underline' },
+  payLink: { fontSize: 12.5, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.4, textDecorationLine: 'underline' },
   payLinkDot: { color: TXTSUB, fontSize: 12.5 },
   // ── Free-trial offer sheet ──
   trialOverlay: { flex: 1, justifyContent: 'flex-end' },
@@ -1042,7 +1042,7 @@ const styles = StyleSheet.create({
   trialTitle: {
     fontSize: 28, fontFamily: FONTS.loraBold, fontWeight: '600', color: TXT, marginBottom: 16,
   },
-  trialPriceLine: { fontSize: 14, color: TXTSUB, fontFamily: FONTS.lato, textAlign: 'center', marginTop: 16, marginBottom: 12 },
+  trialPriceLine: { fontSize: 14, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.4, textAlign: 'center', marginTop: 16, marginBottom: 12 },
   banner: {
     // TOP of the hero (was bottom) — real notifications slide down from the top.
     position: 'absolute', left: 14, right: 14, top: 14,
@@ -1052,12 +1052,12 @@ const styles = StyleSheet.create({
   },
   // The real app icon (no rose tile behind it — the artwork already is the icon).
   bannerIcon: { width: 42, height: 42, borderRadius: 11 },   // 34 → 42
-  bannerApp: { fontSize: 12.5, fontWeight: '700', color: TXT, fontFamily: FONTS.lato },
-  bannerBody: { fontSize: 12, color: 'rgba(30,27,46,0.62)', fontFamily: FONTS.lato },
+  bannerApp: { fontSize: 12.5, fontWeight: '700', color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4 },
+  bannerBody: { fontSize: 12, color: 'rgba(30,27,46,0.62)', fontFamily: FONTS.lato, letterSpacing: 0.4 },
   // Footer CTA.
   footer: { paddingTop: 6 },
   cta: { backgroundColor: ROSE, borderRadius: BTN_RADIUS, alignItems: 'center', justifyContent: 'center', paddingVertical: 16 },
   ctaText: { fontSize: 16.5, fontWeight: '700', color: '#FFFFFF', fontFamily: FONTS.latoBold, letterSpacing: 0.2 },
   laterBtn: { alignItems: 'center', paddingVertical: 12, marginTop: 4 },
-  laterText: { fontSize: 14, color: 'rgba(30,27,46,0.45)', fontFamily: FONTS.lato },
+  laterText: { fontSize: 14, color: 'rgba(30,27,46,0.45)', fontFamily: FONTS.lato, letterSpacing: 0.4 },
 });

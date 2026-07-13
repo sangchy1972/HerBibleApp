@@ -239,9 +239,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     gap: 12,
   },
-  signInText: { flex: 1, fontSize: 13, color: ROSE, fontFamily: FONTS.lato },
+  signInText: { flex: 1, fontSize: 13, color: ROSE, fontFamily: FONTS.lato, letterSpacing: 0.4 },
   signInBtn: { backgroundColor: ROSE, paddingHorizontal: 18, paddingVertical: 9, borderRadius: BTN_RADIUS },
-  signInBtnText: { color: '#fff', fontSize: 14, fontWeight: '700', fontFamily: FONTS.latoBold },
+  signInBtnText: { color: '#fff', fontSize: 14, fontWeight: '700', fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
   scroll: { paddingHorizontal: P, paddingTop: 18 },
   sectionHeader: {
     flexDirection: 'row',
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     color: TXT,
     textAlign: 'center',
     lineHeight: 18,
-    fontFamily: FONTS.lato,
+    fontFamily: FONTS.lato, letterSpacing: 0.4,
   },
   tileNameLocked: { color: TXTSUB },             // weight stays regular; locked state only shifts color
   sheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(20,16,28,0.55)' },

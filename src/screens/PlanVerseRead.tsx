@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   // Pink highlight on the focus verses (rounded, like the reader's highlight).
   focusHl: { backgroundColor: 'rgba(230,63,105,0.18)', borderRadius: 6 },
   // Verse number — Lato bold 14, colour set inline (ROSE for focus / dim rose).
-  verseNum: { fontFamily: FONTS.latoBold, fontWeight: '700', fontSize: 14 },
+  verseNum: { fontFamily: FONTS.latoBold, letterSpacing: 0.4, fontWeight: '700', fontSize: 14 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 36, gap: 14 },
   emptyText: { fontSize: 15, lineHeight: 22, color: TXTSUB, textAlign: 'center' },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },

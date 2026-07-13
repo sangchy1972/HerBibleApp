@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(30,27,46,0.05)',
   },
   pillActive: { backgroundColor: ROSE },
-  pillText: { fontSize: 14, fontWeight: '700', color: TXTSUB, fontFamily: FONTS.latoBold },   // bolder + +8% per user (13→14)
+  pillText: { fontSize: 14, fontWeight: '700', color: TXTSUB, fontFamily: FONTS.latoBold, letterSpacing: 0.4 },   // bolder + +8% per user (13→14)
   pillTextActive: { color: '#fff' },
 
   scroll: { paddingHorizontal: P, paddingTop: 4 },
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     marginBottom: -4,
   },
   planMeta: { flex: 1, minWidth: 0 },
-  planDays: { fontSize: 13, color: TXTSUB, marginBottom: 3, fontWeight: '500', fontFamily: FONTS.lato },
+  planDays: { fontSize: 13, color: TXTSUB, marginBottom: 3, fontWeight: '500', fontFamily: FONTS.lato, letterSpacing: 0.4 },
   planTitle: { fontSize: 15.5, fontWeight: '600', color: TXT, lineHeight: 21, fontFamily: FONTS.loraBold },
   startBtn: {
     flexShrink: 0,
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     borderRadius: BTN_RADIUS,
     backgroundColor: ROSE,                 // pink Start buttons per user (was neutral gray)
   },
-  startBtnText: { fontSize: 14, fontWeight: '700', color: '#fff', fontFamily: FONTS.latoBold },
+  startBtnText: { fontSize: 14, fontWeight: '700', color: '#fff', fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
 
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 36 },
   emptyText: { fontSize: 15, color: TXTSUB, textAlign: 'center' },

@@ -875,7 +875,7 @@ const styles = StyleSheet.create({
     fontSize: 19.5, lineHeight: 32, color: TXT,
   },
   bibleVerseNum: {
-    fontWeight: '700', fontFamily: FONTS.latoBold, fontSize: 14,
+    fontWeight: '700', fontFamily: FONTS.latoBold, letterSpacing: 0.4, fontSize: 14,
   },
 
   // Inline Explore commentary card — mirrors BibleScreen.styles.explainInline.
@@ -911,7 +911,7 @@ const styles = StyleSheet.create({
   actionRow: { flexDirection: 'row', justifyContent: 'space-between' },
   actionBtn: { alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 4, minWidth: 56 },
   actionIcon: { height: 22, alignItems: 'center', justifyContent: 'center' },
-  actionLabel: { fontSize: 11, color: TXT, fontFamily: FONTS.lato, fontWeight: '500' },
+  actionLabel: { fontSize: 11, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4, fontWeight: '500' },
 
   // Bottom bar
   bottomBar: {
@@ -959,9 +959,9 @@ const styles = StyleSheet.create({
     borderRadius: 14, paddingHorizontal: 18, paddingVertical: 10,
     alignItems: 'center',
   },
-  toastText: { color: '#fff', fontSize: 14, fontWeight: '600', fontFamily: FONTS.latoBold },
+  toastText: { color: '#fff', fontSize: 14, fontWeight: '600', fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
 
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 36, gap: 14 },
-  emptyText: { fontSize: 15, lineHeight: 22, fontFamily: FONTS.lato, color: TXTSUB, textAlign: 'center' },
+  emptyText: { fontSize: 15, lineHeight: 22, fontFamily: FONTS.lato, letterSpacing: 0.4, color: TXTSUB, textAlign: 'center' },
 });

@@ -378,9 +378,9 @@ const styles = StyleSheet.create({
   headerBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 19, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  errText: { fontSize: 15, color: TXTSUB, fontFamily: FONTS.lato, textAlign: 'center', paddingHorizontal: 32 },
+  errText: { fontSize: 15, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.4, textAlign: 'center', paddingHorizontal: 32 },
   retryBtn: { marginTop: 18, height: 44, borderRadius: 22, paddingHorizontal: 28, alignItems: 'center', justifyContent: 'center' },
-  retryText: { color: '#fff', fontSize: 15, fontWeight: '700', fontFamily: FONTS.latoBold },
+  retryText: { color: '#fff', fontSize: 15, fontWeight: '700', fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
   hero: { width: '100%', height: 215, backgroundColor: '#EADFE8' },
   sectionWrap: { paddingHorizontal: P + 7, paddingTop: 26 },
   sectionCaption: {
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     alignSelf: 'center', marginTop: 18, paddingVertical: 10, paddingHorizontal: 18,
   },
-  copyAllText: { fontSize: 15, fontWeight: '700', fontFamily: FONTS.latoBold },
+  copyAllText: { fontSize: 15, fontWeight: '700', fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
   amenWrap: {
     position: 'absolute', left: 0, right: 0, bottom: 0,
     paddingHorizontal: P + 7, alignItems: 'center',
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     position: 'absolute', alignSelf: 'center',
     backgroundColor: 'rgba(30,27,46,0.88)', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20,
   },
-  toastText: { color: '#fff', fontSize: 14, fontFamily: FONTS.latoBold },
+  toastText: { color: '#fff', fontSize: 14, fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
 
   // Completion celebration overlay.
   doneOverlay: {
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase', marginBottom: 22,
   },
   doneMsg: {
-    fontSize: 15.5, fontFamily: FONTS.lato, color: 'rgba(30,27,46,0.72)',
+    fontSize: 15.5, fontFamily: FONTS.lato, letterSpacing: 0.4, color: 'rgba(30,27,46,0.72)',
     textAlign: 'center', lineHeight: 23, marginBottom: 30, paddingHorizontal: 10,
   },
   doneBtnWrap: { alignSelf: 'stretch', paddingHorizontal: 8 },

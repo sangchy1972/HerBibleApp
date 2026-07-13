@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   },
   infoBody: {
     fontSize: 16,                    // +10% from 14.5
-    fontFamily: LATO_REG,
+    fontFamily: LATO_REG, letterSpacing: 0.4,
     lineHeight: 23.4,                                                            // 26 → 23.4 (-10 % per user)
     color: TXTSUB,
   },
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
   },
   milestoneDays: {
     fontSize: 18,
-    fontFamily: LATO_BOLD,
+    fontFamily: LATO_BOLD, letterSpacing: 0.4,
     color: TXT,
   },
   milestoneMiddle: {
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
   },
   milestoneCaption: {
     fontSize: 14,
-    fontFamily: LATO_REG,
+    fontFamily: LATO_REG, letterSpacing: 0.4,
     color: TXTSUB,
     textAlign: 'center',
     lineHeight: 20,
@@ -492,14 +492,14 @@ const styles = StyleSheet.create({
   },
   footerTitle: {                                                                 // medium-dark grey per user (between TXT and TXTSUB), centered
     fontSize: 16.56,
-    fontFamily: LATO_REG,
+    fontFamily: LATO_REG, letterSpacing: 0.5,
     color: 'rgba(30,27,46,0.78)',
     marginBottom: 9,
     textAlign: 'center',
   },
   footerBody: {                                                                  // centered per user
     fontSize: 14,
-    fontFamily: LATO_REG,
+    fontFamily: LATO_REG, letterSpacing: 0.4,
     color: TXTSUB,
     lineHeight: 20.7,
     textAlign: 'center',

@@ -86,7 +86,7 @@ export default function GospelPsalmCards({ onOpen }: { onOpen: (slot: Slot) => v
 const styles = StyleSheet.create({
   // Matches PrayerScreen.sectionTitle ("Plans In Progress") so the heading is identical.
   sectionTitle: { fontSize: 19.85, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold },
-  completeNote: { fontSize: 13, color: '#3FAE6A', fontFamily: FONTS.latoBold, marginTop: 4 },
+  completeNote: { fontSize: 13, color: '#3FAE6A', fontFamily: FONTS.latoBold, letterSpacing: 0.4, marginTop: 4 },
   // card byte-matches PlanProgressCard.
   card: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
@@ -102,6 +102,6 @@ const styles = StyleSheet.create({
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
   label: { fontSize: 14.04, fontFamily: FONTS.latoBold, letterSpacing: 0.3 },                          // 13 × 1.08 (+8 % per user)
   // title matches PlanProgressCard.title, +8 % per user (16→17.28, lh 21→22.68).
-  title: { fontSize: 17.28, fontWeight: '600', color: TXT, lineHeight: 22.68, fontFamily: FONTS.latoBold },
-  subtitle: { fontSize: 14.04, color: TXTSUB, fontFamily: FONTS.lato, marginTop: 4 },                  // 13 × 1.08 (+8 % per user)
+  title: { fontSize: 17.28, fontWeight: '600', color: TXT, lineHeight: 22.68, fontFamily: FONTS.latoBold, letterSpacing: 0.5 },
+  subtitle: { fontSize: 14.04, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.5, marginTop: 4 },                  // 13 × 1.08 (+8 % per user)
 });

@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
     lineHeight: 15,
-    fontFamily: FONTS.lato,                                                      // per user — all card text on Profile uses Lato
+    fontFamily: FONTS.lato, letterSpacing: 0.4,                                                      // per user — all card text on Profile uses Lato
   },
   notesTile: {
     width: '31%',
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     lineHeight: 16,
     textAlign: 'center',
-    fontFamily: FONTS.latoBold,                                                  // per user — all card text on Profile uses Lato
+    fontFamily: FONTS.latoBold, letterSpacing: 0.4,                                                  // per user — all card text on Profile uses Lato
   },
   notesTileBadge: {
     position: 'absolute', top: 8, right: 8,

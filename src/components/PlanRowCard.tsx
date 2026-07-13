@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   meta: { flex: 1, minWidth: 0 },
-  days: { fontSize: 13, color: TXTSUB, marginBottom: 3, fontWeight: '400', fontFamily: FONTS.lato },
+  days: { fontSize: 13, color: TXTSUB, marginBottom: 3, fontWeight: '400', fontFamily: FONTS.lato, letterSpacing: 0.4 },
   title: { fontSize: 15.5, fontWeight: '600', color: TXT, lineHeight: 21, fontFamily: FONTS.latoBold, letterSpacing: 0.2 },
   startBtn: {
     flexShrink: 0,

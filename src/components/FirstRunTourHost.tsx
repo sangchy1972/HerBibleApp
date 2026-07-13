@@ -442,12 +442,12 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.loraBold, fontSize: 18, fontWeight: '600',
     color: TXT, marginBottom: 6,
   },
-  body: { fontFamily: FONTS.lato, fontSize: 14.5, lineHeight: 21, color: TXTSUB },
+  body: { fontFamily: FONTS.lato, letterSpacing: 0.4, fontSize: 14.5, lineHeight: 21, color: TXTSUB },
   row: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     marginTop: 16,
   },
-  skip: { fontFamily: FONTS.lato, fontSize: 14, color: TXTSUB },
+  skip: { fontFamily: FONTS.lato, letterSpacing: 0.4, fontSize: 14, color: TXTSUB },
   cta: {
     backgroundColor: ROSE, borderRadius: BTN_RADIUS,
     paddingHorizontal: 20, paddingVertical: 9,

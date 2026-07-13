@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: TXTSUB,
     textAlign: 'center',
-    fontFamily: FONTS.lato,
+    fontFamily: FONTS.lato, letterSpacing: 0.4,
     marginBottom: 20,
   },
   mActions: { flexDirection: 'row', alignSelf: 'stretch', gap: 10 },
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(30,27,46,0.06)',
   },
-  mCancelText: { color: TXTSUB, fontSize: 15.5, fontWeight: '700', fontFamily: FONTS.latoBold },
+  mCancelText: { color: TXTSUB, fontSize: 15.5, fontWeight: '700', fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
   mAdd: {
     flex: 1,
     height: 46,
@@ -267,5 +267,5 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: ROSE,
   },
-  mAddText: { color: '#FFFFFF', fontSize: 15.5, fontWeight: '700', fontFamily: FONTS.latoBold },
+  mAddText: { color: '#FFFFFF', fontSize: 15.5, fontWeight: '700', fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
 });

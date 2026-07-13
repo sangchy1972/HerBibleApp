@@ -1437,7 +1437,7 @@ const styles = StyleSheet.create({
   toggleText: {
     fontSize: 17.28,                                                             // 16 → 17.28 (+8 % per user)
     fontWeight: '600',
-    fontFamily: FONTS.latoBold,
+    fontFamily: FONTS.latoBold, letterSpacing: 0.4,
   },
   section: {
     paddingHorizontal: P,
@@ -1777,7 +1777,7 @@ const styles = StyleSheet.create({
     fontSize: 17.28,                  // 16 × 1.08 (+8 % per user)
     fontWeight: '600',
     color: TXT,
-    fontFamily: FONTS.latoBold,                                                // Lato per user (was Lora); latoBold + 600 = the app's "Lato 600"
+    fontFamily: FONTS.latoBold, letterSpacing: 0.5,                                                // Lato per user (was Lora); latoBold + 600 = the app's "Lato 600"
     marginBottom: 4,                                                           // breathing room before the progress row (was 0; single-line + ellipsis now)
   },
   continueProgressTrack: {
@@ -1794,6 +1794,6 @@ const styles = StyleSheet.create({
   },
   continuePct: {                     // dynamic % badge — non-title
     fontSize: 15.12,                 // 14 × 1.08 (+8 % per user)
-    fontFamily: FONTS.latoBold,      // Lato per user (was Noto bold)
+    fontFamily: FONTS.latoBold, letterSpacing: 0.4,      // Lato per user (was Noto bold)
   },
 });

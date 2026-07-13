@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   },
   readText: { fontSize: 16, fontWeight: '600', color: TXT, fontFamily: FONTS.lora },
   progressWrap: { width: '100%', marginTop: 20, marginHorizontal: -28 },        // tightened for the half sheet (was 46 on the full page)
-  time: { fontSize: 14, color: TXTSUB, fontFamily: FONTS.lato, marginLeft: 4 },
+  time: { fontSize: 14, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.4, marginLeft: 4 },
   sliderWrap: { width: '100%', height: 40, marginTop: 2, justifyContent: 'center' },
   slider: { width: '100%', height: 40 },
   // Verse markers layer — inset ~10 px each side to roughly match the slider's
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
   },
   sideBtn: { width: 56, alignItems: 'center', justifyContent: 'center' },
-  speedText: { fontSize: 17, fontWeight: '700', color: TXT, fontFamily: FONTS.latoBold },
+  speedText: { fontSize: 17, fontWeight: '700', color: TXT, fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
   navBtn: { width: 56, alignItems: 'center', justifyContent: 'center' },
   playBtn: {
     width: 68,

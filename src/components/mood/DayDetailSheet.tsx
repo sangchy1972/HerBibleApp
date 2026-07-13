@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   closeBtn: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(30,27,46,0.06)' },
   emojiWrap: { alignItems: 'center', marginTop: 22, marginBottom: 18 },
   moodLabel: { fontFamily: FONTS.loraBold, fontWeight: '600', color: TXT, fontSize: 24, marginTop: 12 },
-  note: { fontSize: 16, lineHeight: 24, color: TXT, fontFamily: FONTS.lato, fontStyle: 'italic' },
+  note: { fontSize: 16, lineHeight: 24, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4, fontStyle: 'italic' },
   noNote: { fontSize: 15, lineHeight: 22, color: TXTSUB, fontStyle: 'italic' },
   editBtn: {
     marginTop: 26, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center',

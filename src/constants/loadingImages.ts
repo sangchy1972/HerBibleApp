@@ -1,7 +1,7 @@
 // Loading-screen background images.
 //
-// The photos live on the public covers domain under /v1/loading2/. NONE are
-// bundled. Before any CDN image is cached (fresh install) the loading screen
+// The photos live on the public covers domain under /backgrounds/loading/. NONE
+// are bundled. Before any CDN image is cached (fresh install) the loading screen
 // falls back to the bundled `follow_him_day.webp` (see components/LoadingOverlay),
 // so there is always a photo behind the verse. From the second launch on, the
 // rotating CDN images are cached on disk (see services/loadingCache.ts) and the
@@ -17,9 +17,19 @@
 // still running the previous build keep working. loadingCache's pruneExcept()
 // deletes the old cached files by name on the first launch of this build.
 //
-// Upload target (public bucket behind covers.everlandapps.com):
-//   covers.everlandapps.com/v1/loading2/<filename>.jpg
-export const LOADING_IMG_BASE = 'https://covers.everlandapps.com/v1/loading2';
+// ⚠️ The custom domain is bound to the bucket ROOT, so the URL path IS the R2
+// object key — there is no rewrite in between. Bucket layout:
+//   v1/covers/<slug>.webp             plan covers
+//   v1/loading/<hash>.jpg             the OLD 10-photo set (left in place)
+//   backgrounds/loading/<file>.jpg    THIS set — note: NO v1/ prefix
+// So the base below must match the upload key EXACTLY, prefix for prefix. A
+// mismatch doesn't crash: every image 404s and the loading screen silently falls
+// back to the bundled photo forever, which is easy to not notice.
+//
+// Upload target (bucket herbible-plans-7languages):
+//   R2 key   backgrounds/loading/loading-01.jpg
+//   URL      https://covers.everlandapps.com/backgrounds/loading/loading-01.jpg
+export const LOADING_IMG_BASE = 'https://covers.everlandapps.com/backgrounds/loading';
 
 // Filenames as uploaded. Rotation cycles through this list, one per cold start.
 export const LOADING_IMAGE_FILES: string[] = [

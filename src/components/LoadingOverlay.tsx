@@ -67,7 +67,7 @@ const ICON_TEXT_GAP = 17.6;                             // 22 × 0.8 — user: t
 // the lift (both measured from the screen's vertical centre).
 const TEXT_TOP = -ICON_LIFT + ICON_FINAL / 2 + ICON_TEXT_GAP;
 
-const NAME_SIZE = 27.5;                  // 36 → 32.4 (-10 %) → 27.5 (-15 % again, per user)
+const NAME_SIZE = 24.75;                 // 36 → 32.4 (-10 %) → 27.5 (-15 %) → 24.75 (-10 % again, per user)
 const TAGLINE_SIZE = NAME_SIZE / 2;      // user: half the wordmark
 const TAGLINE_TEXT = "Lifted by God's Word";
 
@@ -360,7 +360,10 @@ const styles = StyleSheet.create({
   // The verse is the headline of this card — bigger and bolder than before, to
   // carry the composition the way the reference does.
   sentence: {
-    fontFamily: FONTS.merriweatherBold, fontSize: 27, lineHeight: 38,
+    // 30 → 27 → 24.3 (-10 % per user). lineHeight scales WITH it (38 → 34.2):
+    // shrinking the glyphs while leaving the leading fixed makes the block look
+    // airy and broken, not smaller.
+    fontFamily: FONTS.merriweatherBold, fontSize: 24.3, lineHeight: 34.2,
     fontWeight: '700', textAlign: 'center',
   },
   source: { fontFamily: FONTS.merriweather, fontSize: 16.5, lineHeight: 25, textAlign: 'center', marginTop: 14 },

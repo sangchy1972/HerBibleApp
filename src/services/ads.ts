@@ -10,6 +10,40 @@
 // dev client built BEFORE the module was added doesn't crash at import time —
 // the same defensive pattern used in services/firebase.ts. On such a build all
 // functions below become silent no-ops.
+//
+// ─── ⏳ LEGACY GMA SDK HAS A DEATH DATE — READ THIS BEFORE Q2 2027 ───────────
+// On 2026-07-06 Google announced GMA Next-Gen SDK (Android) and declared the
+// SDK this file uses to be LEGACY:
+//   https://ads-developers.googleblog.com/2026/07/announcing-google-mobile-ads-next-gen.html
+//   "Google Mobile Ads SDK for Android is now legacy."
+// Timetable (https://developers.google.com/admob/android/deprecation):
+//   2027-06-30  Deprecated — ads still serve, technical support ENDS.
+//   2028-06-30  Sunset     — ads at RISK OF NOT SERVING, and Play blocks
+//                            releases for shipping an "outdated SDK".
+// We are deliberately NOT migrating yet (decision 2026-07-12). Why:
+//   • Next-Gen is ANDROID-ONLY. No iOS version exists and Google has not
+//     announced one — the word "iOS" doesn't appear in the announcement.
+//   • NO React Native / Expo / Flutter / Unity wrapper exists for it, from
+//     anyone. Migrating means hand-writing a Kotlin Expo module (init on a
+//     background thread, ~30 interstitial units, a callback bridge that
+//     marshals Next-Gen's background-thread callbacks back to the main thread)
+//     and owning it forever.
+//   • Next-Gen and legacy CANNOT coexist in one Android binary — they share the
+//     com.google.android.gms.ads namespace, so we'd also have to patch
+//     react-native-google-mobile-ads to strip its Android half while keeping it
+//     for iOS. Two ad stacks, two consent wirings, one waterfall behaving two ways.
+//   • The headline Next-Gen win (banner latency) doesn't apply — we run
+//     interstitials only.
+// The RIGHT outcome is the RN library gaining Next-Gen support once, for
+// everyone. Track: https://github.com/invertase/react-native-google-mobile-ads/issues/836
+// (opened Feb 2026, still UNANSWERED as of 2026-07-12).
+// ⇒ REVISIT BY Q2 2027. If issue #836 is still dead by then and Google still
+//   hasn't shipped Next-Gen for iOS, we have to plan the bespoke Android module
+//   with real lead time — not discover the problem when Play blocks a release.
+// Mediation is NOT a blocker either way: Next-Gen reuses the SAME
+// com.google.ads.mediation:* adapters (see plugins/withAdMobMediation.js), ad
+// unit IDs are unchanged, and the UMP API is identical — so the port, when it
+// happens, is about the SDK surface, not the ad business config.
 
 import { Platform, NativeModules, AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';

@@ -75,12 +75,12 @@ export default function MyReadingPlansCard({ model, onOpenPlan, onExplore }: {
 
       {model.suggested.length > 0 && (
         <>
-          {model.active.length > 0 && (
-            <View style={styles.dividerRow}>
-              <Text style={styles.dividerLabel}>{t('prayer.myPlans.suggested').toUpperCase()}</Text>
-              <View style={styles.dividerLine} />
-            </View>
-          )}
+          {/* Divider ALWAYS shown above the suggestions (reference layout) —
+              with zero active plans it sits right under the card title. */}
+          <View style={styles.dividerRow}>
+            <Text style={styles.dividerLabel}>{t('prayer.myPlans.suggested').toUpperCase()}</Text>
+            <View style={styles.dividerLine} />
+          </View>
           {model.suggested.map(plan => (
             <TouchableOpacity key={plan.slug} style={styles.row} activeOpacity={0.85} onPress={() => onOpenPlan(plan.slug)}>
               <PlanCover cover={plan.cover} slug={plan.slug} width={COVER_W} height={COVER_H} radius={8} noTransform />
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   title: {
-    fontSize: 21, fontWeight: '600', color: TXT, fontFamily: FONTS.latoBold, letterSpacing: 0.6,   // Lato 600 + tracking (per user); sized to the reference
+    fontSize: 21, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold, letterSpacing: 0.6,   // Lora 600 (back per user), keep 0.6 tracking
     textAlign: 'center', marginBottom: 6,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 8 },

@@ -231,10 +231,14 @@ export default function FirstRunTourHost() {
 
   // ── Leaving ───────────────────────────────────────────────────────────────
   const leaving = useRef(false);
+  // Mirrored into state ONLY to drive pointerEvents below — a ref read during
+  // render wouldn't re-render when it flips.
+  const [isLeaving, setIsLeaving] = useState(false);
 
   const leave = useCallback((how: 'skip' | 'finish') => {
     if (leaving.current) return;
     leaving.current = true;
+    setIsLeaving(true);
     const b = belowRef.current;
     cancelAnimation(halo);
     halo.value = withTiming(0, { duration: 200 });
@@ -285,6 +289,13 @@ export default function FirstRunTourHost() {
   useEffect(() => {
     if (!active) return;
     const sub = AppState.addEventListener('change', s => {
+      // NEVER touch the scrim while the exit is in flight. Backgrounding during
+      // the ~820ms exit and returning used to clobber its withTiming(0), so the
+      // completion callback fired with finished=false, done() never ran, and
+      // `active` stayed true — a brand-new user left staring at a full-screen
+      // touch-eating scrim on her first session, with both escape hatches
+      // (watchdog, hardware back) already spent on leaving.current.
+      if (leaving.current) return;
       if (s !== 'active') {
         cancelAnimation(sx); cancelAnimation(sy); cancelAnimation(sw);
         cancelAnimation(sh); cancelAnimation(sr); cancelAnimation(halo);
@@ -301,15 +312,20 @@ export default function FirstRunTourHost() {
   // rather than fatal — but it should still never happen.
   useEffect(() => {
     if (!active) return;
-    const cap = setTimeout(() => leave('skip'), 30000);
+    // AUTHORITATIVE — deliberately bypasses leave()'s `leaving.current` guard.
+    // The whole point of a watchdog is the case where the normal exit STARTED
+    // but never completed; routing it back through leave() would just early-
+    // return and leave the scrim up forever, which is exactly what happened.
+    const cap = setTimeout(() => { leaving.current = false; tour.skip(); }, 30000);
     return () => clearTimeout(cap);
-  }, [active, leave]);
+  }, [active, tour]);
 
   // Reset for a clean re-entry (shouldn't happen — the tour is once-ever — but
   // an aborted+restarted session must not inherit stale animation state).
   useEffect(() => {
     if (active) return;
     leaving.current = false;
+    setIsLeaving(false);
     shownStepRef.current = -1;
     scrim.value = 0;
     tipOpacity.value = 0;
@@ -349,8 +365,11 @@ export default function FirstRunTourHost() {
   return (
     <View style={styles.root}>
       {/* The scrim eats every touch outside the hole. It does NOT advance the
-          step — users double-tap and would blow straight through the tour. */}
-      <View style={StyleSheet.absoluteFillObject} />
+          step — users double-tap and would blow straight through the tour.
+          Once we're leaving it stops intercepting: if anything ever strands the
+          exit, a stuck scrim is then cosmetic rather than a frozen app, which is
+          the guarantee this file's header promises. */}
+      <View style={StyleSheet.absoluteFillObject} pointerEvents={isLeaving ? 'none' : 'auto'} />
       <Svg
         width={W}
         height={H}

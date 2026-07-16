@@ -156,7 +156,15 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
 
   // Resolve which line + photo to show (async — reads storage). The line is
   // NEVER shown until this resolves (stage 2 only), so it can't visibly switch.
-  useEffect(() => { advanceRotation().then(n => { setRot(n); warmLoadingPool(n).catch(() => {}); }); }, []);
+  // .catch is not optional: rot stays null on a rejection → contentReady never
+  // flips → stage 2 never runs, and the user sits on the pink card until the 11s
+  // MAX_VISIBLE_MS cap force-hides it. Falling back to rotation 0 keeps the
+  // verse card.
+  useEffect(() => {
+    advanceRotation()
+      .then(n => { setRot(n); warmLoadingPool(n).catch(() => {}); })
+      .catch(() => setRot(0));
+  }, []);
   // Stage-1 minimum dwell.
   useEffect(() => { const tm = setTimeout(() => setBrandElapsed(true), BRAND_MIN_MS); return () => clearTimeout(tm); }, []);
 

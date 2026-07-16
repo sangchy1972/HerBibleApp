@@ -51,14 +51,25 @@ const productsBySku = new Map<string, any>();
 // requestPurchase() call site (OpenIAP delivers results via events).
 let resolvePending: ((r: PurchaseOutcome) => void) | null = null;
 
+// Ceiling on a single purchase attempt. Generous — the user may be typing a
+// password, doing SCA, or reading the Play sheet — but finite, because the
+// alternative is a permanently dead Subscribe button.
+const PURCHASE_TIMEOUT_MS = 120_000;
+
 function settle(outcome: PurchaseOutcome) {
   const r = resolvePending;
   resolvePending = null;
   r?.(outcome);
 }
 
+// NOTE: every path out of this function must reach settle(), or the promise
+// returned by purchasePlan() never resolves — and its callers do
+// `try { await purchasePlan() } finally { setBusy(false) }`, so a pending
+// promise leaves the Subscribe button disabled FOREVER (both paywalls guard on
+// `if (busy) return`). The store can hand us states we don't handle
+// ('deferred', 'restored', 'unspecified'), so the fall-through settles too.
 async function handlePurchase(purchase: any): Promise<void> {
-  if (!purchase || !ALL_SKUS.has(purchase.productId)) return;
+  if (!purchase || !ALL_SKUS.has(purchase.productId)) { settle('error'); return; }
   if (purchase.purchaseState === 'purchased') {
     // Acknowledge/finish FIRST (Android refunds unacknowledged purchases
     // after ~3 days), then grant the entitlement.
@@ -71,6 +82,12 @@ async function handlePurchase(purchase: any): Promise<void> {
     // listener on a later app start once the store finalizes it.
     logEvent('iap_pending', { product_id: purchase.productId });
     settle('pending');
+  } else {
+    // 'deferred' (iOS Ask-to-Buy), 'restored', 'unspecified', anything future.
+    // The entitlement, if it ever lands, arrives via this same listener on a
+    // later launch; what matters here is that the caller is released.
+    logEvent('iap_unhandled_state', { product_id: purchase.productId, state: String(purchase.purchaseState ?? 'unknown') });
+    settle('error');
   }
 }
 
@@ -141,13 +158,28 @@ export async function purchasePlan(plan: PlanId): Promise<PurchaseOutcome> {
   }
   return new Promise<PurchaseOutcome>((resolve) => {
     resolvePending = resolve;
+    // Nothing can be allowed to leave this pending. The outcome normally arrives
+    // via the global purchase listeners, but requestPurchase is itself a promise
+    // (so a synchronous try/catch cannot see an async rejection), and a store
+    // sheet can be dismissed in ways that emit no event at all. The cap releases
+    // the caller so the Subscribe button comes back to life; a purchase that
+    // lands later is still granted by the listener on this or a future launch.
+    const cap = setTimeout(() => {
+      if (!resolvePending) return;
+      logEvent('iap_timeout', { product_id: sku });
+      settle('error');
+    }, PURCHASE_TIMEOUT_MS);
+    const done = (o: PurchaseOutcome) => { clearTimeout(cap); resolve(o); };
+    resolvePending = done;
     try {
-      iap.requestPurchase({
+      // .catch() as well as try/catch: this returns a promise, and an async
+      // rejection would otherwise be unhandled and strand the caller.
+      Promise.resolve(iap.requestPurchase({
         request: isSub
           ? { apple: { sku }, google: { skus: [sku], subscriptionOffers } }
           : { apple: { sku }, google: { skus: [sku] } },
         type: isSub ? 'subs' : 'in-app',
-      });
+      })).catch(() => settle('error'));
     } catch {
       settle('error');
     }

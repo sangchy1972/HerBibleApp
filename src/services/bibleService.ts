@@ -36,10 +36,32 @@ const indexKey = (code: string) => `bible:idx:${CACHE_TAG}:${code}`;
 const chapterKey = (code: string, slug: string, ch: number) => `bible:ch:${CACHE_TAG}:${code}:${slug}:${ch}`;
 const downloadStateKey = (code: string) => `bible:dl:${CACHE_TAG}:${code}`;
 
+// Hard ceiling on any single fetch.
+//
+// React Native's Android OkHttp client ships with connectTimeout/readTimeout/
+// writeTimeout ALL set to 0 — i.e. no timeout whatsoever. A socket that opens
+// and then stalls (captive portal, dying wifi, carrier throttling) never
+// resolves AND never rejects. Every consumer here does
+// `.catch(...).finally(() => setLoading(false))`, so a stalled socket means the
+// finally never runs: the chapter spinner turns forever, the error state is
+// unreachable, and there's no retry. iOS at least degrades after NSURLSession's
+// 60s default; Android hangs indefinitely.
+//
+// featuredPlansService already had this exact fix (and the rationale written
+// out) — it was simply never applied here, which is why the Bible reader and
+// Gospel & Psalm could hang while plans degraded gracefully.
+const BIBLE_NET_TIMEOUT_MS = 12_000;
+
 async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-  return res.json() as Promise<T>;
+  const ctl = new AbortController();
+  const id = setTimeout(() => ctl.abort(), BIBLE_NET_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { signal: ctl.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+    return await res.json() as T;
+  } finally {
+    clearTimeout(id);
+  }
 }
 
 export async function fetchTranslationIndex(code: string, baseUrl: string): Promise<TranslationIndex> {

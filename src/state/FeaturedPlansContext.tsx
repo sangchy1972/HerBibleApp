@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState, useCallback } from 'react';
+import React, { createContext, useContext, useMemo, useState, useCallback, useRef } from 'react';
 import { FEATURED_PLANS_SUMMARY, type PlanSummary } from '../constants/featuredPlansSummary';
 import { getPlan as getFullPlan, getCachedPlan, type FullPlan } from '../services/featuredPlansService';
 import { useUILanguage } from './UILanguageContext';
@@ -38,8 +38,19 @@ export function FeaturedPlansProvider({ children }: { children: React.ReactNode 
     [langKey],
   );
 
+  // `loaded` is read through a ref, NOT listed as a dep. With it in the deps,
+  // every successful load minted a new loadPlan identity → new context value →
+  // every consumer re-rendered and every effect listing loadPlan re-ran
+  // (FeaturedPlanDetail, PlanDayWalk, PrefetchManager). Today they're saved only
+  // by their own `if (plan) return` early-outs and PlanScreen's prefetchedRef —
+  // i.e. it doesn't loop by luck, not by design. Keeping the identity stable
+  // removes the loaded gun.
+  const loadedRef = useRef(loaded);
+  loadedRef.current = loaded;
+
   const loadPlan = useCallback(async (slug: string): Promise<FullPlan> => {
-    if (loaded[slug]) return loaded[slug];
+    const already = loadedRef.current[slug];
+    if (already) return already;
     // Try the on-disk cache before hitting the network — useful even on
     // first session if a previous session cached this plan.
     const cached = await getCachedPlan(langKey, slug);
@@ -50,7 +61,7 @@ export function FeaturedPlansProvider({ children }: { children: React.ReactNode 
     const fresh = await getFullPlan(langKey, slug);
     setLoaded(s => ({ ...s, [slug]: fresh }));
     return fresh;
-  }, [langKey, loaded]);
+  }, [langKey]);
 
   const getSummary = useCallback(
     (slug: string) => summary.find(s => s.slug === slug) || null,

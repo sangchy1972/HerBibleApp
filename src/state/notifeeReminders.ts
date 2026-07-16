@@ -31,7 +31,7 @@ import { lookupString } from '../i18n/lookup';
 import type { UILanguageCode } from './UILanguageContext';
 import { pickDailyVariant, nextOccurrence, VARIANTS_PER_SLOT } from './reminderContent';
 import { todayBgPictureUri, type BgSlot } from './notifBackgroundImage';
-import { todayVerseForNotif } from './notifVerse';
+import { todayVerseForNotif, bannerVerseForSlot } from './notifVerse';
 
 export type RichSlot = 'morning' | 'night';
 
@@ -285,16 +285,30 @@ export function syncNotifeeExtras(granted: boolean, lang: UILanguageCode): void 
 // during the day and sits in the tray between fires, so it's there whenever the
 // user looks. Content = the day's VERSE (like the card).
 //
-// NO STACKING ("弹窗不能重叠"): every hour's banner auto-dismisses after ~55 min
-// (Android timeoutAfter) so at most ONE hourly banner is ever in the tray; on iOS
-// they share a threadId so Notification Center collapses them into one group.
+// NO STACKING — and note WHY this needs two different mechanisms.
+//   • Android: `timeoutAfter` makes the OS drop the banner by itself, so at most
+//     one is ever in the tray. This works.
+//   • iOS: there is NO expiry for a local notification. `threadId` only makes
+//     Notification Center COLLAPSE them into one group — it does not remove any.
+//     The first cut of this treated threadId as iOS's timeoutAfter, which was
+//     simply wrong: on a real iPhone all 15 stayed queued and the user's tray was
+//     a wall of identical verses. There is no scheduling-side fix; the only way
+//     to clear delivered iOS notifications is to call cancelDisplayedNotifications
+//     while the app runs — which is what clearDeliveredBanners does below, on
+//     every foreground.
 // Fired at :30 past the hour so it never coincides with the :00 fixed reminders.
 const HOURLY_CHANNEL = 'her-bible.verse.hourly';
 const HOURLY_THREAD = 'her-bible.verse.hourly';
-const HOURLY_START_HOUR = 8;    // first banner at 08:30
-const HOURLY_END_HOUR = 22;     // last banner at 22:30 — silent overnight (none scheduled)
+// EVERY TWO HOURS, not every hour (per user 2026-07-13). The first cut of this
+// fired 08:30–22:30 hourly = 15 banners a day. On a real device that reads as
+// harassment, and the damage was worse than the count: each banner carried the
+// DAY's verse, of which there are only two (morning + evening segment), so the
+// tray filled with seven identical copies of the same sentence. Both halves are
+// fixed here — 8 banners instead of 15, and each one pulls a DIFFERENT verse
+// (see bannerVerseForSlot).
+const HOURLY_HOURS = [8, 10, 12, 14, 16, 18, 20, 22];   // :30 past each → 8/day
 const HOURLY_MINUTE = 30;       // :30 → never collides with the :00 fixed slots
-const HOURLY_TIMEOUT_MS = 55 * 60_000;   // auto-clear before the next hour → never stacks
+const HOURLY_TIMEOUT_MS = 115 * 60_000;   // Android: auto-clear just before the next one
 
 async function ensureHourlyChannel(lang: UILanguageCode): Promise<void> {
   if (Platform.OS !== 'android') return;
@@ -315,6 +329,29 @@ function hourlyId(hour: number): string {
   return `her-bible.notifee.verse.h${String(hour).padStart(2, '0')}`;
 }
 
+/** Drop banners the user has already walked past.
+ *
+ *  iOS has no notification expiry, so yesterday's banners sit in Notification
+ *  Center forever until they're tapped or swiped. The app opening is proof she
+ *  has seen them, so that's the moment to clear — this is the ONLY lever iOS
+ *  gives us, and without it the tray grows without bound.
+ *
+ *  Only the hourly verse banners are touched: fixed prayer reminders and any
+ *  other notification are left alone, because those are individually meaningful
+ *  and the user may be keeping them on purpose.
+ */
+export function clearDeliveredBanners(): void {
+  chain = chain.then(async () => {
+    try {
+      const displayed = await notifee.getDisplayedNotifications();
+      const ids = displayed
+        .map(d => d.notification?.id)
+        .filter((id): id is string => !!id && id.startsWith('her-bible.notifee.verse.h'));
+      if (ids.length) await notifee.cancelDisplayedNotifications(ids);
+    } catch { /* best-effort — never break the foreground path */ }
+  }).catch(() => {});
+}
+
 /** Reconcile the hourly verse banner set. Cancels the full 0–23 range first (so a
  *  narrowed window tears down cleanly), then schedules the waking-hours window.
  *  Called from syncRichReminders (mount / settings / lang / foreground) so the
@@ -323,21 +360,21 @@ export function syncHourlyVerseBanner(granted: boolean, lang: UILanguageCode): v
   chain = chain.then(async () => {
     await ensureHourlyChannel(lang);
     await ensureNotifeeIosCategory(lang);
-    // Tear down every hour id first — handles a changed window + the "off" case.
+    // Tear down every hour id 0–23 first — this also cleans up the OLD hourly set
+    // for anyone upgrading from the 15-a-day build, whose odd hours are no longer
+    // scheduled but would otherwise stay queued in the OS.
     for (let h = 0; h < 24; h++) { try { await notifee.cancelTriggerNotification(hourlyId(h)); } catch { /* none */ } }
     if (!granted) return;
-    // Resolve BOTH segments once — morning hours show the morning-segment verse,
-    // afternoon/evening hours the evening-segment verse, matching the card
-    // (holiday override applied inside todayVerseForNotif).
-    const morningVerse = await todayVerseForNotif(lang, 'morning');
-    const eveningVerse = await todayVerseForNotif(lang, 'evening');
-    if (!morningVerse?.text && !eveningVerse?.text) return;   // cache not warmed — retry next sync
     const morningPic = (await todayBgPictureUri('morning')) ?? PICTURES.morning;
     const eveningPic = (await todayBgPictureUri('evening')) ?? PICTURES.night;
     const fallbackTitle = lookupString('notif.channel.name', lang);
-    for (let h = HOURLY_START_HOUR; h <= HOURLY_END_HOUR; h++) {
+    for (let i = 0; i < HOURLY_HOURS.length; i++) {
+      const h = HOURLY_HOURS[i];
       const isMorning = h < 15;
-      const verse = (isMorning ? morningVerse : eveningVerse) ?? morningVerse ?? eveningVerse;
+      // A DIFFERENT verse per slot — the whole point of the rewrite. Passing the
+      // slot index walks the verse library instead of repeating the day's card
+      // verse eight times.
+      const verse = await bannerVerseForSlot(lang, i, isMorning ? 'morning' : 'evening');
       if (!verse?.text) continue;
       const picture: Picture = isMorning ? morningPic : eveningPic;
       const dataSlot: RichSlot = isMorning ? 'morning' : 'night';

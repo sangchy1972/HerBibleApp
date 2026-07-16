@@ -8,7 +8,7 @@ import { logEvent, setUserProps } from '../services/firebase';
 import { usePrayer } from './PrayerContext';
 import { useCurrentDayYmd } from '../hooks/useCurrentDayYmd';
 import { NOTIF_IDS, SLOTS, pickDailyVariant, type NotifKey } from './reminderContent';
-import { syncNotifeeReminders, syncNotifeeExtras, syncHourlyVerseBanner } from './notifeeReminders';
+import { syncNotifeeReminders, syncNotifeeExtras, syncHourlyVerseBanner, clearDeliveredBanners } from './notifeeReminders';
 
 // ─── Public types ─────────────────────────────────────────────────────────
 
@@ -514,6 +514,11 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       // unconditionally now: the four big-picture EXTRAS are always-on (not gated
       // by the morning/night toggles), so they must re-bake on every foreground.
       syncRichReminders(settings, lang);
+      // Clear the verse banners she's already scrolled past. Opening the app is
+      // proof she has seen them, and on iOS this is the ONLY way they ever leave
+      // Notification Center — there is no expiry for a local notification there,
+      // so without this the tray accumulates every banner ever fired.
+      clearDeliveredBanners();
     });
     return () => sub.remove();
   }, [ready, settings, lang]);

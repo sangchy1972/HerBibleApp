@@ -64,12 +64,14 @@ import AchievementUnlockSheet from './src/components/AchievementUnlockSheet';
 import { LoginPromptProvider } from './src/state/LoginPromptContext';
 import { NudgeCoordinatorProvider } from './src/state/NudgeCoordinatorContext';
 import { FirstRunTourProvider } from './src/state/FirstRunTourContext';
+import { AudioMiniProvider } from './src/state/AudioMiniContext';
 import { SetReminderTimeProvider } from './src/state/SetReminderTimeContext';
 import LoginPromptHost from './src/components/LoginPromptHost';
 import MoodCheckInSheet from './src/components/MoodCheckInSheet';
 import SetReminderTimeHost from './src/components/SetReminderTimeHost';
 import WidgetInstallHost from './src/components/WidgetInstallHost';
 import FirstRunTourHost from './src/components/FirstRunTourHost';
+import AudioMiniHost from './src/components/AudioMiniHost';
 import DeepLinkHandler from './src/navigation/DeepLinkHandler';
 import PrefetchManager from './src/components/PrefetchManager';
 import WidgetSync from './src/components/WidgetSync';
@@ -174,6 +176,7 @@ export default function App() {
                                     first-run tour — and BELOW OnboardingProvider,
                                     which it reads. */}
                                 <FirstRunTourProvider>
+                                <AudioMiniProvider>
                                   <RatePromptProvider>
                                     <MoodCheckInProvider>
                                       <NotificationsProvider>
@@ -217,6 +220,11 @@ export default function App() {
                                           {/* 3-step first-run spotlight. Mounted
                                               at app root so it covers the tab bar
                                               as well as the screen. */}
+                                          {/* Floating control for Bible narration
+                                              that's still playing after the user
+                                              left the Bible tab. Above the tabs,
+                                              below the tour + launch overlay. */}
+                                          <AudioMiniHost />
                                           <FirstRunTourHost />
                                           {/* Mirrors today's verse + the card's
                                               background image to the home-screen
@@ -245,6 +253,7 @@ export default function App() {
                                       </NotificationsProvider>
                                     </MoodCheckInProvider>
                                   </RatePromptProvider>
+                                </AudioMiniProvider>
                                 </FirstRunTourProvider>
                                 </OnboardingProvider>
                                 </BadgesProvider>

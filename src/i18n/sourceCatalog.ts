@@ -215,6 +215,8 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'tour.skip':                     { en: 'Skip', context: 'Text-only dismiss link on every coach-mark. Ends the tour for good.' },
   'tour.progress':                 { en: '{n} of {total}', context: 'Tiny step counter above the coach-mark title, e.g. "1 of 3". Keep both placeholders.' },
 
+  'audioMini.playing':             { en: 'Now playing', context: 'Floating pill shown when Bible narration keeps playing after the user leaves the Bible tab. Above it is the chapter, e.g. "John 3". Keep very short.' },
+
   'prayer.startMorning':           { en: 'Start Morning Prayer →', context: 'Primary CTA button when morning slot is active. Arrow is decorative — preserve in target language if possible.' },
   'prayer.startNight':             { en: 'Start Night Prayer →',   context: 'Primary CTA button when evening slot is active.' },
   'prayer.wait.nightCountdown':    { en: 'Night Prayer · {countdown}', context: 'Inactive button label showing time until night prayer opens. {countdown} is e.g. "2h 5m".' },

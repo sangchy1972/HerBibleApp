@@ -1,0 +1,193 @@
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withTiming, withRepeat, cancelAnimation, runOnJS, Easing,
+} from 'react-native-reanimated';
+import { useAudioPlayerStatus } from 'expo-audio';
+import Feather from '@expo/vector-icons/Feather';
+import { ROSE, FONTS } from '../constants/theme';
+import { useT } from '../i18n/useT';
+import { useAudioMini } from '../state/AudioMiniContext';
+
+// Floating audio control — the way OUT of audio that's playing off-screen.
+//
+// Bottom-tab screens stay mounted, so narration started on the Bible tab keeps
+// playing when the user moves to Plans or Prayer — with its stop button stranded
+// on a screen she isn't looking at. Rather than kill the audio on tab-away (she
+// may want it while she reads), the control travels with her: a small pill
+// half-tucked against the right edge, above every screen.
+//
+// Collapsed it's a peeking circle — present but not in the way, and it costs no
+// layout space. Tapping it expands to reveal Pause + a label; tapping the label
+// jumps back to what's playing. It auto-collapses so it never becomes furniture.
+//
+// It hides entirely while the owning screen is focused, because that screen has
+// its own full transport bar — two stop buttons is worse than one.
+//
+// NOT a <Modal>: this floats over live screens the user must keep using, and an
+// RN Modal is a native window that swallows every touch in the app. It's a plain
+// absolute View, and the pointerEvents="box-none" root means only the pill
+// itself is ever touchable — the rest of the screen stays fully usable.
+
+const SIZE = 46;                 // collapsed circle
+const PEEK = 0.52;               // how much of it sticks out past the edge
+const EXPANDED_W = 188;
+const ANIM_MS = 320;
+const AUTO_COLLAPSE_MS = 4200;
+const EASE = Easing.out(Easing.cubic);
+
+/** Subscribes to the player's status in its OWN leaf so the ~250 ms tick can't
+ *  re-render anything else. Reports only the boolean the pill cares about. */
+function PlayingProbe({ player, onChange }: { player: NonNullable<ReturnType<typeof useAudioMini>['player']>; onChange: (p: boolean) => void }) {
+  const status = useAudioPlayerStatus(player);
+  const playing = !!status?.playing;
+  useEffect(() => { onChange(playing); }, [playing, onChange]);
+  return null;
+}
+
+export default function AudioMiniHost() {
+  const t = useT();
+  const { width } = useWindowDimensions();
+  const { player, info, ownerFocused } = useAudioMini();
+  const [playing, setPlaying] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  // Visible only when audio is actually playing AND the user has moved away from
+  // the screen that owns it.
+  const show = !!player && !!info && playing && !ownerFocused;
+
+  const enter = useSharedValue(0);     // 0 = off-screen right, 1 = docked
+  const width_ = useSharedValue(SIZE);
+  const pulse = useSharedValue(0);
+
+  useEffect(() => {
+    enter.value = withTiming(show ? 1 : 0, { duration: ANIM_MS, easing: EASE });
+    if (!show) setExpanded(false);
+  }, [show, enter]);
+
+  // A slow breath on the collapsed circle — enough to catch the eye as "this is
+  // live", nowhere near a blink.
+  useEffect(() => {
+    cancelAnimation(pulse);
+    pulse.value = 0;
+    if (!show || expanded) return;
+    pulse.value = withRepeat(withTiming(1, { duration: 1600, easing: Easing.inOut(Easing.quad) }), -1, true);
+  }, [show, expanded, pulse]);
+
+  useEffect(() => {
+    width_.value = withTiming(expanded ? EXPANDED_W : SIZE, { duration: ANIM_MS, easing: EASE });
+  }, [expanded, width_]);
+
+  // Auto-collapse so it settles back out of the way on its own.
+  useEffect(() => {
+    if (!expanded) return;
+    const id = setTimeout(() => setExpanded(false), AUTO_COLLAPSE_MS);
+    return () => clearTimeout(id);
+  }, [expanded]);
+
+  const onPause = useCallback(() => {
+    try { player?.pause(); } catch { /* player released — the pill disappears anyway */ }
+    setExpanded(false);
+  }, [player]);
+
+  const onOpen = useCallback(() => {
+    setExpanded(false);
+    try { info?.onOpen(); } catch { /* nav gone */ }
+  }, [info]);
+
+  const rootStyle = useAnimatedStyle(() => {
+    // Collapsed: tucked against the edge, only PEEK of it showing. Expanded: the
+    // whole pill slides in.
+    const hiddenX = SIZE;
+    const dockedX = expanded ? 0 : SIZE * (1 - PEEK);
+    return {
+      transform: [{ translateX: hiddenX + (dockedX - hiddenX) * enter.value }],
+      opacity: enter.value,
+    };
+  });
+  const pillStyle = useAnimatedStyle(() => ({ width: width_.value }));
+  const haloStyle = useAnimatedStyle(() => ({
+    opacity: 0.35 * (1 - pulse.value),
+    transform: [{ scale: 1 + pulse.value * 0.5 }],
+  }));
+
+  // The probe must stay mounted whenever a player exists — it's what tells us
+  // playback started, so it can't be gated on `show` (that would be circular).
+  return (
+    <View style={styles.root} pointerEvents="box-none">
+      {player ? <PlayingProbe player={player} onChange={setPlaying} /> : null}
+      {show ? (
+        <Animated.View style={[styles.dock, { top: '38%' }, rootStyle]} pointerEvents="box-none">
+          <Animated.View style={[styles.pill, pillStyle]}>
+            {/* Breathing halo behind the note — sits under the content and can
+                never intercept a tap. */}
+            {!expanded ? (
+              <Animated.View style={[styles.halo, haloStyle]} pointerEvents="none" />
+            ) : null}
+
+            {expanded ? (
+              <>
+                <TouchableOpacity onPress={onPause} style={styles.iconBtn} hitSlop={8} activeOpacity={0.7}>
+                  <Feather name="pause" size={19} color="#FFFFFF" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={onOpen} style={styles.labelBtn} activeOpacity={0.7}>
+                  <Text style={styles.label} numberOfLines={1}>{info?.label ?? ''}</Text>
+                  <Text style={styles.sub} numberOfLines={1}>{t('audioMini.playing')}</Text>
+                </TouchableOpacity>
+                <Feather name="chevron-right" size={16} color="rgba(255,255,255,0.7)" style={styles.chev} />
+              </>
+            ) : (
+              <TouchableOpacity
+                onPress={() => setExpanded(true)}
+                style={styles.collapsedHit}
+                hitSlop={10}
+                activeOpacity={0.85}
+                accessibilityLabel={t('audioMini.playing')}
+              >
+                <Feather name="music" size={19} color="#FFFFFF" />
+              </TouchableOpacity>
+            )}
+          </Animated.View>
+        </Animated.View>
+      ) : null}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  // Above the tab bar and every screen, below the launch overlay (zIndex 1000)
+  // and the first-run tour (90) — a coach-mark must never be covered.
+  root: { ...StyleSheet.absoluteFillObject, zIndex: 80, elevation: 80 },
+  dock: { position: 'absolute', right: 0 },
+  pill: {
+    height: SIZE,
+    borderRadius: SIZE / 2,
+    backgroundColor: ROSE,
+    flexDirection: 'row',
+    alignItems: 'center',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  halo: {
+    position: 'absolute',
+    left: (SIZE - 30) / 2, top: (SIZE - 30) / 2,
+    width: 30, height: 30, borderRadius: 15,
+    backgroundColor: '#FFFFFF',
+  },
+  // The collapsed circle is half off-screen, so the note is nudged toward the
+  // visible side — otherwise the icon itself would be half-hidden.
+  collapsedHit: {
+    width: SIZE, height: SIZE,
+    alignItems: 'center', justifyContent: 'center',
+    paddingRight: SIZE * (1 - PEEK) * 0.6,
+  },
+  iconBtn: { width: 44, height: SIZE, alignItems: 'center', justifyContent: 'center' },
+  labelBtn: { flex: 1, minWidth: 0, justifyContent: 'center' },
+  label: { fontFamily: FONTS.latoBold, fontWeight: '700', fontSize: 13.5, color: '#FFFFFF' },
+  sub: { fontFamily: FONTS.lato, fontSize: 11, color: 'rgba(255,255,255,0.8)', marginTop: 1 },
+  chev: { marginRight: 12, marginLeft: 2 },
+});

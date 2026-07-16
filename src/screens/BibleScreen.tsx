@@ -33,6 +33,7 @@ import { useAudioPlayer, useAudioPlayerStatus, type AudioPlayer } from 'expo-aud
 import { bibleAudioUrl } from '../constants/bibleAudioCdn';
 import { loadTimestamps, verseAtTime, type ChapterTimestamps } from '../services/bibleAudioService';
 import BibleAudioPlayer from '../components/BibleAudioPlayer';
+import { useAudioMini } from '../state/AudioMiniContext';
 import { logEvent } from '../services/firebase';
 import { adjustFocus } from '../constants/versification';
 import { HL_COLORS, getHighlightColor } from '../constants/highlightColors';
@@ -1170,6 +1171,13 @@ export default function BibleScreen() {
   // degradation while the narration backlog is being filled.
   const audioSrc = bibleAudioUrl(translation.code, bookSlug, chapter);
   const audioPlayer = useAudioPlayer(audioSrc);
+
+  // Hand this player to the app-root floating pill so narration stays
+  // controllable after the user leaves this tab. Registration is by reference
+  // only — the pill subscribes to status in its own leaf, so nothing here
+  // re-renders on the ~250ms tick.
+  const audioMini = useAudioMini();
+  const { register: registerMini, unregister: unregisterMini, setOwnerFocused } = audioMini;
   // COARSE audio state only — the high-frequency useAudioPlayerStatus
   // subscription lives in the render-null <AudioStatusBridge> leaf (bottom of
   // the JSX). Subscribing HERE re-rendered this entire screen on every ~250ms
@@ -1290,6 +1298,30 @@ export default function BibleScreen() {
   // screen's audioPlayer so opening doesn't restart/duplicate playback, and
   // closing leaves audio running (karaoke highlight continues here).
   const [showPlayer, setShowPlayer] = useState(false);
+
+  // ── Keep the floating audio pill in sync ──────────────────────────────────
+  // Register the player + what it's playing. Re-runs when the chapter changes so
+  // the pill's label follows along.
+  useEffect(() => {
+    registerMini(audioPlayer, {
+      label: `${currentBook?.name || bookSlug} ${chapter}`,
+      onOpen: () => {
+        navigation.navigate('Tabs', { screen: 'bible' });
+        setShowPlayer(true);
+      },
+    });
+    return () => unregisterMini(audioPlayer);
+  }, [audioPlayer, currentBook?.name, bookSlug, chapter, registerMini, unregisterMini, navigation]);
+
+  // The pill hides while THIS screen is focused — the full transport bar is
+  // right here, and two stop buttons is worse than one. On blur it appears.
+  useFocusEffect(
+    React.useCallback(() => {
+      setOwnerFocused(true);
+      return () => setOwnerFocused(false);
+    }, [setOwnerFocused]),
+  );
+
   const openPlayer = () => {
     setShowPlayer(true);
     // Genuine "user chose to listen" tap (pink headphones button) — distinct
@@ -1307,8 +1339,15 @@ export default function BibleScreen() {
   // Pause the narration when the user navigates to a different chapter.
   // Without this the previous chapter's audio keeps playing in the
   // background even though the source URL has changed — expo-audio
-  // doesn't auto-stop on source swap. Triggering pause here ALSO covers
-  // tab-away, since `audioPlayer` is held only by this screen instance.
+  // doesn't auto-stop on source swap.
+  //
+  // This does NOT cover tab-away, despite what this comment used to claim: the
+  // bottom tabs never unmount (no unmountOnBlur) and a tab switch changes
+  // neither bookSlug nor chapter, so this effect simply doesn't re-run. That
+  // left narration playing across the whole app with its stop button stranded
+  // on a screen the user couldn't see. Tab-away is handled deliberately now —
+  // the audio keeps playing (she may want it) and the CONTROL travels with her
+  // via <AudioMiniHost>; see the registration effect below.
   useEffect(() => {
     if (audioPlayer.playing) audioPlayer.pause();
     // Intentional: react to slug/chapter changes only.

@@ -79,6 +79,7 @@ import LoadingOverlay from './src/components/LoadingOverlay';
 import { setAudioModeAsync } from 'expo-audio';
 import { initFirebase, logScreenView } from './src/services/firebase';
 import { initAds } from './src/services/ads';
+import { ensureAttRequested } from './src/services/att';
 import { initAdFrequency, noteNavigation } from './src/services/adFrequency';
 import { initIap } from './src/services/iap';
 
@@ -91,7 +92,16 @@ export default function App() {
   // so it never competes with the loading screens / first render.
   React.useEffect(() => {
     initFirebase();
-    const task = InteractionManager.runAfterInteractions(() => { initAds(); initAdFrequency(); initIap(); });
+    const task = InteractionManager.runAfterInteractions(() => {
+      // ATT FIRST, on its own — Apple requires the tracking prompt to appear
+      // before tracking begins, and burying it inside initAds got the app
+      // rejected (5.1.2(i)). initAds awaits the same one-shot internally, so the
+      // GMA SDK still initializes with the resolved status; this only guarantees
+      // the human is asked early and unconditionally.
+      ensureAttRequested().finally(() => { initAds(); });
+      initAdFrequency();
+      initIap();
+    });
     return () => task.cancel();
   }, []);
 

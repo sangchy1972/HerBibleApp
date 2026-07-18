@@ -48,6 +48,7 @@
 import { Platform, NativeModules, AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent, setUserProps } from './firebase';
+import { ensureAttRequested } from './att';
 import { startUsController, stopUsController, usOnShowOpportunity, isUsControllerActive } from './usInterstitial';
 
 let mobileAdsFn: any = null;
@@ -67,16 +68,10 @@ try {
   /* native module not in this build → no-op everywhere below */
 }
 
-// App Tracking Transparency (iOS only). Guarded require so a build made before
-// the module was added doesn't crash at import; Android has no ATT so this stays
-// null and the call below is skipped.
-let requestTrackingPermissions: null | (() => Promise<{ status: string }>) = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  requestTrackingPermissions = require('expo-tracking-transparency').requestTrackingPermissionsAsync;
-} catch {
-  /* module not in this build */
-}
+// ATT lives in its own module now (services/att) so it can be fired at app root
+// BEFORE ads, independently of the consent flow — see the note there and the
+// 5.1.2(i) rejection. We only AWAIT it here so the SDK inits with the resolved
+// status; we no longer own the prompt.
 
 // Real interstitial ad units for the simple single-unit path (everyone who is
 // NOT routed to the US waterfall controller: non-US Android, all iOS, and any
@@ -282,13 +277,14 @@ export async function initAds(): Promise<void> {
     // fully). REQUIRED by Apple because App Privacy declares tracking (IDFA).
     // Runs after UMP so EEA users see the GDPR form then the ATT prompt. No-op on
     // Android. Awaited so the SDK inits with the resolved authorization status.
-    if (Platform.OS === 'ios' && requestTrackingPermissions) {
-      // Generous bound — this one legitimately waits on a human tapping the OS
-      // prompt. It's here only for the case where the prompt never resolves
-      // (app backgrounded mid-prompt), which would otherwise strand ads forever.
-      try {
-        await bounded(requestTrackingPermissions(), ATT_TIMEOUT_MS, { status: 'unknown' }, 'att');
-      } catch { /* never block ads/app on ATT */ }
+    // ATT was already fired at app root (App.tsx → ensureAttRequested). Await the
+    // SAME one-shot so the GMA SDK initializes AFTER the user's tracking choice
+    // is resolved — on "authorized" it reads the real IDFA and serves
+    // personalized; otherwise non-personalized. Bounded so a prompt the user
+    // never answers (app backgrounded mid-prompt) can't strand ad init.
+    if (Platform.OS === 'ios') {
+      try { await bounded(ensureAttRequested(), ATT_TIMEOUT_MS, 'unknown', 'att'); }
+      catch { /* never block ads/app on ATT */ }
     }
 
     // The mediation-adapter hazard lives here — see the note on INIT_TIMEOUT_MS.

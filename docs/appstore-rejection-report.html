@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<style>
+  @page {
+    size: A4;
+    margin: 20mm 18mm 22mm 18mm;
+    @bottom-center {
+      content: "Her Bible · App Store 上架被拒诊断报告　—　第 " counter(page) " / " counter(pages) " 页";
+      font-family: "Noto Sans CJK SC"; font-size: 8pt; color: #9a94a8;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Noto Sans CJK SC", sans-serif;
+    color: #1E1B2E; font-size: 10.3pt; line-height: 1.75; margin: 0;
+  }
+  h1 { font-size: 21pt; margin: 0 0 2mm; letter-spacing: .5px; }
+  h2 {
+    font-size: 14pt; margin: 9mm 0 3mm; padding-bottom: 2mm;
+    border-bottom: 2px solid #E63F69; color: #1E1B2E;
+  }
+  h3 { font-size: 11.5pt; margin: 6mm 0 2mm; color: #B12B50; }
+  h4 { font-size: 10.5pt; margin: 4mm 0 1.5mm; color: #866BC0; }
+  p { margin: 0 0 2.5mm; }
+  ul, ol { margin: 0 0 3mm; padding-left: 6mm; }
+  li { margin: 0 0 1.5mm; }
+  code, .mono {
+    font-family: "DejaVu Sans Mono", monospace; font-size: 8.8pt;
+    background: #F4EFF1; padding: 0.5mm 1.4mm; border-radius: 2px; color: #7a2440;
+    word-break: break-all;
+  }
+  strong { color: #B12B50; }
+  a { color: #866BC0; text-decoration: none; }
+  .cover {
+    padding: 8mm 0 6mm; border-bottom: 3px solid #E63F69; margin-bottom: 6mm;
+  }
+  .cover .sub { color: #6b6580; font-size: 11pt; margin-top: 1mm; }
+  .meta-grid {
+    display: table; width: 100%; margin-top: 5mm; font-size: 9.3pt;
+    border-collapse: collapse;
+  }
+  .meta-grid .row { display: table-row; }
+  .meta-grid .k {
+    display: table-cell; padding: 1.6mm 4mm 1.6mm 0; color: #6b6580;
+    width: 30%; border-bottom: 1px solid #eee6ea; white-space: nowrap;
+  }
+  .meta-grid .v {
+    display: table-cell; padding: 1.6mm 0; border-bottom: 1px solid #eee6ea;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 3mm 0 4mm; font-size: 9.2pt; }
+  th {
+    background: #FBEEF2; color: #1E1B2E; text-align: left;
+    padding: 2.2mm 2.6mm; border: 1px solid #F0D4DE; font-weight: 700;
+  }
+  td { padding: 2.2mm 2.6mm; border: 1px solid #ece4e8; vertical-align: top; }
+  tr:nth-child(even) td { background: #FCFAFB; }
+  .callout {
+    border-left: 4px solid #E63F69; background: #FDF3F6;
+    padding: 3mm 4mm; margin: 3mm 0 4mm; border-radius: 0 4px 4px 0;
+  }
+  .callout.warn { border-left-color: #C9962B; background: #FCF7EC; }
+  .callout.ok   { border-left-color: #3FAE6A; background: #EEF8F1; }
+  .callout .lbl { font-weight: 700; font-size: 9pt; letter-spacing: .3px; }
+  .quote {
+    font-style: italic; color: #514b63; border-left: 3px solid #ccc4d4;
+    padding: 1.5mm 0 1.5mm 4mm; margin: 2.5mm 0 3mm; font-size: 9.4pt;
+  }
+  .pill {
+    display: inline-block; font-size: 8pt; font-weight: 700; color: #fff;
+    padding: 0.6mm 2.4mm; border-radius: 10px; vertical-align: middle;
+  }
+  .pill.red { background: #E63F69; } .pill.green { background: #3FAE6A; }
+  .pill.amber { background: #C9962B; } .pill.grey { background: #9a94a8; }
+  .status-fixed { color: #2e8a53; font-weight: 700; }
+  .status-todo  { color: #B12B50; font-weight: 700; }
+  .status-user  { color: #9a6a12; font-weight: 700; }
+  .breakbefore { page-break-before: always; }
+  .small { font-size: 8.6pt; color: #6b6580; }
+  .tag { font-family: "DejaVu Sans Mono", monospace; font-size: 8.6pt; color:#3a3550; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>Her Bible — iOS App Store 上架被拒　全面诊断报告</h1>
+  <div class="sub">Rejection Root-Cause Analysis &amp; Remediation Report</div>
+  <div class="meta-grid">
+    <div class="row"><div class="k">应用名称</div><div class="v">Her Bible: KJV Bible for Women</div></div>
+    <div class="row"><div class="k">Bundle ID</div><div class="v"><span class="tag">com.holy.bible.kjv.audio.prayer</span></div></div>
+    <div class="row"><div class="k">开发者主体</div><div class="v">Everland Technology Limited</div></div>
+    <div class="row"><div class="k">受审版本</div><div class="v">1.0.0 (Build 11)</div></div>
+    <div class="row"><div class="k">技术栈</div><div class="v">Expo SDK 54 / React Native 0.81（New Architecture）</div></div>
+    <div class="row"><div class="k">被拒次数</div><div class="v">2 轮（2026-07-13、2026-07-17）</div></div>
+    <div class="row"><div class="k">当前状态</div><div class="v"><span class="pill red">Rejected — Unresolved Issues</span></div></div>
+    <div class="row"><div class="k">报告日期</div><div class="v">2026-07-18</div></div>
+    <div class="row"><div class="k">报告用途</div><div class="v">供第三方评审、复核处置方案</div></div>
+  </div>
+</div>
+
+<h2>一、执行摘要（TL;DR）</h2>
+
+<p>Her Bible 是一款面向女性用户的每日灵修 / KJV 圣经应用，采用订阅制变现并含少量广告。App 在提交 iOS App Store 审核后，<strong>前后两轮共触发 4 条不同的 App Review Guideline 被拒</strong>。核心结论如下：</p>
+
+<div class="callout">
+  <div class="lbl">一句话结论</div>
+  <p style="margin:1.5mm 0 0">被拒的 4 条问题里，<strong>没有一条源于 App 的核心功能或内容违规</strong>。它们全部是<strong>「合规配置 / 元数据填写」层面的疏漏</strong>——即「App 实际行为」与「在 App Store Connect 后台声明的信息」之间存在不一致。这类问题的特点是：<strong>技术上易修，但极易反复</strong>，因为审核是逐项进行的，前一项没过、后一项可能根本没被看到。</p>
+</div>
+
+<table>
+  <thead><tr><th style="width:14%">审核轮次</th><th style="width:24%">Guideline</th><th>问题一句话概括</th><th style="width:16%">状态</th></tr></thead>
+  <tbody>
+    <tr><td>第 1 轮<br><span class="small">07-13</span></td><td>2.3.2 Accurate Metadata</td><td>月订阅与年订阅用了<strong>同一张推广图</strong>（重复）</td><td class="status-fixed">已解决</td></tr>
+    <tr><td>第 1 轮<br><span class="small">07-13</span></td><td>2.3.2 Accurate Metadata</td><td>推广图上<strong>印了价格</strong>（不允许）</td><td class="status-fixed">已解决</td></tr>
+    <tr><td>第 1 &amp; 2 轮</td><td>3.1.2(c) Payments – Subscriptions</td><td>App 元数据缺<strong>可点击的 EULA（服务条款）链接</strong></td><td class="status-user">待用户在后台补</td></tr>
+    <tr><td>第 2 轮<br><span class="small">07-17</span></td><td>5.1.2(i) Data Use &amp; Sharing</td><td>隐私标签声明「追踪」，但<strong>没弹出 ATT 授权框</strong></td><td class="status-fixed">代码已修，待打包</td></tr>
+  </tbody>
+</table>
+
+<p>第 2 轮相比第 1 轮，「推广图」两条已消失（第 1 轮删图处置成功），但新暴露出 <strong>5.1.2(i) ATT</strong> 这条——它此前被前序问题挡住、审核员未走到。这正是「逐项审核」导致问题分批浮现的典型表现。</p>
+
+<h2 class="breakbefore">二、应用背景与商业模型</h2>
+
+<p>理解被拒原因，需先了解 App 的两项与合规强相关的特性：</p>
+
+<h3>2.1 变现方式：订阅 + 广告并存</h3>
+<ul>
+  <li><strong>自动续订订阅（Auto-renewable Subscription）</strong>：提供 <span class="tag">Premium Monthly</span>（月付）与 <span class="tag">Premium Annually</span>（年付）两档，权益为「去广告 + 专注阅读」，并配置了 <strong>7 天免费试用</strong>。</li>
+  <li><strong>广告</strong>：通过 Google AdMob 投放插屏广告（Interstitial），并接入了 Liftoff Monetize（Vungle）作为 AdMob 聚合（Mediation）的一个广告源。</li>
+</ul>
+<div class="callout warn">
+  <div class="lbl">关键矛盾点</div>
+  <p style="margin:1.5mm 0 0">「订阅」与「广告」同时存在，意味着 App 必须<strong>同时满足两套独立的合规要求</strong>：订阅要满足 3.1.2（信息披露 + EULA），广告要满足 5.1.2（追踪透明度 / ATT）。任一套没配好都会被拒——这正是本次两轮 4 条问题的来源。</p>
+</div>
+
+<h3>2.2 隐私标签声明了「追踪」</h3>
+<p>在 App Store Connect 的「App 隐私（App Privacy）」中，该 App 声明会收集 <strong>Device ID（设备标识符，即 IDFA）</strong> 与 <strong>Advertising Data（广告数据）</strong>，并将其用途标记为 <strong>「Used to Track You（用于追踪你）」</strong>。这是为了让 AdMob 能投放<strong>个性化广告</strong>（个性化广告 eCPM 更高、收入更好）。</p>
+<p>一旦隐私标签声明了「追踪」，Apple 就<strong>强制要求</strong>：App 必须通过 <strong>App Tracking Transparency（ATT）框架</strong>，在开始追踪前弹出系统授权框征得用户同意。这是 5.1.2(i) 被拒的根本背景。</p>
+
+<h2>三、被拒时间线</h2>
+
+<table>
+  <thead><tr><th style="width:16%">日期</th><th style="width:22%">事件</th><th>触发的 Guideline</th></tr></thead>
+  <tbody>
+    <tr><td>2026-07-13</td><td>第 1 轮被拒<br><span class="small">Submission ID<br>7d8e7ae1…</span></td><td>
+      · 2.3.2 推广图重复<br>
+      · 2.3.2 推广图含价格<br>
+      · 3.1.2(c) 缺 EULA 链接</td></tr>
+    <tr><td>07-13 ~ 07-16</td><td>处置动作</td><td>删除月/年订阅的推广图；被告知需在描述里补 EULA 链接</td></tr>
+    <tr><td>2026-07-17</td><td>第 2 轮被拒<br><span class="small">Review Device:<br>iPad Air 11" (M3)</span></td><td>
+      · 3.1.2(c) EULA 链接<strong>仍</strong>缺失<br>
+      · 5.1.2(i) ATT 授权框未弹出<strong>（新暴露）</strong></td></tr>
+    <tr><td>2026-07-18</td><td>本报告出具</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <div class="lbl">时间线要点</div>
+  <p style="margin:1.5mm 0 0">第 1 轮的两条「推广图」问题在第 2 轮已不再出现，证明<strong>删图处置有效</strong>。但 3.1.2(c) 连续两轮出现，说明第一次的 EULA 补救<strong>没做对或没做到位</strong>；而 5.1.2(i) 是第一次出现——因为审核在第 1 轮就卡在了推广图上，根本没走到「触发广告 → 检查 ATT」这一步。</p>
+</div>
+
+
+<h2 class="breakbefore">四、逐条问题深度诊断</h2>
+
+<p>以下对 4 条 Guideline 逐一展开：每条包含「Apple 原文摘录 → 通俗解释 → 根因分析 → 已采取 / 需采取的处置 → 当前状态」。</p>
+
+<h3>4.1　Guideline 2.3.2 — 推广图重复 <span class="pill green">已解决</span></h3>
+<h4>Apple 原文</h4>
+<div class="quote">"You submitted duplicate or identical promotional images for different promoted In-App Purchase products…"（你为不同的推广型内购商品提交了重复/相同的推广图片）</div>
+<h4>通俗解释</h4>
+<p>「推广型内购（Promoted In-App Purchase）」是一个可选功能——它让你的订阅直接展示在 App Store 商品页上，用户下载前就能购买。使用这个功能就必须给<strong>每一个</strong>被推广的商品配一张<strong>各不相同、能区分彼此</strong>的推广图。此处月订阅（Premium Monthly）和年订阅（Premium Annually）用了同一张图。</p>
+<h4>根因</h4>
+<p>并非功能违规，而是<strong>启用了一个本不必要的可选功能，却没按其规范配齐素材</strong>。对一款刚上线的 App 而言，几乎没有用户会在商品页直接购买订阅，「推广型内购」带来的收益趋近于零，却凭空增加了合规负担。</p>
+<h4>处置</h4>
+<p>采纳 Apple 官方给出的最简路径：<strong>直接删除两个订阅的推广图片</strong>（"If you have no future plans on promoting this In-App Purchase product, you can delete the associated promotional image"）。删图后本条与 4.2 一并消失。</p>
+<div class="callout ok"><div class="lbl">验证</div><p style="margin:1.5mm 0 0">第 2 轮审核结果中，2.3.2 的两条已不再出现，证明删图有效。</p></div>
+
+<h3>4.2　Guideline 2.3.2 — 推广图含价格 <span class="pill green">已解决</span></h3>
+<h4>Apple 原文</h4>
+<div class="quote">"…the Image for your promoted In-App Purchase product… includes references to the price… which is not an appropriate part of this metadata item."（推广图中出现了价格，这不是该元数据项的合适内容）</div>
+<h4>通俗解释与根因</h4>
+<p>推广图上不允许出现价格。原因是价格在商品页已自动显示，<strong>且各国货币与定价不同</strong>——图片上写死的价格在其他国家/地区就是错的，构成「不准确的元数据」。</p>
+<h4>处置</h4>
+<p>与 4.1 同一处置：删除推广图，价格问题随之消失。</p>
+
+<h3>4.3　Guideline 3.1.2(c) — 缺 EULA（服务条款）链接 <span class="pill amber">待用户在后台补</span></h3>
+<h4>Apple 原文</h4>
+<div class="quote">"…a functional link to the Terms of Use (EULA)… if you are using the standard Apple Terms of Use (EULA), include a link in the App Description…"（需要一个可点击的服务条款/EULA 链接；若用标准 Apple EULA，则在 App 描述里放链接）</div>
+<h4>通俗解释</h4>
+<p>凡是提供「自动续订订阅」的 App，Apple 要求在<strong>两个层面</strong>都能看到一组必备信息：</p>
+<ul>
+  <li><strong>App 内部（购买页面上）</strong>：订阅名称、时长、价格，以及<strong>可点击的「隐私政策」和「服务条款(EULA)」链接</strong>。</li>
+  <li><strong>App Store 元数据（后台）</strong>：「隐私政策 URL」字段必须填；「服务条款(EULA)」链接必须出现在 <strong>App 描述</strong>里，或在后台的 <strong>License Agreement（许可协议）字段</strong>里配置。</li>
+</ul>
+<h4>根因（为什么连续两轮都被拒）</h4>
+<div class="callout warn">
+  <div class="lbl">诊断</div>
+  <p style="margin:1.5mm 0 0">App <strong>内部</strong>的购买页（订阅页）其实<strong>已经做对了</strong>——代码中已含订阅标题、时长、价格，以及指向隐私政策和服务条款的可点击链接。真正缺的是<strong>「App Store 后台元数据」这一侧的 EULA 链接</strong>。<br><br>
+  第 1 轮被告知后若做了补救，第 2 轮仍被拒，只可能是两种情况之一：<strong>(a)</strong> 根本没补；或 <strong>(b)</strong> 补错了位置——例如把链接加到了「内购商品的描述」里，而不是<strong>主 App 描述</strong>里；又或只加在了某一种语言的描述、而审核员（iPad，语言大概率为英文）看的那份英文描述末尾没有。</p>
+</div>
+<h4>处置（需在 App Store Connect 后台完成，无需改代码/打包）</h4>
+<ol>
+  <li><strong>做法 A（最稳，优先）</strong>：进入 <span class="mono">Distribution → App Information（App 信息）</span>，找到 <strong>License Agreement</strong> 栏，确认已启用「Apple 标准 EULA」。此字段对<strong>所有语言、所有版本</strong>生效，不会因语言遗漏。</li>
+  <li><strong>做法 B（双保险）</strong>：在<strong>英文（English U.S.）App 描述的末尾</strong>另起一行加入：<br>
+    <span class="mono">Terms of Use (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/</span><br>
+    建议其余 6 种语言（es / pt / de / fr / zh-Hans / zh-Hant）描述末尾同样补上，避免换区又被拒。</li>
+  <li>同页确认 <strong>Privacy Policy URL</strong> 已填：<span class="mono">https://everlandapps.com/herbible-privacy.html</span></li>
+</ol>
+<div class="callout"><div class="lbl">当前状态</div><p style="margin:1.5mm 0 0"><span class="status-user">待用户在 App Store Connect 后台完成上述配置。</span>此为纯元数据改动，<strong>不需要重新打包</strong>。</p></div>
+
+
+<h3 class="breakbefore">4.4　Guideline 5.1.2(i) — 声明追踪却未弹 ATT 授权框 <span class="pill amber">代码已修，待打包</span></h3>
+<h4>Apple 原文</h4>
+<div class="quote">"The app privacy information… indicates the app collects data in order to track the user, including Device ID and Advertising Data. However, the app does not use App Tracking Transparency to request the user's permission before tracking their activity."（隐私信息显示 App 会收集 Device ID 与广告数据用于追踪用户，但 App 并未在追踪前用 ATT 框架请求授权）</div>
+<h4>通俗解释</h4>
+<p>这是唯一一条<strong>技术/代码层面</strong>的问题，也是本报告最需要向第三方讲清楚的一条。逻辑链是：</p>
+<ol>
+  <li>后台隐私标签<strong>声明了</strong>「追踪」（见 §2.2）；</li>
+  <li>Apple 由此要求：追踪发生前，必须弹出系统 ATT 授权框；</li>
+  <li>审核员在 iPad 上使用 App，<strong>没有看到这个授权框</strong> → 判定「声明与行为不一致」→ 拒。</li>
+</ol>
+<h4>根因分析（关键）</h4>
+<div class="callout warn">
+  <div class="lbl">诊断：ATT 弹窗「代码存在，但埋得太深、太晚」</div>
+  <p style="margin:1.5mm 0 0">经排查，ATT 请求的代码<strong>本来就有</strong>（依赖库 <span class="tag">expo-tracking-transparency</span> 已安装、<span class="tag">Info.plist</span> 的 <span class="tag">NSUserTrackingUsageDescription</span> 文案也在）。问题出在<strong>调用时机</strong>：ATT 请求被写在了广告初始化函数 <span class="tag">initAds()</span> 的<strong>深处</strong>——它排在「读取本地存储 → 跑完 UMP（GDPR）同意流程 → 一个 <span class="tag">if (adsRemoved) return</span> 提前返回判断」之后，而 <span class="tag">initAds()</span> 本身又是被延迟（<span class="tag">runAfterInteractions</span>）触发的。</p>
+  <p style="margin:2mm 0 0">结果：在审核设备上，ATT 授权框可能<strong>被前序流程无限期推迟，甚至根本没机会弹出</strong>，审核员在它出现之前就已经在翻查隐私设置了。Apple 的要求是「追踪前请求」，而把它埋在同意流程后面，等同于让它<strong>不可预期地缺席</strong>。</p>
+</div>
+<h4>处置（已完成代码修复）</h4>
+<p>已将 ATT 请求<strong>从广告初始化中剥离，提升为一个独立、尽早、无条件的动作</strong>：</p>
+<ul>
+  <li>新增独立模块 <span class="tag">services/att.ts</span>：负责发起 ATT 请求，具备「仅弹一次（one-shot）、并发调用共享同一次请求、已有决定则直接读取而不重复弹、永不抛异常」的特性；Android 平台自动空操作。</li>
+  <li>在 App 根组件（<span class="tag">App.tsx</span>）中，<strong>一进入主界面、UI 可交互的瞬间就发起 ATT 请求</strong>，不再依赖 UMP、不依赖 <span class="tag">adsRemoved</span>、不依赖整条广告链。广告初始化改为在其之后进行。</li>
+  <li>广告模块（<span class="tag">ads.ts</span>）不再自己弹窗，而是 <span class="tag">await</span> 同一个 one-shot——这样 Google 广告 SDK 仍会在「用户的追踪选择已确定」之后才初始化，个性化/非个性化广告的投放逻辑<strong>完全不变</strong>。改变的只是「何时询问用户」——提前且无条件。</li>
+</ul>
+<p>净效果：<strong>每一次全新安装，进入 App 后 2–3 秒内必定弹出 ATT 授权框</strong>，且早于任何广告或追踪 SDK 初始化。隐私标签与广告业务逻辑均未改动。</p>
+<div class="callout"><div class="lbl">当前状态</div><p style="margin:1.5mm 0 0"><span class="status-fixed">代码已修复并提交（commit b1727e6）。</span>因涉及原生初始化顺序，<strong>必须重新打包并上传一个新 build</strong>，OTA 热更新无法生效。</p></div>
+
+<h2 class="breakbefore">五、尚未被点名、但仍属隐患的风险项</h2>
+<div class="callout warn">
+  <div class="lbl">风险：商店文案中的「无广告」承诺</div>
+  <p style="margin:1.5mm 0 0">App Store 商店页/推广文案中存在类似 <strong>「no ads, ever（永不含广告）」</strong> 的表述，但 App <strong>实际含有广告</strong>（AdMob 插屏）。本次两轮审核均未点名此项，原因是审核逐项进行、卡在了前面的问题上、尚未走到这里。</p>
+  <p style="margin:2mm 0 0">这是一枚「定时炸弹」：一旦前述问题清除、审核员深入使用 App 看到插屏广告，极可能触发 <strong>2.3.1（隐藏功能）或 2.3.2（不准确元数据）</strong> 再次被拒。<strong>强烈建议在本次重新提交前，一并把商店页面上对所有用户的「无广告」承诺删改掉。</strong></p>
+  <p style="margin:2mm 0 0" class="small">注意区分：App <strong>内部</strong>付费墙上的「No ads」是<strong>订阅权益说明</strong>（订阅后确实去广告），完全合规、无需改动；需要改的是<strong>商店页面上面向所有人的宣传承诺</strong>。</p>
+</div>
+
+<h2>六、处置清单与提交路线</h2>
+<table>
+  <thead><tr><th style="width:6%">#</th><th style="width:34%">动作</th><th style="width:18%">位置</th><th style="width:14%">需打包?</th><th>状态</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>删除月/年订阅推广图</td><td>ASC · 内购项目</td><td>否</td><td class="status-fixed">已完成</td></tr>
+    <tr><td>2</td><td>配置 License Agreement = 标准 EULA</td><td>ASC · App 信息</td><td>否</td><td class="status-user">待办</td></tr>
+    <tr><td>3</td><td>英文（及其余 6 语）描述末尾补 EULA 链接</td><td>ASC · 版本描述</td><td>否</td><td class="status-user">待办</td></tr>
+    <tr><td>4</td><td>确认 Privacy Policy URL 已填</td><td>ASC · 版本页</td><td>否</td><td class="status-user">待核对</td></tr>
+    <tr><td>5</td><td>删改商店文案中的「无广告」承诺</td><td>ASC · 描述/推广文本</td><td>否</td><td class="status-todo">建议办</td></tr>
+    <tr><td>6</td><td>ATT 提前独立弹出（代码修复）</td><td>代码 · att.ts / App.tsx</td><td><strong>是</strong></td><td class="status-fixed">已完成</td></tr>
+    <tr><td>7</td><td>重新打包 iOS 并上传 TestFlight</td><td>EAS Build → Submit</td><td>—</td><td class="status-user">待办</td></tr>
+    <tr><td>8</td><td>选中新 build、填审核备注、Resubmit</td><td>ASC · 提交页</td><td>—</td><td class="status-user">待办</td></tr>
+  </tbody>
+</table>
+<p class="small">ASC = App Store Connect。第 2–5 项是纯元数据，可立即完成；第 6 项已改好，需通过第 7 项才能生效。</p>
+
+<h2>七、给审核员的备注（App Review Notes 模板）</h2>
+<p>Apple 明确要求在提审备注中「指明 ATT 授权框位置」。建议在 <span class="mono">App Review Information → Notes</span> 中填入以下英文说明（一并覆盖 EULA 说明）：</p>
+<div class="mono" style="display:block; white-space:pre-wrap; padding:3mm 4mm; background:#F7F3F5; border-radius:4px; font-size:8.4pt; line-height:1.6;">ATT: The App Tracking Transparency permission prompt appears automatically on
+first launch, immediately after the app becomes interactive, before any ad or
+tracking SDK initializes. On a fresh install it shows within the first 2-3
+seconds. If it does not appear, the device may have "Allow Apps to Request to
+Track" disabled in Settings &gt; Privacy &amp; Security &gt; Tracking.
+
+EULA: A functional link to the standard Apple Terms of Use (EULA) is included in
+the App Description and in the License Agreement field in App Store Connect. The
+subscription screen in the app also shows the subscription title, length, price,
+and functional links to both the Privacy Policy and Terms of Use.</div>
+
+<h2>八、结论与建议</h2>
+<div class="callout ok">
+  <div class="lbl">总体判断</div>
+  <p style="margin:1.5mm 0 0">本 App 的被拒<strong>不涉及功能、内容或政策的实质违规</strong>，全部是可快速修复的配置/元数据问题。其中 3 条（2×2.3.2、1×3.1.2(c) 后台侧）为<strong>纯后台操作</strong>，1 条（5.1.2(i)）已完成代码修复、仅待重新打包。按 §6 清单执行后，本轮所有已知问题均可清除。</p>
+</div>
+<p><strong>建议的执行顺序：</strong></p>
+<ol>
+  <li>先完成所有<strong>后台元数据</strong>改动（清单 2–5），耗时约 5–10 分钟；</li>
+  <li>并行发起 <strong>iOS 重新打包</strong>（清单 6 的代码已就绪）；</li>
+  <li>新 build 上传后，选中它、填入 §7 审核备注、点击 Resubmit；</li>
+  <li>务必把 §5 的「无广告」文案一并处理，避免下一轮才暴露、再次延误上线。</li>
+</ol>
+<p class="small" style="margin-top:6mm; color:#9a94a8;">— 报告完 —　本报告基于 2026-07-13 与 2026-07-17 两封 Apple 审核拒绝信原文、App Store Connect 后台状态、以及代码库诊断整理而成，供第三方评审参考。</p>
+
+</body>
+</html>

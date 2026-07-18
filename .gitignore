@@ -63,3 +63,6 @@ _cdn_ready/
 
 # Google Play service-account key for `eas submit` — secret, never commit
 play-service-account.json
+
+# Play policy audit skill scratch dir
+.scratch/

@@ -27,7 +27,6 @@ import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useNotes } from '../state/NotesContext';
 import { useNotifications } from '../state/NotificationsContext';
 import { useActivity } from '../state/ActivityContext';
-import { useRatePrompt } from '../state/RatePromptContext';
 import { useDailyVerses } from '../state/DailyVersesContext';
 import { useTranslation } from '../state/TranslationsContext';
 import { useT } from '../i18n/useT';
@@ -35,7 +34,6 @@ import { useOnboarding } from '../state/OnboardingContext';
 import { localizeReference } from '../services/parseReference';
 import { dailyLabels } from '../constants/dailyVersesLabels';
 import WeeklyProgressView from '../components/WeeklyProgressView';
-import RatePromptSheet from '../components/RatePromptSheet';
 import ShareVerseSheet from '../components/ShareVerseSheet';
 import VerseNoteSheet from '../components/VerseNoteSheet';
 import { useSavedVerses } from '../state/SavedVersesContext';
@@ -288,7 +286,6 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const { markDone, mDone, eDone, everPrayed } = usePrayer();
   const { addNote } = useNotes();
   const { markToday } = useActivity();
-  const ratePrompt = useRatePrompt();
   const { notifRationaleShown, markNotifRationaleShown } = useOnboarding();
   const { enableReminderAt, permissionGranted } = useNotifications();
   const { kind } = route.params;
@@ -426,7 +423,6 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const [showSheet, setShowSheet] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showNoteSheet, setShowNoteSheet] = useState(false);
-  const [showRatePrompt, setShowRatePrompt] = useState(false);
   const [noteText, setNoteText] = useState('');
   // Keyboard height for the reflection sheet — drives a deterministic lift so
   // the Save button always clears the keyboard on EVERY device. The old
@@ -912,16 +908,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
 
   const closeFlow = () => navigation.goBack();
 
-  // End-of-flow gate: show the rate prompt if the cadence rules say we
-  // should, otherwise dismiss the prayer flow.
-  const finishFlow = () => {
-    if (ratePrompt.shouldAsk()) {
-      ratePrompt.markShown();
-      setShowRatePrompt(true);
-    } else {
-      navigation.goBack();
-    }
-  };
+  // End of the prayer flow → return to the home screen. The rate prompt is no
+  // longer shown here (it used to bleed the praying-hands scene behind it);
+  // RatePromptHost now asks on the home screen instead.
+  const finishFlow = () => navigation.goBack();
 
   const handleWeeklyOpenReminder = () => {
     // Keep the weekly/sapling celebration visible — the habit sheet overlays it.
@@ -963,11 +953,6 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     // land back there, then leaves via that screen's own Back / Continue.
     setShowSheet(false);
     setShowTimePicker(false);
-  };
-
-  const handleRatePromptClose = () => {
-    setShowRatePrompt(false);
-    setTimeout(() => navigation.goBack(), 200);
   };
 
   const closeNoteSheet = () => {
@@ -1413,8 +1398,6 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
           />
         </View>
       )}
-
-      {showRatePrompt && <RatePromptSheet onClose={handleRatePromptClose} />}
 
       {/* Share-verse sheet — opened from the action row under the verse on
           the first FlowPage. Receives the current prayer-bg image as the

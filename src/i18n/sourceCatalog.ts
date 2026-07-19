@@ -1070,10 +1070,10 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'profile.shareApp.message':      { en: 'Her Bible is your daily companion for staying close to God. Find rest for an anxious heart, comfort when you feel alone, and quiet strength in His Word — with daily verses, guided morning and evening prayers, and reading plans that meet you right where you are. Download Her Bible free on Google Play:\n\n{url}', context: 'Body of the system share-app message. Warm, invitational (~55 words, under 60). Must start with the brand name "Her Bible", speak to closeness with God / rest / comfort / companionship, and tell the recipient to download on Google Play. {url} is the Play Store URL on its own line so chat apps render a rich preview card.' },
 
   // ─── Rate prompt sheet ───────────────────────────────────────────────────
-  'rate.title':                    { en: 'Hello, are you enjoying Her Bible?', context: 'Rate-app prompt title.' },
-  'rate.body':                     { en: 'Your honest feedback helps us improve the experience for women everywhere.', context: 'Rate prompt body.' },
-  'rate.no':                       { en: 'No',             context: 'Decline button on rate prompt.' },
-  'rate.yes':                      { en: 'Yes I like',     context: 'Accept button — triggers store review API.' },
+  'rate.title':                    { en: 'Are you satisfied with Her Bible?', context: 'Rate-app prompt title.' },
+  'rate.body':                     { en: 'Your feedback is valuable to us!', context: 'Rate prompt body.' },
+  'rate.no':                       { en: 'Not really',     context: 'Decline button on rate prompt.' },
+  'rate.yes':                      { en: 'Yes',            context: 'Accept button — triggers store review API.' },
 
   // ─── Sign-in sheet — additional ──────────────────────────────────────────
   'signIn.desc':                   { en: 'Sync your highlights, notes, saved verses, and reading streak across devices.', context: 'Description under sign-in sheet title.' },

@@ -38,6 +38,7 @@ import CommentsSheet from '../components/CommentsSheet';
 import { dailyCount, type VerseSlot } from '../state/verseCommentsFeed';
 import { hydrateCommentLikes } from '../state/verseCommentLikes';
 import MyReadingPlansCard from '../components/MyReadingPlansCard';
+import RatePromptHost from '../components/RatePromptHost';
 import { buildReadingPlansCard } from '../services/planRecommendations';
 import { useOnboarding } from '../state/OnboardingContext';
 import TabSection from '../components/shared/TabSection';
@@ -1323,6 +1324,11 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           </Animated.View>
         </View>
       )}
+
+      {/* Asks "Are you satisfied with Her Bible?" when the user is back on the
+          home screen (moved off the prayer-end scene). Self-gates via cadence +
+          the nudge coordinator. */}
+      <RatePromptHost />
     </View>
   );
 }

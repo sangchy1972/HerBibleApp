@@ -149,7 +149,10 @@ const BIBLE_OPTS = [
   { k: 'regular',  sub: true },
 ] as const;
 
-const TOPIC_OPTS = ['anxiety', 'hope', 'gratitude', 'family', 'strength', 'faith', 'sleep'] as const;
+// Prayer-topic chips (multi-select). Each key MUST have a matching entry in
+// TOPIC_TAGS (services/planRecommendations.ts) or the selection is captured but
+// never influences the recommended plans. Order here is purely visual.
+const TOPIC_OPTS = ['anxiety', 'hope', 'gratitude', 'family', 'marriage', 'belonging', 'strength', 'healing', 'identity', 'purpose', 'faith', 'sleep'] as const;
 
 const TIME_OPTS = [5, 10, 15, 30] as const;
 
@@ -706,7 +709,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
             <View>
               {/* Brand row — icon logo + pink wordmark (reference layout). */}
               <View style={styles.loginBrandRow}>
-                <Logo size={30} />
+                <Logo size={34.5} />
                 <Text style={styles.loginBrandName}>HER BIBLE</Text>
               </View>
               <Text style={styles.loginTitle}>{t('onboarding.login.title')}</Text>
@@ -937,7 +940,7 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
   chip: {
     backgroundColor: '#FFFFFF', borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.12)',
-    borderRadius: 22, paddingVertical: 10, paddingHorizontal: 16,
+    borderRadius: 25, paddingVertical: 14.3, paddingHorizontal: 16,   // pV 10 → 14.3: chip height ~41.4 → 50px (+20 %, round up); radius 22 → 25 keeps the full pill at the taller height. Type/leading/centering unchanged (per user)
   },
   chipSel: { backgroundColor: ROSE, borderColor: ROSE },
   chipText: { fontSize: 17, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4 },   // 15.5 → 17 (2nd +10 %)

@@ -24,13 +24,23 @@ export interface PlanRecordLike {   // structural subset of PlanCompletionContex
 
 // Onboarding `topics` → tag sets. The strongest explicit signal: the user
 // literally told us what she cares about.
+// IMPORTANT: every key here MUST also exist in TOPIC_OPTS (OnboardingFlow.tsx)
+// and vice-versa — a chip with no entry here is captured but scores 0 (inert).
+// Values are REAL `secondary` tags from featuredPlansSummary.ts; adding a value
+// that isn't a real tag makes it a no-op. All 12 topics below route to plans
+// that actually exist in the catalog (none are orphaned).
 const TOPIC_TAGS: Record<string, string[]> = {
   anxiety:   ['anxiety', 'anxiety-fear', 'fear'],
   hope:      ['grief-disappointment', 'long-wait', 'threshold-seasons'],
   gratitude: ['joy', 'joy-gratitude'],
-  family:    ['motherhood', 'as-a-mother', 'mother', 'marriage-wifehood', 'wife', 'newlywed-season', 'adult-daughter', 'transition', 'empty-nest'],
+  family:    ['motherhood', 'as-a-mother', 'mother', 'adult-daughter', 'transition', 'empty-nest'],   // marriage split out into its own topic
+  marriage:  ['marriage-wifehood', 'wife', 'newlywed-season', 'love-dating', 'in-love'],
+  belonging: ['loneliness', 'loneliness-emptiness', 'single-whole', 'singleness', 'sisterhood-friendship', 'sisterhood'],
   strength:  ['weariness', 'weariness-burnout', 'character', 'as-a-leader'],
-  faith:     ['draw-near', 'gods-presence', 'her-story', 'living-faith', 'identity'],
+  healing:   ['anger-bitterness', 'forgiveness', 'grief', 'grief-disappointment'],
+  identity:  ['identity', 'self-image', 'daughter-of-god', 'daughter', 'comparison', 'shame'],
+  purpose:   ['calling', 'work-calling', 'mission', 'workplace'],
+  faith:     ['draw-near', 'gods-presence', 'her-story', 'living-faith'],   // identity split out into its own topic
   sleep:     ['anxiety-fear', 'weariness-burnout', 'soul-care'],
 };
 

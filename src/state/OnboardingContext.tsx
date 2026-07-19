@@ -12,7 +12,7 @@ export interface OnboardingAnswers {
   goal?: string;               // 'closer' | 'peace' | 'habit' | 'understand' | 'hope'
   age?: string;                // '18-24' | '25-34' | '35-49' | '50-64' | '65+'
   bibleLevel?: string;         // 'new' | 'basics' | 'familiar' | 'regular'
-  topics?: string[];           // 'anxiety' | 'hope' | 'gratitude' | 'family' | 'strength' | 'faith' | 'sleep'
+  topics?: string[];           // subset of TOPIC_OPTS: anxiety | hope | gratitude | family | marriage | belonging | strength | healing | identity | purpose | faith | sleep  (each must map in TOPIC_TAGS → planRecommendations.ts)
   timeCommitment?: number;     // 5 | 10 | 15 | 30  (minutes/day)
 }
 

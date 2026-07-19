@@ -6,11 +6,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
+import LottieView from 'lottie-react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useAudioPlayer } from 'expo-audio';
 import Animated, { FadeIn, FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ROSE, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
+import { ROSE, LAV, TXT, TXTSUB, P, FONTS, BTN_RADIUS } from '../constants/theme';
 import { useGospelsPsalms, type Slot } from '../state/GospelsPsalmsContext';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useTranslation } from '../state/TranslationsContext';
@@ -320,6 +321,10 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
 // advance independently now, so cross-slot pills would mislead): confirms the
 // reading, then one message — round complete / this slot's 89 all done /
 // "day N+1 continues tomorrow" — so the pacing never looks "stuck".
+// Confetti celebration that bursts from BEHIND the checkmark on the completion
+// card. Same asset as PlanDayDone's plan-complete animation; plays ONCE.
+const LOTTIE_CONGRATS = require('../../assets/lottie/plan-congrats.json');
+
 function GPDoneCard({
   slot, day, total, slotComplete, planComplete, nextRound, accent, onContinue,
 }: {
@@ -345,9 +350,15 @@ function GPDoneCard({
   return (
     <View style={styles.doneOverlay}>
       <LinearGradient colors={gradient} locations={[0, 0.55, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFillObject} />
-      <Animated.View style={[styles.doneCheck, { backgroundColor: accent }, popStyle]}>
-        <Feather name="check" size={54} color="#FFFFFF" />
-      </Animated.View>
+      <View style={styles.checkWrap}>
+        {/* Confetti sits BEHIND the checkmark and plays once (per user). */}
+        <LottieView source={LOTTIE_CONGRATS} autoPlay loop={false} style={styles.congratsLottie} />
+        <Animated.View style={[styles.doneCheck, { backgroundColor: accent }, popStyle]}>
+          {/* -15 % glyph (54 → 46); white tick thickened ~50 % via a same-colour
+              text-shadow (Feather is an icon font, so no true stroke width). */}
+          <Feather name="check" size={46} color="#FFFFFF" style={styles.checkGlyph} />
+        </Animated.View>
+      </View>
 
       <Animated.Text entering={FadeInDown.duration(360).delay(120)} style={styles.doneTitle}>
         {slot === 'morning' ? t('gpDone.morningTitle') : t('gpDone.eveningTitle')}
@@ -437,12 +448,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 30,
   },
+  // Fixed box that holds the confetti (behind) + the checkmark (on top),
+  // centered on the same point. Owns the gap to the title below.
+  checkWrap: { width: 260, height: 180, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  congratsLottie: { ...StyleSheet.absoluteFillObject },
   doneCheck: {
-    width: 108, height: 108, borderRadius: 54,
+    width: 92, height: 92, borderRadius: 46,                                       // 108 → 92 (-15 % per user)
     alignItems: 'center', justifyContent: 'center',
-    marginBottom: 26,
     shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 18, elevation: 8,
   },
+  checkGlyph: { textShadowColor: '#FFFFFF', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 1.1 },   // ~+50 % bolder tick
   doneTitle: {
     fontSize: 26, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT,
     textAlign: 'center', marginBottom: 8,
@@ -452,13 +467,15 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase', marginBottom: 22,
   },
   doneMsg: {
-    fontSize: 15.5, fontFamily: FONTS.lato, letterSpacing: 0.4, color: 'rgba(30,27,46,0.72)',
-    textAlign: 'center', lineHeight: 23, marginBottom: 30, paddingHorizontal: 10,
+    fontSize: 17.05, fontFamily: FONTS.lato, letterSpacing: 0.4, color: 'rgba(30,27,46,0.72)',   // 15.5 → 17.05 (+10 % per user)
+    textAlign: 'center', lineHeight: 25.3, marginBottom: 60, paddingHorizontal: 10,               // marginBottom 30 → 60 (CTA gap +30 px per user)
   },
   doneBtnWrap: { alignSelf: 'stretch', paddingHorizontal: 8 },
+  // Matches the app's canonical CTA (ROSE, BTN_RADIUS, sans-serif bold) — the
+  // radius was a full 26 pill before; now identical to buttons elsewhere.
   doneBtn: {
-    height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.16, shadowRadius: 10, elevation: 4,
+    height: 52, borderRadius: BTN_RADIUS, alignItems: 'center', justifyContent: 'center',
+    shadowColor: ROSE, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 14, elevation: 4,
   },
-  doneBtnText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', letterSpacing: 0.3, fontFamily: FONTS.loraBold },
+  doneBtnText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', letterSpacing: 0.3, fontFamily: FONTS.sansBold },
 });

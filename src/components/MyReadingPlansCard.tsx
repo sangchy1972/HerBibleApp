@@ -16,8 +16,8 @@ import type { ReadingPlansCardModel } from '../services/planRecommendations';
 // R2 ORIGINALS (noTransform — already cached from the Plan screens, so no
 // billable Cloudflare variant) and crop on-device via resizeMode="cover".
 
-const COVER_W = 63;
-const COVER_H = 90;    // ~0.70 ratio — measured off the reference card (a strict 2:3 read too tall to the user)
+const COVER_W = 70;
+const COVER_H = 90;    // 70x90 (per user)
 
 // Circular progress ring, PlanScreen percent math (completed/total).
 function ProgressRing({ percent }: { percent: number }) {

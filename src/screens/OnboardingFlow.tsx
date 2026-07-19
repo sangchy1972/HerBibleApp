@@ -912,7 +912,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     backgroundColor: '#FFFFFF', borderRadius: 20, borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.08)',
-    paddingVertical: 16.8, paddingHorizontal: 14, marginBottom: 9,   // 14 → 16.8 (row height +15 % per user)
+    paddingVertical: 21.5, paddingHorizontal: 14, marginBottom: 9,   // 16.8 → 21.5: box height ~59.6→69px (+15 %, round up); type/leading/centering unchanged (per user)
   },
   rowSel: { backgroundColor: '#FBEAF0', borderWidth: 1.5, borderColor: ROSE },
   rowText: { flex: 1, fontSize: 18, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4 },   // 16.5 → 18 (2nd +10 % round per user)
@@ -927,7 +927,7 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     backgroundColor: '#FFFFFF', borderRadius: 20, borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.08)',
-    paddingVertical: 13, paddingHorizontal: 14, marginBottom: 9,
+    paddingVertical: 18.4, paddingHorizontal: 14, marginBottom: 9,   // 13 → 18.4: box height ~69.2→80px (+15 %, round up); title/sub type/leading/centering unchanged (per user)
   },
   cardTitle: { fontSize: 18, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.5 },   // 16.5 → 18 (2nd +10 %)
   cardSub: { fontSize: 15.5, color: 'rgba(30,27,46,0.42)', fontFamily: FONTS.lato, letterSpacing: 0.4, marginTop: 2 },   // 14 → 15.5 (2nd +10 %)

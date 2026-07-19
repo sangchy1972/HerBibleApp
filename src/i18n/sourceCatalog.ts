@@ -319,7 +319,10 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'rhythm.start':                  { en: 'Start', context: 'Small pill button at the right of the rhythm bar — begins the suggested step. Keep ≤7 letters; use a short synonym like "Go" if the natural translation is longer.' },
   'rhythm.deadZone':               { en: 'Rest well — prayers return at 6', context: 'Rhythm bar line between midnight and 06:00 when only locked prayers remain.' },
   'rhythm.waitEvening':            { en: 'All set for now — evening opens at 6', context: 'Rhythm bar line when everything available is done before the 18:00 evening window.' },
-  'rhythm.hint.evening':           { en: 'Evening prayer opens at 6:00 pm — see you then.', context: 'Toast when tapping the bar while waiting for the evening window.' },
+  'rhythm.hint.evening':           { en: 'Evening prayer opens at 6:00 pm — see you then.', context: 'Toast when tapping the bar while waiting for the evening window. (Superseded by the rhythm.celebrate dialog; kept as fallback.)' },
+  'rhythm.celebrate.title':        { en: 'Congratulations!', context: 'Celebration dialog title — tapping the rhythm bar when every available task is done and evening prayer has not opened yet (before 6 pm).' },
+  'rhythm.celebrate.body':         { en: "You've finished every task for now — prayers and readings all done. Come back at 6:00 pm for your Night Prayer.", context: 'Celebration dialog body. Congratulates on completing all current tasks and invites her back at 6 pm (18:00) for the Night Prayer. Use the local 18:00 time convention.' },
+  'rhythm.celebrate.cta':          { en: 'See you at 6 pm', context: 'Celebration dialog button — closes the dialog. Warm goodbye phrasing; keep short. Use the local 18:00 time convention.' },
   'rhythm.hint.deadZone':          { en: 'Morning prayer opens at 6:00 am. Sleep peacefully.', context: 'Toast when tapping the bar in the 00:00-06:00 dead zone.' },
   'rhythm.hint.allDone':           { en: 'Every step is done. Rest in today\'s peace.', context: 'Toast when tapping the bar after finishing all five steps.' },
   // Complete-streak evening notification (3 rotating variants)

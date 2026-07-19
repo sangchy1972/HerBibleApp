@@ -5,8 +5,9 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withDelay, withSequence,
   cancelAnimation, Easing, runOnJS, type SharedValue,
 } from 'react-native-reanimated';
+import Feather from '@expo/vector-icons/Feather';
 import { useIsFocused } from '@react-navigation/native';
-import { ROSE, BTN_RADIUS, TXT, FONTS } from '../../constants/theme';
+import { ROSE, BTN_RADIUS, TXT, TXTSUB, FONTS } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
 import { RHYTHM_STEPS, isRhythmStepDone, type RhythmDotState } from '../../state/dailyRhythm';
 
@@ -94,7 +95,7 @@ function Sparkle({ size }: { size: number }) {
 }
 
 export default function DailyRhythmBar({
-  todayYmd, dots, doneCount, allDone, text, hintText, onPress,
+  todayYmd, dots, doneCount, allDone, text, hintText, celebrate, onPress,
 }: {
   todayYmd: string;
   dots: RhythmDotState[];              // length 5, canonical order
@@ -102,6 +103,7 @@ export default function DailyRhythmBar({
   allDone: boolean;
   text: string;
   hintText: string | null;             // rest states: tap pops this instead of navigating
+  celebrate?: { title: string; body: string; cta: string } | null;   // waiting-for-evening: tap opens a congrats dialog instead of the toast
   onPress: (() => void) | null;        // step states: navigate
 }) {
   const t = useT();
@@ -291,8 +293,24 @@ export default function DailyRhythmBar({
   const [hint, setHint] = useState<string | null>(null);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (hintTimer.current) clearTimeout(hintTimer.current); }, []);
+
+  // ── Waiting-for-evening celebration dialog (replaces the toast, per user) ──
+  // Shared-value pop-in (never layout `entering` — project memory).
+  const [celebOpen, setCelebOpen] = useState(false);
+  const celebScale = useSharedValue(0.85);
+  useEffect(() => {
+    if (!celebOpen) return;
+    celebScale.value = 0.85;
+    celebScale.value = withSequence(
+      withTiming(1.02, { duration: 200, easing: Easing.out(Easing.cubic) }),
+      withTiming(1, { duration: 120, easing: Easing.out(Easing.quad) }),
+    );
+  }, [celebOpen, celebScale]);
+  const celebStyle = useAnimatedStyle(() => ({ transform: [{ scale: celebScale.value }] }));
+
   const handlePress = () => {
     if (onPress) { onPress(); return; }
+    if (celebrate) { setCelebOpen(true); return; }
     if (!hintText) return;
     if (hintTimer.current) clearTimeout(hintTimer.current);
     setHint(hintText);
@@ -436,6 +454,31 @@ export default function DailyRhythmBar({
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* "All done for now — see you at 6 pm" congrats dialog. Floating-shadow
+          popup card (allowed for dialogs, unlike resident cards). */}
+      {celebrate && (
+        <Modal
+          visible={celebOpen}
+          transparent
+          animationType="fade"
+          statusBarTranslucent
+          onRequestClose={() => setCelebOpen(false)}
+        >
+          <TouchableOpacity style={styles.celebOverlay} activeOpacity={1} onPress={() => setCelebOpen(false)}>
+            <Animated.View style={[styles.celebCard, celebStyle]} onStartShouldSetResponder={() => true}>
+              <View style={styles.celebIcon}>
+                <Feather name="moon" size={22} color={ROSE} />
+              </View>
+              <Text style={styles.celebTitle}>{celebrate.title}</Text>
+              <Text style={styles.celebBody}>{celebrate.body}</Text>
+              <TouchableOpacity onPress={() => setCelebOpen(false)} activeOpacity={0.9} style={styles.celebBtn}>
+                <Text style={styles.celebBtnText}>{celebrate.cta}</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </TouchableOpacity>
+        </Modal>
+      )}
     </View>
   );
 }
@@ -609,4 +652,50 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   hintText: { color: TXT, fontSize: 15, lineHeight: 22, textAlign: 'center' },
+  // Waiting-for-evening congrats dialog.
+  celebOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(20,16,28,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  celebCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 26,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  celebIcon: {
+    width: 48, height: 48, borderRadius: 24,
+    backgroundColor: '#FBE3EE',
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 14,
+  },
+  // Lora 600 (700 drops Lora on Android — project memory), rose like the badge
+  // popup's CONGRATS.
+  celebTitle: {
+    fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 22,
+    color: ROSE, textAlign: 'center', marginBottom: 8, letterSpacing: 0.5,
+  },
+  celebBody: {
+    fontFamily: FONTS.lato, letterSpacing: 0.4, fontSize: 15, lineHeight: 22,
+    color: TXTSUB, textAlign: 'center', marginBottom: 20, paddingHorizontal: 4,
+  },
+  celebBtn: {
+    alignSelf: 'stretch',
+    backgroundColor: ROSE,
+    borderRadius: BTN_RADIUS,
+    paddingVertical: 13,
+    alignItems: 'center',
+  },
+  celebBtnText: { fontFamily: FONTS.latoBold, fontWeight: '700', fontSize: 16, color: '#FFFFFF', letterSpacing: 0.3 },
 });

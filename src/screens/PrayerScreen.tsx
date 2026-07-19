@@ -669,6 +669,11 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
     if (s.kind === 'deadZone') return { icon: 'moon' as const, text: t('rhythm.deadZone'), hint: t('rhythm.hint.deadZone'), onPress: null };
     return { icon: 'clock' as const, text: t('rhythm.waitEvening'), hint: t('rhythm.hint.evening'), onPress: null };
   }, [rhythm, everPrayed, now, t, navigation, getSummary]);
+  // Waiting for the evening window → tapping the bar celebrates ("all tasks
+  // done, see you at 6 pm") in a proper dialog instead of the toast hint.
+  const rhythmCelebrate = rhythm.state.kind === 'waitEvening'
+    ? { title: t('rhythm.celebrate.title'), body: t('rhythm.celebrate.body'), cta: t('rhythm.celebrate.cta') }
+    : null;
 
   // ── Slot rules ───────────────────────────────────────────────────────────
   // Morning window opens at 06:00, closes (effectively) when evening opens.
@@ -1069,6 +1074,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
             allDone={rhythm.state.kind === 'allDone'}
             text={rhythmSpec.text}
             hintText={rhythmSpec.hint}
+            celebrate={rhythmCelebrate}
             onPress={rhythmSpec.onPress}
           />
         </View>

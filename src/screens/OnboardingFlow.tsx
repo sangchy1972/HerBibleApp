@@ -454,9 +454,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
           {stepName === 'language' && (
             <>
               <View style={styles.center}>
-                <LinearGradient colors={['#F9D9E6', '#F4A6C0', ROSE]} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={styles.welcomeHero}>
-                  <Ionicons name="heart" size={40} color="#FFFFFF" style={{ opacity: 0.92 }} />
-                </LinearGradient>
+                <Image source={APP_ICON} style={styles.welcomeHero} resizeMode="cover" />
                 {/* Brand tagline — fades in while rising from just below its
                     resting spot over 0.7s (per user; NOT an off-screen slide). */}
                 <Animated.Text entering={FadeInUp.duration(700)} style={styles.tagline}>
@@ -468,13 +466,15 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
                   detected (or previously persisted) language is pre-selected;
                   tapping another row switches the WHOLE screen live via
                   setLang, which is itself the confirmation the choice took. */}
-              {UI_LANGUAGES.map((l) => {
+              {UI_LANGUAGES.map((l, i) => {
                 const sel = lang === l.code;
                 return (
-                  <TouchableOpacity key={l.code} activeOpacity={0.85} onPress={() => setLang(l.code)} style={[styles.row, sel && styles.rowSel]}>
-                    <Text style={[styles.rowText, { flex: 1 }]}>{l.nativeName}</Text>
-                    {sel && <Ionicons name="checkmark" size={18} color={accent} />}
-                  </TouchableOpacity>
+                  <Animated.View key={l.code} entering={FadeInRight.duration(500).delay(i * 70)}>
+                    <TouchableOpacity activeOpacity={0.85} onPress={() => setLang(l.code)} style={[styles.row, sel && styles.rowSel]}>
+                      <Text style={[styles.rowText, { flex: 1 }]}>{l.nativeName}</Text>
+                      {sel && <Ionicons name="checkmark" size={20.7} color={accent} style={[styles.checkBold, { textShadowColor: accent }]} />}
+                    </TouchableOpacity>
+                  </Animated.View>
                 );
               })}
             </>
@@ -915,6 +915,9 @@ const styles = StyleSheet.create({
   // same-colour shadow thickens the glyph instead — the "+20 % bolder" the user
   // asked for. (True stroke control would mean swapping to SVG icons.)
   rowIconBold: { textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 0.7 },
+  // Selected-language check — 2× the rowIconBold shadow so the glyph reads
+  // clearly heavier (per user: "加粗 2x + 放大 15%"; size bumped 18 → 20.7).
+  checkBold: { textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 1.4 },
   // Two-line card (bible level / time commitment).
   card: {
     flexDirection: 'row', alignItems: 'center', gap: 12,

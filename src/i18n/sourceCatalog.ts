@@ -339,7 +339,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'onboarding.welcome.sub': { en: 'A gentle space for your walk with God. First, choose your language.', context: 'Sub-line on the welcome/language step. Rendered in the DETECTED system language before the user picks.' },
   'onboarding.intro.title': { en: "Let's make Her Bible yours", context: 'Transition interstitial after language, before the questionnaire.' },
   'onboarding.intro.sub': { en: 'A few quick questions help us guide your reading and prayer. It takes less than a minute.', context: 'Transition interstitial body — MUST stay to two short sentences.' },
-  'onboarding.welcome.tagline': { en: "Inspiring through God's Word", context: 'Big brand tagline under the welcome icon; animates in. Keep short and uplifting.' },
+  'onboarding.welcome.tagline': { en: "Inspiring with God's Word", context: 'Big brand tagline under the welcome icon; animates in. Keep short and uplifting.' },
   'obPaywall.title': { en: 'Her Bible Premium', context: 'Onboarding paywall title. Brand — keep "Her Bible".' },
   'obPaywall.b1': { en: '100% Ad-Free', context: 'Paywall benefit — a few words only.' },
   'obPaywall.b2': { en: 'All Reading Plans Unlocked', context: 'Paywall benefit — a few words only.' },

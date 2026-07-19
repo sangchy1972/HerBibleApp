@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withDelay, runOnJS, Easing, interpolateColor,
 } from 'react-native-reanimated';
-import { FONTS, TXT, TXTSUB } from '../constants/theme';
+import { FONTS, TXT, TXTSUB, ROSE } from '../constants/theme';
 import { useUILanguage } from '../state/UILanguageContext';
 import { useReminderInterstitial } from '../state/ReminderInterstitialContext';
 import { useOnboarding } from '../state/OnboardingContext';
@@ -92,8 +92,8 @@ const RISE_UP_PX = 14;          // date/verse drift up as they fade in
 // Stage-1 floor: long enough that the full brand choreography always plays out
 // (otherwise a fast-booting device would jump to stage 2 before the tagline
 // ever appears).
-const BRAND_MIN_MS = BRAND_ANIM_END_MS + 200;   // 2300
-const CONTENT_HOLD_MS = 4000;  // stage-2 dwell. 3000 → 4000 (+1s exactly, per user)
+const BRAND_MIN_MS = 2000;      // brand-card floor (per user 2026-07-18: → 2s)
+const CONTENT_HOLD_MS = 3000;  // stage-2 dwell (per user 2026-07-18: 4000 → 3000)
 const MAX_VISIBLE_MS = 11000;  // hard safety cap — never hang the launch
 
 // English ordinal suffix ("July 17th"); other locales use their own date format.
@@ -129,6 +129,7 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
 
   const opacity = useSharedValue(1);          // whole-overlay fade at the very end
   const hidingRef = useRef(false);
+  const contentStartRef = useRef<number | null>(null);  // when stage 2 began
 
   // Stage-1 choreography. The icon starts EXACTLY where/how big the native
   // splash drew it (translateY 0, scale 1) so the hand-off is invisible, then
@@ -176,13 +177,39 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   const contextsReady = appReady && reminder.ready && onboarding.ready && dailyVerseReady;
   const contentReady = rot != null;
 
-  // Stage 1 → Stage 2. Stage-1 absorbs ALL variable waiting, so stage 2 can be
-  // a fixed-length showcase. Everything below fires off this one switch — the
-  // brand lifts, the photo arrives and starts its slow push-in, and the streak
-  // + verse fade up underneath.
+  // First-run progress bar. New users cold-start every time and can read the
+  // launch as "stuck"; a determinate 7px bar with a % reassures them we really
+  // are loading. Driven in JS (not Reanimated) so the % text is trivial. It
+  // eases toward 90 % on a timer so it always creeps forward, then snaps to
+  // 100 % the moment the app is genuinely ready. Shown on the brand card only,
+  // and only for brand-new users (returning users don't see a slow cold start).
+  const isNewUser = onboarding.ready && !onboarding.done;
+  const allReady = contentReady && contextsReady;
+  const [progress, setProgress] = useState(0);
   useEffect(() => {
-    if (phase !== 'brand' || !brandElapsed || !contentReady || !contextsReady) return;
+    if (!isNewUser) return;
+    const id = setInterval(() => {
+      setProgress(prev => {
+        const target = allReady ? 100 : 90;
+        if (prev >= target) return prev;
+        const next = prev + Math.max(0.7, (target - prev) * 0.12);
+        return Math.min(next, target);
+      });
+    }, 55);
+    return () => clearInterval(id);
+  }, [isNewUser, allReady]);
+
+  // Stage 1 → Stage 2. Entry is gated ONLY on the overlay's OWN content being
+  // ready (brand animation done + rotation resolved — both fast & local). It is
+  // deliberately NOT gated on `contextsReady`/`appReady`: on a cold start the
+  // full provider tree takes several seconds to mount, and gating stage-2 ENTRY
+  // on it made brand-new users sit on the pink brand card for the whole cold
+  // start. The app-ready wait now lives on the DISMISS side instead — the user
+  // watches the verse scene (not a static logo) while the app finishes loading.
+  useEffect(() => {
+    if (phase !== 'brand' || !brandElapsed || !contentReady) return;
     setPhase('content');
+    contentStartRef.current = Date.now();
     const soft = Easing.out(Easing.cubic);
     rise.value = withTiming(1, { duration: RISE_MS, easing: Easing.inOut(Easing.cubic) });
     stage2.value = withTiming(1, { duration: BG_FADE_MS, easing: soft });
@@ -193,7 +220,7 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
     taglineOpacity.value = withTiming(0, { duration: TAGLINE_OUT_MS, easing: Easing.in(Easing.quad) });
     dateOpacity.value = withDelay(DATE_DELAY_MS, withTiming(1, { duration: DATE_FADE_MS, easing: soft }));
     verseOpacity.value = withDelay(VERSE_DELAY_MS, withTiming(1, { duration: VERSE_FADE_MS, easing: soft }));
-  }, [phase, brandElapsed, contentReady, contextsReady,
+  }, [phase, brandElapsed, contentReady,
       rise, stage2, bgOpacity, bgScale, taglineOpacity, dateOpacity, verseOpacity]);
 
   // Single-shot fade-out → onHide. Guarded so the dismiss effect and the safety
@@ -201,17 +228,24 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   const fadeOut = useCallback(() => {
     if (hidingRef.current) return;
     hidingRef.current = true;
-    opacity.value = withTiming(0, { duration: 320, easing: Easing.in(Easing.quad) }, (fin) => {
+    opacity.value = withTiming(0, { duration: 700, easing: Easing.in(Easing.quad) }, (fin) => {
       if (fin) runOnJS(onHide)();
     });
   }, [opacity, onHide]);
 
-  // Stage 2 → app: exactly CONTENT_HOLD_MS, then leave.
+  // Stage 2 → app: play the verse for at least CONTENT_HOLD_MS, then leave — but
+  // never dismiss INTO a half-built app, so also wait for `contextsReady`. On a
+  // cold start the app usually isn't ready yet when the dwell ends; holding on
+  // the verse a beat longer is far nicer than the pink logo. The dwell is counted
+  // from when stage 2 actually began, so a slow-to-ready app adds no extra time
+  // beyond what it genuinely needs. MAX_VISIBLE_MS still hard-caps everything.
   useEffect(() => {
-    if (phase !== 'content') return;
-    const tm = setTimeout(fadeOut, CONTENT_HOLD_MS);
+    if (phase !== 'content' || !contextsReady) return;
+    const started = contentStartRef.current ?? Date.now();
+    const remaining = Math.max(0, CONTENT_HOLD_MS - (Date.now() - started));
+    const tm = setTimeout(fadeOut, remaining);
     return () => clearTimeout(tm);
-  }, [phase, fadeOut]);
+  }, [phase, contextsReady, fadeOut]);
 
   // Hard safety cap — force away even if something never signals ready.
   useEffect(() => { const cap = setTimeout(fadeOut, MAX_VISIBLE_MS); return () => clearTimeout(cap); }, [fadeOut]);
@@ -295,6 +329,18 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
         </View>
       </Animated.View>
 
+      {/* FIRST-RUN PROGRESS — brand card only, new users only. A thick, rounded
+          determinate bar + % so a cold-starting first-timer knows content is
+          loading, not stuck. */}
+      {phase === 'brand' && isNewUser && (
+        <View style={styles.progressWrap} pointerEvents="none">
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${progress}%` }]} />
+          </View>
+          <Text style={styles.progressPct}>{Math.round(progress)}%</Text>
+        </View>
+      )}
+
       {/* LOWER BLOCK — today's date, then the day's verse. Bottom-anchored so a
           long verse grows upward instead of colliding with the brand above. */}
       {onContent && (
@@ -376,4 +422,18 @@ const styles = StyleSheet.create({
   },
   source: { fontFamily: FONTS.merriweather, fontSize: 16.5, lineHeight: 25, textAlign: 'center', marginTop: 14 },
   shadow: { textShadowColor: 'rgba(0,0,0,0.45)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 },
+  // First-run progress — sits a little below the brand's resting centre.
+  progressWrap: {
+    position: 'absolute', left: 0, right: 0, top: Math.round(height * 0.60),
+    alignItems: 'center',
+  },
+  progressTrack: {
+    width: '56%', height: 7, borderRadius: 3.5,
+    backgroundColor: 'rgba(30,27,46,0.12)', overflow: 'hidden',
+  },
+  progressFill: { height: '100%', borderRadius: 3.5, backgroundColor: ROSE },
+  progressPct: {
+    marginTop: 10, fontFamily: FONTS.merriweatherBold, fontSize: 13,
+    fontWeight: '700', letterSpacing: 0.3, color: TXTSUB,
+  },
 });

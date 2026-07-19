@@ -13,20 +13,20 @@ import {
 // Per-section slide-up + fade for the bottom-tab screens. Each section calls
 // this with its own `delay` so the screen lifts into place in waves.
 //
-// PERF NOTES (audit — Jan 2026): the old behaviour ran the entrance on
-// EVERY focus event (including after popping back from a nested screen)
-// with 480 ms duration + delays up to 290 ms — total cascade ~770 ms.
-// Combined with the 320 ms stack transition, that's >1 s of "screen
-// still loading" perception on every tap. Fixed by:
-//   • Duration 480 → 220 ms (still reads as motion, no longer dominates).
-//   • Translate distance 24 → 18 px (proportional finish).
-//   • Animation runs ONCE per mount — subsequent focuses (returning from
-//     a nested screen) are no-ops, so the user lands on a fully-rendered
-//     screen instead of waiting for animations to play again.
-// The wrapper screens scale their `delay` props down 3× to match — see
-// PrayerScreen / PlanScreen edits.
-const ENTRANCE_DURATION_MS = 220;
-const TRANSLATE_FROM = 18;
+// TIMING (2026-07-19, per user): the entrance plays on EVERY focus — landing
+// on a tab (including programmatic jumps like the rhythm bar's "Discover a
+// reading plan" → Plans/Explore) always shows the sections arriving one by
+// one — and the whole cascade takes ~0.8 s. A Jan-2026 perf audit had cut
+// this to a once-per-mount 220 ms flash; the user explicitly wants the
+// ceremony back, uniformly on every screen.
+//
+// Call sites still pass the audit-era delays (scaled ÷3 back then) — they're
+// re-inflated by STAGGER_SCALE here so every screen slows down in lockstep
+// without touching each wrapper. (PrayerScreen's waves land 0–225 ms apart →
+// last section settles ≈ 725 ms; Plans ≈ 650 ms.)
+const ENTRANCE_DURATION_MS = 500;
+const STAGGER_SCALE = 3;
+const TRANSLATE_FROM = 22;
 // Extra slack after the timing nominally ends before we hand the view back to
 // plain RN — covers the delay + duration + a couple of frames of jitter.
 const SETTLE_SLACK_MS = 80;
@@ -37,9 +37,6 @@ const RESTING_STYLE = { opacity: 1 } as const;
 export function useTabFocusEntrance(delay = 0) {
   const translateY = useSharedValue(TRANSLATE_FROM);
   const opacity = useSharedValue(0);
-  // True until the FIRST focus has fired; subsequent focuses are no-ops so
-  // the user isn't waiting for animations to finish before they can tap.
-  const firstFocus = useRef(true);
   const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -90,18 +87,21 @@ export function useTabFocusEntrance(delay = 0) {
   }, [opacity, translateY]);
 
   useFocusEffect(useCallback(() => {
-    if (!firstFocus.current) return undefined;
-    firstFocus.current = false;
+    const d = delay * STAGGER_SCALE;
+    // Re-arm: hand the view back to Reanimated for this focus's play-through.
+    setSettled(false);
+    cancelAnimation(translateY);
+    cancelAnimation(opacity);
     translateY.value = TRANSLATE_FROM;
     opacity.value = 0;
     translateY.value = withDelay(
-      delay,
+      d,
       withTiming(0, { duration: ENTRANCE_DURATION_MS, easing: Easing.out(Easing.cubic) }),
     );
     // PRIMARY settle signal: the animation itself says when it's done, so we can
     // never detach mid-ramp.
     opacity.value = withDelay(
-      delay,
+      d,
       withTiming(1, { duration: ENTRANCE_DURATION_MS, easing: Easing.out(Easing.cubic) }, (finished) => {
         if (finished) runOnJS(settle)();
       }),
@@ -109,8 +109,11 @@ export function useTabFocusEntrance(delay = 0) {
     // Watchdog, in case that callback never lands (a stalled JS thread, dev fast
     // refresh resuming with frozen shared values). `settle` cancels first, so
     // firing early is harmless — it just ends the entrance sooner.
-    settleTimer.current = setTimeout(settle, delay + ENTRANCE_DURATION_MS + SETTLE_SLACK_MS + 500);
-    return undefined;
+    if (settleTimer.current) clearTimeout(settleTimer.current);
+    settleTimer.current = setTimeout(settle, d + ENTRANCE_DURATION_MS + SETTLE_SLACK_MS + 500);
+    // Blur mid-entrance → land on the resting values so the section can never
+    // stick semi-transparent while the tab is away.
+    return () => settle();
   }, [delay, translateY, opacity, settle]));
 
   useEffect(() => () => { if (settleTimer.current) clearTimeout(settleTimer.current); }, []);

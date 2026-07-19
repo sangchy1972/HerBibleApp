@@ -628,7 +628,10 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   // slug can't resolve to a summary — never a dead detail screen.
   const rhythmSpec = useMemo(() => {
     const s = rhythm.state;
-    const exploreNav = () => navigation.navigate('Tabs', { screen: 'plan', params: { tab: 'explore' } });
+    // `reset` is required: PlanScreen only applies the `tab` param when a fresh
+    // reset signal arrives (same contract as the home "More Plans" button) —
+    // without it the jump lands on whatever tab Plans last showed.
+    const exploreNav = () => navigation.navigate('Tabs', { screen: 'plan', params: { tab: 'explore', reset: Date.now() } });
     if (s.kind === 'step') {
       switch (s.step) {
         case 'prayerMorning': return {

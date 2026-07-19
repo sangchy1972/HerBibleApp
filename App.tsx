@@ -78,6 +78,7 @@ import WidgetSync from './src/components/WidgetSync';
 import LoadingOverlay from './src/components/LoadingOverlay';
 import { setAudioModeAsync } from 'expo-audio';
 import { initFirebase, logScreenView } from './src/services/firebase';
+import { setAppRemountHandler, initCloudBackup } from './src/services/cloudBackup';
 import { initAds } from './src/services/ads';
 import { ensureAttRequested } from './src/services/att';
 import { initAdFrequency, noteNavigation } from './src/services/adFrequency';
@@ -92,6 +93,7 @@ export default function App() {
   // so it never competes with the loading screens / first render.
   React.useEffect(() => {
     initFirebase();
+    initCloudBackup();
     const task = InteractionManager.runAfterInteractions(() => {
       // ATT FIRST, on its own — Apple requires the tracking prompt to appear
       // before tracking begins, and burying it inside initAds got the app
@@ -129,6 +131,12 @@ export default function App() {
   // with a rotating hymn/quote instead of a black screen or a bare logo.
   const [appReady, setAppReady] = React.useState(false);
   const [loadingDone, setLoadingDone] = React.useState(false);
+  // Cloud-restore remount: after a sign-in pulls backed-up progress into
+  // AsyncStorage, bumping this key remounts the whole provider tree so every
+  // context re-hydrates the restored data (pure-JS "reload"; App itself — and
+  // thus loadingDone — survives, so the launch overlay does not replay).
+  const [treeEpoch, setTreeEpoch] = React.useState(0);
+  React.useEffect(() => { setAppRemountHandler(() => setTreeEpoch(e => e + 1)); }, []);
   // Stable callback so LoadingOverlay's timers/effects don't reset on every
   // re-render (an inline arrow would churn its 6s safety-cap effect).
   const hideLoading = React.useCallback(() => setLoadingDone(true), []);
@@ -162,6 +170,7 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
+        <React.Fragment key={treeEpoch}>
         <UILanguageProvider>
         <AuthProvider>
           <PrayerProvider>
@@ -284,6 +293,7 @@ export default function App() {
           </PrayerProvider>
         </AuthProvider>
         </UILanguageProvider>
+        </React.Fragment>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

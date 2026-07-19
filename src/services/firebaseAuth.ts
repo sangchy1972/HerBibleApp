@@ -110,6 +110,25 @@ export function facebookAuthAvailable(): boolean {
   return !!authMod && !!FBLoginManager && !!FBAccessToken;
 }
 
+export function appleFirebaseAvailable(): boolean {
+  return !!authMod;
+}
+
+// Apple identity token (from expo-apple-authentication) → Firebase, so Apple
+// users land in the same uid pool as Google/email — required for cloud backup
+// & restore. `rawNonce` is the pre-hash nonce whose SHA-256 was passed to
+// signInAsync. Apple returns fullName ONLY on first authorization and Firebase
+// never sets displayName from Apple, so we set it once ourselves.
+export async function appleFirebaseSignIn(identityToken: string, rawNonce: string, displayName?: string): Promise<void> {
+  if (!authMod) throw new Error('FIREBASE_AUTH_UNAVAILABLE');
+  const credential = authMod.AppleAuthProvider.credential(identityToken, rawNonce);
+  await withTimeout(authMod().signInWithCredential(credential), 25000);
+  try {
+    const u = authMod().currentUser;
+    if (u && displayName && !u.displayName) await u.updateProfile({ displayName });
+  } catch { /* cosmetic only */ }
+}
+
 // Native Facebook login (react-native-fbsdk-next) → Firebase. The official FB
 // SDK handles the native login dialog + redirect, then we exchange the FB
 // access token for a Firebase credential so the FB user lands in the same

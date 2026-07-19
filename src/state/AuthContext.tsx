@@ -1,7 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { onAuthChanged, googleSignIn, facebookSignIn, firebaseSignOut, deleteAccount as fbDeleteAccount, sendEmailSignInLink, completeEmailSignIn, type AuthUser } from '../services/firebaseAuth';
+import { onAuthChanged, googleSignIn, facebookSignIn, appleFirebaseSignIn, firebaseSignOut, deleteAccount as fbDeleteAccount, sendEmailSignInLink, completeEmailSignIn, type AuthUser } from '../services/firebaseAuth';
 import { setAnalyticsUser, logEvent, setUserProps } from '../services/firebase';
+import { deleteCloudBackup } from '../services/cloudBackup';
 
 export interface User {
   uid?: string;          // Firebase UID when signed in via Firebase (Google); undefined for legacy local sign-ins
@@ -16,6 +17,8 @@ interface AuthState {
   signInWithGoogle: () => Promise<void>;
   /** Native Facebook (fbsdk) → Firebase. Resolves on success; throws 'CANCELLED' if dismissed. */
   signInWithFacebook: () => Promise<void>;
+  /** Apple identity token → Firebase (same uid pool as Google/email). */
+  signInWithApple: (identityToken: string, rawNonce: string, displayName?: string) => Promise<void>;
   /** Email magic-link (passwordless): sends a one-tap sign-in link to the email. */
   sendEmailLink: (email: string) => Promise<void>;
   /** Completes magic-link sign-in from the tapped link (called by DeepLinkHandler). */
@@ -98,6 +101,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     recordSignInEvent('facebook');
   }, [recordSignInEvent]);
 
+  const signInWithApple = useCallback(async (identityToken: string, rawNonce: string, displayName?: string) => {
+    await appleFirebaseSignIn(identityToken, rawNonce, displayName);   // onAuthChanged fires with the new user
+    recordSignInEvent('apple');
+  }, [recordSignInEvent]);
+
   const sendEmailLink = useCallback(async (email: string) => {
     await sendEmailSignInLink(email);
   }, []);
@@ -124,6 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // THEN wipe every trace of local identity + data and sign out. Order matters:
   // if the delete fails (e.g. needs re-auth) we must NOT pretend it succeeded.
   const deleteAccount = useCallback(async () => {
+    await deleteCloudBackup(); // server-side progress copy — needs auth, so BEFORE the user is deleted
     await fbDeleteAccount();   // deletes the Firebase user (or no-ops for Apple/local)
     setLocalUser(null);
     setPhotoOverride(undefined);
@@ -149,8 +158,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo<AuthState>(() => ({
-    user, signInWithGoogle, signInWithFacebook, sendEmailLink, completeEmailLink, signIn, signOut, deleteAccount, updateProfile,
-  }), [user, signInWithGoogle, signInWithFacebook, sendEmailLink, completeEmailLink, signIn, signOut, deleteAccount, updateProfile]);
+    user, signInWithGoogle, signInWithFacebook, signInWithApple, sendEmailLink, completeEmailLink, signIn, signOut, deleteAccount, updateProfile,
+  }), [user, signInWithGoogle, signInWithFacebook, signInWithApple, sendEmailLink, completeEmailLink, signIn, signOut, deleteAccount, updateProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -23,6 +23,7 @@ import Logo from '../components/shared/Logo';
 import { useProviderSignIn } from '../hooks/useProviderSignIn';
 import { useAuth } from '../state/AuthContext';
 import { warmupGoogleSignIn } from '../services/firebaseAuth';
+import { flushPendingRemount } from '../services/cloudBackup';
 import { maybeShowOnboardingInterstitial } from '../services/ads';
 import { initIap, fetchPrices, purchasePlan, restorePurchases, type PlanId } from '../services/iap';
 
@@ -383,6 +384,10 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
     if (a.timeCommitment) props.ob_time_commitment = String(a.timeCommitment);
     setUserProps(props);
     onDone();   // RootNavigator wires this to OnboardingContext.finish()
+    // If a sign-in during onboarding restored cloud progress, the provider-tree
+    // remount was deferred to here (a remount mid-flow would reset the flow).
+    // Give finish()'s AsyncStorage write a beat to land before re-hydrating.
+    setTimeout(flushPendingRemount, 250);
   };
 
   const accent = ROSE;

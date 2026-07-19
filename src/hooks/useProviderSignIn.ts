@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 import { isConfigured } from '../constants/oauth';
 import { useAuth } from '../state/AuthContext';
-import { googleAuthAvailable, facebookAuthAvailable } from '../services/firebaseAuth';
+import { googleAuthAvailable, facebookAuthAvailable, appleFirebaseAvailable } from '../services/firebaseAuth';
 import { useT } from '../i18n/useT';
 
 export type SignInProvider = 'apple' | 'google' | 'facebook';
@@ -15,7 +16,7 @@ export function useProviderSignIn({ onSuccess, onError }: {
   onSuccess: () => void;
   onError?: (msg: string) => void;
 }) {
-  const { signIn, signInWithGoogle, signInWithFacebook } = useAuth();
+  const { signIn, signInWithGoogle, signInWithFacebook, signInWithApple } = useAuth();
   const t = useT();
   const [busy, setBusy] = useState<SignInProvider | null>(null);
 
@@ -75,11 +76,16 @@ export function useProviderSignIn({ onSuccess, onError }: {
     }
     setBusy('apple');
     try {
+      // Nonce pair: Apple gets the SHA-256 hash, Firebase verifies against the
+      // raw value — required for the identity-token → Firebase exchange.
+      const rawNonce = Crypto.randomUUID();
+      const hashedNonce = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, rawNonce);
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
         ],
+        nonce: hashedNonce,
       });
       const email = credential.email ?? `${credential.user}@privaterelay.appleid.com`;
       const fullName = [credential.fullName?.givenName, credential.fullName?.familyName]
@@ -87,7 +93,13 @@ export function useProviderSignIn({ onSuccess, onError }: {
         .join(' ')
         .trim();
       const name = fullName || email.split('@')[0];
-      signIn({ name, email });
+      if (credential.identityToken && appleFirebaseAvailable()) {
+        // Firebase path — stable uid, enables cloud backup/restore.
+        await signInWithApple(credential.identityToken, rawNonce, fullName || undefined);
+      } else {
+        // Legacy local fallback for builds without the Firebase native module.
+        signIn({ name, email });
+      }
       onSuccess();
     } catch (e: unknown) {
       const code = (e as { code?: string })?.code;

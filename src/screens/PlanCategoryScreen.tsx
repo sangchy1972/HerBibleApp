@@ -5,6 +5,8 @@ import Feather from '@expo/vector-icons/Feather';
 import { ROSE, BTN_RADIUS, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import type { PlanSummary } from '../constants/featuredPlansSummary';
+import { useOnboarding } from '../state/OnboardingContext';
+import { scorePlan } from '../services/planRecommendations';
 import { useT } from '../i18n/useT';
 import { SUBTAB_ORDER, SUBTAB_OVERRIDE, type PlanSectionId } from '../constants/plansApi';
 import PlanCover, { PLAN_ROW_COVER } from '../components/PlanCover';
@@ -97,9 +99,19 @@ export default function PlanCategoryScreen({ route, navigation }: RootStackScree
   }, [initialTab, tryAutoScroll]);
 
   // Plans for THIS primary, then optionally filtered by the active sub-tab.
+  // Stably re-sorted by onboarding fit (desc) so the drill-in list matches the
+  // personalized ordering on the Plans tab. Ties keep curation order, so a
+  // zero-signal (skipped onboarding) user sees the untouched original order.
+  const { answers } = useOnboarding();
+  const hasSignal = !!(answers.topics?.length || answers.goal || answers.age || answers.bibleLevel || answers.timeCommitment);
   const allInPrimary = useMemo(() => {
-    return summary.filter(p => p.primary === primary);
-  }, [summary, primary]);
+    const inPrimary = summary.filter(p => p.primary === primary);
+    if (!hasSignal) return inPrimary;   // no onboarding signal → keep curation order
+    return inPrimary
+      .map((p, i) => ({ p, i, s: scorePlan(p, answers).score }))
+      .sort((a, b) => (b.s - a.s) || (a.i - b.i))
+      .map(x => x.p);
+  }, [summary, primary, answers, hasSignal]);
 
   const filteredPlans = useMemo(() => {
     if (activeTab === ALL_TAB) return allInPrimary;

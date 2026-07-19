@@ -19,6 +19,8 @@ import TabSection from '../components/shared/TabSection';
 import { useT } from '../i18n/useT';
 import { useUILanguage } from '../state/UILanguageContext';
 import { localeFor } from '../i18n/locale';
+import { useOnboarding } from '../state/OnboardingContext';
+import { scorePlan, recommendPlans } from '../services/planRecommendations';
 
 const TABS = ['current', 'explore', 'completed'] as const;
 type TabId = typeof TABS[number];
@@ -90,6 +92,28 @@ export default function PlanScreen() {
   // category sections — all from the bundled summary (no demo data anymore).
   const { summary, getSummary, loadPlan } = useFeaturedPlans();
   const { records: planRecords } = usePlanCompletion();
+  // Onboarding answers drive the personalized ordering of the Featured
+  // carousel and the four category sections (same scoring engine as the home
+  // "My Reading Plans" card). If onboarding was skipped, every plan scores 0
+  // and the ordering collapses back to the original curation order — so
+  // non-onboarded users see exactly today's layout (no regression).
+  const { answers } = useOnboarding();
+  const todayYmd = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
+  // Only reorder when onboarding actually gave us something to key off. This
+  // keeps the feature purely additive: users who skipped onboarding (or
+  // onboarded before topics existed) keep the exact curation order — we do NOT
+  // want scorePlan's editorial `starter +1` silently reshuffling their tab.
+  const hasSignal = !!(answers.topics?.length || answers.goal || answers.age || answers.bibleLevel || answers.timeCommitment);
+  // Whole catalog, stably re-sorted by onboarding fit (desc). Stable: ties keep
+  // their original curation index. Feeds the category sections below (each
+  // sliced to its top 4 per primary).
+  const personalizedSummary = useMemo(() => {
+    if (!hasSignal) return summary;
+    return summary
+      .map((p, i) => ({ p, i, s: scorePlan(p, answers).score }))
+      .sort((a, b) => (b.s - a.s) || (a.i - b.i))
+      .map(x => x.p);
+  }, [summary, answers, hasSignal]);
 
   // In-progress / completed plans — derived from PlanCompletionContext's
   // per-slug records. "In progress" = ≥1 day completed but not finished
@@ -119,17 +143,24 @@ export default function PlanScreen() {
   // ordering stay stable across content republishes.
   const corpusByPrimary = useMemo(() => {
     const map = new Map<string, PlanSummary[]>();
-    for (const p of summary) {
+    for (const p of personalizedSummary) {
       const list = map.get(p.primary) || [];
       list.push(p);
       map.set(p.primary, list);
     }
     return map;
-  }, [summary]);
+  }, [personalizedSummary]);
 
-  // Featured = first 5 plans (one per category-ish). Bundled summary is
-  // already ordered by curation rank, so slice is enough.
-  const featuredPlans = useMemo(() => summary.slice(0, 5), [summary]);
+  // Featured = a personalized top-5 via the shared recommender, so it gets the
+  // engine's diversity rules (≤2 per section, no duplicate tag) and gentle
+  // per-day rotation for free — rather than 5 look-alikes from one topic. With
+  // no onboarding signal we keep the original curated first-5 (no regression).
+  const featuredPlans = useMemo(
+    () => hasSignal
+      ? recommendPlans({ answers, summaries: summary, excludeSlugs: [], todayYmd, count: 5 })
+      : summary.slice(0, 5),
+    [answers, summary, todayYmd, hasSignal],
+  );
 
   const openCorpusPlan = (slug: string) =>
     navigation.navigate('FeaturedPlanDetail', { slug });

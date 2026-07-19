@@ -224,7 +224,8 @@
               "RNFBApp",
               "RNFBAuth",
               "RNFBAnalytics",
-              "RNFBCrashlytics"
+              "RNFBCrashlytics",
+              "RNFBFirestore"
             ]
           }
         }

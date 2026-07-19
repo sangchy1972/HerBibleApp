@@ -1,12 +1,13 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import Svg, { Polygon, Defs, RadialGradient, Stop } from 'react-native-svg';
 import Animated, {
-  FadeIn, FadeOut, useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence,
+  useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, withDelay, runOnJS,
   Easing,                       // reanimated's Easing — required for UI-thread worklets;
                                 // the react-native Easing is a JS-thread function and
                                 // crashes when passed into withTiming.
 } from 'react-native-reanimated';
+import { isInterstitialVisible, onInterstitialVisibility } from '../services/interstitialVisibility';
 import { useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import BadgeIcon from './BadgeIcon';
@@ -53,16 +54,73 @@ export default function AchievementUnlockSheet() {
   }, [visible, spin]);
   const raysStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.value}deg` }] }));
 
-  // Subtle bounce-in on the badge itself.
-  const scale = useSharedValue(0.8);
+  // ── Ceremony entrance: the whole card pops small → big over 0.7 s ──────────
+  // Shared-value driven (never layout `entering` — first-frame flash on the new
+  // arch, project memory). When a fullscreen interstitial is on screen the play
+  // is DEFERRED until the user closes it — otherwise the ceremony has already
+  // silently finished underneath the native ad overlay.
+  const show = visible && active;
+  const backdropOpacity = useSharedValue(0);
+  const cardScale = useSharedValue(0.4);
+  const cardOpacity = useSharedValue(0);
+  const scale = useSharedValue(0.8);           // badge's own extra bounce
+  // Android/Fabric: a Reanimated-owned wrapper can leave its children's touch
+  // regions stale — hand the card back to plain RN once the entrance lands
+  // (same pattern as FirstRunTourHost / useTabFocusEntrance).
+  const [settled, setSettled] = useState(false);
+
   useEffect(() => {
-    if (!visible) return;
+    if (!show || !current) return;
+    setSettled(false);
+    backdropOpacity.value = 0;
+    cardOpacity.value = 0;
+    cardScale.value = 0.4;
     scale.value = 0.8;
-    scale.value = withSequence(
-      withTiming(1.06, { duration: 280, easing: Easing.out(Easing.cubic) }),
-      withTiming(1, { duration: 220, easing: Easing.out(Easing.quad) }),
-    );
-  }, [visible, scale]);
+    let cancelled = false;
+    let unsub: (() => void) | null = null;
+    let watchdog: ReturnType<typeof setTimeout> | null = null;
+    const play = () => {
+      if (cancelled) return;
+      backdropOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.quad) });
+      cardOpacity.value = withTiming(1, { duration: 240, easing: Easing.out(Easing.quad) });
+      // 460 + 240 = 0.7 s total: overshoot then settle.
+      cardScale.value = withSequence(
+        withTiming(1.05, { duration: 460, easing: Easing.out(Easing.cubic) }),
+        withTiming(1, { duration: 240, easing: Easing.inOut(Easing.quad) }, (fin) => {
+          if (fin) runOnJS(setSettled)(true);
+        }),
+      );
+      // Badge pop rides on top of the card growth, slightly offset.
+      scale.value = withDelay(320, withSequence(
+        withTiming(1.06, { duration: 280, easing: Easing.out(Easing.cubic) }),
+        withTiming(1, { duration: 220, easing: Easing.out(Easing.quad) }),
+      ));
+      // runOnJS callbacks can be dropped under load — never leave the buttons
+      // inside a Reanimated-owned subtree forever.
+      watchdog = setTimeout(() => { if (!cancelled) setSettled(true); }, 1000);
+    };
+    if (isInterstitialVisible()) {
+      unsub = onInterstitialVisibility(v => {
+        if (!v) { unsub?.(); unsub = null; setTimeout(play, 150); }
+      });
+    } else {
+      play();
+    }
+    return () => {
+      cancelled = true;
+      unsub?.();
+      if (watchdog) clearTimeout(watchdog);
+    };
+    // Re-plays per badge as a multi-badge queue drains.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [show, current?.id]);
+
+  const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropOpacity.value }));
+  const cardStyle = useAnimatedStyle(() => ({
+    opacity: cardOpacity.value,
+    transform: [{ scale: cardScale.value }],
+  }));
+  const SETTLED = { opacity: 1 } as const;
   const badgeStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   // Stable navigation ref so the View Details button can navigate even after
@@ -80,18 +138,19 @@ export default function AchievementUnlockSheet() {
     }, 80);
   };
 
+  // The badge name inside the earned line renders rose + bold: build the line
+  // around a sentinel so the split works for every language's word order.
+  const badgeName = localizedAchievementName(current, translation.code);
+  const descParts = ui.earnedDescription('\u0000').split('\u0000');
+
   return (
     <Modal transparent visible={visible && active} animationType="none" onRequestClose={close}>
-      <Animated.View entering={FadeIn.duration(220)} exiting={FadeOut.duration(180)} style={styles.backdrop}>
+      <Animated.View style={[styles.backdrop, backdropStyle]}>
         <TouchableOpacity activeOpacity={1} onPress={close} style={StyleSheet.absoluteFillObject} />
       </Animated.View>
 
       <View style={styles.centerWrap} pointerEvents="box-none">
-        <Animated.View
-          entering={FadeIn.duration(260).delay(80)}
-          exiting={FadeOut.duration(160)}
-          style={styles.card}
-        >
+        <Animated.View style={[styles.card, settled ? SETTLED : cardStyle]}>
           {/* CONGRATS — title at the very top, in Lora (per user). */}
           <Text style={styles.congratsTitle}>{ui.congrats}</Text>
 
@@ -114,7 +173,12 @@ export default function AchievementUnlockSheet() {
           </View>
 
           <Text style={styles.subtitle}>
-            {ui.earnedDescription(localizedAchievementName(current, translation.code))}
+            {descParts.map((part, i) => (
+              <React.Fragment key={i}>
+                {part}
+                {i < descParts.length - 1 && <Text style={styles.subtitleName}>{badgeName}</Text>}
+              </React.Fragment>
+            ))}
           </Text>
 
           <TouchableOpacity onPress={close} activeOpacity={0.85} style={styles.okBtn}>
@@ -238,7 +302,13 @@ const styles = StyleSheet.create({
     color: TXT,
     paddingHorizontal: 8,
     lineHeight: 25,
+    // The 280-px sunburst overflows badgeArea (zIndex 1) downward into this
+    // line's row — lift the text above the rays, same as the title.
+    zIndex: 2,
+    elevation: 2,
   },
+  // The badge's name inside the earned line — rose + bold (per user).
+  subtitleName: { color: ROSE, fontFamily: FONTS.loraBold, fontWeight: '600' },
   okBtn: {
     marginTop: 22,
     backgroundColor: ROSE,

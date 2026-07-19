@@ -29,6 +29,7 @@
 import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent } from './firebase';
+import { setInterstitialVisible } from './interstitialVisibility';
 
 // ── Constants (spec §0) ──────────────────────────────────────────────────────
 const PUB = 'ca-app-pub-4656643588243987';
@@ -427,6 +428,7 @@ function resetDailyState(): void {
   established = false;
   emptySince = null;
   showing = false;
+  setInterstitialVisible(false);
   todayImpr = [];
 }
 
@@ -460,6 +462,7 @@ function resumeDay(p: any): void {
   win = makeWindow(lo);                                 // rebuilt → never trusts a corrupt hi
   emptySince = null;
   showing = false;
+  setInterstitialVisible(false);
   if (established) firstStagger();
   else pump();
 }
@@ -505,6 +508,7 @@ export function stopUsController(): void {
   if (ticker != null) { clearInterval(ticker); ticker = null; }
   teardownAll();
   showing = false;
+  setInterstitialVisible(false);
   started = false;
 }
 
@@ -561,18 +565,21 @@ export function usOnShowOpportunity(placement: 'prayer_end' | 'gospel_end' | 'pl
     });
     offClosed = slot.ad.addAdEventListener(deps!.AdEventType.CLOSED, () => {
       showing = false;
+      setInterstitialVisible(false);
       if (!established && !paidSeen) bootstrapFromShow(slot.idx);   // H3 fallback
       cleanup();
       pump();                                            // top the cache back up
     });
     showing = true;
+    setInterstitialVisible(true);
     const r = slot.ad.show();                            // throws synchronously if not loaded
     if (r && typeof r.then === 'function') {
-      r.then(() => {}).catch(() => { showing = false; cleanup(); pump(); });   // C1: never unhandled
+      r.then(() => {}).catch(() => { showing = false; setInterstitialVisible(false); cleanup(); pump(); });   // C1: never unhandled
     }
     return true;
   } catch {
     showing = false;
+    setInterstitialVisible(false);
     cleanup();
     pump();
     return false;

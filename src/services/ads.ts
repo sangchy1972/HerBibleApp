@@ -50,6 +50,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent, setUserProps } from './firebase';
 import { ensureAttRequested } from './att';
 import { startUsController, stopUsController, usOnShowOpportunity, isUsControllerActive } from './usInterstitial';
+import { setInterstitialVisible } from './interstitialVisibility';
 
 let mobileAdsFn: any = null;
 let InterstitialAdCls: any = null;
@@ -338,8 +339,8 @@ function preload(): void {
     loaded = false;
     interstitial.addAdEventListener(AdEventTypeEnum.LOADED, () => { loaded = true; });
     // When the user closes the ad, immediately preload the next one.
-    interstitial.addAdEventListener(AdEventTypeEnum.CLOSED, () => { loaded = false; preload(); });
-    interstitial.addAdEventListener(AdEventTypeEnum.ERROR, () => { loaded = false; });
+    interstitial.addAdEventListener(AdEventTypeEnum.CLOSED, () => { loaded = false; setInterstitialVisible(false); preload(); });
+    interstitial.addAdEventListener(AdEventTypeEnum.ERROR, () => { loaded = false; setInterstitialVisible(false); });
     interstitial.load();
   } catch { /* swallow — maybeShow will just no-op until one loads */ }
 }
@@ -350,7 +351,7 @@ function preloadOnboarding(): void {
     onboardingInterstitial = InterstitialAdCls.createForAdRequest(ONBOARDING_INTERSTITIAL_UNIT_ID, {});
     onboardingLoaded = false;
     onboardingInterstitial.addAdEventListener(AdEventTypeEnum.LOADED, () => { onboardingLoaded = true; });
-    onboardingInterstitial.addAdEventListener(AdEventTypeEnum.CLOSED, () => { onboardingLoaded = false; });
+    onboardingInterstitial.addAdEventListener(AdEventTypeEnum.CLOSED, () => { onboardingLoaded = false; setInterstitialVisible(false); });
     onboardingInterstitial.addAdEventListener(AdEventTypeEnum.ERROR, () => {
       onboardingLoaded = false;
       // Fresh units no-fill often; a few spaced retries raise the odds it's
@@ -377,6 +378,7 @@ export function maybeShowOnboardingInterstitial(): boolean {
   if (AppState.currentState !== 'active') return false;
   try {
     onboardingInterstitial.show();
+    setInterstitialVisible(true);
     onboardingShown = true;
     lastShownAt = Date.now();
     logEvent('ad_impression_custom', { format: 'interstitial', placement: 'onboarding_first' });
@@ -399,6 +401,7 @@ export function maybeShowInterstitial(placement: 'prayer_end' | 'gospel_end' | '
   if (now - lastShownAt < MIN_INTERVAL_MS) return;
   try {
     interstitial.show();
+    setInterstitialVisible(true);
     lastShownAt = now;
     // NOT `ad_impression` — that's a Firebase auto-collected reserved event
     // (AdMob link). `placement` distinguishes the two call sites.

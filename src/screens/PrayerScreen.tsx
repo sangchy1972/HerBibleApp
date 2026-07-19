@@ -18,7 +18,7 @@ import { ROSE, BTN_RADIUS, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme
 import { useAuth } from '../state/AuthContext';
 import { usePrayer } from '../state/PrayerContext';
 import { useActivity } from '../state/ActivityContext';
-import { useFirstRunTour } from '../state/FirstRunTourContext';
+import { useFirstRunTour, measureRefInWindow } from '../state/FirstRunTourContext';
 import { useDailyVerses } from '../state/DailyVersesContext';
 import { useTranslation } from '../state/TranslationsContext';
 import { useReadChapters } from '../state/ReadChaptersContext';
@@ -782,6 +782,18 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   const tourStart = tour.start;
   const tourAbort = tour.abort;
   const tourSetAnchor = tour.setAnchor;
+  // Live re-measurers — the host calls these at EVERY step (and normalizes
+  // against its own window position), so the spotlight tracks the current
+  // layout instead of a launch-time snapshot. Same P-gutter trim as below.
+  const tourRegisterMeasurer = tour.registerAnchorMeasurer;
+  useEffect(() => {
+    tourRegisterMeasurer('rhythm', async () => {
+      const r = await measureRefInWindow(rhythmBarRef);
+      return r ? { x: r.x + P, y: r.y, w: r.w - 2 * P, h: r.h } : null;
+    });
+    tourRegisterMeasurer('streak', () => measureRefInWindow(streakChipRef));
+    tourRegisterMeasurer('verse', () => measureRefInWindow(heroRef));
+  }, [tourRegisterMeasurer]);
   useEffect(() => {
     if (!tourPending || !isFocused) return;
     let cancelled = false;

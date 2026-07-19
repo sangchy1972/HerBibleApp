@@ -11,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ROSE, TXT, TXTSUB, FONTS, P, BTN_RADIUS } from '../constants/theme';
 import { useT } from '../i18n/useT';
-import { useFirstRunTour, TOUR_STEPS, type Rect } from '../state/FirstRunTourContext';
+import { useFirstRunTour, measureRefInWindow, TOUR_STEPS, type Rect } from '../state/FirstRunTourContext';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -82,7 +82,7 @@ export default function FirstRunTourHost() {
   const insets = useSafeAreaInsets();
   const { width: W, height: H } = useWindowDimensions();
   const tour = useFirstRunTour();
-  const { active, step, anchors, startPrayer } = tour;
+  const { active, step, anchors, measureAnchor, startPrayer } = tour;
 
   const [reduceMotion, setReduceMotion] = useState(false);
   useEffect(() => {
@@ -115,15 +115,46 @@ export default function FirstRunTourHost() {
   const [tipSettled, setTipSettled] = useState(false);
 
   const stepId = TOUR_STEPS[step];
-  const rect = anchors[stepId];
   const isLast = step === TOUR_STEPS.length - 1;
 
-  // Padded target rect for the current step.
-  const target = useMemo<Rect | null>(() => {
-    if (!valid(rect, H)) return null;
-    const s = SHAPE[stepId] ?? { pad: 8, radius: 20 };
-    return inflate(rect, s.pad);
-  }, [rect, stepId, H]);
+  // ── Per-step geometry, measured LIVE in the overlay's own coordinate space ──
+  // Anchor rects come from measureInWindow, whose "window" origin differs by
+  // device: on edge-to-edge devices it's the physical screen top, but e.g.
+  // Samsung/OneUI windows start BELOW the status bar — drawing raw window
+  // coords there paints every hole a status-bar-height too high. So at every
+  // step we measure the TARGET and this overlay's ROOT in the same pass and
+  // subtract: any constant offset the device applies cancels exactly.
+  // Re-measuring per step (not once at launch) also keeps the hole honest when
+  // content shifts after the tour started.
+  const rootRef = useRef<View>(null);
+  const [geo, setGeo] = useState<{ step: number; rect: Rect | null }>({ step: -1, rect: null });
+  // Bumped to force a re-measure with unchanged step (e.g. after foregrounding).
+  const [measureEpoch, setMeasureEpoch] = useState(0);
+
+  useEffect(() => {
+    if (!active) return;
+    let live = true;
+    (async () => {
+      const [origin, fresh] = await Promise.all([
+        measureRefInWindow(rootRef),
+        measureAnchor(stepId),
+      ]);
+      if (!live) return;
+      // Launch-time anchors (same window space) are the fallback for a
+      // measurer that fails mid-tour; origin defaults to 0 (already aligned).
+      const raw = fresh ?? anchors[stepId] ?? null;
+      const o = origin ?? { x: 0, y: 0, w: 0, h: 0 };
+      const rel = raw ? { x: raw.x - o.x, y: raw.y - o.y, w: raw.w, h: raw.h } : null;
+      const s = SHAPE[stepId] ?? { pad: 8, radius: 20 };
+      setGeo({ step, rect: valid(rel ?? undefined, H) ? inflate(rel as Rect, s.pad) : null });
+    })();
+    return () => { live = false; };
+  }, [active, step, stepId, anchors, measureAnchor, H, measureEpoch]);
+
+  // Render/choreograph against the last measured rect. While a new step is
+  // being measured (~1 frame) the previous rect keeps the scrim stable.
+  const target = geo.rect;
+  const targetReady = geo.step === step && !!target;
   const targetRadius = (SHAPE[stepId] ?? { radius: 20 }).radius;
 
   const put = useCallback((r: Rect, radius: number) => {
@@ -192,15 +223,19 @@ export default function FirstRunTourHost() {
 
   // ── Choreography ──────────────────────────────────────────────────────────
   const shownStepRef = useRef(-1);
+  const animatedRectRef = useRef<Rect | null>(null);
   const belowRef = useRef(true);
   belowRef.current = below;
 
-  // Step 0 → open. Later steps → travel.
+  // Step 0 → open. Later steps → travel. Waits for THIS step's fresh
+  // measurement — animating toward the previous step's rect would undo the
+  // whole coordinate-normalization exercise.
   useEffect(() => {
-    if (!active || !target || tipH === 0) return;
+    if (!active || !targetReady || !target || tipH === 0) return;
     if (shownStepRef.current === step) return;
     const first = shownStepRef.current < 0;
     shownStepRef.current = step;
+    animatedRectRef.current = target;
 
     if (reduceMotion) {
       put(target, targetRadius);
@@ -227,7 +262,7 @@ export default function FirstRunTourHost() {
     // `below` is derived from tipH which is in the deps; belowRef keeps the exit
     // path in sync without re-running this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, step, target, targetRadius, tipH, reduceMotion]);
+  }, [active, step, target, targetReady, targetRadius, tipH, reduceMotion]);
 
   // ── Leaving ───────────────────────────────────────────────────────────────
   const leaving = useRef(false);
@@ -259,15 +294,28 @@ export default function FirstRunTourHost() {
     if (how === 'finish') setTimeout(startPrayer, 300);
   }, [halo, exitTip, target, move, scrim, reduceMotion, tour, startPrayer]);
 
-  // An anchor that never measured (collapsed view, odd device) must not strand
-  // the tour on a blank scrim — step over it, or end if it was the last one.
+  // A re-measure (foregrounding, late layout shift) that MOVES the current
+  // step's rect after its choreography already played → snap the hole onto the
+  // fresh position. The rect-equality check keeps this from teleporting over
+  // the entrance animation that just ran with this very rect.
   useEffect(() => {
-    if (!active || target || leaving.current) return;
+    if (!active || !targetReady || !target || shownStepRef.current !== step) return;
+    const a = animatedRectRef.current;
+    if (a && a.x === target.x && a.y === target.y && a.w === target.w && a.h === target.h) return;
+    animatedRectRef.current = target;
+    put(target, targetRadius);
+  }, [active, targetReady, target, step, targetRadius, put]);
+
+  // An anchor whose measurement came back empty (collapsed view, odd device)
+  // must not strand the tour on a blank scrim — step over it, or end if it was
+  // the last one. Only judged AFTER this step's measurement completed.
+  useEffect(() => {
+    if (!active || geo.step !== step || target || leaving.current) return;
     const tm = setTimeout(() => {
       if (isLast) leave('skip'); else tour.next();
     }, 60);
     return () => clearTimeout(tm);
-  }, [active, target, isLast, leave, tour]);
+  }, [active, geo.step, step, target, isLast, leave, tour]);
 
   const onNext = useCallback(() => {
     if (leaving.current) return;
@@ -303,6 +351,9 @@ export default function FirstRunTourHost() {
         put(target, targetRadius);
         scrim.value = 1;
         pulseHalo(0);
+        // Layout can have changed while backgrounded — force a re-measure; the
+        // choreography's shownStepRef guard keeps this from replaying motions.
+        setMeasureEpoch(e => e + 1);
       }
     });
     return () => sub.remove();
@@ -359,11 +410,14 @@ export default function FirstRunTourHost() {
   }));
   const SETTLED = { opacity: 1 } as const;
 
+  // Mounted for the whole active tour — even before the first measurement
+  // lands (scrim opacity is still 0 then, so nothing shows). The root MUST be
+  // in the tree before the measure effect runs: it is the coordinate-space
+  // reference every hole position is normalized against.
   if (!active) return null;
-  if (!target) return null;   // PrayerScreen aborts the tour if nothing measures
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} ref={rootRef} collapsable={false}>
       {/* The scrim eats every touch outside the hole. It does NOT advance the
           step — users double-tap and would blow straight through the tour.
           Once we're leaving it stops intercepting: if anything ever strands the
@@ -391,7 +445,7 @@ export default function FirstRunTourHost() {
       <Animated.View
         style={[
           styles.tipWrap,
-          { left: tipLeft, top: tipTop, width: tipW, opacity: tipH === 0 ? 0 : undefined },
+          { left: tipLeft, top: tipTop, width: tipW, opacity: tipH === 0 || !target ? 0 : undefined },
           tipSettled ? SETTLED : tipStyle,
         ]}
         onLayout={(e: LayoutChangeEvent) => {

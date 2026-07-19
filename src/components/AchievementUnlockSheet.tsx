@@ -1,40 +1,53 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
-import Svg, { Polygon, Defs, RadialGradient, Stop } from 'react-native-svg';
-import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, withDelay, runOnJS,
-  Easing,                       // reanimated's Easing — required for UI-thread worklets;
-                                // the react-native Easing is a JS-thread function and
-                                // crashes when passed into withTiming.
-} from 'react-native-reanimated';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, Pressable, Dimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import Feather from '@expo/vector-icons/Feather';
+import ViewShot, { captureRef } from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
+import * as MediaLibrary from 'expo-media-library';
 import { isInterstitialVisible, onInterstitialVisibility } from '../services/interstitialVisibility';
-import { useNavigation } from '@react-navigation/native';
-import type { NavigationProp } from '@react-navigation/native';
-import BadgeIcon from './BadgeIcon';
-import { achievementUi, localizedAchievementName } from '../constants/achievements';
+import BadgeCardArt from './BadgeCardArt';
+import { achievementUi, localizedAchievementName, localizedAchievementRule } from '../constants/achievements';
 import { useAchievements } from '../state/AchievementsContext';
 import { useNudgeCoordinator } from '../state/NudgeCoordinatorContext';
 import { NUDGE_PRIORITY } from '../state/nudgePriority';
 import { useTranslation } from '../state/TranslationsContext';
-import { ROSE, TXT, TXTSUB, FONTS } from '../constants/theme';
-import type { RootStackParamList } from '../navigation/types';
+import { useT } from '../i18n/useT';
+import { logEvent } from '../services/firebase';
+import { ROSE, TXT, FONTS, BTN_RADIUS } from '../constants/theme';
 
-// Single source of truth for the new-badge popup. Mounted once at the app
-// root (next to the navigation container) so it can fire from inside any
-// screen — the queue is read off the AchievementsContext.
+// Full-screen "New Achievement" unlock. Mounted once at the app root (next to
+// the navigation container) so it can fire from inside any screen — the queue
+// is read off AchievementsContext and drains one badge at a time.
+//
+// The screen slides up from the bottom (native Modal animationType="slide", so
+// there is no Reanimated-owned wrapper and therefore no stale-touch-region
+// risk). The centre is a single pink card (BadgeCardArt) that doubles as the
+// shareable image: the card's Share button captures it at full resolution and
+// hands it to the OS share sheet or saves it to the photo library — the same
+// mechanism the verse share uses.
+
+const { width: SCREEN_W } = Dimensions.get('window');
+const CARD_W = Math.min(SCREEN_W - 48, 400);   // on-screen card width
+const CAPTURE_W = 1080;                          // exported-image width (crisp)
+const CAPTURE_QUALITY = 0.92;
+const CAPTURE_FORMAT = 'jpg' as const;
+const CAPTURE_MIME = 'image/jpeg';
 
 export default function AchievementUnlockSheet() {
   const { awardQueue, dismissAward } = useAchievements();
   const { current: translation } = useTranslation();
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const t = useT();
   const ui = achievementUi(translation.code);
+  const insets = useSafeAreaInsets();
 
   const visible = awardQueue.length > 0;
   const current = awardQueue[0];
 
-  // Route through the nudge coordinator so a badge popup never stacks with the
-  // mood sheet / login. ignoresBudget: rewards always show, and a multi-badge
-  // queue drains one-by-one across successive activations.
+  // Route through the nudge coordinator so a badge unlock never stacks with the
+  // mood sheet / login. ignoresBudget: rewards always show; a multi-badge queue
+  // drains one-by-one across successive activations.
   const coord = useNudgeCoordinator();
   useEffect(() => {
     if (visible) coord.requestSlot({ id: 'achievementUnlock', priority: NUDGE_PRIORITY.achievementUnlock, canShow: () => true, ignoresBudget: true });
@@ -42,288 +55,173 @@ export default function AchievementUnlockSheet() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
   const active = coord.isActive('achievementUnlock');
-  // Advance the coordinator when this popup closes, then pop the queue.
   const close = useCallback(() => { coord.notifyDismissed('achievementUnlock'); dismissAward(); }, [coord, dismissAward]);
 
-  // Sunburst rays behind the badge — gentle continuous rotation while open.
-  const spin = useSharedValue(0);
-  useEffect(() => {
-    if (!visible) return;
-    spin.value = 0;
-    spin.value = withRepeat(withTiming(360, { duration: 18000, easing: Easing.linear }), -1, false);
-  }, [visible, spin]);
-  const raysStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.value}deg` }] }));
+  // Defer opening until any fullscreen interstitial ad has closed — otherwise
+  // the slide-up would play hidden underneath the native ad overlay.
+  const [adUp, setAdUp] = useState(isInterstitialVisible());
+  useEffect(() => onInterstitialVisibility(setAdUp), []);
+  const show = visible && active && !adUp;
 
-  // ── Ceremony entrance: the whole card pops small → big over 0.7 s ──────────
-  // Shared-value driven (never layout `entering` — first-frame flash on the new
-  // arch, project memory). When a fullscreen interstitial is on screen the play
-  // is DEFERRED until the user closes it — otherwise the ceremony has already
-  // silently finished underneath the native ad overlay.
-  const show = visible && active;
-  const backdropOpacity = useSharedValue(0);
-  const cardScale = useSharedValue(0.4);
-  const cardOpacity = useSharedValue(0);
-  const scale = useSharedValue(0.8);           // badge's own extra bounce
-  // Android/Fabric: a Reanimated-owned wrapper can leave its children's touch
-  // regions stale — hand the card back to plain RN once the entrance lands
-  // (same pattern as FirstRunTourHost / useTabFocusEntrance).
-  const [settled, setSettled] = useState(false);
+  // ── Share / save (mirrors ShareVerseSheet) ────────────────────────────────
+  const shotRef = useRef<ViewShot | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showToast = useCallback((msg: string) => {
+    setToast(msg);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 1600);
+  }, []);
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current); }, []);
 
-  useEffect(() => {
-    if (!show || !current) return;
-    setSettled(false);
-    backdropOpacity.value = 0;
-    cardOpacity.value = 0;
-    cardScale.value = 0.4;
-    scale.value = 0.8;
-    let cancelled = false;
-    let unsub: (() => void) | null = null;
-    let watchdog: ReturnType<typeof setTimeout> | null = null;
-    const play = () => {
-      if (cancelled) return;
-      backdropOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.quad) });
-      cardOpacity.value = withTiming(1, { duration: 240, easing: Easing.out(Easing.quad) });
-      // 460 + 240 = 0.7 s total: overshoot then settle.
-      cardScale.value = withSequence(
-        withTiming(1.05, { duration: 460, easing: Easing.out(Easing.cubic) }),
-        withTiming(1, { duration: 240, easing: Easing.inOut(Easing.quad) }, (fin) => {
-          if (fin) runOnJS(setSettled)(true);
-        }),
-      );
-      // Badge pop rides on top of the card growth, slightly offset.
-      scale.value = withDelay(320, withSequence(
-        withTiming(1.06, { duration: 280, easing: Easing.out(Easing.cubic) }),
-        withTiming(1, { duration: 220, easing: Easing.out(Easing.quad) }),
-      ));
-      // runOnJS callbacks can be dropped under load — never leave the buttons
-      // inside a Reanimated-owned subtree forever.
-      watchdog = setTimeout(() => { if (!cancelled) setSettled(true); }, 1000);
-    };
-    if (isInterstitialVisible()) {
-      unsub = onInterstitialVisibility(v => {
-        if (!v) { unsub?.(); unsub = null; setTimeout(play, 150); }
-      });
-    } else {
-      play();
-    }
-    return () => {
-      cancelled = true;
-      unsub?.();
-      if (watchdog) clearTimeout(watchdog);
-    };
-    // Re-plays per badge as a multi-badge queue drains.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [show, current?.id]);
+  const captureCard = useCallback(async (): Promise<string> => {
+    const node = shotRef.current;
+    if (!node) throw new Error('card not ready');
+    const uri = await captureRef(node, { format: CAPTURE_FORMAT, quality: CAPTURE_QUALITY, result: 'tmpfile' });
+    return uri.startsWith('file://') ? uri : `file://${uri}`;
+  }, []);
 
-  const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropOpacity.value }));
-  const cardStyle = useAnimatedStyle(() => ({
-    opacity: cardOpacity.value,
-    transform: [{ scale: cardScale.value }],
-  }));
-  const SETTLED = { opacity: 1 } as const;
-  const badgeStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const shareSystem = useCallback(async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const url = await captureCard();
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(url, { mimeType: CAPTURE_MIME, dialogTitle: current ? localizedAchievementName(current, translation.code) : undefined });
+        if (current) logEvent('share', { content_type: 'achievement', item_id: current.id, method: 'system' });
+      }
+    } catch { /* user cancelled / capture failed — silent */ }
+    finally { setBusy(false); setShareOpen(false); }
+  }, [busy, captureCard, current, translation.code]);
 
-  // Stable navigation ref so the View Details button can navigate even after
-  // the popup unmounts.
-  const navRef = useRef(navigation);
-  useEffect(() => { navRef.current = navigation; }, [navigation]);
+  const saveToGallery = useCallback(async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const url = await captureCard();
+      // No explicit permission request: saveToLibraryAsync writes via Android
+      // MediaStore (no READ needed) and triggers the iOS add-only prompt backed
+      // by the expo-media-library strings already in app.json.
+      await MediaLibrary.saveToLibraryAsync(url);
+      if (current) logEvent('share', { content_type: 'achievement', item_id: current.id, method: 'save' });
+      setShareOpen(false);
+      showToast(t('shareVerse.saveAlert.title'));
+    } catch { setShareOpen(false); }
+    finally { setBusy(false); }
+  }, [busy, captureCard, current, translation.code, showToast, t]);
 
   if (!current) return null;
 
-  const onViewDetails = () => {
-    close();
-    // Defer to next frame so the modal can finish closing animation.
-    setTimeout(() => {
-      try { navRef.current.navigate('Achievement'); } catch { /* navigator may not yet have the route mounted */ }
-    }, 80);
+  const name = localizedAchievementName(current, translation.code);
+  const description = localizedAchievementRule(current, translation.code);
+  const cardProps = {
+    badgeId: current.id,
+    iconKey: current.iconKey,
+    rarity: current.rarity,
+    name,
+    description,
+    newAchievementLabel: ui.newAchievement,
   };
 
-  // The badge name inside the earned line renders rose + bold: build the line
-  // around a sentinel so the split works for every language's word order.
-  const badgeName = localizedAchievementName(current, translation.code);
-  const descParts = ui.earnedDescription('\u0000').split('\u0000');
-
   return (
-    <Modal transparent visible={visible && active} animationType="none" onRequestClose={close}>
-      <Animated.View style={[styles.backdrop, backdropStyle]}>
-        <TouchableOpacity activeOpacity={1} onPress={close} style={StyleSheet.absoluteFillObject} />
-      </Animated.View>
+    <Modal visible={show} animationType="slide" onRequestClose={close} statusBarTranslucent>
+      <LinearGradient colors={['#FFF6FA', '#FBE3EE']} style={StyleSheet.absoluteFillObject} />
+      <View style={[styles.root, { paddingTop: insets.top + 6, paddingBottom: insets.bottom + 16 }]}>
+        {/* Title only — no back button (per user). */}
+        <Text style={styles.headerTitle}>{ui.congratsTitle}</Text>
 
-      <View style={styles.centerWrap} pointerEvents="box-none">
-        <Animated.View style={[styles.card, settled ? SETTLED : cardStyle]}>
-          {/* CONGRATS — title at the very top, in Lora (per user). */}
-          <Text style={styles.congratsTitle}>{ui.congrats}</Text>
-
-          {/* Badge with the rotating sunburst centered behind it. */}
-          <View style={styles.badgeArea}>
-            <View style={styles.raysWrap} pointerEvents="none">
-              <Animated.View style={raysStyle}>
-                <Sunburst />
-              </Animated.View>
-            </View>
-            <Animated.View style={[styles.badgeWrap, badgeStyle]}>
-              <BadgeIcon
-                id={current.id}
-                iconKey={current.iconKey}
-                rarity={current.rarity}
-                size={120}
-                label={null}
-              />
-            </Animated.View>
+        <View style={styles.center}>
+          <View>
+            <BadgeCardArt {...cardProps} width={CARD_W} />
+            {/* Share button — overlaid, so it never appears in the exported
+                image. Tapping it opens the share / save actions. */}
+            <TouchableOpacity
+              style={[styles.shareFab, { top: CARD_W * 0.05, right: CARD_W * 0.05 }]}
+              activeOpacity={0.85}
+              onPress={() => setShareOpen(true)}
+              hitSlop={8}
+            >
+              <Feather name="share-2" size={19} color={ROSE} />
+            </TouchableOpacity>
           </View>
+        </View>
 
-          <Text style={styles.subtitle}>
-            {descParts.map((part, i) => (
-              <React.Fragment key={i}>
-                {part}
-                {i < descParts.length - 1 && <Text style={styles.subtitleName}>{badgeName}</Text>}
-              </React.Fragment>
-            ))}
-          </Text>
-
-          <TouchableOpacity onPress={close} activeOpacity={0.85} style={styles.okBtn}>
-            <Text style={styles.okText}>{ui.ok}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={onViewDetails} activeOpacity={0.7} style={styles.detailsBtn}>
-            <Text style={styles.detailsText}>{ui.viewDetails}</Text>
-          </TouchableOpacity>
-        </Animated.View>
+        <TouchableOpacity onPress={close} activeOpacity={0.9} style={styles.collectBtn}>
+          <Text style={styles.collectText}>{ui.collect}</Text>
+        </TouchableOpacity>
       </View>
+
+      {/* Off-screen full-resolution copy of the card — the capture source. */}
+      <View style={styles.offscreen} pointerEvents="none">
+        <ViewShot ref={shotRef} options={{ format: CAPTURE_FORMAT, quality: CAPTURE_QUALITY, result: 'tmpfile' }} style={{ width: CAPTURE_W }}>
+          <BadgeCardArt {...cardProps} width={CAPTURE_W} />
+        </ViewShot>
+      </View>
+
+      {toast ? (
+        <View style={[styles.toast, { bottom: insets.bottom + 90 }]} pointerEvents="none">
+          <Text style={styles.toastText}>{toast}</Text>
+        </View>
+      ) : null}
+
+      {/* Share / save actions — slides up when the Share button is tapped
+          (same idea as the verse share). The OS sheet from "Share" lists
+          Facebook / Instagram / X / etc.; "Save" writes to the photo library. */}
+      <Modal visible={shareOpen} transparent animationType="slide" onRequestClose={() => setShareOpen(false)}>
+        <Pressable style={styles.sheetBackdrop} onPress={() => setShareOpen(false)} />
+        <View style={[styles.sheet, { paddingBottom: insets.bottom + 14 }]}>
+          <View style={styles.sheetHandle} />
+          <TouchableOpacity style={styles.sheetRow} activeOpacity={0.75} onPress={shareSystem} disabled={busy}>
+            <Feather name="share-2" size={21} color={TXT} />
+            <Text style={styles.sheetRowText}>{t('common.share')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.sheetRow} activeOpacity={0.75} onPress={saveToGallery} disabled={busy}>
+            <Feather name="download" size={21} color={TXT} />
+            <Text style={styles.sheetRowText}>{t('shareVerse.btn.save')}</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </Modal>
   );
 }
 
-// 8-spoke peach sunburst behind the badge. Each ray is a trapezoid that
-// widens from inside (narrow, near the badge) to outside (wide, at the rim);
-// a single radial gradient fades opacity from solid near the center to fully
-// transparent at the edge so the rays bleed off into the card background.
-// Per user: 12 → 8 rays, each widened, and ~30% more transparent.
-function Sunburst() {
-  const W = 280;
-  const center = W / 2;
-  const innerR = 26;
-  const outerR = W / 2 - 4;
-  const halfIn = 6;      // 4 → 6 (wider — fewer rays, so each is broader)
-  const halfOut = 33;    // 22 → 33 (wider)
-  const rays: number[] = [];
-  for (let i = 0; i < 8; i++) rays.push(i * 45);
-  return (
-    <Svg width={W} height={W} viewBox={`0 0 ${W} ${W}`}>
-      <Defs>
-        <RadialGradient id="rayFade" cx="50%" cy="50%" r="50%">
-          <Stop offset="0%" stopColor="#F8B68C" stopOpacity={0.49} />
-          <Stop offset="55%" stopColor="#F8B68C" stopOpacity={0.245} />
-          <Stop offset="100%" stopColor="#F8B68C" stopOpacity={0} />
-        </RadialGradient>
-      </Defs>
-      {rays.map(angle => {
-        const rad = (angle * Math.PI) / 180;
-        const ortho = rad + Math.PI / 2;
-        const ix = center + Math.cos(rad) * innerR;
-        const iy = center + Math.sin(rad) * innerR;
-        const ox = center + Math.cos(rad) * outerR;
-        const oy = center + Math.sin(rad) * outerR;
-        const i1x = ix + Math.cos(ortho) * halfIn;
-        const i1y = iy + Math.sin(ortho) * halfIn;
-        const i2x = ix - Math.cos(ortho) * halfIn;
-        const i2y = iy - Math.sin(ortho) * halfIn;
-        const o1x = ox + Math.cos(ortho) * halfOut;
-        const o1y = oy + Math.sin(ortho) * halfOut;
-        const o2x = ox - Math.cos(ortho) * halfOut;
-        const o2y = oy - Math.sin(ortho) * halfOut;
-        return (
-          <Polygon
-            key={angle}
-            points={`${i1x},${i1y} ${o1x},${o1y} ${o2x},${o2y} ${i2x},${i2y}`}
-            fill="url(#rayFade)"
-          />
-        );
-      })}
-    </Svg>
-  );
-}
-
 const styles = StyleSheet.create({
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(20,16,28,0.55)' },
-  centerWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28 },
-  card: {
-    width: '100%',
-    maxWidth: 420,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingHorizontal: 24,
-    paddingTop: 30,
-    paddingBottom: 24,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    elevation: 12,
-    overflow: 'hidden',
+  root: { flex: 1, paddingHorizontal: 24 },
+  headerTitle: {
+    fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 27, color: ROSE,
+    letterSpacing: 0.4, marginLeft: 4, marginTop: 4,
   },
-  // CONGRATS — title at the top of the card, in Lora (per user).
-  congratsTitle: {
-    fontSize: 26,
-    fontFamily: FONTS.loraBold,
-    fontWeight: '600',                                                           // loraBold pairs with 600 (700 drops Lora on Android)
-    color: ROSE,
-    letterSpacing: 1.2,
-    textAlign: 'center',
-    marginBottom: 6,
-    // The 280-px sunburst overflows the 150-px badgeArea upward into the title's
-    // row; badgeArea is a LATER sibling so by default its rays paint OVER this
-    // title. Lift the title above the rays (zIndex + Android elevation).
-    zIndex: 2,
-    elevation: 2,
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  shareFab: {
+    position: 'absolute',
+    width: 38, height: 38, borderRadius: 19,
+    backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 6, elevation: 3,
   },
-  // Relative box holding the badge with the sunburst centered behind it.
-  // Kept BELOW the title in paint order so the overflowing rays sit behind it.
-  badgeArea: {
-    width: '100%',
-    height: 150,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
-    zIndex: 1,
+  collectBtn: {
+    height: 54, borderRadius: BTN_RADIUS, backgroundColor: ROSE,
+    alignItems: 'center', justifyContent: 'center',
+    marginHorizontal: 4,
+    shadowColor: ROSE, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.28, shadowRadius: 14, elevation: 5,
   },
-  raysWrap: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
+  collectText: { color: '#FFFFFF', fontFamily: FONTS.sansBold, fontWeight: '700', fontSize: 19, letterSpacing: 0.6 },
+  // Off-screen capture host — rendered but pushed far off-screen and invisible.
+  offscreen: { position: 'absolute', left: -10000, top: -10000, opacity: 0 },
+  toast: {
+    position: 'absolute', alignSelf: 'center',
+    backgroundColor: 'rgba(20,16,28,0.9)', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20,
   },
-  badgeWrap: { alignItems: 'center', justifyContent: 'center' },
-  subtitle: {
-    marginTop: 12,
-    textAlign: 'center',
-    fontSize: 18,
-    fontFamily: FONTS.lora,                                                      // Lora (per user)
-    color: TXT,
-    paddingHorizontal: 8,
-    lineHeight: 25,
-    // The 280-px sunburst overflows badgeArea (zIndex 1) downward into this
-    // line's row — lift the text above the rays, same as the title.
-    zIndex: 2,
-    elevation: 2,
+  toastText: { color: '#fff', fontSize: 14, fontFamily: FONTS.sansBold, fontWeight: '600', letterSpacing: 0.3 },
+  // Share actions bottom sheet.
+  sheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(20,16,28,0.4)' },
+  sheet: {
+    position: 'absolute', left: 0, right: 0, bottom: 0,
+    backgroundColor: '#FFFFFF', borderTopLeftRadius: 22, borderTopRightRadius: 22,
+    paddingHorizontal: 20, paddingTop: 10,
   },
-  // The badge's name inside the earned line — rose + bold (per user).
-  subtitleName: { color: ROSE, fontFamily: FONTS.loraBold, fontWeight: '600' },
-  okBtn: {
-    marginTop: 22,
-    backgroundColor: ROSE,
-    borderRadius: 16,                                                            // 32 → 16 (-50 % per user)
-    paddingVertical: 13.12,                                                      // 16 → 13.12 (-18 % height per user)
-    paddingHorizontal: 80,
-    minWidth: 200,
-    alignItems: 'center',
-    shadowColor: ROSE,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  okText: { color: '#fff', fontSize: 20.7, fontWeight: '700', letterSpacing: 0.5 },   // 18 → 20.7 (+15 % per user)
-  detailsBtn: { marginTop: 14, paddingVertical: 6 },
-  detailsText: { color: TXTSUB, fontSize: 15, textDecorationLine: 'underline' },
+  sheetHandle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(30,27,46,0.16)', marginBottom: 8 },
+  sheetRow: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingVertical: 15 },
+  sheetRowText: { fontSize: 17, color: TXT, fontFamily: FONTS.sansBold, fontWeight: '600', letterSpacing: 0.3 },
 });

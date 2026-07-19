@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, AccessibilityInfo } from 'react-native';
 import Svg, { Path, Defs, RadialGradient, Stop, Rect } from 'react-native-svg';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withDelay, withSequence,
-  cancelAnimation, Easing, runOnJS,
+  cancelAnimation, Easing, runOnJS, type SharedValue,
 } from 'react-native-reanimated';
 import { useIsFocused } from '@react-navigation/native';
 import { ROSE, BTN_RADIUS, TXT, FONTS } from '../../constants/theme';
@@ -29,6 +29,16 @@ import { RHYTHM_STEPS, isRhythmStepDone, type RhythmDotState } from '../../state
 
 const RETIRED_LAV = '#866BC059';   // LAV @ 35% — "graduated" gospel steps
 const SEGMENTS = RHYTHM_STEPS.length;   // 5
+
+// Completion choreography timeline (all from the moment focus lands back):
+//   0 ──300──▶ segment sweep (1200ms, doubled per user) ──▶ 1500:
+//   bubble pop on the whole card (400ms) + old text dissolves like sand
+//   (380ms) ──▶ new task text assembles in (420ms).
+const SWEEP_DELAY = 300;
+const SWEEP_MS = 1200;                       // 600 → 1200 (half speed per user)
+const SWEEP_END = SWEEP_DELAY + SWEEP_MS;    // 1500
+const SAND_OUT_MS = 380;
+const SAND_IN_MS = 420;
 
 // Silk backdrop — five soft radial color pools (theme pinks/lavenders/white)
 // that overlap with no hard boundaries, mesh-gradient style (per user: "more
@@ -59,10 +69,10 @@ function SegmentFill({ filled, animateAt, x, segW, color, reduceMotion }: {
     cancelAnimation(w);
     if (shouldSweep) {
       // The sweep fires on focus regain (completion happened inside a flow).
-      // Hold 300ms so it starts AFTER the navigation transition lands — the
-      // user actually SEES it — then play at 0.9× (540 → 600ms), per user.
+      // Hold SWEEP_DELAY so it starts AFTER the navigation transition lands —
+      // the user actually SEES it — then sweep over SWEEP_MS.
       w.value = 0;
-      w.value = withDelay(300, withTiming(segW, { duration: 600, easing: Easing.out(Easing.cubic) }));
+      w.value = withDelay(SWEEP_DELAY, withTiming(segW, { duration: SWEEP_MS, easing: Easing.out(Easing.cubic) }));
     } else {
       w.value = filled ? segW : 0;   // snap — includes layout width changes
     }
@@ -124,6 +134,10 @@ export default function DailyRhythmBar({
   const wasAllDone = useRef(allDone);
   const waveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (waveTimer.current) clearTimeout(waveTimer.current); }, []);
+  // Armed by the completion effect for the text effect running in the SAME
+  // commit — routes that text change through the ceremony instead of the
+  // plain crossfade.
+  const ceremonyArm = useRef(false);
   useEffect(() => {
     if (!isFocused) return;                       // reconcile only while visible
     const prev = snap.current;
@@ -134,11 +148,16 @@ export default function DailyRhythmBar({
     const flipped = RHYTHM_STEPS.map((_, k) => !isRhythmStepDone(prev.dots[k]) && isRhythmStepDone(dots[k]));
     if (flipped.some(Boolean)) {
       setCelebrates(c => c.map((v, k) => (flipped[k] ? v + 1 : v)));
-      // Whole-day sparkle chains once the segment sweep lands (300ms hold
-      // + 600ms sweep ≈ 900ms).
+      // A completion just landed — if the suggestion text changes in this same
+      // commit, the text effect below runs the full ceremony (wait for sweep →
+      // bubble → sand swap) instead of the plain crossfade. Cleared next tick
+      // so an unrelated later text change can't inherit it.
+      ceremonyArm.current = true;
+      setTimeout(() => { ceremonyArm.current = false; }, 50);
+      // Whole-day sparkle chains once the segment sweep lands.
       if (allDone && !wasComplete) {
         if (waveTimer.current) clearTimeout(waveTimer.current);
-        waveTimer.current = setTimeout(() => setWaveAt(w => w + 1), 1200);
+        waveTimer.current = setTimeout(() => setWaveAt(w => w + 1), SWEEP_END + 300);
       }
     }
   }, [isFocused, todayYmd, dots, allDone]);
@@ -182,10 +201,68 @@ export default function DailyRhythmBar({
     setShown({ ...latest.current });
   };
   useEffect(() => () => { if (swapWatchdog.current) clearTimeout(swapWatchdog.current); }, []);
+
+  // ── Completion ceremony: sweep lands → bubble pop + sand text swap ────────
+  // Every animated value is a pure transform/opacity driven on the UI thread —
+  // no layout thrash, low-end-device friendly. Each phase transition has a
+  // runOnJS completion AND a timer watchdog (dropped runOnJS = stuck card).
+  const cardScale = useSharedValue(1);
+  const sand = useSharedValue(0);                        // master progress of the active sand phase
+  const [sandPhase, setSandPhase] = useState<'idle' | 'out' | 'in'>('idle');
+  const sandPhaseRef = useRef<'idle' | 'out' | 'in'>('idle');
+  const ceremonyTimers = useRef<Array<ReturnType<typeof setTimeout>>>([]);
+  useEffect(() => () => { ceremonyTimers.current.forEach(clearTimeout); }, []);
+  const setPhase = (p: 'idle' | 'out' | 'in') => { sandPhaseRef.current = p; setSandPhase(p); };
+
+  const endCeremony = () => {
+    if (sandPhaseRef.current !== 'in') return;           // watchdog + callback are both routed here
+    setPhase('idle');
+    msgOpacity.value = 1; msgY.value = 0;
+  };
+  const beginSandIn = () => {
+    if (sandPhaseRef.current !== 'out') return;
+    setShown({ ...latest.current });                     // newest suggestion wins
+    setPhase('in');
+    sand.value = 0;
+    sand.value = withTiming(1, { duration: SAND_IN_MS, easing: Easing.out(Easing.quad) }, (fin) => {
+      if (fin) runOnJS(endCeremony)();
+    });
+    ceremonyTimers.current.push(setTimeout(endCeremony, SAND_IN_MS + 250));
+  };
+  const startCeremony = () => {
+    ceremonyTimers.current.push(setTimeout(() => {
+      // Bubble pop: a damped grow-shrink oscillation, each swing softer than
+      // the last — reads as a bubble "boing". ~400ms total.
+      cancelAnimation(cardScale);
+      cardScale.value = withSequence(
+        withTiming(1.045, { duration: 130, easing: Easing.out(Easing.quad) }),
+        withTiming(0.985, { duration: 110, easing: Easing.inOut(Easing.quad) }),
+        withTiming(1.012, { duration: 90,  easing: Easing.inOut(Easing.quad) }),
+        withTiming(1,     { duration: 70,  easing: Easing.out(Easing.quad) }),
+      );
+      // Old text crumbles into sand while the card pops.
+      setPhase('out');
+      sand.value = 0;
+      sand.value = withTiming(1, { duration: SAND_OUT_MS, easing: Easing.in(Easing.quad) }, (fin) => {
+        if (fin) runOnJS(beginSandIn)();
+      });
+      ceremonyTimers.current.push(setTimeout(beginSandIn, SAND_OUT_MS + 250));
+    }, SWEEP_END));
+  };
+  const bubbleStyle = useAnimatedStyle(() => ({ transform: [{ scale: cardScale.value }] }));
+
   useEffect(() => {
     latest.current = { text };
     if (shown.text === text) return;
     if (reduceMotion) { setShown({ text }); return; }
+    if (ceremonyArm.current) {
+      // A step just completed AND the suggestion changed → full ceremony,
+      // timed off the segment sweep. The old text stays on screen until then.
+      ceremonyArm.current = false;
+      startCeremony();
+      return;
+    }
+    if (sandPhaseRef.current !== 'idle') return;         // mid-ceremony: latest.current will be picked up at swap
     cancelAnimation(msgOpacity); cancelAnimation(msgY);
     msgOpacity.value = withTiming(0, { duration: 160 }, (fin) => { if (fin) runOnJS(applyLatest)(); });
     msgY.value = withTiming(-6, { duration: 160 });
@@ -197,8 +274,10 @@ export default function DailyRhythmBar({
     swapWatchdog.current = setTimeout(applyLatest, 400);
   }, [text]);   // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    // `shown` just swapped → slide the new line in from below.
-    if (reduceMotion) { msgOpacity.value = 1; msgY.value = 0; return; }
+    // `shown` just swapped → slide the new line in from below. During a
+    // ceremony the swap comes from beginSandIn and the grains own the motion —
+    // the container must hold still.
+    if (reduceMotion || sandPhaseRef.current !== 'idle') { msgOpacity.value = 1; msgY.value = 0; return; }
     msgY.value = 6;
     msgOpacity.value = withDelay(40, withTiming(1, { duration: 200 }));
     msgY.value = withDelay(40, withTiming(0, { duration: 200 }));
@@ -224,6 +303,8 @@ export default function DailyRhythmBar({
 
   return (
     <View style={styles.wrap}>
+      {/* Bubble-pop wrapper — pure transform, never re-layouts the card. */}
+      <Animated.View style={bubbleStyle}>
       <TouchableOpacity
         style={styles.bar}
         activeOpacity={0.85}
@@ -272,15 +353,21 @@ export default function DailyRhythmBar({
         <View style={styles.topZone}>
           <Animated.View style={[styles.msg, msgStyle]}>
             {/* Two lines allowed (longer de/fr strings wrap and the card grows
-                with them); adjustsFontSizeToFit still guards the extremes. */}
-            <Text
-              style={styles.title}
-              numberOfLines={2}
-              adjustsFontSizeToFit
-              minimumFontScale={0.8}
-            >
-              {shown.text}
-            </Text>
+                with them); adjustsFontSizeToFit still guards the extremes.
+                During the ceremony the line renders as per-character sand
+                grains instead (same metrics, so the layout barely shifts). */}
+            {sandPhase === 'idle' ? (
+              <Text
+                style={styles.title}
+                numberOfLines={2}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+              >
+                {shown.text}
+              </Text>
+            ) : (
+              <SandTitle text={shown.text} mode={sandPhase} progress={sand} />
+            )}
           </Animated.View>
           {onPress != null && (
             <View style={styles.rightZone}>
@@ -334,6 +421,7 @@ export default function DailyRhythmBar({
           </View>
         </View>
       </TouchableOpacity>
+      </Animated.View>
 
       <Modal
         visible={!!hint}
@@ -348,6 +436,85 @@ export default function DailyRhythmBar({
           </View>
         </TouchableOpacity>
       </Modal>
+    </View>
+  );
+}
+
+// ── Sand text ────────────────────────────────────────────────────────────────
+// The suggestion line rendered as individual character "grains", all driven by
+// ONE master shared value — each grain derives its own staggered window from
+// deterministic per-index pseudo-randoms (no Math.random in this repo). Words
+// stay unbreakable (a row View per word) so wrapping matches the real Text;
+// CJK characters are their own tokens, which is also the correct wrap rule.
+type SandGrain = { ch: string; delayFrac: number; dx: number; dy: number };
+type SandToken = { space: boolean; grains: SandGrain[] };
+
+// Deterministic 0..1 hash (same sin-hash family the codebase already uses).
+const grainRnd = (n: number): number => {
+  const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+};
+
+const CJK_RE = /[\u2E80-\u9FFF\uF900-\uFAFF\u3000-\u303F\uFF00-\uFFEF]/;
+
+function tokenizeSand(text: string): SandToken[] {
+  const tokens: SandToken[] = [];
+  let word: SandGrain[] = [];
+  let index = 0;
+  const flush = () => { if (word.length) { tokens.push({ space: false, grains: word }); word = []; } };
+  for (const ch of text) {
+    const i = index++;
+    if (/\s/.test(ch)) { flush(); tokens.push({ space: true, grains: [] }); continue; }
+    const grain: SandGrain = {
+      ch,
+      delayFrac: grainRnd(i * 7 + 1),                       // scatter order, not left→right
+      dx: (grainRnd(i * 13 + 5) - 0.5) * 12,                // sideways drift −6..+6
+      dy: -(4 + grainRnd(i * 29 + 11) * 7),                 // upward drift −4..−11
+    };
+    if (CJK_RE.test(ch)) { flush(); tokens.push({ space: false, grains: [grain] }); }
+    else word.push(grain);
+  }
+  flush();
+  return tokens;
+}
+
+function SandChar({ grain, mode, progress }: { grain: SandGrain; mode: 'out' | 'in'; progress: SharedValue<number> }) {
+  const style = useAnimatedStyle(() => {
+    // Each grain animates over a 55% window of the master timeline, offset by
+    // its own delay fraction — the line crumbles/assembles grain by grain.
+    const span = 0.55;
+    const p = Math.min(1, Math.max(0, (progress.value - grain.delayFrac * (1 - span)) / span));
+    if (mode === 'out') {
+      return {
+        opacity: 1 - p,
+        transform: [{ translateX: grain.dx * p }, { translateY: grain.dy * p }, { scale: 1 - 0.3 * p }],
+      };
+    }
+    return {
+      opacity: p,
+      transform: [
+        { translateX: grain.dx * 0.5 * (1 - p) },
+        { translateY: -grain.dy * 0.5 * (1 - p) },        // assembles rising INTO place
+        { scale: 0.85 + 0.15 * p },
+      ],
+    };
+  });
+  return <Animated.Text style={[styles.sandChar, style]}>{grain.ch}</Animated.Text>;
+}
+
+function SandTitle({ text, mode, progress }: { text: string; mode: 'out' | 'in'; progress: SharedValue<number> }) {
+  const tokens = useMemo(() => tokenizeSand(text), [text]);
+  return (
+    <View style={styles.sandWrap}>
+      {tokens.map((tok, i) =>
+        tok.space
+          ? <View key={i} style={styles.sandSpace} />
+          : (
+            <View key={i} style={styles.sandWord}>
+              {tok.grains.map((g, k) => <SandChar key={k} grain={g} mode={mode} progress={progress} />)}
+            </View>
+          ),
+      )}
     </View>
   );
 }
@@ -370,11 +537,18 @@ const styles = StyleSheet.create({
   },
   cardBg: { position: 'absolute', top: 0, left: 0 },
   // TOP zone: auto-height (1–2 title lines), split into title | Start (25%).
-  topZone: { flexDirection: 'row', alignItems: 'center' },
+  // marginBottom 3 = +3px after the text block, before the progress bar (per user).
+  topZone: { flexDirection: 'row', alignItems: 'center', marginBottom: 3 },
   // The right 25% belongs entirely to the Start pill, centered on the text.
   rightZone: { width: '25%', justifyContent: 'center', alignItems: 'flex-end', paddingLeft: 4 },
   msg: { flex: 1, flexDirection: 'row', alignItems: 'center' },
-  title: { flex: 1, fontSize: 17.5, lineHeight: 22.8, fontWeight: '400', color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.5, marginLeft: 3 },   // 17.5, Lato regular 400, +3px left inset (per user)
+  title: { flex: 1, fontSize: 16.1, lineHeight: 21, fontWeight: '400', color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.5, marginLeft: 3 },   // 17.5 → 16.1 (-8% per user), Lato regular 400, +3px left inset
+  // Sand-mode counterparts — SAME metrics as `title` so the per-char layout
+  // matches the native Text closely and the idle↔sand swap doesn't jump.
+  sandWrap: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', marginLeft: 3 },
+  sandWord: { flexDirection: 'row' },
+  sandSpace: { width: 4.4 },
+  sandChar: { fontSize: 16.1, lineHeight: 21, fontWeight: '400', color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.5 },
   // Decorative Start pill (whole card is tappable) — rose, canonical CTA
   // radius, bold label like every other rose button.
   startBtn: {

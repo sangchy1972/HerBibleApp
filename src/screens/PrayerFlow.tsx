@@ -1403,7 +1403,12 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
           <NotifRationaleScreen
             onDismiss={() => {
               markNotifRationaleShown();
-              navigation.goBack();
+              // Continue INTO the weekly celebration (sapling/fire + the Gospel
+              // & Psalm next card) — this used to goBack(), which silently
+              // swallowed the whole completion screen on every first-ever
+              // prayer with notifications off.
+              setShowNotifRationale(false);
+              setShowWeekly(true);
             }}
           />
         </View>

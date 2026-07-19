@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import LottieView from 'lottie-react-native';
@@ -102,7 +103,7 @@ interface Props {
 export default function WeeklyProgressView({ morning, onOpenReminder, onBack, onStartGospelPsalm }: Props) {
   const t = useT();
   const { lang } = useUILanguage();
-  const { height: winH } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const { recordOn, mDone, eDone } = usePrayer();
   const { count, weekFlags, bothFlags, todayIdx } = countPrayersThisWeek(recordOn);
   const accent = morning ? ROSE : LAV;
@@ -168,12 +169,32 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack, on
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-      <Hero dayComplete={dayComplete} height={winH * 0.38} />
+      {/* Headline at the very top of the page (reference layout, per user) —
+          the celebration title now frames the whole screen, not the card. */}
+      <Animated.Text
+        entering={FadeIn.duration(360)}
+        style={[styles.pageTitle, { marginTop: insets.top + 18 }]}
+      >
+        {headline}
+      </Animated.Text>
 
+      {/* One translucent white card holding the lottie + the "Your Nth day"
+          line + the weekday calendar (reference layout, per user). */}
       <Animated.View
         entering={SlideInDown.duration(500).delay(200).easing(Easing.out(Easing.cubic))}
         style={styles.card}
       >
+        <LottieView
+          source={dayComplete ? FIRE_LOTTIE : HERO_LOTTIE}                       // both prayers done = streak fire; first of the day = growing sapling (per user)
+          autoPlay
+          loop={dayComplete}                                                     // fire LOOPS (its end frame is empty → looked like it vanished); the sapling plays once and holds its grown final frame
+          style={styles.heroLottie}
+        />
+
+        <Text style={styles.sub}>
+          {t('weekly.subPrefix')} <Text style={[styles.subStrong, { color: accent }]}>{ordinalFor(lang, count)}</Text> {t('weekly.subSuffix')}
+        </Text>
+
         <View style={styles.dayRow}>
           {DAY_LABELS.map((d, i) => {
             const isToday = i === todayIdx;
@@ -202,11 +223,6 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack, on
             );
           })}
         </View>
-
-        <Text style={styles.headline}>{headline}</Text>
-        <Text style={styles.sub}>
-          {t('weekly.subPrefix')} <Text style={[styles.subStrong, { color: accent }]}>{ordinalFor(lang, count)}</Text> {t('weekly.subSuffix')}
-        </Text>
 
         {!remindersOn && (
           <TouchableOpacity onPress={onOpenReminder} activeOpacity={0.85} style={[styles.reminderBtn, { backgroundColor: accent }]}>
@@ -299,19 +315,6 @@ function BackgroundDecor({ morning }: { morning: boolean }) {
   );
 }
 
-function Hero({ dayComplete, height }: { dayComplete: boolean; height: number }) {
-  return (
-    <View style={[styles.hero, { height }]}>
-      <LottieView
-        source={dayComplete ? FIRE_LOTTIE : HERO_LOTTIE}                         // both prayers done = streak fire; first of the day = growing sapling (per user)
-        autoPlay
-        loop={dayComplete}                                                       // fire LOOPS so it keeps burning (its end frame is empty → looked like it vanished); the sapling still plays once and holds its grown final frame
-        style={{ width: 195.5, height: 195.5 }}                                  // 230 → 195.5 (-15 % per user)
-      />
-    </View>
-  );
-}
-
 // Streak-fire glyph for the calendar's fully-completed days (both prayers
 // done). Small monochrome flame in the slot accent — distinct from the
 // praying-hands used for partially-done days.
@@ -382,13 +385,17 @@ const styles = StyleSheet.create({
   // Bottom padding so the last CTA clears the home indicator when the content
   // scrolls on small screens; on tall screens it's invisible whitespace.
   scrollContent: { paddingBottom: 28 },
-  hero: {
-    // height set inline (38% of the window in dp — see the render comment).
-    marginTop: 30,                                                               // +30 px from the top edge per user
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'transparent',
+  // Page headline — top of the screen, above the card (reference layout).
+  pageTitle: {
+    fontSize: 27,
+    fontWeight: '600',                                                            // project rule: loraBold + 600 (700 → Android system sans)
+    fontFamily: FONTS.loraBold,
+    color: TXT,
+    textAlign: 'center',
+    paddingHorizontal: 24,
   },
+  // Both lotties render at ONE unified size (fire was 195.5 → -15 % per user).
+  heroLottie: { width: 166, height: 166 },
   placeholderTag: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -415,19 +422,24 @@ const styles = StyleSheet.create({
   blobC: { width: 300, height: 300, top: '18%', right: -60 },
   blobD: { width: 360, height: 360, bottom: -80, left: -100 },
   blobE: { width: 240, height: 240, bottom: '12%', right: -50 },
+  // Translucent white card (reference layout): lottie + "Your Nth day" line +
+  // weekday calendar live together. Kept ~25 % shorter than the reference by
+  // the compact lottie + paddings.
   card: {
-    marginTop: -22,                                                              // -32 → -22 (+10 px gap below the lottie per user)
+    marginTop: 22,
     marginHorizontal: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.68)',
+    borderRadius: 24,
     paddingHorizontal: 22,
-    paddingTop: 22,
-    paddingBottom: 22,
+    paddingTop: 18,
+    paddingBottom: 20,
+    alignItems: 'center',
   },
   dayRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 22,
+    alignSelf: 'stretch',
+    marginTop: 18,
   },
   dayCircle: {
     width: 38,
@@ -445,25 +457,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#F4D58A',
   },
   dayLetter: { fontSize: 13, color: TXTSUB, fontWeight: '600' },
-  headline: {
-    fontSize: 22,
-    fontWeight: '600',                                                            // project rule: loraBold + 600 (700 → Android system sans)
-    fontFamily: FONTS.loraBold,                                                   // Lora bold per user
-    color: TXT,
-    textAlign: 'center',
-    marginBottom: 6,
-  },
   sub: {
     fontSize: 18,
     color: TXT,
     textAlign: 'center',
-    marginBottom: 22,
+    marginTop: 6,
   },
   subStrong: { fontWeight: '700' },
   reminderBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    alignSelf: 'stretch',
     gap: 14,
+    marginTop: 18,
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderRadius: 10.8,                                                          // 18 → 10.8 (-40 % per user)

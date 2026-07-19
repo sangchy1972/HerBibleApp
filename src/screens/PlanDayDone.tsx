@@ -22,7 +22,7 @@ const LOTTIE_PLAN_CONGRATS = require('../../assets/lottie/plan-congrats.json');
 export default function PlanDayDone({ route, navigation }: RootStackScreenProps<'PlanDayDone'>) {
   const t = useT();
   const insets = useSafeAreaInsets();
-  const { slug, day } = route.params;
+  const { slug, day, firstOfDay } = route.params;
   const { getSummary } = useFeaturedPlans();
   const { planProgress } = usePlanCompletion();
   const summary = getSummary(slug);
@@ -55,15 +55,21 @@ export default function PlanDayDone({ route, navigation }: RootStackScreenProps<
     Share.share({ message }).catch(() => {});
   };
 
-  // Lands on this plan's FeaturedPlanDetail (already in the stack underneath
-  // the modal: [Tabs, FeaturedPlanDetail, PlanDayDone]). The previous
-  // popToTop sent the user back to the Plan tab, which felt like losing
-  // their place — they wanted to stay inside the plan they just advanced.
-  const onContinue = () => navigation.goBack();
+  // Where leaving this screen lands (Continue AND the X — one rule):
+  //   • the day's FIRST plan completion → the home tab, so the rhythm bar's
+  //     plan segment sweep + completion ceremony plays in front of the user
+  //     (navigate('Tabs') pops FeaturedPlanDetail + this modal off the stack);
+  //   • otherwise → back to this plan's FeaturedPlanDetail (already in the
+  //     stack underneath: [Tabs, FeaturedPlanDetail, PlanDayDone]) — popToTop
+  //     used to feel like losing their place.
+  const onContinue = () => {
+    if (firstOfDay) navigation.navigate('Tabs', { screen: 'prayer' });
+    else navigation.goBack();
+  };
 
   return (
     <View style={styles.root}>
-      <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.closeBtn, { top: insets.top + 12 }]} hitSlop={10}>
+      <TouchableOpacity onPress={onContinue} style={[styles.closeBtn, { top: insets.top + 12 }]} hitSlop={10}>
         <Feather name="x" size={24} color={TXT} />
       </TouchableOpacity>
 

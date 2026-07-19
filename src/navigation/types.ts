@@ -51,7 +51,7 @@ export type RootStackParamList = {
   // Jan 2026 redesign). Removed from the param list to prevent code
   // accidentally navigating to a dead screen.
   PlanVerseRead: { focus: BibleFocus; planSlug: string; day: number };
-  PlanDayDone: { slug: string; day: number };
+  PlanDayDone: { slug: string; day: number; firstOfDay?: boolean };
 };
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> =

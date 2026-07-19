@@ -78,7 +78,7 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
   const t = useT();
   const { slug, day } = route.params;
   const { loadPlan, loadedPlans } = useFeaturedPlans();
-  const { markDayComplete } = usePlanCompletion();
+  const { markDayComplete, records } = usePlanCompletion();
   const { current: translation } = useTranslation();
   const { setHighlight, getColor } = useHighlights();
   const { verses: savedList, addVerse, removeVerse, hasVerse } = useSavedVerses();
@@ -181,8 +181,17 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
     if (page < pages.length - 1) {
       goTo(page + 1);
     } else if (plan) {
+      // Day's FIRST plan completion? Computed BEFORE the write (afterwards
+      // lastDayYmd is already today). Must also be a genuinely new (slug, day)
+      // — re-walking an already-done day is a no-op write and must not claim
+      // the "first of today" celebration. PlanDayDone routes home on it so the
+      // rhythm bar's plan segment sweeps in front of the user.
+      const d = new Date();
+      const todayYmd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const firstOfDay = !records[slug]?.completedDays.includes(day)
+        && !Object.values(records).some(r => !!r && r.lastDayYmd === todayYmd);
       markDayComplete(slug, day, plan.duration);
-      navigation.replace('PlanDayDone', { slug, day });
+      navigation.replace('PlanDayDone', { slug, day, firstOfDay });
       // Interstitial at the end of a plan day's reading — shows over the
       // just-pushed PlanDayDone screen; frequency-capped + remove-ads-aware.
       maybeShowInterstitial('plan_end');

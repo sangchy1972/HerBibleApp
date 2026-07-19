@@ -61,6 +61,7 @@ const LEGAL_TERMS_URL = 'https://covers.everlandapps.com/legal/support.html';
 const LEGAL_PRIVACY_URL = 'https://covers.everlandapps.com/legal/privacy.html';
 
 const TRIAL_SHEET_H = Math.round(Dimensions.get('window').height * 0.56);
+const HERO_MAX_H = Math.round(Dimensions.get('window').height * 0.34);
 const GIFT_BOX = require('../../assets/paywall/gift-box.png');
 const HERO_IMG = require('../../assets/onboarding-hero.webp');
 // Full-screen celebration behind the intro step. This is the SAME animation as
@@ -482,7 +483,9 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
 
           {stepName === 'intro' && (
             <View style={styles.center}>
-              <Image source={HERO_IMG} style={styles.hero} resizeMode="cover" />
+              <View style={styles.hero}>
+                <Image source={HERO_IMG} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+              </View>
               <Text style={[styles.h, { textAlign: 'center', marginTop: 22 }]}>{t('onboarding.intro.title')}</Text>
               <Text style={[styles.sub, { textAlign: 'center', paddingHorizontal: 16 }]}>{t('onboarding.intro.sub')}</Text>
             </View>
@@ -548,7 +551,9 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
 
           {stepName === 'encourage' && (
             <View style={styles.center}>
-              <Image source={HERO_IMG} style={styles.hero} resizeMode="cover" />
+              <View style={styles.hero}>
+                <Image source={HERO_IMG} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+              </View>
               <Text style={[styles.h, { textAlign: 'center', marginTop: 22 }]}>{t('onboarding.encourage.title')}</Text>
               {/* "2 million women" is pulled out of the sentence via a {highlight}
                   token so it can be rendered bigger/bold/rose in EVERY language
@@ -938,10 +943,13 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 17, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4 },   // 15.5 → 17 (2nd +10 %)
   chipTextSel: { color: '#FFFFFF', fontWeight: '700' },
   // Encouragement interstitial.
-  // aspectRatio matches the hero photo EXACTLY (1280×980), so resizeMode="cover"
-  // fills the box without cropping a single pixel — per user "不用切割". Corner
-  // radius unchanged.
-  hero: { width: '100%', aspectRatio: 1.3061, borderRadius: 30, marginTop: 6 },
+  // The hero is a WRAPPER VIEW that owns the layout (the animated-webp
+  // photo ignored the Image's aspectRatio box on device and blew up to
+  // full-screen portrait, pushing the copy + CTA out of view — P0). The
+  // image absolute-fills it with resizeMode="cover". aspectRatio matches
+  // the 1280×980 source; HERO_MAX_H caps it at 34% of the screen so the
+  // title, subtitle and Continue always fit above the fold on EVERY device.
+  hero: { width: '100%', aspectRatio: 1.3061, maxHeight: HERO_MAX_H, borderRadius: 30, marginTop: 6, overflow: 'hidden' },
   // Time-picker rows (reminder step).
   timeRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

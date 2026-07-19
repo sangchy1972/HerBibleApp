@@ -18,6 +18,6 @@ export default function TabSection({
   style?: StyleProp<ViewStyle>;
   children: React.ReactNode;
 }) {
-  const animStyle = useTabFocusEntrance(delay);
-  return <Animated.View style={[style, animStyle]}>{children}</Animated.View>;
+  const { style: animStyle, onLayout } = useTabFocusEntrance(delay);
+  return <Animated.View style={[style, animStyle]} onLayout={onLayout}>{children}</Animated.View>;
 }

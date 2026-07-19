@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { LayoutChangeEvent } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   useSharedValue,
@@ -64,6 +65,7 @@ export function useTabFocusEntrance(delay = 0) {
   // element type so the swap doesn't remount the subtree.
   // ─────────────────────────────────────────────────────────────────────────
   const [settled, setSettled] = useState(false);
+  const settledRef = useRef(false);   // synchronous mirror of `settled` for the onLayout callback below
 
   // Landing the view back on plain RN has ONE hard requirement: Reanimated's
   // LAST native write must already be the resting value.
@@ -79,16 +81,19 @@ export function useTabFocusEntrance(delay = 0) {
   // Cancelling and assigning the final values makes Reanimated write 1 / 0
   // natively itself, so the hand-off is clean no matter who won the race.
   const settle = useCallback(() => {
+    if (settledRef.current) return;
     cancelAnimation(opacity);
     cancelAnimation(translateY);
     opacity.value = 1;
     translateY.value = 0;
+    settledRef.current = true;
     setSettled(true);
   }, [opacity, translateY]);
 
   useFocusEffect(useCallback(() => {
     const d = delay * STAGGER_SCALE;
     // Re-arm: hand the view back to Reanimated for this focus's play-through.
+    settledRef.current = false;
     setSettled(false);
     cancelAnimation(translateY);
     cancelAnimation(opacity);
@@ -123,7 +128,34 @@ export function useTabFocusEntrance(delay = 0) {
     transform: [{ translateY: translateY.value }],
   }));
 
-  return settled ? RESTING_STYLE : animStyle;
+  // ─────────────────────────────────────────────────────────────────────────
+  // THE REMAINING WINDOW (the "new-user taps do nothing" report).
+  //
+  // The settle above hands the view back to RN once the entrance FINISHES.
+  // But there's a dead window BEFORE that: if a sibling ABOVE this section
+  // grows (async content landing — a verse hero, a rhythm bar, covers) while
+  // Reanimated still owns this view, our native touch region stays pinned to
+  // the pre-growth position. The card is drawn in its new spot but every tap
+  // lands where it used to be → nothing happens. New users hit this constantly
+  // because they tap immediately, on a cold start where async content is still
+  // streaming in.
+  //
+  // onLayout fires from the shadow tree (independent of Reanimated's native
+  // prop writes), so a change in our top edge `y` is a precise signal that a
+  // sibling grew. The moment that happens we settle EARLY — detaching to plain
+  // RN so hit-testing snaps to the real position. The slide is cut a hair
+  // short only in the exact scenario that would otherwise break taps; the
+  // common (no-growth) case still plays the full ceremony.
+  // ─────────────────────────────────────────────────────────────────────────
+  const lastY = useRef<number | null>(null);
+  const onLayout = useCallback((e: LayoutChangeEvent) => {
+    const y = e.nativeEvent.layout.y;
+    const prev = lastY.current;
+    lastY.current = y;
+    if (prev !== null && Math.abs(y - prev) > 0.5) settle();
+  }, [settle]);
+
+  return { style: settled ? RESTING_STYLE : animStyle, onLayout };
 }
 
 // Resets the given scroll ref to y=0 every time the screen is focused. Kept

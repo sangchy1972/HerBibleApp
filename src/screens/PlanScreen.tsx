@@ -218,7 +218,12 @@ export default function PlanScreen() {
   // this is a no-op for them — their state is preserved.
   useEffect(() => {
     if (resetSignal !== undefined) {
-      setTab(route.params?.tab ?? 'current');
+      const nextTab = route.params?.tab ?? 'current';
+      setTab(nextTab);
+      // Bump the fade key in the SAME commit as the tab change so the entrance
+      // replays over the tab we're landing on (e.g. home's "More Plans" →
+      // Explore) rather than over whatever tab was showing before.
+      setFadeKey(k => k + 1);
       scrollRef.current?.scrollTo({ y: 0, animated: false });
     }
   }, [resetSignal]);

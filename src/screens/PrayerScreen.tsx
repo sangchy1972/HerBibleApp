@@ -32,7 +32,6 @@ import GospelPsalmCards from '../components/GospelPsalmCards';
 import { dailyLabels } from '../constants/dailyVersesLabels';
 import { localizeBookName, englishBookName, chaptersInBook } from '../constants/bibleBookNames';
 import { parseReference, localizeReference } from '../services/parseReference';
-import { useTabFocusScrollReset } from '../components/shared/useTabFocusEntrance';
 import { useT } from '../i18n/useT';
 import ShareVerseSheet from '../components/ShareVerseSheet';
 import CommentsSheet from '../components/CommentsSheet';
@@ -490,11 +489,24 @@ function VerseHeroCard({ cardRef, morning, ymd, canStart, canReplay, readyToSwit
 }
 
 export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
-  // Tab-entrance scroll-to-top — paired with the per-section <TabSection>
-  // animations below so the user always lands at the top of the screen and
-  // the content lifts into place in waves on every focus.
+  // Scroll-to-top ONLY on a real tab-bar press — NOT on every focus. Returning
+  // from a pushed screen (a plan detail, Streak, Gospel & Psalm) re-focuses
+  // this tab WITHOUT a tab press, so the previous scroll offset is preserved
+  // and the user lands right where they left — a real "back" feel (per user).
+  // (The per-section <TabSection> entrance still replays on every focus.)
   const mainScrollRef = useRef<ScrollView>(null);
-  useTabFocusScrollReset(mainScrollRef);
+  const resetScrollOnFocus = useRef(false);
+  useEffect(() => {
+    const unsub = navigation.addListener('tabPress', () => { resetScrollOnFocus.current = true; });
+    return unsub;
+  }, [navigation]);
+  useFocusEffect(useCallback(() => {
+    if (resetScrollOnFocus.current) {
+      resetScrollOnFocus.current = false;
+      mainScrollRef.current?.scrollTo({ y: 0, animated: false });
+    }
+    return undefined;
+  }, []));
   const t = useT();
   const insets = useSafeAreaInsets();
   // The header chip and the StreakScreen it routes to must show the same

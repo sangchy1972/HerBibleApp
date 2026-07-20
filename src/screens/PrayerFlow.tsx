@@ -130,15 +130,27 @@ function ScrollWheel<T>({ values, value, onChange, format }: {
   );
 }
 
-function TimePickerSheet({ onConfirm, onClose }: { onConfirm: (hour: number, minute: number) => void; onClose: () => void }) {
+function TimePickerSheet({ slot, onConfirm, onClose }: { slot: 'morning' | 'night'; onConfirm: (hour: number, minute: number) => void; onClose: () => void }) {
   const t = useT();
+  const night = slot === 'night';
   const [hour, setHour] = useState<number>(8);
   const [minute, setMinute] = useState<number>(0);
-  const [ampm, setAmpm] = useState<'AM' | 'PM'>('AM');
+  const [ampm, setAmpm] = useState<'AM' | 'PM'>(night ? 'PM' : 'AM');
 
-  const hours = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  // 18:00 is the boundary (the evening prayer window opens then): a night
+  // reminder only offers 6–11 PM; a morning one anything BEFORE 6 PM
+  // (all of AM, and 12–5 PM). The wheels simply never show invalid hours.
+  const hours = night
+    ? [6, 7, 8, 9, 10, 11]
+    : ampm === 'PM' ? [12, 1, 2, 3, 4, 5] : [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
   const minutes = Array.from({ length: 60 }, (_, i) => i);
-  const periods: ('AM' | 'PM')[] = ['AM', 'PM'];
+  const periods: ('AM' | 'PM')[] = night ? ['PM'] : ['AM', 'PM'];
+  // Switching a morning pick to PM shrinks the hour list — clamp a now-invalid
+  // hour (e.g. 8) onto the latest valid one so the wheel never points nowhere.
+  const onPeriod = (p: 'AM' | 'PM') => {
+    setAmpm(p);
+    if (!night && p === 'PM' && hour !== 12 && hour > 5) setHour(5);
+  };
 
   return (
     <View style={styles.sheet}>
@@ -149,7 +161,7 @@ function TimePickerSheet({ onConfirm, onClose }: { onConfirm: (hour: number, min
         <Text style={styles.wheelColon}>:</Text>
         <ScrollWheel values={minutes} value={minute} onChange={setMinute}
           format={v => String(v).padStart(2, '0')} />
-        <ScrollWheel values={periods} value={ampm} onChange={setAmpm} />
+        <ScrollWheel values={periods} value={ampm} onChange={onPeriod} />
       </View>
       <View style={styles.sheetBtns}>
         <TouchableOpacity onPress={onClose} style={styles.sheetBtnBack}>
@@ -1516,7 +1528,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                   </TouchableOpacity>
                 </View>
               ) : (
-                <TimePickerSheet onConfirm={handleHabitConfirm} onClose={() => setShowTimePicker(false)} />
+                <TimePickerSheet slot={morning ? 'morning' : 'night'} onConfirm={handleHabitConfirm} onClose={() => setShowTimePicker(false)} />
               )}
             </Animated.View>
           </GestureDetector>

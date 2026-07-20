@@ -849,6 +849,10 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
             initialHour={settings[editing].hour}
             initialMinute={settings[editing].minute}
             title={t(editing === 'morning' ? 'onboarding.remind.morning' : 'onboarding.remind.evening')}
+            // 18:00 is the boundary: evening prayer opens then, so the evening
+            // reminder can't sit before it and the morning one can't cross it.
+            minHour={editing === 'night' ? 18 : 0}
+            maxHour={editing === 'morning' ? 17 : 23}
             onConfirm={(h, m) => { setSchedule(editing, h, m); setEditing(null); }}
             onClose={() => setEditing(null)}
           />

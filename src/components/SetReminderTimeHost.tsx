@@ -72,6 +72,7 @@ export default function SetReminderTimeHost() {
         initialHour={mTime.hour}
         initialMinute={mTime.minute}
         title={t('nudge.setReminder.morningTitle')}
+        maxHour={17}
         onConfirm={(h, m) => { setMTime({ hour: h, minute: m }); setStep('evening'); }}
         onClose={dismiss}
       />
@@ -83,6 +84,7 @@ export default function SetReminderTimeHost() {
         initialHour={20}
         initialMinute={0}
         title={t('nudge.setReminder.eveningTitle')}
+        minHour={18}
         onConfirm={onEveningConfirm}
         onClose={dismiss}
       />

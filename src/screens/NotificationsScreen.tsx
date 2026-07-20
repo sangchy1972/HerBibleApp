@@ -174,6 +174,10 @@ export default function NotificationsScreen({ navigation }: RootStackScreenProps
           initialHour={settings[editing].hour}
           initialMinute={settings[editing].minute}
           title={t('notif.sheet.scheduleTitle', { section: t(SECTIONS.find(s => s.key === editing)?.titleKey ?? '') })}
+          // 18:00 boundary — night reminders live in the evening window, the
+          // morning one before it; the plan reminder stays unconstrained.
+          minHour={editing === 'night' ? 18 : 0}
+          maxHour={editing === 'morning' ? 17 : 23}
           onConfirm={(h, m) => { setSchedule(editing, h, m); setEditing(null); }}
           onClose={() => setEditing(null)}
         />

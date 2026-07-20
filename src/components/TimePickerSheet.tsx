@@ -48,21 +48,26 @@ interface Props {
   initialHour: number;
   initialMinute: number;
   title?: string;
+  /** Inclusive hour bounds. The evening prayer window opens at 18:00, so
+   *  evening/night reminder pickers pass minHour 18 and morning ones
+   *  maxHour 17 — the wheel simply doesn't offer out-of-window hours. */
+  minHour?: number;
+  maxHour?: number;
   onConfirm: (hour: number, minute: number) => void;
   onClose: () => void;
 }
 
-export default function TimePickerSheet({ initialHour, initialMinute, title, onConfirm, onClose }: Props) {
+export default function TimePickerSheet({ initialHour, initialMinute, title, minHour = 0, maxHour = 23, onConfirm, onClose }: Props) {
   const t = useT();
   const insets = useSafeAreaInsets();
-  const [hour, setHour] = useState(initialHour);
+  const [hour, setHour] = useState(Math.min(maxHour, Math.max(minHour, initialHour)));
   const [minute, setMinute] = useState(initialMinute);
   // Both current callers (NotificationsScreen, PrayerFlow) pass a title;
   // this fallback keeps the prop optional without forcing every future
   // caller to invent one. English-only is acceptable for the unused default.
   const displayTitle = title ?? 'Pick a time';
 
-  const hours = Array.from({ length: 24 }, (_, i) => i);
+  const hours = Array.from({ length: maxHour - minHour + 1 }, (_, i) => minHour + i);
   const minutes = Array.from({ length: 60 }, (_, i) => i);
   const pad = (n: number) => String(n).padStart(2, '0');
 

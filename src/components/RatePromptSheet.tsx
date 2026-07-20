@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Image, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Image, Pressable, Platform, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import * as StoreReview from 'expo-store-review';
@@ -21,10 +21,21 @@ export default function RatePromptSheet({ onClose }: { onClose: () => void }) {
   const onYes = async () => {
     markYes();
     try {
-      // Play in-app review (Android) / SKStoreReview (iOS). No-op on unsupported
-      // devices. Play/Apple don't confirm submission, so we assume completion.
-      if (await StoreReview.hasAction()) {
+      // Play in-app review (Android) / SKStoreReview (iOS). NOTE: the Play
+      // dialog only actually renders when the app was INSTALLED BY the Play
+      // Store for this account (internal-testing installs count; sideloads
+      // "succeed" silently by design) and Play quota-caps how often it shows.
+      if (await StoreReview.isAvailableAsync()) {
         await StoreReview.requestReview();
+        markRated();
+      } else {
+        // No in-app dialog on this install (no Play Store, dev build, iOS
+        // simulator) — open the store listing instead so Yes is never a
+        // dead end.
+        const url = Platform.OS === 'android'
+          ? 'market://details?id=com.holy.bible.kjv.audio.prayer'
+          : StoreReview.storeUrl();
+        if (url) await Linking.openURL(url);
         markRated();
       }
     } catch { /* never block the user */ }
@@ -85,8 +96,10 @@ const styles = StyleSheet.create({
     position: 'absolute', top: -58, alignSelf: 'center',
     width: 132, height: 132, alignItems: 'center', justifyContent: 'center', zIndex: 10,
   },
+  // 84 → 100.8 (+20 % per user); offsets recentered so the disc keeps the same
+  // midpoint under the emoji (center 66, 79 of the 132 box).
   emojiCircle: {
-    position: 'absolute', left: 24, top: 37, width: 84, height: 84, borderRadius: 42,
+    position: 'absolute', left: 15.6, top: 28.6, width: 100.8, height: 100.8, borderRadius: 50.4,
     backgroundColor: '#FFFFFF',
     shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.10, shadowRadius: 8, elevation: 4,
   },

@@ -381,28 +381,24 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
   };
 
   const pickPhoto = async () => {
-    // In-app consent moment before opening the picker (store-guidance UX).
-    // NO OS permission is requested: launchImageLibraryAsync uses the system
-    // Photo Picker (Android) / PHPicker (iOS), which are permissionless —
-    // REQUIRED, because the manifest deliberately ships without the
-    // READ_MEDIA_* family (Play photo/video-permissions policy; the old
-    // getMediaLibraryPermissionsAsync gate would now deny forever and
-    // dead-end this flow).
-    const explain = (): Promise<boolean> =>
+    // Informational note before opening the picker. App Review 5.1.1(iv)
+    // (rejection 2026-07-20): a pre-permission message must have NO exit /
+    // delay button and its CTA must read "Continue"/"Next" — never "Allow".
+    // So: ONE Continue button, not cancelable, always proceeds. (The picker
+    // itself is the permissionless system Photo Picker / PHPicker; the
+    // manifest deliberately ships without the READ_MEDIA_* family — Play
+    // photo/video-permissions policy.)
+    const explain = (): Promise<void> =>
       new Promise((resolve) => {
         Alert.alert(
           t('profile.photo.consent.title'),
           t('profile.photo.consent.body'),
-          [
-            { text: t('profile.photo.consent.notNow'), style: 'cancel', onPress: () => resolve(false) },
-            { text: t('profile.photo.consent.allow'), onPress: () => resolve(true) },
-          ],
-          { cancelable: true, onDismiss: () => resolve(false) },
+          [{ text: t('common.continue'), onPress: () => resolve() }],
+          { cancelable: false },
         );
       });
 
-    const consented = await explain();
-    if (!consented) return;
+    await explain();
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,

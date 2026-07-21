@@ -1024,8 +1024,6 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'profile.menu.editName':         { en: 'Edit name',      context: 'Action sheet row — opens the edit-name sheet.' },
   'profile.photo.consent.title':   { en: 'Use your photo as profile picture?', context: 'In-app rationale alert title before requesting OS photo permission.' },
   'profile.photo.consent.body':    { en: "Her Bible will read only the single photo you pick. We don't scan or upload your library, and you can change or remove the picture anytime.", context: 'In-app rationale alert body. Uses curly apostrophe.' },
-  'profile.photo.consent.allow':   { en: 'Allow',          context: 'Rationale alert primary button.' },
-  'profile.photo.consent.notNow':  { en: 'Not now',        context: 'Rationale alert cancel button.' },
   'profile.photo.denied.title':    { en: 'Photo access is off', context: 'Alert title when permission is permanently denied.' },
   'profile.photo.denied.body':     { en: "You've previously denied photo access. Open Settings to grant access, then come back to pick a picture.", context: 'Alert body when permission is permanently denied.' },
   'profile.editName.title':        { en: 'Edit name',      context: 'Title of the edit-name bottom sheet.' },

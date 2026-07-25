@@ -23,8 +23,9 @@ import {
   initAdRevenue,
   __resetAdRevenueForTest,
   __getAdRevenueState,
+  __flushForTest,
 } from '../src/services/adRevenue';
-import { DEFAULT_AD_REVENUE_CONFIG } from '../src/constants/adRevenueConfig';
+import { DEFAULT_AD_REVENUE_CONFIG, stepForCurrency } from '../src/constants/adRevenueConfig';
 
 beforeEach(async () => {
   logged.length = 0;
@@ -62,8 +63,20 @@ describe('sanitize — a broken remote file must not break reporting', () => {
   });
 
   it.each([0, -1, NaN, 1e-9, 'x', null])('rejects a bad step (%p)', (bad) => {
+    // Assert the OBSERVABLE step, not the raw key: a rejected entry is simply
+    // absent, and the lookup falls through to `default`. Either way the value
+    // actually used must stay safe.
     const clean = __sanitizeForTest({ totalRevenueStep: { HKD: bad } })!;
-    expect(clean.totalRevenueStep.HKD).toBeCloseTo(DEFAULT_AD_REVENUE_CONFIG.totalRevenueStep.HKD);
+    expect(stepForCurrency(clean, 'HKD')).toBeGreaterThanOrEqual(0.001);
+    expect(stepForCurrency(clean, 'HKD')).toBeCloseTo(DEFAULT_AD_REVENUE_CONFIG.totalRevenueStep.default);
+  });
+
+  it('lets a removed currency actually disappear', () => {
+    // Additive merging made a key published once permanent — and because the
+    // merged result is what gets cached, permanent on that device.
+    __setConfigForTest({ totalRevenueStep: { HKD: 0.078, EUR: 5, default: 0.078 } });
+    const clean = __sanitizeForTest({ totalRevenueStep: { HKD: 0.078, default: 0.078 } })!;
+    expect(clean.totalRevenueStep.EUR).toBeUndefined();
   });
 
   it('keeps the previous threshold table when the field is malformed', () => {
@@ -107,6 +120,7 @@ describe('persistence round-trip', () => {
     onAdPaid({ value: v, currency: 'HKD', format: 'interstitial', adUnitName: 'u' });
 
   it('does not re-fire today\'s AdLTV tiers after a relaunch', async () => {
+    await initAdRevenue();
     __setConfigForTest({
       totalRevenueStep: { HKD: 0.078 },
       adLtvThresholds: { HKD: { default: { top50: 0.1, top30: 5 } } },
@@ -129,6 +143,7 @@ describe('persistence round-trip', () => {
   it('resets daily state but inherits the carry across a relaunch on a new day', async () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date(2026, 6, 25, 12, 0, 0));
+    await initAdRevenue();
     __setConfigForTest({
       totalRevenueStep: { HKD: 0.078 },
       adLtvThresholds: { HKD: { default: { top50: 0.1 } } },
@@ -153,6 +168,33 @@ describe('persistence round-trip', () => {
     await AsyncStorage.setItem('ad-revenue-state:v1', '{not json');
     await expect(initAdRevenue()).resolves.toBeUndefined();
     expect(__getAdRevenueState().total).toBe(0);
+  });
+
+  it('never writes empty state over real state before the load completes', async () => {
+    // The AppState listener is registered at MODULE scope and is live from
+    // bundle eval, but `state` is an empty day until initAdRevenue() resolves —
+    // and on iOS that only happens after ATT settles, while the ATT alert
+    // itself drives the app to `inactive`. A flush in that window would erase
+    // today's `fired` list and re-arm tiers that already fired.
+    __setConfigForTest({
+      totalRevenueStep: { HKD: 0.078 },
+      adLtvThresholds: { HKD: { default: { top50: 0.1 } } },
+    });
+    await initAdRevenue();
+    pay(0.5);
+    expect(logged.filter(e => e.name === 'AdLTV_OneDay_Top50Percent')).toHaveLength(1);
+    const onDisk = await AsyncStorage.getItem('ad-revenue-state:v1');
+    expect(JSON.parse(onDisk!).fired).toContain('top50');
+
+    // Relaunch, then background BEFORE initAdRevenue() runs.
+    __resetAdRevenueForTest();
+    __flushForTest();
+    expect(await AsyncStorage.getItem('ad-revenue-state:v1')).toBe(onDisk);
+
+    logged.length = 0;
+    await initAdRevenue();
+    pay(0.5);
+    expect(logged.filter(e => e.name === 'AdLTV_OneDay_Top50Percent')).toHaveLength(0);
   });
 
   it('drops unknown tier names read back from disk', async () => {

@@ -45,13 +45,23 @@ function sanitize(raw: any): AdRevenueConfig | null {
     android: typeof mai?.android === 'boolean' ? mai.android : base.manualAdImpression.android,
   };
 
-  const totalRevenueStep: Record<string, number> = { ...base.totalRevenueStep };
-  if (raw.totalRevenueStep && typeof raw.totalRevenueStep === 'object') {
+  // Present-and-usable → replace wholesale, so removing a currency from the
+  // remote file actually removes it. Additive merging made a key published once
+  // permanent, and (because the merged result is what gets cached) permanent on
+  // that device. Absent/garbage → keep what we had.
+  const stepGiven = raw.totalRevenueStep && typeof raw.totalRevenueStep === 'object' && !Array.isArray(raw.totalRevenueStep);
+  const totalRevenueStep: Record<string, number> = stepGiven ? {} : { ...base.totalRevenueStep };
+  if (stepGiven) {
     for (const [k, v] of Object.entries(raw.totalRevenueStep)) {
       // Reject rather than clamp. A zero/negative/NaN step is obviously bad,
       // but so is an implausibly tiny one: it would make every impression emit
       // the per-call event cap, for every user, until someone noticed.
       if (typeof v === 'number' && isFinite(v) && v >= MIN_REVENUE_STEP) totalRevenueStep[k] = v;
+    }
+    // A table that rejected every entry would leave stepForCurrency with no
+    // `default` to fall back to; restore the known-good one.
+    if (typeof totalRevenueStep.default !== 'number') {
+      totalRevenueStep.default = base.totalRevenueStep.default;
     }
   }
 
@@ -148,10 +158,14 @@ export async function refreshAdRevenueConfig(force = false): Promise<void> {
       // landed on devices, without waiting for AdLTV volume to show up.
       ltv_currencies: Object.keys(clean.adLtvThresholds).length,
     });
-    await AsyncStorage.setItem(
-      AD_CONFIG_CACHE_KEY,
-      JSON.stringify({ at: lastFetchedAt, config: clean }),
-    );
+    // Own try: the config is already applied in memory and reported ok above,
+    // so a failed cache write must not re-report the same fetch as a failure.
+    try {
+      await AsyncStorage.setItem(
+        AD_CONFIG_CACHE_KEY,
+        JSON.stringify({ at: lastFetchedAt, config: clean }),
+      );
+    } catch { /* memory copy still good; we refetch next launch */ }
   } catch (e: any) {
     // Offline / aborted / unparseable → keep last-known-good, but say so.
     try { logEvent('ad_config_fetch', { ok: 0, reason: String(e?.name || reason) }); } catch {}

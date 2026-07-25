@@ -133,8 +133,17 @@ function shouldLogAdImpression(): boolean {
   return Platform.OS === 'ios' ? !!flags?.ios : !!flags?.android;
 }
 
+// Until initAdRevenue() has read the disk, `state` is an EMPTY day — not the
+// user's real accumulators. Writing that out would erase today's `fired` list
+// and re-arm tiers that already fired (and bin the carry). The window is real:
+// the module-scope AppState listener below is live from bundle eval, while the
+// load only finishes after ATT settles, and the iOS ATT alert itself drives the
+// app to `inactive`. So: never write before we have read.
+let hydrated = false;
+
 function flushPersist(): void {
   if (persistTimer) { clearTimeout(persistTimer); persistTimer = null; }
+  if (!hydrated) return;
   AsyncStorage.setItem(STATE_KEY, JSON.stringify(state)).catch(() => {});
 }
 
@@ -142,9 +151,10 @@ function flushPersist(): void {
 // every impression. Losing at most a second of accumulator state on a hard kill
 // is an acceptable trade for not doing blocking I/O inside an ad callback.
 function persistSoon(): void {
-  if (persistTimer) return;
+  if (!hydrated || persistTimer) return;
   persistTimer = setTimeout(() => {
     persistTimer = null;
+    if (!hydrated) return;
     AsyncStorage.setItem(STATE_KEY, JSON.stringify(state)).catch(() => {});
   }, 1000);
 }
@@ -187,7 +197,12 @@ export async function initAdRevenue(): Promise<void> {
           : [],
         currency: normalizeCurrency(p.currency),
       };
-    } catch { /* corrupt cache → start the day clean */ }
+    } catch { /* corrupt cache → start the day clean */ } finally {
+      // Set even on the error paths: "we tried to read and there was nothing
+      // usable" is still a valid basis for writing. Only the pre-read window
+      // must stay read-only.
+      hydrated = true;
+    }
   })();
   return loading;
 }
@@ -225,14 +240,15 @@ function ensureDay(currency: string): void {
 export function onAdPaid(info: AdPaidInfo): void {
   try {
     const value = normalizeValue(info.value);
-    const currency = normalizeCurrency(info.currency);
-    ensureDay(currency);
-
     const cfg = currentConfig();
-    // Never 'USD' by reflex: `value` is denominated in the ACCOUNT's currency
-    // (HKD here), so stamping USD on it would inflate its apparent worth ~7.8×
-    // everywhere downstream.
-    const cur = effectiveCurrency(cfg, currency);
+    // Resolve ONCE and use everywhere: the amount is denominated in the
+    // account's currency no matter what code the SDK reports, so the event
+    // label, the step lookup and the threshold lookup must all agree. Labelling
+    // an event 'HKD' while looking thresholds up under '' silently disabled
+    // every AdLTV tier whenever the SDK returned a blank/non-ISO code. And
+    // never 'USD' by reflex — that would inflate every value ~7.8×.
+    const cur = effectiveCurrency(cfg, normalizeCurrency(info.currency));
+    ensureDay(cur);
 
     // 1) The reserved event — one per impression, even a zero-value one, since
     //    an impression did occur. Param keys are fixed by Firebase/Google Ads.
@@ -256,7 +272,7 @@ export function onAdPaid(info: AdPaidInfo): void {
     // 2) Micro-threshold roll-up. A `while` (not `if`) because one high-value
     //    impression can cross several steps at once, and the carry must not
     //    drift upward across days.
-    const step = stepForCurrency(cfg, currency);
+    const step = stepForCurrency(cfg, cur);
     // Relative epsilon: binary floating point cannot hold 0.078, so an
     // impression worth exactly 3 steps leaves a carry of 0.07799999999999996
     // and the third event would be lost. Nothing is over-counted — the residue
@@ -269,7 +285,7 @@ export function onAdPaid(info: AdPaidInfo): void {
       state.carry -= step;
       steps += 1;
     }
-    if (steps >= MAX_STEPS_PER_IMPRESSION) {
+    if (steps >= MAX_STEPS_PER_IMPRESSION && state.carry + eps >= step) {
       // We hit the cap, which means the step is implausibly small relative to
       // this impression. Leaving the remainder in `carry` would re-trigger the
       // cap on EVERY subsequent impression forever — an unbounded event flood
@@ -289,7 +305,7 @@ export function onAdPaid(info: AdPaidInfo): void {
 
     // 3) Daily LTV tiers — cheapest first, each at most once per day.
     state.total += value;
-    const thresholds = thresholdsFor(cfg, currency, deviceRegion());
+    const thresholds = thresholdsFor(cfg, cur, deviceRegion());
     let tierFired = false;
     for (const tier of AD_LTV_TIERS) {
       const t = thresholds[tier];
@@ -316,11 +332,18 @@ export function onAdPaid(info: AdPaidInfo): void {
   } catch { /* never let analytics break an ad callback */ }
 }
 
-/** Test seam. */
+/** Test seam. `hydrated` stays false so a test can reproduce the pre-load
+ *  window; call initAdRevenue() to leave it. */
 export function __resetAdRevenueForTest(): void {
   state = freshDay(localDay(), '');
   loading = null;
+  hydrated = false;
   if (persistTimer) { clearTimeout(persistTimer); persistTimer = null; }
+}
+
+/** Test seam — simulates the app being backgrounded. */
+export function __flushForTest(): void {
+  flushPersist();
 }
 
 /** Test/debug read-only view of the accumulators. */

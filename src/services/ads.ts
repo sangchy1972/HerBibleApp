@@ -45,7 +45,7 @@
 // unit IDs are unchanged, and the UMP API is identical — so the port, when it
 // happens, is about the SDK surface, not the ad business config.
 
-import { Platform, NativeModules, AppState } from 'react-native';
+import { Platform, AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent, setUserProps } from './firebase';
 import { ensureAttRequested } from './att';
@@ -227,7 +227,15 @@ export async function initAds(): Promise<void> {
   // re-firing today's LTV tiers) and the config (so the very first impression
   // already knows whether WE own `ad_impression` on this platform). Both read
   // from cache only — the network refresh below is fire-and-forget.
-  try { await Promise.all([initAdRevenue(), hydrateAdRevenueConfig()]); } catch {}
+  // Bounded like every other await in this function: neither call can reject,
+  // but a wedged AsyncStorage would hang here forever, and `initialized` would
+  // never flip — no preload, no onboarding ad, no US controller. Invisible
+  // zero-revenue for the session, which is worse than missing accumulators.
+  // On timeout adRevenue stays un-hydrated, and its `hydrated` gate makes that
+  // degrade to "don't persist" rather than "overwrite good state with empty".
+  try {
+    await bounded(Promise.all([initAdRevenue(), hydrateAdRevenueConfig()]), 2000, undefined, 'ad_revenue_state');
+  } catch {}
   if (isFirstRun()) {
     // Fresh install: there is no cached config, so `manualAdImpression` is
     // whatever was baked into the binary. If the AdMob link state has changed

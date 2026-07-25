@@ -264,7 +264,7 @@ function teardownAll(): void {
  * synchronously when the native module is missing, and an exception escaping a
  * native ad callback is unrecoverable.
  */
-function attachLadderPaid(ad: any, idx: number): void {
+function attachLadderPaid(ad: any, idx: number, myEpoch: number): void {
   try {
     if (!deps?.AdEventType?.PAID) return;
     let paidSeen = false;
@@ -277,8 +277,9 @@ function attachLadderPaid(ad: any, idx: number): void {
         // would bootstrap its window from a bogus floor.
         const v = normalizeValue(e?.value);
         const vEcpm = v * ECPM_PER_IMPRESSION;
-        todayImpr.push(vEcpm);
         logEvent('ad_paid', { value: v, ecpm: vEcpm, currency: String(e?.currency ?? ''), unit_idx: idx, precision: String(e?.precision ?? '') });
+        // The MONEY is always real, whatever the ladder's state — report it
+        // unconditionally.
         onAdPaid({
           value: e?.value,
           currency: e?.currency,
@@ -286,6 +287,14 @@ function attachLadderPaid(ad: any, idx: number): void {
           format: 'interstitial',
           adUnitName: `us_ladder_${String(idx).padStart(2, '0')}`,
         });
+        // The LADDER's bookkeeping is only meaningful while this ad still
+        // belongs to the current epoch. Because PAID can arrive after dismiss,
+        // it can also arrive after a day rollover or stopUsController() — at
+        // which point a stale eCPM would seed the new day's first-3 average and
+        // could set `established`/`win` from yesterday's value. LOADED/ERROR
+        // already guard this way; PAID must too.
+        if (myEpoch !== epoch || adsOff()) return;
+        todayImpr.push(vEcpm);
         if (!established) {                    // first real impression sets the window
           established = true;
           win = makeWindow(startIndexFromValue(vEcpm));
@@ -330,7 +339,7 @@ function request(idx: number): void {
     // silently lost that revenue, and on this path it is the highest-floor
     // (most valuable) inventory in the app. Subscribed last + guarded so an
     // older client without AdEventType.PAID can't abort the whole request.
-    attachLadderPaid(ad, idx);
+    attachLadderPaid(ad, idx, myEpoch);
     ad.load();
     // Unit-level request observability: AdMob's per-unit console stats lag by
     // hours, which makes the waterfall look dead while it's actually in

@@ -232,6 +232,28 @@ describe('AdLTV_OneDay_TopNPercent', () => {
     pay(5, 'HKD');
     expect(namesOf('AdLTV_OneDay_Top50Percent')).toHaveLength(0);
   });
+
+  it('does not lose a tier to float drift on the day\'s last impression', () => {
+    // 0.1 + 0.7 === 0.7999999999999999 in binary floating point, i.e. strictly
+    // BELOW the 0.8 the user actually earned. A later impression would self-heal,
+    // but on the last one of the day the tier is lost for good.
+    __setConfigForTest({
+      totalRevenueStep: { HKD: 999 },                  // keep the step out of the way
+      adLtvThresholds: { HKD: { default: { top50: 0.8 } } },
+    });
+    pay(0.1); pay(0.7);
+    expect(__getAdRevenueState().total).toBeLessThan(0.8);   // the drift is real
+    expect(namesOf('AdLTV_OneDay_Top50Percent')).toHaveLength(1);
+  });
+
+  it('still resolves thresholds when the SDK reports no usable currency', () => {
+    // The event is stamped with the account currency, so the LOOKUP must use it
+    // too. Keying the lookup on the raw blank code silently disabled every tier
+    // whenever an adapter returned a non-ISO value.
+    __setConfigForTest({ adLtvThresholds: { HKD: { default: { top50: 0.1 } } } });
+    onAdPaid({ value: 5, currency: '', format: 'interstitial', adUnitName: 'u' });
+    expect(namesOf('AdLTV_OneDay_Top50Percent')).toHaveLength(1);
+  });
 });
 
 // ── day boundary + currency switch ──────────────────────────────────────────
@@ -315,11 +337,7 @@ describe('never throws out of an ad callback', () => {
     expect(namesOf('ad_revenue_step_overflow').length).toBeGreaterThan(0);
   });
 
-  it('refuses an implausibly small step from the remote file', () => {
-    // sanitize() should reject it outright; stepForCurrency then falls back to
-    // the safe baked-in default instead of honouring an obvious typo.
-    const { __sanitizeForTest } = require('../src/services/adRevenueConfig');
-    const clean = __sanitizeForTest({ totalRevenueStep: { HKD: 1e-9 } });
-    expect(clean.totalRevenueStep.HKD).toBeGreaterThanOrEqual(0.001);
-  });
+  // (Rejecting an implausibly small step at the parser is covered in
+  // adRevenueConfig.test.ts, which asserts the observable step rather than the
+  // raw key.)
 });

@@ -398,7 +398,11 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
         );
       });
 
-    await explain();
+    // iOS: NO custom message at all — PHPicker is permissionless and App
+    // Review 5.1.1(iv) treats any custom pre-photo-access message as suspect
+    // (1.0(12) rejection), so the safest surface is none. Android keeps the
+    // informational note (Play policy likes the transparency).
+    if (Platform.OS !== 'ios') await explain();
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,

@@ -272,8 +272,6 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'prayerFlow.time.confirm':       { en: 'Confirm',        context: 'Confirm button in time picker.' },
   'prayerFlow.notif.heading':      { en: 'Stay close to God', context: 'Headline on the first-launch notification rationale screen.' },
   'prayerFlow.notif.body':         { en: 'Turn on prayer reminders so morning and evening verses gently meet you where you are. Just 5–10 minutes a day to draw nearer in heart and mind.', context: 'Body copy on notification rationale screen.' },
-  'prayerFlow.notif.skip':         { en: 'Skip',           context: 'Skip link on notification rationale screen.' },
-  'prayerFlow.notif.allow':        { en: 'Allow Notifications', context: 'CTA button on notification rationale screen. Title-case in English.' },
   'prayerFlow.guide.title':        { en: 'Allow HerBibleApp to send you\nDaily Verses', context: 'Title in the guidance card that appears alongside the system Settings page. Preserve the line break.' },
   'prayerFlow.guide.allow':        { en: 'Allow',          context: 'Mock-row label in the guidance card simulating the system Settings toggle row.' },
 
@@ -628,10 +626,6 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'onboarding.title':              { en: 'Connect with God', context: 'Big headline on the onboarding cover step.' },
   'onboarding.subtitle':           { en: 'To enjoy a daily verse and gentle reminders to pray, turn on notifications.', context: 'Subtitle under onboarding headline.' },
   'onboarding.continue':           { en: 'CONTINUE',       context: 'Primary CTA on onboarding cover. Uppercase.' },
-  'onboarding.permission.title':   { en: 'Daily verses & prayer reminders', context: 'Title of the in-app rationale sheet on the permission step.' },
-  'onboarding.permission.desc':    { en: "We'll send a short morning verse and an evening prayer cue. You can change or turn this off anytime in Settings — we never share your information.", context: 'Rationale sheet body copy.' },
-  'onboarding.permission.allow':   { en: 'Allow notifications', context: 'Primary CTA on rationale sheet.' },
-  'onboarding.permission.notNow':  { en: 'Not now',        context: 'Dismiss link on rationale sheet.' },
 
   // ─── Past Verses screen ──────────────────────────────────────────────────
   'pastVerses.title':              { en: 'Verses of the Day', context: 'Screen title — history of daily verses.' },

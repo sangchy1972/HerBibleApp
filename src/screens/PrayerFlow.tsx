@@ -2061,15 +2061,16 @@ function NotifRationaleScreen({ onDismiss }: { onDismiss: () => void }) {
         <PhoneMockup />
       </Animated.View>
 
+      {/* ONE Continue button, no skip/exit — App Review 5.1.1(iv) (1.0(12)
+          rejection template): a custom message before a permission request
+          must not offer an escape and its CTA can't say "Allow"; the user
+          always proceeds to the SYSTEM dialog, which is where she decides. */}
       <Animated.View
         entering={FadeIn.duration(360).delay(700)}
         style={[rationaleStyles.ctaRow, { paddingBottom: Math.max(insets.bottom, 12) + 48 }]}
       >
-        <TouchableOpacity onPress={onDismiss} activeOpacity={0.85} style={rationaleStyles.skipBtn}>
-          <Text style={rationaleStyles.skipText}>{t('prayerFlow.notif.skip')}</Text>
-        </TouchableOpacity>
         <TouchableOpacity onPress={requestPermission} activeOpacity={0.9} style={rationaleStyles.allowBtn}>
-          <Text style={rationaleStyles.allowText}>{t('prayerFlow.notif.allow')}</Text>
+          <Text style={rationaleStyles.allowText}>{t('common.continue')}</Text>
         </TouchableOpacity>
       </Animated.View>
     </View>
@@ -2153,22 +2154,11 @@ const rationaleStyles = StyleSheet.create({
     gap: 12,
     paddingTop: 6,
   },
-  // Both CTAs share PrayerScreen.startBtn's height (49.41) + radius (17.07)
-  // per user — keeps the primary-action "feel" identical across the app.
-  // Flex ratio (1 : 2) makes Allow visually dominant as the recommended path.
-  skipBtn: {
-    flex: 1,
-    height: 49.41,
-    borderRadius: 17.07,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(30,27,46,0.08)',
-  },
-  skipText: { fontSize: 16, fontWeight: '700', color: TXT, letterSpacing: 0.3 },
+  // Single full-width Continue (the Skip button was removed for App Review
+  // 5.1.1(iv) compliance). Shares PrayerScreen.startBtn's height + radius per
+  // user — keeps the primary-action "feel" identical across the app.
   allowBtn: {
-    flex: 2,
+    flex: 1,
     height: 49.41,
     borderRadius: BTN_RADIUS,
     backgroundColor: ROSE,

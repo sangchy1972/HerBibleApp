@@ -18,6 +18,9 @@ module.exports = {
     // node_modules aren't transformed. Modules under test transitively import
     // it but never run its filesystem code, so a no-op stub lets the suite load.
     '^expo-file-system$': '<rootDir>/test/expoFileSystemStub.ts',
+    // services/adRevenue persists its daily accumulators; an in-memory map is
+    // all the tests need and keeps them free of the native module.
+    '^@react-native-async-storage/async-storage$': '<rootDir>/test/asyncStorageStub.ts',
   },
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: { strict: false, esModuleInterop: true, jsx: 'react' } }],

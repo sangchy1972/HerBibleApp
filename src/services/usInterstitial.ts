@@ -30,6 +30,7 @@ import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent } from './firebase';
 import { setInterstitialVisible } from './interstitialVisibility';
+import { onAdPaid, normalizeValue } from './adRevenue';
 
 // ── Constants (spec §0) ──────────────────────────────────────────────────────
 const PUB = 'ca-app-pub-4656643588243987';
@@ -253,6 +254,50 @@ function teardownAll(): void {
   inFlight.clear();
 }
 
+/**
+ * PAID handler for a ladder ad. Owns BOTH jobs the callback has to do:
+ *   • the ladder's own bookkeeping (today's eCPM samples, first-impression
+ *     window bootstrap) — previously inline in usOnShowOpportunity;
+ *   • forwarding into the shared ILAR funnel.
+ *
+ * The whole body is wrapped: `persist()` touches AsyncStorage, which throws
+ * synchronously when the native module is missing, and an exception escaping a
+ * native ad callback is unrecoverable.
+ */
+function attachLadderPaid(ad: any, idx: number): void {
+  try {
+    if (!deps?.AdEventType?.PAID) return;
+    let paidSeen = false;
+    ad.addAdEventListener(deps.AdEventType.PAID, (e: any) => {
+      try {
+        if (paidSeen) return;
+        paidSeen = true;
+        // Same normalisation as the funnel: a locale-comma value ("0,004")
+        // must not read as 0 here while being recovered there, or the ladder
+        // would bootstrap its window from a bogus floor.
+        const v = normalizeValue(e?.value);
+        const vEcpm = v * ECPM_PER_IMPRESSION;
+        todayImpr.push(vEcpm);
+        logEvent('ad_paid', { value: v, ecpm: vEcpm, currency: String(e?.currency ?? ''), unit_idx: idx, precision: String(e?.precision ?? '') });
+        onAdPaid({
+          value: e?.value,
+          currency: e?.currency,
+          precision: e?.precision,
+          format: 'interstitial',
+          adUnitName: `us_ladder_${String(idx).padStart(2, '0')}`,
+        });
+        if (!established) {                    // first real impression sets the window
+          established = true;
+          win = makeWindow(startIndexFromValue(vEcpm));
+          resetWindowCounts();
+          firstStagger();
+        }
+        persist();
+      } catch { /* never throw out of an ad callback */ }
+    });
+  } catch { /* older client without PAID → ladder still serves ads */ }
+}
+
 // ── Request / load lifecycle (spec §5) ───────────────────────────────────────
 function request(idx: number): void {
   if (adsOff() || !deps?.Interstitial) return;
@@ -278,6 +323,14 @@ function request(idx: number): void {
       if (myEpoch !== epoch) return;                   // stale → ignore
       onError(idx, e);
     }));
+    // Impression-level revenue. Bound HERE, at creation, and deliberately NOT
+    // added to `subs` — so it survives the cleanup() that runs on CLOSED. Some
+    // mediation adapters deliver PAID *after* the ad is dismissed, and the
+    // library drops an event with no live listener; tearing this down on close
+    // silently lost that revenue, and on this path it is the highest-floor
+    // (most valuable) inventory in the app. Subscribed last + guarded so an
+    // older client without AdEventType.PAID can't abort the whole request.
+    attachLadderPaid(ad, idx);
     ad.load();
     // Unit-level request observability: AdMob's per-unit console stats lag by
     // hours, which makes the waterfall look dead while it's actually in
@@ -534,41 +587,32 @@ export function usOnShowOpportunity(placement: 'prayer_end' | 'gospel_end' | 'pl
   // Show priority is the inverse of request order: highest floor first.
   cache.sort((a, b) => floorOf(b.idx) - floorOf(a.idx));
   const slot = cache.shift()!;
-  let paidSeen = false;
-  let offPaid = () => {};
   let offOpened = () => {};
   let offClosed = () => {};
+  // NOTE: the PAID listener is bound in request(), lives on the ad object, and
+  // is intentionally NOT torn down here — a post-dismiss PAID must still land.
   const cleanup = () => {
-    try { offPaid(); } catch {}
     try { offOpened(); } catch {}
     try { offClosed(); } catch {}
     try { slot.ad.__cleanup?.(); } catch {}
   };
   try {
-    offPaid = slot.ad.addAdEventListener(deps!.AdEventType.PAID, (e: any) => {
-      if (paidSeen) return;
-      paidSeen = true;
-      const vEcpm = (Number(e?.value) || 0) * ECPM_PER_IMPRESSION;
-      todayImpr.push(vEcpm);
-      logEvent('ad_paid', { value: Number(e?.value) || 0, ecpm: vEcpm, currency: String(e?.currency ?? ''), unit_idx: slot.idx, precision: String(e?.precision ?? '') });
-      if (!established) {                                // first real impression sets the window
-        established = true;
-        win = makeWindow(startIndexFromValue(vEcpm));
-        resetWindowCounts();
-        firstStagger();
-      }
-      persist();
-    });
     offOpened = slot.ad.addAdEventListener(deps!.AdEventType.OPENED, () => {
-      lastShownAt = Date.now();                          // real present → start the cap clock
-      logEvent('ad_impression_custom', { format: 'interstitial', placement, unit_idx: slot.idx, floor: floorOf(slot.idx) });
+      try {
+        lastShownAt = Date.now();                        // real present → start the cap clock
+        logEvent('ad_impression_custom', { format: 'interstitial', placement, unit_idx: slot.idx, floor: floorOf(slot.idx) });
+      } catch { /* never throw out of an ad callback */ }
     });
     offClosed = slot.ad.addAdEventListener(deps!.AdEventType.CLOSED, () => {
-      showing = false;
-      setInterstitialVisible(false);
-      if (!established && !paidSeen) bootstrapFromShow(slot.idx);   // H3 fallback
-      cleanup();
-      pump();                                            // top the cache back up
+      try {
+        showing = false;
+        setInterstitialVisible(false);
+        // `established` is set by the PAID handler; if PAID never arrived we
+        // still need a window, hence the fallback.
+        if (!established) bootstrapFromShow(slot.idx);    // H3 fallback
+        cleanup();
+        pump();                                          // top the cache back up
+      } catch { /* never throw out of an ad callback */ }
     });
     showing = true;
     setInterstitialVisible(true);

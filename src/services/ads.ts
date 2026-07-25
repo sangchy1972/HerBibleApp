@@ -51,6 +51,9 @@ import { logEvent, setUserProps } from './firebase';
 import { ensureAttRequested } from './att';
 import { startUsController, stopUsController, usOnShowOpportunity, isUsControllerActive } from './usInterstitial';
 import { setInterstitialVisible } from './interstitialVisibility';
+import { deviceRegion } from './deviceRegion';
+import { initAdRevenue, onAdPaid } from './adRevenue';
+import { hydrateAdRevenueConfig, refreshAdRevenueConfig, isFirstRun } from './adRevenueConfig';
 
 let mobileAdsFn: any = null;
 let InterstitialAdCls: any = null;
@@ -207,44 +210,6 @@ export function areAdsRemoved(): boolean {
 // controller. NOTE: this is the DEVICE region, a client-side proxy for the
 // ad-serving country (which AdMob ultimately decides by IP). Good enough for
 // the US-only rollout; swap for a real geo/IP signal later if needed.
-const REGION_RE = /[_-]([A-Za-z]{2})(?:[_@.-]|$)/;
-
-// US IANA timezones (Hermes Intl gives the real device tz on both platforms).
-// Third-level fallback for devices whose locale carries no region (bare "en").
-const US_TZ_RE = /^(America\/(New_York|Detroit|Kentucky\/|Indiana\/|Chicago|Menominee|North_Dakota\/|Denver|Boise|Phoenix|Los_Angeles|Anchorage|Juneau|Sitka|Metlakatla|Yakutat|Nome|Adak)|Pacific\/Honolulu)/;
-
-function deviceRegion(): string | null {
-  // 1) Hermes Intl — the only source that works reliably under the NEW
-  //    ARCHITECTURE (bridgeless): NativeModules.SettingsManager is undefined on
-  //    iOS and I18nManager.localeIdentifier is unreliable on Android there,
-  //    which silently routed every user away from the US controller.
-  try {
-    const loc = Intl.DateTimeFormat().resolvedOptions().locale;   // e.g. "en-US"
-    const m = String(loc || '').match(REGION_RE);
-    if (m) return m[1].toUpperCase();
-  } catch { /* fall through */ }
-  // 2) Legacy NativeModules constants (old architecture builds).
-  try {
-    const { SettingsManager, I18nManager } = NativeModules as any;
-    let loc: string | undefined;
-    if (Platform.OS === 'ios') {
-      loc = SettingsManager?.settings?.AppleLocale
-        || (Array.isArray(SettingsManager?.settings?.AppleLanguages) ? SettingsManager.settings.AppleLanguages[0] : undefined);
-    } else {
-      loc = I18nManager?.localeIdentifier;
-    }
-    const m = loc ? String(loc).match(REGION_RE) : null;
-    if (m) return m[1].toUpperCase();
-  } catch { /* fall through */ }
-  // 3) Timezone heuristic for region-less locales (bare "en" is common on US
-  //    Android devices) — a US tz is a good-enough proxy for the US rollout.
-  try {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (tz && US_TZ_RE.test(tz)) return 'US';
-  } catch { /* fall through */ }
-  return null;
-}
-
 export function isUsUser(): boolean {
   return deviceRegion() === 'US';
 }
@@ -257,6 +222,22 @@ export async function initAds(): Promise<void> {
     adsRemoved = stored === '1';
   } catch { /* default: ads on */ }
   if (adsRemoved) { initialized = true; return; }
+  // Impression-level revenue plumbing. BOTH must be in memory before the first
+  // ad can serve: the accumulators (so a mid-day relaunch resumes instead of
+  // re-firing today's LTV tiers) and the config (so the very first impression
+  // already knows whether WE own `ad_impression` on this platform). Both read
+  // from cache only — the network refresh below is fire-and-forget.
+  try { await Promise.all([initAdRevenue(), hydrateAdRevenueConfig()]); } catch {}
+  if (isFirstRun()) {
+    // Fresh install: there is no cached config, so `manualAdImpression` is
+    // whatever was baked into the binary. If the AdMob link state has changed
+    // since this build shipped, every impression until the first fetch lands is
+    // double- or zero-counted. Wait briefly — no ad can serve this fast anyway
+    // — then proceed regardless.
+    await bounded(refreshAdRevenueConfig(), 3000, undefined, 'ad_config');
+  } else {
+    void refreshAdRevenueConfig().catch(() => {});
+  }
   try {
     // UMP consent — MUST run BEFORE initializing the ads SDK. Fetches the latest
     // consent info and, where the user's region (EEA / UK / Switzerland / etc.)
@@ -327,6 +308,32 @@ export async function initAds(): Promise<void> {
   } catch { /* never crash on ads init */ }
 }
 
+/**
+ * Attach the impression-level-revenue listener to an ad object.
+ *
+ * Attached at CREATE time and never removed: the docs are explicit that a
+ * listener added later can miss the callback, and some mediation adapters
+ * deliver PAID *after* the ad is dismissed — a listener torn down on close
+ * would silently drop that revenue. Never throws.
+ */
+function attachPaidListener(ad: any, adUnitName: string): void {
+  try {
+    if (!ad || !AdEventTypeEnum?.PAID) return;
+    let paidSeen = false;
+    ad.addAdEventListener(AdEventTypeEnum.PAID, (e: any) => {
+      if (paidSeen) return;                    // one impression = one accrual
+      paidSeen = true;
+      onAdPaid({
+        value: e?.value,
+        currency: e?.currency,
+        precision: e?.precision,
+        format: 'interstitial',
+        adUnitName,
+      });
+    });
+  } catch { /* older client without PAID → no revenue data, but ads still run */ }
+}
+
 function preload(): void {
   if (!InterstitialAdCls || adsRemoved) return;
   try {
@@ -341,6 +348,16 @@ function preload(): void {
     // When the user closes the ad, immediately preload the next one.
     interstitial.addAdEventListener(AdEventTypeEnum.CLOSED, () => { loaded = false; setInterstitialVisible(false); preload(); });
     interstitial.addAdEventListener(AdEventTypeEnum.ERROR, () => { loaded = false; setInterstitialVisible(false); });
+    // Impression-level ad revenue — the worldwide path (every non-US user and
+    // all of iOS), which until now captured NO revenue at all.
+    //
+    // Subscribed LAST and in its own try/catch on purpose: the library THROWS
+    // on an unknown event type, so on a dev client built before PAID existed
+    // `AdEventTypeEnum.PAID` is undefined and this call blows up. Higher in the
+    // function that would have skipped LOADED/CLOSED/ERROR and load() itself —
+    // turning "no revenue data" into "no ads at all". Analytics must never be
+    // able to take the ad stack down with it.
+    attachPaidListener(interstitial, 'ww_interstitial');
     interstitial.load();
   } catch { /* swallow — maybeShow will just no-op until one loads */ }
 }
@@ -361,6 +378,10 @@ function preloadOnboarding(): void {
         setTimeout(() => { if (!onboardingShown) preloadOnboarding(); }, 8000);
       }
     });
+    // First-open impression — the single highest-value one for LTV modelling,
+    // since it is the only ad a same-day churner ever sees. Subscribed last;
+    // see the note in preload().
+    attachPaidListener(onboardingInterstitial, 'onboarding_first');
     onboardingInterstitial.load();
   } catch { /* attempts simply no-op */ }
 }

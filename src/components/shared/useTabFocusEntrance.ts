@@ -93,6 +93,10 @@ export function useTabFocusEntrance(delay = 0) {
   useFocusEffect(useCallback(() => {
     const d = delay * STAGGER_SCALE;
     // Re-arm: hand the view back to Reanimated for this focus's play-through.
+    // The layout baseline resets too — frame changes that happened while the
+    // tab was away are already reflected in the attach-time layout and must
+    // not count as "shifted mid-animation" (that would kill the ceremony).
+    lastFrame.current = null;
     settledRef.current = false;
     setSettled(false);
     cancelAnimation(translateY);
@@ -147,12 +151,18 @@ export function useTabFocusEntrance(delay = 0) {
   // short only in the exact scenario that would otherwise break taps; the
   // common (no-growth) case still plays the full ceremony.
   // ─────────────────────────────────────────────────────────────────────────
-  const lastY = useRef<number | null>(null);
+  // Track y AND height: a y-shift means a sibling ABOVE grew; a height change
+  // means content INSIDE this section hydrated (e.g. the My Reading Plans card
+  // renders its rows once plan summaries land) — in BOTH cases the subtree's
+  // frozen hit regions no longer match the drawn layout, so detach now. The
+  // y-only version of this check left the card's lower rows (suggested plans,
+  // More Plans) untappable for the whole entrance window on every focus.
+  const lastFrame = useRef<{ y: number; h: number } | null>(null);
   const onLayout = useCallback((e: LayoutChangeEvent) => {
-    const y = e.nativeEvent.layout.y;
-    const prev = lastY.current;
-    lastY.current = y;
-    if (prev !== null && Math.abs(y - prev) > 0.5) settle();
+    const { y, height } = e.nativeEvent.layout;
+    const prev = lastFrame.current;
+    lastFrame.current = { y, h: height };
+    if (prev !== null && (Math.abs(y - prev.y) > 0.5 || Math.abs(height - prev.h) > 0.5)) settle();
   }, [settle]);
 
   return { style: settled ? RESTING_STYLE : animStyle, onLayout };

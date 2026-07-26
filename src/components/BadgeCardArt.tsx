@@ -16,7 +16,10 @@ import { ROSE, TXT, FONTS } from '../constants/theme';
 // card (it is overlaid separately) so it never appears in the exported image.
 
 const CARD_BG = '#FCE7EF';        // light rose card surface
-const BRAND_BG = ROSE;            // deeper rose footer bar
+// Footer bar sits a step LIGHTER than ROSE (#E63F69). At full brand rose the
+// app icon — itself rose with a white book — sank into the bar and read as a
+// flat blob; the lighter ground plus the white keyline below separates them.
+const BRAND_BG = '#F0648A';
 const NEW_ACH = 'rgba(30,27,46,0.42)';
 const DESC = 'rgba(30,27,46,0.62)';
 
@@ -35,7 +38,7 @@ function Hexagon({ size, color }: { size: number; color: string }) {
 }
 
 export default function BadgeCardArt({
-  badgeId, iconKey, rarity, name, description, newAchievementLabel, width,
+  badgeId, iconKey, rarity, name, description, newAchievementLabel, width, glow,
 }: {
   badgeId?: string;
   iconKey: string;
@@ -44,8 +47,19 @@ export default function BadgeCardArt({
   description: string;
   newAchievementLabel: string;
   width: number;
+  /**
+   * Optional decorative layer painted BEHIND the badge (the rotating light
+   * rays on the unlock screen). Passed in rather than built here so this
+   * component stays animation-free: the off-screen capture copy renders
+   * WITHOUT it, keeping the exported image deterministic.
+   */
+  glow?: React.ReactNode;
 }) {
   const W = width;
+  // The app mark gets a white keyline so it reads as a distinct object against
+  // the rose bar instead of melting into it.
+  const logoSize = Math.round(W * 0.078);
+  const logoRing = Math.max(2, Math.round(W * 0.006));
   return (
     <View style={[styles.card, { width: W, borderRadius: W * 0.075 }]}>
       <View style={{ paddingHorizontal: W * 0.075, paddingTop: W * 0.06 }}>
@@ -57,6 +71,10 @@ export default function BadgeCardArt({
         </View>
 
         <View style={{ alignItems: 'center', marginTop: W * 0.055, marginBottom: W * 0.055 }}>
+          {/* Rays sit under the badge and must never intercept a tap. */}
+          {glow ? (
+            <View style={styles.glowLayer} pointerEvents="none">{glow}</View>
+          ) : null}
           <BadgeIcon id={badgeId} iconKey={iconKey} rarity={rarity} size={Math.round(W * 0.42)} label={null} />
         </View>
 
@@ -67,7 +85,14 @@ export default function BadgeCardArt({
       </View>
 
       <View style={[styles.brandBar, { marginTop: W * 0.075, paddingVertical: W * 0.05, paddingHorizontal: W * 0.075, gap: W * 0.03 }]}>
-        <Logo size={Math.round(W * 0.078)} />
+        <View style={{
+          borderWidth: logoRing,
+          borderColor: '#FFFFFF',
+          borderRadius: logoSize * 0.28 + logoRing,
+          overflow: 'hidden',
+        }}>
+          <Logo size={logoSize} />
+        </View>
         <Text style={[styles.brandText, { fontSize: W * 0.05 }]}>HER BIBLE</Text>
       </View>
     </View>
@@ -77,6 +102,9 @@ export default function BadgeCardArt({
 const styles = StyleSheet.create({
   card: { backgroundColor: CARD_BG, overflow: 'hidden' },
   topRow: { flexDirection: 'row', alignItems: 'center' },
+  // Centred on the badge without affecting layout, so adding the glow can't
+  // shift the card's height (which would change the capture geometry).
+  glowLayer: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   newAch: { fontFamily: FONTS.sansSemiBold, fontWeight: '600', color: NEW_ACH, letterSpacing: 0.4 },
   name: { fontFamily: FONTS.loraBold, fontWeight: '600', color: TXT, letterSpacing: 0.2 },
   desc: { fontFamily: FONTS.lato, color: DESC, letterSpacing: 0.2 },

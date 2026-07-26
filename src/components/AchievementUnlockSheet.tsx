@@ -2,12 +2,16 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, Pressable, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing, cancelAnimation,
+} from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import ViewShot, { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
 import { isInterstitialVisible, onInterstitialVisibility } from '../services/interstitialVisibility';
 import BadgeCardArt from './BadgeCardArt';
+import BadgeRays from './BadgeRays';
 import { achievementUi, localizedAchievementName, localizedAchievementRule } from '../constants/achievements';
 import { useAchievements } from '../state/AchievementsContext';
 import { useNudgeCoordinator } from '../state/NudgeCoordinatorContext';
@@ -28,12 +32,31 @@ import { ROSE, TXT, FONTS, BTN_RADIUS } from '../constants/theme';
 // hands it to the OS share sheet or saves it to the photo library — the same
 // mechanism the verse share uses.
 
-const { width: SCREEN_W } = Dimensions.get('window');
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const CARD_W = Math.min(SCREEN_W - 48, 400);   // on-screen card width
 const CAPTURE_W = 1080;                          // exported-image width (crisp)
 const CAPTURE_QUALITY = 0.92;
 const CAPTURE_FORMAT = 'jpg' as const;
 const CAPTURE_MIME = 'image/jpeg';
+
+// ── Entrance choreography ────────────────────────────────────────────────────
+// Three beats, each starting as the previous one lands, so the screen reads as
+// one continuous reveal rather than three separate effects:
+//   1. the whole screen rises from the bottom            (0 → 400 ms)
+//   2. the badge card fades up from dim                  (400 → 1000 ms)
+//   3. the light rays bloom in behind it and drift       (1000 → 1700 ms)
+// Driven here rather than by Modal animationType="slide" because the native
+// slide gives no hook to hang beats 2 and 3 off — it finishes whenever it
+// finishes. The Modal itself stays a plain native window (animationType="none"),
+// so this is only animating its CHILDREN: there is no Reanimated-owned wrapper
+// around the modal and therefore none of the stale-touch-region risk that
+// motivated the original native-slide choice.
+const RISE_MS = 400;
+const BADGE_MS = 600;
+const RAYS_MS = 700;
+const RAYS_DELAY = RISE_MS + BADGE_MS;   // rays only once the badge is fully up
+/** Rays overflow the badge so the beams read as light coming from behind it. */
+const RAYS_SIZE = Math.round(CARD_W * 0.78);
 
 export default function AchievementUnlockSheet() {
   const { awardQueue, dismissAward } = useAchievements();
@@ -62,6 +85,35 @@ export default function AchievementUnlockSheet() {
   const [adUp, setAdUp] = useState(isInterstitialVisible());
   useEffect(() => onInterstitialVisibility(setAdUp), []);
   const show = visible && active && !adUp;
+
+  // ── Entrance ───────────────────────────────────────────────────────────────
+  const rise = useSharedValue(0);    // 0 = off-screen bottom, 1 = settled
+  const badge = useSharedValue(0);   // badge card dim → bright
+  const rays = useSharedValue(0);    // light rays bloom
+  useEffect(() => {
+    if (!show) {
+      // Reset immediately (not animated) — the modal is gone, and the next
+      // badge in the queue must start from the beginning, not mid-sequence.
+      cancelAnimation(rise); cancelAnimation(badge); cancelAnimation(rays);
+      rise.value = 0; badge.value = 0; rays.value = 0;
+      return;
+    }
+    rise.value = withTiming(1, { duration: RISE_MS, easing: Easing.out(Easing.cubic) });
+    badge.value = withDelay(RISE_MS, withTiming(1, { duration: BADGE_MS, easing: Easing.out(Easing.quad) }));
+    rays.value = withDelay(RAYS_DELAY, withTiming(1, { duration: RAYS_MS, easing: Easing.inOut(Easing.quad) }));
+  }, [show, rise, badge, rays]);
+
+  const riseStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: (1 - rise.value) * SCREEN_H }],
+    opacity: rise.value,
+  }));
+  // Fades AND lifts slightly — a pure opacity fade on a static card reads as a
+  // rendering glitch rather than an arrival.
+  const badgeStyle = useAnimatedStyle(() => ({
+    opacity: badge.value,
+    transform: [{ scale: 0.94 + badge.value * 0.06 }],
+  }));
+  const raysStyle = useAnimatedStyle(() => ({ opacity: rays.value }));
 
   // ── Share / save (mirrors ShareVerseSheet) ────────────────────────────────
   const shotRef = useRef<ViewShot | null>(null);
@@ -126,32 +178,42 @@ export default function AchievementUnlockSheet() {
   };
 
   return (
-    <Modal visible={show} animationType="slide" onRequestClose={close} statusBarTranslucent>
-      <LinearGradient colors={['#FFF6FA', '#FBE3EE']} style={StyleSheet.absoluteFillObject} />
-      <View style={[styles.root, { paddingTop: insets.top + 6, paddingBottom: insets.bottom + 16 }]}>
-        {/* Title only — no back button (per user). */}
-        <Text style={styles.headerTitle}>{ui.congratsTitle}</Text>
+    <Modal visible={show} animationType="none" onRequestClose={close} statusBarTranslucent>
+      <Animated.View style={[StyleSheet.absoluteFillObject, riseStyle]}>
+        <LinearGradient colors={['#FFF6FA', '#FBE3EE']} style={StyleSheet.absoluteFillObject} />
+        <View style={[styles.root, { paddingTop: insets.top + 6, paddingBottom: insets.bottom + 16 }]}>
+          {/* Title only — no back button (per user). */}
+          <Text style={styles.headerTitle}>{ui.congratsTitle}</Text>
 
-        <View style={styles.center}>
-          <View>
-            <BadgeCardArt {...cardProps} width={CARD_W} />
-            {/* Share button — overlaid, so it never appears in the exported
-                image. Tapping it opens the share / save actions. */}
-            <TouchableOpacity
-              style={[styles.shareFab, { top: CARD_W * 0.05, right: CARD_W * 0.05 }]}
-              activeOpacity={0.85}
-              onPress={() => setShareOpen(true)}
-              hitSlop={8}
-            >
-              <Feather name="share-2" size={19} color={ROSE} />
-            </TouchableOpacity>
+          <View style={styles.center}>
+            <Animated.View style={badgeStyle}>
+              <BadgeCardArt
+                {...cardProps}
+                width={CARD_W}
+                glow={(
+                  <Animated.View style={raysStyle} pointerEvents="none">
+                    <BadgeRays size={RAYS_SIZE} />
+                  </Animated.View>
+                )}
+              />
+              {/* Share button — overlaid, so it never appears in the exported
+                  image. Tapping it opens the share / save actions. */}
+              <TouchableOpacity
+                style={[styles.shareFab, { top: CARD_W * 0.05, right: CARD_W * 0.05 }]}
+                activeOpacity={0.85}
+                onPress={() => setShareOpen(true)}
+                hitSlop={12}
+              >
+                <Feather name="share-2" size={20} color={ROSE} />
+              </TouchableOpacity>
+            </Animated.View>
           </View>
-        </View>
 
-        <TouchableOpacity onPress={close} activeOpacity={0.9} style={styles.collectBtn}>
-          <Text style={styles.collectText}>{ui.collect}</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity onPress={close} activeOpacity={0.9} style={styles.collectBtn}>
+            <Text style={styles.collectText}>{ui.collect}</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
 
       {/* Off-screen full-resolution copy of the card — the capture source. */}
       <View style={styles.offscreen} pointerEvents="none">
@@ -194,11 +256,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4, marginLeft: 4, marginTop: 4,
   },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  // Bare glyph — no white disc, no shadow (per user). The rose icon already has
+  // enough contrast on the light-rose card, and the disc read as a stray UI chip
+  // sitting on top of the artwork. hitSlop keeps the tap target full size.
   shareFab: {
     position: 'absolute',
-    width: 38, height: 38, borderRadius: 19,
-    backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 6, elevation: 3,
+    width: 38, height: 38,
+    alignItems: 'center', justifyContent: 'center',
   },
   collectBtn: {
     height: 54, borderRadius: BTN_RADIUS, backgroundColor: ROSE,

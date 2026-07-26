@@ -80,15 +80,37 @@ export function useTabFocusEntrance(delay = 0) {
   //
   // Cancelling and assigning the final values makes Reanimated write 1 / 0
   // natively itself, so the hand-off is clean no matter who won the race.
-  const settle = useCallback(() => {
-    if (settledRef.current) return;
+  // Final write + detach — idempotent (safe to reach via both the glide's
+  // completion and its watchdog).
+  const glideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const finishSettle = useCallback(() => {
     cancelAnimation(opacity);
     cancelAnimation(translateY);
     opacity.value = 1;
     translateY.value = 0;
-    settledRef.current = true;
     setSettled(true);
   }, [opacity, translateY]);
+
+  // Detach back to plain RN. `immediate` (blur) snaps invisibly; the default
+  // GLIDES the remaining distance (~110 ms) first. An early settle — async
+  // content landing mid-entrance shifts the layout — then reads as "this
+  // section finished a beat early" instead of popping from half-transparent
+  // to full. The old hard snap made content-heavy screens (Plans Explore,
+  // Bible, Profile) blink section-by-section as their data streamed in.
+  const settle = useCallback((immediate = false) => {
+    if (settledRef.current) return;
+    settledRef.current = true;
+    if (settleTimer.current) { clearTimeout(settleTimer.current); settleTimer.current = null; }
+    if (immediate) { finishSettle(); return; }
+    cancelAnimation(opacity);
+    cancelAnimation(translateY);
+    translateY.value = withTiming(0, { duration: 110, easing: Easing.out(Easing.quad) });
+    opacity.value = withTiming(1, { duration: 110, easing: Easing.out(Easing.quad) }, (fin) => {
+      if (fin) runOnJS(finishSettle)();
+    });
+    // Dropped runOnJS must never leave the view owned by Reanimated.
+    glideTimer.current = setTimeout(finishSettle, 220);
+  }, [finishSettle, opacity, translateY]);
 
   useFocusEffect(useCallback(() => {
     const d = delay * STAGGER_SCALE;
@@ -97,6 +119,7 @@ export function useTabFocusEntrance(delay = 0) {
     // tab was away are already reflected in the attach-time layout and must
     // not count as "shifted mid-animation" (that would kill the ceremony).
     lastFrame.current = null;
+    if (glideTimer.current) { clearTimeout(glideTimer.current); glideTimer.current = null; }
     settledRef.current = false;
     setSettled(false);
     cancelAnimation(translateY);
@@ -120,12 +143,15 @@ export function useTabFocusEntrance(delay = 0) {
     // firing early is harmless — it just ends the entrance sooner.
     if (settleTimer.current) clearTimeout(settleTimer.current);
     settleTimer.current = setTimeout(settle, d + ENTRANCE_DURATION_MS + SETTLE_SLACK_MS + 500);
-    // Blur mid-entrance → land on the resting values so the section can never
-    // stick semi-transparent while the tab is away.
-    return () => settle();
+    // Blur mid-entrance → snap to the resting values (invisible — the screen
+    // is leaving) so the section can never stick semi-transparent while away.
+    return () => settle(true);
   }, [delay, translateY, opacity, settle]));
 
-  useEffect(() => () => { if (settleTimer.current) clearTimeout(settleTimer.current); }, []);
+  useEffect(() => () => {
+    if (settleTimer.current) clearTimeout(settleTimer.current);
+    if (glideTimer.current) clearTimeout(glideTimer.current);
+  }, []);
 
   const animStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,

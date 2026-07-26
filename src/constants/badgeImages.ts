@@ -39,8 +39,23 @@ export const EARLY_BADGE_IDS: readonly string[] = [
 // placeholder (two-stop body + highlight arc + white Feather glyph + soft
 // shadow) — every tier looks finished even with no PNG.
 //
-// This map is the highest-priority source: to bundle a specific badge in the
-// app binary (e.g. a hero badge that must show instantly offline before any
-// download), add `id → require(...)` here and it wins over the CDN copy.
-// Left empty by design.
-export const BADGE_IMAGES: Record<string, ImageSourcePropType> = {};
+// This map is the highest-priority source: an id listed here wins over the CDN
+// copy and needs no network at all.
+//
+// BUNDLED: the two badges a brand-new user can reach in one action, because a
+// first unlock on a weak connection was showing the gradient placeholder
+// instead of the real art (reported on device). Everything else stays on the
+// CDN — those need streaks or cumulative counts, so the prefetch has days to
+// land them.
+//
+//   prayer.first     — first Amen. The home screen's primary CTA, and where
+//                      onboarding leads; effectively everyone's first badge.
+//   scripture.first  — fires automatically after 5 min on the Bible tab.
+//
+// ~100 KB for the pair. Adding more is one line each, but weigh it against the
+// binary: note.first / highlight.first are the next most exposed, and they need
+// the verse toolbar, so the CDN usually wins that race.
+export const BADGE_IMAGES: Record<string, ImageSourcePropType> = {
+  'prayer.first': require('../../assets/badges/prayer-first.png'),
+  'scripture.first': require('../../assets/badges/scripture-first.png'),
+};

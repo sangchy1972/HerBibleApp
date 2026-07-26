@@ -69,3 +69,8 @@ play-service-account.json
 
 # EAS local env-var materializations (eas env:pull) — same policy as google-services.json
 .eas/
+
+# Build artifacts downloaded for inspection (never commit; .easignore also skips them)
+*.aab
+*.apk
+*.ipa

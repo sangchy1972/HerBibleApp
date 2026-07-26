@@ -444,7 +444,9 @@ const styles = StyleSheet.create({
   // accent circle + check that stacked on top of it was removed per user).
   // Owns the gap to the title below.
   checkWrap: { width: 260, height: 180, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  congratsLottie: { ...StyleSheet.absoluteFillObject },
+  // +15 % (260×180 → 299×207) per user; centered in the same 260×180 footprint
+  // so the title gap below doesn't move — the lottie just overflows evenly.
+  congratsLottie: { width: 299, height: 207 },
   doneTitle: {
     fontSize: 26, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT,
     textAlign: 'center', marginBottom: 8,

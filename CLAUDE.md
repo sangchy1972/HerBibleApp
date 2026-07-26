@@ -40,7 +40,10 @@ requirements — follow them by default without re-asking.
 
 ## Product facts (do not re-derive)
 
-- Bundle id: `com.holy.bible.kjv.audio.prayer`. Firebase project `herbible-d1cc7`.
+- Bundle id: `com.holy.bible.kjv.audio.prayer`.
+- Firebase: display **name** `herbible-001`, project **ID** `herbible-d1cc7`, project number
+  `553397384848`. Same project — the console breadcrumb shows the name, `google-services.json`
+  shows the id. Don't mistake them for two projects.
 - **IAP** (`src/services/iap.ts`): one "ad-free" entitlement granted by any of three products —
   `herbible_remove_ads_lifetime` (non-consumable), `herbible_premium_annual` (P1Y sub),
   `herbible_premium_monthly` (P1M sub). Same ids on both stores. No backend; trust the store client.

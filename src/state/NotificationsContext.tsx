@@ -565,17 +565,17 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   }, [settings, persist]);
 
   const requestPermissionAndEnableDefaults = useCallback(async (): Promise<boolean> => {
-    // Direct OS prompt — the calling surface (e.g. the "Follow Him" screen)
-    // already explains why, so we skip ensureNotificationPermission's
-    // in-app rationale Alert. On a fresh device this shows the system
-    // dialog; if permanently denied, getPermissionsAsync().granted stays
-    // false and we just return false (the screen still dismisses).
-    const current = await Notifications.getPermissionsAsync();
-    let granted = current.granted;
-    if (!granted && current.canAskAgain) {
-      const next = await Notifications.requestPermissionsAsync();
-      granted = next.granted;
-    }
+    // Direct OS prompt — the calling surface (e.g. the onboarding notify step)
+    // already explains why, so we skip the in-app rationale Alert. Call
+    // requestPermissionsAsync FIRST, with no getPermissionsAsync pre-check:
+    // that pre-check was a second serial native round-trip that delayed the
+    // system dialog by a visible beat, and request itself is a safe no-op when
+    // already granted / permanently denied (it just resolves with the current
+    // status, no dialog). So the OS prompt now appears on the first bridge call.
+    let granted = false;
+    try {
+      granted = (await Notifications.requestPermissionsAsync()).granted;
+    } catch { /* no native module (Expo Go / unsupported) — treat as denied */ }
     setPermissionGranted(granted);
     if (granted) {
       // Turn on the two daily reminders so the opt-in delivers value

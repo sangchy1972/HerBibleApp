@@ -267,6 +267,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
   const [selectedPlan, setSelectedPlan] = useState<PlanId>('lifetime');
   const [obPrices, setObPrices] = useState<Record<PlanId, string>>(OB_FALLBACK_PRICES);
   const [payBusy, setPayBusy] = useState(false);
+  const [notifyBusy, setNotifyBusy] = useState(false);   // notify step: OS-permission request in flight
   const [showTrialSheet, setShowTrialSheet] = useState(false);
   useEffect(() => {
     if (stepName !== 'paywall') return;
@@ -367,10 +368,13 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
   // Notify step: fire the OS permission prompt + enable reminders, then advance
   // to the login page (onboarding finishes after the final paywall step).
   const onNotifyRemind = async () => {
+    if (notifyBusy) return;                 // guard against double-taps during the await
+    setNotifyBusy(true);                    // synchronous → the button shows its spinner THIS frame
     let granted = false;
     try { granted = await requestPermissionAndEnableDefaults(); } catch { /* declined / no module */ }
     notifsOnRef.current = granted;
     logEvent('onboarding_notification_result', { granted: granted ? 'true' : 'false', source: 'onboarding' });
+    setNotifyBusy(false);
     goNext();
   };
 
@@ -823,10 +827,12 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
       <View style={[styles.footer, { paddingBottom: insets.bottom + 14 }]}>
         {stepName === 'notify' ? (
           <Animated.View entering={FadeIn.duration(300)}>
-            <PressBounce onPress={onNotifyRemind} style={styles.cta}>
-              <Text style={styles.ctaText}>{t('onboarding.notify.cta')}</Text>
+            <PressBounce onPress={onNotifyRemind} style={styles.cta} disabled={notifyBusy}>
+              {notifyBusy
+                ? <ActivityIndicator color="#FFFFFF" />
+                : <Text style={styles.ctaText}>{t('onboarding.notify.cta')}</Text>}
             </PressBounce>
-            <TouchableOpacity onPress={goNext} hitSlop={10} style={styles.laterBtn}>
+            <TouchableOpacity onPress={goNext} hitSlop={10} style={styles.laterBtn} disabled={notifyBusy}>
               <Text style={styles.laterText}>{t('onboarding.notify.later')}</Text>
             </TouchableOpacity>
           </Animated.View>

@@ -66,3 +66,6 @@ play-service-account.json
 
 # Play policy audit skill scratch dir
 .scratch/
+
+# EAS local env-var materializations (eas env:pull) — same policy as google-services.json
+.eas/

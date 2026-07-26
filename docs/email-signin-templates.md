@@ -1,0 +1,249 @@
+# Sign-in email — Firebase templates (7 languages)
+
+Paste-ready replacements for **Firebase Console → Authentication → Templates →
+Email address sign-in**.
+
+## Before you paste — do these two first
+
+Both matter more than the HTML for staying out of spam.
+
+**1. Fix the project's public-facing name.** The current mail says *"Sign in to
+project-553397384848"* — a raw project number in the subject line is the single
+loudest spam signal in the whole message, and it lands before the user opens
+anything.
+
+> Firebase Console → Authentication → Sign-in method → Google → **Public-facing
+> name for project** → change `project-553397384848` to `Her Bible` → Save.
+
+This is the `%APP_NAME%` used below, so it fixes the subject and the body at once.
+
+**2. Point the sender at your own domain.** `noreply@herbible-d1cc7.firebaseapp.com`
+has no reputation with Gmail and no SPF/DKIM of yours, which is why Gmail said
+*"similar to messages identified as spam"*.
+
+> Authentication → Templates → **Customize domain** → enter `everlandapps.com` →
+> add the TXT/CNAME records it gives you at your DNS provider.
+
+You already control this domain (it is on Vercel), so it is a two-record change.
+Sender becomes `noreply@everlandapps.com`.
+
+## How localisation works here
+
+Firebase auto-localises only its **stock** templates. A customised template is
+sent exactly as written, so the app now sends a language code with the request
+(`auth().languageCode`, wired in `services/firebaseAuth.ts` →
+`setEmailLanguage`). Firebase then looks up the template stored for that locale.
+
+In the console, the Templates page has a **language selector** — switch it, paste
+the matching block, save, repeat. Locales the app sends:
+
+| App language | Locale to select |
+| --- | --- |
+| English | `en` |
+| 简体中文 | `zh-CN` |
+| 繁體中文 | `zh-TW` |
+| Español | `es` |
+| Português | `pt-BR` |
+| Deutsch | `de` |
+| Français | `fr` |
+
+Any locale you don't fill in falls back to `en`, so English is the one to do first.
+
+## Notes on the markup
+
+- Table layout + inline styles. Gmail strips `<style>` blocks and ignores flexbox;
+  anything fancier degrades into unstyled text in exactly the client that matters.
+- `%LINK%` is the button's href — Firebase substitutes the real one-time URL.
+  Don't rename it and don't wrap it in tracking.
+- The button is a padded table cell, not a styled `<a>` — Outlook drops padding
+  on inline elements.
+- No remote images. An image-heavy first email from an unknown sender is itself a
+  spam signal, and Gmail blocks remote images by default anyway, so a logo would
+  render as a broken box on the one impression that counts. The wordmark is text.
+- Under 100 words in every language, per the brief.
+
+---
+
+## English — `en`
+
+**Subject:** `Sign in to %APP_NAME%`
+
+```html
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FAF7F8;padding:32px 0;font-family:Helvetica,Arial,sans-serif;">
+  <tr><td align="center">
+    <table width="440" cellpadding="0" cellspacing="0" border="0" style="max-width:440px;background:#FFFFFF;border:1px solid #EFE6EA;border-radius:12px;padding:40px 32px;">
+      <tr><td align="center" style="font-size:20px;font-weight:bold;color:#E63F69;letter-spacing:1px;padding-bottom:28px;">HER BIBLE</td></tr>
+      <tr><td align="center" style="font-size:22px;color:#1E1B2E;padding-bottom:14px;">Confirm your sign-in</td></tr>
+      <tr><td align="center" style="font-size:15px;line-height:22px;color:#6B6675;padding-bottom:28px;">Tap below to sign in to %APP_NAME% as %EMAIL%. The link works once and expires soon.</td></tr>
+      <tr><td align="center" style="padding-bottom:28px;">
+        <table cellpadding="0" cellspacing="0" border="0"><tr>
+          <td align="center" bgcolor="#E63F69" style="border-radius:8px;">
+            <a href="%LINK%" style="display:inline-block;padding:14px 36px;font-size:16px;color:#FFFFFF;text-decoration:none;">Confirm sign-in</a>
+          </td>
+        </tr></table>
+      </td></tr>
+      <tr><td align="center" style="font-size:13px;line-height:20px;color:#9A94A3;border-top:1px solid #F2EBEE;padding-top:20px;">Didn't request this? You can safely ignore this email.</td></tr>
+    </table>
+  </td></tr>
+</table>
+```
+
+## 简体中文 — `zh-CN`
+
+**Subject:** `登录 %APP_NAME%`
+
+```html
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FAF7F8;padding:32px 0;font-family:Helvetica,Arial,sans-serif;">
+  <tr><td align="center">
+    <table width="440" cellpadding="0" cellspacing="0" border="0" style="max-width:440px;background:#FFFFFF;border:1px solid #EFE6EA;border-radius:12px;padding:40px 32px;">
+      <tr><td align="center" style="font-size:20px;font-weight:bold;color:#E63F69;letter-spacing:1px;padding-bottom:28px;">HER BIBLE</td></tr>
+      <tr><td align="center" style="font-size:22px;color:#1E1B2E;padding-bottom:14px;">确认登录</td></tr>
+      <tr><td align="center" style="font-size:15px;line-height:24px;color:#6B6675;padding-bottom:28px;">点击下方按钮，以 %EMAIL% 登录 %APP_NAME%。此链接仅可使用一次，且会很快失效。</td></tr>
+      <tr><td align="center" style="padding-bottom:28px;">
+        <table cellpadding="0" cellspacing="0" border="0"><tr>
+          <td align="center" bgcolor="#E63F69" style="border-radius:8px;">
+            <a href="%LINK%" style="display:inline-block;padding:14px 36px;font-size:16px;color:#FFFFFF;text-decoration:none;">确认登录</a>
+          </td>
+        </tr></table>
+      </td></tr>
+      <tr><td align="center" style="font-size:13px;line-height:20px;color:#9A94A3;border-top:1px solid #F2EBEE;padding-top:20px;">若非本人操作，忽略此邮件即可。</td></tr>
+    </table>
+  </td></tr>
+</table>
+```
+
+## 繁體中文 — `zh-TW`
+
+**Subject:** `登入 %APP_NAME%`
+
+```html
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FAF7F8;padding:32px 0;font-family:Helvetica,Arial,sans-serif;">
+  <tr><td align="center">
+    <table width="440" cellpadding="0" cellspacing="0" border="0" style="max-width:440px;background:#FFFFFF;border:1px solid #EFE6EA;border-radius:12px;padding:40px 32px;">
+      <tr><td align="center" style="font-size:20px;font-weight:bold;color:#E63F69;letter-spacing:1px;padding-bottom:28px;">HER BIBLE</td></tr>
+      <tr><td align="center" style="font-size:22px;color:#1E1B2E;padding-bottom:14px;">確認登入</td></tr>
+      <tr><td align="center" style="font-size:15px;line-height:24px;color:#6B6675;padding-bottom:28px;">點擊下方按鈕，以 %EMAIL% 登入 %APP_NAME%。此連結僅可使用一次，且會很快失效。</td></tr>
+      <tr><td align="center" style="padding-bottom:28px;">
+        <table cellpadding="0" cellspacing="0" border="0"><tr>
+          <td align="center" bgcolor="#E63F69" style="border-radius:8px;">
+            <a href="%LINK%" style="display:inline-block;padding:14px 36px;font-size:16px;color:#FFFFFF;text-decoration:none;">確認登入</a>
+          </td>
+        </tr></table>
+      </td></tr>
+      <tr><td align="center" style="font-size:13px;line-height:20px;color:#9A94A3;border-top:1px solid #F2EBEE;padding-top:20px;">若非本人操作，忽略此郵件即可。</td></tr>
+    </table>
+  </td></tr>
+</table>
+```
+
+## Español — `es`
+
+**Subject:** `Inicia sesión en %APP_NAME%`
+
+```html
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FAF7F8;padding:32px 0;font-family:Helvetica,Arial,sans-serif;">
+  <tr><td align="center">
+    <table width="440" cellpadding="0" cellspacing="0" border="0" style="max-width:440px;background:#FFFFFF;border:1px solid #EFE6EA;border-radius:12px;padding:40px 32px;">
+      <tr><td align="center" style="font-size:20px;font-weight:bold;color:#E63F69;letter-spacing:1px;padding-bottom:28px;">HER BIBLE</td></tr>
+      <tr><td align="center" style="font-size:22px;color:#1E1B2E;padding-bottom:14px;">Confirma tu acceso</td></tr>
+      <tr><td align="center" style="font-size:15px;line-height:22px;color:#6B6675;padding-bottom:28px;">Toca abajo para entrar en %APP_NAME% como %EMAIL%. El enlace sirve una vez y caduca pronto.</td></tr>
+      <tr><td align="center" style="padding-bottom:28px;">
+        <table cellpadding="0" cellspacing="0" border="0"><tr>
+          <td align="center" bgcolor="#E63F69" style="border-radius:8px;">
+            <a href="%LINK%" style="display:inline-block;padding:14px 36px;font-size:16px;color:#FFFFFF;text-decoration:none;">Confirmar acceso</a>
+          </td>
+        </tr></table>
+      </td></tr>
+      <tr><td align="center" style="font-size:13px;line-height:20px;color:#9A94A3;border-top:1px solid #F2EBEE;padding-top:20px;">¿No lo pediste? Puedes ignorar este correo.</td></tr>
+    </table>
+  </td></tr>
+</table>
+```
+
+## Português — `pt-BR`
+
+**Subject:** `Entre no %APP_NAME%`
+
+```html
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FAF7F8;padding:32px 0;font-family:Helvetica,Arial,sans-serif;">
+  <tr><td align="center">
+    <table width="440" cellpadding="0" cellspacing="0" border="0" style="max-width:440px;background:#FFFFFF;border:1px solid #EFE6EA;border-radius:12px;padding:40px 32px;">
+      <tr><td align="center" style="font-size:20px;font-weight:bold;color:#E63F69;letter-spacing:1px;padding-bottom:28px;">HER BIBLE</td></tr>
+      <tr><td align="center" style="font-size:22px;color:#1E1B2E;padding-bottom:14px;">Confirme seu acesso</td></tr>
+      <tr><td align="center" style="font-size:15px;line-height:22px;color:#6B6675;padding-bottom:28px;">Toque abaixo para entrar no %APP_NAME% como %EMAIL%. O link funciona uma vez e expira em breve.</td></tr>
+      <tr><td align="center" style="padding-bottom:28px;">
+        <table cellpadding="0" cellspacing="0" border="0"><tr>
+          <td align="center" bgcolor="#E63F69" style="border-radius:8px;">
+            <a href="%LINK%" style="display:inline-block;padding:14px 36px;font-size:16px;color:#FFFFFF;text-decoration:none;">Confirmar acesso</a>
+          </td>
+        </tr></table>
+      </td></tr>
+      <tr><td align="center" style="font-size:13px;line-height:20px;color:#9A94A3;border-top:1px solid #F2EBEE;padding-top:20px;">Não foi você? Pode ignorar este e-mail.</td></tr>
+    </table>
+  </td></tr>
+</table>
+```
+
+## Deutsch — `de`
+
+**Subject:** `Bei %APP_NAME% anmelden`
+
+```html
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FAF7F8;padding:32px 0;font-family:Helvetica,Arial,sans-serif;">
+  <tr><td align="center">
+    <table width="440" cellpadding="0" cellspacing="0" border="0" style="max-width:440px;background:#FFFFFF;border:1px solid #EFE6EA;border-radius:12px;padding:40px 32px;">
+      <tr><td align="center" style="font-size:20px;font-weight:bold;color:#E63F69;letter-spacing:1px;padding-bottom:28px;">HER BIBLE</td></tr>
+      <tr><td align="center" style="font-size:22px;color:#1E1B2E;padding-bottom:14px;">Anmeldung bestätigen</td></tr>
+      <tr><td align="center" style="font-size:15px;line-height:22px;color:#6B6675;padding-bottom:28px;">Tippe unten, um dich als %EMAIL% bei %APP_NAME% anzumelden. Der Link gilt einmal und läuft bald ab.</td></tr>
+      <tr><td align="center" style="padding-bottom:28px;">
+        <table cellpadding="0" cellspacing="0" border="0"><tr>
+          <td align="center" bgcolor="#E63F69" style="border-radius:8px;">
+            <a href="%LINK%" style="display:inline-block;padding:14px 36px;font-size:16px;color:#FFFFFF;text-decoration:none;">Anmeldung bestätigen</a>
+          </td>
+        </tr></table>
+      </td></tr>
+      <tr><td align="center" style="font-size:13px;line-height:20px;color:#9A94A3;border-top:1px solid #F2EBEE;padding-top:20px;">Nicht angefordert? Ignoriere diese E-Mail einfach.</td></tr>
+    </table>
+  </td></tr>
+</table>
+```
+
+## Français — `fr`
+
+**Subject:** `Connexion à %APP_NAME%`
+
+```html
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FAF7F8;padding:32px 0;font-family:Helvetica,Arial,sans-serif;">
+  <tr><td align="center">
+    <table width="440" cellpadding="0" cellspacing="0" border="0" style="max-width:440px;background:#FFFFFF;border:1px solid #EFE6EA;border-radius:12px;padding:40px 32px;">
+      <tr><td align="center" style="font-size:20px;font-weight:bold;color:#E63F69;letter-spacing:1px;padding-bottom:28px;">HER BIBLE</td></tr>
+      <tr><td align="center" style="font-size:22px;color:#1E1B2E;padding-bottom:14px;">Confirme ta connexion</td></tr>
+      <tr><td align="center" style="font-size:15px;line-height:22px;color:#6B6675;padding-bottom:28px;">Touche ci-dessous pour te connecter à %APP_NAME% en tant que %EMAIL%. Le lien sert une fois et expire bientôt.</td></tr>
+      <tr><td align="center" style="padding-bottom:28px;">
+        <table cellpadding="0" cellspacing="0" border="0"><tr>
+          <td align="center" bgcolor="#E63F69" style="border-radius:8px;">
+            <a href="%LINK%" style="display:inline-block;padding:14px 36px;font-size:16px;color:#FFFFFF;text-decoration:none;">Confirmer la connexion</a>
+          </td>
+        </tr></table>
+      </td></tr>
+      <tr><td align="center" style="font-size:13px;line-height:20px;color:#9A94A3;border-top:1px solid #F2EBEE;padding-top:20px;">Ce n'était pas toi ? Ignore simplement cet e-mail.</td></tr>
+    </table>
+  </td></tr>
+</table>
+```
+
+---
+
+## What the button does
+
+`%LINK%` already lands where you want — nothing to change:
+
+```
+email button → everlandapps.com/finishSignIn.html → herbible://finishSignIn?…
+             → DeepLinkHandler → completeEmailSignIn() → signed in
+```
+
+The redirect page is what avoids Firebase Dynamic Links (deprecated) and Android
+App Links entirely. Keep `everlandapps.com` in **Authentication → Settings →
+Authorized domains** or the send call starts failing with
+`auth/unauthorized-continue-uri`.

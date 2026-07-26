@@ -20,7 +20,7 @@ interface AuthState {
   /** Apple identity token → Firebase (same uid pool as Google/email). */
   signInWithApple: (identityToken: string, rawNonce: string, displayName?: string) => Promise<void>;
   /** Email magic-link (passwordless): sends a one-tap sign-in link to the email. */
-  sendEmailLink: (email: string) => Promise<void>;
+  sendEmailLink: (email: string, appLanguage?: string) => Promise<void>;
   /** Completes magic-link sign-in from the tapped link (called by DeepLinkHandler). */
   completeEmailLink: (link: string) => Promise<void>;
   /** Legacy local sign-in — still used by Apple until it migrates to Firebase. */
@@ -106,8 +106,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     recordSignInEvent('apple');
   }, [recordSignInEvent]);
 
-  const sendEmailLink = useCallback(async (email: string) => {
-    await sendEmailSignInLink(email);
+  // Pass the app's current language so Firebase picks the matching email
+  // template — a CUSTOMISED template is never auto-localised, so without this
+  // a Spanish user gets the English mail.
+  const sendEmailLink = useCallback(async (email: string, appLanguage?: string) => {
+    await sendEmailSignInLink(email, appLanguage);
   }, []);
 
   const completeEmailLink = useCallback(async (link: string) => {

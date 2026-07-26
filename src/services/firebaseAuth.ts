@@ -162,9 +162,42 @@ const PENDING_EMAIL_KEY = 'auth:emailLink:pendingEmail';
 
 export function emailAuthAvailable(): boolean { return !!authMod; }
 
-export async function sendEmailSignInLink(email: string): Promise<void> {
+// App language → the locale Firebase looks up a template under. Firebase keys
+// its per-language templates by BCP-47-ish codes; Chinese needs the script
+// subtag or both variants collapse to one template.
+const EMAIL_LOCALE: Record<string, string> = {
+  en: 'en',
+  'zh-Hans': 'zh-CN',
+  'zh-Hant': 'zh-TW',
+  de: 'de',
+  fr: 'fr',
+  es: 'es',
+  pt: 'pt-BR',
+};
+
+/**
+ * Tell Firebase which language to send the sign-in email in.
+ *
+ * This is REQUIRED once the templates are customised: Firebase auto-localises
+ * only its stock templates — a customised one is sent verbatim, in whatever
+ * language that template was written, unless the request carries a language
+ * code. Without this every user gets the English template no matter what
+ * language they picked in the app.
+ *
+ * Never throws: a wrong/unsupported code just falls back to the default
+ * template, which is strictly better than failing the send.
+ */
+export function setEmailLanguage(appLanguage: string): void {
+  if (!authMod) return;
+  try {
+    authMod().languageCode = EMAIL_LOCALE[appLanguage] ?? 'en';
+  } catch { /* older SDK without the setter → stock behaviour */ }
+}
+
+export async function sendEmailSignInLink(email: string, appLanguage?: string): Promise<void> {
   if (!authMod) throw new Error('FIREBASE_AUTH_UNAVAILABLE');
   const clean = email.trim();
+  if (appLanguage) setEmailLanguage(appLanguage);
   await authMod().sendSignInLinkToEmail(clean, {
     handleCodeInApp: true,
     url: EMAIL_LINK_CONTINUE_URL,

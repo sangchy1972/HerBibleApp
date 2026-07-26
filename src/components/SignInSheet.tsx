@@ -10,6 +10,7 @@ import { useAuth } from '../state/AuthContext';
 import { warmupGoogleSignIn } from '../services/firebaseAuth';
 import { useProviderSignIn } from '../hooks/useProviderSignIn';
 import { useT } from '../i18n/useT';
+import { useTranslation } from '../state/TranslationsContext';
 import { useNavigation, type NavigationProp } from '@react-navigation/native';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -21,6 +22,7 @@ interface Props {
 export default function SignInSheet({ onClose, onError }: Props) {
   const { sendEmailLink } = useAuth();
   const t = useT();
+  const { current: translation } = useTranslation();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   // Shared OAuth flows (Google / Apple / Facebook) — `busy` = the provider
   // mid-flight; drives the in-button spinner + disables the sibling rows.
@@ -37,7 +39,7 @@ export default function SignInSheet({ onClose, onError }: Props) {
     if (emailBusy || !emailValid) return;
     setEmailBusy(true);
     try {
-      await sendEmailLink(email.trim());
+      await sendEmailLink(email.trim(), translation.code);
       setEmailSent(true);
     } catch {
       onError?.(t('signIn.email.error'));

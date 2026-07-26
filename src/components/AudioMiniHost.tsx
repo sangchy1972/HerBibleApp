@@ -45,12 +45,58 @@ function PlayingProbe({ player, onChange }: { player: NonNullable<ReturnType<typ
   return null;
 }
 
+/**
+ * Keeps a released audio player from killing the app.
+ *
+ * expo-audio's `useAudioPlayer` holds the player in `useReleasingSharedObject`,
+ * so changing the source — which BibleScreen does on every chapter, book or
+ * translation change — RELEASES the previous native object. The reference this
+ * host renders comes from context state, which lags that release by a render.
+ * In that window `useAudioPlayerStatus` reads `player.currentStatus`, a native
+ * getter, and the native side throws "Cannot use shared object that was already
+ * released". Thrown from a hook during render, that is a FATAL JavascriptException
+ * — the app dies (Crashlytics: ExceptionsManagerModule.reportException, 1.0.0 (19),
+ * 5 crashes while a user flipped chapters).
+ *
+ * The ordering cannot be fully closed from here: the release happens inside
+ * expo's hook, during BibleScreen's render, before our effects get to run. So we
+ * catch it. The boundary is keyed on the player generation, so each new player
+ * gets a fresh one and a previous failure never suppresses a healthy probe.
+ */
+class ProbeBoundary extends React.Component<
+  { onDead: () => void; children: React.ReactNode },
+  { dead: boolean }
+> {
+  state = { dead: false };
+
+  static getDerivedStateFromError() {
+    return { dead: true };
+  }
+
+  componentDidCatch() {
+    // Tell the host to stop treating this player as live — otherwise the pill
+    // would sit there showing "playing" for audio that no longer exists.
+    this.props.onDead();
+  }
+
+  render() {
+    return this.state.dead ? null : this.props.children;
+  }
+}
+
 export default function AudioMiniHost() {
   const t = useT();
   const { width } = useWindowDimensions();
-  const { player, info, ownerFocused } = useAudioMini();
+  const { player, info, ownerFocused, playerKey, dropPlayer } = useAudioMini();
   const [playing, setPlaying] = useState(false);
   const [expanded, setExpanded] = useState(false);
+
+  // The probe hit a released player. Hide the pill and forget the player so
+  // nothing subscribes to it again; the owning screen re-registers its live one.
+  const onProbeDead = useCallback(() => {
+    setPlaying(false);
+    dropPlayer();
+  }, [dropPlayer]);
 
   // Visible only when audio is actually playing AND the user has moved away from
   // the screen that owns it.
@@ -115,7 +161,14 @@ export default function AudioMiniHost() {
   // playback started, so it can't be gated on `show` (that would be circular).
   return (
     <View style={styles.root} pointerEvents="box-none">
-      {player ? <PlayingProbe player={player} onChange={setPlaying} /> : null}
+      {player ? (
+        // key: a new player generation gets a brand-new probe AND boundary, so a
+        // subscription can never straddle two players and a past failure can't
+        // suppress the live one.
+        <ProbeBoundary key={playerKey} onDead={onProbeDead}>
+          <PlayingProbe player={player} onChange={setPlaying} />
+        </ProbeBoundary>
+      ) : null}
       {show ? (
         <Animated.View style={[styles.dock, { top: '38%' }, rootStyle]} pointerEvents="box-none">
           <Animated.View style={[styles.pill, pillStyle]}>

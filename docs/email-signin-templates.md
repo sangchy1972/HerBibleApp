@@ -1,11 +1,47 @@
-# Sign-in email — Firebase templates (7 languages)
+# Sign-in email — branding + 7-language copy
 
-Paste-ready replacements for **Firebase Console → Authentication → Templates →
-Email address sign-in**.
+## Read this first: the console will NOT take custom HTML
 
-## Before you paste — do these two first
+Firebase Console → Authentication → Templates lets you edit only:
 
-Both matter more than the HTML for staying out of spam.
+| Field | Editable? |
+| --- | --- |
+| Sender name | ✅ |
+| From (local part) | ✅ |
+| Reply-to | ✅ |
+| Subject | ✅ |
+| **Message (body)** | ❌ **read-only — greyed out** |
+| Action URL | ❌ (separate "Customize action URL" flow) |
+
+The body is locked by design: this is a free relay Google owns, and an editable
+body would make it a spam cannon. So the HTML further down is **not pasteable
+into the console** — it only becomes usable on Path B below.
+
+There are two routes, and they cost very different amounts.
+
+### Path A — free, today, no code
+
+Fixes the parts of the email a user actually sees in their inbox list (sender
+name and subject line) plus deliverability. Does not change the body layout.
+This is most of the perceived win for none of the cost. **Start here.**
+
+### Path B — full branded HTML
+
+Generate the sign-in link yourself with the Admin SDK
+(`generateSignInWithEmailLink()`), then send it through your own email provider
+with your own HTML. Full control over design, layout and language.
+
+Cost of entry, stated plainly: it needs a backend. This app has none by design,
+and the project is on the **Spark (free)** plan, so Cloud Functions alone means
+moving to Blaze — plus an email provider (Resend / Postmark / SendGrid) and a
+new deploy surface to own. Worth it if the sign-in email becomes a conversion
+bottleneck; not worth it just to move a logo.
+
+The templates at the bottom of this file are written for Path B.
+
+## Path A — what to change in the console now
+
+Both of these matter more than the HTML for staying out of spam.
 
 **1. Fix the project's public-facing name.** The current mail says *"Sign in to
 project-553397384848"* — a raw project number in the subject line is the single
@@ -26,6 +62,36 @@ has no reputation with Gmail and no SPF/DKIM of yours, which is why Gmail said
 
 You already control this domain (it is on Vercel), so it is a two-record change.
 Sender becomes `noreply@everlandapps.com`.
+
+**3. Set the sender name.** It currently reads `noreply`, which is what the
+inbox list shows next to the subject — the most-seen string in the whole email.
+
+> Templates → ✏️ → **Sender name** → `Her Bible`
+
+**4. Set the subject per language.** The Subject field IS editable, and it is
+per-language (Template language selector at the bottom-left). Use these:
+
+| Locale | Subject |
+| --- | --- |
+| `en` | `Sign in to Her Bible` |
+| `zh-CN` | `登录 Her Bible` |
+| `zh-TW` | `登入 Her Bible` |
+| `es` | `Inicia sesión en Her Bible` |
+| `pt-BR` | `Entre no Her Bible` |
+| `de` | `Bei Her Bible anmelden` |
+| `fr` | `Connexion à Her Bible` |
+
+After step 1 you can write `%APP_NAME%` instead of the literal name and it
+resolves to `Her Bible` everywhere.
+
+Sender name + subject + a domain-signed sender is what turns *"noreply — Sign in
+to project-553397384848"* into *"Her Bible — Sign in to Her Bible"*. That is the
+line the user judges before opening anything.
+
+Note: `setEmailLanguage()` in `services/firebaseAuth.ts` is what makes the
+per-language subject actually get picked — Firebase auto-localises only its stock
+templates, and the moment you edit one it is served verbatim unless the request
+carries a language code.
 
 ## How localisation works here
 
@@ -64,7 +130,7 @@ Any locale you don't fill in falls back to `en`, so English is the one to do fir
 
 ---
 
-## English — `en`
+## Path B templates — English `en`
 
 **Subject:** `Sign in to %APP_NAME%`
 

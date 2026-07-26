@@ -18,28 +18,34 @@ export default function RatePromptSheet({ onClose }: { onClose: () => void }) {
   const t = useT();
   const insets = useSafeAreaInsets();
 
-  const onYes = async () => {
+  const onYes = () => {
     markYes();
-    try {
-      // Play in-app review (Android) / SKStoreReview (iOS). NOTE: the Play
-      // dialog only actually renders when the app was INSTALLED BY the Play
-      // Store for this account (internal-testing installs count; sideloads
-      // "succeed" silently by design) and Play quota-caps how often it shows.
-      if (await StoreReview.isAvailableAsync()) {
-        await StoreReview.requestReview();
-        markRated();
-      } else {
-        // No in-app dialog on this install (no Play Store, dev build, iOS
-        // simulator) — open the store listing instead so Yes is never a
-        // dead end.
-        const url = Platform.OS === 'android'
-          ? 'market://details?id=com.holy.bible.kjv.audio.prayer'
-          : StoreReview.storeUrl();
-        if (url) await Linking.openURL(url);
-        markRated();
-      }
-    } catch { /* never block the user */ }
+    // Dismiss OUR sheet first: it's an RN Modal (its own native window), and
+    // the Play in-app review panel attaches to the Activity BELOW it — firing
+    // the request while our Modal is up leaves Google's sheet hidden behind
+    // it / unable to present. Classic RN + ReviewManager pitfall.
     onClose();
+    setTimeout(async () => {
+      try {
+        // Play in-app review (Android) / SKStoreReview (iOS). NOTE: the Play
+        // dialog only actually renders when the app was INSTALLED BY the Play
+        // Store for this account (internal-testing installs count; sideloads
+        // "succeed" silently by design) and Play quota-caps how often it shows.
+        if (await StoreReview.isAvailableAsync()) {
+          await StoreReview.requestReview();
+          markRated();
+        } else {
+          // No in-app dialog on this install (no Play Store, dev build, iOS
+          // simulator) — open the store listing instead so Yes is never a
+          // dead end.
+          const url = Platform.OS === 'android'
+            ? 'market://details?id=com.holy.bible.kjv.audio.prayer'
+            : StoreReview.storeUrl();
+          if (url) await Linking.openURL(url);
+          markRated();
+        }
+      } catch { /* never block the user */ }
+    }, 400);
   };
 
   const onNo = () => { markNo(); onClose(); };

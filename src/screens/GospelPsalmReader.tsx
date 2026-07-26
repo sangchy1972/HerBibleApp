@@ -9,7 +9,7 @@ import Feather from '@expo/vector-icons/Feather';
 import LottieView from 'lottie-react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useAudioPlayer } from 'expo-audio';
-import Animated, { FadeIn, FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ROSE, LAV, TXT, TXTSUB, P, FONTS, BTN_RADIUS } from '../constants/theme';
 import { useGospelsPsalms, type Slot } from '../state/GospelsPsalmsContext';
@@ -337,10 +337,6 @@ function GPDoneCard({
     ? (['#FEF1F6', '#FBDCE9', '#FCE1ED'] as const)
     : (['#F1EDF8', '#DDD2EF', '#E5DBF4'] as const);
 
-  const pop = useSharedValue(0);
-  useEffect(() => { pop.value = withSpring(1, { damping: 9, stiffness: 140, mass: 0.7 }); }, [pop]);
-  const popStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }));
-
   const message = planComplete
     ? t('gpDone.roundComplete', { round: nextRound })
     : slotComplete
@@ -351,13 +347,9 @@ function GPDoneCard({
     <View style={styles.doneOverlay}>
       <LinearGradient colors={gradient} locations={[0, 0.55, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFillObject} />
       <View style={styles.checkWrap}>
-        {/* Confetti sits BEHIND the checkmark and plays once (per user). */}
+        {/* The congrats lottie IS the celebration mark now — the old accent
+            circle + check stacked on top of it (per user, removed). */}
         <LottieView source={LOTTIE_CONGRATS} autoPlay loop={false} style={styles.congratsLottie} />
-        <Animated.View style={[styles.doneCheck, { backgroundColor: accent }, popStyle]}>
-          {/* -15 % glyph (54 → 46); white tick thickened ~50 % via a same-colour
-              text-shadow (Feather is an icon font, so no true stroke width). */}
-          <Feather name="check" size={46} color="#FFFFFF" style={styles.checkGlyph} />
-        </Animated.View>
       </View>
 
       <Animated.Text entering={FadeInDown.duration(360).delay(120)} style={styles.doneTitle}>
@@ -448,16 +440,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 30,
   },
-  // Fixed box that holds the confetti (behind) + the checkmark (on top),
-  // centered on the same point. Owns the gap to the title below.
+  // Fixed box for the congrats lottie (the celebration mark itself — the old
+  // accent circle + check that stacked on top of it was removed per user).
+  // Owns the gap to the title below.
   checkWrap: { width: 260, height: 180, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   congratsLottie: { ...StyleSheet.absoluteFillObject },
-  doneCheck: {
-    width: 92, height: 92, borderRadius: 46,                                       // 108 → 92 (-15 % per user)
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 18, elevation: 8,
-  },
-  checkGlyph: { textShadowColor: '#FFFFFF', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 1.1 },   // ~+50 % bolder tick
   doneTitle: {
     fontSize: 26, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT,
     textAlign: 'center', marginBottom: 8,

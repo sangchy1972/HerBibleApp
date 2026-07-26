@@ -52,14 +52,24 @@ export default function BadgeCardArt({
    * rays on the unlock screen). Passed in rather than built here so this
    * component stays animation-free: the off-screen capture copy renders
    * WITHOUT it, keeping the exported image deterministic.
+   *
+   * Receives the size to render at, because THIS component owns the geometry:
+   * the layer is centred by computed offsets against the badge box, not by flex
+   * alignment. Flex centring is unreliable once the child is larger than its
+   * container, and the glow is deliberately ~1.9× the badge — the rays have to
+   * appear to come out of the badge, so a few px of drift reads as a separate
+   * object floating behind it.
    */
-  glow?: React.ReactNode;
+  glow?: (size: number) => React.ReactNode;
 }) {
   const W = width;
   // The app mark gets a white keyline so it reads as a distinct object against
   // the rose bar instead of melting into it.
   const logoSize = Math.round(W * 0.078);
   const logoRing = Math.max(2, Math.round(W * 0.006));
+  const badgeSize = Math.round(W * 0.42);
+  const glowSize = Math.round(badgeSize * 1.9);
+  const glowOffset = Math.round((badgeSize - glowSize) / 2);
   return (
     <View style={[styles.card, { width: W, borderRadius: W * 0.075 }]}>
       <View style={{ paddingHorizontal: W * 0.075, paddingTop: W * 0.06 }}>
@@ -71,11 +81,19 @@ export default function BadgeCardArt({
         </View>
 
         <View style={{ alignItems: 'center', marginTop: W * 0.055, marginBottom: W * 0.055 }}>
-          {/* Rays sit under the badge and must never intercept a tap. */}
-          {glow ? (
-            <View style={styles.glowLayer} pointerEvents="none">{glow}</View>
-          ) : null}
-          <BadgeIcon id={badgeId} iconKey={iconKey} rarity={rarity} size={Math.round(W * 0.42)} label={null} />
+          {/* Box is EXACTLY the badge, so the glow's computed offsets put its
+              centre on the badge's centre. */}
+          <View style={{ width: badgeSize, height: badgeSize }}>
+            {glow ? (
+              <View
+                pointerEvents="none"
+                style={{ position: 'absolute', left: glowOffset, top: glowOffset, width: glowSize, height: glowSize }}
+              >
+                {glow(glowSize)}
+              </View>
+            ) : null}
+            <BadgeIcon id={badgeId} iconKey={iconKey} rarity={rarity} size={badgeSize} label={null} />
+          </View>
         </View>
 
         <Text style={[styles.name, { fontSize: W * 0.088, lineHeight: W * 0.106 }]}>{name}</Text>
@@ -102,9 +120,6 @@ export default function BadgeCardArt({
 const styles = StyleSheet.create({
   card: { backgroundColor: CARD_BG, overflow: 'hidden' },
   topRow: { flexDirection: 'row', alignItems: 'center' },
-  // Centred on the badge without affecting layout, so adding the glow can't
-  // shift the card's height (which would change the capture geometry).
-  glowLayer: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   newAch: { fontFamily: FONTS.sansSemiBold, fontWeight: '600', color: NEW_ACH, letterSpacing: 0.4 },
   name: { fontFamily: FONTS.loraBold, fontWeight: '600', color: TXT, letterSpacing: 0.2 },
   desc: { fontFamily: FONTS.lato, color: DESC, letterSpacing: 0.2 },

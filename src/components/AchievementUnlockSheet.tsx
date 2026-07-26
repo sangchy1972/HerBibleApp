@@ -55,8 +55,6 @@ const RISE_MS = 400;
 const BADGE_MS = 600;
 const RAYS_MS = 700;
 const RAYS_DELAY = RISE_MS + BADGE_MS;   // rays only once the badge is fully up
-/** Rays overflow the badge so the beams read as light coming from behind it. */
-const RAYS_SIZE = Math.round(CARD_W * 0.78);
 
 export default function AchievementUnlockSheet() {
   const { awardQueue, dismissAward } = useAchievements();
@@ -190,9 +188,11 @@ export default function AchievementUnlockSheet() {
               <BadgeCardArt
                 {...cardProps}
                 width={CARD_W}
-                glow={(
+                // The card owns the geometry and hands back the size to fill —
+                // that is what keeps the rays' centre exactly on the badge's.
+                glow={(size) => (
                   <Animated.View style={raysStyle} pointerEvents="none">
-                    <BadgeRays size={RAYS_SIZE} />
+                    <BadgeRays size={size} />
                   </Animated.View>
                 )}
               />

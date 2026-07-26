@@ -1,9 +1,9 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { NativeModules, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { downloadFullTranslation, getDownloadState, fetchTranslationIndex, fetchChapter } from '../services/bibleService';
 import { CORPUS_CDN_BASE as CDN } from '../constants/corpus';
 import { useUILanguage } from './UILanguageContext';
+import { detectDeviceLanguage } from '../i18n/detectDeviceLanguage';
 
 export type LanguageCode = 'en' | 'zh-Hans' | 'zh-Hant' | 'de' | 'fr' | 'es' | 'pt';
 
@@ -52,25 +52,9 @@ interface TranslationsState {
 
 const TranslationsContext = createContext<TranslationsState | null>(null);
 
-function detectSystemLanguage(): LanguageCode {
-  let raw = '';
-  if (Platform.OS === 'ios') {
-    raw =
-      NativeModules.SettingsManager?.settings?.AppleLocale ||
-      NativeModules.SettingsManager?.settings?.AppleLanguages?.[0] ||
-      '';
-  } else if (Platform.OS === 'android') {
-    raw = NativeModules.I18nManager?.localeIdentifier || '';
-  }
-  raw = (raw || 'en').toLowerCase().replace('_', '-');
-  if (raw.startsWith('zh')) {
-    if (raw.includes('hant') || raw.includes('tw') || raw.includes('hk') || raw.includes('mo')) return 'zh-Hant';
-    return 'zh-Hans';
-  }
-  const prefix = raw.split('-')[0];
-  if (['en', 'de', 'fr', 'es', 'pt'].includes(prefix)) return prefix as LanguageCode;
-  return 'en';
-}
+// Default Bible translation follows the device language (shared Intl-first
+// detector — the old NativeModules copy here defaulted everyone to KJV under
+// the new architecture). A persisted choice overrides on hydrate.
 
 // Last committed translation, persisted so the Bible stays in lockstep with
 // the chosen UI language across app launches.
@@ -95,7 +79,7 @@ async function getPriorityChapter(): Promise<{ bookSlug: string; chapter: number
 }
 
 export function TranslationsProvider({ children }: { children: React.ReactNode }) {
-  const [code, setCode] = useState<LanguageCode>(() => detectSystemLanguage());
+  const [code, setCode] = useState<LanguageCode>(() => detectDeviceLanguage());
   const [pending, setPending] = useState<PendingDownload | null>(null);
   const pendingRef = useRef<LanguageCode | null>(null);
   const abortRef = useRef<AbortController | null>(null);

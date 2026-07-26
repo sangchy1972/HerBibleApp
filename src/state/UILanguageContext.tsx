@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { NativeModules, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setUserProps } from '../services/firebase';
+import { detectDeviceLanguage } from '../i18n/detectDeviceLanguage';
 
 // The 7 supported UI languages. Mirrors TranslationsContext.LanguageCode so a
 // user can sensibly say "switch my UI to Português → switch my Bible to João
@@ -32,26 +32,6 @@ export const UI_LANGUAGES: UILanguageMeta[] = [
 
 const STORAGE_KEY = 'ui:lang:v1';
 
-function detectSystemLanguage(): UILanguageCode {
-  let raw = '';
-  if (Platform.OS === 'ios') {
-    raw =
-      NativeModules.SettingsManager?.settings?.AppleLocale ||
-      NativeModules.SettingsManager?.settings?.AppleLanguages?.[0] ||
-      '';
-  } else if (Platform.OS === 'android') {
-    raw = NativeModules.I18nManager?.localeIdentifier || '';
-  }
-  raw = (raw || 'en').toLowerCase().replace('_', '-');
-  if (raw.startsWith('zh')) {
-    if (raw.includes('hant') || raw.includes('tw') || raw.includes('hk') || raw.includes('mo')) return 'zh-Hant';
-    return 'zh-Hans';
-  }
-  const prefix = raw.split('-')[0];
-  if (['en', 'de', 'fr', 'es', 'pt'].includes(prefix)) return prefix as UILanguageCode;
-  return 'en';
-}
-
 interface UILanguageState {
   lang: UILanguageCode;
   meta: UILanguageMeta;
@@ -66,8 +46,9 @@ const UILanguageContext = createContext<UILanguageState | null>(null);
 
 export function UILanguageProvider({ children }: { children: React.ReactNode }) {
   // Follow the device locale by default so a Spanish/Chinese/… user lands in a
-  // UI they can read. A returning user's stored choice overrides it on hydrate.
-  const [lang, setLangState] = useState<UILanguageCode>(() => detectSystemLanguage());
+  // UI they can read — this is also what the onboarding language step
+  // pre-selects. A returning user's stored choice overrides it on hydrate.
+  const [lang, setLangState] = useState<UILanguageCode>(() => detectDeviceLanguage());
   const [hydrated, setHydrated] = useState(false);
 
   // Hydrate from AsyncStorage on mount — overrides the system-detected default

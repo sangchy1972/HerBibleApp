@@ -177,6 +177,20 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
   const [editing, setEditing] = useState<'morning' | 'night' | null>(null);
   const notifsOnRef = useRef(false);   // set at the notify step; read by finishAll
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);   // pending single-select auto-advance
+  // Language step: when detection pre-selects one of the two Chinese rows
+  // (list positions 6/7, below the fold), scroll them into view on entry so
+  // the user SEES their language already chosen instead of assuming English.
+  const langScrollRef = useRef<ScrollView>(null);
+  useEffect(() => {
+    if (stepName !== 'language') return;
+    const idx = UI_LANGUAGES.findIndex(l => l.code === lang);
+    if (idx >= 5) {
+      const timer = setTimeout(() => langScrollRef.current?.scrollToEnd({ animated: false }), 80);
+      return () => clearTimeout(timer);
+    }
+    // Entry-only: not re-run on row taps (lang deliberately out of the deps).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepName]);
   // Language detected (or previously persisted) at mount — used to log whether
   // the user kept the default or actively switched on the welcome step.
   const initialLangRef = useRef(lang);
@@ -458,7 +472,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
       )}
 
       <Animated.View key={step} entering={FadeInDown.duration(300)} style={styles.content}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        <ScrollView ref={langScrollRef} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
           {stepName === 'language' && (
             <>
@@ -904,7 +918,11 @@ const styles = StyleSheet.create({
   progressTrack: { height: 5, borderRadius: 3, backgroundColor: 'rgba(230,63,105,0.16)', marginTop: 8, marginBottom: 18 },
   progressFill: { height: '100%', borderRadius: 3, backgroundColor: ROSE },
   content: { flex: 1 },
-  scroll: { paddingBottom: 12 },
+  // Bottom padding clears the PINNED footer CTA (16×2 vertical padding + text
+  // ≈ 56pt + its top inset): with the old 12pt, the language step's last rows
+  // (Deutsch/中文) slid UNDER the floating Continue button — visually colliding
+  // and hiding a pre-selected Chinese row entirely.
+  scroll: { paddingBottom: 96 },
   center: { alignItems: 'center' },
   // Question titles now use the SAME typeface as the option rows (Lato, in its
   // bold cut) instead of the Lora serif — per user, so the whole step reads in

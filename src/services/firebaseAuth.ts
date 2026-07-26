@@ -42,13 +42,21 @@ export function googleAuthAvailable(): boolean {
   return !!authMod && !!GoogleSignin;
 }
 
+// The project's WEB (type 3) OAuth client from google-services.json — the
+// audience Firebase requires on the Google ID token. It MUST be passed
+// literally: `webClientId: 'autoDetect'` was a myth (that string exists nowhere
+// in @react-native-google-signin@16, which forwards the value verbatim into
+// GoogleSignInOptions.requestIdToken(...)), so every sign-in asked Google for a
+// token audienced to the literal client id "autoDetect" and came back
+// DEVELOPER_ERROR (code 10) — the "Google sign-in failed (10)" users saw, on
+// every build regardless of SHA-1 registration. Not a secret: it ships inside
+// google-services.json in every APK.
+const GOOGLE_WEB_CLIENT_ID = '553397384848-3su69vsfrath03gkfq48aeprtm399em2.apps.googleusercontent.com';
+
 let configured = false;
 function ensureConfigured(): void {
   if (configured || !GoogleSignin) return;
-  // `webClientId: 'autoDetect'` reads the `default_web_client_id` string
-  // resource that the Firebase Gradle plugin generates from google-services.json
-  // (the Web OAuth client). No need to hard-code the ID anywhere.
-  GoogleSignin.configure({ webClientId: 'autoDetect', offlineAccess: false });
+  GoogleSignin.configure({ webClientId: GOOGLE_WEB_CLIENT_ID, offlineAccess: false });
   configured = true;
 }
 

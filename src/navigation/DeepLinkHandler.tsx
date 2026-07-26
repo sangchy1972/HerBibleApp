@@ -121,6 +121,24 @@ function notifResponseKey(response: Notifications.NotificationResponse): string 
   return `${req.identifier}:${date}`;
 }
 
+// Route to a destination SAFELY from any state. A warm notification or
+// deep-link tap can arrive while a fullScreenModal (PrayerFlow, GospelPsalm,
+// PlanDayDone, RemoveAds, AddWidget) is presented; `navigate` across that
+// boundary presents the target as a sheet ON TOP of the modal instead of
+// dismissing it — the same artifact PlanDayDone had to fix. `reset` rebuilds
+// the stack, so the destination is always the only thing on screen, and a
+// PrayerFlow target always remounts (so its `kind` param is re-read).
+function resetTo(
+  navigation: NavigationProp<RootStackParamList>,
+  screen: keyof RootStackParamList,
+  params?: object,
+): void {
+  const routes = screen === 'Tabs'
+    ? [{ name: 'Tabs' as const, params }]
+    : [{ name: 'Tabs' as const }, { name: screen, params }];
+  (navigation.reset as any)({ index: routes.length - 1, routes });
+}
+
 export default function DeepLinkHandler() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { completeEmailLink } = useAuth();
@@ -143,7 +161,7 @@ export default function DeepLinkHandler() {
       // with prayer_complete/gospel_psalm_complete in BigQuery.
       logEvent('notification_tap', { slot: slot === 'night' ? 'evening' : String(slot ?? 'unknown') });
       const dest = routeForSlot(slot);
-      if (dest) (navigation.navigate as any)(dest.screen, dest.params);
+      if (dest) resetTo(navigation, dest.screen, dest.params);
     };
 
     // Cold start — replay the last notification tap that opened the app (once).
@@ -171,7 +189,7 @@ export default function DeepLinkHandler() {
       const dest = routeForSlot(slot);
       if (!dest) return;
       logEvent('notification_tap', { slot: slot === 'night' ? 'evening' : String(slot ?? 'unknown'), src });
-      (navigation.navigate as any)(dest.screen, dest.params);
+      resetTo(navigation, dest.screen, dest.params);
     };
 
     const drainPending = async (src: string) => {
@@ -229,7 +247,7 @@ export default function DeepLinkHandler() {
       const emailLink = emailLinkFromDeepLink(url);
       if (emailLink) { completeEmailLink(emailLink).catch(() => {}); return; }
       const dest = routeForUrl(url);
-      if (dest) (navigation.navigate as any)(dest.screen, dest.params);
+      if (dest) resetTo(navigation, dest.screen, dest.params);
     };
 
     Linking.getInitialURL().then(handleUrl).catch(() => {});

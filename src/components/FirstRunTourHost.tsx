@@ -417,7 +417,10 @@ export default function FirstRunTourHost() {
   if (!active) return null;
 
   return (
-    <View style={styles.root} ref={rootRef} collapsable={false}>
+    // box-none on the ROOT so only the scrim child below decides what blocks:
+    // the root staying 'auto' meant a stuck tour ate every touch app-wide,
+    // breaking this file's own "cosmetic, never a frozen app" guarantee.
+    <View style={styles.root} ref={rootRef} collapsable={false} pointerEvents="box-none">
       {/* The scrim eats every touch outside the hole. It does NOT advance the
           step — users double-tap and would blow straight through the tour.
           Once we're leaving it stops intercepting: if anything ever strands the

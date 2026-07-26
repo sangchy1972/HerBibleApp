@@ -321,8 +321,12 @@ export default function DailyRhythmBar({
 
   return (
     <View style={styles.wrap}>
-      {/* Bubble-pop wrapper — pure transform, never re-layouts the card. */}
-      <Animated.View style={bubbleStyle}>
+      {/* Bubble-pop wrapper — pure transform, never re-layouts the card. The
+          animated style is attached ONLY while the ceremony runs: a permanently
+          Reanimated-owned wrapper freezes its subtree's native hit regions
+          (Android/Fabric), which is what made the bar's taps unreliable when
+          content above it reflowed. */}
+      <Animated.View style={sandPhase !== 'idle' ? bubbleStyle : undefined}>
       <TouchableOpacity
         style={styles.bar}
         activeOpacity={0.85}

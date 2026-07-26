@@ -290,7 +290,11 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   const onContent = phase === 'content';
 
   return (
-    <Animated.View style={[StyleSheet.absoluteFillObject, styles.root, fade]}>
+    // pointerEvents="none": nothing in here is interactive, but a full-screen
+    // 'auto' View with no responder SWALLOWS touches instead of passing them
+    // down — so taps during the 700 ms fade-out (overlay already invisible)
+    // used to die, and a stalled ready-flag could eat them far longer.
+    <Animated.View style={[StyleSheet.absoluteFillObject, styles.root, fade]} pointerEvents="none">
       {/* BACKDROP — fades in under the rising brand and pushes in 100 % → 110 %. */}
       {onContent && (
         <Animated.View style={[StyleSheet.absoluteFillObject, bgFade]} pointerEvents="none">

@@ -429,30 +429,37 @@ function VerseHeroCard({ cardRef, morning, ymd, canStart, canReplay, readyToSwit
       </View>
 
       {canStart ? (
-        <Animated.View style={pulseStyle}>
-          <TouchableOpacity
-            onPress={onBegin}
-            activeOpacity={0.9}
-            style={[styles.startBtn, { backgroundColor: morning ? ROSE : LAV }]}
-          >
+        // The breathing pulse lives on a DECORATIVE layer behind the button, not
+        // on a wrapper around it: an infinite Reanimated-owned wrapper never
+        // hands the subtree back to RN, so this CTA's native hit region froze at
+        // attach-time position (the verse hero above it grows async and pushes
+        // it down) and the 0.92 scaleX also shrank the target ~8 % mid-breath.
+        // Now the touchable owns plain layout + hit-testing; only the pill's
+        // fill animates.
+        <View style={styles.ctaWrap}>
+          <Animated.View
+            style={[styles.ctaPulseBg, pulseStyle, { backgroundColor: morning ? ROSE : LAV }]}
+            pointerEvents="none"
+          />
+          <TouchableOpacity onPress={onBegin} activeOpacity={0.9} style={styles.ctaHit}>
             <Text style={styles.startBtnText}>
               {t(morning ? 'prayer.startMorning' : 'prayer.startNight')}
             </Text>
           </TouchableOpacity>
-        </Animated.View>
+        </View>
       ) : readyToSwitch ? (
         // Morning is done and night has opened — same active styling as the
         // Start CTA (LAV to telegraph "evening"), tinted toward the
         // destination tab. Tap flips to evening rather than popping a hint.
-        <Animated.View style={pulseStyle}>
-          <TouchableOpacity
-            onPress={onSwitchTab}
-            activeOpacity={0.9}
-            style={[styles.startBtn, { backgroundColor: morning ? LAV : ROSE }]}
-          >
+        <View style={styles.ctaWrap}>
+          <Animated.View
+            style={[styles.ctaPulseBg, pulseStyle, { backgroundColor: morning ? LAV : ROSE }]}
+            pointerEvents="none"
+          />
+          <TouchableOpacity onPress={onSwitchTab} activeOpacity={0.9} style={styles.ctaHit}>
             <Text style={styles.startBtnText}>{waitLabel}</Text>
           </TouchableOpacity>
-        </Animated.View>
+        </View>
       ) : (
         // Wait state — slot is either before its window or already done.
         // Tinted with the active accent at low opacity so it still reads as
@@ -1579,6 +1586,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Pulsing CTA, split in two so the touch target is never Reanimated-owned:
+  // `ctaWrap` is a PLAIN view carrying the exact former startBtn geometry (so
+  // layout is pixel-identical), `ctaPulseBg` is the breathing fill behind it,
+  // and `ctaHit` is the static, full-bleed touchable.
+  ctaWrap: {
+    marginTop: 11,
+    marginBottom: 10,
+    height: 46.94,
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+  },
+  ctaPulseBg: { ...StyleSheet.absoluteFillObject, borderRadius: BTN_RADIUS },
+  ctaHit: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   startBtnText: {
     color: '#fff',
     fontSize: 18,

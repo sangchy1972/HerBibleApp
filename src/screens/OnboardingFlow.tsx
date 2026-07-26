@@ -64,7 +64,10 @@ const LEGAL_PRIVACY_URL = 'https://covers.everlandapps.com/legal/privacy.html';
 const TRIAL_SHEET_H = Math.round(Dimensions.get('window').height * 0.56);
 const HERO_MAX_H = Math.round(Dimensions.get('window').height * 0.34);
 const GIFT_BOX = require('../../assets/paywall/gift-box.png');
-const HERO_IMG = require('../../assets/onboarding-hero.webp');
+// Two 16:9 hero photos (1600×900 webp, ≤150 KB each — cropped/compressed from
+// the user's originals, bundled into the binary so they're offline-ready).
+const HERO_INTRO_IMG = require('../../assets/onboarding-hero-intro.webp');
+const HERO_ENCOURAGE_IMG = require('../../assets/onboarding-hero-encourage.webp');
 // Full-screen celebration behind the intro step. This is the SAME animation as
 // the user's "Free Flex Confetti" dotLottie (byte-identical once extracted), so
 // we reuse the asset already in the bundle instead of adding a duplicate.
@@ -506,7 +509,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
           {stepName === 'intro' && (
             <View style={styles.center}>
               <View style={styles.hero}>
-                <Image source={HERO_IMG} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+                <Image source={HERO_INTRO_IMG} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
               </View>
               <Text style={[styles.h, { textAlign: 'center', marginTop: 22 }]}>{t('onboarding.intro.title')}</Text>
               <Text style={[styles.sub, { textAlign: 'center', paddingHorizontal: 16 }]}>{t('onboarding.intro.sub')}</Text>
@@ -574,7 +577,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
           {stepName === 'encourage' && (
             <View style={styles.center}>
               <View style={styles.hero}>
-                <Image source={HERO_IMG} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+                <Image source={HERO_ENCOURAGE_IMG} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
               </View>
               <Text style={[styles.h, { textAlign: 'center', marginTop: 22 }]}>{t('onboarding.encourage.title')}</Text>
               {/* "2 million women" is pulled out of the sentence via a {highlight}
@@ -972,14 +975,15 @@ const styles = StyleSheet.create({
   chipSel: { backgroundColor: ROSE, borderColor: ROSE },
   chipText: { fontSize: 17, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4 },   // 15.5 → 17 (2nd +10 %)
   chipTextSel: { color: '#FFFFFF', fontWeight: '700' },
-  // Encouragement interstitial.
-  // The hero is a WRAPPER VIEW that owns the layout (the animated-webp
-  // photo ignored the Image's aspectRatio box on device and blew up to
-  // full-screen portrait, pushing the copy + CTA out of view — P0). The
-  // image absolute-fills it with resizeMode="cover". aspectRatio matches
-  // the 1280×980 source; HERO_MAX_H caps it at 34% of the screen so the
-  // title, subtitle and Continue always fit above the fold on EVERY device.
-  hero: { width: '100%', aspectRatio: 1.3061, maxHeight: HERO_MAX_H, borderRadius: 30, marginTop: 6, overflow: 'hidden' },
+  // Intro / encouragement hero.
+  // The hero is a WRAPPER VIEW that owns the layout (an animated-webp source
+  // once ignored the Image's aspectRatio box on device and blew up to
+  // full-screen portrait, pushing the copy + CTA out of view — P0). The image
+  // absolute-fills it with resizeMode="cover". aspectRatio matches the 16:9
+  // (1600×900) sources exactly so the full curated crop shows — a mismatched
+  // box would silently re-crop the sides. HERO_MAX_H caps it at 34% of the
+  // screen so the title, subtitle and Continue always fit above the fold.
+  hero: { width: '100%', aspectRatio: 16 / 9, maxHeight: HERO_MAX_H, borderRadius: 30, marginTop: 6, overflow: 'hidden' },
   // Time-picker rows (reminder step).
   timeRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

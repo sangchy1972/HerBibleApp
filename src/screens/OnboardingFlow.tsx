@@ -414,6 +414,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
   const accent = ROSE;
   // Split the encourage line around the emphasised phrase (see the JSX below).
   const encourageSubParts = t('onboarding.encourage.sub').split('{highlight}');
+  const notifySubParts = t('onboarding.notify.sub').split('{highlight}');
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 6 }]}>
@@ -713,7 +714,17 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
           {stepName === 'notify' && (
             <>
               <Text style={[styles.h, { fontSize: 27 }]}>{t('onboarding.notify.title')}</Text>
-              <Text style={styles.sub}>{t('onboarding.notify.sub')}</Text>
+              {/* The "2.5×" multiplier is pulled out via a {highlight} token so
+                  it renders bigger/bold/rose in EVERY language (word order +
+                  decimal separator differ per locale). Missing token → one
+                  part → plain line. */}
+              <Text style={styles.sub}>
+                {notifySubParts[0]}
+                {notifySubParts.length > 1 && (
+                  <Text style={styles.notifySubHL}>{t('onboarding.notify.subHighlight')}</Text>
+                )}
+                {notifySubParts[1] ?? ''}
+              </Text>
               <LinearGradient colors={['#F9D9E6', '#F4A6C0', ROSE]} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={styles.notifHero}>
                 <Ionicons name="notifications-outline" size={44} color="#FFFFFF" style={{ opacity: 0.5 }} />
                 {/* Mock heads-up notification. Pinned to the TOP of the hero —
@@ -947,6 +958,7 @@ const styles = StyleSheet.create({
   encourageSub: { fontSize: 18, lineHeight: 32, color: TXT },   // 15 → 18 (+20 % per user)
   // "2 million women" — bold, +40 % over the line, in the option-button rose.
   encourageSubHL: { fontSize: 25.2, color: ROSE, fontFamily: FONTS.latoBold, letterSpacing: 0.4, fontWeight: '700' },   // 18 × 1.4
+  notifySubHL: { fontSize: 19.5, color: ROSE, fontFamily: FONTS.latoBold, letterSpacing: 0.4, fontWeight: '700' },   // sub 15 × 1.3 (+30 % per user), rose + bold
   // Single-line option row.
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 12,

@@ -57,14 +57,21 @@ export default function PlanDayDone({ route, navigation }: RootStackScreenProps<
 
   // Where leaving this screen lands (Continue AND the X — one rule):
   //   • the day's FIRST plan completion → the home tab, so the rhythm bar's
-  //     plan segment sweep + completion ceremony plays in front of the user
-  //     (navigate('Tabs') pops FeaturedPlanDetail + this modal off the stack);
-  //   • otherwise → back to this plan's FeaturedPlanDetail (already in the
-  //     stack underneath: [Tabs, FeaturedPlanDetail, PlanDayDone]) — popToTop
-  //     used to feel like losing their place.
+  //     plan segment sweep + completion ceremony plays in front of the user;
+  //   • otherwise → back to this plan's FeaturedPlanDetail (already underneath:
+  //     [Tabs, FeaturedPlanDetail, PlanDayDone]) so she keeps her place.
+  //
+  // The home path uses reset(), NOT navigate('Tabs'): this screen is a
+  // fullScreenModal, and navigate('Tabs') across that modal boundary on iOS
+  // presented the tabs as a NEW sheet card ON TOP of PlanDayDone (swipe-down
+  // revealed the completion screen behind — the reported bug). reset() rebuilds
+  // the root stack as exactly [Tabs/prayer], so nothing can be left presented.
   const onContinue = () => {
-    if (firstOfDay) navigation.navigate('Tabs', { screen: 'prayer' });
-    else navigation.goBack();
+    if (firstOfDay) {
+      navigation.reset({ index: 0, routes: [{ name: 'Tabs', params: { screen: 'prayer' } }] });
+    } else {
+      navigation.goBack();
+    }
   };
 
   return (

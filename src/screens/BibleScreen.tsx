@@ -10,7 +10,7 @@ import * as Clipboard from 'expo-clipboard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, withSequence, withDelay,
+  useSharedValue, useAnimatedStyle, withTiming, withSequence, withDelay, withRepeat,
   interpolateColor, Easing,
   FadeIn, FadeOut, SlideInUp, SlideInDown,
 } from 'react-native-reanimated';
@@ -654,6 +654,23 @@ const THEMES: Record<string, { bg: string; txt: string; sub: string }> = {
 // giant reader above only hears about COARSE changes: the play/pause flip
 // and the karaoke verse advancing (once every few seconds). Same isolation
 // pattern as PrayerFlow's NarratedBody.
+// Slowly rotating music note for the floating audio button while narration is
+// live (per user: replaces the old pause glyph, which made every tap stop the
+// audio). Pure transform on the UI thread — cheap on low-end devices.
+function SpinningNote() {
+  const spin = useSharedValue(0);
+  useEffect(() => {
+    spin.value = withRepeat(withTiming(360, { duration: 3600, easing: Easing.linear }), -1, false);
+    return () => { spin.value = 0; };
+  }, [spin]);
+  const style = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.value}deg` }] }));
+  return (
+    <Animated.View style={style}>
+      <Feather name="music" size={26} color="#fff" />
+    </Animated.View>
+  );
+}
+
 function AudioStatusBridge({ player, timestamps, onPlayingChange, onVerseChange }: {
   player: AudioPlayer;
   timestamps: ChapterTimestamps | null;
@@ -1733,26 +1750,22 @@ export default function BibleScreen() {
         <Feather name="chevron-right" size={22} color={canNext ? TH.txt : 'rgba(30,27,46,0.25)'} />
       </TouchableOpacity>
 
-      {/* Floating audio button — its glyph mirrors player state, so a single
-          tap always reads as the obvious next action:
-            • idle (or paused) → headphones, tap opens the player + starts
-              playback (loading spinner shows in the sheet if the chapter
-              audio is still buffering)
-            • playing → pause bars, tap stops audio immediately and reverts
-              to the headphones glyph WITHOUT opening the player. The user
-              never needs the sheet just to stop. */}
+      {/* Floating audio button. ALWAYS opens the player sheet — never toggles
+          playback itself (per user: a bare pause button meant one tap always
+          stopped the audio, so there was no way to reach the scrubber without
+          interrupting it first). State is communicated by the glyph instead:
+            • idle / paused → static headphones
+            • playing       → a slowly SPINNING music note, so "live" is
+              obvious and the tap still leads to the full transport. */}
       <TouchableOpacity
-        onPress={() => {
-          if (audioPlaying) {
-            try { audioPlayer.pause(); } catch {}
-          } else {
-            openPlayer();
-          }
-        }}
+        onPress={openPlayer}
         style={styles.audioBtn}
         activeOpacity={0.85}
+        accessibilityLabel={audioPlaying ? t('audioMini.playing') : undefined}
       >
-        <Feather name={audioPlaying ? 'pause' : 'headphones'} size={26} color="#fff" />
+        {audioPlaying
+          ? <SpinningNote />
+          : <Feather name="headphones" size={26} color="#fff" />}
       </TouchableOpacity>
 
       {/* Full-screen narration player (Modal — covers the tab bar). */}

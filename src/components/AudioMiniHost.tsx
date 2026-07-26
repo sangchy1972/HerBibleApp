@@ -17,9 +17,10 @@ import { useAudioMini } from '../state/AudioMiniContext';
 // may want it while she reads), the control travels with her: a small pill
 // half-tucked against the right edge, above every screen.
 //
-// Collapsed it's a peeking circle — present but not in the way, and it costs no
-// layout space. Tapping it expands to reveal Pause + a label; tapping the label
-// jumps back to what's playing. It auto-collapses so it never becomes furniture.
+// Collapsed it's a peeking circle with a slowly spinning note — present but not
+// in the way, and it costs no layout space. Tapping it expands to note + chapter
+// (tap → jump back to what's playing) and an X (tap → stop). It auto-collapses
+// so it never becomes furniture.
 //
 // It hides entirely while the owning screen is focused, because that screen has
 // its own full transport bar — two stop buttons is worse than one.
@@ -30,7 +31,11 @@ import { useAudioMini } from '../state/AudioMiniContext';
 // itself is ever touchable — the rest of the screen stays fully usable.
 
 const SIZE = 46;                 // collapsed circle
-const PEEK = 0.52;               // how much of it sticks out past the edge
+// How much of the circle sticks out past the right edge. 0.52 → 0.85 (+15 px
+// visible) per user: at half-out it read as a sliver glued to the bezel and was
+// hard to hit. Nearly the whole circle now shows, with a small tuck that still
+// says "parked at the edge".
+const PEEK = 0.85;
 const EXPANDED_W = 188;
 const ANIM_MS = 320;
 const AUTO_COLLAPSE_MS = 4200;
@@ -105,6 +110,7 @@ export default function AudioMiniHost() {
   const enter = useSharedValue(0);     // 0 = off-screen right, 1 = docked
   const width_ = useSharedValue(SIZE);
   const pulse = useSharedValue(0);
+  const spin = useSharedValue(0);
 
   useEffect(() => {
     enter.value = withTiming(show ? 1 : 0, { duration: ANIM_MS, easing: EASE });
@@ -124,6 +130,14 @@ export default function AudioMiniHost() {
     width_.value = withTiming(expanded ? EXPANDED_W : SIZE, { duration: ANIM_MS, easing: EASE });
   }, [expanded, width_]);
 
+  // Note rotation while the collapsed circle is showing.
+  useEffect(() => {
+    cancelAnimation(spin);
+    spin.value = 0;
+    if (!show || expanded) return;
+    spin.value = withRepeat(withTiming(360, { duration: 3600, easing: Easing.linear }), -1, false);
+  }, [show, expanded, spin]);
+
   // Auto-collapse so it settles back out of the way on its own.
   useEffect(() => {
     if (!expanded) return;
@@ -131,7 +145,10 @@ export default function AudioMiniHost() {
     return () => clearTimeout(id);
   }, [expanded]);
 
-  const onPause = useCallback(() => {
+  // The X on the expanded pill: stop playback outright (the pill's whole reason
+  // to exist is off-screen audio, so "close" means "stop"). Per user — replaces
+  // the old chevron, whose job the note + label now do.
+  const onClose = useCallback(() => {
     try { player?.pause(); } catch { /* player released — the pill disappears anyway */ }
     setExpanded(false);
   }, [player]);
@@ -152,6 +169,7 @@ export default function AudioMiniHost() {
     };
   });
   const pillStyle = useAnimatedStyle(() => ({ width: width_.value }));
+  const spinStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.value}deg` }] }));
   const haloStyle = useAnimatedStyle(() => ({
     opacity: 0.35 * (1 - pulse.value),
     transform: [{ scale: 1 + pulse.value * 0.5 }],
@@ -179,15 +197,22 @@ export default function AudioMiniHost() {
             ) : null}
 
             {expanded ? (
+              // Note + chapter label are ONE target that opens what's playing
+              // (per user); the X on the right stops it. No inline pause — the
+              // full transport lives in the player sheet the label opens.
               <>
-                <TouchableOpacity onPress={onPause} style={styles.iconBtn} hitSlop={8} activeOpacity={0.7}>
-                  <Feather name="pause" size={19} color="#FFFFFF" />
+                <TouchableOpacity onPress={onOpen} style={styles.openBtn} activeOpacity={0.7}>
+                  <View style={styles.noteBox}>
+                    <Feather name="music" size={19} color="#FFFFFF" />
+                  </View>
+                  <View style={styles.labelBtn}>
+                    <Text style={styles.label} numberOfLines={1}>{info?.label ?? ''}</Text>
+                    <Text style={styles.sub} numberOfLines={1}>{t('audioMini.playing')}</Text>
+                  </View>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={onOpen} style={styles.labelBtn} activeOpacity={0.7}>
-                  <Text style={styles.label} numberOfLines={1}>{info?.label ?? ''}</Text>
-                  <Text style={styles.sub} numberOfLines={1}>{t('audioMini.playing')}</Text>
+                <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={8} activeOpacity={0.7}>
+                  <Feather name="x" size={17} color="rgba(255,255,255,0.85)" />
                 </TouchableOpacity>
-                <Feather name="chevron-right" size={16} color="rgba(255,255,255,0.7)" style={styles.chev} />
               </>
             ) : (
               <TouchableOpacity
@@ -197,7 +222,11 @@ export default function AudioMiniHost() {
                 activeOpacity={0.85}
                 accessibilityLabel={t('audioMini.playing')}
               >
-                <Feather name="music" size={19} color="#FFFFFF" />
+                {/* Spinning note = "audio is live", matching the Bible tab's
+                    floating button. */}
+                <Animated.View style={spinStyle}>
+                  <Feather name="music" size={19} color="#FFFFFF" />
+                </Animated.View>
               </TouchableOpacity>
             )}
           </Animated.View>
@@ -231,16 +260,18 @@ const styles = StyleSheet.create({
     width: 30, height: 30, borderRadius: 15,
     backgroundColor: '#FFFFFF',
   },
-  // The collapsed circle is half off-screen, so the note is nudged toward the
-  // visible side — otherwise the icon itself would be half-hidden.
+  // Only a small tuck remains at PEEK 0.85, so the glyph needs just a hair of
+  // nudge toward the visible side (was a large offset at PEEK 0.52).
   collapsedHit: {
     width: SIZE, height: SIZE,
     alignItems: 'center', justifyContent: 'center',
     paddingRight: SIZE * (1 - PEEK) * 0.6,
   },
-  iconBtn: { width: 44, height: SIZE, alignItems: 'center', justifyContent: 'center' },
+  // Note + label = one tap target (opens the player); the X sits outside it.
+  openBtn: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', height: SIZE },
+  noteBox: { width: 40, height: SIZE, alignItems: 'center', justifyContent: 'center' },
+  closeBtn: { width: 34, height: SIZE, alignItems: 'center', justifyContent: 'center' },
   labelBtn: { flex: 1, minWidth: 0, justifyContent: 'center' },
   label: { fontFamily: FONTS.latoBold, fontWeight: '700', fontSize: 13.5, color: '#FFFFFF' },
   sub: { fontFamily: FONTS.lato, fontSize: 11, color: 'rgba(255,255,255,0.8)', marginTop: 1 },
-  chev: { marginRight: 12, marginLeft: 2 },
 });

@@ -106,6 +106,12 @@ const ADAPTERS = [
   {
     key: 'meta',
     label: 'Meta Audience Network',
+    // ⚠️ Placement IDs are registered in docs/ad-unit-ids.md. App ID
+    //    1020655230368479; the one that matters is Interstitial #2
+    //    (1020655230368479_1026027013164634) — this app renders interstitials
+    //    only, so the banner / native / rewarded placements can never fill.
+    //    Pasting them into AdMob while this flag is false gets you a bidding
+    //    source that cannot respond: the adapter isn't in the binary.
     enabled: false,
     // Built/tested with GMA 25.2.0.
     androidDep: 'com.google.ads.mediation:facebook:6.21.0.3',

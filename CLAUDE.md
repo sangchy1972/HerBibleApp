@@ -52,3 +52,7 @@ requirements — follow them by default without re-asking.
   production upload; the marketing **version** (e.g. 1.0) only changes when you edit `app.json`.
 - US-only interstitial floor ladder is gated `region === 'US' && !__DEV__` — won't run on a
   non-US/dev device.
+- **Ad unit / placement IDs** live in `docs/ad-unit-ids.md` (Meta Audience Network app id
+  `1020655230368479` + its 6 placements, created for Meta *bidding* inside AdMob mediation).
+  The app renders **interstitials only**, so only the Interstitial placement can ever fill,
+  and the Meta adapter is still `enabled: false` in `plugins/withAdMobMediation.js`.

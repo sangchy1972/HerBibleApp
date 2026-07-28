@@ -62,6 +62,7 @@
       "./plugins/withNotifeeMavenRepo.js",
       "./plugins/withKotlinGradlePlugin.js",
       "./plugins/withAdMobMediation.js",
+      "./plugins/withMetaAdvertiserTracking.js",
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
       "@react-native-firebase/crashlytics",

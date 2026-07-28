@@ -51,11 +51,18 @@ AdMob UI is asking you for one, you are adding it to the wrong kind of group.
   `facebook.com, 1720054809146063, DIRECT, c3e20eee3f780d68`.
   Note that number is the **business ID**, which is a different thing from the
   Audience Network App ID above. Both are correct in their own place.
-- **iOS, when Meta is switched on** — Meta wants
-  `FBAdSettings.setAdvertiserTrackingEnabled(<ATT status>)` called *before* the
-  GMA SDK initialises. Not injected by the config plugin (it needs a native
-  AppDelegate hook). Skipping it isn't fatal — Meta just serves limited,
-  non-personalised ads at a lower eCPM — but it is money left on the table.
+- **iOS advertiser tracking — DONE.** `plugins/withMetaAdvertiserTracking.js`
+  injects `FBAdSettings.setAdvertiserTrackingEnabled(<ATT status>)` into
+  `AppDelegate.swift`. It resolves the class through the Objective-C runtime
+  rather than importing `FBAudienceNetwork`, so it compiles and no-ops while
+  `meta` is still `enabled: false` — no compile-time dependency on a pod that
+  isn't linked yet. Applied at `didFinishLaunching` and re-applied on
+  `didBecomeActive`, because on a first run ATT is still `.notDetermined` at
+  launch (the prompt is fired from JS at app root) and the user's answer needs
+  to land afterwards.
+  ⚠️ Written without a macOS toolchain to compile against — **check the first
+  iOS build after this shipped.** The design fails safe (no flag rather than a
+  broken build), but "fails safe" is not "verified".
 - **Testing** — the Facebook app must be installed and logged in on the device
   to see Meta test ads.
 

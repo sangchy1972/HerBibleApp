@@ -57,10 +57,23 @@ describe('AdMob mediation adapter table', () => {
     }
   });
 
-  // Liftoff is the only one live right now. This is a tripwire: turning another
-  // network on ships a new ad SDK into the binary, so it should be a deliberate,
-  // reviewed change — not something that slips in.
-  it('liftoff is the only enabled adapter', () => {
-    expect(adapters.filter(a => a.enabled).map(a => a.key)).toEqual(['liftoff']);
+  // Tripwire: turning a network on ships a new ad SDK into the binary, so it has
+  // to be a deliberate, reviewed change — not something that slips in. Updating
+  // this list IS the review step; don't relax the assertion to make it pass.
+  //
+  // meta joined 2026-07-26 (bidding-only interstitial; iOS advertiser-tracking
+  // flag wired in plugins/withMetaAdvertiserTracking.js).
+  it('exactly liftoff and meta are enabled', () => {
+    expect(adapters.filter(a => a.enabled).map(a => a.key)).toEqual(['liftoff', 'meta']);
+  });
+
+  // Meta is bidding-only for interstitial and this app renders interstitials
+  // only, so its iOS prerequisite is load-bearing: without the advertiser-
+  // tracking flag Meta still fills, just non-personalised at a lower eCPM.
+  it('meta ships both platforms with pinned versions', () => {
+    const meta = adapters.find(a => a.key === 'meta')!;
+    expect(meta.androidDep).toMatch(/^com\.google\.ads\.mediation:facebook:\d/);
+    expect(meta.iosPod).toBe('GoogleMobileAdsMediationFacebook');
+    expect(meta.iosPodVersion).toMatch(/^\d+\.\d+/);
   });
 });

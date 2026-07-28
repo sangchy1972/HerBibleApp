@@ -112,7 +112,10 @@ const ADAPTERS = [
     //    only, so the banner / native / rewarded placements can never fill.
     //    Pasting them into AdMob while this flag is false gets you a bidding
     //    source that cannot respond: the adapter isn't in the binary.
-    enabled: false,
+    // ✅ Enabled 2026-07-26. The iOS advertiser-tracking prerequisite is wired
+    //    (plugins/withMetaAdvertiserTracking.js), app-ads.txt carries the Meta
+    //    line, and the Interstitial placement is registered in AdMob.
+    enabled: true,
     // Built/tested with GMA 25.2.0.
     androidDep: 'com.google.ads.mediation:facebook:6.21.0.3',
     // podspec: Google-Mobile-Ads-SDK ~> 13.4 → satisfied by 13.5.0.

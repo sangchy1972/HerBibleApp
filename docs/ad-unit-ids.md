@@ -34,11 +34,12 @@ their zero fill as a problem.
 
 ### Two things that must be true before #2 earns anything
 
-**1. The adapter has to be in the binary.** `plugins/withAdMobMediation.js`
-currently has `meta` at `enabled: false`, so the Meta adapter is not compiled
-in. Pasting the placement ID into the AdMob console while the adapter is absent
-gets you a bidding source that can never respond. Flip `enabled: true` and ship
-a new build.
+**1. The adapter has to be in the binary.** ✅ Done — `meta` is `enabled: true`
+in `plugins/withAdMobMediation.js` as of 2026-07-26, so the adapter
+(`com.google.ads.mediation:facebook` / `GoogleMobileAdsMediationFacebook`) and
+Meta's two SKAdNetwork IDs ship from the next build onward. Note this only takes
+effect **in a build made after that date** — a bidding source configured in
+AdMob cannot respond from a binary that predates it.
 
 **2. Interstitial must go in as BIDDING, not waterfall.** Meta has been
 bidding-only for interstitial since 2021. There is no eCPM floor to set; if the

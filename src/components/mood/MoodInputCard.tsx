@@ -25,7 +25,11 @@ export default function MoodInputCard({
   dateLabel, title, saveLabel, initialMood, initialNote, onSave, onClose,
 }: Props) {
   const t = useT();
-  const [index, setIndex] = useState(() => (initialMood ? moodToIndex(initialMood) : moodToIndex('calm')));
+  // Default to the far-RIGHT mood (per user): 'calm' sat mid-track and read as
+  // the app deciding how she feels. Starting at the radiant end makes the pick
+  // hers — she pulls the handle down to wherever the day actually is. Editing an
+  // existing entry still opens on that entry's mood.
+  const [index, setIndex] = useState(() => moodToIndex(initialMood ?? 'blessed'));
   const [note, setNote] = useState(initialNote ?? '');
   const mood = indexToMood(index);
 
@@ -36,9 +40,12 @@ export default function MoodInputCard({
   const firstRender = useRef(true);
   useEffect(() => {
     if (firstRender.current) { firstRender.current = false; return; }
-    const spring = { damping: 6, stiffness: 170, mass: 0.6 } as const;
-    sx.value = withSequence(withTiming(1.18, { duration: 110, easing: Easing.out(Easing.quad) }), withSpring(1, spring));
-    sy.value = withSequence(withTiming(0.82, { duration: 110, easing: Easing.out(Easing.quad) }), withSpring(1, spring));
+    // Squash depth halved (per user: the face went too flat while sliding).
+    // 1.18/0.82 → 1.08/0.92, and damping 6 → 9 so the jelly rebound overshoots
+    // less on the way back to round.
+    const spring = { damping: 9, stiffness: 170, mass: 0.6 } as const;
+    sx.value = withSequence(withTiming(1.08, { duration: 110, easing: Easing.out(Easing.quad) }), withSpring(1, spring));
+    sy.value = withSequence(withTiming(0.92, { duration: 110, easing: Easing.out(Easing.quad) }), withSpring(1, spring));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index]);
   const squeezeStyle = useAnimatedStyle(() => ({ transform: [{ scaleX: sx.value }, { scaleY: sy.value }] }));

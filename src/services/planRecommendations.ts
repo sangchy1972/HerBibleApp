@@ -241,12 +241,17 @@ export function buildReadingPlansCard({ records, summaries, answers, todayYmd }:
       const completed = Math.min(r.completedDays.length, total);
       return [{ plan, completed, total, percent: completed / total, startedAt: r.firstStartedAt || 0, lastDayYmd: r.lastDayYmd ?? '' }];
     })
+    // MOST RECENTLY READ first (per user). This used to lead with percent, so a
+    // user juggling 5–6 plans saw whichever were furthest along rather than the
+    // ones she actually opened this week — and the plan she read an hour ago
+    // could be pushed out of the 3 shown entirely. Percent is now only a
+    // tie-break between plans last read on the SAME day.
     .sort((a, b) =>
-      b.percent - a.percent
-      || (a.lastDayYmd < b.lastDayYmd ? 1 : a.lastDayYmd > b.lastDayYmd ? -1 : 0)
+      (a.lastDayYmd < b.lastDayYmd ? 1 : a.lastDayYmd > b.lastDayYmd ? -1 : 0)
+      || b.percent - a.percent
       || b.startedAt - a.startedAt
       || (a.plan.slug < b.plan.slug ? -1 : 1))
-    .slice(0, 3)
+    .slice(0, 3)   // hard cap — the card must never grow with the plan count
     .map(({ lastDayYmd: _drop, ...row }) => row);
 
   // 0 active → 3 suggestions; 1 → 2; 2 → 1; ≥3 → 1. Everything the user ever

@@ -1,4 +1,4 @@
-import { QUIZ_BANK, type QuizQuestion } from '../constants/bibleQuiz';
+import type { QuizQuestion } from '../constants/bibleQuiz';
 
 // Which 5 questions make up quiz set N.
 //
@@ -98,13 +98,13 @@ export function setPositions(setIndex: number, n: number): number[] {
 }
 
 /** The 5 questions for a set, resolved against the bank. */
-export function questionsForSet(setIndex: number, bank: readonly QuizQuestion[] = QUIZ_BANK): QuizQuestion[] {
-  if (bank.length < SET_SIZE) return [];
+export function questionsForSet(setIndex: number, bank: readonly QuizQuestion[]): QuizQuestion[] {
+  if (!bank || bank.length < SET_SIZE) return [];
   return setPositions(setIndex, bank.length).map(i => bank[i]);
 }
 
 /** How many sets before the bank starts repeating. Display only. */
-export function setsPerCycle(bankSize: number = QUIZ_BANK.length): number {
+export function setsPerCycle(bankSize: number): number {
   return Math.floor(bankSize / SET_SIZE);
 }
 

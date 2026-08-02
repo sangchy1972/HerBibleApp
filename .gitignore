@@ -74,3 +74,6 @@ play-service-account.json
 *.aab
 *.apk
 *.ipa
+
+# Quiz bank translation workspace — inputs/outputs are regenerated, not edited
+.quiz-i18n/

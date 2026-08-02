@@ -6,45 +6,38 @@ import {
   SET_SIZE, mulberry32, cyclePermutation, streamPosition, setPositions,
   questionsForSet, setsPerCycle, __clearPermCacheForTest,
 } from '../src/services/quizSets';
-import { QUIZ_BANK, QUIZ_BANK_VERSION } from '../src/constants/bibleQuiz';
+import { QUIZ_BANK_VERSION, quizBankUrl, QUIZ_LANGS } from '../src/constants/bibleQuiz';
+import type { QuizQuestion } from '../src/constants/bibleQuiz';
 
-const N = 329;
+// The real bank now lives on the CDN, so set composition is tested against a
+// synthetic bank of the SAME SIZE — the algorithm only ever sees a length.
+const N = 327;
+const fakeBank: QuizQuestion[] = Array.from({ length: N }, (_, i) => ({
+  id: i + 1, question: `q${i}`, options: ['a', 'b', 'c', 'd'], answerIndex: i % 4,
+}));
 
 beforeEach(() => __clearPermCacheForTest());
 
-describe('the bank itself', () => {
-  it('is 329 questions with unique ids', () => {
-    expect(QUIZ_BANK.length).toBe(N);
-    expect(new Set(QUIZ_BANK.map(q => q.id)).size).toBe(N);
+describe('bank constants', () => {
+  it('pins the bank version so a question-set edit forces a conscious bump', () => {
+    // v2 = the two language-dependent questions were removed. Anything that
+    // changes the SET of questions must bump this, or an in-flight session
+    // grades answers against questions the user never saw.
+    expect(QUIZ_BANK_VERSION).toBe(2);
   });
 
-  it('has a valid answerIndex for every question', () => {
-    for (const q of QUIZ_BANK) {
-      expect(Number.isInteger(q.answerIndex)).toBe(true);
-      expect(q.answerIndex).toBeGreaterThanOrEqual(0);
-      expect(q.answerIndex).toBeLessThan(q.options.length);
-    }
+  it('builds a CDN url per language', () => {
+    expect(quizBankUrl('es')).toBe('https://covers.everlandapps.com/v1/quiz/quiz-es.json');
+    expect(quizBankUrl('zh-Hant')).toBe('https://covers.everlandapps.com/v1/quiz/quiz-zh-Hant.json');
   });
 
-  it('is NOT uniformly 4-option — 60 are True/False', () => {
-    // Pinned deliberately: the brief assumed 4 everywhere, and any renderer
-    // that hardcodes 4 buttons breaks on 18% of the bank.
-    const two = QUIZ_BANK.filter(q => q.options.length === 2).length;
-    const four = QUIZ_BANK.filter(q => q.options.length === 4).length;
-    expect(two).toBe(60);
-    expect(four).toBe(269);
-    expect(two + four).toBe(N);
+  it('falls back to English for an unpublished language', () => {
+    expect(quizBankUrl('ja')).toBe('https://covers.everlandapps.com/v1/quiz/quiz-en.json');
+    expect(quizBankUrl('')).toBe('https://covers.everlandapps.com/v1/quiz/quiz-en.json');
   });
 
-  it('has no empty question or option strings', () => {
-    for (const q of QUIZ_BANK) {
-      expect(q.question.trim().length).toBeGreaterThan(0);
-      for (const o of q.options) expect(o.trim().length).toBeGreaterThan(0);
-    }
-  });
-
-  it('pins the bank version so a bank edit forces a conscious bump', () => {
-    expect(QUIZ_BANK_VERSION).toBe(1);
+  it('publishes all 7 app languages', () => {
+    expect([...QUIZ_LANGS].sort()).toEqual(['de', 'en', 'es', 'fr', 'pt', 'zh-Hans', 'zh-Hant']);
   });
 });
 
@@ -85,8 +78,8 @@ describe('setPositions', () => {
   // GOLDEN SNAPSHOT. If these change, QUIZ_SEED or the mixer moved, and every
   // existing user's queue silently reshuffled. There is no migration for that.
   it('matches the frozen golden values', () => {
-    expect(setPositions(0, N)).toEqual([185, 37, 101, 33, 213]);
-    expect(setPositions(1, N)).toEqual([61, 142, 6, 117, 292]);
+    expect(setPositions(0, N)).toEqual([1, 209, 22, 82, 61]);
+    expect(setPositions(1, N)).toEqual([312, 56, 99, 125, 48]);
   });
 
   it('always returns exactly 5, for any index', () => {
@@ -104,7 +97,7 @@ describe('setPositions', () => {
   it('covers the whole bank by the end of the cycle', () => {
     const all = new Set<number>();
     for (let k = 0; k < 66; k += 1) setPositions(k, N).forEach(x => all.add(x));
-    expect(all.size).toBe(N);      // 330 draws, 329 distinct = the single seam
+    expect(all.size).toBe(N);      // 330 draws, 327 distinct = the cycle seam
   });
 
   it('keeps every position inside the bank', () => {
@@ -130,7 +123,7 @@ describe('setPositions', () => {
 
 describe('questionsForSet', () => {
   it('resolves 5 real questions', () => {
-    const qs = questionsForSet(0);
+    const qs = questionsForSet(0, fakeBank);
     expect(qs.length).toBe(SET_SIZE);
     for (const q of qs) {
       expect(typeof q.question).toBe('string');
@@ -139,7 +132,7 @@ describe('questionsForSet', () => {
   });
 
   it('returns nothing rather than a short set when the bank is too small', () => {
-    expect(questionsForSet(0, QUIZ_BANK.slice(0, 3))).toEqual([]);
+    expect(questionsForSet(0, fakeBank.slice(0, 3))).toEqual([]);
   });
 
   it('reports the cycle length', () => {

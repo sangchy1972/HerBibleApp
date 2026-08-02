@@ -45,3 +45,6 @@ _cdn_ready/
 /android
 /ios
 play-service-account.json
+
+# Quiz bank JSONs are published to R2, not bundled — no need in the build upload
+docs/

@@ -188,14 +188,21 @@ export async function initAdRevenue(): Promise<void> {
         state = rollDay(localDay(), normalizeCurrency(p.currency), carry);
         return;
       }
+      const diskFired: AdLtvTier[] = Array.isArray(p.fired)
+        ? p.fired.filter((t: unknown): t is AdLtvTier => AD_LTV_TIERS.includes(t as AdLtvTier))
+        : [];
+      // MERGE, don't overwrite. The load is bounded (ads.ts gives it 2s) and
+      // impressions can land while it is still in flight, so `state` may
+      // already hold accruals from this launch. Those are different impressions
+      // from the ones on disk, so the counters add; `fired` must be a union or
+      // a tier the in-flight window already fired would be forgotten and could
+      // fire a second time today — the one thing this state exists to prevent.
       state = {
         day,
-        total: normalizeValue(p.total),
-        carry,
-        fired: Array.isArray(p.fired)
-          ? p.fired.filter((t: unknown): t is AdLtvTier => AD_LTV_TIERS.includes(t as AdLtvTier))
-          : [],
-        currency: normalizeCurrency(p.currency),
+        total: normalizeValue(p.total) + state.total,
+        carry: carry + state.carry,
+        fired: [...new Set([...diskFired, ...state.fired])],
+        currency: normalizeCurrency(p.currency) || state.currency,
       };
     } catch { /* corrupt cache → start the day clean */ } finally {
       // Set even on the error paths: "we tried to read and there was nothing

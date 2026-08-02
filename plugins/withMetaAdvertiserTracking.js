@@ -61,7 +61,9 @@ const HELPER = `
 
   @objc static func observe() {
     apply()
-    NotificationCenter.default.addObserver(
+    // Discard the observer token explicitly — an unused return value is a
+    // Swift warning, and warnings-as-errors is a build setting people turn on.
+    _ = NotificationCenter.default.addObserver(
       forName: UIApplication.didBecomeActiveNotification,
       object: nil,
       queue: .main
@@ -70,7 +72,12 @@ const HELPER = `
 }
 `;
 
-const IMPORTS = ['import ObjectiveC', 'import AppTrackingTransparency'];
+// UIKit is NOT optional: the helper touches UIApplication.didBecomeActiveNotification,
+// and AppDelegate.swift only imports ExpoModulesCore — Swift modules do not
+// re-export their own imports, so without this the injected code fails to
+// COMPILE, which is precisely the failure mode the runtime-lookup design exists
+// to avoid. Foundation comes along with UIKit.
+const IMPORTS = ['import UIKit', 'import ObjectiveC', 'import AppTrackingTransparency'];
 const CALL = '    HerBibleMetaAdvertiserTracking.observe()';
 
 module.exports = function withMetaAdvertiserTracking(config) {

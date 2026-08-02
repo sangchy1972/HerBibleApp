@@ -53,7 +53,6 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'profile.stats.calendar':         { en: 'Mood Tracking',                   context: 'Stat card label opening the mood-tracking calendar. Short — may wrap to two lines.' },
   'profile.removeAds.title':        { en: 'Remove Ads',                      context: 'Banner CTA title that opens the paywall.' },
   'profile.removeAds.hero':         { en: 'Try no ads for free',             context: 'Large headline on the Profile paywall banner. Keep it short — it sits beside an illustration and wraps to at most two lines.' },
-  'profile.removeAds.sub':          { en: 'Subscribe for an ad-free, focused experience.', context: 'Subtitle for the Remove Ads banner.' },
   'profile.section.faithAchievement': { en: 'Faith Achievement',             context: 'Section header. Shows earned achievement badges.' },
   'profile.section.myNotes':        { en: 'My Notes',                        context: 'Section header. Shortcuts to user-saved content (notes, saved verses, etc.).' },
   'profile.section.learningBible':  { en: 'Learning Bible',                  context: 'Section header. Bible learning resources / commentary.' },
@@ -1160,8 +1159,6 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'plan.dayDone.congratsTitle':    { en: 'Congratulations!',                                      context: 'Big headline on the PlanDayDone screen when the user finishes the FINAL day of a plan. Joyful, celebratory.' },
   'plan.dayDone.congratsSubtitle': { en: 'You completed this plan',                               context: 'Subtitle under the Congratulations headline when the whole plan is finished.' },
   'plan.dayWalk.chapterLoadError': { en: "Couldn't load this chapter.",                           context: 'Error message inside PlanDayWalk verse page when the chapter fetch fails.' },
-
-  'profile.adPlaceholder':         { en: 'AD',                                                    context: 'Two-letter placeholder shown on the ad slot when no ad is loaded. Universal — keep as "AD".' },
   'profile.saved.empty':           { en: 'No saved verses yet',                                   context: 'Empty-state text inside the Saved Verses sheet on Profile.' },
   'profile.saved.emptyHint':       { en: 'Open any chapter, tap a verse, and choose Save to keep it here.', context: 'Helper sentence shown below the empty-state on the Saved Verses sheet. Tells the user how to save verses. "Save" refers to the button label (same as common.save).' },
   'profile.notes.label':           { en: 'Notes · {n}',                                           context: 'Header inside the Notes sheet on Profile. "{n}" is the note count.' },

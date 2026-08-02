@@ -115,10 +115,15 @@ export async function hydrateAdRevenueConfig(): Promise<void> {
       const raw = await AsyncStorage.getItem(AD_CONFIG_CACHE_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw);
+      const at = Number(parsed?.at) || 0;
+      // A network refresh can win the race against this disk read. Applying an
+      // older cached copy over a fresher live one would also rewind
+      // lastFetchedAt, suppressing the next refresh for a full TTL.
+      if (at <= lastFetchedAt && lastFetchedAt > 0) return;
       const clean = sanitize(parsed?.config);
       if (clean) {
         config = clean;
-        lastFetchedAt = Number(parsed?.at) || 0;
+        lastFetchedAt = at;
       }
     } catch { /* keep defaults */ }
   })();

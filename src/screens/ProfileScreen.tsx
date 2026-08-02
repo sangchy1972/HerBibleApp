@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
+import { areAdsRemoved } from '../services/ads';
 import { useTabFocusScrollReset } from '../components/shared/useTabFocusEntrance';
 import TabSection from '../components/shared/TabSection';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, Modal, Share, Platform } from 'react-native';
@@ -262,6 +264,12 @@ function CalendarSheet({ activityDates, onClose }: { activityDates: Set<string>;
 
 export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>) {
   const insets = useSafeAreaInsets();
+  // Re-read on every focus rather than once on mount: the flag is flipped by a
+  // purchase or a restore that happens on ANOTHER screen, and areAdsRemoved() is
+  // a synchronous mirror of an async load, so a mount-time read on a cold start
+  // can still be false while the stored entitlement says otherwise.
+  const [adsGone, setAdsGone] = useState(areAdsRemoved);
+  useFocusEffect(React.useCallback(() => { setAdsGone(areAdsRemoved()); }, []));
   // Tab-entrance scroll-to-top — paired with the per-section <TabSection>
   // animations below so the user always lands at the top of the Profile tab
   // and the content lifts into place in waves on every focus.
@@ -563,6 +571,11 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
       showsVerticalScrollIndicator={false}
       contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 8 }]}
     >
+      {/* Hidden once the ad-free entitlement is owned — the banner is the FIRST
+          thing on this screen now, so leaving it up would sell a paying user
+          something she already bought, every time she opens Profile. */}
+      {!adsGone && (
+      <>
       {/* Remove Ads — the screen's lead element. Moved above the identity hero
           (per user) so the paywall is the first thing on Profile rather than a
           card buried under the stats row: this is the only monetisation surface
@@ -582,14 +595,34 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
           style={styles.removeAdsInner}
         >
           <View style={styles.removeAdsCopy}>
-            <Text style={styles.removeAdsHero} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
+            {/* maxFontSizeMultiplier: adjustsFontSizeToFit only shrinks to fit
+                WIDTH, never height, so at accessibility font sizes the column
+                would grow past the card and the CTA below it would be clipped. */}
+            <Text
+              style={styles.removeAdsHero}
+              numberOfLines={2}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+              maxFontSizeMultiplier={1.3}
+            >
               {t('profile.removeAds.hero')}
             </Text>
             {/* Not a nested Touchable — the whole banner is already the tap
                 target, and a button inside a button swallows presses on
                 Android. pointerEvents="none" keeps it purely visual. */}
             <View style={styles.removeAdsBtn} pointerEvents="none">
-              <Text style={styles.removeAdsBtnText} numberOfLines={1}>{t('profile.removeAds.title')}</Text>
+              {/* de "Werbung entfernen" / fr "Sans publicités" overflow the pill
+                  on a 320 dp screen; same auto-fit the rhythm bar's Start pill
+                  uses rather than truncating a CTA. */}
+              <Text
+                style={styles.removeAdsBtnText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.7}
+                maxFontSizeMultiplier={1.3}
+              >
+                {t('profile.removeAds.title')}
+              </Text>
             </View>
           </View>
           <Image
@@ -600,6 +633,8 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
         </LinearGradient>
       </TouchableOpacity>
       </TabSection>
+      </>
+      )}
 
       {/* Hero */}
       <TabSection delay={30}>
@@ -741,7 +776,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
             <Feather name="plus" size={42} color={ROSE} strokeWidth={3} />
           </View>
           <View style={styles.widgetBannerCopy}>
-            <Text style={[styles.widgetBannerTitle, styles.removeAdsTitle]} numberOfLines={1} ellipsizeMode="tail">{t('profile.widget.title')}</Text>
+            <Text style={[styles.widgetBannerTitle, styles.bannerTitleRose]} numberOfLines={1} ellipsizeMode="tail">{t('profile.widget.title')}</Text>
             <Text style={styles.widgetBannerSub} numberOfLines={2} ellipsizeMode="tail">{t('profile.widget.eyebrow')}</Text>
           </View>
           <Feather name="chevron-right" size={20} color={TXTSUB} />
@@ -1451,11 +1486,16 @@ const styles = StyleSheet.create({
   // Lead card. 92 → 129 (+40 % per user) — it no longer shares the unified
   // 92 px height with statCard / widgetBanner because it is deliberately the
   // heaviest element on the screen now, not a sibling of them.
+  // minHeight, not height: at accessibility font scales the copy column grows,
+  // and a fixed height with overflow:hidden silently guillotined the CTA.
+  // Shadow lives HERE and clipping lives on the inner view — iOS drops a
+  // view's own shadow when that same view sets overflow:'hidden', so the two
+  // cannot share a node (Android's elevation was unaffected, which is exactly
+  // how this kind of thing ships looking fine on one platform).
   removeAdsBanner: {
     marginBottom: 16,
-    height: 129,
+    minHeight: 129,
     borderRadius: 20,
-    overflow: 'hidden',            // clips the artwork's bleed to the radius
     shadowColor: ROSE,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.16,
@@ -1464,11 +1504,13 @@ const styles = StyleSheet.create({
   },
   removeAdsInner: {
     flex: 1,
+    minHeight: 129,
     flexDirection: 'row',
     alignItems: 'center',
+    borderRadius: 20,
+    overflow: 'hidden',
     paddingLeft: 18,
-    // No right padding: the artwork is meant to run to the edge.
-    paddingRight: 0,
+    paddingRight: 12,
   },
   // Left column takes the remaining width so a long translation wraps instead
   // of pushing the artwork off-card (German and Spanish are ~1.6× English here).
@@ -1497,17 +1539,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     letterSpacing: 0.3,
   },
-  // Oversized on purpose and pulled right so it bleeds past the card edge —
-  // the crown reads as artwork rather than an icon sitting in a box.
+  // Sized to the asset's real 0.791 aspect. The source was a 3:2 canvas whose
+  // crown occupied a 1119x1415 island, so `contain` into a 138 square drew it
+  // at ~67x85 and the negative margin bled nothing but transparent pixels. The
+  // PNG is now cropped to its alpha bounds, so these numbers are the artwork.
   removeAdsArt: {
-    width: 138,
-    height: 138,
-    marginRight: -14,
+    width: 93,
+    height: 118,
+    flexShrink: 0,
   },
-  // Override on top of widgetBannerTitle — Lato 600 per user (reverted from
-  // Lora 600). Color matches the slash on the AD icon (#D54A6E) so the whole
-  // banner reads in the same warm-red palette. fontSize +5 % per user.
-  removeAdsTitle: { fontSize: 17.64, fontWeight: '600', fontFamily: FONTS.latoBold, letterSpacing: 0.5, color: ROSE },                     // ROSE matches "See all" link color per user; 16 → 16.8 → 17.64 (cumulative +10 %)
+  // Rose banner-title override on top of widgetBannerTitle — Lato 600 per user
+  // (reverted from Lora 600). Used by the WIDGET banner; it was named
+  // removeAdsTitle back when the Remove Ads card shared this style, which it no
+  // longer does.
+  bannerTitleRose: { fontSize: 17.64, fontWeight: '600', fontFamily: FONTS.latoBold, letterSpacing: 0.5, color: ROSE },                     // ROSE matches "See all" link color per user; 16 → 16.8 → 17.64 (cumulative +10 %)
   settingsCard: {
     overflow: 'hidden',
     padding: 0,

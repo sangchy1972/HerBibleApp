@@ -128,12 +128,9 @@ const ADAPTERS = [
     // ⚠️ No Facebook App ID needed (that's the Login/Core SDK, not Audience
     //    Network) — no manifest entry, no CFBundleURLTypes, no fb<id> scheme.
     //    It's configured entirely by the Placement ID you paste into AdMob.
-    // ⚠️ iOS follow-up when you enable this: Meta wants
-    //    FBAdSettings.setAdvertiserTrackingEnabled(<ATT status>) called BEFORE
-    //    the GMA SDK initializes. Not injected here on purpose — it needs a
-    //    native AppDelegate hook and I won't ship Swift I can't build-test.
-    //    Skipping it is NOT fatal (Meta just serves limited/non-personalized
-    //    ads → lower eCPM), so wire it when you actually turn Meta on.
+    // ✅ iOS advertiser tracking is wired — FBAdSettings.setAdvertiserTrackingEnabled
+    //    is injected into AppDelegate by plugins/withMetaAdvertiserTracking.js,
+    //    resolved through the ObjC runtime so it costs nothing when Meta is off.
     // ⚠️ Meta also requires its own entries in app-ads.txt, and the Facebook app
     //    must be installed + logged in on the device to see test ads.
   },

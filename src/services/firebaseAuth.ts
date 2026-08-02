@@ -195,17 +195,21 @@ const EMAIL_LOCALE: Record<string, string> = {
  * Never throws: a wrong/unsupported code just falls back to the default
  * template, which is strictly better than failing the send.
  */
-export function setEmailLanguage(appLanguage: string): void {
+export async function setEmailLanguage(appLanguage: string): Promise<void> {
   if (!authMod) return;
   try {
-    authMod().languageCode = EMAIL_LOCALE[appLanguage] ?? 'en';
-  } catch { /* older SDK without the setter → stock behaviour */ }
+    // setLanguageCode, NOT the `languageCode` setter: RNFB's setter calls this
+    // same async method without awaiting or catching, so a native rejection
+    // escapes as an unhandled promise rejection that our try/catch can't see,
+    // and the send below could in principle race the write.
+    await authMod().setLanguageCode(EMAIL_LOCALE[appLanguage] ?? 'en');
+  } catch { /* unsupported locale / older SDK → stock template */ }
 }
 
 export async function sendEmailSignInLink(email: string, appLanguage?: string): Promise<void> {
   if (!authMod) throw new Error('FIREBASE_AUTH_UNAVAILABLE');
   const clean = email.trim();
-  if (appLanguage) setEmailLanguage(appLanguage);
+  if (appLanguage) await setEmailLanguage(appLanguage);
   await authMod().sendSignInLinkToEmail(clean, {
     handleCodeInApp: true,
     url: EMAIL_LINK_CONTINUE_URL,

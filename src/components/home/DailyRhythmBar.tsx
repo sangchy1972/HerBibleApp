@@ -17,8 +17,8 @@ import { RHYTHM_STEPS, isRhythmStepDone, packedRhythmFill, type RhythmDotState }
 //   • a soft pink→white→lavender gradient card (borderless, per user) with
 //     the suggestion text and — on actionable steps — a small rose "Start"
 //     pill on the right (decorative: the WHOLE card is the touch target),
-//   • a 5-SEGMENT progress bar hugging the card's inner bottom with a live
-//     percentage at its right — one segment per rhythm step (20% each),
+//   • a 5-SEGMENT progress bar hugging the card's inner bottom — one segment
+//     per completed step (20% each), packed left,
 //     replacing the old 1–5 numbered dots AND the screen's separate
 //     "Today's Progress" section (merged per user). Track/fill/tick styles
 //     carried over from that section verbatim (height 6, rose fill, white
@@ -135,6 +135,10 @@ export default function DailyRhythmBar({
   const [waveAt, setWaveAt] = useState(0);
   const wasAllDone = useRef(allDone);
   const waveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Declared here, not beside the ceremony code below: the completion effect
+  // pushes into it, and a reader tracing that effect shouldn't have to scroll
+  // 60 lines to find out what it is.
+  const ceremonyTimers = useRef<Array<ReturnType<typeof setTimeout>>>([]);
   useEffect(() => () => { if (waveTimer.current) clearTimeout(waveTimer.current); }, []);
   // Armed by the completion effect for the text effect running in the SAME
   // commit — routes that text change through the ceremony instead of the
@@ -160,7 +164,8 @@ export default function DailyRhythmBar({
       // bubble → sand swap) instead of the plain crossfade. Cleared next tick
       // so an unrelated later text change can't inherit it.
       ceremonyArm.current = true;
-      setTimeout(() => { ceremonyArm.current = false; }, 50);
+      // Tracked like every other timer here — an untracked one survives unmount.
+      ceremonyTimers.current.push(setTimeout(() => { ceremonyArm.current = false; }, 50));
       // Whole-day sparkle chains once the segment sweep lands.
       if (allDone && !wasComplete) {
         if (waveTimer.current) clearTimeout(waveTimer.current);
@@ -217,7 +222,6 @@ export default function DailyRhythmBar({
   const sand = useSharedValue(0);                        // master progress of the active sand phase
   const [sandPhase, setSandPhase] = useState<'idle' | 'out' | 'in'>('idle');
   const sandPhaseRef = useRef<'idle' | 'out' | 'in'>('idle');
-  const ceremonyTimers = useRef<Array<ReturnType<typeof setTimeout>>>([]);
   useEffect(() => () => { ceremonyTimers.current.forEach(clearTimeout); }, []);
   const setPhase = (p: 'idle' | 'out' | 'in') => { sandPhaseRef.current = p; setSandPhase(p); };
 
@@ -418,7 +422,7 @@ export default function DailyRhythmBar({
           )}
         </View>
 
-        {/* BOTTOM zone — the full-width 5-segment progress bar + live %; its
+        {/* BOTTOM zone — the full-width 5-segment progress bar; its
             height is just the row's natural content height. Inside the
             touchable (never intercepts the tap) and hidden from the a11y
             tree (the card label already reads the %). Segments are POSITIONAL,

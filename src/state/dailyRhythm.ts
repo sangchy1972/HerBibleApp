@@ -47,8 +47,8 @@ export function isRhythmStepDone(s: RhythmDotState): boolean {
  * completion order isn't persisted; a relaunch would otherwise reshuffle the
  * colours of already-filled segments.
  */
-export function packedRhythmFill(dots: RhythmDotState[]): RhythmDotState[] {
-  return dots.filter(isRhythmStepDone);
+export function packedRhythmFill(dots: RhythmDotState[]): Array<'done' | 'retired'> {
+  return dots.filter((d): d is 'done' | 'retired' => isRhythmStepDone(d));
 }
 
 export type RhythmState =

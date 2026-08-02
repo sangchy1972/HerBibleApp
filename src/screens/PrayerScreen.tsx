@@ -1211,7 +1211,10 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           leave a 20 px gap on the home screen of every offline user. The card
           owns its own outer spacing so "hidden" really means zero height. */}
       <TabSection delay={68}>
-        <QuizChallengeCard onPress={() => navigation.navigate('Quiz')} />
+        <QuizChallengeCard
+          onPress={() => navigation.navigate('Quiz')}
+          onOpenCollection={() => navigation.navigate('PuzzleCollection')}
+        />
       </TabSection>
 
       <TabSection delay={75}>

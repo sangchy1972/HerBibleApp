@@ -75,6 +75,44 @@ export function puzzleView(completedSets: number, artCount: number): PuzzleView 
   };
 }
 
+export interface RewardPreview {
+  view: PuzzleView;
+  /** Quadrant to ring, or null when there is nothing new to show. */
+  freshTile: number | null;
+}
+
+/**
+ * The board as the results screen should show it, for a set the user has just
+ * finished but not yet committed.
+ *
+ * Not simply `puzzleView(completedSets + 1)`: on the set that COMPLETES a
+ * painting that call rolls straight on to the next one and reports 0 tiles, so
+ * the reward screen would show an empty board at the exact moment she earned a
+ * finished picture. The last tile of a painting has to stay on the painting it
+ * belongs to; the roll-over happens on the NEXT set.
+ */
+export function rewardPreview(completedSetsBefore: number, artCount: number): RewardPreview {
+  const before = Math.max(0, Math.floor(completedSetsBefore) || 0);
+  const earned = before + 1;
+  const art = Math.max(1, Math.floor(artCount) || 1);
+
+  const paintingRaw = Math.floor((earned - 1) / TILES_PER_PAINTING);
+  const outOfArt = paintingRaw >= art;
+  const tileInPainting = (earned - 1) % TILES_PER_PAINTING;
+
+  const view: PuzzleView = outOfArt
+    ? { ...puzzleView(earned, art) }
+    : {
+      paintingIndex: paintingRaw,
+      tilesUnlocked: tileInPainting + 1,
+      tiles: Array.from({ length: TILES_PER_PAINTING }, (_, i) => (i <= tileInPainting ? 'unlocked' : 'locked')),
+      completedPaintings: Math.floor(earned / TILES_PER_PAINTING),
+      outOfArt: false,
+    };
+
+  return { view, freshTile: outOfArt ? null : tileInPainting };
+}
+
 export interface MysteryView {
   current: number;
   target: number;

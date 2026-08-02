@@ -44,6 +44,8 @@ export type RootStackParamList = {
   /** Full-screen Bible quiz. Optional setIndex reserved for a future
    *  "replay set N" deep link, so adding it later isn't a breaking change. */
   Quiz: { setIndex?: number } | undefined;
+  /** Puzzle collection — every artwork the quiz has earned. */
+  PuzzleCollection: undefined;
   Reflections: undefined;
   PastVerses: undefined;
   FeaturedPlanDetail: { slug: string };

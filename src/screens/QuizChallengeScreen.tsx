@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, BackHandler } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -29,8 +29,14 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
 
   // Start (or resume) as soon as the bank is available. Guarded inside `open`,
   // which returns the existing session untouched if one is already in flight.
+  //
+  // `leaving` matters: committing a set changes progress.setIndex, which
+  // changes `open`'s identity, which re-fires this effect during the frame
+  // between finish() and the screen unmounting — silently starting and
+  // persisting a session for the NEXT set the user never asked to begin.
+  const leaving = useRef(false);
   useEffect(() => {
-    if (ready && bank) open();
+    if (ready && bank && !leaving.current) open();
   }, [ready, bank, open]);
 
   // Android hardware back = the close button, not a silent no-op.
@@ -84,8 +90,9 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
           wrong={summary.wrong}
           level={progress.completedSets + 1}
           firstPassPerfect={summary.firstPassPerfect}
+          completedSets={progress.completedSets}
           onRetry={retry}
-          onContinue={() => { finish(); navigation.goBack(); }}
+          onContinue={() => { leaving.current = true; finish(); navigation.goBack(); }}
         />
       );
     }

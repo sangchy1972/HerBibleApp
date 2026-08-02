@@ -1,9 +1,13 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { ROSE, GREEN_DONE, TXT, TXTSUB, BTN_RADIUS, FONTS } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
 import QuizSegmentBar from './QuizSegmentBar';
+import PuzzleBoard from './PuzzleBoard';
+import MysteryRewardBar from './MysteryRewardBar';
+import { rewardPreview } from '../../state/quizProgress';
+import { QUIZ_ART_COUNT } from '../../constants/quizArt';
 import type { SegmentState } from '../../state/quizSession';
 
 // End-of-round screen.
@@ -17,7 +21,8 @@ import type { SegmentState } from '../../state/quizSession';
 // re-derives the score.
 
 export default function QuizReviewView({
-  segments, correct, total, wrong, level, firstPassPerfect, onRetry, onContinue,
+  segments, correct, total, wrong, level, firstPassPerfect, completedSets,
+  onRetry, onContinue,
 }: {
   segments: SegmentState[];
   correct: number;
@@ -25,11 +30,20 @@ export default function QuizReviewView({
   wrong: number;
   level: number;
   firstPassPerfect: boolean;
+  /** Sets completed BEFORE this one. The reward preview looks one ahead. */
+  completedSets: number;
   onRetry: () => void;
   onContinue: () => void;
 }) {
   const t = useT();
+  const { width } = useWindowDimensions();
   const done = wrong === 0;
+
+  // The board shows the state AFTER this set commits, with the tile it earns
+  // ringed. Showing the pre-commit state would mean the reward only appears
+  // once she has already tapped away from the screen celebrating it.
+  const { view, freshTile } = rewardPreview(completedSets, QUIZ_ART_COUNT);
+  const boardSize = Math.min(width - 88, 240);
 
   return (
     <View style={styles.root}>
@@ -57,6 +71,26 @@ export default function QuizReviewView({
         <Text style={styles.sub} maxFontSizeMultiplier={1.3}>
           {done ? t('quiz.review.levelDone', { n: level }) : t('quiz.review.retryHint', { n: wrong })}
         </Text>
+
+        {/* The reward only appears once the set is actually finished. Showing a
+            puzzle tile beside "2 still wrong" would promise something the user
+            hasn't earned and can't collect yet. */}
+        {done ? (
+          <>
+            <Text style={styles.rewardLabel} maxFontSizeMultiplier={1.3}>
+              {view.outOfArt ? t('quiz.reward.allArt') : t('quiz.reward.tile')}
+            </Text>
+            <PuzzleBoard
+              paintingIndex={view.paintingIndex}
+              tilesUnlocked={view.tilesUnlocked}
+              size={boardSize}
+              newTile={freshTile}
+            />
+            <View style={styles.mystery}>
+              <MysteryRewardBar completedSets={completedSets + 1} />
+            </View>
+          </>
+        ) : null}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -95,6 +129,12 @@ const styles = StyleSheet.create({
     color: TXTSUB, textAlign: 'center', marginTop: 10,
   },
   bar: { marginTop: 22 },
+  rewardLabel: {
+    fontFamily: FONTS.latoBold, fontSize: 13.5, color: TXTSUB,
+    letterSpacing: 0.5, textAlign: 'center', marginTop: 30, marginBottom: 14,
+    textTransform: 'uppercase',
+  },
+  mystery: { marginTop: 26, width: '100%' },
   sub: {
     fontFamily: FONTS.lato, fontSize: 14.5, color: TXTSUB,
     textAlign: 'center', marginTop: 18, lineHeight: 21,

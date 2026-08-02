@@ -18,7 +18,12 @@ import QuizSegmentBar from '../quiz/QuizSegmentBar';
 // filigree frame: title row with a medal, a one-line status, and the
 // 5-segment bar. The whole card is the touch target; the chevron is decorative.
 
-export default function QuizChallengeCard({ onPress }: { onPress: () => void }) {
+export default function QuizChallengeCard({
+  onPress, onOpenCollection,
+}: {
+  onPress: () => void;
+  onOpenCollection: () => void;
+}) {
   const t = useT();
   const { ready, bank, progress, session, segments } = useQuiz();
 
@@ -37,7 +42,17 @@ export default function QuizChallengeCard({ onPress }: { onPress: () => void }) 
       accessibilityLabel={`${t('quiz.card.title')}. ${t('quiz.card.answered', { n: answered })}`}
     >
       <View style={styles.header}>
-        <MaterialCommunityIcons name="medal-outline" size={24} color={ROSE} />
+        {/* The medal is its own target: it opens the collection, not the quiz.
+            Nested inside the card's touchable, which RN handles — the inner
+            one wins. hitSlop keeps it reachable without growing the icon. */}
+        <TouchableOpacity
+          onPress={onOpenCollection}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel={t('quiz.collection.title')}
+        >
+          <MaterialCommunityIcons name="medal-outline" size={24} color={ROSE} />
+        </TouchableOpacity>
         <View style={styles.headerCopy}>
           <Text style={styles.title} numberOfLines={1}>{t('quiz.card.title')}</Text>
           <Text style={styles.sub} numberOfLines={1}>

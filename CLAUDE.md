@@ -52,6 +52,11 @@ requirements — follow them by default without re-asking.
   production upload; the marketing **version** (e.g. 1.0) only changes when you edit `app.json`.
 - US-only interstitial floor ladder is gated `region === 'US' && !__DEV__` — won't run on a
   non-US/dev device.
+- **R2 buckets** — two, on purpose. `herbible-plans-7languages` → `covers.everlandapps.com`
+  (plan covers, badge art, prayer audio, legal pages). `herbible-quiz` → `quiz.everlandapps.com`
+  (quiz banks at `/v1/quiz-<lang>.json`). Both are path-versioned: a custom domain puts
+  Cloudflare's cache in front, so re-cut content under the same key can serve stale for a long
+  time — bump the `/v1/` segment instead of purging. Never per-file SHAs.
 - **Ad unit / placement IDs** live in `docs/ad-unit-ids.md` (Meta Audience Network app id
   `1020655230368479` + its 6 placements, created for Meta *bidding* inside AdMob mediation).
   The app renders **interstitials only**, so only the Interstitial placement can ever fill,

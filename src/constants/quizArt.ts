@@ -3,7 +3,7 @@
 // PLACEHOLDER ART. Every entry currently has `url: null`, which makes
 // PuzzleArt render a bundled vector composition instead of an image. When real
 // artwork is commissioned, set `url` to a CDN path
-// (covers.everlandapps.com/v1/quiz-art/...) and the renderer switches over with
+// (quiz.everlandapps.com/v1/art/...) and the renderer switches over with
 // no other change — the registry shape, the ids, and the tile maths all stay.
 //
 // ⚠️ ORDER IS DURABLE. `puzzleView` addresses these by INDEX derived from

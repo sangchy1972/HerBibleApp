@@ -10,10 +10,17 @@
 // install has no bank, and the home card is HIDDEN rather than shown broken.
 // See services/quizBank.ts.
 //
-// Hosted on the same public R2 bucket as plan covers and badge art, under a
-// path-versioned prefix. Re-translate or edit questions → bump the version
-// segment (v1 → v2) to cache-bust every language at once. Project rule:
-// path-version, never per-file SHAs.
+// Hosted on its OWN public R2 bucket (`herbible-quiz`, custom domain
+// quiz.everlandapps.com) — deliberately not the covers bucket that serves plan
+// art and badges, so a quiz re-cut can never disturb image caching and the two
+// can be purged independently.
+//
+// The `/v1/` segment is a cache-bust handle, not decoration: a custom domain
+// puts Cloudflare's cache in front of these files, so re-editing questions
+// under the SAME key can keep serving the old bank for a long time. Re-translate
+// or edit questions → bump the segment (v1 → v2) and re-upload, which
+// invalidates every language at once. Project rule: path-version, never
+// per-file SHAs.
 
 export interface QuizQuestion {
   /** Stable id from the source export. Identical across all 7 languages. */
@@ -42,7 +49,7 @@ export interface QuizQuestion {
  */
 export const QUIZ_BANK_VERSION = 2;
 
-export const QUIZ_CDN_BASE = 'https://covers.everlandapps.com/v1/quiz';
+export const QUIZ_CDN_BASE = 'https://quiz.everlandapps.com/v1';
 
 /** Languages with a published bank. Anything else falls back to English. */
 export const QUIZ_LANGS = ['en', 'zh-Hans', 'zh-Hant', 'de', 'fr', 'es', 'pt'] as const;

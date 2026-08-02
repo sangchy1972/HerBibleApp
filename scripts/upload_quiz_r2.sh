@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Upload the quiz question banks to R2 (covers.everlandapps.com/v1/quiz).
+# Upload the quiz question banks to R2 (quiz.everlandapps.com/v1).
+#
+# NOTE the bucket: the quiz has its OWN bucket, not the covers/badges one.
 #
 # The app ships WITHOUT questions: QuizContext fetches the bank for the user's
 # language on first open and caches it. Until these 7 files are live the home
@@ -25,8 +27,8 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-BUCKET="herbible-plans-7languages"          # custom domain: covers.everlandapps.com
-PREFIX="v1/quiz"
+BUCKET="herbible-quiz"                      # custom domain: quiz.everlandapps.com
+PREFIX="v1"
 SRC="${1:-${REPO}/docs/quiz-bank}"
 
 # Resolve a usable wrangler: $WRANGLER env override → on PATH → npx fallback.
@@ -79,5 +81,5 @@ done <<< "$LANGS"
 echo
 echo "Uploaded ${uploaded} banks. Missing: ${missing}."
 echo "Verify:"
-echo "  curl -sI https://covers.everlandapps.com/v1/quiz/quiz-en.json"
-echo "  curl -s  https://covers.everlandapps.com/v1/quiz/quiz-es.json | head -c 200"
+echo "  curl -sI https://quiz.everlandapps.com/v1/quiz-en.json"
+echo "  curl -s  https://quiz.everlandapps.com/v1/quiz-es.json | head -c 200"

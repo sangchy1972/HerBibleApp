@@ -27,13 +27,13 @@ describe('bank constants', () => {
   });
 
   it('builds a CDN url per language', () => {
-    expect(quizBankUrl('es')).toBe('https://covers.everlandapps.com/v1/quiz/quiz-es.json');
-    expect(quizBankUrl('zh-Hant')).toBe('https://covers.everlandapps.com/v1/quiz/quiz-zh-Hant.json');
+    expect(quizBankUrl('es')).toBe('https://quiz.everlandapps.com/v1/quiz-es.json');
+    expect(quizBankUrl('zh-Hant')).toBe('https://quiz.everlandapps.com/v1/quiz-zh-Hant.json');
   });
 
   it('falls back to English for an unpublished language', () => {
-    expect(quizBankUrl('ja')).toBe('https://covers.everlandapps.com/v1/quiz/quiz-en.json');
-    expect(quizBankUrl('')).toBe('https://covers.everlandapps.com/v1/quiz/quiz-en.json');
+    expect(quizBankUrl('ja')).toBe('https://quiz.everlandapps.com/v1/quiz-en.json');
+    expect(quizBankUrl('')).toBe('https://quiz.everlandapps.com/v1/quiz-en.json');
   });
 
   it('publishes all 7 app languages', () => {

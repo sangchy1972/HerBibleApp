@@ -1206,10 +1206,12 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           nothing until the CDN bank has landed, so a device that has never been
           online simply doesn't see it. delay 68 keeps it inside the existing
           60 → 75 cascade rather than extending the tail. */}
+      {/* No wrapper View here on purpose: the card hides itself when the CDN
+          bank hasn't landed, and a padded wrapper around a null child would
+          leave a 20 px gap on the home screen of every offline user. The card
+          owns its own outer spacing so "hidden" really means zero height. */}
       <TabSection delay={68}>
-      <View style={[styles.section, { paddingTop: 20 }]}>
         <QuizChallengeCard onPress={() => navigation.navigate('Quiz')} />
-      </View>
       </TabSection>
 
       <TabSection delay={75}>

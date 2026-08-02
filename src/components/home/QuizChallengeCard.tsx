@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Feather from '@expo/vector-icons/Feather';
-import { ROSE, TXT, TXTSUB, FONTS } from '../../constants/theme';
+import { ROSE, TXT, TXTSUB, FONTS, P } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
 import { useQuiz } from '../../state/QuizContext';
 import QuizSegmentBar from '../quiz/QuizSegmentBar';
@@ -28,6 +28,7 @@ export default function QuizChallengeCard({ onPress }: { onPress: () => void }) 
   const inProgress = !!session && answered > 0;
 
   return (
+    <View style={styles.outer}>
     <TouchableOpacity
       style={styles.card}
       activeOpacity={0.85}
@@ -50,10 +51,14 @@ export default function QuizChallengeCard({ onPress }: { onPress: () => void }) 
 
       <QuizSegmentBar segments={segments} height={6} style={styles.bar} />
     </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // Owned here, not by the caller — see the note at the call site in
+  // PrayerScreen. Mirrors that screen's `section` style (paddingHorizontal: P).
+  outer: { paddingHorizontal: P, paddingTop: 20 },
   // Flat white card, no border, no shadow — the app's card system (matches
   // MyReadingPlansCard directly above it, so the two read as siblings).
   card: {

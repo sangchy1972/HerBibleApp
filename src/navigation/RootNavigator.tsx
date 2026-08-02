@@ -4,6 +4,7 @@ import TabNavigator from './TabNavigator';
 import StreakScreen from '../screens/StreakScreen';
 import PrayerFlow from '../screens/PrayerFlow';
 import GospelPsalmReader from '../screens/GospelPsalmReader';
+import QuizChallengeScreen from '../screens/QuizChallengeScreen';
 import MoodDashboardScreen from '../screens/MoodDashboardScreen';
 import RemoveAdsScreen from '../screens/RemoveAdsScreen';
 import HelpCenterScreen from '../screens/HelpCenterScreen';
@@ -64,6 +65,11 @@ export default function RootNavigator() {
       <Stack.Screen
         name="GospelPsalm"
         component={GospelPsalmReader}
+        options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', animationDuration: 320 }}
+      />
+      <Stack.Screen
+        name="Quiz"
+        component={QuizChallengeScreen}
         options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', animationDuration: 320 }}
       />
       <Stack.Screen

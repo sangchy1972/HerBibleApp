@@ -1244,9 +1244,20 @@ export default function BibleScreen() {
   // px brings it back, and the very top of a chapter always shows it. Reading
   // position is tracked in a ref (no re-render per frame); only a genuine
   // flip touches state, so scrolling stays at 60fps.
+  // Only while THIS tab is in front. Tab screens never unmount, and narration
+  // auto-scrolls the reader to the verse being read — so with audio playing from
+  // another tab those programmatic scrolls would fire this handler and slide the
+  // tab bar away under a user who isn't even in the Bible reader.
+  const readerFocusedRef = useRef(false);
+  useFocusEffect(useCallback(() => {
+    readerFocusedRef.current = true;
+    return () => { readerFocusedRef.current = false; };
+  }, []));
+
   const lastYRef = useRef(0);
   const onReaderScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     setSelVerse(null);                                   // preserved: any scroll clears the selection
+    if (!readerFocusedRef.current) return;               // background auto-scroll must not touch the tab bar
     const y = e.nativeEvent.contentOffset.y;
     const dy = y - lastYRef.current;
     lastYRef.current = y;

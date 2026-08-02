@@ -563,8 +563,46 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
       showsVerticalScrollIndicator={false}
       contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 8 }]}
     >
-      {/* Hero */}
+      {/* Remove Ads — the screen's lead element. Moved above the identity hero
+          (per user) so the paywall is the first thing on Profile rather than a
+          card buried under the stats row: this is the only monetisation surface
+          in the app, and it was previously below the fold on small phones.
+          Layout follows the reference the user supplied — headline + button
+          stacked on the left, artwork bleeding off the right edge. */}
       <TabSection delay={0}>
+      <TouchableOpacity
+        onPress={() => navigation.navigate('RemoveAds')}
+        activeOpacity={0.9}
+        style={styles.removeAdsBanner}
+      >
+        <LinearGradient
+          colors={['#FFE3EC', '#FFC9DC']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.removeAdsInner}
+        >
+          <View style={styles.removeAdsCopy}>
+            <Text style={styles.removeAdsHero} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
+              {t('profile.removeAds.hero')}
+            </Text>
+            {/* Not a nested Touchable — the whole banner is already the tap
+                target, and a button inside a button swallows presses on
+                Android. pointerEvents="none" keeps it purely visual. */}
+            <View style={styles.removeAdsBtn} pointerEvents="none">
+              <Text style={styles.removeAdsBtnText} numberOfLines={1}>{t('profile.removeAds.title')}</Text>
+            </View>
+          </View>
+          <Image
+            source={require('../../assets/paywall/no-ads-crown.png')}
+            style={styles.removeAdsArt}
+            resizeMode="contain"
+          />
+        </LinearGradient>
+      </TouchableOpacity>
+      </TabSection>
+
+      {/* Hero */}
+      <TabSection delay={30}>
       <View style={styles.hero}>
         <TouchableOpacity style={styles.heroLeft} onPress={openAvatarMenu} activeOpacity={0.8}>
           <View>
@@ -620,43 +658,6 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
           </TouchableOpacity>
         ))}
       </View>
-      </TabSection>
-
-      {/* Remove Ads — promoted out of the Account list to sit above the
-          Widget banner. Same card silhouette as the widget banner so the two
-          adjacent CTAs read as siblings rather than competing styles. */}
-      <TabSection delay={60}>{/* 180 → 60 */}
-      <TouchableOpacity
-        onPress={() => navigation.navigate('RemoveAds')}
-        activeOpacity={0.85}
-        style={[styles.removeAdsBanner]}
-      >
-        <LinearGradient
-          colors={[`${ROSE}1A`, `${LAV}1A`]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.widgetBannerInner}
-        >
-          <LinearGradient
-            colors={[`${ROSE}25`, `${LAV}25`]}
-            style={styles.removeAdsIcon}
-          >
-            {/* "AD" glyph with a coral slash crossed through it. Reads as
-                "no ads" without ambiguity (shield felt like privacy /
-                protection generally; heart felt like favourites). The
-                slash uses a ROSE-leaning warm red so the whole icon stays
-                inside the app's pink palette instead of clashing with a
-                pure-red prohibition glyph. */}
-            <Text style={styles.removeAdsAd}>{t('profile.adPlaceholder')}</Text>
-            <View style={styles.removeAdsSlash} />
-          </LinearGradient>
-          <View style={styles.widgetBannerCopy}>
-            <Text style={[styles.widgetBannerTitle, styles.removeAdsTitle]}>{t('profile.removeAds.title')}</Text>
-            <Text style={styles.widgetBannerSub}>{t('profile.removeAds.sub')}</Text>
-          </View>
-          <Feather name="chevron-right" size={20} color={TXTSUB} />
-        </LinearGradient>
-      </TouchableOpacity>
       </TabSection>
 
       {/* Faith Achievement — preview up to 4 most-recent badges + a CTA into
@@ -1447,53 +1448,66 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginTop: 6,
   },
-  // Same chrome as widgetBanner / notesTile — radius, height, shadow AND
-  // elevation:1 so it lifts on Android the same way the My Notes cards do.
+  // Lead card. 92 → 129 (+40 % per user) — it no longer shares the unified
+  // 92 px height with statCard / widgetBanner because it is deliberately the
+  // heaviest element on the screen now, not a sibling of them.
   removeAdsBanner: {
-    marginBottom: 12,
-    height: 92,
-    backgroundColor: '#FFFFFF',
+    marginBottom: 16,
+    height: 129,
     borderRadius: 20,
+    overflow: 'hidden',            // clips the artwork's bleed to the radius
+    shadowColor: ROSE,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  removeAdsInner: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 18,
+    // No right padding: the artwork is meant to run to the edge.
+    paddingRight: 0,
+  },
+  // Left column takes the remaining width so a long translation wraps instead
+  // of pushing the artwork off-card (German and Spanish are ~1.6× English here).
+  removeAdsCopy: { flex: 1, minWidth: 0, paddingRight: 8 },
+  removeAdsHero: {
+    fontFamily: FONTS.latoBold,
+    fontWeight: '700',
+    fontSize: 21,
+    lineHeight: 26,
+    letterSpacing: 0.2,
+    color: '#8E2547',              // deep rose — readable on the pink wash
+  },
+  removeAdsBtn: {
+    marginTop: 10,
+    alignSelf: 'flex-start',
+    backgroundColor: ROSE,
+    borderRadius: BTN_RADIUS,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    maxWidth: '100%',
+  },
+  removeAdsBtnText: {
+    color: '#FFFFFF',
+    fontFamily: FONTS.latoBold,
+    fontWeight: '700',
+    fontSize: 14,
+    letterSpacing: 0.3,
+  },
+  // Oversized on purpose and pulled right so it bleeds past the card edge —
+  // the crown reads as artwork rather than an icon sitting in a box.
+  removeAdsArt: {
+    width: 138,
+    height: 138,
+    marginRight: -14,
   },
   // Override on top of widgetBannerTitle — Lato 600 per user (reverted from
   // Lora 600). Color matches the slash on the AD icon (#D54A6E) so the whole
   // banner reads in the same warm-red palette. fontSize +5 % per user.
   removeAdsTitle: { fontSize: 17.64, fontWeight: '600', fontFamily: FONTS.latoBold, letterSpacing: 0.5, color: ROSE },                     // ROSE matches "See all" link color per user; 16 → 16.8 → 17.64 (cumulative +10 %)
-  removeAdsIcon: {
-    // 72 × 71 — height net -1 px from the 72 baseline. widgetBannerInner uses
-    // `alignItems: 'center'` so the badge sits vertically centered inside the
-    // locked 92 px card. marginLeft -3 nudges the badge closer to the card's
-    // left edge per user (shared widgetBannerInner padding stays at 14 so the
-    // Widget banner is unaffected).
-    marginLeft: -3,
-    width: 72,
-    height: 71,
-    borderRadius: 10.08,                                                         // 18 → 12.6 → 10.08 (cumulative -44 % from baseline)
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    overflow: 'hidden',
-  },
-  removeAdsAd: {
-    fontSize: 18.2,                                                              // 26 → 18.2 (-30 % per user)
-    fontWeight: '800',
-    color: ROSE,
-    letterSpacing: 1.5,
-  },
-  // Diagonal strikethrough — sits on top of the "AD" via absolute
-  // positioning. Width is wider than the glyph so the slash visibly
-  // extends past both letters; rotation -22° feels like a natural
-  // hand-drawn cancel mark rather than a perfect ⊘ symbol. Scaled
-  // proportionally with the glyph (-30 %) so it still over-extends by the
-  // same ratio.
-  removeAdsSlash: {
-    position: 'absolute',
-    width: 39.2,                                                                 // 56 → 39.2 (-30 % to match AD shrink)
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: '#D54A6E',          // warm app-palette red, not a pure browser red
-    transform: [{ rotate: '-22deg' }],
-  },
   settingsCard: {
     overflow: 'hidden',
     padding: 0,

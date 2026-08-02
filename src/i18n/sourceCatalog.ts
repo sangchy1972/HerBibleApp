@@ -52,6 +52,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'profile.stats.daysRead':         { en: 'Days Read',                       context: 'Stat card label. Number of days the user has read scripture.' },
   'profile.stats.calendar':         { en: 'Mood Tracking',                   context: 'Stat card label opening the mood-tracking calendar. Short — may wrap to two lines.' },
   'profile.removeAds.title':        { en: 'Remove Ads',                      context: 'Banner CTA title that opens the paywall.' },
+  'profile.removeAds.hero':         { en: 'Try no ads for free',             context: 'Large headline on the Profile paywall banner. Keep it short — it sits beside an illustration and wraps to at most two lines.' },
   'profile.removeAds.sub':          { en: 'Subscribe for an ad-free, focused experience.', context: 'Subtitle for the Remove Ads banner.' },
   'profile.section.faithAchievement': { en: 'Faith Achievement',             context: 'Section header. Shows earned achievement badges.' },
   'profile.section.myNotes':        { en: 'My Notes',                        context: 'Section header. Shortcuts to user-saved content (notes, saved verses, etc.).' },

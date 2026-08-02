@@ -8,7 +8,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
-  Easing, FadeIn, useSharedValue, useAnimatedStyle, withTiming, runOnJS,
+  Easing, FadeIn, useSharedValue, useAnimatedStyle, withTiming, runOnJS, cancelAnimation,
 } from 'react-native-reanimated';
 import MoodInputCard from './mood/MoodInputCard';
 import MonthCalendar from './mood/MonthCalendar';
@@ -86,6 +86,14 @@ function Sheet() {
   useEffect(() => {
     backdropO.value = withTiming(1, { duration: 440, easing: Easing.out(Easing.quad) });
     sheetTY.value = withTiming(0, { duration: ENTER_MS, easing: RISE_EASE });
+    // Watchdog: if the rise is cancelled/dropped (saturated UI thread, dev fast
+    // refresh), snap the sheet into place. Without this the sheet could sit
+    // off-screen while its backdrop dims the app — visible lock-up.
+    const armed = setTimeout(() => {
+      cancelAnimation(sheetTY); cancelAnimation(backdropO);
+      sheetTY.value = 0; backdropO.value = 1;
+    }, ENTER_MS + 400);
+    return () => clearTimeout(armed);
   }, [backdropO, sheetTY]);
   const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropO.value }));
   const sheetAnim = useAnimatedStyle(() => ({ transform: [{ translateY: sheetTY.value }] }));
@@ -95,6 +103,8 @@ function Sheet() {
   // them for the whole 260 ms slide-out).
   const [closing, setClosing] = useState(false);
   const closingRef = useRef(false);
+  const exitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (exitTimer.current) clearTimeout(exitTimer.current); }, []);
   const dismiss = () => {
     if (closingRef.current) return;
     closingRef.current = true;
@@ -103,6 +113,10 @@ function Sheet() {
     sheetTY.value = withTiming(SCREEN_H, { duration: 260, easing: Easing.in(Easing.cubic) }, (fin) => {
       if (fin) runOnJS(closePrompt)();
     });
+    // Watchdog: a dropped runOnJS would leave this mounted forever (promptVisible
+    // stuck true). closePrompt is idempotent, so firing twice is harmless.
+    if (exitTimer.current) clearTimeout(exitTimer.current);
+    exitTimer.current = setTimeout(closePrompt, 700);
   };
 
   const onSave = (mood: Mood, note: string) => {
@@ -116,8 +130,17 @@ function Sheet() {
   const dateLabel = now.toLocaleDateString(localeFor(lang), { weekday: 'long', month: 'long', day: 'numeric' });
 
   return (
-    <View style={styles.overlay} pointerEvents={closing ? 'none' : 'auto'}>
-      <Animated.View style={[StyleSheet.absoluteFillObject, styles.backdrop, backdropStyle]}>
+    // The ROOT is box-none, always: it spans the whole screen (including the
+    // top), so if it ever captured touches while the sheet was invisible —
+    // entrance animation dropped, exit callback lost — the user would see the
+    // home screen and be unable to tap ANYTHING. Only the backdrop (a
+    // deliberate dismiss target) and the sheet itself capture, and both go
+    // inert while leaving.
+    <View style={styles.overlay} pointerEvents="box-none">
+      <Animated.View
+        style={[StyleSheet.absoluteFillObject, styles.backdrop, backdropStyle]}
+        pointerEvents={closing ? 'none' : 'auto'}
+      >
         <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={dismiss} />
       </Animated.View>
 
@@ -228,7 +251,7 @@ function DoneStep({ picks, onDone }: { picks: Record<string, Mood>; onDone: () =
 }
 
 const styles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'flex-end', zIndex: 210 },
+  overlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'flex-end', zIndex: 210, elevation: 210 },
   backdrop: { backgroundColor: 'rgba(0,0,0,0.4)' },
   sheet: {
     backgroundColor: '#FBF7F6',

@@ -101,12 +101,27 @@ function enOrdinal(d: number): string {
   if (d >= 11 && d <= 13) return `${d}th`;
   return `${d}${({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[d % 10] || 'th'}`;
 }
+// Capitalize the MONTH NAME inside a formatted date (per user). Romance locales
+// render it lowercase and mid-string — "25 de julio", "25 juillet" — so
+// upper-casing the string's first character would do nothing. Instead we format
+// the month on its own, capitalize that, and swap it back in. en/de are already
+// capitalized by grammar and CJK has no case, so those are no-ops.
+function capitalizeMonth(full: string, month: string): string {
+  if (!month) return full;
+  const capped = month.charAt(0).toUpperCase() + month.slice(1);
+  return capped === month ? full : full.replace(month, capped);
+}
+
 function dateLine(lang: string): string {
   const now = new Date();
   if (lang === 'en') {
     return `${now.toLocaleDateString('en-US', { month: 'long' })} ${enOrdinal(now.getDate())}`;
   }
-  return now.toLocaleDateString(localeFor(lang as Parameters<typeof localeFor>[0]), { month: 'long', day: 'numeric' });
+  const loc = localeFor(lang as Parameters<typeof localeFor>[0]);
+  return capitalizeMonth(
+    now.toLocaleDateString(loc, { month: 'long', day: 'numeric' }),
+    now.toLocaleDateString(loc, { month: 'long' }),
+  );
 }
 
 interface Props {

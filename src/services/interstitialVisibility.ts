@@ -8,8 +8,17 @@
 
 let visible = false;
 const subs = new Set<(v: boolean) => void>();
+let stuckTimer: ReturnType<typeof setTimeout> | null = null;
+// No interstitial legitimately stays up this long. If CLOSED never arrives —
+// show() was called but the ad never actually presented, the event was missed,
+// or the SDK dropped it — this flag would stay true FOREVER, and everything
+// gated on it silently dies with it: the badge unlock screen never opens, and
+// its nudge-coordinator slot is never released, which blocks every later prompt.
+const MAX_VISIBLE_MS = 45_000;
 
 export function setInterstitialVisible(v: boolean): void {
+  if (stuckTimer) { clearTimeout(stuckTimer); stuckTimer = null; }
+  if (v) stuckTimer = setTimeout(() => setInterstitialVisible(false), MAX_VISIBLE_MS);
   if (v === visible) return;
   visible = v;
   subs.forEach(fn => { try { fn(v); } catch { /* listener errors never propagate */ } });

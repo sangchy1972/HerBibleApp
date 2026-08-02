@@ -26,6 +26,15 @@ const STORAGE_KEY = 'achievements:v1';
 const FIRST_LAUNCH_DATE_KEY = 'daily-verses:first-launch-date';   // shared with DailyVersesContext
 const PREV_PASSING_KEY = 'achievements:prev-passing-set:v1';      // for repeatable badges, tracks which were passing last eval
 const SCHEMA_KEY = 'achievements:schema';                          // bumped each time we expand the badge set
+// Badge ids the user has actually LOOKED AT in the Achievement grid. Drives the
+// green NEW ribbon.
+//
+// This has to be its own record — `firstAwardedAt` is not a substitute. A badge
+// can be earned and never announced (the unlock queue is in-memory, so it dies
+// with a backgrounded app; the sheet is also suppressed while an interstitial
+// is up; migration mode deliberately never queues at all). "Recently awarded"
+// and "she knows about it" are different facts.
+const SEEN_KEY = 'achievements:seen:v1';
 const CURRENT_SCHEMA = '2.3';                                      // matches `her_bible_logic_v2_3.html`
 // Window during which the migration silently absorbs currently-passing
 // badges into `earned` (no popups). Long enough to absorb every context's
@@ -44,6 +53,12 @@ interface AchievementsState {
   daysSinceFirstLaunch: number;
   awardQueue: Achievement[];
   dismissAward: () => void;
+  /** Earned badges the user hasn't seen in the grid yet — the NEW ribbon. */
+  newBadgeIds: Set<string>;
+  /** Clear the ribbons. Call when LEAVING the Achievement screen, not on open —
+   *  marking them seen on entry would hide the labels before she scrolls to
+   *  them, which is the entire point of having them. */
+  markBadgesSeen: () => void;
   // Useful for screen-driven manual refresh; the context already auto-evaluates
   // on relevant counter changes, but a manual nudge is cheap and harmless.
   recompute: () => void;
@@ -72,6 +87,10 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
 
   const [earned, setEarned] = useState<EarnedMap>({});
   const [awardQueue, setAwardQueue] = useState<Achievement[]>([]);
+  // Mirrored in a ref because recompute() reads it synchronously while already
+  // inside a state update — the same reason prevPassingRef exists.
+  const [seen, setSeen] = useState<Set<string>>(new Set());
+  const seenRef = useRef<Set<string>>(new Set());
   const prevPassingRef = useRef<Set<string>>(new Set());
   const loadedRef = useRef(false);
   // True only when (a) the user has prior earned data AND (b) the saved
@@ -91,7 +110,8 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
       AsyncStorage.getItem(PREV_PASSING_KEY),
       AsyncStorage.getItem(FIRST_LAUNCH_DATE_KEY),
       AsyncStorage.getItem(SCHEMA_KEY),
-    ]).then(([rawEarned, rawPrev, rawFirst, rawSchema]) => {
+      AsyncStorage.getItem(SEEN_KEY),
+    ]).then(([rawEarned, rawPrev, rawFirst, rawSchema, rawSeen]) => {
       let parsedEarned: EarnedMap = {};
       if (rawEarned) {
         try { parsedEarned = JSON.parse(rawEarned) as EarnedMap; setEarned(parsedEarned); } catch {}
@@ -100,6 +120,25 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
         try { prevPassingRef.current = new Set(JSON.parse(rawPrev) as string[]); } catch {}
       }
       if (rawFirst) setFirstLaunchDate(rawFirst);
+
+      // BACKFILL, and it matters. A key that has never existed means this build
+      // introduced the ribbon — so everything the user already earned is old
+      // news to her. Starting from an empty set instead would paint NEW on all
+      // 26-odd badges she collected months ago, which is noise, not news.
+      // From then on the stored set is authoritative.
+      if (rawSeen == null) {
+        const backfill = new Set(Object.keys(parsedEarned));
+        seenRef.current = backfill;
+        setSeen(backfill);
+        AsyncStorage.setItem(SEEN_KEY, JSON.stringify([...backfill])).catch(() => {});
+      } else {
+        try {
+          const s = new Set(JSON.parse(rawSeen) as string[]);
+          seenRef.current = s;
+          setSeen(s);
+        } catch { /* leave empty; worst case a few extra ribbons */ }
+      }
+
       // Migration trigger: existing user data + schema mismatch. New users
       // (empty `earned`) skip migration so first-action popups still fire.
       const hasPriorData = Object.keys(parsedEarned).length > 0;
@@ -124,6 +163,12 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
     setEarned(next);
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(() => {});
   };
+
+  const persistSeen = useCallback((next: Set<string>) => {
+    seenRef.current = next;
+    setSeen(next);
+    AsyncStorage.setItem(SEEN_KEY, JSON.stringify([...next])).catch(() => {});
+  }, []);
 
   // Distinct books with at least one highlight — derive from the highlight map keys.
   const distinctHighlightedBooks = useMemo(() => {
@@ -216,7 +261,16 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
           mig[id] = { count: 1, firstAwardedAt: now, lastAwardedAt: now };
         }
       }
-      if (mig) persistEarned(mig);
+      if (mig) {
+        persistEarned(mig);
+        // Absorbed silently, so mark them seen too. Migration mode exists
+        // precisely so the user is NOT told about badges she retroactively
+        // qualified for; letting them come back as a wall of green NEW
+        // ribbons would defeat that in a different colour.
+        const s = new Set(seenRef.current);
+        for (const id of Object.keys(mig)) s.add(id);
+        persistSeen(s);
+      }
       if (passingNow.size !== wasPassing.size || [...passingNow].some(x => !wasPassing.has(x))) {
         prevPassingRef.current = passingNow;
         AsyncStorage.setItem(PREV_PASSING_KEY, JSON.stringify([...passingNow])).catch(() => {});
@@ -284,9 +338,26 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
 
   const earnedCount = useMemo(() => Object.keys(earned).length, [earned]);
 
+  // Derived, never stored — a stored "new list" could drift from `earned`,
+  // and the repo's doctrine is that a derived view can't.
+  const newBadgeIds = useMemo(
+    () => new Set(Object.keys(earned).filter(id => !seen.has(id))),
+    [earned, seen],
+  );
+
+  const markBadgesSeen = useCallback(() => {
+    // No-op unless something actually changes, so leaving the screen with
+    // nothing new doesn't churn a write on every visit.
+    const ids = Object.keys(earned);
+    if (ids.every(id => seenRef.current.has(id))) return;
+    persistSeen(new Set([...seenRef.current, ...ids]));
+  }, [earned, persistSeen]);
+
   const value = useMemo<AchievementsState>(() => ({
     earned, earnedCount, daysSinceFirstLaunch, awardQueue, dismissAward, recompute,
-  }), [earned, earnedCount, daysSinceFirstLaunch, awardQueue, dismissAward, recompute]);
+    newBadgeIds, markBadgesSeen,
+  }), [earned, earnedCount, daysSinceFirstLaunch, awardQueue, dismissAward, recompute,
+       newBadgeIds, markBadgesSeen]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

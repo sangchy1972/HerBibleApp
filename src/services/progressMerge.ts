@@ -162,6 +162,13 @@ export const MERGERS: Record<string, Merger> = {
   'activity:dates': unionStringArray,
   'achievements:v1': mergeAchievements,
   'achievements:prev-passing-set:v1': unionStringArray,
+  // Union, so "seen on any device" wins. The alternative — intersection — would
+  // re-announce badges as NEW on every device the user has ever signed into,
+  // which is the failure the ribbon exists to avoid. Missing this entry
+  // entirely would be worse: a restore would arrive with `earned` full and
+  // `seen` absent, and the backfill only runs when the key has NEVER existed,
+  // so she'd get a wall of ribbons on a fresh install.
+  'achievements:seen:v1': unionStringArray,
   'mood:v2': mergeMood,
   'shares:count': maxNumeric,
   'daily-verses:first-launch-date': minYmd,

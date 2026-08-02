@@ -582,6 +582,13 @@ export interface AchievementUiStrings {
   newAchievement: string;
   /** Primary CTA on the unlock screen — accept/keep the badge. */
   collect: string;
+  /**
+   * Tiny corner pill on a badge she hasn't looked at yet. Must stay SHORT —
+   * it sits on an 88 px badge, so anything past ~6 characters starts covering
+   * the artwork it is meant to draw attention to. Uppercase where the language
+   * has a case distinction.
+   */
+  newRibbon: string;
   earnedDescription: (name: string) => string;
   ok: string;
   viewDetails: string;
@@ -591,49 +598,49 @@ export interface AchievementUiStrings {
 const UI: Record<LanguageCode, AchievementUiStrings> = {
   en: {
     title: 'Achievement', awarded: 'Badges Awarded', toCollect: 'Badges to be Collected',
-    congrats: 'CONGRATS', congratsTitle: 'Congrats!', newAchievement: 'New Achievement', collect: 'Collect',
+    congrats: 'CONGRATS', congratsTitle: 'Congrats!', newAchievement: 'New Achievement', collect: 'Collect', newRibbon: 'NEW',
     earnedDescription: (n) => `You've earned the "${n}" badge`,
     ok: 'Continue', viewDetails: 'View Details',
     categories: { prayer: 'Prayer', scripture: 'Scripture', plan: 'Study Plans', note: 'Notes & Highlights', milestone: 'Milestones' },
   },
   'zh-Hans': {
     title: '成就', awarded: '已获得徽章', toCollect: '待获得徽章',
-    congrats: '恭喜', congratsTitle: '恭喜!', newAchievement: '新成就', collect: '收下',
+    congrats: '恭喜', congratsTitle: '恭喜!', newAchievement: '新成就', collect: '收下', newRibbon: 'NEW',
     earnedDescription: (n) => `你获得了「${n}」徽章`,
     ok: '继续', viewDetails: '查看详情',
     categories: { prayer: '祈祷', scripture: '阅读', plan: '学习计划', note: '笔记与高亮', milestone: '综合成就' },
   },
   'zh-Hant': {
     title: '成就', awarded: '已獲得徽章', toCollect: '待獲得徽章',
-    congrats: '恭喜', congratsTitle: '恭喜!', newAchievement: '新成就', collect: '收下',
+    congrats: '恭喜', congratsTitle: '恭喜!', newAchievement: '新成就', collect: '收下', newRibbon: 'NEW',
     earnedDescription: (n) => `你獲得了「${n}」徽章`,
     ok: '繼續', viewDetails: '查看詳情',
     categories: { prayer: '祈禱', scripture: '閱讀', plan: '學習計劃', note: '筆記與高亮', milestone: '綜合成就' },
   },
   de: {
     title: 'Erfolge', awarded: 'Erhaltene Abzeichen', toCollect: 'Noch zu sammeln',
-    congrats: 'GLÜCKWUNSCH', congratsTitle: 'Glückwunsch!', newAchievement: 'Neuer Erfolg', collect: 'Einsammeln',
+    congrats: 'GLÜCKWUNSCH', congratsTitle: 'Glückwunsch!', newAchievement: 'Neuer Erfolg', collect: 'Einsammeln', newRibbon: 'NEU',
     earnedDescription: (n) => `Du hast das Abzeichen „${n}" erhalten`,
     ok: 'Weiter', viewDetails: 'Details ansehen',
     categories: { prayer: 'Gebet', scripture: 'Schrift', plan: 'Studienpläne', note: 'Notizen & Markierungen', milestone: 'Meilensteine' },
   },
   fr: {
     title: 'Réussites', awarded: 'Badges obtenus', toCollect: 'Badges à collecter',
-    congrats: 'FÉLICITATIONS', congratsTitle: 'Félicitations !', newAchievement: 'Nouveau succès', collect: 'Récupérer',
+    congrats: 'FÉLICITATIONS', congratsTitle: 'Félicitations !', newAchievement: 'Nouveau succès', collect: 'Récupérer', newRibbon: 'NOUV.',
     earnedDescription: (n) => `Tu as obtenu le badge « ${n} »`,
     ok: 'Continuer', viewDetails: 'Voir détails',
     categories: { prayer: 'Prière', scripture: 'Écriture', plan: 'Plans d’étude', note: 'Notes & surlignages', milestone: 'Jalons' },
   },
   es: {
     title: 'Logros', awarded: 'Insignias obtenidas', toCollect: 'Insignias por obtener',
-    congrats: 'FELICIDADES', congratsTitle: '¡Felicidades!', newAchievement: 'Nuevo logro', collect: 'Recoger',
+    congrats: 'FELICIDADES', congratsTitle: '¡Felicidades!', newAchievement: 'Nuevo logro', collect: 'Recoger', newRibbon: 'NUEVO',
     earnedDescription: (n) => `Has obtenido la insignia «${n}»`,
     ok: 'Continuar', viewDetails: 'Ver detalles',
     categories: { prayer: 'Oración', scripture: 'Escritura', plan: 'Planes de estudio', note: 'Notas y subrayados', milestone: 'Hitos' },
   },
   pt: {
     title: 'Conquistas', awarded: 'Distintivos obtidos', toCollect: 'Distintivos a coletar',
-    congrats: 'PARABÉNS', congratsTitle: 'Parabéns!', newAchievement: 'Nova conquista', collect: 'Coletar',
+    congrats: 'PARABÉNS', congratsTitle: 'Parabéns!', newAchievement: 'Nova conquista', collect: 'Coletar', newRibbon: 'NOVO',
     earnedDescription: (n) => `Você ganhou o distintivo "${n}"`,
     ok: 'Continuar', viewDetails: 'Ver detalhes',
     categories: { prayer: 'Oração', scripture: 'Escritura', plan: 'Planos de estudo', note: 'Notas e destaques', milestone: 'Marcos' },

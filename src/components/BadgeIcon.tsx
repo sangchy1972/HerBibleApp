@@ -8,6 +8,7 @@ import Feather from '@expo/vector-icons/Feather';
 import type { BadgeRarity } from '../constants/achievements';
 import { BADGE_IMAGES } from '../constants/badgeImages';
 import { useBadges } from '../state/BadgesContext';
+import { GREEN_DONE, BG } from '../constants/theme';
 
 // Per-rarity palette. The placeholder now renders as a filled medallion
 // (two-stop gradient bg + white glyph + thin highlight ring at the top),
@@ -88,10 +89,15 @@ interface Props {
   count?: number;
   /** Small numeric label inside the placeholder (e.g. "7", "30%"). PNG path ignores this. */
   label?: string | null;
+  /** Earned but not yet looked at — draws the green NEW pill. */
+  isNew?: boolean;
+  /** Localized ribbon text. Passed in so this component stays i18n-free. */
+  newLabel?: string;
 }
 
 export default function BadgeIcon({
   id, iconKey, rarity, size = 88, locked = false, count = 1, label = null,
+  isNew = false, newLabel = 'NEW',
 }: Props) {
   // Art source, in priority order: a bundled override (BADGE_IMAGES, normally
   // empty — the binary ships art-free) → the CDN-cached PNG on disk → none,
@@ -191,6 +197,17 @@ export default function BadgeIcon({
           <Text style={styles.countText}>×{count}</Text>
         </View>
       ) : null}
+      {/* NEW ribbon — top-LEFT on purpose. Top-right is the ×N count pill, and
+          the two collide on exactly the badges most likely to show both at once
+          (repeatables like prayer.streak3 re-award and are therefore new again).
+          `wrap` has no overflow:hidden, so the -4 overhang is safe. */}
+      {isNew ? (
+        <View pointerEvents="none" style={styles.newBadge}>
+          <Text style={styles.newText} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+            {newLabel}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -231,4 +248,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   countText: { color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.3 },
+  // Solid green pill, white text. Radius is half the height so the ends are
+  // true semicircles at any font scale — a fixed radius would square off the
+  // caps once accessibility text grew the pill.
+  newBadge: {
+    position: 'absolute',
+    top: -2,
+    left: -4,
+    backgroundColor: GREEN_DONE,
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 11,
+    // A hairline of the page colour separates the pill from the badge art
+    // underneath, which on a green-ish badge would otherwise merge with it.
+    borderWidth: 1.5,
+    borderColor: BG,
+  },
+  newText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
 });

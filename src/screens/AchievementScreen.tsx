@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -45,9 +45,21 @@ function labelFor(a: Achievement): string | null {
 export default function AchievementScreen({ navigation }: RootStackScreenProps<'Achievement'>) {
   const insets = useSafeAreaInsets();
   const t = useT();
-  const { earned } = useAchievements();
+  const { earned, newBadgeIds, markBadgesSeen } = useAchievements();
   const { prefetchAll } = useBadges();
   const { current: translation } = useTranslation();
+
+  // The ribbons clear when she LEAVES, not when she arrives. Clearing on entry
+  // would wipe them before she has scrolled far enough to see the badge they
+  // were pointing at. Snapshotted on mount so a badge unlocked while this very
+  // screen is open doesn't pop a ribbon in and out mid-scroll.
+  const ribbons = useMemo(() => new Set(newBadgeIds), []);   // eslint-disable-line react-hooks/exhaustive-deps
+  // Via a ref, so the effect runs its cleanup ONCE on unmount. Depending on
+  // `markBadgesSeen` directly would re-run — and therefore mark seen — every
+  // time `earned` changed while the screen was still open.
+  const seenOnExit = useRef(markBadgesSeen);
+  seenOnExit.current = markBadgesSeen;
+  useEffect(() => () => seenOnExit.current(), []);
 
   // First visit to this screen → pull all badge art from the CDN into the
   // local cache (the binary ships without it). No-op once cached / per launch.
@@ -95,6 +107,8 @@ export default function AchievementScreen({ navigation }: RootStackScreenProps<'
                 count={earned[a.id]?.count || 1}
                 locked={false}
                 lang={translation.code}
+                isNew={ribbons.has(a.id)}
+                newLabel={ui.newRibbon}
                 onPress={() => setDetail(a)}
               />
             ))}
@@ -144,11 +158,14 @@ function SectionHeader({ title, count, accent }: { title: string; count: number;
   );
 }
 
-function BadgeTile({ badge, count, locked, lang, onPress }: {
+function BadgeTile({ badge, count, locked, lang, isNew = false, newLabel = 'NEW', onPress }: {
   badge: Achievement;
   count: number;
   locked: boolean;
   lang: ReturnType<typeof useTranslation>['current']['code'];
+  /** Earned since she last opened this screen. Locked badges never get it. */
+  isNew?: boolean;
+  newLabel?: string;
   onPress: () => void;
 }) {
   return (
@@ -161,6 +178,8 @@ function BadgeTile({ badge, count, locked, lang, onPress }: {
         locked={locked}
         count={count}
         label={labelFor(badge)}
+        isNew={isNew && !locked}
+        newLabel={newLabel}
       />
       <Text style={[styles.tileName, locked && styles.tileNameLocked]} numberOfLines={2}>
         {localizedAchievementName(badge, lang)}

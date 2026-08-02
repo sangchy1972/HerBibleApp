@@ -101,6 +101,22 @@ describe('mergeSnapshots', () => {
       'prayer:records:v1', 'plan-completion:v1', 'notes:v1', 'savedVerses',
       'highlights:v1', 'achievements:v1', 'daily-verses:first-launch-date',
       'onboarding:answers:v1', 'notifications:v1',
+      // If this one is ever dropped, a restore lands with `earned` full and
+      // `seen` absent — and the context only backfills when the key has NEVER
+      // existed, so the user gets a green NEW ribbon on every badge she has
+      // owned for months.
+      'achievements:seen:v1',
     ]) expect(BACKUP_KEYS).toContain(key);
+  });
+
+  test('seen-badge set unions across devices rather than intersecting', () => {
+    // "Seen on any device" must win. Intersecting would re-announce badges as
+    // NEW on every device she has ever signed into.
+    const local = { 'achievements:seen:v1': JSON.stringify(['prayer.first', 'note.count10']) };
+    const remote = { 'achievements:seen:v1': JSON.stringify(['prayer.first', 'milestone.crown']) };
+    const out = mergeSnapshots(local, remote).merged['achievements:seen:v1'];
+    expect(new Set(JSON.parse(out as string))).toEqual(
+      new Set(['prayer.first', 'note.count10', 'milestone.crown']),
+    );
   });
 });

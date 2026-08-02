@@ -150,13 +150,17 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
     setPage(clamped);
     scrollRef.current?.scrollTo({ x: clamped * winWidth, animated: true });
   };
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+  // Commit the page index when the swipe SETTLES, not on every scroll frame:
+  // setPage re-renders the whole pager (every mounted page), and doing that
+  // mid-gesture dropped frames on the text-heavy sections. Overlays still close
+  // the instant the gesture starts, so nothing lingers over the wrong page.
+  const onPagerScrollBegin = () => {
+    setSelected(null);                                                            // drop verse popup on page change
+    setExploreTarget(null);                                                       // and close any open Explore card
+  };
+  const onPagerSettled = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const i = Math.round(e.nativeEvent.contentOffset.x / Math.max(1, winWidth));
-    if (i !== page) {
-      setPage(i);
-      setSelected(null);                                                          // drop verse popup on page change
-      setExploreTarget(null);                                                     // and close any open Explore card
-    }
+    if (i !== page) setPage(i);
   };
 
   // Verse selection (powers the popup overlay). Stored separately from
@@ -256,8 +260,10 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
+        onScrollBeginDrag={onPagerScrollBegin}
+        onMomentumScrollEnd={onPagerSettled}
+        // A slow drag that never gains momentum ends here instead.
+        onScrollEndDrag={onPagerSettled}
         style={{ flex: 1 }}
       >
         {pages.map((p, i) => (
@@ -542,12 +548,21 @@ function PageContent({
   // Replays the staggered entrance every time this page becomes the active one
   // (initial mount + each swipe to it). 0.6 s → 1.2 s per user — the rise-up
   // reveal felt too fast / flashy, so the whole stagger now plays at half speed.
-  const anim = useSharedValue(0);
+  // The staggered reveal plays ONLY for the page that is visible when the pager
+  // mounts. It used to replay on every activation — and `active` flips as soon as
+  // the swipe passes the halfway point, so the page you were sliding TOWARD reset
+  // to opacity 0 and then took 1.2 s to assemble. That is the flicker / "content
+  // isn't ready" feel: the swipe and a from-blank reveal fighting each other.
+  // Pages reached by swiping now start fully composed (anim = 1) — the horizontal
+  // slide IS their transition, which is exactly why the verse pages (no stagger)
+  // already felt smooth.
+  const revealOnMount = useRef(active).current;
+  const anim = useSharedValue(revealOnMount ? 0 : 1);
+  const played = useRef(!revealOnMount);
   useEffect(() => {
-    if (active) {
-      anim.value = 0;
-      anim.value = withTiming(1, { duration: 1200, easing: Easing.out(Easing.cubic) });
-    }
+    if (!active || played.current) return;
+    played.current = true;
+    anim.value = withTiming(1, { duration: 1200, easing: Easing.out(Easing.cubic) });
   }, [active, anim]);
   const base = isFirstPage ? 1 : 0;          // dayTitle occupies stagger slot 0 on the first page
   // Body copy mirrors the Bible reader's typography, in Merriweather.

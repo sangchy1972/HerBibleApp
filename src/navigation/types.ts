@@ -41,6 +41,9 @@ export type RootStackParamList = {
   Notifications: undefined;
   OtherNotifications: undefined;
   Achievement: undefined;
+  /** Full-screen Bible quiz. Optional setIndex reserved for a future
+   *  "replay set N" deep link, so adding it later isn't a breaking change. */
+  Quiz: { setIndex?: number } | undefined;
   Reflections: undefined;
   PastVerses: undefined;
   FeaturedPlanDetail: { slug: string };

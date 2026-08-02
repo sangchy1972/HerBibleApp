@@ -18,7 +18,7 @@ import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import * as ImagePicker from 'expo-image-picker';
 import Glass from '../components/shared/Glass';
 import Logo from '../components/shared/Logo';
-import { ROSE, BTN_RADIUS, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
+import { ROSE, BTN_RADIUS, LAV, TXT, TXTSUB, P, FONTS, GREEN_DONE } from '../constants/theme';
 import { getHighlightColor } from '../constants/highlightColors';
 import { TRANSLATIONS, useTranslation } from '../state/TranslationsContext';
 import { useUILanguage, UI_LANGUAGES, type UILanguageCode } from '../state/UILanguageContext';
@@ -1224,7 +1224,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
                       {downloaded ? (
-                        <Feather name="check-circle" size={24} color="#7DB87D" />
+                        <Feather name="check-circle" size={24} color={GREEN_DONE} />
                       ) : isPaused ? (
                         <TouchableOpacity onPress={resumeDownload} hitSlop={12} style={styles.translationPickerDlBtn}>
                           <Feather name="play" size={22} color={ROSE} />
@@ -1658,7 +1658,7 @@ const styles = StyleSheet.create({
   pickerName: { fontSize: 16, fontWeight: '600', color: TXT, marginBottom: 3 },
   pickerEdition: { fontSize: 13, color: TXTSUB },
   pickerProgress: { fontSize: 12, color: ROSE, fontWeight: '600', marginTop: 4 },
-  pickerComplete: { fontSize: 12, color: '#7DB87D', fontWeight: '600', marginTop: 4 },
+  pickerComplete: { fontSize: 12, color: GREEN_DONE, fontWeight: '600', marginTop: 4 },
   pickerDlBtn: {
     minWidth: 44,
     height: 32,
@@ -1747,7 +1747,7 @@ const styles = StyleSheet.create({
   translationPickerName: { fontSize: 18, fontWeight: '600', color: TXT, marginBottom: 4 },           // 16 → 18
   translationPickerEdition: { fontSize: 14, color: TXTSUB },                                         // 13 → 14
   translationPickerProgress: { fontSize: 13, color: ROSE, fontWeight: '600', marginTop: 5 },         // 12 → 13
-  translationPickerComplete: { fontSize: 13, color: '#7DB87D', fontWeight: '600', marginTop: 5 },    // 12 → 13
+  translationPickerComplete: { fontSize: 13, color: GREEN_DONE, fontWeight: '600', marginTop: 5 },    // 12 → 13
   translationPickerLocked: { fontSize: 13, color: TXTSUB, fontWeight: '500', marginTop: 5 },
   translationPickerDlBtn: {
     minWidth: 48,                       // 44 → 48

@@ -38,6 +38,7 @@ import CommentsSheet from '../components/CommentsSheet';
 import { dailyCount, type VerseSlot } from '../state/verseCommentsFeed';
 import { hydrateCommentLikes } from '../state/verseCommentLikes';
 import MyReadingPlansCard from '../components/MyReadingPlansCard';
+import QuizChallengeCard from '../components/home/QuizChallengeCard';
 import RatePromptHost from '../components/RatePromptHost';
 import { buildReadingPlansCard } from '../services/planRecommendations';
 import { useOnboarding } from '../state/OnboardingContext';
@@ -1198,6 +1199,16 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           onOpenPlan={(slug) => navigation.navigate('FeaturedPlanDetail', { slug })}
           onExplore={() => navigation.navigate('Tabs', { screen: 'plan', params: { tab: 'explore', reset: Date.now() } })}
         />
+      </View>
+      </TabSection>
+
+      {/* Quiz Challenge — directly below My Reading Plans (per user). Renders
+          nothing until the CDN bank has landed, so a device that has never been
+          online simply doesn't see it. delay 68 keeps it inside the existing
+          60 → 75 cascade rather than extending the tail. */}
+      <TabSection delay={68}>
+      <View style={[styles.section, { paddingTop: 20 }]}>
+        <QuizChallengeCard onPress={() => navigation.navigate('Quiz')} />
       </View>
       </TabSection>
 

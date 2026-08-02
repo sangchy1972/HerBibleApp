@@ -4,13 +4,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { TXT, TXTSUB, ROSE } from '../constants/theme';
+import { TXT, TXTSUB, ROSE, GREEN_DONE } from '../constants/theme';
 
 // Unified plan accent. Per user: every plan uses the SAME palette — pink for
 // the selected / active state, green for completed days — instead of a
 // per-plan brown/blue/green accent. PLAN_DONE is the app's standard
 // "complete" green (matches the check badges elsewhere).
-const PLAN_DONE = '#7DB87D';
+const PLAN_DONE = GREEN_DONE;
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import { usePlanCompletion } from '../state/PlanCompletionContext';
 import { useTranslation } from '../state/TranslationsContext';

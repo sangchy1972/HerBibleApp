@@ -53,6 +53,10 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'profile.stats.calendar':         { en: 'Mood Tracking',                   context: 'Stat card label opening the mood-tracking calendar. Short — may wrap to two lines.' },
   'profile.removeAds.title':        { en: 'Remove Ads',                      context: 'Banner CTA title that opens the paywall.' },
   'profile.removeAds.hero':         { en: 'Try no ads for free',             context: 'Large headline on the Profile paywall banner. Keep it short — it sits beside an illustration and wraps to at most two lines.' },
+  // ── Quiz Challenge ────────────────────────────────────────────────────────
+  'quiz.card.title':                { en: 'Quiz Challenge',                  context: 'Home-screen card title for the Bible quiz. Keep short — one line beside a medal icon.' },
+  'quiz.card.level':                { en: 'Level {n} · 5 questions',         context: 'Home quiz card, no set in progress. {n} is the level number.' },
+  'quiz.card.answered':             { en: '{n} of 5 answered',               context: 'Home quiz card, a set is part-way done. {n} is 1-4.' },
   'profile.section.faithAchievement': { en: 'Faith Achievement',             context: 'Section header. Shows earned achievement badges.' },
   'profile.section.myNotes':        { en: 'My Notes',                        context: 'Section header. Shortcuts to user-saved content (notes, saved verses, etc.).' },
   'profile.section.learningBible':  { en: 'Learning Bible',                  context: 'Section header. Bible learning resources / commentary.' },

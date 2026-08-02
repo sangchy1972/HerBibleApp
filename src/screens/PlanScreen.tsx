@@ -7,7 +7,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import type { NavigationProp, RouteProp } from '@react-navigation/native';
-import { ROSE, BTN_RADIUS, TXT, TXTSUB, P, FONTS } from '../constants/theme';
+import { ROSE, BTN_RADIUS, TXT, TXTSUB, P, FONTS, GREEN_DONE } from '../constants/theme';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import { usePlanCompletion } from '../state/PlanCompletionContext';
 import { PLAN_SECTIONS, PLAN_SECTION_LABELS, EMOTION_TAGS, type PlanSectionId } from '../constants/plansApi';
@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#7DB87D',
+    backgroundColor: GREEN_DONE,
     alignItems: 'center',
     justifyContent: 'center',
   },

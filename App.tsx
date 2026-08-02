@@ -40,7 +40,7 @@ import RootNavigator from './src/navigation/RootNavigator';
 import { PrayerProvider } from './src/state/PrayerContext';
 import { NotesProvider } from './src/state/NotesContext';
 import { TranslationsProvider } from './src/state/TranslationsContext';
-import { UILanguageProvider } from './src/state/UILanguageContext';
+import { UILanguageProvider, useUILanguage } from './src/state/UILanguageContext';
 import { SavedVersesProvider } from './src/state/SavedVersesContext';
 import { ActivityProvider } from './src/state/ActivityContext';
 import { AuthProvider } from './src/state/AuthContext';
@@ -56,6 +56,7 @@ import { DailyVersesProvider } from './src/state/DailyVersesContext';
 import { PrayerBackgroundsProvider } from './src/state/PrayerBackgroundsContext';
 import { ShareProvider } from './src/state/ShareContext';
 import { AchievementsProvider } from './src/state/AchievementsContext';
+import { QuizProvider } from './src/state/QuizContext';
 import { BadgesProvider } from './src/state/BadgesContext';
 import { FeaturedPlansProvider } from './src/state/FeaturedPlansContext';
 import { PlanCompletionProvider } from './src/state/PlanCompletionContext';
@@ -188,6 +189,11 @@ export default function App() {
                             <PrayerBackgroundsProvider>
                             <ShareProvider>
                               <AchievementsProvider>
+                                {/* Below AchievementsProvider: no cross-context
+                                    deps, so it sits deep and keeps the top of
+                                    the tree shallow. Needs the UI language to
+                                    know which CDN bank to fetch. */}
+                                <QuizProviderWithLanguage>
                                 <BadgesProvider>
                                 <OnboardingProvider>
                                 {/* Must sit ABOVE MoodCheckInProvider and
@@ -276,6 +282,7 @@ export default function App() {
                                 </FirstRunTourProvider>
                                 </OnboardingProvider>
                                 </BadgesProvider>
+                                </QuizProviderWithLanguage>
                               </AchievementsProvider>
                             </ShareProvider>
                             </PrayerBackgroundsProvider>
@@ -297,4 +304,12 @@ export default function App() {
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
+}
+
+// QuizProvider needs the UI language to know which CDN bank to fetch, and
+// useUILanguage is a hook — so it can't be read inside App's JSX above the
+// provider that supplies it. This thin wrapper reads it at the right depth.
+function QuizProviderWithLanguage({ children }: { children: React.ReactNode }) {
+  const { lang } = useUILanguage();
+  return <QuizProvider language={lang}>{children}</QuizProvider>;
 }

@@ -3,6 +3,11 @@ export const LAV = '#866BC0';
 export const TXT = '#1E1B2E';
 export const TXTSUB = 'rgba(30,27,46,0.50)';
 export const BG = '#FBF7F6';
+// The app's "done" green. Was hardcoded in five places (plan covers' check
+// badge, FeaturedPlanDetail, three spots in ProfileScreen) before being given a
+// name; the quiz's correct-answer state is the sixth consumer and the reason it
+// finally got one. CLAUDE.md: never hardcode colors.
+export const GREEN_DONE = '#7DB87D';
 // Canonical app screen background. Pinned to React Navigation v7's default
 // scene colour (rgb(242,242,242)) — the exact neutral grey the Prayer / Plan /
 // Profile tabs already render — and fed into both the NavigationContainer theme

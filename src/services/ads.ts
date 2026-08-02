@@ -192,7 +192,14 @@ let onboardingLoaded = false;
 let onboardingShown = false;
 let onboardingRetries = 0;
 
+// Bumped on every GRANT. A revoke path captures this before its store queries
+// and bails if it changed meanwhile — otherwise a launch-time check that started
+// before a purchase could resume afterwards and undo it.
+let grantGeneration = 0;
+export function adsGrantGeneration(): number { return grantGeneration; }
+
 export async function setAdsRemoved(value: boolean): Promise<void> {
+  if (value) grantGeneration += 1;
   adsRemoved = value;
   setUserProps({ ads_removed: value ? 'on' : 'off' });   // payer cohort for BigQuery
   // Tear the US waterfall down on purchase so its ticker + cached/in-flight ads
@@ -219,7 +226,11 @@ export async function initAds(): Promise<void> {
   if (initialized || !mobileAdsFn) return;
   try {
     const stored = await AsyncStorage.getItem(REMOVE_ADS_KEY);
-    adsRemoved = stored === '1';
+    // ONE-WAY: only ever turn the flag ON from storage. initIap runs in the same
+    // tick and may grant the entitlement in memory before its setItem commits —
+    // assigning `stored === '1'` here would overwrite that grant and serve ads
+    // to a paying user for the whole session.
+    if (stored === '1') adsRemoved = true;
   } catch { /* default: ads on */ }
   if (adsRemoved) { initialized = true; return; }
   // Impression-level revenue plumbing. BOTH must be in memory before the first

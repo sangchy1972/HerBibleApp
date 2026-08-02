@@ -13,8 +13,9 @@
 // services/ads.ts / services/firebase.ts) so a dev client built BEFORE
 // expo-iap was added degrades to silent no-ops instead of crashing at import.
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent } from './firebase';
-import { setAdsRemoved, areAdsRemoved } from './ads';
+import { setAdsRemoved, areAdsRemoved, adsGrantGeneration } from './ads';
 
 let iap: any = null;
 try {
@@ -75,6 +76,7 @@ async function handlePurchase(purchase: any): Promise<void> {
     // after ~3 days), then grant the entitlement.
     try { await iap.finishTransaction({ purchase, isConsumable: false }); } catch {}
     await setAdsRemoved(true);
+    await rememberGrantSku(purchase.productId);
     logEvent('iap_purchase', { product_id: purchase.productId });
     settle('purchased');
   } else if (purchase.purchaseState === 'pending') {
@@ -199,6 +201,7 @@ export async function purchasePlan(plan: PlanId): Promise<PurchaseOutcome> {
 // getting a few more ad-free launches, and the next successful check corrects it.
 export async function restorePurchases(): Promise<boolean> {
   if (!connected) return false;
+  const gen = adsGrantGeneration();          // captured BEFORE any await
   let owned = false;
   let purchasesOk = false;
   let subsOk = false;
@@ -218,11 +221,30 @@ export async function restorePurchases(): Promise<boolean> {
     logEvent('iap_restore', {});
     return true;
   }
-  // Nothing owned. Only act on a TRUSTWORTHY answer, and only if we currently
-  // believe the user is entitled (so this is a no-op for everyone else).
-  if (purchasesOk && subsOk && areAdsRemoved()) {
-    await setAdsRemoved(false);
-    logEvent('iap_entitlement_lapsed', {});
-  }
+  // ── Nothing owned. Revoking is the ONE operation here that can hurt a paying
+  // user, so it needs three more guards beyond "both queries succeeded":
+  //
+  //  • LIFETIME IS NEVER REVOKED. getAvailablePurchases maps to StoreKit
+  //    currentEntitlements, which resolves [] (it does NOT throw) when the
+  //    device isn't signed in to the store or entitlements haven't synced yet —
+  //    so an empty result is not proof a non-consumable was refunded. A
+  //    subscription genuinely lapses; a lifetime unlock does not.
+  //  • NO GRANT MAY HAVE RACED US. These queries are awaited, and initIap fires
+  //    this fire-and-forget at launch — a purchase completing mid-flight would
+  //    otherwise be undone by the stale result resuming afterwards.
+  //  • We must currently believe she's entitled, so this is a no-op otherwise.
+  if (!(purchasesOk && subsOk && areAdsRemoved())) return false;
+  if (await grantedByLifetime()) return false;
+  if (adsGrantGeneration() !== gen) return false;
+  await setAdsRemoved(false);
+  logEvent('iap_entitlement_lapsed', {});
   return false;
+}
+
+const GRANT_SKU_KEY = 'iap:grantSku:v1';
+async function rememberGrantSku(productId: string): Promise<void> {
+  try { await AsyncStorage.setItem(GRANT_SKU_KEY, productId); } catch {}
+}
+async function grantedByLifetime(): Promise<boolean> {
+  try { return (await AsyncStorage.getItem(GRANT_SKU_KEY)) === IAP_SKUS.lifetime; } catch { return true; }
 }

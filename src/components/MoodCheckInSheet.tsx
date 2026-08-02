@@ -150,7 +150,13 @@ function Sheet() {
         <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={dismiss} />
       </Animated.View>
 
-      <Animated.View style={[styles.sheet, { height: winH - TOP_GAP }, sheetAnim]}>
+      {/* The BODY goes inert while leaving too — the header comment promised
+          this but only the backdrop had it, so a tap on Save during the 260 ms
+          exit still ran recordPick + setStep on an unmounting sheet. */}
+      <Animated.View
+        style={[styles.sheet, { height: winH - TOP_GAP }, sheetAnim]}
+        pointerEvents={closing ? 'none' : 'auto'}
+      >
         <View style={styles.handle} />
         <ScrollView
           ref={scrollRef}

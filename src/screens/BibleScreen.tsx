@@ -1268,8 +1268,9 @@ export default function BibleScreen() {
 
   // The bar must never stay hidden once the reader isn't in front of her:
   // leaving the tab, opening a modal over it, or unmounting all restore it.
+  // useFocusEffect's cleanup already runs on unmount as well as on blur, so one
+  // registration covers both (a second unmount-only effect was redundant).
   useFocusEffect(useCallback(() => () => resetTabBarHidden(), []));
-  useEffect(() => () => { resetTabBarHidden(); }, []);
 
   const lastScrolledVerseRef = useRef<number | null>(null);
   useEffect(() => {

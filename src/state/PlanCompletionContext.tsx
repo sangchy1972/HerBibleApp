@@ -10,6 +10,12 @@ interface PlanRecord {
   finishedAt?: number;          // ms timestamp once completedDays.length === total
   lastDayYmd?: string;          // local YYYY-MM-DD of the most recent day completion
                                 // (absent on pre-existing records — treat as "not today")
+  // Local YYYY-MM-DD each day was ACTUALLY completed, keyed by day number.
+  // lastDayYmd only ever held the latest, so a user who read two days in one
+  // sitting had no way to show both on the same date — and the schedule strip
+  // had to fake dates as start+(N-1). Absent for days completed before this
+  // field existed; callers fall back to the projection.
+  dayDates?: Record<number, string>;
 }
 
 type PlanRecords = Record<string, PlanRecord>;   // slug → record
@@ -65,6 +71,7 @@ export function PlanCompletionProvider({ children }: { children: React.ReactNode
       const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const next: PlanRecord = {
         ...current,
+        dayDates: { ...(current.dayDates ?? {}), [day]: ymd },
         completedDays,
         firstStartedAt: current.firstStartedAt || Date.now(),
         finishedAt: completedDays.length >= total ? Date.now() : current.finishedAt,

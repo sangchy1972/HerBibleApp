@@ -86,7 +86,10 @@ const mergePrayerRecords: Merger = jsonMerger<Record<string, PrayerDay>>((l, r) 
 });
 
 // plan-completion:v1 — slug → { completedDays, firstStartedAt, finishedAt?, lastDayYmd? }.
-type PlanRecord = { completedDays?: number[]; firstStartedAt?: number; finishedAt?: number; lastDayYmd?: string };
+type PlanRecord = {
+  completedDays?: number[]; firstStartedAt?: number; finishedAt?: number; lastDayYmd?: string;
+  dayDates?: Record<number, string>;
+};
 const mergePlanRecords: Merger = jsonMerger<Record<string, PlanRecord>>((l, r) => {
   const out: Record<string, PlanRecord> = { ...r };
   for (const [slug, lr] of Object.entries(l)) {
@@ -98,6 +101,9 @@ const mergePlanRecords: Merger = jsonMerger<Record<string, PlanRecord>>((l, r) =
     const lastDays = [lr.lastDayYmd, rr.lastDayYmd].filter((s): s is string => typeof s === 'string');
     out[slug] = {
       ...rr, ...lr,
+      // Per-day completion dates must UNION — the object spread above would
+      // otherwise drop whichever device recorded the other days.
+      dayDates: { ...(rr.dayDates ?? {}), ...(lr.dayDates ?? {}) },
       completedDays: days,
       firstStartedAt: starts.length ? Math.min(...starts) : undefined,
       finishedAt: finishes.length ? Math.min(...finishes) : undefined,

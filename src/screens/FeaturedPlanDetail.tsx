@@ -138,24 +138,48 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
   const ac = ROSE;
 
   // Day cells: number, calendar date, walk title (from full plan when loaded),
-  // verses. The date strip is ANCHORED to the day the plan was started
-  // (firstStartedAt = when Day 1 was first completed): Day 1 keeps its real
-  // date and Day N = start + (N-1). So if you began yesterday, Day 1 reads
-  // yesterday's date and today is Day 2 — the strip no longer slides Day 1
-  // onto "today" every time you open it. Before the plan is started there's no
-  // record, so we anchor to today (a preview of the schedule from now).
+  // verses. Dates are HONEST rather than projected from the start:
+  //   • a COMPLETED day shows the date it was actually completed (dayDates) —
+  //     so reading two days in one sitting shows the SAME date twice, which is
+  //     what really happened. The old start+(N-1) projection invented a date
+  //     for day 2 that the user never read on.
+  //   • every REMAINING day is projected forward from TODAY, in order: the next
+  //     unread day is today, the one after is tomorrow, and so on. Getting ahead
+  //     therefore pulls the whole remaining schedule earlier, which is the point
+  //     of reading ahead.
+  //   • days completed before dayDates existed fall back to the old projection
+  //     off firstStartedAt, so history never renders blank.
   //
   // Memoized so the per-day Date()/toLocaleDateString() chain doesn't re-run
   // every render — only when the duration, plan body, language, or completion
-  // record (which moves the anchor + the "today" cell) changes.
+  // record changes.
   const days = useMemo(() => {
-    const startedAt = records[slug]?.firstStartedAt;
-    const anchor = startedAt ? new Date(startedAt) : new Date();
-    const todayStr = new Date().toDateString();
+    const rec = records[slug];
+    const startedAt = rec?.firstStartedAt;
+    const legacyAnchor = startedAt ? new Date(startedAt) : new Date();
+    const dayDates = rec?.dayDates ?? {};
+    const doneSet = new Set(rec?.completedDays ?? []);
+    const today = new Date();
+    const todayStr = today.toDateString();
     const locale = localeFor(uiLang);
+    // 'YYYY-MM-DD' → local midnight. Parsed by parts: new Date(str) treats a
+    // bare date as UTC and lands a day early west of GMT.
+    const fromYmd = (ymd: string): Date | null => {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+      return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+    };
+    let futureOffset = 0;   // how many unread days we've already scheduled
     return Array.from({ length: summary.duration }, (_, i) => {
-      const d = new Date(anchor);
-      d.setDate(anchor.getDate() + i);
+      const dayNo = i + 1;
+      let d: Date;
+      if (doneSet.has(dayNo)) {
+        // Real completion date; legacy records without one keep the projection.
+        const real = fromYmd(dayDates[dayNo] ?? '');
+        d = real ?? new Date(legacyAnchor.getFullYear(), legacyAnchor.getMonth(), legacyAnchor.getDate() + i);
+      } else {
+        d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + futureOffset);
+        futureOffset += 1;
+      }
       const content = plan?.days.find(x => x.day === i + 1);
       const verseWall = content?.sections.find(s => s.type === 'verse_wall') as
         Extract<PlanSection, { type: 'verse_wall' }> | undefined;

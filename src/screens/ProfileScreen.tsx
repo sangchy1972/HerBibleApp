@@ -961,6 +961,18 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
                         activeOpacity={0.7}
                       >
                         {n.verseRef && <Text style={styles.savedSheetRef}>{n.verseRef}</Text>}
+                        {/* The VERSE she annotated, capped at 3 lines with an
+                            ellipsis (per user): a reference alone made the list
+                            unreadable — you had to open each note to remember
+                            what it was about. Serif + muted so it reads as the
+                            quoted scripture, with her own note below it in the
+                            primary style. Only rendered when the note carries
+                            verseText (older notes and free reflections don't). */}
+                        {n.verseText ? (
+                          <Text style={styles.noteVerseQuote} numberOfLines={3} ellipsizeMode="tail">
+                            {n.verseText}
+                          </Text>
+                        ) : null}
                         <Text style={styles.savedSheetText}>{n.text}</Text>
                         <Text style={styles.metaSmall}>{formatNoteDate(n.savedAt, uiLang)}</Text>
                       </TouchableOpacity>
@@ -1803,6 +1815,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 5,
     letterSpacing: 0.5,
+  },
+  // Quoted scripture inside a note row — serif (matches the readers), muted,
+  // tighter than the note itself so her own words stay the loudest thing.
+  noteVerseQuote: {
+    fontFamily: FONTS.merriweather,
+    fontSize: 14.5,
+    lineHeight: 22,
+    color: TXTSUB,
+    marginTop: 3,
+    marginBottom: 5,
   },
   savedSheetText: {                      // +15% from savedText.fontSize 16
     fontSize: 18,

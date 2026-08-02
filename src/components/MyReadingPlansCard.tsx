@@ -55,6 +55,12 @@ export default function MyReadingPlansCard({ model, onOpenPlan, onExplore }: {
 }) {
   const t = useT();
   const { lang } = useUILanguage();
+  // 'YYYY-MM-DD' → local-midnight timestamp. Parsed by parts, NOT new Date(str),
+  // which treats a bare date as UTC and lands on the previous day west of GMT.
+  const ymdToTs = (ymd: string): number | null => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd || '');
+    return m ? new Date(+m[1], +m[2] - 1, +m[3]).getTime() : null;
+  };
   const fmtDate = (ts: number) =>
     ts > 0 ? new Date(ts).toLocaleDateString(localeFor(lang), { month: 'short', day: 'numeric' }) : '';
 
@@ -62,12 +68,15 @@ export default function MyReadingPlansCard({ model, onOpenPlan, onExplore }: {
     <View style={styles.card}>
       <Text style={styles.title}>{t('prayer.myPlans.title')}</Text>
 
-      {model.active.map(({ plan, percent, startedAt }) => (
+      {model.active.map(({ plan, percent, startedAt, lastDayYmd }) => (
         <TouchableOpacity key={plan.slug} style={styles.row} activeOpacity={0.85} onPress={() => onOpenPlan(plan.slug)}>
           <PlanCover cover={plan.cover} slug={plan.slug} width={COVER_W} height={COVER_H} radius={8} noTransform />
           <View style={styles.rowBody}>
             <Text style={styles.rowTitle} numberOfLines={2}>{plan.title}</Text>
-            <Text style={styles.rowMeta}>{fmtDate(startedAt)}</Text>
+            {/* LAST READ, not the start date: the list is ordered by recency,
+                so showing when she began made the order look arbitrary. Falls
+                back to the start date for records predating lastDayYmd. */}
+            <Text style={styles.rowMeta}>{fmtDate(ymdToTs(lastDayYmd) ?? startedAt)}</Text>
           </View>
           <ProgressRing percent={percent} />
         </TouchableOpacity>

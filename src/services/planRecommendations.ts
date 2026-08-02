@@ -220,7 +220,15 @@ export function recommendPlans({ answers, summaries, excludeSlugs, todayYmd, cou
 // ── Card model: encodes the 0/1/2/≥3 content rule so the render is dumb ─────
 
 export interface ReadingPlansCardModel {
-  active: Array<{ plan: PlanSummary; completed: number; total: number; percent: number; startedAt: number }>;
+  active: Array<{
+    plan: PlanSummary; completed: number; total: number; percent: number;
+    startedAt: number;
+    /** Local YYYY-MM-DD of the most recent day completed — the row's meta line
+     *  shows THIS, because it's what the list is ordered by. Showing the start
+     *  date while sorting by recency made the order look random. Empty on
+     *  records written before the field existed. */
+    lastDayYmd: string;
+  }>;
   suggested: PlanSummary[];
 }
 
@@ -251,8 +259,7 @@ export function buildReadingPlansCard({ records, summaries, answers, todayYmd }:
       || b.percent - a.percent
       || b.startedAt - a.startedAt
       || (a.plan.slug < b.plan.slug ? -1 : 1))
-    .slice(0, 3)   // hard cap — the card must never grow with the plan count
-    .map(({ lastDayYmd: _drop, ...row }) => row);
+    .slice(0, 3);   // hard cap — the card must never grow with the plan count
 
   // 0 active → 3 suggestions; 1 → 2; 2 → 1; ≥3 → 1. Everything the user ever
   // touched (active OR finished) is excluded from suggestions forever.

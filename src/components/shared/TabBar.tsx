@@ -93,8 +93,12 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
         const h = Math.round(e.nativeEvent.layout.height);
         if (h > 0 && h !== barH) setBarH(h);
       }}
-      // Hidden bar must not eat taps aimed at the text underneath it.
+      // Hidden bar must not eat taps aimed at the text underneath it — nor be
+      // announced: while slid away it stayed in the a11y tree, so a screen
+      // reader still offered five tabs that could not be activated.
       pointerEvents={hidden ? 'none' : 'auto'}
+      accessibilityElementsHidden={hidden}
+      importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
     >
       {TABS.map(({ id, labelKey, Icon }) => {
         const label = t(labelKey);

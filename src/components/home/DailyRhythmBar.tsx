@@ -9,7 +9,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { useIsFocused } from '@react-navigation/native';
 import { ROSE, BTN_RADIUS, TXT, TXTSUB, FONTS } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
-import { RHYTHM_STEPS, isRhythmStepDone, type RhythmDotState } from '../../state/dailyRhythm';
+import { RHYTHM_STEPS, isRhythmStepDone, packedRhythmFill, type RhythmDotState } from '../../state/dailyRhythm';
 
 // Permanent Daily Rhythm bar (presentational). PrayerScreen computes the
 // rhythm view (state machine in src/state/dailyRhythm.ts) and hands us the
@@ -147,9 +147,14 @@ export default function DailyRhythmBar({
     const wasComplete = wasAllDone.current;
     wasAllDone.current = allDone;
     if (!prev || prev.ymd !== todayYmd) return;   // first render / day rolled → snap silently
-    const flipped = RHYTHM_STEPS.map((_, k) => !isRhythmStepDone(prev.dots[k]) && isRhythmStepDone(dots[k]));
-    if (flipped.some(Boolean)) {
-      setCelebrates(c => c.map((v, k) => (flipped[k] ? v + 1 : v)));
+    // Segments are POSITIONAL now, so the sweep belongs to the position that
+    // just became filled — index prevDone → nowDone-1 — not to the step's own
+    // slot. A range (not a single index) because two steps can land in one
+    // commit, e.g. a gospel pair graduating together.
+    const prevDone = prev.dots.filter(d => isRhythmStepDone(d)).length;
+    const nowDone = dots.filter(d => isRhythmStepDone(d)).length;
+    if (nowDone > prevDone) {
+      setCelebrates(c => c.map((v, p) => (p >= prevDone && p < nowDone ? v + 1 : v)));
       // A completion just landed — if the suggestion text changes in this same
       // commit, the text effect below runs the full ceremony (wait for sweep →
       // bubble → sand swap) instead of the plain crossfade. Cleared next tick
@@ -318,6 +323,10 @@ export default function DailyRhythmBar({
   };
 
   const pct = Math.round((doneCount / SEGMENTS) * 100);
+  // Filled segments, packed left — see packedRhythmFill. Position p is filled
+  // iff p < packed.length; packed[p] carries that step's kind so a retired
+  // (graduated) step still paints lavender after the repack.
+  const packed = useMemo(() => packedRhythmFill(dots), [dots]);
 
   return (
     <View style={styles.wrap}>
@@ -412,21 +421,21 @@ export default function DailyRhythmBar({
         {/* BOTTOM zone — the full-width 5-segment progress bar + live %; its
             height is just the row's natural content height. Inside the
             touchable (never intercepts the tap) and hidden from the a11y
-            tree (the card label already reads the %). Segment k =
-            RHYTHM_STEPS[k]; filled ⇔ done/retired, so completing ANY flow
-            always advances exactly its own segment. The sparkle is a SIBLING
+            tree (the card label already reads the %). Segments are POSITIONAL,
+            not per-step: n completed steps fill the first n segments in any
+            completion order (see packedRhythmFill). The sparkle is a SIBLING
             of the track — inside it, overflow:hidden would clip its rise. */}
         <View style={styles.trackRow} pointerEvents="none" importantForAccessibility="no-hide-descendants">
           <View style={styles.trackWrap}>
             <View style={styles.track} onLayout={(e) => setTrackW(e.nativeEvent.layout.width)}>
-              {RHYTHM_STEPS.map((id, k) => (
+              {Array.from({ length: SEGMENTS }, (_, p) => (
                 <SegmentFill
-                  key={id}
-                  filled={isRhythmStepDone(dots[k])}
-                  animateAt={celebrates[k]}
-                  x={k * segW}
+                  key={p}
+                  filled={p < packed.length}
+                  animateAt={celebrates[p]}
+                  x={p * segW}
                   segW={segW}
-                  color={dots[k] === 'retired' ? RETIRED_LAV : ROSE}
+                  color={packed[p] === 'retired' ? RETIRED_LAV : ROSE}
                   reduceMotion={reduceMotion}
                 />
               ))}

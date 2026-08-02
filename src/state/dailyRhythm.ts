@@ -30,6 +30,27 @@ export function isRhythmStepDone(s: RhythmDotState): boolean {
   return s === 'done' || s === 'retired';
 }
 
+/**
+ * The progress bar's fills, PACKED LEFT.
+ *
+ * The bar used to map segment k to step k, so finishing the 5th task lit the
+ * 5th segment and left a gap behind it. Users read a progress bar as "how far
+ * along am I", not as a checklist with fixed slots, so a lit segment floating
+ * at the right end reads as broken rather than as information.
+ *
+ * Progress is therefore positional: n completed steps fill the first n
+ * segments, whatever order they were done in. What each position keeps is the
+ * completed step's KIND, so a retired (graduated gospel) step still paints
+ * lavender rather than rose — the distinction survives the repacking.
+ *
+ * Returned in canonical step order rather than completion order, because
+ * completion order isn't persisted; a relaunch would otherwise reshuffle the
+ * colours of already-filled segments.
+ */
+export function packedRhythmFill(dots: RhythmDotState[]): RhythmDotState[] {
+  return dots.filter(isRhythmStepDone);
+}
+
 export type RhythmState =
   | { kind: 'step'; step: RhythmStepId }
   | { kind: 'allDone' }      // every available step done today

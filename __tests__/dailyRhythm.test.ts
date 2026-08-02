@@ -1,4 +1,4 @@
-import { computeRhythm, pickOngoingPlan, isRhythmStepDone, type RhythmInput } from '../src/state/dailyRhythm';
+import { computeRhythm, pickOngoingPlan, isRhythmStepDone, packedRhythmFill, type RhythmDotState, type RhythmInput } from '../src/state/dailyRhythm';
 
 const TODAY = '2026-07-02';
 
@@ -184,5 +184,55 @@ describe('isRhythmStepDone', () => {
     });
     expect(v.dots.filter(isRhythmStepDone).length).toBe(v.doneCount);
     expect(v.doneCount).toBe(2);   // morning prayer + retired morning gospel
+  });
+});
+
+// The progress bar reads as "how far along am I", not as a checklist with fixed
+// slots. It used to map segment k to step k, so finishing the 5th task lit the
+// 5th segment and left a gap behind it — which users read as broken.
+describe('packedRhythmFill — progress packs left', () => {
+  const D: RhythmDotState[] = ['pending', 'pending', 'pending', 'pending', 'pending'];
+  const withAt = (...idx: number[]): RhythmDotState[] =>
+    D.map((d, i) => (idx.includes(i) ? 'done' : d));
+
+  it('fills from position 0 even when the LAST step was completed first', () => {
+    expect(packedRhythmFill(withAt(4))).toEqual(['done']);
+  });
+
+  it('length always equals the number of completed steps, whatever their slots', () => {
+    expect(packedRhythmFill(withAt(1, 3)).length).toBe(2);
+    expect(packedRhythmFill(withAt(0, 1)).length).toBe(2);
+    expect(packedRhythmFill(withAt(2, 4)).length).toBe(2);
+  });
+
+  it('never leaves a hole — a filled position is always preceded by filled ones', () => {
+    // The property the old positional mapping violated.
+    for (const combo of [[4], [3], [2, 4], [1, 4], [0, 2, 4]]) {
+      const packed = packedRhythmFill(withAt(...combo));
+      expect(packed.every(Boolean)).toBe(true);
+      expect(packed.length).toBe(combo.length);
+    }
+  });
+
+  it('keeps each completed step\'s kind so retired stays lavender after repacking', () => {
+    const dots: RhythmDotState[] = ['pending', 'retired', 'pending', 'done', 'pending'];
+    // Canonical order among the completed ones — retired (slot 1) lands first.
+    expect(packedRhythmFill(dots)).toEqual(['retired', 'done']);
+  });
+
+  it('ignores states that are not completions', () => {
+    expect(packedRhythmFill(['current', 'locked', 'pending', 'pending', 'pending'])).toEqual([]);
+  });
+
+  it('agrees with doneCount on a real computed day', () => {
+    const v = computeRhythm({
+      hour: 10, todayYmd: '2026-07-11',
+      mDone: true, eDone: false,
+      gospelReady: true,
+      gospelMorningDone: false, gospelEveningDone: false,
+      gospelMorningComplete: true, gospelEveningComplete: false,
+      planRecords: {},
+    });
+    expect(packedRhythmFill(v.dots).length).toBe(v.doneCount);
   });
 });

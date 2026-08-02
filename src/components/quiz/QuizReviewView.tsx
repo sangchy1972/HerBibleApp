@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { ROSE, GREEN_DONE, TXT, TXTSUB, BTN_RADIUS, FONTS } from '../../constants/theme';
+import { ROSE, GREEN_DONE, TXT, TXTSUB, BTN_RADIUS, FONTS, INK_06, INK_10, GREEN_WASH, ROSE_WASH } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
 import QuizSegmentBar from './QuizSegmentBar';
 import PuzzleBoard from './PuzzleBoard';
@@ -116,10 +116,10 @@ const styles = StyleSheet.create({
   ring: {
     width: 84, height: 84, borderRadius: 42,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(216,138,161,0.12)',
+    backgroundColor: ROSE_WASH,
     marginBottom: 20,
   },
-  ringDone: { backgroundColor: 'rgba(125,184,125,0.14)' },
+  ringDone: { backgroundColor: GREEN_WASH },
   headline: {
     fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 24,
     color: TXT, textAlign: 'center', letterSpacing: 0.3,

@@ -4,7 +4,7 @@
 import {
   initialSession, pickOption, advance, startRetryRound, finishSession,
   currentPosition, wrongPositions, isTried, sessionSegments, sessionSummary,
-  parseSession, type QuizSessionV1,
+  parseSession, sessionAlignsWith, type QuizSessionV1,
 } from '../src/state/quizSession';
 
 const QIDS = [10, 20, 30, 40, 50];
@@ -228,5 +228,44 @@ describe('parseSession', () => {
     const s: any = fresh();
     s.answers[0].tried = [1, 'x', null, 2];
     expect(parseSession(JSON.stringify(s), 1)!.answers[0].tried).toEqual([1, 2]);
+  });
+});
+
+describe('sessionAlignsWith — bank swapped under a live session', () => {
+  const s = initialSession(0, [11, 22, 33, 44, 55], 2);
+
+  it('accepts the same ids in the same positions', () => {
+    // The normal case: she switched language. All 7 banks ship identical ids
+    // in identical order, so the session survives and the questions simply
+    // re-render in the new language.
+    expect(sessionAlignsWith(s, [11, 22, 33, 44, 55])).toBe(true);
+  });
+
+  it('rejects a reordering', () => {
+    // Same questions, different order — grading position 0 would now check the
+    // answer key of a question she was never shown.
+    expect(sessionAlignsWith(s, [22, 11, 33, 44, 55])).toBe(false);
+  });
+
+  it('rejects a different length', () => {
+    expect(sessionAlignsWith(s, [11, 22, 33])).toBe(false);
+    expect(sessionAlignsWith(s, [11, 22, 33, 44, 55, 66])).toBe(false);
+  });
+
+  it('treats a null session as always aligned', () => {
+    // Nothing in flight, nothing to invalidate.
+    expect(sessionAlignsWith(null, [1, 2, 3])).toBe(true);
+    expect(sessionAlignsWith(null, [])).toBe(true);
+  });
+
+  it('survives a retry round, where queue shrinks but answers do not', () => {
+    // startRetryRound rewrites `queue`, never `answers` — so alignment must be
+    // judged against answers, or every retry would look like bank drift and
+    // throw the set away mid-recovery.
+    const wrong = pickOption(s, 1, false);
+    const atSummary = { ...advance({ ...wrong, cursor: 4 }), phase: 'summary' as const };
+    const retry = startRetryRound(atSummary);
+    expect(retry.queue.length).toBeLessThan(retry.answers.length);
+    expect(sessionAlignsWith(retry, [11, 22, 33, 44, 55])).toBe(true);
   });
 });

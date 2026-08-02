@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, TouchableOpacity, StyleSheet, View } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import { ROSE, GREEN_DONE, TXT, TXTSUB, BTN_RADIUS, FONTS } from '../../constants/theme';
+import { ROSE, GREEN_DONE, TXT, TXTSUB, BTN_RADIUS, FONTS, INK_06, INK_10, GREEN_WASH, ROSE_WASH } from '../../constants/theme';
 
 // One answer option.
 //
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     marginBottom: 11,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(30,27,46,0.10)',
+    borderColor: INK_10,
   },
   // Merriweather for the answer text (bundled; the reader already uses it).
   // 16 → 17.3 = the +8 % scale the user asked for over the reference design.
@@ -99,8 +99,8 @@ const STATE_BOX: Record<OptionState, object> = {
   wrong: { backgroundColor: ROSE, borderColor: ROSE },
   // The right answer surfaced after a miss: tinted, not filled, so it reads as
   // information rather than as something the user did.
-  revealed: { backgroundColor: 'rgba(125,184,125,0.14)', borderColor: GREEN_DONE, borderWidth: 1.5 },
-  tried: { backgroundColor: 'rgba(30,27,46,0.06)', borderColor: 'transparent' },
+  revealed: { backgroundColor: GREEN_WASH, borderColor: GREEN_DONE, borderWidth: 1.5 },
+  tried: { backgroundColor: INK_06, borderColor: 'transparent' },
 };
 
 const STATE_TEXT: Record<OptionState, object> = {

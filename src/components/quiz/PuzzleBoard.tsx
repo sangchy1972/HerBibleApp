@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
+import { INK_28 } from '../../constants/theme';
 import { TILES_PER_PAINTING } from '../../state/quizProgress';
 import { artworkAt } from '../../constants/quizArt';
 import PuzzleArt from './PuzzleArt';
@@ -46,8 +47,8 @@ export default function PuzzleBoard({
           ) : null;
         }
         return (
-          <View key={i} style={[styles.tile, box, styles.locked]}>
-            <Feather name="lock" size={Math.max(12, size * 0.07)} color="rgba(30,27,46,0.28)" />
+          <View key={i} pointerEvents="none" style={[styles.tile, box, styles.locked]}>
+            <Feather name="lock" size={Math.max(12, size * 0.07)} color={INK_28} />
           </View>
         );
       })}

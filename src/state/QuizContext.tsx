@@ -1,11 +1,12 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { QUIZ_BANK_VERSION, type QuizQuestion } from '../constants/bibleQuiz';
 import { loadBank } from '../services/quizBank';
 import { questionsForSet, SET_SIZE } from '../services/quizSets';
 import {
   initialSession, pickOption, advance, startRetryRound, finishSession,
-  currentPosition, sessionSegments, sessionSummary, parseSession,
+  currentPosition, sessionSegments, sessionSummary, parseSession, sessionAlignsWith,
   type QuizSessionV1, type SegmentState,
 } from './quizSession';
 import {
@@ -30,11 +31,20 @@ import { logEvent } from '../services/firebase';
 const SESSION_KEY = 'quiz:session:v1';
 const PROGRESS_KEY = 'quiz:progress:v1';
 
+/**
+ * `loading` and `unavailable` are NOT the same thing and must never be
+ * collapsed into `bank === null`. A screen that treats "still fetching" as
+ * "there is no quiz" throws the user out of a question she is in the middle of
+ * answering the moment anything re-triggers the fetch.
+ */
+export type BankStatus = 'loading' | 'ready' | 'unavailable';
+
 interface QuizState {
   /** Hydration finished — until then, render nothing rather than a wrong state. */
   ready: boolean;
   /** null = no bank on this device yet. The home card hides itself. */
   bank: QuizQuestion[] | null;
+  bankStatus: BankStatus;
   progress: QuizProgressV1;
   session: QuizSessionV1 | null;
   /** The 5 questions of the CURRENT set, resolved. Empty when there is no bank. */
@@ -62,6 +72,8 @@ const Ctx = createContext<QuizState | null>(null);
 export function QuizProvider({ children, language }: { children: React.ReactNode; language: string }) {
   const [ready, setReady] = useState(false);
   const [bank, setBank] = useState<QuizQuestion[] | null>(null);
+  const [bankStatus, setBankStatus] = useState<BankStatus>('loading');
+  const [retryTick, setRetryTick] = useState(0);
   const [progress, setProgress] = useState<QuizProgressV1>(INITIAL_PROGRESS);
   const [session, setSession] = useState<QuizSessionV1 | null>(null);
 
@@ -95,12 +107,56 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
   // ── Bank (cache-first, then network) ──────────────────────────────────────
   // Re-runs on language change: a user who switches to Spanish should get the
   // Spanish bank, not keep answering English questions.
+  //
+  // The OLD bank deliberately stays on screen while the new one loads. Clearing
+  // it first would blank the question she is currently reading, and — because
+  // the screen treats "no bank" as "no quiz" — bounce her back to the home
+  // screen mid-answer.
   useEffect(() => {
     let alive = true;
-    setBank(null);
-    loadBank(language).then(b => { if (alive) setBank(b); }).catch(() => {});
+    setBankStatus('loading');
+    loadBank(language)
+      .then(b => {
+        if (!alive) return;
+        if (b) setBank(b);
+        setBankStatus(b ? 'ready' : 'unavailable');
+        if (b) reconcileSession(b);
+      })
+      .catch(() => { if (alive) setBankStatus('unavailable'); });
     return () => { alive = false; };
-  }, [language]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language, retryTick]);
+
+  // A device that was offline at launch would otherwise never see the quiz
+  // again until the app is force-quit — the fetch effect keys only on language.
+  // Retrying when the app comes back to the foreground covers the ordinary
+  // "she opened it on the train, then got signal" case without a poll loop.
+  useEffect(() => {
+    if (bankStatus !== 'unavailable') return;
+    const sub = AppState.addEventListener('change', s => {
+      if (s === 'active') setRetryTick(t => t + 1);
+    });
+    return () => sub.remove();
+  }, [bankStatus]);
+
+  /**
+   * A new bank arrived while a set was in flight. Every language ships the same
+   * ids in the same positions, so the normal outcome is that the session
+   * survives and the questions simply change language.
+   *
+   * If the ids DON'T line up, the session is dropped rather than repaired: the
+   * stored answers would then be graded against questions the user never saw,
+   * and marking a right answer wrong is worse than restarting one set.
+   */
+  const reconcileSession = useCallback((b: QuizQuestion[]) => {
+    setSession(prev => {
+      if (!prev) return prev;
+      const qs = questionsForSet(prev.setIndex, b);
+      if (sessionAlignsWith(prev, qs.map(q => q.id))) return prev;
+      logEvent('quiz_session_dropped_bank_drift', { set_index: prev.setIndex });
+      return null;
+    });
+  }, []);
 
   // ── Persist ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -189,9 +245,9 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
   const abandon = useCallback(() => setSession(null), []);
 
   const value = useMemo<QuizState>(() => ({
-    ready, bank, progress, session, questions, currentQuestion, segments,
+    ready, bank, bankStatus, progress, session, questions, currentQuestion, segments,
     open, pick, next, retry, finish, abandon,
-  }), [ready, bank, progress, session, questions, currentQuestion, segments,
+  }), [ready, bank, bankStatus, progress, session, questions, currentQuestion, segments,
        open, pick, next, retry, finish, abandon]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
@@ -208,7 +264,7 @@ export function useQuiz(): QuizState {
   const ctx = useContext(Ctx);
   if (ctx) return ctx;
   return {
-    ready: false, bank: null, progress: INITIAL_PROGRESS, session: null,
+    ready: false, bank: null, bankStatus: 'unavailable', progress: INITIAL_PROGRESS, session: null,
     questions: [], currentQuestion: null, segments: ['empty', 'empty', 'empty', 'empty', 'empty'],
     open: () => {}, pick: () => {}, next: () => {}, retry: () => {}, finish: () => {}, abandon: () => {},
   };

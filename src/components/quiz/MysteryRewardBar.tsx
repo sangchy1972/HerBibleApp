@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { ROSE, LAV, TXT, TXTSUB, FONTS } from '../../constants/theme';
+import { ROSE, LAV, TXT, TXTSUB, FONTS, INK_10 } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
 import { mysteryView, MYSTERY_EVERY } from '../../state/quizProgress';
 
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   count: { fontFamily: FONTS.lato, fontSize: 13, color: TXTSUB, letterSpacing: 0.2 },
   track: {
     height: 6, borderRadius: 10,
-    backgroundColor: 'rgba(30,27,46,0.10)', overflow: 'hidden',
+    backgroundColor: INK_10, overflow: 'hidden',
   },
   fill: { height: '100%', borderRadius: 10, backgroundColor: ROSE },
 });

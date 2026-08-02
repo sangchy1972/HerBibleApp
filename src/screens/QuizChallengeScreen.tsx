@@ -6,6 +6,7 @@ import { BG, TXT, TXTSUB, FONTS } from '../constants/theme';
 import { useT } from '../i18n/useT';
 import { useQuiz } from '../state/QuizContext';
 import { currentPosition, isTried, sessionSummary } from '../state/quizSession';
+import { levelFor } from '../state/quizProgress';
 import QuizSegmentBar from '../components/quiz/QuizSegmentBar';
 import QuizQuestionView from '../components/quiz/QuizQuestionView';
 import QuizReviewView from '../components/quiz/QuizReviewView';
@@ -23,7 +24,7 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   const t = useT();
   const insets = useSafeAreaInsets();
   const {
-    ready, bank, session, questions, currentQuestion, segments, progress,
+    ready, bank, bankStatus, session, questions, currentQuestion, segments, progress,
     open, pick, next, retry, finish,
   } = useQuiz();
 
@@ -72,12 +73,12 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   const roundLength = session ? session.queue.length : 0;
   const step = session ? session.cursor + 1 : 0;
 
-  // `ready && bank` is the same gate the home card uses. Reaching this screen
-  // without a bank means a deep link or a race, not a normal path — go back
-  // rather than render an empty quiz.
+  // Leave only when the bank is genuinely UNAVAILABLE — never merely because it
+  // is reloading. Keying this on `!bank` used to eject the user mid-question
+  // the instant she changed app language, since that re-triggers the fetch.
   useEffect(() => {
-    if (ready && !bank) navigation.goBack();
-  }, [ready, bank, navigation]);
+    if (ready && bankStatus === 'unavailable' && !bank) navigation.goBack();
+  }, [ready, bankStatus, bank, navigation]);
 
   const body = () => {
     if (!session) return null;
@@ -88,7 +89,7 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
           correct={summary.correct}
           total={questions.length}
           wrong={summary.wrong}
-          level={progress.completedSets + 1}
+          level={levelFor(progress.completedSets)}
           firstPassPerfect={summary.firstPassPerfect}
           completedSets={progress.completedSets}
           onRetry={retry}
@@ -118,7 +119,7 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
         </TouchableOpacity>
         <View style={styles.headerCopy}>
           <Text style={styles.level} numberOfLines={1} maxFontSizeMultiplier={1.3}>
-            {t('quiz.header.level', { n: progress.completedSets + 1 })}
+            {t('quiz.header.level', { n: levelFor(progress.completedSets) })}
           </Text>
         </View>
         {/* Balances the close button so the title stays optically centred. */}

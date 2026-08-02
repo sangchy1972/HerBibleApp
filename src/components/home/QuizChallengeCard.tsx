@@ -5,6 +5,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { ROSE, TXT, TXTSUB, FONTS, P } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
 import { useQuiz } from '../../state/QuizContext';
+import { levelFor } from '../../state/quizProgress';
 import QuizSegmentBar from '../quiz/QuizSegmentBar';
 
 // Home-screen entry point for the Quiz Challenge, below My Reading Plans.
@@ -31,6 +32,10 @@ export default function QuizChallengeCard({
 
   const answered = segments.filter(s => s !== 'empty').length;
   const inProgress = !!session && answered > 0;
+  // A set sitting in `summary` is finished but not yet claimed — she closed the
+  // app on the results screen. "5 of 5 answered" reads as nothing left to do,
+  // when in fact a puzzle piece is waiting behind one tap.
+  const awaitingClaim = session?.phase === 'summary' && segments.every(s => s === 'correct');
 
   return (
     <View style={styles.outer}>
@@ -47,7 +52,11 @@ export default function QuizChallengeCard({
             one wins. hitSlop keeps it reachable without growing the icon. */}
         <TouchableOpacity
           onPress={onOpenCollection}
-          hitSlop={12}
+          // Asymmetric on purpose: generous everywhere except the right side,
+          // where a symmetric slop would reach past `headerCopy`'s 14 pt margin
+          // and steal taps aimed at the title — opening the collection when she
+          // meant to start the quiz.
+          hitSlop={{ top: 14, bottom: 14, left: 14, right: 10 }}
           accessibilityRole="button"
           accessibilityLabel={t('quiz.collection.title')}
         >
@@ -56,9 +65,11 @@ export default function QuizChallengeCard({
         <View style={styles.headerCopy}>
           <Text style={styles.title} numberOfLines={1}>{t('quiz.card.title')}</Text>
           <Text style={styles.sub} numberOfLines={1}>
-            {inProgress
-              ? t('quiz.card.answered', { n: answered })
-              : t('quiz.card.level', { n: progress.completedSets + 1 })}
+            {awaitingClaim
+              ? t('quiz.card.claim')
+              : inProgress
+                ? t('quiz.card.answered', { n: answered })
+                : t('quiz.card.level', { n: levelFor(progress.completedSets) })}
           </Text>
         </View>
         <Feather name="chevron-right" size={20} color={TXTSUB} />
@@ -84,7 +95,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   header: { flexDirection: 'row', alignItems: 'center' },
-  headerCopy: { flex: 1, minWidth: 0, marginLeft: 10 },
+  headerCopy: { flex: 1, minWidth: 0, marginLeft: 14 },
   // Sized to PrayerScreen's sectionTitle so the card sits in the same visual
   // register as its neighbours — deliberately NOT the +8% quiz scale, which
   // applies inside the quiz itself.

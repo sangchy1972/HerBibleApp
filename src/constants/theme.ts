@@ -2,6 +2,18 @@ export const ROSE = '#E63F69';
 export const LAV = '#866BC0';
 export const TXT = '#1E1B2E';
 export const TXTSUB = 'rgba(30,27,46,0.50)';
+
+// Ink washes — TXT at low alpha. Hairline borders, empty progress tracks, and
+// inert/disabled fills. Named because the literal `rgba(30,27,46,x)` was being
+// hand-retyped across components: that spelling re-derives TXT by hand, so
+// retinting TXT would silently leave every one of them behind.
+export const INK_06 = 'rgba(30,27,46,0.06)';
+export const INK_10 = 'rgba(30,27,46,0.10)';
+export const INK_28 = 'rgba(30,27,46,0.28)';
+// Accent washes, for tinted (not filled) states — a revealed correct answer,
+// a badge disc. Derived from GREEN_DONE and ROSE respectively.
+export const GREEN_WASH = 'rgba(125,184,125,0.14)';
+export const ROSE_WASH = 'rgba(230,63,105,0.10)';
 export const BG = '#FBF7F6';
 // The app's "done" green. Was hardcoded in five places (plan covers' check
 // badge, FeaturedPlanDetail, three spots in ProfileScreen) before being given a

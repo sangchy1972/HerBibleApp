@@ -133,6 +133,24 @@ export function finishSession(s: QuizSessionV1): QuizSessionV1 {
   return { ...s, phase: 'complete' };
 }
 
+/**
+ * Do the questions a bank now yields for this set still match the ones the
+ * session was built from?
+ *
+ * Called when a new bank lands under a live session — the language changed, or
+ * a background refresh returned. Every language ships the same ids in the same
+ * positions, so the normal answer is `true` and the session survives with its
+ * questions simply re-rendered in the new language. A `false` means the stored
+ * answers would be graded against questions the user never saw.
+ *
+ * `null` session aligns with anything: there is nothing to invalidate.
+ */
+export function sessionAlignsWith(s: QuizSessionV1 | null, qids: readonly number[]): boolean {
+  if (!s) return true;
+  if (qids.length !== s.answers.length) return false;
+  return qids.every((id, i) => id === s.answers[i]?.qid);
+}
+
 /** Has this option already been tried and been wrong? */
 export function isTried(s: QuizSessionV1 | null, position: number, optionIndex: number): boolean {
   if (!s) return false;

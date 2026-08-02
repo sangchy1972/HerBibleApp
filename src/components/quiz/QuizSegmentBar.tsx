@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { ROSE, GREEN_DONE } from '../../constants/theme';
+import { ROSE, GREEN_DONE, INK_10 } from '../../constants/theme';
 import type { SegmentState } from '../../state/quizSession';
 
 // The 5-segment quiz progress bar. Shared by the home card and the in-quiz
@@ -56,7 +56,7 @@ export default function QuizSegmentBar({
 
 const styles = StyleSheet.create({
   track: {
-    backgroundColor: 'rgba(30,27,46,0.10)',
+    backgroundColor: INK_10,
     overflow: 'hidden',
     position: 'relative',
     width: '100%',

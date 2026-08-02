@@ -93,8 +93,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
     marginBottom: 22,
   },
-  footer: { paddingHorizontal: 20, paddingTop: 6, paddingBottom: 10 },
-  footerSpacer: { height: 96 },
+  // minHeight, not height: the footer must reserve its full size while empty,
+  // or the options list jumps upward under the user's finger the instant she
+  // answers. Sized for the verdict line (~21) + its 10 gap + the 54 CTA + the
+  // 16 of vertical padding.
+  footer: { paddingHorizontal: 20, paddingTop: 6, paddingBottom: 10, minHeight: 101 },
   verdict: {
     fontFamily: FONTS.latoBold,
     fontSize: 15.5,

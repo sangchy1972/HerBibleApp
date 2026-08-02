@@ -57,6 +57,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'quiz.card.title':                { en: 'Quiz Challenge',                  context: 'Home-screen card title for the Bible quiz. Keep short — one line beside a medal icon.' },
   'quiz.card.level':                { en: 'Level {n} · 5 questions',         context: 'Home quiz card, no set in progress. {n} is the level number.' },
   'quiz.card.answered':             { en: '{n} of 5 answered',               context: 'Home quiz card, a set is part-way done. {n} is 1-4.' },
+  'quiz.card.claim':                { en: 'Reward waiting',                  context: 'Home quiz card when the set is finished but the user has not tapped Continue to claim the puzzle piece.' },
   'quiz.header.level':              { en: 'Level {n}',                       context: 'Header of the full-screen quiz. {n} is the level number.' },
   'quiz.header.progress':           { en: '{n} of {total}',                   context: 'Quiz header counter, e.g. 3 of 5.' },
   'quiz.verdict.correct':           { en: 'Correct!',                        context: 'Shown after the user picks the right answer. Warm, short.' },

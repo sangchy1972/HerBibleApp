@@ -14,7 +14,7 @@
 // expo-iap was added degrades to silent no-ops instead of crashing at import.
 
 import { logEvent } from './firebase';
-import { setAdsRemoved } from './ads';
+import { setAdsRemoved, areAdsRemoved } from './ads';
 
 let iap: any = null;
 try {
@@ -187,19 +187,42 @@ export async function purchasePlan(plan: PlanId): Promise<PurchaseOutcome> {
 }
 
 // Restore: true if any owned product grants the entitlement.
+//
+// Also the place a LAPSED entitlement is revoked. This used to only ever grant
+// (setAdsRemoved(true)) and never revoke, so a monthly subscriber who cancelled
+// kept ad-free access forever — the persisted flag was never cleared.
+//
+// Revoking is deliberately CONSERVATIVE: it happens only when BOTH store
+// queries completed WITHOUT throwing and both reported nothing owned. A failed
+// / offline / unavailable store leaves the entitlement exactly as it was —
+// showing ads to someone who is actually paying is far worse than a lapsed user
+// getting a few more ad-free launches, and the next successful check corrects it.
 export async function restorePurchases(): Promise<boolean> {
   if (!connected) return false;
   let owned = false;
+  let purchasesOk = false;
+  let subsOk = false;
   try {
     const purchases: any[] = (await iap.getAvailablePurchases?.()) ?? [];
+    purchasesOk = true;
     owned = purchases.some(p => ALL_SKUS.has(p.productId) && p.purchaseState !== 'unknown');
-  } catch {}
+  } catch { /* leave purchasesOk false → no revoke */ }
   if (!owned) {
-    try { owned = !!(await iap.hasActiveSubscriptions?.(SUB_SKUS)); } catch {}
+    try {
+      owned = !!(await iap.hasActiveSubscriptions?.(SUB_SKUS));
+      subsOk = true;
+    } catch { /* leave subsOk false → no revoke */ }
   }
   if (owned) {
     await setAdsRemoved(true);
     logEvent('iap_restore', {});
+    return true;
   }
-  return owned;
+  // Nothing owned. Only act on a TRUSTWORTHY answer, and only if we currently
+  // believe the user is entitled (so this is a no-op for everyone else).
+  if (purchasesOk && subsOk && areAdsRemoved()) {
+    await setAdsRemoved(false);
+    logEvent('iap_entitlement_lapsed', {});
+  }
+  return false;
 }

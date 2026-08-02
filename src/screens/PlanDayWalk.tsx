@@ -13,6 +13,7 @@ import * as Clipboard from 'expo-clipboard';
 import { ROSE, TXT, TXTSUB, P, FONTS, SERIF_BODY } from '../constants/theme';
 import { maybeShowInterstitial } from '../services/ads';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
+import { useUILanguage } from '../state/UILanguageContext';
 import { usePlanCompletion } from '../state/PlanCompletionContext';
 import { useTranslation } from '../state/TranslationsContext';
 import { useHighlights } from '../state/HighlightsContext';
@@ -78,6 +79,7 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
   const t = useT();
   const { slug, day } = route.params;
   const { loadPlan, loadedPlans } = useFeaturedPlans();
+  const { lang: uiLang } = useUILanguage();
   const { markDayComplete, records } = usePlanCompletion();
   const { current: translation } = useTranslation();
   const { setHighlight, getColor } = useHighlights();
@@ -104,6 +106,20 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
       } catch { /* keep defaults */ }
     }).catch(() => {});
   }, []);
+
+  // FeaturedPlansContext drops its cache when the language changes, but this
+  // screen snapshotted the plan into local state and `if (plan) return` blocks
+  // any refetch — so the body text would stay in the old language for the rest
+  // of the visit. Clearing it hands the fetch effect below its trigger.
+  // (Not reachable through today's navigation, since the language picker lives
+  // behind the Profile tab and this screen is a full-screen modal over it — but
+  // one deep link away from being real.)
+  const planLang = useRef(uiLang);
+  useEffect(() => {
+    if (planLang.current === uiLang) return;
+    planLang.current = uiLang;
+    setPlan(null);
+  }, [uiLang]);
 
   useEffect(() => {
     if (plan) return;

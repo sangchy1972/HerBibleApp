@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -69,6 +69,16 @@ export default function FeaturedPlanDetail({ route, navigation }: RootStackScree
   // the bundled summary already powers the hero / strip / button.
   const [plan, setPlan] = useState<FullPlan | null>(loadedPlans[slug] || null);
   const [loadError, setLoadError] = useState(false);
+  // See PlanDayWalk: the context drops its cache on a language change, but this
+  // screen's local snapshot plus `if (plan) return` would keep serving the old
+  // language's body for the rest of the visit. Clearing it re-arms the fetch.
+  const planLang = useRef(uiLang);
+  useEffect(() => {
+    if (planLang.current === uiLang) return;
+    planLang.current = uiLang;
+    setPlan(null);
+  }, [uiLang]);
+
   useEffect(() => {
     if (plan) return;
     loadPlan(slug).then(setPlan).catch(() => setLoadError(true));

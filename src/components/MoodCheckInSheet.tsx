@@ -24,6 +24,10 @@ import { ROSE, BTN_RADIUS, TXT, FONTS } from '../constants/theme';
 
 const SCREEN_H = Dimensions.get('window').height;
 const TOP_GAP = 50;   // sheets rise to ~full height, leaving 50px at the top
+// Slow, curved rise (per user): 0.6 s on a long-tail deceleration — quick to
+// commit, then a soft landing, so the sheet reads as gliding into place.
+const ENTER_MS = 600;
+const RISE_EASE = Easing.bezier(0.22, 1, 0.36, 1);
 
 type Step = 'input' | 'verse' | 'done';
 
@@ -73,17 +77,28 @@ function Sheet() {
     return () => { s.remove(); h.remove(); };
   }, []);
 
-  // Entrance via shared values (matches the app's sheet idiom).
+  // Entrance via shared values (matches the app's sheet idiom). 420 → 600 ms
+  // per user, on a long-tail deceleration curve so it reads as ONE slow,
+  // deliberate rise rather than a snap. The backdrop fades across most of that
+  // span instead of beating the sheet to the screen.
   const backdropO = useSharedValue(0);
   const sheetTY = useSharedValue(SCREEN_H);
   useEffect(() => {
-    backdropO.value = withTiming(1, { duration: 220 });
-    sheetTY.value = withTiming(0, { duration: 420, easing: Easing.out(Easing.cubic) });
+    backdropO.value = withTiming(1, { duration: 440, easing: Easing.out(Easing.quad) });
+    sheetTY.value = withTiming(0, { duration: ENTER_MS, easing: RISE_EASE });
   }, [backdropO, sheetTY]);
   const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropO.value }));
   const sheetAnim = useAnimatedStyle(() => ({ transform: [{ translateY: sheetTY.value }] }));
 
+  // Guarded so a double-tap can't restart the exit timing, and the overlay stops
+  // intercepting touches the moment it starts leaving (it used to keep eating
+  // them for the whole 260 ms slide-out).
+  const [closing, setClosing] = useState(false);
+  const closingRef = useRef(false);
   const dismiss = () => {
+    if (closingRef.current) return;
+    closingRef.current = true;
+    setClosing(true);
     backdropO.value = withTiming(0, { duration: 200 });
     sheetTY.value = withTiming(SCREEN_H, { duration: 260, easing: Easing.in(Easing.cubic) }, (fin) => {
       if (fin) runOnJS(closePrompt)();
@@ -101,7 +116,7 @@ function Sheet() {
   const dateLabel = now.toLocaleDateString(localeFor(lang), { weekday: 'long', month: 'long', day: 'numeric' });
 
   return (
-    <View style={styles.overlay}>
+    <View style={styles.overlay} pointerEvents={closing ? 'none' : 'auto'}>
       <Animated.View style={[StyleSheet.absoluteFillObject, styles.backdrop, backdropStyle]}>
         <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={dismiss} />
       </Animated.View>

@@ -8,6 +8,12 @@ import { useFirstRunTour } from './FirstRunTourContext';
 const STORAGE_KEY_V2 = 'mood:v2';
 const STORAGE_KEY_V1 = 'mood:v1';
 const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
+// How long after landing on the tabs the mood sheet starts rising. 600 → 1800 ms
+// (per user): the home screen's own section cascade runs ~725 ms, so the old
+// delay had the sheet climbing THROUGH that animation — it read as "already
+// sitting there when I arrived". Now home settles, holds for a beat, and then
+// the sheet glides up.
+const OPEN_DELAY_MS = 1800;
 
 const todayKey = () => {
   const d = new Date();
@@ -102,8 +108,8 @@ export function MoodCheckInProvider({ children }: { children: React.ReactNode })
   // questionnaire runs, and when finish() flips it the effect re-runs (this
   // provider never remounts) and fires then. This also stops lastShownAt from
   // being persisted while the sheet would be buried under onboarding, which
-  // used to suppress that day's legitimate prompt. The 600ms delay lets the
-  // tabs land before the sheet animates in.
+  // used to suppress that day's legitimate prompt. OPEN_DELAY_MS lets the tabs
+  // land — and finish their own entrance — before the sheet animates in.
   const { ready: obReady, done: obDone } = useOnboarding();
   // ...and NOT while the first-run tour is owed (per user: a brand-new user must
   // never get the mood sheet before she's been shown around). The gate sits
@@ -125,7 +131,7 @@ export function MoodCheckInProvider({ children }: { children: React.ReactNode })
       const timer = setTimeout(() => {
         setPromptVisible(true);
         persist({ ...state, lastShownAt: Date.now() });
-      }, 600);
+      }, OPEN_DELAY_MS);
       return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

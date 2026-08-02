@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
   StyleSheet, ActivityIndicator, AppState, useWindowDimensions, PanResponder, Platform, Modal,
+  type NativeSyntheticEvent, type NativeScrollEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -9,6 +10,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Clipboard from 'expo-clipboard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import { setTabBarHidden, resetTabBarHidden } from '../state/immersiveReading';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSequence, withDelay, withRepeat,
   interpolateColor, Easing,
@@ -1236,6 +1238,28 @@ export default function BibleScreen() {
   // janks the reader. The 1/3-from-top target keeps the user looking at
   // the verse without losing context above/below; clamped to >=0 so the
   // top of the chapter never tries to scroll negative.
+  // ── Immersive reading: hide the bottom tab bar while she reads ────────────
+  // Direction-based with a dead zone so a jittery finger can't strobe the bar:
+  // scrolling DOWN past the top region hides it, scrolling UP by more than a few
+  // px brings it back, and the very top of a chapter always shows it. Reading
+  // position is tracked in a ref (no re-render per frame); only a genuine
+  // flip touches state, so scrolling stays at 60fps.
+  const lastYRef = useRef(0);
+  const onReaderScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    setSelVerse(null);                                   // preserved: any scroll clears the selection
+    const y = e.nativeEvent.contentOffset.y;
+    const dy = y - lastYRef.current;
+    lastYRef.current = y;
+    if (y <= 24) { setTabBarHidden(false); return; }      // chapter top → always visible
+    if (dy > 6) setTabBarHidden(true);                    // reading forward → immerse
+    else if (dy < -6) setTabBarHidden(false);             // pulling back → resurface
+  }, []);
+
+  // The bar must never stay hidden once the reader isn't in front of her:
+  // leaving the tab, opening a modal over it, or unmounting all restore it.
+  useFocusEffect(useCallback(() => () => resetTabBarHidden(), []));
+  useEffect(() => () => { resetTabBarHidden(); }, []);
+
   const lastScrolledVerseRef = useRef<number | null>(null);
   useEffect(() => {
     if (activeAudioVerse == null) {
@@ -1423,7 +1447,7 @@ export default function BibleScreen() {
         style={styles.verseScroll}
         contentContainerStyle={styles.verseContent}
         showsVerticalScrollIndicator={false}
-        onScroll={() => setSelVerse(null)}
+        onScroll={onReaderScroll}
         scrollEventThrottle={16}
       >
         <Text style={[styles.chapterTitle, { color: TH.txt }]}>{bookTitle} {chapter}</Text>

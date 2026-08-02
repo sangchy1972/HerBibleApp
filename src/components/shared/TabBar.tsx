@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
+import { useTabBarHidden } from '../../state/immersiveReading';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { ROSE, LAV, TXTSUB } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
@@ -66,8 +68,34 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
   const t = useT();
   const active = state.routes[state.index].name as TabId;
 
+  // Immersive reading (Bible tab): slide the bar down out of view while the user
+  // reads. Height is measured rather than assumed so the travel is exact on
+  // every device (inset-less phones, tall gesture bars). translateY only — the
+  // bar keeps its layout space, so the reader's content never reflows mid-scroll.
+  const hidden = useTabBarHidden();
+  const [barH, setBarH] = useState(0);
+  const slide = useSharedValue(0);
+  useEffect(() => {
+    slide.value = withTiming(hidden ? 1 : 0, {
+      duration: hidden ? 260 : 220,
+      easing: hidden ? Easing.in(Easing.quad) : Easing.out(Easing.quad),
+    });
+  }, [hidden, slide]);
+  const slideStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: slide.value * (barH || 90) }],
+    opacity: 1 - slide.value * 0.35,
+  }));
+
   return (
-    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 11) }]}>
+    <Animated.View
+      style={[styles.container, { paddingBottom: Math.max(insets.bottom, 11) }, slideStyle]}
+      onLayout={(e) => {
+        const h = Math.round(e.nativeEvent.layout.height);
+        if (h > 0 && h !== barH) setBarH(h);
+      }}
+      // Hidden bar must not eat taps aimed at the text underneath it.
+      pointerEvents={hidden ? 'none' : 'auto'}
+    >
       {TABS.map(({ id, labelKey, Icon }) => {
         const label = t(labelKey);
         const isActive = id === active;
@@ -106,7 +134,7 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
           </TouchableOpacity>
         );
       })}
-    </View>
+    </Animated.View>
   );
 }
 

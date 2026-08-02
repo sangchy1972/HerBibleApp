@@ -159,7 +159,11 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
     setExploreTarget(null);                                                       // and close any open Explore card
   };
   const onPagerSettled = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const i = Math.round(e.nativeEvent.contentOffset.x / Math.max(1, winWidth));
+    // CLAMP: onScrollEndDrag fires mid-bounce, so an iOS overscroll fling past
+    // either end yielded pages.length / -1 → pages[page] undefined for a beat
+    // (blank ref pill, finish button falling back to a chevron).
+    const raw = Math.round(e.nativeEvent.contentOffset.x / Math.max(1, winWidth));
+    const i = Math.max(0, Math.min(pages.length - 1, raw));
     if (i !== page) setPage(i);
   };
 
@@ -181,7 +185,11 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
   };
   useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current); }, []);
 
+  const advancingRef = useRef(false);
   const onNext = () => {
+    if (advancingRef.current) return;                 // stale-closure double-tap guard
+    advancingRef.current = true;
+    setTimeout(() => { advancingRef.current = false; }, 350);
     if (page < pages.length - 1) {
       goTo(page + 1);
     } else if (plan) {

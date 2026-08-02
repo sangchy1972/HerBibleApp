@@ -13,7 +13,7 @@ import { useFocusEffect, useNavigation, useRoute, type RouteProp } from '@react-
 import { setTabBarHidden, resetTabBarHidden } from '../state/immersiveReading';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSequence, withDelay, withRepeat,
-  interpolateColor, Easing,
+  interpolateColor, Easing, cancelAnimation,
   FadeIn, FadeOut, SlideInUp, SlideInDown,
 } from 'react-native-reanimated';
 import { ROSE, BTN_RADIUS, LAV, TXT, TXTSUB, P, FONTS, SERIF_BODY, SCREEN_BG } from '../constants/theme';
@@ -663,7 +663,7 @@ function SpinningNote() {
   const spin = useSharedValue(0);
   useEffect(() => {
     spin.value = withRepeat(withTiming(360, { duration: 3600, easing: Easing.linear }), -1, false);
-    return () => { spin.value = 0; };
+    return () => { cancelAnimation(spin); spin.value = 0; };
   }, [spin]);
   const style = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.value}deg` }] }));
   return (

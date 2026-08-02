@@ -89,11 +89,15 @@ function Sheet() {
     // Watchdog: if the rise is cancelled/dropped (saturated UI thread, dev fast
     // refresh), snap the sheet into place. Without this the sheet could sit
     // off-screen while its backdrop dims the app — visible lock-up.
-    const armed = setTimeout(() => {
+    // MUST bail once we're leaving: dismissing inside this window used to let
+    // the watchdog cancel the exit and slam the sheet back to fully visible,
+    // where it sat inert until the exit watchdog unmounted it.
+    enterWatchdog.current = setTimeout(() => {
+      if (closingRef.current) return;
       cancelAnimation(sheetTY); cancelAnimation(backdropO);
       sheetTY.value = 0; backdropO.value = 1;
     }, ENTER_MS + 400);
-    return () => clearTimeout(armed);
+    return () => { if (enterWatchdog.current) clearTimeout(enterWatchdog.current); };
   }, [backdropO, sheetTY]);
   const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropO.value }));
   const sheetAnim = useAnimatedStyle(() => ({ transform: [{ translateY: sheetTY.value }] }));
@@ -104,11 +108,13 @@ function Sheet() {
   const [closing, setClosing] = useState(false);
   const closingRef = useRef(false);
   const exitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const enterWatchdog = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (exitTimer.current) clearTimeout(exitTimer.current); }, []);
   const dismiss = () => {
     if (closingRef.current) return;
     closingRef.current = true;
     setClosing(true);
+    if (enterWatchdog.current) { clearTimeout(enterWatchdog.current); enterWatchdog.current = null; }
     backdropO.value = withTiming(0, { duration: 200 });
     sheetTY.value = withTiming(SCREEN_H, { duration: 260, easing: Easing.in(Easing.cubic) }, (fin) => {
       if (fin) runOnJS(closePrompt)();

@@ -1577,19 +1577,11 @@ const styles = StyleSheet.create({
   // hero card above it. Adding margin would inset the button an extra P on
   // each side, leaving it 2 × P narrower than the card (the previous
   // mismatch the design called out).
-  startBtn: {
-    marginTop: 11,                      // → 11 (per user — card ↔ Start CTA gap)
-    marginBottom: 10,
-    height: 46.94,                      // 49.41 → 46.94 (-5 % per user)
-    borderRadius: BTN_RADIUS,           // canonical CTA radius (was 17.07 after the -30 % pass)
-    alignSelf: 'stretch',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // Pulsing CTA, split in two so the touch target is never Reanimated-owned:
-  // `ctaWrap` is a PLAIN view carrying the exact former startBtn geometry (so
-  // layout is pixel-identical), `ctaPulseBg` is the breathing fill behind it,
-  // and `ctaHit` is the static, full-bleed touchable.
+  // Pulsing CTA, split in three so the touch target is never Reanimated-owned:
+  // `ctaWrap` is a PLAIN view carrying the geometry the old single `startBtn`
+  // style had (marginTop 11 / marginBottom 10 / height 46.94 — layout is
+  // pixel-identical to before the split), `ctaPulseBg` is the breathing fill
+  // behind it, and `ctaHit` is the static, full-bleed touchable.
   ctaWrap: {
     marginTop: 11,
     marginBottom: 10,

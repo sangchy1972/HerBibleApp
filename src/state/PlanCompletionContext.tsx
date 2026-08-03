@@ -50,7 +50,24 @@ export function PlanCompletionProvider({ children }: { children: React.ReactNode
   // Hydrate.
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY)
-      .then(raw => { if (raw) { try { setRecords(JSON.parse(raw)); } catch {} } })
+      // Sanitised, not trusted. The reduce in `value` reads
+      // `r.completedDays.length` inside a PROVIDER-level useMemo, so a single
+      // record missing that array throws during render and white-screens the
+      // entire app — not one screen. The parse is not the only way in either:
+      // mergePlanRecords copies a remote-only slug verbatim, so a record
+      // written by another version of the app arrives here unnormalised.
+      .then(raw => {
+        if (!raw) return;
+        try {
+          const parsed = JSON.parse(raw) as PlanRecords;
+          const clean: PlanRecords = {};
+          for (const [slug, r] of Object.entries(parsed ?? {})) {
+            if (!r || typeof r !== 'object') continue;
+            clean[slug] = { ...r, completedDays: Array.isArray(r.completedDays) ? r.completedDays : [] };
+          }
+          setRecords(clean);
+        } catch { /* unparseable → start empty rather than crash */ }
+      })
       .catch(() => {});
   }, []);
 

@@ -54,8 +54,11 @@ export interface FullPlan {
 
 function slimVerse(v: any): PlanVerseRef {
   return {
-    display: v.display,
-    bookCode: v.book_code,
+    // Defaulted at the boundary. `display` is split on ' ' in two render-path
+    // useMemos and `book_code` is uppercased; either missing from one verse in
+    // one language's plan file crashed that plan day on open.
+    display: v.display || '',
+    bookCode: v.book_code || '',
     chapter: v.chapter,
     verses: String(v.verses),
     translation: v.translation || 'KJV',

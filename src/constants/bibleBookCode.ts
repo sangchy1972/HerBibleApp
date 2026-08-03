@@ -36,7 +36,12 @@ export const BOOK_CODE_TO_SLUG: Record<string, string> = {
   JUD: 'jude',        REV: 'revelation-of-john',
 };
 
-export function bookCodeToSlug(code: string): string | null {
+/** Callers already handle null, so a missing code is far better than a throw:
+ *  plan JSON is CDN-authored per language, and one verse without `book_code`
+ *  used to take down PlanDayWalk's `pages` useMemo the moment she opened the
+ *  day. */
+export function bookCodeToSlug(code?: string | null): string | null {
+  if (typeof code !== 'string' || !code) return null;
   return BOOK_CODE_TO_SLUG[code.toUpperCase()] || null;
 }
 

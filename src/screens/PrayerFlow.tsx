@@ -396,7 +396,6 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // player idle and `toggleMusic` becomes a no-op.
   const audioSource = prayerBg.audioFor(morning ? 'morning' : 'evening');
   const audioPlayer = useAudioPlayer(audioSource ?? null);
-  const audioStatus = useAudioPlayerStatus(audioPlayer);
   // Auto-loop + auto-play. Setting `loop` on every render is safe — it's
   // idempotent — and covers the case where the player swaps source on
   // morning↔evening toggle. We only nudge `play()` when the source first

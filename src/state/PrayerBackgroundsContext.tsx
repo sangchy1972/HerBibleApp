@@ -325,7 +325,13 @@ export function PrayerBackgroundsProvider({ children }: { children: React.ReactN
     let cancelled = false;
     (async () => {
       for (const slot of ['morning', 'evening'] as const) {
-        const list = manifest.images[slot];
+        // `?.` and `?? []`: the manifest is CDN-pushed and only checked for
+        // version === 1, then written to AsyncStorage. A push that renames or
+        // drops images.evening would throw in render, white-screen the home
+        // tab, AND persist — after which every launch white-screens and only
+        // clearing app data recovers. Two characters against an unrecoverable
+        // state. Siblings at :305 and :356 already guard this way.
+        const list = manifest.images?.[slot] ?? [];
         // Cache TODAY's pick (in use now) and pre-cache TOMORROW's (so the
         // midnight rollover renders instantly instead of re-fetching). Everything
         // else is pruned — footprint stays at ≤4 tiny files, self-cleaning.
@@ -370,7 +376,7 @@ export function PrayerBackgroundsProvider({ children }: { children: React.ReactN
     loaded,
     imageFor: (slot) => {
       if (!manifest) return slot === 'morning' ? DEFAULT_MORNING_IMG : DEFAULT_EVENING_IMG;
-      const fn = pickSequential(manifest.images[slot], ymdForOffset(0));
+      const fn = pickSequential(manifest.images?.[slot] ?? [], ymdForOffset(0));
       if (!fn) return slot === 'morning' ? DEFAULT_MORNING_IMG : DEFAULT_EVENING_IMG;
       // 1) Local disk cache (instant, offline-safe, persists across launches) —
       //    populated by the effect above once the small variant has landed.
@@ -416,7 +422,7 @@ export function PrayerBackgroundsProvider({ children }: { children: React.ReactN
       // bundled landscape art (also undistorted). Never returns a file:// uri —
       // the widget's ImageWidget only accepts http/https/data/require sources.
       if (!manifest || !cfReady) return null;
-      const fn = pickSequential(manifest.images[slot], ymdForOffset(0));
+      const fn = pickSequential(manifest.images?.[slot] ?? [], ymdForOffset(0));
       if (!fn) return null;
       return cfCoverImage(`${manifest.base_url}/${slot}/${fn}`, WIDGET_BG_W, WIDGET_BG_H);
     },

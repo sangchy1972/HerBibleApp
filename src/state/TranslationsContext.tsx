@@ -83,6 +83,12 @@ export function TranslationsProvider({ children }: { children: React.ReactNode }
   const [pending, setPending] = useState<PendingDownload | null>(null);
   const pendingRef = useRef<LanguageCode | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // Abort any in-flight translation download when this provider goes away. It
+  // only goes away on the cloud-restore remount (treeEpoch in App.tsx), and
+  // without this the dying provider keeps downloading, keeps calling setPending
+  // on a dead instance, and the fresh provider immediately starts the SAME
+  // download again — two writers racing for one chapter cache, on her data plan.
+  useEffect(() => () => { abortRef.current?.abort(); abortRef.current = null; }, []);
   // Monotonic switch token — guards against a rapid second switch whose
   // async download-state lookup resolves out of order with the first.
   const seqRef = useRef(0);

@@ -33,13 +33,28 @@ export default function WidgetInstallHost() {
   // widget" leads nowhere. Gated off on iOS until a real iOS widget exists.
   const eligible = Platform.OS === 'android' && shown === false && daysSinceFirstLaunch >= 3 && everPrayed;
 
-  useEffect(() => {
-    if (eligible) coord.requestSlot({ id: 'widgetInstall', priority: NUDGE_PRIORITY.widgetInstall, canShow: () => true });
-    else coord.releaseSlot('widgetInstall');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eligible]);
+  // `eligible` contains `shown === false`, and the effect below sets `shown`
+  // true the moment the slot is granted — so without the `if (active) return`
+  // guard this effect immediately releases the slot it was just given and the
+  // card unmounts inside its own fade-in. It has been doing exactly that: a
+  // one-time nudge that marks itself shown, spends the budget, and is never
+  // seen. `canShow` reads a ref for the same reason. Copied from
+  // RatePromptHost, which had this right from the start.
+  const eligibleRef = useRef(eligible);
+  eligibleRef.current = eligible;
 
   const active = coord.isActive('widgetInstall');
+
+  useEffect(() => {
+    if (active) return;
+    if (eligible) {
+      coord.requestSlot({ id: 'widgetInstall', priority: NUDGE_PRIORITY.widgetInstall, canShow: () => eligibleRef.current });
+    } else {
+      coord.releaseSlot('widgetInstall');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eligible, active]);
+  useEffect(() => () => coord.releaseSlot('widgetInstall'), [coord]);
   const markedRef = useRef(false);
   useEffect(() => {
     if (active && !markedRef.current) {
@@ -47,6 +62,7 @@ export default function WidgetInstallHost() {
       setShown(true);   // one-time: mark shown the moment it appears
       AsyncStorage.setItem(SHOWN_KEY, '1').catch(() => {});
     }
+    if (!active) markedRef.current = false;
   }, [active]);
 
   if (!active) return null;

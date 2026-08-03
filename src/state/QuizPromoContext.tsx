@@ -84,16 +84,22 @@ export function QuizPromoProvider({ children }: { children: React.ReactNode }) {
       .finally(() => setReady(true));
   }, []);
 
-  const persist = (next: QuizPromoPersisted) => {
-    setState(next);
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(() => {});
+  // Functional updates throughout: a mutator that closed over `state` would be
+  // correct only as long as no two of them can fire in the same commit, and
+  // that is a property of the CALLER, not of this file.
+  const persist = (fn: (prev: QuizPromoPersisted) => QuizPromoPersisted) => {
+    setState(prev => {
+      const next = fn(prev);
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
   };
 
   const value = useMemo<State>(() => ({
     ready,
     shouldShow: () => quizPromoShouldShow(state),
-    markShown: () => persist({ ...state, lastShownAt: Date.now(), promptCount: state.promptCount + 1 }),
-    markConverted: () => { if (!state.converted) persist({ ...state, converted: true }); },
+    markShown: () => persist(p => ({ ...p, lastShownAt: Date.now(), promptCount: p.promptCount + 1 })),
+    markConverted: () => persist(p => (p.converted ? p : { ...p, converted: true })),
   }), [state, ready]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

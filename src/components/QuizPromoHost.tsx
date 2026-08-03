@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import { useQuiz } from '../state/QuizContext';
 import { useQuizPromo } from '../state/QuizPromoContext';
@@ -52,7 +52,13 @@ export default function QuizPromoHost({ inGap }: {
   // She has already met the feature. Terminal, and checked before anything else
   // so a returning player never sees an introduction to something she plays.
   const played = progress.completedSets > 0;
-  useEffect(() => { if (played) promo.markConverted(); }, [played]);   // eslint-disable-line react-hooks/exhaustive-deps
+  // `promo.ready` is load-bearing: without it this can fire while the provider's
+  // getItem is still in flight, and persist() would spread over the
+  // pre-hydration DEFAULT — writing converted:true on top of zeroed counters and
+  // then having the resolving read flip it back to false in memory.
+  useEffect(() => {
+    if (promo.ready && played) promo.markConverted();
+  }, [promo.ready, played]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   // Every condition that must hold for the prompt to be honest:
   //   ready + bank   — the quiz genuinely exists on this device
@@ -62,14 +68,35 @@ export default function QuizPromoHost({ inGap }: {
   const eligible = inGap
     && ready && !!bank && !lifecycle.retired && canStart && !played
     && promo.ready && promo.shouldShow();
-
-  useEffect(() => {
-    if (eligible) coord.requestSlot({ id: 'quizPromo', priority: NUDGE_PRIORITY.quizPromo, canShow: () => true });
-    else coord.releaseSlot('quizPromo');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eligible]);
+  // Read through a ref inside canShow. `eligible` contains the cadence, and
+  // markShown() below flips the cadence false the instant the slot is granted —
+  // so a naive `else releaseSlot()` tears the card down inside its own 200 ms
+  // fade-in. Nobody sees it, and it still spends the budget. RatePromptHost
+  // solved this first; this is the same shape.
+  const eligibleRef = useRef(eligible);
+  eligibleRef.current = eligible;
 
   const active = coord.isActive('quizPromo');
+
+  // `isFocused`: PrayerScreen stays MOUNTED behind every tab and every pushed
+  // screen (no unmountOnBlur anywhere), so without this the promo can arm while
+  // she is in the Bible, in a plan, or already in the quiz — and render inside a
+  // hidden screen. The showing is burned and the card is never seen.
+  const isFocused = useIsFocused();
+  useEffect(() => {
+    if (active) return;                       // never disturb a live prompt
+    if (isFocused && eligible) {
+      coord.requestSlot({ id: 'quizPromo', priority: NUDGE_PRIORITY.quizPromo, canShow: () => eligibleRef.current });
+    } else {
+      coord.releaseSlot('quizPromo');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFocused, eligible, active]);
+
+  // Release on unmount. Unreachable today, but a slot left active wedges the
+  // coordinator's `if (activeId !== null) return` for every other prompt,
+  // including badge unlocks.
+  useEffect(() => () => coord.releaseSlot('quizPromo'), [coord]);
 
   // The cadence advances the moment it APPEARS, not when she answers it.
   // Marking on dismiss would let a prompt she swipes past reappear on the next
@@ -81,6 +108,7 @@ export default function QuizPromoHost({ inGap }: {
       promo.markShown();
       logEvent('quiz_promo_shown', { completed_sets: progress.completedSets });
     }
+    if (!active) markedRef.current = false;   // a later, legitimate showing must still count
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
@@ -101,14 +129,26 @@ export default function QuizPromoHost({ inGap }: {
   const setsToCard = Math.min(mystery.remaining, daily.remaining);
 
   return (
+    // A Modal, not a bare overlay. This host is mounted inside PrayerScreen, so
+    // an absoluteFill View is bounded by the tab SCREEN — the scrim stopped
+    // above the tab bar, the card centred in the wrong box, and she could tap
+    // straight past a supposedly blocking prompt by hitting another tab.
+    // RatePromptSheet is a Modal for the same reason; the two App-root nudges
+    // get away with a plain View only because they are mounted at the root.
+    <Modal transparent visible statusBarTranslucent animationType="none" onRequestClose={dismiss}>
     <View style={styles.overlay}>
       <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={dismiss} />
       <Animated.View entering={FadeIn.duration(200)} style={styles.card}>
         <View style={styles.icon}>
           <MaterialCommunityIcons name="cards-outline" size={26} color={ROSE} />
         </View>
-        <Text style={styles.title}>{t('nudge.quiz.title')}</Text>
-        <Text style={styles.body}>{t('nudge.quiz.body')}</Text>
+        <Text style={styles.title} maxFontSizeMultiplier={1.3}>{t('nudge.quiz.title')}</Text>
+        {/* Scrolls rather than clips. This is the longest body of any nudge in
+            the app, German is the longest locale, and at a Larger-Text setting
+            of 1.3 the card already reaches the bottom of an iPhone SE. */}
+        <ScrollView style={styles.bodyWrap} contentContainerStyle={styles.bodyBox} showsVerticalScrollIndicator={false}>
+          <Text style={styles.body} maxFontSizeMultiplier={1.3}>{t('nudge.quiz.body')}</Text>
+        </ScrollView>
 
         {/* Read from the same mysteryView the results screen uses. If this ever
             disagreed with what she sees after tapping through, the prompt would
@@ -118,18 +158,19 @@ export default function QuizPromoHost({ inGap }: {
             <View key={i} style={[styles.pip, i < mystery.current && styles.pipOn]} />
           ))}
         </View>
-        <Text style={styles.progressText}>
+        <Text style={styles.progressText} maxFontSizeMultiplier={1.3}>
           {t('nudge.quiz.progress', { n: Math.max(1, setsToCard) })}
         </Text>
 
         <TouchableOpacity style={styles.cta} activeOpacity={0.9} onPress={onTake}>
-          <Text style={styles.ctaText}>{t('nudge.quiz.cta')}</Text>
+          <Text style={styles.ctaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>{t('nudge.quiz.cta')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.later} onPress={dismiss} hitSlop={8}>
-          <Text style={styles.laterText}>{t('nudge.quiz.later')}</Text>
+          <Text style={styles.laterText} numberOfLines={1} maxFontSizeMultiplier={1.3}>{t('nudge.quiz.later')}</Text>
         </TouchableOpacity>
       </Animated.View>
     </View>
+    </Modal>
   );
 }
 
@@ -142,7 +183,9 @@ const styles = StyleSheet.create({
   card: { width: '100%', backgroundColor: '#FFFFFF', borderRadius: 20, paddingTop: 24, paddingBottom: 16, paddingHorizontal: 22, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 24, elevation: 8 },
   icon: { width: 56, height: 56, borderRadius: 28, backgroundColor: `${ROSE}16`, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
   title: { fontSize: 20, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT, textAlign: 'center', marginBottom: 8 },
-  body: { fontSize: 14.5, lineHeight: 21, color: TXTSUB, textAlign: 'center', fontFamily: FONTS.lato, letterSpacing: 0.4, marginBottom: 16 },
+  bodyWrap: { flexGrow: 0, alignSelf: 'stretch', maxHeight: 168, marginBottom: 16 },
+  bodyBox: { flexGrow: 1, justifyContent: 'center' },
+  body: { fontSize: 14.5, lineHeight: 21, color: TXTSUB, textAlign: 'center', fontFamily: FONTS.lato, letterSpacing: 0.4 },
   progressRow: { flexDirection: 'row', gap: 7, marginBottom: 8 },
   pip: { width: 26, height: 6, borderRadius: 3, backgroundColor: `${ROSE}24` },
   pipOn: { backgroundColor: ROSE },

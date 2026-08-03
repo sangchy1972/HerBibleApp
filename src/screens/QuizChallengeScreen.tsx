@@ -65,6 +65,16 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   // Two taps in one frame dispatch two GO_BACKs; the second pops the parent and
   // she lands two screens away from where she meant to be.
   const navLock = useRef(false);
+  // ONE retry ad per visit to the quiz.
+  //
+  // The 60 s global floor is the only other throttle in the app — there is no
+  // per-day impression cap anywhere — and a retry round of one or two questions
+  // takes 10-25 s. Uncapped, the woman who knows Scripture LEAST takes the most
+  // ads: 2-4 per set, 6-12 a day from this button alone. That is the opposite
+  // of the incentive a devotional app should create, and it is the pattern
+  // AdMob's own guidance names when it says not to attach an ad to a repeated
+  // action.
+  const retryAdShown = useRef(false);
   const goHome = () => {
     if (navLock.current) return;
     navLock.current = true;
@@ -225,7 +235,15 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
             // A user who never gets one wrong never sees this ad at all. That
             // is the design, not an oversight.
             retry();
-            maybeShowInterstitial('quiz_retry');
+            if (retryAdShown.current) return;
+            retryAdShown.current = true;
+            // DELAYED, not immediate. "Try those again" is the primary footer
+            // CTA and a double-tap on a retry button is a reflex; presenting in
+            // the same touch window means the second tap lands on the creative.
+            // That is an accidental click, and at scale AdMob reads a pattern of
+            // them as invalid traffic. 400 ms is past the reflex and still
+            // inside the transition.
+            setTimeout(() => maybeShowInterstitial('quiz_retry'), 400);
           }}
           onNextLevel={() => {
             // Commit and stay. `leaving` is NOT set: the auto-open effect is

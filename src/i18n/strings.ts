@@ -2675,7 +2675,7 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'nudge.widget.body': 'Behalte den heutigen Vers und dein nächstes Gebet auf dem Startbildschirm.',
     'nudge.widget.cta': 'Widget hinzufügen',
     'nudge.widget.later': 'Jetzt nicht',
-    'nudge.quiz.title': 'Verdien eine Karte beim Warten',
+    'nudge.quiz.title': 'Verdiene eine Karte beim Warten',
     'nudge.quiz.body': 'Beantworte fünf Fragen zur Schrift und erhalte eine Karte, die für das geschrieben ist, was du gerade trägst — dazu ein Teil eines klassischen Gemäldes.',
     'nudge.quiz.progress': 'Noch {n} Runden bis zur nächsten Karte',
     'nudge.quiz.cta': 'Quiz starten',

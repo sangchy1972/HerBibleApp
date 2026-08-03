@@ -54,6 +54,16 @@ export interface CardProgressV1 {
   /** May exceed collected.length once the pool has reset and repeats begin. */
   drawsTaken: number;
   /**
+   * Highest completedSets already considered for a draw.
+   *
+   * PERSISTED, and that is the point. The grant used to live in an in-memory
+   * ref, and the grant is a different render from the commit — so a kill in
+   * between committed the set and lost the draw FOREVER, because on relaunch
+   * the ref re-seeded to the new count and that set was never re-examined.
+   * Storing the watermark makes the grant derivable instead of ref-dependent.
+   */
+  grantedThroughSets: number;
+  /**
    * A draw has been EARNED but not yet taken.
    *
    * This flag is the whole reason the reward survives real life. The draw is
@@ -70,6 +80,7 @@ export const INITIAL_CARD_PROGRESS: CardProgressV1 = {
   collected: [],
   drawsTaken: 0,
   pendingDraw: false,
+  grantedThroughSets: 0,
 };
 
 /**
@@ -165,6 +176,34 @@ export function collectCard(p: CardProgressV1, cardId: string): CardProgressV1 {
   };
 }
 
+/**
+ * Catch up on every draw earned between `grantedThroughSets` and `completedSets`.
+ *
+ * Idempotent and CRASH-SAFE: replaying it after a kill re-examines exactly the
+ * sets that were never considered, so a draw earned in the frame before the
+ * process died is still granted on the next launch. `pendingDraw` is a single
+ * boolean rather than a queue on purpose — owing her two draws at once has
+ * never been reachable at a 3-set cadence, and a counter would need its own
+ * merge rules for no benefit.
+ */
+export function grantDrawsThrough(
+  p: CardProgressV1,
+  completedSets: number,
+  every: number,
+): CardProgressV1 {
+  const n = Math.max(0, Math.floor(completedSets) || 0);
+  if (n <= p.grantedThroughSets) return p;
+  let owed = false;
+  for (let k = p.grantedThroughSets + 1; k <= n; k += 1) {
+    if (drawEarnedAt(k, every)) { owed = true; break; }
+  }
+  return {
+    ...p,
+    grantedThroughSets: n,
+    pendingDraw: p.pendingDraw || owed,
+  };
+}
+
 /** A completed set earned a draw. Idempotent — two calls do not stack two draws. */
 export function grantDraw(p: CardProgressV1): CardProgressV1 {
   return p.pendingDraw ? p : { ...p, pendingDraw: true };
@@ -239,13 +278,20 @@ export function parseCardProgress(raw: string | null): CardProgressV1 {
     const collected = Array.isArray(p.collected)
       ? p.collected.filter((x: unknown) => typeof x === 'string' && x.length > 0)
       : [];
+    const unique = [...new Set<string>(collected)];
     return {
       v: 1,
       // De-dupe on read: a merge from another device unions the arrays, and a
       // duplicate would inflate the collection count.
-      collected: [...new Set<string>(collected)],
-      drawsTaken: Number.isInteger(p.drawsTaken) && p.drawsTaken >= 0 ? p.drawsTaken : collected.length,
+      collected: unique,
+      drawsTaken: Number.isInteger(p.drawsTaken) && p.drawsTaken >= 0 ? p.drawsTaken : unique.length,
       pendingDraw: p.pendingDraw === true,
+      // Absent on a record written before this field existed. Seeding from
+      // drawsTaken rather than 0 stops an upgrade from replaying every draw she
+      // has ever earned as one big backlog.
+      grantedThroughSets: Number.isInteger(p.grantedThroughSets) && p.grantedThroughSets >= 0
+        ? p.grantedThroughSets
+        : unique.length * 3,
     };
   } catch {
     return INITIAL_CARD_PROGRESS;

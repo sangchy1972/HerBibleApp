@@ -214,13 +214,19 @@ export function parseSession(raw: string | null, bankVersion: number): QuizSessi
       correct: typeof a?.correct === 'boolean' ? a.correct : null,
       tried: Array.isArray(a?.tried) ? a.tried.filter((t: unknown) => Number.isInteger(t)) : [],
     }));
-    const cursor = Number.isInteger(p.cursor) ? Math.max(0, Math.min(p.cursor, p.queue.length - 1)) : 0;
+    const queue: number[] = p.queue.filter((q: unknown) => Number.isInteger(q));
+    // A queue entry outside `answers` makes currentPosition return an index
+    // that resolves to no question, and the screen renders a blank body with no
+    // way forward — the one genuinely unrecoverable state. Discarding the
+    // session costs her one set; keeping it costs her the feature.
+    if (queue.length === 0 || queue.some(q => q < 0 || q >= answers.length)) return null;
+    const cursor = Number.isInteger(p.cursor) ? Math.max(0, Math.min(p.cursor, queue.length - 1)) : 0;
     return {
       v: 1,
       bankVersion,
       setIndex: Number.isInteger(p.setIndex) && p.setIndex >= 0 ? p.setIndex : 0,
       round: Number.isInteger(p.round) && p.round >= 0 ? p.round : 0,
-      queue: p.queue.filter((q: unknown) => Number.isInteger(q)),
+      queue,
       cursor,
       phase,
       answers,

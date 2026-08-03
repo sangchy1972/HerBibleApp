@@ -51,7 +51,12 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
   const accuracy = answered > 0 ? progress.totalCorrect / answered : null;
   const puzzle = puzzleView(progress.completedSets, QUIZ_ART_COUNT);
 
+  // Capped at the bank size on purpose: the set stream cycles, so past set 65
+  // she has genuinely seen everything and starts again. The label switches
+  // rather than sitting at a permanently full bar with no explanation for why
+  // questions are repeating.
   const seen = Math.min(progress.setIndex * SET_SIZE, bank?.length ?? 0);
+  const fullCycle = !!bank && bank.length > 0 && seen >= bank.length;
   const coverage = bank && bank.length > 0 ? seen / bank.length : 0;
 
   const days = useMemo(
@@ -95,19 +100,34 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
             {t('quiz.progress.level', { n: levelFor(progress.completedSets) })}
           </Text>
         </View>
-        {/* Labelled, because a bare number here means nothing — "perfect" has to
-            be spelled out as 5/5 with no retry or she has to guess. */}
-        <View style={styles.line}>
-          <Feather name="check-circle" size={16} color={GREEN_DONE} />
-          <Text style={styles.lineText} maxFontSizeMultiplier={1.3}>
-            {t('quiz.progress.perfect', { n: progress.perfectSets })}
-          </Text>
-        </View>
+        {/* Hidden at zero. This app's readers often arrive low, and a dashboard
+            that greets a returning user with "0 perfect levels" is a scoreboard
+            telling her she is bad at it. The streak row already had this
+            judgement; the same rule belongs here. */}
+        {progress.perfectSets > 0 ? (
+          <View style={styles.line}>
+            <Feather name="check-circle" size={16} color={GREEN_DONE} />
+            <Text style={styles.lineText} maxFontSizeMultiplier={1.3}>
+              {t('quiz.progress.perfect', { n: progress.perfectSets })}
+            </Text>
+          </View>
+        ) : null}
         {historySummary.streak > 0 ? (
           <View style={styles.line}>
             <Feather name="zap" size={16} color={ROSE} />
             <Text style={styles.lineText} maxFontSizeMultiplier={1.3}>
               {t('quiz.progress.streak', { n: historySummary.streak })}
+            </Text>
+          </View>
+        ) : null}
+        {/* Shown only when it beats the current run — that is exactly the user
+            who came back after a lapse, and "you once did 12 days" is the one
+            number on this screen that welcomes her instead of grading her. */}
+        {historySummary.bestStreak > historySummary.streak ? (
+          <View style={styles.line}>
+            <Feather name="award" size={16} color={TXTSUB} />
+            <Text style={styles.lineText} maxFontSizeMultiplier={1.3}>
+              {t('quiz.progress.bestStreak', { n: historySummary.bestStreak })}
             </Text>
           </View>
         ) : null}
@@ -117,7 +137,9 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
         {bank && bank.length > 0 ? (
           <View style={styles.block}>
             <Text style={styles.blockLabel} maxFontSizeMultiplier={1.3}>
-              {t('quiz.progress.coverage', { n: seen, total: bank.length })}
+              {fullCycle
+                ? t('quiz.progress.coverageDone', { total: bank.length })
+                : t('quiz.progress.coverage', { n: seen, total: bank.length })}
             </Text>
             <View style={styles.track}>
               <View style={[styles.fill, { width: `${Math.round(coverage * 100)}%` }]} />

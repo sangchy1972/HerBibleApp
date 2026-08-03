@@ -12,7 +12,7 @@ import { ROSE, BTN_RADIUS, FONTS } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
 import { useQuiz } from '../../state/QuizContext';
 import { useUILanguage } from '../../state/UILanguageContext';
-import { localizedCardBody, type MysteryCard } from '../../constants/mysteryCards';
+import { localizedCardBody, MYSTERY_CARD_COUNT, type MysteryCard } from '../../constants/mysteryCards';
 import type { UILanguageCode } from '../../state/UILanguageContext';
 import { MysteryCardBack, MysteryCardFront, CARD_RADIUS } from './MysteryCardFace';
 import MysteryCardArt, { CARD_SHARE_WIDTH } from './MysteryCardArt';
@@ -43,12 +43,19 @@ const TYPE_AT = 3320;
 
 type Phase = 'spread' | 'reveal' | 'read';
 
-export default function MysteryDrawOverlay({ onDone }: { onDone: () => void }) {
+export default function MysteryDrawOverlay({
+  onDone, blocked = false,
+}: {
+  onDone: () => void;
+  /** Another overlay is on top. Back must fall through to it. */
+  blocked?: boolean;
+}) {
   const t = useT();
   const { lang } = useUILanguage();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const { drawSpread, drawCard, likeCard, cardIsLiked, logCardShare } = useQuiz();
+  const { drawSpread, drawCard, likeCard, cardIsLiked, logCardShare, collectedCards } = useQuiz();
+  const collectedCount = collectedCards.length;
   const shotRef = useRef<View>(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -83,13 +90,18 @@ export default function MysteryDrawOverlay({ onDone }: { onDone: () => void }) {
   // by drawCard, so backing out returns her to the same spread later.
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      // BackHandler runs subscriptions last-registered-first, and the painting
+      // celebration mounts BEFORE this one — so without this guard the hidden
+      // draw overlay swallowed Back on the completion screen and ejected her
+      // from the quiz mid-celebration.
+      if (blocked) return false;
       if (phase === 'spread') { onDone(); return true; }
       skip();
       return true;
     });
     return () => sub.remove();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, onDone]);
+  }, [phase, onDone, blocked]);
 
   const geom = useMemo(() => {
     const gutter = 15;
@@ -267,6 +279,12 @@ export default function MysteryDrawOverlay({ onDone }: { onDone: () => void }) {
             <IconAction icon="share-2" label={t('quiz.card.share')} onPress={onShare} />
             <IconAction icon="download" label={t('quiz.card.save')} onPress={onSave} />
           </View>
+          {/* Where it went. Without this the collection is invisible to anyone
+              who never opens Profile, and by the spec's own argument the draw
+              degrades back into a notification. */}
+          <Text style={styles.saved} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+            {t('quiz.card.savedTo', { n: collectedCount, total: MYSTERY_CARD_COUNT })}
+          </Text>
           <TouchableOpacity style={styles.cta} activeOpacity={0.85} onPress={onDone} accessibilityRole="button">
             <Text style={styles.ctaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
               {t('quiz.card.collect')}
@@ -406,6 +424,10 @@ const styles = StyleSheet.create({
   },
   iconDiscOn: { backgroundColor: ROSE },
   iconLabel: { color: 'rgba(255,255,255,0.6)', fontFamily: FONTS.lato, fontSize: 11 },
+  saved: {
+    color: 'rgba(255,255,255,0.55)', fontFamily: FONTS.lato, fontSize: 12,
+    textAlign: 'center', marginBottom: 12, letterSpacing: 0.2,
+  },
   cta: {
     height: 54, borderRadius: BTN_RADIUS, backgroundColor: ROSE,
     alignItems: 'center', justifyContent: 'center',

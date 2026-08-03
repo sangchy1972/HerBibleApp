@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import Svg, { Defs, ClipPath, Path, Image as SvgImage, G } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
@@ -42,6 +42,10 @@ export default function PuzzleBoard({
   const paths = useMemo(() => jigsawPaths(w, h), [w, h]);
   const uri = artUrl(art);
   const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  // Reset when the board is recycled onto a different painting, or a single
+  // failure would stick for every later one.
+  useEffect(() => { setFailed(false); setLoaded(false); }, [art.id]);
 
   return (
     <View style={{ width: w }}>
@@ -51,6 +55,7 @@ export default function PuzzleBoard({
       <Image
         source={{ uri }}
         style={styles.probe}
+        onLoad={() => setLoaded(true)}
         onError={() => setFailed(true)}
         accessibilityIgnoresInvertColors
       />
@@ -65,8 +70,11 @@ export default function PuzzleBoard({
         </Defs>
 
         {paths.map((d, i) => {
-          const open = i < unlocked;
-          if (!open || failed) {
+          // Until the bitmap lands, an "unlocked" piece would draw nothing at
+          // all — SvgImage has no placeholder — so the whole celebration could
+          // be a dark scrim over a blank rectangle on a slow connection.
+          const open = i < unlocked && loaded && !failed;
+          if (!open) {
             return (
               <Path
                 key={`l${i}`}
@@ -105,9 +113,11 @@ export default function PuzzleBoard({
       </Svg>
 
       {/* Lock glyphs sit outside the SVG: a Feather icon inside react-native-svg
-          would need a second font registration for no gain. */}
-      {!failed && Array.from({ length: TILES_PER_PAINTING }, (_, i) => (
-        i < unlocked ? null : (
+          would need a second font registration for no gain. Kept when the image
+          FAILS, so a dead CDN still reads as "not earned yet" rather than as a
+          blank grey box with no explanation. */}
+      {Array.from({ length: TILES_PER_PAINTING }, (_, i) => (
+        i < unlocked && !failed ? null : (
           <View
             key={`k${i}`}
             pointerEvents="none"
@@ -125,6 +135,12 @@ export default function PuzzleBoard({
           </View>
         )
       ))}
+
+      {failed ? (
+        <View pointerEvents="none" style={styles.offline}>
+          <Feather name="cloud-off" size={14} color={TXTSUB} />
+        </View>
+      ) : null}
 
       {showCaption ? (
         <View style={styles.caption}>
@@ -146,6 +162,7 @@ const styles = StyleSheet.create({
   probe: { width: 1, height: 1, opacity: 0, position: 'absolute' },
   board: { borderRadius: 14, overflow: 'hidden', backgroundColor: INK_06 },
   lock: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
+  offline: { position: 'absolute', right: 8, top: 8, opacity: 0.8 },
   caption: { marginTop: 12, alignItems: 'center' },
   title: {
     fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 16.5,

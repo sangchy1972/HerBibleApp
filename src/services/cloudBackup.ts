@@ -92,7 +92,7 @@ export async function backupNow(force = false): Promise<void> {
 // Download + merge + apply. Returns true when anything on-device changed
 // (i.e. the UI needs a re-hydration). Only marks the uid restored on success,
 // so an offline failure retries on the next launch/sign-in.
-async function restoreAndMerge(uid: string): Promise<boolean> {
+async function restoreAndMerge(uid: string, wasOnboardingDone: boolean): Promise<void> {
   const snapDoc: any = await withTimeout(fsMod.getDoc(userDoc(uid)), 20000);
   const exists = typeof snapDoc.exists === 'function' ? snapDoc.exists() : !!snapDoc.exists;
   const remote: Snapshot = exists ? (JSON.parse(snapDoc.data()?.payload ?? '{}') as Snapshot) : {};
@@ -102,9 +102,22 @@ async function restoreAndMerge(uid: string): Promise<boolean> {
     await AsyncStorage.multiSet(changedKeys.map(k => [k, merged[k]] as [string, string]));
   }
   await AsyncStorage.setItem(RESTORED_UID_KEY, uid);
-  // Push the merged snapshot straight back up so the cloud copy is the union.
-  await backupNow(true);
-  return changedKeys.length > 0;
+
+  // ⚠️ REMOUNT BEFORE THE UPLOAD, AND DO NOT AWAIT THE UPLOAD.
+  //
+  // Every provider still mounted is holding PRE-restore state and will write it
+  // back the moment anything changes. backupNow is a network round trip with a
+  // 20 s timeout, so awaiting it here left a 20-second window in which finishing
+  // one quiz set — or tapping a single heart — would overwrite the freshly
+  // merged keys with the stale in-memory copy, and the upload would then push
+  // that clobbered version to the cloud. Progress from her other device would be
+  // gone from BOTH ends, unrecoverably.
+  //
+  // Remounting first re-hydrates every provider from the merged disk state, so
+  // there is no stale writer left. The upload is fire-and-forget; if it fails
+  // the next launch re-runs the merge, which is idempotent.
+  if (changedKeys.length) requestRemount(wasOnboardingDone);
+  void backupNow(true);
 }
 
 // Remount immediately when the app is past onboarding; otherwise hold it until
@@ -149,8 +162,7 @@ export function initCloudBackup(): void {
       const restoredUid = await AsyncStorage.getItem(RESTORED_UID_KEY);
       if (restoredUid === currentUid) { backupNow(); return; }
       const wasOnboardingDone = (await AsyncStorage.getItem('onboarding:done:v1')) === '1';
-      const changed = await restoreAndMerge(currentUid);
-      if (changed) requestRemount(wasOnboardingDone);
+      await restoreAndMerge(currentUid, wasOnboardingDone);
     } catch { /* offline — retry next auth event / launch */ }
   });
 

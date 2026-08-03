@@ -14,7 +14,7 @@ import {
 } from './quizProgress';
 import {
   INITIAL_CARD_PROGRESS, INITIAL_CARD_LIKES, parseCardProgress, parseCardLikes,
-  spreadFor, collectCard, grantDraw, drawEarnedAt, toggleLike, isLiked,
+  spreadFor, collectCard, grantDrawsThrough, toggleLike, isLiked,
   type CardProgressV1, type CardLikesV1,
 } from './cardDraw';
 import {
@@ -345,29 +345,28 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
   }, [session]);
 
   /**
-   * Grant the draw once per newly completed set.
+   * Grant every draw earned since the last one we considered.
    *
-   * Keyed on the committed count rather than fired inside the commit, so it
-   * cannot double-grant, and `lastGranted` makes a re-render idempotent on top
-   * of grantDraw already being so.
+   * The watermark is PERSISTED (`grantedThroughSets`), not held in a ref. The
+   * grant is a different render from the commit, so a kill in between used to
+   * commit the set and lose the draw forever — on relaunch the ref re-seeded to
+   * the new count and that set was never examined again. Replaying from the
+   * stored watermark catches exactly the sets that were missed.
    */
-  const lastGranted = useRef(-1);
   useEffect(() => {
     if (!hydrated.current) return;
-    const n = progress.completedSets;
-    // Seed on the first pass after hydration: a restored account at set 9 must
-    // not be handed a draw it already spent months ago.
-    if (lastGranted.current < 0) { lastGranted.current = n; return; }
-    if (n === lastGranted.current) return;
-    lastGranted.current = n;
-    if (drawEarnedAt(n, MYSTERY_EVERY)) {
-      setCards(c => grantDraw(c));
-      logEvent('quiz_draw_earned', { completed_sets: n });
-    }
+    setCards(prev => {
+      const next = grantDrawsThrough(prev, progress.completedSets, MYSTERY_EVERY);
+      if (next !== prev && next.pendingDraw && !prev.pendingDraw) {
+        logEvent('quiz_draw_earned', { completed_sets: progress.completedSets });
+      }
+      return next;
+    });
   }, [progress.completedSets]);
 
   // ── Mystery cards ─────────────────────────────────────────────────────────
   const cardIds = useMemo(() => MYSTERY_CARDS.map(c => c.id), []);
+  const knownCardIds = useMemo(() => new Set(cardIds), [cardIds]);
 
   const drawSpread = useMemo(
     () => spreadFor(cards, cardIds).candidates.map(i => MYSTERY_CARDS[i]),
@@ -376,8 +375,12 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
 
   // Most recent first: the collection reads as "what she just got", not as a
   // list she has to scroll to the bottom of.
+  // Filtered against the live pool, not mapped blindly. `cardById` falls back
+  // to the first card, so an id from a newer build — or a union merge across app
+  // versions — would render as a phantom duplicate of doubt-1 with a clashing
+  // React key, a "41 of 40" count, and a heart that likes the wrong card.
   const collectedCards = useMemo(
-    () => cards.collected.map(cardById).reverse(),
+    () => cards.collected.filter(id => knownCardIds.has(id)).map(cardById).reverse(),
     [cards.collected],
   );
 

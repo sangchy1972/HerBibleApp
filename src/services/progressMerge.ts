@@ -184,6 +184,9 @@ const mergeCardProgress = jsonMerger<any>((l, r) => {
     // than she visibly holds cards.
     drawsTaken: Math.max(l?.drawsTaken ?? 0, r?.drawsTaken ?? 0, collected.length),
     pendingDraw: l?.pendingDraw === true || r?.pendingDraw === true,
+    // Max, to match the ladder's own merge: the further-along device wins, and
+    // the watermark can never rewind and re-grant draws she already took.
+    grantedThroughSets: Math.max(l?.grantedThroughSets ?? 0, r?.grantedThroughSets ?? 0),
   };
 });
 

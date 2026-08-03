@@ -6,7 +6,7 @@
 
 import {
   CANDIDATES_PER_DRAW, INITIAL_CARD_PROGRESS, mulberry32,
-  candidatesFor, availableIndexes, spreadFor, collectCard, grantDraw,
+  candidatesFor, availableIndexes, spreadFor, collectCard, grantDraw, grantDrawsThrough,
   drawEarnedAt, parseCardProgress, type CardProgressV1,
   INITIAL_CARD_LIKES, isLiked, toggleLike, parseCardLikes,
 } from '../src/state/cardDraw';
@@ -98,7 +98,7 @@ describe('pool economics', () => {
 
   it('resets rather than dead-ends once everything is collected', () => {
     // A reward counter that counts down to nothing is worse than a repeat.
-    const p: CardProgressV1 = { v: 1, collected: [...IDS], drawsTaken: 40, pendingDraw: true };
+    const p: CardProgressV1 = { v: 1, collected: [...IDS], drawsTaken: 40, pendingDraw: true, grantedThroughSets: 0 };
     const s = spreadFor(p, IDS);
     expect(s.poolExhausted).toBe(true);
     expect(s.candidates).toHaveLength(CANDIDATES_PER_DRAW);
@@ -109,7 +109,7 @@ describe('pool economics', () => {
     // At 39 of 40 the raw candidate list is ONE entry. Showing a single card
     // under a prompt that says "choose one" is a joke at her expense after
     // three completed sets, so the table is topped up from what she holds.
-    const p: CardProgressV1 = { v: 1, collected: IDS.slice(0, 39), drawsTaken: 39, pendingDraw: true };
+    const p: CardProgressV1 = { v: 1, collected: IDS.slice(0, 39), drawsTaken: 39, pendingDraw: true, grantedThroughSets: 0 };
     const s = spreadFor(p, IDS);
     expect(s.candidates).toHaveLength(CANDIDATES_PER_DRAW);
     expect(new Set(s.candidates).size).toBe(CANDIDATES_PER_DRAW);
@@ -118,7 +118,7 @@ describe('pool economics', () => {
   });
 
   it('tops up from two cards short as well', () => {
-    const p: CardProgressV1 = { v: 1, collected: IDS.slice(0, 38), drawsTaken: 38, pendingDraw: true };
+    const p: CardProgressV1 = { v: 1, collected: IDS.slice(0, 38), drawsTaken: 38, pendingDraw: true, grantedThroughSets: 0 };
     const s = spreadFor(p, IDS);
     expect(s.candidates).toHaveLength(CANDIDATES_PER_DRAW);
     expect(new Set(s.candidates).size).toBe(CANDIDATES_PER_DRAW);
@@ -126,7 +126,7 @@ describe('pool economics', () => {
 
   it('reports the pool as not exhausted while anything is left', () => {
     expect(spreadFor(fresh(), IDS).poolExhausted).toBe(false);
-    const nearly: CardProgressV1 = { v: 1, collected: IDS.slice(0, 39), drawsTaken: 39, pendingDraw: true };
+    const nearly: CardProgressV1 = { v: 1, collected: IDS.slice(0, 39), drawsTaken: 39, pendingDraw: true, grantedThroughSets: 0 };
     expect(spreadFor(nearly, IDS).poolExhausted).toBe(false);
   });
 });
@@ -194,9 +194,58 @@ describe('grantDraw / drawEarnedAt', () => {
   });
 });
 
+describe('grantDrawsThrough — the crash-safe grant', () => {
+  it('grants nothing until the third set', () => {
+    let p = fresh();
+    p = grantDrawsThrough(p, 1, MYSTERY_EVERY);
+    expect(p.pendingDraw).toBe(false);
+    p = grantDrawsThrough(p, 2, MYSTERY_EVERY);
+    expect(p.pendingDraw).toBe(false);
+    p = grantDrawsThrough(p, 3, MYSTERY_EVERY);
+    expect(p.pendingDraw).toBe(true);
+  });
+
+  it('catches up a set that was committed just before the process died', () => {
+    // THE bug this replaces. The grant used to live in an in-memory ref, and
+    // the grant is a different render from the commit — so a kill in between
+    // committed the set and lost the draw forever, because on relaunch the ref
+    // re-seeded to the new count and set 3 was never examined again.
+    const afterCrash: CardProgressV1 = {
+      v: 1, collected: [], drawsTaken: 0, pendingDraw: false, grantedThroughSets: 2,
+    };
+    expect(grantDrawsThrough(afterCrash, 3, MYSTERY_EVERY).pendingDraw).toBe(true);
+  });
+
+  it('catches up several missed sets at once without owing several draws', () => {
+    const stale: CardProgressV1 = {
+      v: 1, collected: [], drawsTaken: 0, pendingDraw: false, grantedThroughSets: 0,
+    };
+    const p = grantDrawsThrough(stale, 9, MYSTERY_EVERY);
+    expect(p.pendingDraw).toBe(true);
+    expect(p.grantedThroughSets).toBe(9);
+  });
+
+  it('is idempotent — re-running never re-grants a spent draw', () => {
+    let p = grantDrawsThrough(fresh(), 3, MYSTERY_EVERY);
+    p = collectCard(p, IDS[0]);
+    expect(p.pendingDraw).toBe(false);
+    p = grantDrawsThrough(p, 3, MYSTERY_EVERY);
+    expect(p.pendingDraw).toBe(false);
+  });
+
+  it('never rewinds the watermark', () => {
+    const ahead: CardProgressV1 = {
+      v: 1, collected: [], drawsTaken: 0, pendingDraw: false, grantedThroughSets: 12,
+    };
+    expect(grantDrawsThrough(ahead, 5, MYSTERY_EVERY)).toBe(ahead);
+  });
+});
+
 describe('parseCardProgress', () => {
   it('round-trips', () => {
-    const p: CardProgressV1 = { v: 1, collected: [IDS[0], IDS[5]], drawsTaken: 4, pendingDraw: true };
+    const p: CardProgressV1 = {
+      v: 1, collected: [IDS[0], IDS[5]], drawsTaken: 4, pendingDraw: true, grantedThroughSets: 12,
+    };
     expect(parseCardProgress(JSON.stringify(p))).toEqual(p);
   });
 

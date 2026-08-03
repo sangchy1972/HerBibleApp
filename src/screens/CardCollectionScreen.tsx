@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
-import { BG, TXT, TXTSUB, ROSE, INK_06, FONTS, P } from '../constants/theme';
+import { BG, TXT, TXTSUB, ROSE, INK_06, BTN_RADIUS, FONTS, P } from '../constants/theme';
 import { useT } from '../i18n/useT';
 import { useQuiz } from '../state/QuizContext';
 import { useUILanguage } from '../state/UILanguageContext';
@@ -96,7 +96,22 @@ export default function CardCollectionScreen({ navigation }: RootStackScreenProp
         ) : null}
 
         {collectedCards.length === 0 ? (
-          <Text style={styles.empty} maxFontSizeMultiplier={1.3}>{t('quiz.cards.empty')}</Text>
+          <>
+            <Text style={styles.empty} maxFontSizeMultiplier={1.3}>{t('quiz.cards.empty')}</Text>
+            {/* A dead end otherwise: the only affordance on the empty screen was
+                Back, and nothing on it pointed at the thing that earns a card.
+                Profile can reach this on day one. */}
+            <TouchableOpacity
+              style={styles.goPlay}
+              activeOpacity={0.85}
+              onPress={() => navigation.replace('Quiz')}
+              accessibilityRole="button"
+            >
+              <Text style={styles.goPlayText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+                {t('quiz.cards.goPlay')}
+              </Text>
+            </TouchableOpacity>
+          </>
         ) : rows.length === 0 ? (
           <Text style={styles.empty} maxFontSizeMultiplier={1.3}>{t('quiz.cards.noneLiked')}</Text>
         ) : (
@@ -263,6 +278,11 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.lato, fontSize: 13.5, color: TXTSUB,
     lineHeight: 21, letterSpacing: 0.2, marginTop: 8,
   },
+  goPlay: {
+    height: 50, borderRadius: BTN_RADIUS, backgroundColor: ROSE,
+    alignItems: 'center', justifyContent: 'center', marginTop: 22,
+  },
+  goPlayText: { fontFamily: FONTS.latoBold, fontSize: 15.5, color: '#FFFFFF', letterSpacing: 0.4 },
   row: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#FFFFFF', borderRadius: 14,

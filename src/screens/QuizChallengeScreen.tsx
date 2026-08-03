@@ -8,6 +8,7 @@ import { useQuiz } from '../state/QuizContext';
 import { currentPosition, isTried, sessionSummary } from '../state/quizSession';
 import { levelFor, MYSTERY_EVERY, TILES_PER_PAINTING } from '../state/quizProgress';
 import { drawEarnedAt } from '../state/cardDraw';
+import { QUIZ_ART_COUNT } from '../constants/quizArt';
 import QuizSegmentBar from '../components/quiz/QuizSegmentBar';
 import QuizQuestionView from '../components/quiz/QuizQuestionView';
 import QuizReviewView from '../components/quiz/QuizReviewView';
@@ -41,6 +42,19 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   // She would appear to be trapped. The flag lives for this visit only, so the
   // draw is offered again next time she opens the quiz.
   const drawDismissed = useRef(false);
+  // True when the overlay was opened by a draw she earned in a PREVIOUS visit
+  // rather than by the set she just finished. Collecting that one must leave
+  // her on the quiz, not throw her home — she opened the app to answer
+  // questions and an old reward ambushed her before the first one.
+  const resumedDraw = useRef(false);
+  // Two taps in one frame dispatch two GO_BACKs; the second pops the parent and
+  // she lands two screens away from where she meant to be.
+  const navLock = useRef(false);
+  const goHome = () => {
+    if (navLock.current) return;
+    navLock.current = true;
+    navigation.goBack();
+  };
 
   // A finished painting gets its own moment. Four sets and twenty questions is
   // a bigger thing than one set, and folding it into the same results card
@@ -50,7 +64,11 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   // A draw interrupted by a force quit is offered again on the next open —
   // pendingDraw is persisted and only ever spent by collecting a card.
   useEffect(() => {
-    if (ready && pendingDraw && !drawing && !drawDismissed.current) setDrawing(true);
+    if (!ready || !pendingDraw || drawing || drawDismissed.current) return;
+    // A draw that was already owed when the screen mounted is a leftover, not a
+    // reward for what she is doing right now.
+    if (!leaving.current) resumedDraw.current = true;
+    setDrawing(true);
   }, [ready, pendingDraw, drawing]);
 
   // Start (or resume) as soon as the bank is available. Guarded inside `open`,
@@ -68,7 +86,7 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   // Android hardware back = the close button, not a silent no-op.
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      navigation.goBack();
+      goHome();
       return true;
     });
     return () => sub.remove();
@@ -102,7 +120,7 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   // is reloading. Keying this on `!bank` used to eject the user mid-question
   // the instant she changed app language, since that re-triggers the fetch.
   useEffect(() => {
-    if (ready && bankStatus === 'unavailable' && !bank) navigation.goBack();
+    if (ready && bankStatus === 'unavailable' && !bank) goHome();
   }, [ready, bankStatus, bank, navigation]);
 
   const body = () => {
@@ -118,6 +136,11 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
           firstPassPerfect={summary.firstPassPerfect}
           completedSets={progress.completedSets}
           onRetry={retry}
+          onNextLevel={() => {
+            // Commit and stay. `leaving` is NOT set: the auto-open effect is
+            // exactly what starts the next set, which is the whole point.
+            finish();
+          }}
           onContinue={() => {
             leaving.current = true;
             // Decided BEFORE finish(), synchronously, from the set she is about
@@ -133,12 +156,18 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
             // committed count, synchronously, for the same reason the draw is:
             // the screen must know before finish() whether anything is going to
             // hold it open.
-            const painting = committed % TILES_PER_PAINTING === 0
-              ? committed / TILES_PER_PAINTING - 1
+            // Clamped: past the last painting there is nothing new to finish,
+            // and an unclamped index would replay a full "picture complete"
+            // celebration for artwork 73 every four sets, forever, while the
+            // grid never grew. QuizReviewView already handles this via
+            // view.outOfArt.
+            const pIdx = committed / TILES_PER_PAINTING - 1;
+            const painting = committed % TILES_PER_PAINTING === 0 && pIdx < QUIZ_ART_COUNT
+              ? pIdx
               : null;
             finish();
             if (painting != null) setFinishedPainting(painting);
-            else if (!earns) navigation.goBack();
+            else if (!earns) goHome();
           }}
         />
       );
@@ -160,7 +189,7 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   return (
     <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12} style={styles.close}>
+        <TouchableOpacity onPress={goHome} hitSlop={12} style={styles.close}>
           <Feather name="x" size={24} color={TXT} />
         </TouchableOpacity>
         <View style={styles.headerCopy}>
@@ -190,7 +219,15 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
           the painting under it would make the rarer thing feel incidental. */}
       {drawing ? (
         <MysteryDrawOverlay
-          onDone={() => { drawDismissed.current = true; setDrawing(false); navigation.goBack(); }}
+          blocked={finishedPainting != null}
+          onDone={() => {
+            drawDismissed.current = true;
+            setDrawing(false);
+            // A leftover draw hands her back the quiz she came here for; a draw
+            // she just earned takes her home with it.
+            if (resumedDraw.current) { resumedDraw.current = false; return; }
+            goHome();
+          }}
         />
       ) : null}
 
@@ -200,7 +237,7 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
           onDone={() => {
             setFinishedPainting(null);
             // Only leave if no card draw is waiting underneath.
-            if (!pendingDraw) navigation.goBack();
+            if (!pendingDraw) goHome();
           }}
         />
       ) : null}

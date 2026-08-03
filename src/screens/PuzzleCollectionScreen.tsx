@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
-import { BG, TXT, TXTSUB, INK_06, ROSE, FONTS, P } from '../constants/theme';
+import { BG, TXT, TXTSUB, INK_06, ROSE, BTN_RADIUS, FONTS, P } from '../constants/theme';
 import { useT } from '../i18n/useT';
 import { useQuiz } from '../state/QuizContext';
 import { puzzleView, TILES_PER_PAINTING } from '../state/quizProgress';
@@ -88,7 +88,19 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
         </Text>
 
         {finished.length === 0 ? (
-          <Text style={styles.empty} maxFontSizeMultiplier={1.3}>{t('quiz.collection.empty')}</Text>
+          <>
+            <Text style={styles.empty} maxFontSizeMultiplier={1.3}>{t('quiz.collection.empty')}</Text>
+            <TouchableOpacity
+              style={styles.goPlay}
+              activeOpacity={0.85}
+              onPress={() => navigation.replace('Quiz')}
+              accessibilityRole="button"
+            >
+              <Text style={styles.goPlayText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+                {t('quiz.cards.goPlay')}
+              </Text>
+            </TouchableOpacity>
+          </>
         ) : (
           <View style={styles.grid}>
             {finished.map(a => (
@@ -258,6 +270,11 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.lato, fontSize: 13.5, color: TXTSUB,
     lineHeight: 20, letterSpacing: 0.2,
   },
+  goPlay: {
+    height: 50, borderRadius: BTN_RADIUS, backgroundColor: ROSE,
+    alignItems: 'center', justifyContent: 'center', marginTop: 22,
+  },
+  goPlayText: { fontFamily: FONTS.latoBold, fontSize: 15.5, color: '#FFFFFF', letterSpacing: 0.4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: GRID_GAP, rowGap: 18 },
   thumb: { borderRadius: 10, backgroundColor: INK_06 },
   thumbTitle: {

@@ -6,7 +6,8 @@ import { useT } from '../../i18n/useT';
 import QuizSegmentBar from './QuizSegmentBar';
 import PuzzleBoard from './PuzzleBoard';
 import MysteryRewardBar from './MysteryRewardBar';
-import { rewardPreview } from '../../state/quizProgress';
+import { rewardPreview, MYSTERY_EVERY, TILES_PER_PAINTING } from '../../state/quizProgress';
+import { drawEarnedAt } from '../../state/cardDraw';
 import { QUIZ_ART_COUNT } from '../../constants/quizArt';
 import type { SegmentState } from '../../state/quizSession';
 
@@ -22,7 +23,7 @@ import type { SegmentState } from '../../state/quizSession';
 
 export default function QuizReviewView({
   segments, correct, total, wrong, level, firstPassPerfect, completedSets,
-  onRetry, onContinue,
+  onRetry, onContinue, onNextLevel,
 }: {
   segments: SegmentState[];
   correct: number;
@@ -34,6 +35,8 @@ export default function QuizReviewView({
   completedSets: number;
   onRetry: () => void;
   onContinue: () => void;
+  /** Commit and start the next set without leaving. */
+  onNextLevel: () => void;
 }) {
   const t = useT();
   const { width } = useWindowDimensions();
@@ -44,6 +47,11 @@ export default function QuizReviewView({
   // once she has already tapped away from the screen celebrating it.
   const { view, freshTile } = rewardPreview(completedSets, QUIZ_ART_COUNT);
   const boardSize = Math.min(width - 88, 240);
+  // The set she is about to commit. The counter has to read from the COMMITTED
+  // number or the screen that celebrates a card says "3 more to go" with an
+  // empty bar — she watched that counter for three sets and never saw it land.
+  const earnsCard = drawEarnedAt(completedSets + 1, MYSTERY_EVERY);
+  const willFinishPainting = (completedSets + 1) % TILES_PER_PAINTING === 0;
 
   return (
     <View style={styles.root}>
@@ -87,7 +95,16 @@ export default function QuizReviewView({
               newTile={freshTile}
             />
             <View style={styles.mystery}>
-              <MysteryRewardBar completedSets={completedSets + 1} />
+              {earnsCard ? (
+                <View style={styles.unlocked}>
+                  <MaterialCommunityIcons name="gift-outline" size={19} color={ROSE} />
+                  <Text style={styles.unlockedText} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+                    {t('quiz.mystery.unlocked')}
+                  </Text>
+                </View>
+              ) : (
+                <MysteryRewardBar completedSets={completedSets + 1} />
+              )}
             </View>
           </>
         ) : null}
@@ -104,6 +121,22 @@ export default function QuizReviewView({
             {done ? t('quiz.action.continue') : t('quiz.action.retry')}
           </Text>
         </TouchableOpacity>
+
+        {/* Every exit used to go home, so playing ten sets meant ten trips back
+            through the home screen hunting for the card. Hidden when a reward is
+            waiting — the celebration should not be skippable by accident. */}
+        {done && !earnsCard && !willFinishPainting ? (
+          <TouchableOpacity
+            style={styles.secondary}
+            activeOpacity={0.7}
+            onPress={onNextLevel}
+            accessibilityRole="button"
+          >
+            <Text style={styles.secondaryText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+              {t('quiz.action.nextLevel')}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
     </View>
   );
@@ -147,4 +180,12 @@ const styles = StyleSheet.create({
   ctaText: {
     fontFamily: FONTS.latoBold, fontSize: 16.5, color: '#FFFFFF', letterSpacing: 0.4,
   },
+  secondary: { height: 44, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  secondaryText: { fontFamily: FONTS.latoBold, fontSize: 14.5, color: ROSE, letterSpacing: 0.3 },
+  unlocked: {
+    flexDirection: 'row', alignItems: 'center', gap: 9,
+    backgroundColor: ROSE_WASH, borderRadius: 12,
+    paddingVertical: 11, paddingHorizontal: 14,
+  },
+  unlockedText: { flex: 1, fontFamily: FONTS.latoBold, fontSize: 13.5, color: TXT, letterSpacing: 0.2 },
 });

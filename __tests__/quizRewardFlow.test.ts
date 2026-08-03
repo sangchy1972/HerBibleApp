@@ -17,8 +17,8 @@ import {
   INITIAL_PROGRESS, applyCompletion, MYSTERY_EVERY, levelFor, puzzleView,
 } from '../src/state/quizProgress';
 import {
-  INITIAL_CARD_PROGRESS, INITIAL_CARD_LIKES, spreadFor, collectCard, grantDraw,
-  drawEarnedAt, toggleLike, isLiked, type CardProgressV1, type CardLikesV1,
+  INITIAL_CARD_PROGRESS, INITIAL_CARD_LIKES, spreadFor, collectCard,
+  grantDrawsThrough, toggleLike, isLiked, type CardProgressV1, type CardLikesV1,
 } from '../src/state/cardDraw';
 import { INITIAL_HISTORY, recordSet, summarize } from '../src/state/quizHistory';
 import { questionsForSet, SET_SIZE } from '../src/services/quizSets';
@@ -54,7 +54,7 @@ const fresh = (): World => ({
  * Play one full set exactly as QuizChallengeScreen does.
  * `wrongAt` = positions to deliberately miss on the first pass.
  */
-function playSet(w: World, ymd: string, wrongAt: number[] = []): World {
+function playSet(w: World, ymd: string, wrongAt: number[] = [], missAgainAt: number[] = []): World {
   const qs = questionsForSet(w.progress.setIndex, BANK);
   let s = initialSession(w.progress.setIndex, qs.map(q => q.id), 2);
 
@@ -69,12 +69,17 @@ function playSet(w: World, ymd: string, wrongAt: number[] = []): World {
   expect(s.phase).toBe('summary');
 
   // Retry rounds until nothing is wrong — a set cannot commit otherwise.
+  // `missAgainAt` misses once more on the FIRST retry round, so the second
+  // retry round is exercised too: firstPassWrong must stay frozen through it.
   let guard = 0;
   while (sessionSummary(s).wrong > 0 && guard < 10) {
     s = startRetryRound(s);
+    const missNow = guard === 0 ? missAgainAt : [];
     while (s.phase !== 'summary') {
       const pos = currentPosition(s)!;
-      s = pickOption(s, qs[pos].answerIndex, true);
+      const q = qs[pos];
+      const ok = !missNow.includes(pos);
+      s = pickOption(s, ok ? q.answerIndex : (q.answerIndex + 2) % q.options.length, ok);
       s = advance(s);
     }
     guard += 1;
@@ -90,7 +95,7 @@ function playSet(w: World, ymd: string, wrongAt: number[] = []): World {
 
   return {
     progress,
-    cards: drawEarnedAt(progress.completedSets, MYSTERY_EVERY) ? grantDraw(w.cards) : w.cards,
+    cards: grantDrawsThrough(w.cards, progress.completedSets, MYSTERY_EVERY),
     likes: w.likes,
     history: recordSet(w.history, ymd, {
       questions: done.answers.length,
@@ -214,6 +219,48 @@ describe('the loop', () => {
     w = draw(w);
     expect(w.cards.collected).toHaveLength(before);   // repeat, not a new entry
     expect(w.cards.drawsTaken).toBe(MYSTERY_CARD_COUNT + 1);
+  });
+});
+
+describe('the collision set', () => {
+  it('set 12 grants a card AND completes a painting, and both are recorded', () => {
+    // The two cadences (every 3, every 4) land together every 12 sets. Neither
+    // may eat the other.
+    let w = fresh();
+    for (let i = 0; i < 12; i += 1) {
+      w = playSet(w, day(i));
+      if (w.cards.pendingDraw && (i + 1) % 12 !== 0) w = draw(w);
+    }
+    expect(w.progress.completedSets).toBe(12);
+    // A card is owed from set 12 itself.
+    expect(w.cards.pendingDraw).toBe(true);
+    // And painting index 2 (sets 9-12) is complete.
+    expect(puzzleView(w.progress.completedSets, QUIZ_ART_COUNT).completedPaintings).toBe(3);
+    w = draw(w);
+    expect(w.cards.pendingDraw).toBe(false);
+  });
+
+  it('a draw earned in the frame before a crash is still granted on relaunch', () => {
+    let w = fresh();
+    for (let i = 0; i < 3; i += 1) w = playSet(w, day(i));
+    // Simulate the process dying between the ladder write and the grant write.
+    const crashed: CardProgressV1 = { ...w.cards, pendingDraw: false, grantedThroughSets: 2 };
+    const relaunched = grantDrawsThrough(crashed, w.progress.completedSets, MYSTERY_EVERY);
+    expect(relaunched.pendingDraw).toBe(true);
+  });
+});
+
+describe('scoring across a second retry round', () => {
+  it('freezes firstPassWrong at round 0 and never counts a retry miss again', () => {
+    let w = fresh();
+    // Miss positions 0 and 3 on the first pass, then miss 3 AGAIN on the first
+    // retry, fixing it on the second.
+    w = playSet(w, day(0), [0, 3], [3]);
+    expect(w.progress.completedSets).toBe(1);
+    expect(w.progress.perfectSets).toBe(0);
+    // 5 asked, 2 wrong on the FIRST pass only.
+    expect(w.progress.totalCorrect).toBe(3);
+    expect(w.history.days[0].firstPassWrong).toBe(2);
   });
 });
 

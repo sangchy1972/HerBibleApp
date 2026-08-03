@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
-import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
+import Animated, { FadeIn, SlideInDown, Easing, useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import BadgeIcon from '../components/BadgeIcon';
 import SignInSheet from '../components/SignInSheet';
 import { ACHIEVEMENTS, achievementUi, localizedAchievementName, localizedAchievementRule, type Achievement } from '../constants/achievements';
@@ -41,6 +41,9 @@ function labelFor(a: Achievement): string | null {
       return null;
   }
 }
+
+// How far the detail sheet starts below its resting position.
+const SHEET_TRAVEL = 520;
 
 export default function AchievementScreen({ navigation }: RootStackScreenProps<'Achievement'>) {
   const insets = useSafeAreaInsets();
@@ -197,14 +200,28 @@ function DetailSheet({ badge, earnedAt, count, onClose, lang }: {
 }) {
   const insets = useSafeAreaInsets();
   const t = useT();
+  // Shared-value entrance, NOT `entering=`: Reanimated layout animations do not
+  // reliably run inside an RN Modal on the new arch, and a Modal eats every
+  // touch app-wide — so the old markup could leave this screen an input trap
+  // with no escape on iOS (the dismiss target lived inside the animated view).
+  // Same fix as RatePromptSheet; useAnimatedStyle DOES work in a Modal.
+  const dim = useSharedValue(0);
+  const ty = useSharedValue(SHEET_TRAVEL);
+  useEffect(() => {
+    dim.value = withTiming(1, { duration: 180 });
+    ty.value = withTiming(0, { duration: 360, easing: Easing.out(Easing.cubic) });
+    const wd = setTimeout(() => { dim.value = 1; ty.value = 0; }, 900);
+    return () => clearTimeout(wd);
+  }, [dim, ty]);
+  const dimStyle = useAnimatedStyle(() => ({ opacity: dim.value }));
+  const riseStyle = useAnimatedStyle(() => ({ transform: [{ translateY: ty.value }] }));
   return (
     <Modal transparent visible animationType="none" onRequestClose={onClose}>
-      <Animated.View entering={FadeIn.duration(180)} style={styles.sheetBackdrop}>
-        <TouchableOpacity activeOpacity={1} onPress={onClose} style={StyleSheet.absoluteFillObject} />
-      </Animated.View>
+      {/* Dismiss target OUTSIDE any animated wrapper — a blind tap always closes. */}
+      <TouchableOpacity activeOpacity={1} onPress={onClose} style={StyleSheet.absoluteFillObject} />
+      <Animated.View style={[styles.sheetBackdrop, dimStyle]} pointerEvents="none" />
       <Animated.View
-        entering={SlideInDown.duration(360)}
-        style={[styles.sheet, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}
+        style={[styles.sheet, { paddingBottom: Math.max(insets.bottom + 12, 24) }, riseStyle]}
       >
         <View style={styles.sheetHandle} />
         <View style={{ alignItems: 'center', marginTop: 8 }}>

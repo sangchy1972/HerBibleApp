@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Image, Pressable, Platform, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import * as StoreReview from 'expo-store-review';
-import Animated, { FadeIn, SlideInDown, Easing } from 'react-native-reanimated';
+import Animated, { Easing, useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { TXT, ROSE, BTN_RADIUS, FONTS } from '../constants/theme';
 import { useRatePrompt } from '../state/RatePromptContext';
 import { useT } from '../i18n/useT';
@@ -12,11 +12,27 @@ import { useT } from '../i18n/useT';
 // screen by RatePromptHost — never over the prayer-end scene anymore, so the
 // praying-hands Lottie can no longer bleed through behind it.
 const EMOJI = require('../../assets/rate-emoji.png');
+// How far the sheet starts below its resting position.
+const SHEET_TRAVEL = 420;
 
 export default function RatePromptSheet({ onClose }: { onClose: () => void }) {
   const { markYes, markNo, markRated } = useRatePrompt();
   const t = useT();
   const insets = useSafeAreaInsets();
+
+  // Shared-value entrance (see the note in the JSX for why this cannot be
+  // `entering=`). The watchdog snaps the sheet into place if the timing is
+  // dropped, so a saturated UI thread can never leave it off-screen.
+  const dim = useSharedValue(0);
+  const ty = useSharedValue(SHEET_TRAVEL);
+  useEffect(() => {
+    dim.value = withTiming(1, { duration: 250 });
+    ty.value = withTiming(0, { duration: 380, easing: Easing.out(Easing.cubic) });
+    const wd = setTimeout(() => { dim.value = 1; ty.value = 0; }, 900);
+    return () => clearTimeout(wd);
+  }, [dim, ty]);
+  const dimStyle = useAnimatedStyle(() => ({ opacity: dim.value }));
+  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: ty.value }] }));
 
   const onYes = () => {
     markYes();
@@ -53,13 +69,22 @@ export default function RatePromptSheet({ onClose }: { onClose: () => void }) {
   return (
     <Modal transparent visible animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.container}>
-        <Animated.View entering={FadeIn.duration(250)} style={[StyleSheet.absoluteFillObject, styles.dim]}>
-          <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
-        </Animated.View>
+        {/* CRITICAL: entrances are driven by SHARED VALUES, never `entering=`.
+            Reanimated LAYOUT animations do not reliably run inside an RN Modal
+            on the new architecture (see CommentsSheet + PrayerFlow, which hit
+            this before) — and a Modal is a native window that swallows every
+            touch in the app. When these two `entering` animations didn't run,
+            this sheet was up over the whole app with 100% transparent content
+            and NO touch target anywhere: home rendered perfectly and nothing
+            responded, with no escape on iOS at all. `useAnimatedStyle` DOES
+            work inside a Modal, so that is what we use.
+            The dismiss Pressable also sits OUTSIDE any animated wrapper now,
+            so even a total animation failure leaves a blind tap that closes. */}
+        <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
+        <Animated.View style={[StyleSheet.absoluteFillObject, styles.dim, dimStyle]} pointerEvents="none" />
 
         <Animated.View
-          entering={SlideInDown.duration(380).easing(Easing.out(Easing.cubic))}
-          style={[styles.sheet, { paddingBottom: insets.bottom + 20 }]}
+          style={[styles.sheet, { paddingBottom: insets.bottom + 20 }, sheetStyle]}
         >
           {/* Emoji badge — a white disc overlapping the sheet's top edge with
               the sparkly smiley on top (sparkles overflow the disc). */}

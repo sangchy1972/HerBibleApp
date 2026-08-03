@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, BackHandler } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -6,10 +6,12 @@ import { BG, TXT, TXTSUB, FONTS } from '../constants/theme';
 import { useT } from '../i18n/useT';
 import { useQuiz } from '../state/QuizContext';
 import { currentPosition, isTried, sessionSummary } from '../state/quizSession';
-import { levelFor } from '../state/quizProgress';
+import { levelFor, MYSTERY_EVERY } from '../state/quizProgress';
+import { drawEarnedAt } from '../state/cardDraw';
 import QuizSegmentBar from '../components/quiz/QuizSegmentBar';
 import QuizQuestionView from '../components/quiz/QuizQuestionView';
 import QuizReviewView from '../components/quiz/QuizReviewView';
+import MysteryDrawOverlay from '../components/quiz/MysteryDrawOverlay';
 import type { OptionState } from '../components/quiz/QuizOptionButton';
 import type { RootStackScreenProps } from '../navigation/types';
 
@@ -25,8 +27,19 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   const insets = useSafeAreaInsets();
   const {
     ready, bank, bankStatus, session, questions, currentQuestion, segments, progress,
-    open, pick, next, retry, finish,
+    open, pick, next, retry, finish, pendingDraw,
   } = useQuiz();
+
+  // The draw overlay sits ON TOP of the results screen rather than being a
+  // route of its own: the reward has to land in the same breath as the set that
+  // earned it, not after a navigation transition.
+  const [drawing, setDrawing] = useState(false);
+
+  // A draw interrupted by a force quit is offered again on the next open —
+  // pendingDraw is persisted and only ever spent by collecting a card.
+  useEffect(() => {
+    if (ready && pendingDraw && !drawing) setDrawing(true);
+  }, [ready, pendingDraw, drawing]);
 
   // Start (or resume) as soon as the bank is available. Guarded inside `open`,
   // which returns the existing session untouched if one is already in flight.
@@ -93,7 +106,19 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
           firstPassPerfect={summary.firstPassPerfect}
           completedSets={progress.completedSets}
           onRetry={retry}
-          onContinue={() => { leaving.current = true; finish(); navigation.goBack(); }}
+          onContinue={() => {
+            leaving.current = true;
+            // Decided BEFORE finish(), synchronously, from the set she is about
+            // to commit. Navigating in the same tick as a granted draw would
+            // unmount the screen before the overlay could show and the reward
+            // would only surface on her next visit — but two sets in three earn
+            // nothing, and those must still take her home. Waiting on the
+            // pendingDraw effect for both would strand her on the results
+            // screen with a dead button.
+            const earns = drawEarnedAt(progress.completedSets + 1, MYSTERY_EVERY);
+            finish();
+            if (!earns) navigation.goBack();
+          }}
         />
       );
     }
@@ -137,6 +162,10 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
       )}
 
       {body()}
+
+      {drawing ? (
+        <MysteryDrawOverlay onDone={() => { setDrawing(false); navigation.goBack(); }} />
+      ) : null}
     </View>
   );
 }

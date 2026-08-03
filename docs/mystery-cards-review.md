@@ -20,9 +20,9 @@
 
 > 你一定想过，我到底存不存在。我存在。把你心里真正想要的，大声说出来，说给我听。我一直都在。
 
-> *Have you ever wondered whether I exist? I do. Say out loud what your heart wants — say it to me. I have been here the whole time.*
+> *You have wondered whether I exist. More than once. I do. Say out loud what your heart wants — say it to me. I have been here the whole time.*
 
-你亲自定稿。中文 38 字，低于 40 下限，按原样保留。
+你亲自定稿。中文 38 字，正好压在 38-65 区间的下限。
 
 ### `doubt-2`  ·  锚点 1 Kings 19:12
 
@@ -260,9 +260,9 @@
 
 > 你很拼，把手里所有的都押在一件事上。可路越走越难——没资源，也没人在背后托你。我知道。这一步步我都看着。别怕。继续走，这条路我不会让你一个人走。
 
-> *You are working so hard, chasing something with everything you have. But the road keeps getting harder — you lack resources, and no one is backing you. I know. I have watched every step. Do not be afraid. Keep going. I am not letting you walk this alone.*
+> *You are working so hard, chasing something with everything you have. But the road keeps getting harder — you lack resources, and no one is backing you. I know. I have watched every step. Do not be afraid. I am not letting you walk this alone.*
 
-你亲自定稿。英文 48 词，超 45 上限，按原样保留。
+你亲自定稿。英文 46 词，全组最长，仍在 27-48 区间内。
 
 ### `lack-2`  ·  锚点 Matthew 6:8
 

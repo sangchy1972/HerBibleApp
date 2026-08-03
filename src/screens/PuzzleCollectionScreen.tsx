@@ -35,7 +35,7 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
   const { lang } = useUILanguage();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { progress, canStart, daily } = useQuiz();
+  const { progress, canStart, daily, lifecycle } = useQuiz();
   const [detail, setDetail] = useState<QuizArtwork | null>(null);
 
   const view = puzzleView(progress.completedSets, QUIZ_ART_COUNT);
@@ -115,7 +115,11 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
                   otherwise walk her into the cap wall AND drop the screen she
                   came from, so Close would land two pages back. */}
               <Text style={styles.goPlayText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
-                {canStart ? t('quiz.cards.goPlay') : t('quiz.daily.capCard', { total: daily.limit })}
+                {canStart
+                  ? t('quiz.cards.goPlay')
+                  : lifecycle.retired
+                    ? t('quiz.done.cardSub')
+                    : t('quiz.daily.capCard', { total: daily.limit })}
               </Text>
             </TouchableOpacity>
           </>

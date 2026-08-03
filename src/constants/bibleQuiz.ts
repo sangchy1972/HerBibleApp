@@ -27,8 +27,8 @@ export interface QuizQuestion {
   id: number;
   question: string;
   /**
-   * 2 or 4 entries — the bank is NOT uniformly 4-option (60 items are
-   * True/False). Renderers must map over this, never assume a length.
+   * 2 or 4 entries — the bank is NOT uniformly 4-option (59 items are
+   * two-option, True/False or Yes/No; the other 268 have four). Renderers must map over this, never assume a length.
    */
   options: readonly string[];
   /** The ONLY source of truth for correctness. Indexes into `options`. */
@@ -48,6 +48,21 @@ export interface QuizQuestion {
  * would scramble a user's progress.
  */
 export const QUIZ_BANK_VERSION = 2;
+
+/**
+ * How many questions the CDN bank currently holds.
+ *
+ * PLANNING FIGURE ONLY. Nothing at runtime reads it — every code path uses
+ * `bank.length` from the file it actually downloaded, because this number is a
+ * fact about a bucket and can be wrong. It exists so the content budget in
+ * __tests__/quizLifecycle.test.ts is checked against something, since the bank
+ * is not bundled and a test cannot count it.
+ *
+ * ⚠️ Update this whenever the bank is re-cut. If it drifts, the only thing that
+ * breaks is the budget arithmetic — which is exactly the thing that must not
+ * drift quietly, hence the test.
+ */
+export const QUIZ_BANK_SIZE = 327;
 
 export const QUIZ_CDN_BASE = 'https://quiz.everlandapps.com/v1';
 

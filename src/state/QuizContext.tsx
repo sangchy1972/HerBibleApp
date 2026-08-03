@@ -21,6 +21,7 @@ import {
   INITIAL_HISTORY, parseHistory, recordSet, summarize, dailyGate, canStartSet,
   type QuizHistoryV1, type HistorySummary, type DailyGate,
 } from './quizHistory';
+import { quizLifecycle, type QuizLifecycle } from './quizLifecycle';
 import { MYSTERY_CARDS, cardById, type MysteryCard } from '../constants/mysteryCards';
 import { logEvent } from '../services/firebase';
 
@@ -39,9 +40,10 @@ import { logEvent } from '../services/firebase';
 //   quiz:dates:v1      — daily history. Append-only and unbackfillable, so a
 //                        write that fails to happen is gone forever.
 //
-// All five are in MERGERS (services/progressMerge.ts). The ladder shipped
-// WITHOUT an entry and silently reset on every reinstall — do not add a sixth
-// key without adding its merger in the same commit.
+// FOUR of the five are in MERGERS (services/progressMerge.ts); the session is
+// deliberately excluded, being disposable by design. The ladder shipped WITHOUT
+// an entry and silently reset on every reinstall — do not add a sixth key
+// without deciding its merger in the same commit.
 //
 // The bank comes from the CDN, so `bank` can legitimately be null forever on a
 // device that has never been online. `ready && !!bank` is the gate the home card
@@ -95,14 +97,19 @@ interface QuizState {
   history: QuizHistoryV1;
   /** Rolling streak / accuracy / activity, derived from history. */
   historySummary: HistorySummary;
-  /** Today's seven-set allowance: how many are gone, how many are left. */
+  /** Today's three-set allowance: how many are gone, how many are left. */
   daily: DailyGate;
   /** YYYY-MM-DD, local, ROLLED OVER at midnight. The single answer to "what day
    *  is it" — screens that computed their own froze it at launch. */
   todayYmd: string;
-  /** May she begin a NEW set right now? False once today's seven are done.
-   *  A set already in flight is always resumable, cap or no cap. */
+  /** May she begin a NEW set right now? False once today's allowance is spent,
+   *  and false forever once the quiz has retired. A set already in flight is
+   *  always resumable — cap or no cap, retired or not. */
   canStart: boolean;
+  /** Whether the bank still has anything she has not seen. `retired` hides the
+   *  home card; it is derived from the bank on the device, so a bigger bank
+   *  brings the quiz back with no migration. */
+  lifecycle: QuizLifecycle;
   /** She has earned a draw and not taken it. Survives a force quit. */
   pendingDraw: boolean;
   /** The 4 face-down cards on the table right now. Stable across relaunches. */
@@ -302,7 +309,17 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
   // from the history the progress screen reads, and history is already the
   // append-only record every other daily number comes from.
   const daily = useMemo(() => dailyGate(history, todayYmd), [history, todayYmd]);
-  const canStart = canStartSet(daily, !!session);
+  // Retirement reads `bank`, not bankStatus: a device still fetching has
+  // bank === null and must NOT read as finished, or the feature would vanish
+  // for a few hundred milliseconds on every cold start.
+  const lifecycle = useMemo(
+    () => quizLifecycle(progress.setIndex, bank?.length ?? 0),
+    [progress.setIndex, bank],
+  );
+  // The retired half is NOT overridden by a live session. A session cannot
+  // outlive retirement: the set that retires the quiz is committed before
+  // setIndex advances, so by the time `retired` is true that session is gone.
+  const canStart = canStartSet(daily, !!session) && !lifecycle.retired;
 
   // ── Actions ───────────────────────────────────────────────────────────────
   const open = useCallback(() => {
@@ -317,12 +334,17 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
       // Reading `daily` (computed from history + todayYmd) rather than a counter
       // of our own means it cannot drift from what the screens display.
       if (daily.reached) return prev;
+      // Every question has been served. quizSets would happily deal a second
+      // shuffle of the same bank forever -- that is what makes the set machinery
+      // simple -- but serving her a game whose content she has finished is not
+      // something to do quietly. See state/quizLifecycle.ts.
+      if (lifecycle.retired) return prev;
       const qs = questionsForSet(progress.setIndex, bank);
       if (qs.length < SET_SIZE) return prev;
       logEvent('quiz_set_start', { set_index: progress.setIndex });
       return initialSession(progress.setIndex, qs.map(q => q.id), QUIZ_BANK_VERSION);
     });
-  }, [bank, progress.setIndex, daily.reached]);
+  }, [bank, progress.setIndex, daily.reached, lifecycle.retired]);
 
   const pick = useCallback((optionIndex: number) => {
     setSession(prev => {
@@ -384,8 +406,8 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
 
     // localYmd() fresh, not the `todayYmd` state: a set finished at 00:00:02
      // belongs to the day it ENDED on, and the state may be up to five seconds
-     // behind the timer above. Recording it against yesterday would give her an
-     // eighth set today.
+     // behind the timer above. Recording it against yesterday would give her a
+     // fourth set today.
     const ymd = localYmd();
     setProgress(p => applyCompletion(p, {
       firstPassWrong: done.firstPassWrong,
@@ -499,12 +521,13 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
   const value = useMemo<QuizState>(() => ({
     ready, bank, bankStatus, progress, session, questions, currentQuestion, segments,
     open, pick, next, retry, finish, abandon,
-    cards, likes, history, historySummary, daily, canStart, todayYmd,
+    cards, likes, history, historySummary, daily, canStart, todayYmd, lifecycle,
     pendingDraw: cards.pendingDraw, drawSpread, collectedCards,
     drawCard, likeCard, cardIsLiked, logCardShare, logCardOpen,
   }), [ready, bank, bankStatus, progress, session, questions, currentQuestion, segments,
        open, pick, next, retry, finish, abandon,
-       cards, likes, history, historySummary, daily, canStart, todayYmd, drawSpread, collectedCards,
+       cards, likes, history, historySummary, daily, canStart, todayYmd, lifecycle,
+       drawSpread, collectedCards,
        drawCard, likeCard, cardIsLiked, logCardShare, logCardOpen]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
@@ -527,6 +550,7 @@ export function useQuiz(): QuizState {
     cards: INITIAL_CARD_PROGRESS, likes: INITIAL_CARD_LIKES, history: INITIAL_HISTORY,
     historySummary: { streak: 0, bestStreak: 0, activeDays: 0, setsLast7: 0, setsLast30: 0, accuracy: null },
     daily: dailyGate(INITIAL_HISTORY, ''), canStart: false, todayYmd: '',
+    lifecycle: quizLifecycle(0, 0),
     pendingDraw: false, drawSpread: [], collectedCards: [],
     drawCard: () => {}, likeCard: () => {}, cardIsLiked: () => false,
     logCardShare: () => {}, logCardOpen: () => {},

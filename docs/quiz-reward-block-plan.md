@@ -1,6 +1,9 @@
 # Quiz reward block — likes, analytics, collection, dashboard
 
-Plan only. Grounded in code as of this writing; every claim cites a file.
+Plan only. Grounded in code as of 2026-08-02 — the quiz block has been substantially
+reworked since (24 curated paintings, a 3-set daily cap, retirement at bank
+exhaustion), so treat every line-number citation below as approximate and the
+file references as authoritative. Grounded in code as of this writing; every claim cites a file.
 
 ---
 
@@ -35,7 +38,7 @@ mergers, two hydration reads.
 
 **What breaks on a cloud restore — three things, in severity order:**
 
-1. **`quiz:progress:v1` is not in `MERGERS` at all.** Grep confirms it appears only in
+1. ~~**`quiz:progress:v1` is not in `MERGERS` at all.**~~ **FIXED** — `progressMerge.ts` now maps it to `mergeQuizProgress`. Original finding: Grep confirms it appears only in
    `QuizContext.tsx:32`. The whole quiz ladder — sets, perfect sets, puzzle tiles —
    is lost on reinstall today. Shipping card sync without fixing this produces a
    restored device holding 12 cards at Level 1. Fix needs a per-field max merger

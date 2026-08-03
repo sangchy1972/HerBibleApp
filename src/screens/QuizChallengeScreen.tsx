@@ -30,7 +30,7 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   const insets = useSafeAreaInsets();
   const {
     ready, bank, bankStatus, session, questions, currentQuestion, segments, progress,
-    open, pick, next, retry, finish, pendingDraw, daily,
+    open, pick, next, retry, finish, pendingDraw, daily, lifecycle,
   } = useQuiz();
 
   // The draw overlay sits ON TOP of the results screen rather than being a
@@ -100,7 +100,12 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   // screen: open() refuses, so `session` stays null, and body() returns null for
   // a null session -- which without this branch is a permanently blank page
   // under a header, reachable from the home card by one tap.
-  const cappedOut = ready && !!bank && !session && daily.reached;
+  const cappedOut = ready && !!bank && !session && daily.reached && !lifecycle.retired;
+  // Retirement outranks the daily cap: "come back tomorrow" would be a lie once
+  // there is nothing left to come back to. Reachable even with the home card
+  // gone -- the collection screens link here, and Android can restore this route
+  // from a saved navigation state.
+  const retiredOut = ready && !!bank && !session && lifecycle.retired;
 
   // SAFETY NET, deliberately on a timer rather than asserted at render.
   //
@@ -201,7 +206,7 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
             // hold it open.
             // Clamped: past the last painting there is nothing new to finish,
             // and an unclamped index would replay a full "picture complete"
-            // celebration for artwork 73 every four sets, forever, while the
+            // celebration for artwork 25 every four sets, forever, while the
             // grid never grew. QuizReviewView already handles this via
             // view.outOfArt.
             const pIdx = committed / TILES_PER_PAINTING - 1;
@@ -263,7 +268,12 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
         <View style={styles.counterSpacer} />
       )}
 
-      {cappedOut ? (
+      {retiredOut ? (
+        <QuizDoneView
+          onCollection={() => { if (!navLock.current) navigation.replace('PuzzleCollection'); }}
+          onClose={goHome}
+        />
+      ) : cappedOut ? (
         <DailyCapView
           limit={daily.limit}
           onCollection={() => { if (!navLock.current) navigation.replace('PuzzleCollection'); }}
@@ -304,11 +314,45 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
 }
 
 /**
- * Seven sets done. Congratulation, not a lockout.
+ * Every question answered. The end of the content, not the end of a day.
+ *
+ * Separate from DailyCapView because the two say opposite things: the cap says
+ * come back tomorrow, and here there is nothing to come back to until the bank
+ * grows. Telling her to return tomorrow would be a promise the app cannot keep.
+ */
+function QuizDoneView({ onCollection, onClose }: { onCollection: () => void; onClose: () => void }) {
+  const t = useT();
+  return (
+    <View style={styles.capRoot}>
+      <View style={styles.capRing}>
+        <MaterialCommunityIcons name="trophy-outline" size={40} color={ROSE} />
+      </View>
+      <Text style={styles.capTitle} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+        {t('quiz.done.title')}
+      </Text>
+      <Text style={styles.capBody} maxFontSizeMultiplier={1.3}>
+        {t('quiz.done.body')}
+      </Text>
+      <TouchableOpacity style={styles.capCta} activeOpacity={0.85} onPress={onCollection} accessibilityRole="button">
+        <Text style={styles.capCtaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+          {t('quiz.progress.puzzleRow')}
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.capSecondary} activeOpacity={0.7} onPress={onClose} accessibilityRole="button">
+        <Text style={styles.capSecondaryText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+          {t('common.close')}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+/**
+ * Today's sets are done. Congratulation, not a lockout.
  *
  * It offers a way onward rather than only a way out: she opened the quiz
  * wanting to do something with it, and a screen whose single control is "close"
- * is a dead end. The collection is the thing her seven sets were FOR.
+ * is a dead end. The collection is the thing her three sets were FOR.
  */
 function DailyCapView({
   limit, onCollection, onClose,
@@ -329,7 +373,7 @@ function DailyCapView({
       <Text style={styles.capBody} maxFontSizeMultiplier={1.3}>
         {t('quiz.daily.capBody', { total: limit })}
       </Text>
-      {/* The collection is what her seven sets were FOR. A screen whose only
+      {/* The collection is what her three sets were FOR. A screen whose only
           control is "close" sends her away from the thing she just earned. */}
       <TouchableOpacity style={styles.capCta} activeOpacity={0.85} onPress={onCollection} accessibilityRole="button">
         <Text style={styles.capCtaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>

@@ -286,8 +286,8 @@ export function parseCardProgress(raw: string | null): CardProgressV1 {
       collected: unique,
       drawsTaken: Number.isInteger(p.drawsTaken) && p.drawsTaken >= 0 ? p.drawsTaken : unique.length,
       pendingDraw: p.pendingDraw === true,
-      // Absent on a record written before this field existed. Seeding from
-      // drawsTaken rather than 0 stops an upgrade from replaying every draw she
+      // Absent on a record written before this field existed. Seeding from the
+      // collected count x MYSTERY_EVERY rather than 0 stops an upgrade replaying every draw she
       // has ever earned as one big backlog.
       grantedThroughSets: Number.isInteger(p.grantedThroughSets) && p.grantedThroughSets >= 0
         ? p.grantedThroughSets

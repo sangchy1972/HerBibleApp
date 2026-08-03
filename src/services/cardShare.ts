@@ -60,8 +60,9 @@ export async function shareCard(node: unknown, dialogTitle?: string): Promise<Sh
  *
  * Requesting READ_MEDIA_IMAGES is what a naive implementation does, and Google
  * Play's Photo & Video Permissions policy rejects it as non-core for a Bible
- * app — the manifest entry is actively stripped in
- * plugins/withRemoveMediaPermissions.js. Do not add a permission request here.
+ * app — the manifest entry is actively stripped by android.blockedPermissions
+ * in app.json (there is no withRemoveMediaPermissions plugin; that name was
+ * wrong). Do not add a permission request here.
  */
 export async function saveCard(
   node: unknown,

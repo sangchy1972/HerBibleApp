@@ -34,10 +34,10 @@ export default function QuizReviewView({
   firstPassPerfect: boolean;
   /** Sets completed BEFORE this one. The reward preview looks one ahead. */
   completedSets: number;
-  /** Committing this set spends the last of today's seven. Hides "next set" and
+  /** Committing this set spends the last of today's three. Hides "next set" and
    *  says so, rather than leaving a button that would silently do nothing. */
   lastOfDay: boolean;
-  /** Sets left today AFTER this one commits. Shown on EVERY set, so the seventh
+  /** Sets left today AFTER this one commits. Shown on EVERY set, so the third
    *  ends a countdown she has been watching instead of ambushing her. */
   setsLeftAfter: number;
   onRetry: () => void;
@@ -99,7 +99,7 @@ export default function QuizReviewView({
             <Text style={styles.rewardLabel} maxFontSizeMultiplier={1.3}>
               {view.outOfArt ? t('quiz.reward.allArt') : t('quiz.reward.tile')}
             </Text>
-            {/* showCaption: six reward moments in seven were an unnamed quarter
+            {/* showCaption: three reward moments in four were an unnamed quarter
                 of an unnamed picture. She is collecting a Caravaggio; the least
                 the screen can do is say so while she earns it. */}
             <PuzzleBoard
@@ -138,7 +138,7 @@ export default function QuizReviewView({
         </TouchableOpacity>
 
         {/* The daily cap gets a line, not a dead button. open() refuses once the
-            seventh set is committed, so leaving "Next level" on screen would
+            third set is committed, so leaving "Next level" on screen would
             give her a control that visibly does nothing. */}
         {done ? (
           <Text style={styles.lastOfDay} numberOfLines={2} maxFontSizeMultiplier={1.3}>
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   },
   secondary: { height: 44, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
   // Roughly the band the secondary button would have occupied, so the CTA does
-  // not jump up the screen on the one set in seven that ends the day.
+  // not jump up the screen on the one set in three that ends the day.
   lastOfDay: {
     fontFamily: FONTS.lato, fontSize: 13, color: TXTSUB,
     textAlign: 'center', marginTop: 13, marginBottom: 9, letterSpacing: 0.2,

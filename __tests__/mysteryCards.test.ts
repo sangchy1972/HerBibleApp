@@ -59,7 +59,7 @@ describe('pool shape', () => {
 
 describe('card copy fits the card', () => {
   it('keeps every English body inside 27-48 words', () => {
-    // The card is landscape, 15.2pt serif, height capped at 400. Past ~48 words
+    // The draw card is portrait (h = w x 1.12), 14.1pt serif, height measured not capped. Past ~48 words
     // it either overflows or forces the type down to an unreadable size.
     for (const c of MYSTERY_CARDS) {
       const n = words(c.body.en!);

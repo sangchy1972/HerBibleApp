@@ -65,7 +65,9 @@ export function edgeSegments(
     y0 + uy * len * a + ny * len * b,
   ];
 
-  const k = TAB / 0.3;   // the profile below peaks at 0.30; scale it to TAB
+  const k = TAB / 0.3;   // nominal scale. The bulb's cubic actually peaks at
+                       // 0.335, so the true protrusion is ~0.212 of the edge,
+                       // not TAB. Frozen: changing it reshapes every board.
   const o = (b: number) => b * k;
 
   return [
@@ -116,9 +118,10 @@ export function jigsawPaths(w: number, h: number): [string, string, string, stri
   const cy = h / 2;
 
   // Canonical directions: A and B run downward, C and D run rightward.
-  // The `out` flags alternate so no two adjacent tabs point the same way.
-  const A = edgeSegments([cx, 0], [cx, cy], true);     // tab bulges into TR
-  const B = edgeSegments([cx, cy], [cx, h], false);    // ...into BL
+  // The `out` flags alternate along each axis, so the two halves of the centre
+  // line bulge opposite ways and the board does not read as striped.
+  const A = edgeSegments([cx, 0], [cx, cy], true);     // tab bulges into TL
+  const B = edgeSegments([cx, cy], [cx, h], false);    // ...into BR
   const C = edgeSegments([0, cy], [cx, cy], false);    // ...into TL
   const D = edgeSegments([cx, cy], [w, cy], true);     // ...into BR
 

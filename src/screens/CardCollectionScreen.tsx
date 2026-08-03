@@ -26,7 +26,7 @@ import type { RootStackScreenProps } from '../navigation/types';
 // The product reason matters more: a card she read once and can never find
 // again is a notification, not a reward.
 //
-// NO LOCKED SLOTS. 30-odd grey rectangles reframe a gift as a checklist — and
+// NO LOCKED SLOTS. Up to 39 grey rectangles reframe a gift as a checklist — and
 // this is comfort written for someone in distress, so each empty slot is a
 // reminder of what she did not get. One "N of 40" line carries the same
 // progress signal at no emotional cost.
@@ -35,7 +35,7 @@ import type { RootStackScreenProps } from '../navigation/types';
 // stands alone. A row is the first line of the body, truncated. `theme` is
 // backend-only — it drives analytics, never a label she reads.
 
-/** Below this the "Liked only" toggle is hidden. A filter over four items is
+/** Below this the "Liked only" toggle is hidden. A filter over five items is
  *  furniture, not a feature. */
 const FILTER_MIN = 6;
 
@@ -43,7 +43,7 @@ export default function CardCollectionScreen({ navigation }: RootStackScreenProp
   const t = useT();
   const { lang } = useUILanguage();
   const insets = useSafeAreaInsets();
-  const { collectedCards, cardIsLiked, logCardOpen, canStart, daily } = useQuiz();
+  const { collectedCards, cardIsLiked, logCardOpen, canStart, daily, lifecycle } = useQuiz();
   const [likedOnly, setLikedOnly] = useState(false);
   const [detail, setDetail] = useState<MysteryCard | null>(null);
 
@@ -112,7 +112,11 @@ export default function CardCollectionScreen({ navigation }: RootStackScreenProp
                   otherwise walk her into the cap wall AND drop the screen she
                   came from, so Close would land two pages back. */}
               <Text style={styles.goPlayText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
-                {canStart ? t('quiz.cards.goPlay') : t('quiz.daily.capCard', { total: daily.limit })}
+                {canStart
+                  ? t('quiz.cards.goPlay')
+                  : lifecycle.retired
+                    ? t('quiz.done.cardSub')
+                    : t('quiz.daily.capCard', { total: daily.limit })}
               </Text>
             </TouchableOpacity>
           </>
@@ -201,7 +205,7 @@ function CardDetail({ card, onClose }: { card: MysteryCard; onClose: () => void 
     <View style={styles.detail}>
       <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} accessibilityLabel={t('common.close')} />
 
-      {/* Height is intrinsic, clamped: the pool ranges from ~28 to ~48 words and
+      {/* Height is intrinsic, clamped: the pool runs 30-46 words against a 27-48 band and
           a fixed box would either clip the long ones or leave the short ones
           swimming. */}
       <View style={[styles.detailCard, { width: width - P * 2 }]}>

@@ -40,7 +40,7 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
   const insets = useSafeAreaInsets();
   const {
     progress, bank, cards, likes, history, historySummary, daily, todayYmd,
-    collectedCards, canStart,
+    collectedCards, canStart, lifecycle,
   } = useQuiz();
   // collectedCards, NOT cards.collected: the context filters ids this build does
   // not know about, which a restore from a newer version can introduce. Counting
@@ -56,8 +56,9 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
 
   // Capped at the bank size on purpose: the set stream cycles, so past set 65
   // she has genuinely seen everything and starts again. The label switches
-  // rather than sitting at a permanently full bar with no explanation for why
-  // questions are repeating.
+  // rather than sitting at a permanently full bar. She never actually meets the
+  // repeat -- quizLifecycle retires the quiz at the same moment -- but the label
+  // still has to explain why there is nothing left to play.
   const seen = Math.min(progress.setIndex * SET_SIZE, bank?.length ?? 0);
   const fullCycle = !!bank && bank.length > 0 && seen >= bank.length;
   const coverage = bank && bank.length > 0 ? seen / bank.length : 0;
@@ -110,12 +111,16 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
             one row on the screen that answers "why can't I keep going", and
             hiding it in exactly the state that raises the question would be
             perverse. */}
-        <View style={styles.line}>
-          <Feather name="sunrise" size={16} color={daily.reached ? TXTSUB : ROSE} />
-          <Text style={styles.lineText} maxFontSizeMultiplier={1.3}>
-            {t('quiz.daily.remaining', { n: daily.remaining, total: daily.limit })}
-          </Text>
-        </View>
+        {/* Hidden once the quiz retires: "3 of 3 sets left today" is true and
+            useless when there is nothing left to spend them on. */}
+        {lifecycle.retired ? null : (
+          <View style={styles.line}>
+            <Feather name="sunrise" size={16} color={daily.reached ? TXTSUB : ROSE} />
+            <Text style={styles.lineText} maxFontSizeMultiplier={1.3}>
+              {t('quiz.daily.remaining', { n: daily.remaining, total: daily.limit })}
+            </Text>
+          </View>
+        )}
         {/* Hidden at zero. This app's readers often arrive low, and a dashboard
             that greets a returning user with "0 perfect levels" is a scoreboard
             telling her she is bad at it. The streak row already had this
@@ -191,7 +196,7 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
           </View>
         ) : null}
 
-        {/* She opens her dashboard, reads "3 of 7 sets left today", and until
+        {/* She opens her dashboard, reads "2 of 3 sets left today", and until
             now had nothing on the screen to tap. */}
         <TouchableOpacity
           style={[styles.play, !canStart && styles.playOff]}
@@ -201,7 +206,11 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
           accessibilityRole="button"
         >
           <Text style={styles.playText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
-            {canStart ? t('quiz.cards.goPlay') : t('quiz.daily.capCard', { total: daily.limit })}
+            {canStart
+              ? t('quiz.cards.goPlay')
+              : lifecycle.retired
+                ? t('quiz.done.cardSub')
+                : t('quiz.daily.capCard', { total: daily.limit })}
           </Text>
         </TouchableOpacity>
 

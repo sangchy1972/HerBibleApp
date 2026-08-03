@@ -17,7 +17,8 @@ import type { LanguageCode } from '../state/TranslationsContext';
 //
 // HOW MANY. 327 questions = 65 sets per bank cycle, 4 sets per painting. 24
 // paintings = 96 sets, so the art outlasts a full pass through every question
-// with room over. 74 would have been four cycles of art nobody reaches, at
+// with room over. 74 would have been four and a half cycles of art nobody
+// reaches, at
 // four times the translation cost.
 //
 // PUBLIC DOMAIN. Every artist died before 1900, and all 24 photographs come

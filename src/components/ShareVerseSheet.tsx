@@ -225,7 +225,7 @@ export default function ShareVerseSheet({ reference, text, onClose, bgSource }: 
       // triggers the add-only Photos prompt (NSPhotoLibraryAddUsageDescription).
       // We deliberately no longer request READ_MEDIA_IMAGES — Google Play's Photo
       // & Video Permissions policy rejects it as non-core for a Bible app (the
-      // manifest entry is stripped in plugins/withRemoveMediaPermissions.js).
+      // manifest entry is stripped by android.blockedPermissions in app.json).
       await MediaLibrary.saveToLibraryAsync(url);
       showToast(t('shareVerse.saveAlert.title'));
     } catch (e) {

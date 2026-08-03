@@ -18,8 +18,8 @@ export const CARD_CREAM = '#FFFCF8';
 export const CARD_RADIUS = 16;
 
 /** Fixed, never scaled by the OS font setting. The card is a fixed-size object
- *  and an accessibility bump would push the text out of it. Sized at 90% of the
- *  Bible reader's 18. */
+ *  and an accessibility bump would push the text out of it. 14.1 is the quiz's
+ *  +8% scale over a 13.05 base, NOT a fraction of the reader's 18. */
 export const CARD_FONT = 14.1;
 
 export function MysteryCardBack({ style }: { style?: StyleProp<ViewStyle> }) {
@@ -57,7 +57,7 @@ export function MysteryCardFront({
   /**
    * `false` (default) is a card FACE: absolutely filling a parent whose size is
    * animated by the draw overlay. `true` sizes itself to the text — used by the
-   * collection detail, where the card has to grow with a 28- to 48-word body
+   * collection detail, where the card has to grow with a 30- to 46-word body
    * rather than clip the long ones or leave the short ones swimming.
    */
   inline?: boolean;
@@ -95,7 +95,7 @@ export function MysteryCardFront({
  * Reveals `text` one character at a time.
  *
  * Total duration is CLAMPED to 3.0-3.6s regardless of length. At a fixed
- * per-character speed the shortest card takes ~2.2s and the longest ~4.2s —
+ * per-character speed the shortest card takes ~3.4s and the longest ~5.9s —
  * what she notices is how long she waited, not how fast the letters appeared.
  */
 export function useTypewriter(text: string, active: boolean, onDone?: () => void) {

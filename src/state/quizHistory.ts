@@ -88,7 +88,8 @@ export function recordSet(
  * THE ARITHMETIC, because an earlier version of this comment got it wrong by a
  * factor of seven and the wrong number is easier to repeat than to check:
  *
- *     cap   bank runs out   all 24 paintings   all 40 cards   cards/day
+ *     cap   bank recycles*   all 24 paintings   all 40 cards   cards/day
+ *   (* 65 fresh sets; the 66th straddles the seam and is where the quiz retires)
  *      7        9.3 d            13.7 d            17.1 d       2.33
  *      5       13.0 d            19.2 d            24.0 d       1.67
  *      3       21.7 d            32.0 d            40.0 d       1.00
@@ -99,17 +100,24 @@ export function recordSet(
  * a person can notice and come back for. Seven gave 2.33 cards a day, a
  * sawtooth nobody can feel.
  *
- * At three the content runs out in a deliberate order: questions repeat at day
- * 22, the 24th painting completes at day 32, the 40th card at day 40. Something
- * new keeps arriving for well over a month.
+ * At three, day 22 is where everything stops AT ONCE. The bank is exhausted
+ * after 66 sets and state/quizLifecycle.ts retires the quiz, at which point she
+ * holds 16 of 24 paintings and 22 of 40 cards. The remaining 8 paintings and 18
+ * cards are unreachable until the bank grows -- the 24th painting needs 96 sets
+ * and the 40th card 120, both well past retirement.
+ *
+ * That is a content gap, not a fault in the cap, and it is pinned in
+ * __tests__/quizLifecycle.test.ts: the bank needs 600 questions (273 more) for
+ * both collections to be finishable.
  *
  * NOT tunable per user, and deliberately not remote-config: the number is part
  * of what the app IS, and a cap that moves is a cap she cannot build a habit
  * around.
  *
- * The cliff the cap CANNOT fix is at 96 sets, where puzzleView goes outOfArt and
- * every results screen shows the same finished painting forever. That needs more
- * artwork or a real end state, not a smaller number here.
+ * puzzleView's outOfArt cliff at 96 sets -- where every results screen would
+ * show the same finished painting forever -- is therefore not even reachable
+ * against this bank; retirement gets there 30 sets earlier. The clamping stays,
+ * because the bank is meant to grow.
  *
  * COUNTED FROM COMPLETED SETS, not from starts. A set she abandoned halfway
  * costs her nothing, and — more importantly — a set already in flight can always

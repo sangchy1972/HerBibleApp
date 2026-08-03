@@ -75,6 +75,12 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'quiz.daily.capCard':             { en: "Today's {total} sets are done", context: 'Home quiz card sub-line when the daily cap is reached. One short line.' },
   'quiz.daily.lastOfDay':           { en: "That's your last set today", context: 'Small note on the results screen when committing this set uses up the 7th and final slot of the day. Gentle.' },
   'quiz.daily.remaining':           { en: '{n} of {total} sets left today', context: 'Quiz progress screen row showing the daily allowance. {n} counts down to 0.' },
+  // Retirement. Every question has been answered, so the home card stands down.
+  // Distinct from the daily cap: there is no "tomorrow" to come back to until
+  // the bank grows, and promising one would be a lie.
+  'quiz.done.title':                { en: "You've answered them all", context: 'Headline once the user has seen every question in the quiz bank and the quiz has retired from the home screen. Celebratory. Must NOT say "come back tomorrow" — there is nothing new until more questions ship.' },
+  'quiz.done.body':                 { en: 'Every question, answered. Your paintings and cards are still in your collection, and more questions are on the way.', context: 'Body under quiz.done.title. Reassures her that nothing she collected is gone and that the feature has a future.' },
+  'quiz.done.cardSub':              { en: 'Every question answered', context: 'Short label replacing the start button on the collection screens once the quiz has retired. One line.' },
   'quiz.progress.bestStreak':       { en: 'Best run: {n} days', context: 'Shown when her best streak beats her current one.' },
   'common.close':                   { en: 'Close', context: 'Accessibility label for a tap-to-dismiss backdrop.' },
   'quiz.cards.title':               { en: 'My Cards', context: 'Header of the collected mystery-card screen.' },

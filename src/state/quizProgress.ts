@@ -123,7 +123,8 @@ export interface MysteryView {
   remaining: number;
 }
 
-/** Placeholder reward track — "N levels away from the mystery reward". */
+/** The mystery-card countdown — "N sets from the next draw". Real, not
+ *  decorative: hitting zero grants an actual draw via grantDrawsThrough. */
 export function mysteryView(completedSets: number): MysteryView {
   const done = Math.max(0, Math.floor(completedSets) || 0);
   const current = done % MYSTERY_EVERY;

@@ -1,6 +1,6 @@
 // One quiz set in flight — the reducer.
 //
-// PURE, and deliberately ZERO-IMPORT: it never touches the 68 KB question bank,
+// PURE, and deliberately ZERO-IMPORT: it never touches the ~60 KB question bank,
 // AsyncStorage, or React. `pickOption` takes `isCorrect` as an argument rather
 // than looking the answer up itself, which is what keeps that true. Same split
 // as dailyRhythm.ts vs DailyRhythmBar.tsx — the logic is unit-testable in this

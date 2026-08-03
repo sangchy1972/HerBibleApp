@@ -26,7 +26,8 @@ import { shareCard, saveCard } from '../../services/cardShare';
 // TIMING IS DELIBERATELY SLOW (~7s tap-to-readable), after two rounds of the
 // owner asking for slower. A draw costs three completed sets, so the ceremony
 // is proportionate to what it took. It is still fully skippable, because the
-// same person sees it ~120 times a year.
+// same person sees it about once a day, and 22 times in total before the quiz
+// retires against today's bank.
 //
 // Phases:
 //   spread   4 face-down cards, waiting for a pick
@@ -61,7 +62,8 @@ export default function MysteryDrawOverlay({
   const [toast, setToast] = useState<string | null>(null);
 
   // Measured, not fixed. A hardcoded height clips the longest cards — the pool
-  // runs 27-48 words and the tallest need 7 lines at this width, so a 210pt box
+  // runs 30-46 words (against a 27-48 band) and the tallest need 7 lines at this
+  // width, so a 210pt box
   // cuts the last sentence off mid-word after a 7-second reveal. The measuring
   // copy renders off-screen at the final width and reports its intrinsic
   // height; until it lands, `null` keeps the reveal from animating to a size we
@@ -126,7 +128,7 @@ export default function MysteryDrawOverlay({
   }, [drawCard]);
 
   // Any tap during reveal or typing jumps to the end state. She will see this
-  // ~120 times; an animation with no way out becomes the thing she dreads about
+  // ~22 times in all; an animation with no way out becomes the thing she dreads about
   // finishing a set. The tap target is the whole screen, not just a button —
   // wherever her thumb lands should work.
   const skip = useCallback(() => {

@@ -4,8 +4,8 @@ The reward behind the "mystery reward" counter in the Quiz Challenge. Every
 `MYSTERY_EVERY` (3) completed sets, the user draws one card from a face-down
 2×2 spread. The card flips and speaks to her.
 
-Status: copy **final** and shipped in `src/constants/mysteryCards.ts` (40 cards,
-en + zh-Hans). Draw logic **built** (`src/state/cardDraw.ts`). UI **not built**.
+Status: copy **final** and shipped in `src/constants/mysteryCards.ts` (40 cards, all 7
+languages). Draw logic **built** (`src/state/cardDraw.ts`). UI **not built**.
 
 ---
 
@@ -114,10 +114,10 @@ user's collection. **Append only.** Same rule as `QUIZ_ART`.
 |---|---|
 | Draw every | 3 sets (`MYSTERY_EVERY`) |
 | Sets per bank cycle | 65 (327 questions ÷ 5) |
-| Draws per bank cycle | ~21 |
+| Draws before the quiz retires | 22 (`reachableRewards(327)`) |
 | Draws to exhaust a 40-card pool | 40 → **120 sets** |
 
-She meets a repeated *question* long before a repeated *card* — which is the
+Neither repeats: the quiz retires at 66 sets, before the bank recycles or the 40-card pool empties. (Was: she meets a repeated *question* long before a repeated *card* — which is the
 right way round, since the card is the reward.
 
 40 × 7 languages = 280 strings. Deliberately not 100: every card has to be
@@ -158,6 +158,12 @@ interface CardProgressV1 {
   collected: string[];   // card ids, in draw order
   drawsTaken: number;    // may exceed collected.length after a pool reset
   pendingDraw: boolean;  // earned but not yet drawn — survives a force quit
+  grantedThroughSets: number;  // highest completedSets already considered for a
+                               // draw. PERSISTED: the grant lands a render after
+                               // the commit, so a kill in between used to lose
+                               // the draw forever — an in-memory watermark
+                               // re-seeded to the new count on relaunch and that
+                               // set was never examined again.
 }
 ```
 
@@ -203,12 +209,13 @@ been bitten by layout animations on remount before.
 | 8 | Actions | 200 ms | **Like** and **Save to album** as icon buttons between the card and the primary **Collect** button |
 
 FINAL TIMING (owner-approved, after two rounds of slowing down): every beat from
-scrim to flip runs at 2x the numbers above, and the typewriter is 3.0-3.6 s.
+scrim to flip runs at 2x the numbers above — except the flip itself, which is 4x
+(FLIP_MS = 2080) — and the typewriter is 3.0-3.6 s.
 About **7 s** from tap to readable card.
 
 That is long, and it is correct here: a draw costs three completed sets, so the
 ceremony is proportionate to what it took. The earlier objection — that she will
-see it ~120 times a year and grow to resent it — was overruled on exactly that
+see it once a day, 22 times in total against today's bank, and grow to resent it — was overruled on exactly that
 ground.
 
 **Skippable.** A tap during beats 4–7 jumps to the end state. Any animation the
@@ -276,7 +283,7 @@ scripture reference — see §1.
 
 ## 7. i18n
 
-40 titles + 40 bodies = 80 keys × 7 languages.
+40 bodies × 7 languages = 280 strings. No titles — see §6.
 
 The bodies are the hardest translation work in this app so far. A literal
 translation will kill them — the register is intimate spoken comfort, and each

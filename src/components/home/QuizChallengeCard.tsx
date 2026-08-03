@@ -26,9 +26,18 @@ export default function QuizChallengeCard({
   onOpenCollection: () => void;
 }) {
   const t = useT();
-  const { ready, bank, progress, session, segments, daily } = useQuiz();
+  const { ready, bank, progress, session, segments, daily, lifecycle } = useQuiz();
 
   if (!ready || !bank) return null;
+  // RETIRED. Every question in the bank has been served, so the card would be
+  // offering a game whose content she has finished. It goes away rather than
+  // pretending -- and because `retired` is derived from the bank on the device
+  // (state/quizLifecycle.ts), shipping more questions brings it back on its own.
+  //
+  // Not a dead end: Profile keeps My Progress, My Cards and the puzzle
+  // collection, so everything she earned is still one tap from the same place
+  // it always was.
+  if (lifecycle.retired) return null;
 
   const answered = segments.filter(s => s !== 'empty').length;
   const inProgress = !!session && answered > 0;

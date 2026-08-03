@@ -7,7 +7,7 @@ import type { SegmentState } from '../../state/quizSession';
 // header so the two can never drift.
 //
 // Geometry is carried over from DailyRhythmBar's track (height 6, radius 10,
-// 10% ink track, white full-height ticks at the 5 boundaries, fills with radius
+// 10% ink track, white full-height ticks at the 4 interior boundaries, fills with radius
 // 0 so interior edges sit flush against the ticks instead of notching dark
 // slivers beside every one).
 //

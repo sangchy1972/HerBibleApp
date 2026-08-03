@@ -10,8 +10,8 @@ import type { QuizQuestion } from '../constants/bibleQuiz';
 // ────────────
 // Deterministic · no repeats until the bank is exhausted · identical across
 // relaunches · reproducible from ONE stored integer (the set index) · every set
-// exactly 5 questions. That last one bites: 329 % 5 = 4, so naive chunking
-// leaves a broken 4-question tail.
+// exactly 5 questions. That last one bites: 327 % 5 = 2, so naive chunking
+// leaves a broken 2-question tail.
 //
 // DESIGN
 // ──────
@@ -39,8 +39,8 @@ const CYCLE_MIX = 0x9e3779b1;
 /**
  * mulberry32. Copied from state/verseCommentsFeed.ts rather than imported,
  * because that module pulls the whole VERSE_COMMENTS constant tree with it —
- * the same reason fnv1a is duplicated between planRecommendations.ts and
- * verseCommentsFeed.ts. Math.random is not an option: this repo keeps every
+ * the same reason FNV-1a is duplicated between planRecommendations.ts
+ * (`fnv1a`) and verseCommentsFeed.ts (`hashStr`). Math.random is not an option: this repo keeps every
  * content-selection path deterministic so a relaunch reproduces it exactly.
  */
 export function mulberry32(seed: number): () => number {
@@ -65,9 +65,10 @@ export function cyclePermutation(n: number, cycle: number): number[] {
   return a;
 }
 
-// Recomputing a 329-element shuffle per lookup would be wasteful inside a
+// Recomputing a 327-element shuffle per lookup would be wasteful inside a
 // render. Bounded so a very long-lived session can't grow it without limit; a
-// user reaches cycle 1 only after 66 sets, so this is cold after the first hit.
+// user first touches cycle 1 INSIDE the 66th set, so this is cold after the
+// first hit.
 const permCache = new Map<string, number[]>();
 const PERM_CACHE_MAX = 4;
 function permutationFor(n: number, cycle: number): number[] {

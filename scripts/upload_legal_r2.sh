@@ -17,8 +17,25 @@
 # Usage:
 #   scripts/upload_legal_r2.sh
 #
-# Idempotent: re-running overwrites the same keys (policy edits go live on
-# the next run; R2 serves raw keys, no cache-busting needed for legal pages).
+# Idempotent: re-running overwrites the same keys in R2.
+#
+# ⚠️ BUT THE EDIT IS NOT LIVE UNTIL YOU PURGE. covers.everlandapps.com is a
+# custom domain, so Cloudflare's edge cache sits in front of R2 and keeps
+# serving the OLD html on the bare URL — verified on 2026-08-03, where the new
+# policy was in R2 and the plain URL still returned the previous one while
+# ?anything=1 returned the new one. That matters more here than anywhere else:
+# the bare URL is what App Store Connect and Play Console reviewers open.
+#
+# After every run:
+#   Cloudflare dashboard → everlandapps.com → Caching → Configuration
+#     → Purge Cache → Custom Purge → URL:
+#         https://covers.everlandapps.com/legal/privacy.html
+#         https://covers.everlandapps.com/legal/support.html
+#   then confirm in a private window that the effective date changed.
+#
+# These two pages cannot be path-versioned the way /v1/ content is — the URLs
+# are filed with both stores and must stay stable — so purging is the only
+# option, not a shortcut.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
@@ -61,3 +78,8 @@ echo
 echo "Done. Verify:"
 echo "  https://covers.everlandapps.com/legal/privacy.html"
 echo "  https://covers.everlandapps.com/legal/support.html"
+echo
+echo "⚠️  NOT LIVE YET — the edge cache still serves the old copy on the bare URL."
+echo "    Purge it: Cloudflare → everlandapps.com → Caching → Configuration"
+echo "              → Purge Cache → Custom Purge → the two URLs above."
+echo "    Then check in a private window that the effective date changed."

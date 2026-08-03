@@ -6,12 +6,13 @@ import { BG, TXT, TXTSUB, FONTS } from '../constants/theme';
 import { useT } from '../i18n/useT';
 import { useQuiz } from '../state/QuizContext';
 import { currentPosition, isTried, sessionSummary } from '../state/quizSession';
-import { levelFor, MYSTERY_EVERY } from '../state/quizProgress';
+import { levelFor, MYSTERY_EVERY, TILES_PER_PAINTING } from '../state/quizProgress';
 import { drawEarnedAt } from '../state/cardDraw';
 import QuizSegmentBar from '../components/quiz/QuizSegmentBar';
 import QuizQuestionView from '../components/quiz/QuizQuestionView';
 import QuizReviewView from '../components/quiz/QuizReviewView';
 import MysteryDrawOverlay from '../components/quiz/MysteryDrawOverlay';
+import PaintingComplete from '../components/quiz/PaintingComplete';
 import type { OptionState } from '../components/quiz/QuizOptionButton';
 import type { RootStackScreenProps } from '../navigation/types';
 
@@ -40,6 +41,11 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   // She would appear to be trapped. The flag lives for this visit only, so the
   // draw is offered again next time she opens the quiz.
   const drawDismissed = useRef(false);
+
+  // A finished painting gets its own moment. Four sets and twenty questions is
+  // a bigger thing than one set, and folding it into the same results card
+  // would make the larger achievement read as the smaller one.
+  const [finishedPainting, setFinishedPainting] = useState<number | null>(null);
 
   // A draw interrupted by a force quit is offered again on the next open —
   // pendingDraw is persisted and only ever spent by collecting a card.
@@ -121,9 +127,18 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
             // nothing, and those must still take her home. Waiting on the
             // pendingDraw effect for both would strand her on the results
             // screen with a dead button.
-            const earns = drawEarnedAt(progress.completedSets + 1, MYSTERY_EVERY);
+            const committed = progress.completedSets + 1;
+            const earns = drawEarnedAt(committed, MYSTERY_EVERY);
+            // The 4th, 8th, 12th… set completes a painting. Computed from the
+            // committed count, synchronously, for the same reason the draw is:
+            // the screen must know before finish() whether anything is going to
+            // hold it open.
+            const painting = committed % TILES_PER_PAINTING === 0
+              ? committed / TILES_PER_PAINTING - 1
+              : null;
             finish();
-            if (!earns) navigation.goBack();
+            if (painting != null) setFinishedPainting(painting);
+            else if (!earns) navigation.goBack();
           }}
         />
       );
@@ -169,9 +184,24 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
 
       {body()}
 
+      {/* The painting sits ON TOP of the card draw when both land on the same
+          set (every 12th). She collects the picture, then the card — biggest
+          reward last is wrong here: the card is the routine one, and burying
+          the painting under it would make the rarer thing feel incidental. */}
       {drawing ? (
         <MysteryDrawOverlay
           onDone={() => { drawDismissed.current = true; setDrawing(false); navigation.goBack(); }}
+        />
+      ) : null}
+
+      {finishedPainting != null ? (
+        <PaintingComplete
+          paintingIndex={finishedPainting}
+          onDone={() => {
+            setFinishedPainting(null);
+            // Only leave if no card draw is waiting underneath.
+            if (!pendingDraw) navigation.goBack();
+          }}
         />
       ) : null}
     </View>

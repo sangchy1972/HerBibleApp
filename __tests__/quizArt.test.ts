@@ -5,7 +5,9 @@
 // works with `completedSets + 1` while `puzzleView` is written against
 // completed counts. Getting that wrong rings the previous tile, or none.
 
-import { QUIZ_ART, QUIZ_ART_COUNT, artworkAt } from '../src/constants/quizArt';
+import {
+  QUIZ_ART, QUIZ_ART_COUNT, artworkAt, artUrl, artThumbUrl,
+} from '../src/constants/quizArt';
 import { rewardPreview as rawPreview, TILES_PER_PAINTING } from '../src/state/quizProgress';
 
 const rewardPreview = (before: number) => rawPreview(before, QUIZ_ART_COUNT);
@@ -20,15 +22,43 @@ describe('art registry', () => {
 
   it('exposes a count that matches the list', () => {
     expect(QUIZ_ART_COUNT).toBe(QUIZ_ART.length);
-    expect(QUIZ_ART_COUNT).toBeGreaterThan(0);
+    // 74 paintings x 4 sets = 296 sets to collect them all, against 65 sets per
+    // quiz bank cycle. The art outlasts the questions by a wide margin, which
+    // is the right way round — the reward should never run out first.
+    expect(QUIZ_ART_COUNT).toBe(74);
   });
 
-  it('gives every artwork a title key and a two-stop palette', () => {
+  it('credits every painting', () => {
+    // Title and artist are shown to the user. Partly because it is the decent
+    // thing to do with somebody's Caravaggio, and partly because they ARE the
+    // reward — she collected a painting that has a name, not a texture.
     for (const a of QUIZ_ART) {
-      expect(a.titleKey.startsWith('quiz.art.')).toBe(true);
-      expect(a.bg).toHaveLength(2);
-      expect(a.ink).toMatch(/^#/);
+      expect(`${a.id}:title:${a.title.length > 0}`).toBe(`${a.id}:title:true`);
+      expect(`${a.id}:artist:${a.artist.length > 0}`).toBe(`${a.id}:artist:true`);
     }
+  });
+
+  it('gives every painting a usable aspect ratio', () => {
+    // The board takes its shape from this. A zero or a NaN would collapse the
+    // height to nothing and the puzzle would be a 1px strip.
+    for (const a of QUIZ_ART) {
+      expect(Number.isFinite(a.aspect)).toBe(true);
+      expect(a.aspect).toBeGreaterThan(0.3);
+      expect(a.aspect).toBeLessThan(3);
+    }
+  });
+
+  it('builds CDN urls from the id, with a separate thumbnail', () => {
+    // A separate thumb file rather than a Cloudflare transform: the transform
+    // host list in cfImage.ts covers the covers domain only, and a resize that
+    // silently failed would push the full-size set into a 2-column grid.
+    const a = QUIZ_ART[0];
+    expect(artUrl(a)).toBe(`https://quiz.everlandapps.com/v1/art/full/${a.id}.jpg`);
+    expect(artThumbUrl(a)).toBe(`https://quiz.everlandapps.com/v1/art/thumb/${a.id}.jpg`);
+  });
+
+  it('has ids that are safe as filenames', () => {
+    for (const a of QUIZ_ART) expect(a.id).toMatch(/^\d{3}$/);
   });
 
   it('clamps instead of returning undefined', () => {

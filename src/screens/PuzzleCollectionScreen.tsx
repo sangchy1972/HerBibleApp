@@ -1,22 +1,29 @@
-import React, { useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import {
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, useWindowDimensions, BackHandler,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
-import { BG, TXT, TXTSUB, FONTS, P } from '../constants/theme';
+import { BG, TXT, TXTSUB, INK_06, ROSE, FONTS, P } from '../constants/theme';
 import { useT } from '../i18n/useT';
 import { useQuiz } from '../state/QuizContext';
 import { puzzleView, TILES_PER_PAINTING } from '../state/quizProgress';
-import { QUIZ_ART, QUIZ_ART_COUNT, artworkAt } from '../constants/quizArt';
+import {
+  QUIZ_ART, QUIZ_ART_COUNT, artUrl, artThumbUrl, type QuizArtwork,
+} from '../constants/quizArt';
 import PuzzleBoard from '../components/quiz/PuzzleBoard';
-import PuzzleArt from '../components/quiz/PuzzleArt';
-import MysteryRewardBar from '../components/quiz/MysteryRewardBar';
+import PaintingShareArt, { PAINTING_SHARE_WIDTH } from '../components/quiz/PaintingShareArt';
+import { shareCard, saveCard } from '../services/cardShare';
 import type { RootStackScreenProps } from '../navigation/types';
 
-// The puzzle collection — everything the quiz has earned, in one place.
+// Every painting the quiz has earned, plus the one in progress.
 //
-// Three bands: the board in progress, the finished paintings, and the mystery
-// counter. All of it is DERIVED from `completedSets`; nothing here is stored,
-// so there is no way for the collection to disagree with the ladder.
+// STILL DERIVES EVERYTHING from `completedSets`. Nothing on this screen is
+// stored, which is what makes it trivially correct and is why the mystery cards
+// got their own screen instead of a band at the bottom of this one.
+//
+// Finished paintings only in the grid. The one in progress is already the hero
+// above; listing it twice makes the collection look padded.
 
 const GRID_GAP = 10;
 
@@ -25,28 +32,23 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { progress } = useQuiz();
+  const [detail, setDetail] = useState<QuizArtwork | null>(null);
 
   const view = puzzleView(progress.completedSets, QUIZ_ART_COUNT);
-  // Adaptive, not fixed: iPhone SE → Pro Max is a 110 pt spread and a hardcoded
+  // Adaptive, not fixed: iPhone SE to Pro Max is a 110pt spread and a hardcoded
   // board would either overflow the small screen or float in the large one.
-  const boardSize = Math.min(width - P * 2, 340);
-  // 3 across with two 10 pt gutters. Floor, so rounding can never make the row
-  // one sub-pixel too wide and wrap the third thumbnail onto its own line.
-  const thumb = Math.floor((width - P * 2 - GRID_GAP * 2) / 3);
+  const boardW = Math.min(width - P * 2, 380);
+  const thumb = Math.floor((width - P * 2 - GRID_GAP) / 2);
 
-  // Finished paintings only — the one in progress is already shown above, and
-  // listing it twice makes the collection look padded.
   const finished = useMemo(
     () => QUIZ_ART.slice(0, Math.min(view.completedPaintings, QUIZ_ART_COUNT)),
     [view.completedPaintings],
   );
 
-  const current = artworkAt(view.paintingIndex);
-
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12} style={styles.close}>
+        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12} style={styles.iconBtn}>
           <Feather name="x" size={24} color={TXT} />
         </TouchableOpacity>
         <View style={styles.headerCopy}>
@@ -54,58 +56,175 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
             {t('quiz.collection.title')}
           </Text>
         </View>
-        <View style={styles.close} />
+        <View style={styles.iconBtn} />
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 28 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 28 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.boardWrap}>
           <PuzzleBoard
             paintingIndex={view.paintingIndex}
             tilesUnlocked={view.tilesUnlocked}
-            size={boardSize}
+            size={boardW}
+            showCaption
           />
         </View>
 
-        <Text style={styles.caption} numberOfLines={1} maxFontSizeMultiplier={1.3}>
-          {t(current.titleKey)}
-        </Text>
         <Text style={styles.captionSub} maxFontSizeMultiplier={1.3}>
           {view.outOfArt
             ? t('quiz.collection.allDone')
             : t('quiz.collection.tiles', { n: view.tilesUnlocked, total: TILES_PER_PAINTING })}
         </Text>
-
-        <View style={styles.mystery}>
-          <MysteryRewardBar completedSets={progress.completedSets} />
-        </View>
+        {!view.outOfArt && view.tilesUnlocked < TILES_PER_PAINTING ? (
+          <Text style={styles.nudge} maxFontSizeMultiplier={1.3}>
+            {t('quiz.collection.nudge', { n: TILES_PER_PAINTING - view.tilesUnlocked })}
+          </Text>
+        ) : null}
 
         <Text style={styles.sectionTitle} maxFontSizeMultiplier={1.3}>
           {t('quiz.collection.collected', { n: finished.length, total: QUIZ_ART_COUNT })}
         </Text>
 
         {finished.length === 0 ? (
-          <Text style={styles.empty} maxFontSizeMultiplier={1.3}>
-            {t('quiz.collection.empty')}
-          </Text>
+          <Text style={styles.empty} maxFontSizeMultiplier={1.3}>{t('quiz.collection.empty')}</Text>
         ) : (
           <View style={styles.grid}>
             {finished.map(a => (
-              <View key={a.id} style={[styles.thumbWrap, { width: thumb }]}>
-                <View style={styles.thumbClip}>
-                  <PuzzleArt art={a} size={thumb} />
-                </View>
-                <Text style={styles.thumbLabel} numberOfLines={1} maxFontSizeMultiplier={1.2}>
-                  {t(a.titleKey)}
-                </Text>
-              </View>
+              <TouchableOpacity
+                key={a.id}
+                style={{ width: thumb }}
+                activeOpacity={0.85}
+                onPress={() => setDetail(a)}
+                accessibilityRole="button"
+                accessibilityLabel={`${a.title}, ${a.artist}`}
+              >
+                <Image
+                  source={{ uri: artThumbUrl(a) }}
+                  style={[styles.thumb, { width: thumb, height: Math.round(thumb / (a.aspect || 1)) }]}
+                  resizeMode="cover"
+                  accessibilityIgnoresInvertColors
+                />
+                <Text style={styles.thumbTitle} numberOfLines={1} maxFontSizeMultiplier={1.2}>{a.title}</Text>
+                <Text style={styles.thumbArtist} numberOfLines={1} maxFontSizeMultiplier={1.2}>{a.artist}</Text>
+              </TouchableOpacity>
             ))}
           </View>
         )}
       </ScrollView>
+
+      {detail ? <PaintingDetail art={detail} onClose={() => setDetail(null)} /> : null}
     </View>
+  );
+}
+
+/** Full painting, unseamed, with share and save. */
+function PaintingDetail({ art, onClose }: { art: QuizArtwork; onClose: () => void }) {
+  const t = useT();
+  const { width, height } = useWindowDimensions();
+  const shotRef = useRef<View>(null);
+  const [busy, setBusy] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current); }, []);
+  // Android back closes the PAINTING, not the whole collection.
+  React.useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => { onClose(); return true; });
+    return () => sub.remove();
+  }, [onClose]);
+
+  const showToast = useCallback((msg: string) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(msg);
+    toastTimer.current = setTimeout(() => setToast(null), 1600);
+  }, []);
+
+  const w = Math.min(width - 36, height * 0.52 * (art.aspect || 1));
+
+  const onShare = async () => {
+    if (busy) return;
+    setBusy(true);
+    const r = await shareCard(shotRef.current, art.title);
+    if (r === 'unavailable' || r === 'failed') showToast(t('error.couldNotShare'));
+    setBusy(false);
+  };
+
+  const onSave = async () => {
+    if (busy) return;
+    setBusy(true);
+    await saveCard(
+      shotRef.current,
+      () => showToast(t('shareVerse.saveAlert.title')),
+      { failTitle: t('error.couldNotSave'), tryAgain: t('common.tryAgain') },
+    );
+    setBusy(false);
+  };
+
+  return (
+    <View style={styles.detail}>
+      <TouchableOpacity
+        style={StyleSheet.absoluteFill}
+        onPress={onClose}
+        activeOpacity={1}
+        accessibilityLabel={t('common.close')}
+      />
+
+      {/* Shown WHOLE, with no seams. The jigsaw is how she earned it, not what
+          it is. */}
+      <Image
+        source={{ uri: artUrl(art) }}
+        style={{ width: w, height: Math.round(w / (art.aspect || 1)), borderRadius: 12 }}
+        resizeMode="cover"
+        accessibilityIgnoresInvertColors
+      />
+      <Text style={styles.detailTitle} numberOfLines={2} maxFontSizeMultiplier={1.3}>{art.title}</Text>
+      <Text style={styles.detailArtist} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+        {art.year ? `${art.artist} · ${art.year}` : art.artist}
+      </Text>
+
+      <View style={styles.detailActions}>
+        <IconAction icon="share-2" label={t('quiz.card.share')} onPress={onShare} />
+        <IconAction icon="download" label={t('quiz.card.save')} onPress={onSave} />
+      </View>
+
+      {toast ? (
+        <View style={styles.toast} pointerEvents="none">
+          <Text style={styles.toastText} numberOfLines={2}>{toast}</Text>
+        </View>
+      ) : null}
+
+      <View style={styles.offscreen} pointerEvents="none" collapsable={false}>
+        <View ref={shotRef} collapsable={false}>
+          <PaintingShareArt
+            uri={artUrl(art)}
+            aspect={art.aspect}
+            title={art.title}
+            artist={art.artist}
+            year={art.year}
+            width={PAINTING_SHARE_WIDTH}
+          />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function IconAction({
+  icon, label, onPress,
+}: {
+  icon: keyof typeof Feather.glyphMap;
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity style={styles.iconAction} onPress={onPress} accessibilityRole="button" accessibilityLabel={label}>
+      <View style={styles.iconDisc}>
+        <Feather name={icon} size={21} color="#FFFFFF" />
+      </View>
+      <Text style={styles.iconLabel} numberOfLines={1} maxFontSizeMultiplier={1.2}>{label}</Text>
+    </TouchableOpacity>
   );
 }
 
@@ -115,23 +234,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12, paddingTop: 6, paddingBottom: 8,
   },
-  close: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   headerCopy: { flex: 1, alignItems: 'center' },
   headerTitle: {
     fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 18,
     color: TXT, letterSpacing: 0.3,
   },
-  content: { paddingHorizontal: P, paddingTop: 10 },
+  scroll: { paddingHorizontal: P, paddingTop: 10 },
   boardWrap: { alignItems: 'center' },
-  caption: {
-    fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 19,
-    color: TXT, textAlign: 'center', marginTop: 18, letterSpacing: 0.3,
-  },
   captionSub: {
     fontFamily: FONTS.lato, fontSize: 13.5, color: TXTSUB,
-    textAlign: 'center', marginTop: 5, letterSpacing: 0.2,
+    textAlign: 'center', marginTop: 12, letterSpacing: 0.2,
   },
-  mystery: { marginTop: 26 },
+  nudge: {
+    fontFamily: FONTS.lato, fontSize: 13, color: ROSE,
+    textAlign: 'center', marginTop: 6, letterSpacing: 0.2,
+  },
   sectionTitle: {
     fontFamily: FONTS.latoBold, fontSize: 14, color: TXT,
     letterSpacing: 0.4, marginTop: 30, marginBottom: 12,
@@ -140,11 +258,36 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.lato, fontSize: 13.5, color: TXTSUB,
     lineHeight: 20, letterSpacing: 0.2,
   },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: GRID_GAP, rowGap: 16 },
-  thumbWrap: {},
-  thumbClip: { borderRadius: 12, overflow: 'hidden' },
-  thumbLabel: {
-    fontFamily: FONTS.lato, fontSize: 12, color: TXTSUB,
-    marginTop: 6, textAlign: 'center', letterSpacing: 0.2,
+  grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: GRID_GAP, rowGap: 18 },
+  thumb: { borderRadius: 10, backgroundColor: INK_06 },
+  thumbTitle: {
+    fontFamily: FONTS.latoBold, fontSize: 12.5, color: TXT,
+    marginTop: 7, letterSpacing: 0.2,
   },
+  thumbArtist: { fontFamily: FONTS.lato, fontSize: 11.5, color: TXTSUB, marginTop: 2 },
+
+  detail: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.88)', alignItems: 'center', justifyContent: 'center' },
+  detailTitle: {
+    fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 18,
+    color: '#FFFFFF', textAlign: 'center', marginTop: 20, paddingHorizontal: 24,
+  },
+  detailArtist: {
+    fontFamily: FONTS.lato, fontSize: 13, color: 'rgba(255,255,255,0.6)',
+    textAlign: 'center', marginTop: 5,
+  },
+  detailActions: { flexDirection: 'row', justifyContent: 'center', gap: 34, marginTop: 30 },
+  iconAction: { alignItems: 'center', gap: 6 },
+  iconDisc: {
+    width: 48, height: 48, borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.13)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  iconLabel: { color: 'rgba(255,255,255,0.6)', fontFamily: FONTS.lato, fontSize: 11 },
+  toast: {
+    position: 'absolute', left: 40, right: 40, bottom: 80,
+    backgroundColor: 'rgba(0,0,0,0.78)', borderRadius: 14,
+    paddingVertical: 12, paddingHorizontal: 16,
+  },
+  toastText: { color: '#FFFFFF', fontFamily: FONTS.lato, fontSize: 14, textAlign: 'center' },
+  offscreen: { position: 'absolute', left: -9999, top: 0 },
 });

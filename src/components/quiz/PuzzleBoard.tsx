@@ -1,72 +1,158 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, Image } from 'react-native';
+import Svg, { Defs, ClipPath, Path, Image as SvgImage, G } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
-import { INK_28 } from '../../constants/theme';
+import { INK_06, INK_28, TXT, TXTSUB, FONTS } from '../../constants/theme';
 import { TILES_PER_PAINTING } from '../../state/quizProgress';
-import { artworkAt } from '../../constants/quizArt';
-import PuzzleArt from './PuzzleArt';
+import { artworkAt, artUrl, type QuizArtwork } from '../../constants/quizArt';
+import { jigsawPaths } from '../../services/jigsaw';
 
-// The 2×2 puzzle board.
+// The 2x2 jigsaw board.
 //
-// The artwork is drawn ONCE at full size and the locked tiles are frosted
-// panels laid on top. Cutting the picture into four separately-rendered
-// quadrants would be the obvious implementation and is wrong: each piece would
-// scale independently, so the seams wouldn't line up and the reveal wouldn't
-// read as one picture coming into view. One image, four covers.
+// THE PICTURE IS DRAWN FOUR TIMES, each copy clipped to one piece — not cut
+// into four images. Four separately-scaled crops would each round their own
+// edges and the seams would not line up; one source clipped four ways keeps
+// every piece registered to the same pixel grid.
 //
-// `newTile` is the quadrant unlocked by the set the user just finished. It gets
-// a ring so the reward is legible in the half-second she looks at it — without
-// it, "one of four squares is now slightly less grey" is easy to miss entirely.
+// The tab and its socket are ONE curve, generated once in services/jigsaw.ts
+// and walked backwards by whichever piece traverses it in reverse. Generating
+// each side independently leaves a hairline of background along the seam, which
+// on a photograph reads as a rendering fault rather than as a puzzle.
+//
+// Locked pieces render as a soft ink fill with a lock glyph — not as a blurred
+// or greyed copy of the art. Showing her the picture she has not earned yet
+// removes the reason to earn it.
 
 export default function PuzzleBoard({
-  paintingIndex, tilesUnlocked, size, newTile,
+  paintingIndex, tilesUnlocked, size, newTile, showCaption = false,
 }: {
   paintingIndex: number;
   tilesUnlocked: number;
+  /** Board WIDTH. Height comes from the painting's own aspect. */
   size: number;
-  /** Quadrant index just unlocked, or null. */
+  /** Piece just unlocked, or null. Gets a ring so the reward is legible. */
   newTile?: number | null;
+  showCaption?: boolean;
 }) {
   const art = artworkAt(paintingIndex);
-  const half = size / 2;
+  const w = Math.max(1, size);
+  const h = Math.max(1, Math.round(w / (art.aspect || 1)));
   const unlocked = Math.max(0, Math.min(TILES_PER_PAINTING, Math.floor(tilesUnlocked) || 0));
 
+  const paths = useMemo(() => jigsawPaths(w, h), [w, h]);
+  const uri = artUrl(art);
+  const [failed, setFailed] = useState(false);
+
   return (
-    <View style={[styles.root, { width: size, height: size }]}>
-      <PuzzleArt art={art} size={size} />
+    <View style={{ width: w }}>
+      {/* Warms the OS image cache and tells us whether the fetch worked at all.
+          SvgImage gives no onError, so a dead CDN would otherwise show four
+          empty holes with no way to fall back. */}
+      <Image
+        source={{ uri }}
+        style={styles.probe}
+        onError={() => setFailed(true)}
+        accessibilityIgnoresInvertColors
+      />
 
-      {Array.from({ length: TILES_PER_PAINTING }, (_, i) => {
-        const isOpen = i < unlocked;
-        const row = Math.floor(i / 2);
-        const col = i % 2;
-        const box = { left: col * half, top: row * half, width: half, height: half };
+      <Svg width={w} height={h} style={styles.board}>
+        <Defs>
+          {paths.map((d, i) => (
+            <ClipPath key={`c${i}`} id={`piece-${art.id}-${i}`}>
+              <Path d={d} />
+            </ClipPath>
+          ))}
+        </Defs>
 
-        if (isOpen) {
-          return i === newTile ? (
-            <View key={i} pointerEvents="none" style={[styles.tile, box, styles.fresh]} />
-          ) : null;
-        }
-        return (
-          <View key={i} pointerEvents="none" style={[styles.tile, box, styles.locked]}>
-            <Feather name="lock" size={Math.max(12, size * 0.07)} color={INK_28} />
+        {paths.map((d, i) => {
+          const open = i < unlocked;
+          if (!open || failed) {
+            return (
+              <Path
+                key={`l${i}`}
+                d={d}
+                fill={open ? INK_06 : 'rgba(30,27,46,0.07)'}
+                stroke="rgba(255,255,255,0.55)"
+                strokeWidth={1}
+              />
+            );
+          }
+          return (
+            <G key={`p${i}`} clipPath={`url(#piece-${art.id}-${i})`}>
+              <SvgImage
+                href={{ uri }}
+                x={0}
+                y={0}
+                width={w}
+                height={h}
+                preserveAspectRatio="xMidYMid slice"
+              />
+            </G>
+          );
+        })}
+
+        {/* Seams last, over the art, so the board still reads as four pieces
+            once every one is open. */}
+        {paths.map((d, i) => (
+          <Path
+            key={`s${i}`}
+            d={d}
+            fill="none"
+            stroke={i === newTile ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.5)'}
+            strokeWidth={i === newTile ? 2.5 : 1}
+          />
+        ))}
+      </Svg>
+
+      {/* Lock glyphs sit outside the SVG: a Feather icon inside react-native-svg
+          would need a second font registration for no gain. */}
+      {!failed && Array.from({ length: TILES_PER_PAINTING }, (_, i) => (
+        i < unlocked ? null : (
+          <View
+            key={`k${i}`}
+            pointerEvents="none"
+            style={[
+              styles.lock,
+              {
+                left: (i % 2) * (w / 2),
+                top: Math.floor(i / 2) * (h / 2),
+                width: w / 2,
+                height: h / 2,
+              },
+            ]}
+          >
+            <Feather name="lock" size={Math.max(13, w * 0.055)} color={INK_28} />
           </View>
-        );
-      })}
+        )
+      ))}
 
-      {/* Hairline cross, above the covers, so the board still reads as four
-          pieces once every tile is open. */}
-      <View pointerEvents="none" style={[styles.seam, { left: half - 0.5, top: 0, width: 1, height: size }]} />
-      <View pointerEvents="none" style={[styles.seam, { left: 0, top: half - 0.5, width: size, height: 1 }]} />
+      {showCaption ? (
+        <View style={styles.caption}>
+          <Text style={styles.title} numberOfLines={2} maxFontSizeMultiplier={1.3}>{art.title}</Text>
+          <Text style={styles.artist} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+            {art.year ? `${art.artist} · ${art.year}` : art.artist}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 }
 
+export function artworkCaption(a: QuizArtwork): string {
+  return a.year ? `${a.title} — ${a.artist}, ${a.year}` : `${a.title} — ${a.artist}`;
+}
+
 const styles = StyleSheet.create({
-  root: { borderRadius: 18, overflow: 'hidden', position: 'relative' },
-  tile: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-  // Frosted, not opaque: a hint of the picture behind a locked tile is what
-  // makes the next one worth unlocking.
-  locked: { backgroundColor: 'rgba(255,255,255,0.86)' },
-  fresh: { borderWidth: 2, borderColor: 'rgba(255,255,255,0.9)' },
-  seam: { position: 'absolute', backgroundColor: 'rgba(255,255,255,0.55)' },
+  probe: { width: 1, height: 1, opacity: 0, position: 'absolute' },
+  board: { borderRadius: 14, overflow: 'hidden', backgroundColor: INK_06 },
+  lock: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
+  caption: { marginTop: 12, alignItems: 'center' },
+  title: {
+    fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 16.5,
+    color: TXT, textAlign: 'center', letterSpacing: 0.2,
+  },
+  artist: {
+    fontFamily: FONTS.lato, fontSize: 12.5, color: TXTSUB,
+    textAlign: 'center', marginTop: 3, letterSpacing: 0.2,
+  },
 });

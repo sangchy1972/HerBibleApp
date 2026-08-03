@@ -46,6 +46,11 @@ export type RootStackParamList = {
   Quiz: { setIndex?: number } | undefined;
   /** Puzzle collection — every artwork the quiz has earned. */
   PuzzleCollection: undefined;
+  /** Mystery cards she has drawn. Its own route, not a band on the puzzle
+   *  screen: that screen stores nothing and this list is stored + filterable. */
+  CardCollection: undefined;
+  /** Quiz standing — every number derived, nothing stored. */
+  QuizProgress: undefined;
   Reflections: undefined;
   PastVerses: undefined;
   FeaturedPlanDetail: { slug: string };

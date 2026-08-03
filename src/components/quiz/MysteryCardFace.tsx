@@ -49,18 +49,25 @@ export function MysteryCardBack({ style }: { style?: StyleProp<ViewStyle> }) {
  * to her, and without them the sentence reads as app copy.
  */
 export function MysteryCardFront({
-  body, typing = false, onTypingDone, style,
+  body, typing = false, onTypingDone, inline = false, style,
 }: {
   body: string;
   typing?: boolean;
   onTypingDone?: () => void;
+  /**
+   * `false` (default) is a card FACE: absolutely filling a parent whose size is
+   * animated by the draw overlay. `true` sizes itself to the text — used by the
+   * collection detail, where the card has to grow with a 28- to 48-word body
+   * rather than clip the long ones or leave the short ones swimming.
+   */
+  inline?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
   const quoted = useMemo(() => `“${body}”`, [body]);
   const shown = useTypewriter(quoted, typing, onTypingDone);
 
   return (
-    <View style={[styles.face, styles.front, style]}>
+    <View style={[inline ? styles.faceInline : styles.face, styles.front, style]}>
       {/* The FULL text is always laid out, transparent, and the visible copy is
           absolutely positioned over it — the wrapper takes its size from the
           ghost, so the overlay lands on exactly the same box.
@@ -123,6 +130,13 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     // No border on either face — an outline made the card read as a UI panel
     // rather than as an object.
+    backfaceVisibility: 'hidden',
+  },
+  /** Same box as `face` minus the absolute fill, so the card grows with its
+   *  text instead of being sized by an animated parent. */
+  faceInline: {
+    borderRadius: CARD_RADIUS,
+    overflow: 'hidden',
     backfaceVisibility: 'hidden',
   },
   back: { alignItems: 'center', justifyContent: 'center' },

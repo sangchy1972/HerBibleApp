@@ -755,6 +755,21 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
       </View>
       </TabSection>
 
+      {/* Quiz. Two destinations rather than one tabbed screen: the puzzle
+          collection already owns its own header chrome and its own deep link,
+          and top tabs reached from a Profile row is two levels of navigation
+          furniture for three items. The home-screen medal still lands on the
+          puzzle — it is a MEDAL, it means art, and repointing it at a numbers
+          dashboard would break a shipped affordance for nothing. */}
+      <TabSection delay={140}>
+      <Text style={[styles.sectionTitle, { marginTop: 28, marginBottom: 14 }]}>{t('profile.section.quiz')}</Text>
+      <View style={styles.notesRow}>
+        <NotesTile label={t('profile.quiz.tile.progress')} icon="bar-chart-2" onPress={() => navigation.navigate('QuizProgress')} />
+        <NotesTile label={t('profile.quiz.tile.cards')}    icon="layers"      onPress={() => navigation.navigate('CardCollection')} />
+        <NotesTile label={t('profile.quiz.tile.puzzle')}   icon="image"       onPress={() => navigation.navigate('PuzzleCollection')} />
+      </View>
+      </TabSection>
+
       {/* Widget banner — ANDROID ONLY. iOS provides no API to programmatically
           add a home-screen widget, and the app ships no iOS WidgetKit widget, so
           on iOS this leads nowhere. Hidden on iOS until a real widget is built.

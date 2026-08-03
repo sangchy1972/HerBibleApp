@@ -6,6 +6,8 @@ import PrayerFlow from '../screens/PrayerFlow';
 import GospelPsalmReader from '../screens/GospelPsalmReader';
 import QuizChallengeScreen from '../screens/QuizChallengeScreen';
 import PuzzleCollectionScreen from '../screens/PuzzleCollectionScreen';
+import CardCollectionScreen from '../screens/CardCollectionScreen';
+import QuizProgressScreen from '../screens/QuizProgressScreen';
 import MoodDashboardScreen from '../screens/MoodDashboardScreen';
 import RemoveAdsScreen from '../screens/RemoveAdsScreen';
 import HelpCenterScreen from '../screens/HelpCenterScreen';
@@ -77,6 +79,15 @@ export default function RootNavigator() {
         name="PuzzleCollection"
         component={PuzzleCollectionScreen}
         options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', animationDuration: 280 }}
+      />
+      <Stack.Screen
+        name="CardCollection"
+        component={CardCollectionScreen}
+        options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', animationDuration: 280 }}
+      />
+      <Stack.Screen
+        name="QuizProgress"
+        component={QuizProgressScreen}
       />
       <Stack.Screen
         name="MoodDashboard"

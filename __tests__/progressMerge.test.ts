@@ -106,7 +106,31 @@ describe('mergeSnapshots', () => {
       // existed, so the user gets a green NEW ribbon on every badge she has
       // owned for months.
       'achievements:seen:v1',
+      // The quiz shipped without these. A reinstall reset the whole ladder.
+      'quiz:progress:v1', 'quiz:cards:v1',
     ]) expect(BACKUP_KEYS).toContain(key);
+  });
+
+  test('quiz ladder: every counter takes the max, so a stale device cannot drag her back', () => {
+    const local = { 'quiz:progress:v1': JSON.stringify({ v: 1, bankVersion: 2, setIndex: 12, completedSets: 12, perfectSets: 5, totalCorrect: 51, lastCompletedYmd: '2026-08-01' }) };
+    const remote = { 'quiz:progress:v1': JSON.stringify({ v: 1, bankVersion: 2, setIndex: 7, completedSets: 7, perfectSets: 6, totalCorrect: 33, lastCompletedYmd: '2026-08-03' }) };
+    const out = JSON.parse(mergeSnapshots(local, remote).merged['quiz:progress:v1'] as string);
+    expect(out.setIndex).toBe(12);
+    expect(out.completedSets).toBe(12);
+    expect(out.perfectSets).toBe(6);          // the OTHER device was better here
+    expect(out.totalCorrect).toBe(51);
+    expect(out.lastCompletedYmd).toBe('2026-08-03');
+  });
+
+  test('cards: collection unions and an unspent draw survives from either side', () => {
+    // Losing pendingDraw would silently eat a reward she worked three sets for.
+    const local = { 'quiz:cards:v1': JSON.stringify({ v: 1, collected: ['doubt-1', 'weary-2'], drawsTaken: 2, pendingDraw: false }) };
+    const remote = { 'quiz:cards:v1': JSON.stringify({ v: 1, collected: ['weary-2', 'lack-1'], drawsTaken: 2, pendingDraw: true }) };
+    const out = JSON.parse(mergeSnapshots(local, remote).merged['quiz:cards:v1'] as string);
+    expect(new Set(out.collected)).toEqual(new Set(['doubt-1', 'weary-2', 'lack-1']));
+    expect(out.pendingDraw).toBe(true);
+    // Never fewer draws than cards she visibly holds.
+    expect(out.drawsTaken).toBe(3);
   });
 
   test('seen-badge set unions across devices rather than intersecting', () => {

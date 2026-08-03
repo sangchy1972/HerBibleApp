@@ -146,6 +146,47 @@ const mergeMood: Merger = jsonMerger<Mood>((l, r) => ({
   lastShownAt: Math.max(l.lastShownAt ?? 0, r.lastShownAt ?? 0),
 }));
 
+// Quiz ladder. Every field is a monotonic lifetime counter, so max-per-field is
+// correct and a device that is behind can never drag the user backwards.
+//
+// `setIndex` is the position in the question stream, NOT a score — taking the
+// max means the further-along device wins and she never re-answers a set she
+// already cleared. It is deliberately NOT tied to completedSets: they diverge
+// if a set is ever skipped, and clamping one to the other would silently
+// rewrite her place in the bank.
+const mergeQuizProgress = jsonMerger<any>((l, r) => ({
+  ...l,
+  v: 1,
+  bankVersion: Math.max(l?.bankVersion ?? 1, r?.bankVersion ?? 1),
+  setIndex: Math.max(l?.setIndex ?? 0, r?.setIndex ?? 0),
+  completedSets: Math.max(l?.completedSets ?? 0, r?.completedSets ?? 0),
+  perfectSets: Math.max(l?.perfectSets ?? 0, r?.perfectSets ?? 0),
+  totalCorrect: Math.max(l?.totalCorrect ?? 0, r?.totalCorrect ?? 0),
+  lastCompletedYmd: [l?.lastCompletedYmd, r?.lastCompletedYmd]
+    .filter((x): x is string => typeof x === 'string')
+    .sort()
+    .pop() ?? null,
+}));
+
+// Mystery cards. `collected` unions — a card drawn on any device is hers. Union
+// rather than "longer array wins" because two devices can hold disjoint sets.
+// `pendingDraw` ORs: an unspent draw earned anywhere must survive, since losing
+// it silently eats a reward she already worked three sets for.
+const mergeCardProgress = jsonMerger<any>((l, r) => {
+  const collected = Array.from(new Set([
+    ...(Array.isArray(l?.collected) ? l.collected : []),
+    ...(Array.isArray(r?.collected) ? r.collected : []),
+  ]));
+  return {
+    v: 1,
+    collected,
+    // Never below the collection size, or a restore would report fewer draws
+    // than she visibly holds cards.
+    drawsTaken: Math.max(l?.drawsTaken ?? 0, r?.drawsTaken ?? 0, collected.length),
+    pendingDraw: l?.pendingDraw === true || r?.pendingDraw === true,
+  };
+});
+
 // The full backup manifest: every key that goes to the cloud, with its merge
 // strategy. Caches, ad/nudge state, attest tokens etc. are deliberately absent.
 export const MERGERS: Record<string, Merger> = {
@@ -169,6 +210,14 @@ export const MERGERS: Record<string, Merger> = {
   // `seen` absent, and the backfill only runs when the key has NEVER existed,
   // so she'd get a wall of ribbons on a fresh install.
   'achievements:seen:v1': unionStringArray,
+  // ⚠️ Added late. The quiz shipped WITHOUT these, which meant a reinstall or a
+  // restore silently reset the whole ladder — level back to 1, puzzle tiles
+  // gone, and (once cards land) a full card collection sitting next to Level 1.
+  // The in-flight session is deliberately still absent: it is disposable by
+  // design and restoring a half-answered set onto another device is worse than
+  // restarting it.
+  'quiz:progress:v1': mergeQuizProgress,
+  'quiz:cards:v1': mergeCardProgress,
   'mood:v2': mergeMood,
   'shares:count': maxNumeric,
   'daily-verses:first-launch-date': minYmd,

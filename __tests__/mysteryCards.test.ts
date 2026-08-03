@@ -1,27 +1,24 @@
 // The mystery card pool.
 //
-// Most of these assertions guard EDITORIAL rules, not code. That is deliberate:
-// this is the one place in the app where we write in God's first person, and a
-// card that drifts into prosperity-gospel phrasing or reads as a reason to skip
-// medical care is a far worse defect than a crash — it ships, it looks fine in
-// review, and the damage is to a reader who trusted it.
-//
-// The mechanical rules (ids, counts, lengths) protect the draw logic, which
-// addresses cards by id and lays them out on a phone-sized card.
+// Most of these guard EDITORIAL rules, not code. That is deliberate: this is
+// the one place in the app where we write in God's first person, with no
+// scripture reference shown to qualify it. A card that drifts into promising
+// an outcome, or that reads as a reason to delay medical care, is a far worse
+// defect than a crash — it ships clean, it looks fine in review, and the damage
+// lands on a reader who trusted it.
 
 import {
-  MYSTERY_CARDS, MYSTERY_CARD_COUNT, CARD_THEMES, cardById,
-  localizedCardTitle, localizedCardBody,
+  MYSTERY_CARDS, MYSTERY_CARD_COUNT, CARD_THEMES, cardById, localizedCardBody,
 } from '../src/constants/mysteryCards';
 import { MYSTERY_EVERY } from '../src/state/quizProgress';
 
+const en = (id: string) => MYSTERY_CARDS.find(c => c.id === id)!.body.en!;
 const words = (s: string) => s.trim().split(/\s+/).length;
+/** Chinese length excluding punctuation. */
+const hanzi = (s: string) => s.replace(/[，。？！—；：、“”‘’（）]/g, '').length;
 
 describe('pool shape', () => {
-  it('has 40 cards, 4 per theme', () => {
-    // 40 draws x 3 sets = 120 completed sets before a card repeats, against 65
-    // sets per bank cycle — she meets a repeated QUESTION long before a
-    // repeated CARD, which is the right way round since the card is the reward.
+  it('has 40 cards, 4 per concern', () => {
     expect(MYSTERY_CARD_COUNT).toBe(40);
     expect(CARD_THEMES).toHaveLength(10);
     for (const theme of CARD_THEMES) {
@@ -29,26 +26,27 @@ describe('pool shape', () => {
     }
   });
 
-  it('outlasts a full bank cycle by a wide margin', () => {
-    const setsToExhaust = MYSTERY_CARD_COUNT * MYSTERY_EVERY;
-    expect(setsToExhaust).toBeGreaterThan(65);   // sets per quiz bank cycle
+  it('outlasts a full quiz bank cycle by a wide margin', () => {
+    // 40 draws x 3 sets = 120 sets, against 65 sets per bank cycle. She meets a
+    // repeated question long before a repeated card.
+    expect(MYSTERY_CARD_COUNT * MYSTERY_EVERY).toBeGreaterThan(65);
   });
 
   it('has unique ids', () => {
-    // Ids are the durable key in CardProgress.collected. A duplicate would make
-    // two cards indistinguishable in a user's collection.
+    // Ids are the durable key in the collection. A duplicate would make two
+    // cards indistinguishable in a user's record.
     const ids = MYSTERY_CARDS.map(c => c.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('never repeats a scripture reference', () => {
-    // Two cards on the same passage would feel like a duplicate draw even
-    // though the ids differ.
+  it('never anchors two cards on the same passage', () => {
+    // The ref is invisible to users, so this is not about attribution — two
+    // cards standing on one passage tend to say the same thing twice.
     const refs = MYSTERY_CARDS.map(c => c.ref);
     expect(new Set(refs).size).toBe(refs.length);
   });
 
-  it('ids are lowercase, hyphenated, and start with their theme', () => {
+  it('ids are lowercase, hyphenated, and prefixed with their theme', () => {
     for (const c of MYSTERY_CARDS) {
       expect(c.id).toMatch(/^[a-z]+-\d+$/);
       expect(c.id.startsWith(`${c.theme}-`)).toBe(true);
@@ -56,95 +54,151 @@ describe('pool shape', () => {
   });
 });
 
-describe('card copy fits a phone card', () => {
-  it('keeps every English body between 35 and 60 words', () => {
+describe('card copy fits the card', () => {
+  it('keeps every English body inside 27-48 words', () => {
+    // The card is landscape, 15.2pt serif, height capped at 400. Past ~48 words
+    // it either overflows or forces the type down to an unreadable size.
     for (const c of MYSTERY_CARDS) {
       const n = words(c.body.en!);
-      expect(`${c.id}:${n >= 35 && n <= 60}`).toBe(`${c.id}:true`);
+      expect(`${c.id}:${n >= 27 && n <= 48}`).toBe(`${c.id}:true`);
     }
   });
 
-  it('keeps every title to 2-4 words', () => {
+  it('keeps every Chinese body inside 38-65 characters', () => {
     for (const c of MYSTERY_CARDS) {
-      const n = words(c.title.en!);
-      expect(`${c.id}:${n}`).toBe(`${c.id}:${Math.min(4, Math.max(2, n))}`);
+      const n = hanzi(c.body['zh-Hans']!);
+      expect(`${c.id}:${n >= 38 && n <= 65}`).toBe(`${c.id}:true`);
     }
   });
 
-  it('always has English, since every localizer falls back to it', () => {
+  it('ships English and Chinese for every card', () => {
     for (const c of MYSTERY_CARDS) {
-      expect(c.title.en && c.title.en.length).toBeTruthy();
-      expect(c.body.en && c.body.en.length).toBeTruthy();
-    }
-  });
-
-  it('cites a book chapter:verse reference', () => {
-    for (const c of MYSTERY_CARDS) {
-      expect(c.ref).toMatch(/^[1-3]? ?[A-Z][a-z]+ \d+:\d+(-\d+)?$/);
+      expect(`${c.id}:${!!c.body.en}`).toBe(`${c.id}:true`);
+      expect(`${c.id}:${!!c.body['zh-Hans']}`).toBe(`${c.id}:true`);
     }
   });
 });
 
-describe('editorial guardrails', () => {
-  const bodies = MYSTERY_CARDS.map(c => ({ id: c.id, text: c.body.en!.toLowerCase() }));
+describe('the formula', () => {
+  it('never opens by interrogating her', () => {
+    // "Are you feeling...?" makes her answer a question. The card is supposed
+    // to state her situation as a fact so she recognises herself in line one.
+    // A rhetorical opener that quotes HER question back is allowed.
+    for (const c of MYSTERY_CARDS) {
+      const opener = /^(Are you|Do you feel|Do you think|Have you been)\b/.test(c.body.en!);
+      expect(`${c.id}:${opener}`).toBe(`${c.id}:false`);
+    }
+  });
 
-  it('never promises wealth or material increase', () => {
-    // The provision theme is where this drifts. Cards there deliberately say
-    // "I am not promising you abundance on demand" and "satisfy what you need"
-    // rather than anything resembling a return on faith.
-    const banned = ['rich', 'riches', 'wealth', 'wealthy', 'prosper', 'prosperity', 'financial breakthrough'];
-    for (const { id, text } of bodies) {
+  it('speaks to her directly, in both languages', () => {
+    for (const c of MYSTERY_CARDS) {
+      expect(`${c.id}:${/\byou\b|\byour\b/i.test(c.body.en!)}`).toBe(`${c.id}:true`);
+      expect(`${c.id}:${c.body['zh-Hans']!.includes('你')}`).toBe(`${c.id}:true`);
+    }
+  });
+
+  it('does not shout', () => {
+    // Register check. Someone speaking quietly to one tired woman at 1am does
+    // not use exclamation marks.
+    for (const c of MYSTERY_CARDS) {
+      expect(`${c.id}:${c.body.en!.includes('!')}`).toBe(`${c.id}:false`);
+      expect(`${c.id}:${c.body['zh-Hans']!.includes('！')}`).toBe(`${c.id}:false`);
+    }
+  });
+});
+
+describe('guardrails', () => {
+  it('never promises wealth or a guaranteed outcome', () => {
+    // The `lack` theme is where this drifts. An earlier draft closed a card
+    // with "keep going and I will give you what you want" — a promise that,
+    // when the thing does not come, is a broken promise from God in her hand.
+    // The shipped line promises company instead: "I am not letting you walk
+    // this alone."
+    const banned = [
+      'rich', 'riches', 'wealth', 'wealthy', 'prosper', 'prosperity',
+      'i will give you what you want', 'everything you asked for',
+    ];
+    for (const c of MYSTERY_CARDS) {
+      const t = c.body.en!.toLowerCase();
       for (const w of banned) {
-        expect(`${id}:${w}:${new RegExp(`\\b${w}\\b`).test(text)}`).toBe(`${id}:${w}:false`);
+        const hit = w.includes(' ') ? t.includes(w) : new RegExp(`\\b${w}\\b`).test(t);
+        expect(`${c.id}|${w}|${hit}`).toBe(`${c.id}|${w}|false`);
       }
     }
   });
 
   it('never touches physical illness or cure', () => {
-    // The healing cards speak to grief and heartbreak ONLY. Anything that could
-    // be read as a promise of physical healing risks being read as a reason to
-    // delay treatment.
-    const banned = ['cure', 'cured', 'disease', 'illness', 'cancer', 'symptom', 'diagnosis', 'medicine'];
-    for (const { id, text } of bodies) {
+    // `broken` and `afraid` both sit next to real medical fear. Nothing here
+    // may be readable as "you do not need treatment".
+    const banned = ['cure', 'cured', 'disease', 'illness', 'cancer', 'symptom', 'diagnosis', 'medicine', 'medication'];
+    for (const c of MYSTERY_CARDS) {
+      const t = c.body.en!.toLowerCase();
       for (const w of banned) {
-        expect(`${id}:${w}:${new RegExp(`\\b${w}\\b`).test(text)}`).toBe(`${id}:${w}:false`);
+        expect(`${c.id}|${w}|${new RegExp(`\\b${w}\\b`).test(t)}`).toBe(`${c.id}|${w}|false`);
       }
     }
   });
 
-  it('does not shout', () => {
-    // Register check. These are meant to be read as someone speaking quietly to
-    // one tired woman; exclamation marks turn that into cheerleading.
-    for (const { id, text } of bodies) {
-      expect(`${id}:${text.includes('!')}`).toBe(`${id}:false`);
+  it('keeps the Chinese out of third-person self-reference', () => {
+    // God is the speaker. A sentence where the Chinese word for God is the
+    // subject reads as someone else talking ABOUT him, and the voice collapses.
+    // unanswered-1 is the deliberate exception: it quotes her own question.
+    for (const c of MYSTERY_CARDS) {
+      if (c.id === 'unanswered-1') continue;
+      const t = c.body['zh-Hans']!;
+      expect(`${c.id}:${/上帝|神(会|要|必|说|听|看)/.test(t)}`).toBe(`${c.id}:false`);
     }
   });
 
-  it('speaks to her directly', () => {
-    // Every card must contain second-person address. A card written about her
-    // rather than to her has missed the entire brief.
-    for (const { id, text } of bodies) {
-      expect(`${id}:${/\byou\b|\byour\b/.test(text)}`).toBe(`${id}:true`);
+  it('keeps the Chinese out of bulletin register', () => {
+    // This vocabulary is how a church newsletter sounds, not how someone talks
+    // to her at 1am. It was the single most common failure in early drafts.
+    const churchy = ['恩典满溢', '主必看顾', '荣耀归于', '交托仰望', '靠主刚强', '满有平安', '阿们'];
+    for (const c of MYSTERY_CARDS) {
+      for (const w of churchy) {
+        expect(`${c.id}|${w}|${c.body['zh-Hans']!.includes(w)}`).toBe(`${c.id}|${w}|false`);
+      }
     }
+  });
+});
+
+describe('the owner-approved cards are shipped verbatim', () => {
+  // These four were written or edited by the owner directly and define the
+  // register for the other 36. If a later pass "improves" them, that pass has
+  // drifted off-brief and this should fail.
+  it('doubt-1 opens the pool exactly as approved', () => {
+    expect(en('doubt-1')).toBe(
+      'Have you ever wondered whether I exist? I do. Say out loud what your heart wants — say it to me. I have been here the whole time.',
+    );
+  });
+
+  it('lack-1 promises company, not the outcome she is chasing', () => {
+    expect(en('lack-1')).toContain('I am not letting you walk this alone.');
+    expect(en('lack-1')).not.toContain('give you what you want');
+  });
+
+  it('unanswered-1 quotes her question back at her', () => {
+    expect(en('unanswered-1')).toContain('why does God not answer');
+  });
+
+  it('unworthy-1 asks nothing of her first', () => {
+    expect(en('unworthy-1')).toContain('Come as you are.');
   });
 });
 
 describe('lookup helpers', () => {
   it('never returns undefined for an unknown id', () => {
-    // A reward screen is the last place a missing lookup should land.
     expect(cardById('does-not-exist')).toBe(MYSTERY_CARDS[0]);
     expect(cardById('')).toBe(MYSTERY_CARDS[0]);
   });
 
   it('resolves a known id', () => {
-    expect(cardById('courage-1').ref).toBe('Isaiah 41:10');
+    expect(cardById('weary-2').theme).toBe('weary');
   });
 
   it('falls back to English for an untranslated language', () => {
-    // Translations land per language over time; a half-translated pool must
-    // render English rather than blank.
     const c = MYSTERY_CARDS[0];
-    expect(localizedCardTitle(c, 'de')).toBe(c.title.en);
     expect(localizedCardBody(c, 'de')).toBe(c.body.en);
+    expect(localizedCardBody(c, 'zh-Hans')).toBe(c.body['zh-Hans']);
   });
 });

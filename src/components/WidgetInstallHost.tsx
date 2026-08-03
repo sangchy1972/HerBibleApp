@@ -54,7 +54,15 @@ export default function WidgetInstallHost() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eligible, active]);
-  useEffect(() => () => coord.releaseSlot('widgetInstall'), [coord]);
+  // `coord.releaseSlot`, NOT `coord`. The context value is memoized on
+  // `activeId` (NudgeCoordinatorContext), so `coord`'s identity changes on the
+  // very transition that GRANTS this host its slot — and an effect keyed on
+  // `[coord]` then runs its cleanup one frame later and releases it. That is the
+  // self-cancel this whole file was rewritten to remove, reintroduced by the
+  // cleanup that was supposed to be the safe part. releaseSlot is a stable
+  // useCallback, so capturing the function pins the dependency.
+  const release = coord.releaseSlot;
+  useEffect(() => () => release('widgetInstall'), [release]);
   const markedRef = useRef(false);
   useEffect(() => {
     if (active && !markedRef.current) {

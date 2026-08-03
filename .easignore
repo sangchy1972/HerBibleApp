@@ -48,3 +48,18 @@ play-service-account.json
 
 # Quiz bank JSONs are published to R2, not bundled — no need in the build upload
 docs/
+
+# LOCAL SECRETS. .easignore replaces .gitignore on EAS, so a gitignored file
+# that is not ALSO listed here is uploaded to the build worker. .env.local holds
+# the Cloudflare Access service token and a GOOGLE_SERVICES_JSON path that only
+# exists on this Mac — @expo/env loads it on the worker, and app.config.js would
+# then point android.googleServicesFile at a path Linux does not have. The only
+# reason builds have not broken is that EAS has its own env var of the same name
+# and dotenv does not overwrite an existing process.env value. Do not rely on
+# that.
+.env
+.env.local
+.env.*.local
+.eas/
+.scratch/
+.quiz-i18n/

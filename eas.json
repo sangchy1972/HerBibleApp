@@ -16,6 +16,7 @@
     },
     "production": {
       "autoIncrement": true,
+      "environment": "production",
       "android": { "buildType": "app-bundle" }
     }
   },
@@ -23,7 +24,8 @@
     "production": {
       "android": {
         "serviceAccountKeyPath": "./play-service-account.json",
-        "track": "internal"
+        "track": "production",
+        "releaseStatus": "draft"
       }
     }
   }

@@ -81,6 +81,43 @@ function runOpen(h: Host): Result {
 
 const base: Host = { id: 'quizPromo', priority: 65, eligible: true, guardsWhileActive: true, canShowReadsRef: true };
 
+/**
+ * The SECOND way to lose the slot, found after the first was fixed.
+ *
+ * The coordinator memoizes its context value on `activeId`, so `coord`'s
+ * identity changes on the very transition that grants a host its slot. A
+ * cleanup effect keyed on `[coord]` — added in good faith to release the slot on
+ * unmount — therefore runs its cleanup one frame after the grant and releases a
+ * LIVE prompt. Keying on the stable `coord.releaseSlot` instead pins it.
+ *
+ * `depsOnWholeContext` models the broken version.
+ */
+function runOpenWithCleanupEffect(depsOnWholeContext: boolean): { visible: boolean } {
+  let activeId: string | null = null;
+  let contextIdentity = 0;                       // bumps whenever activeId changes
+  const setActive = (id: string | null) => { activeId = id; contextIdentity += 1; };
+
+  setActive('quizPromo');                        // arbiter grants the slot
+
+  // React re-runs an effect whose deps changed: cleanup first, then create.
+  const depsChanged = depsOnWholeContext ? contextIdentity !== 0 : false;
+  if (depsChanged) setActive(null);              // the cleanup releases it
+
+  return { visible: activeId === 'quizPromo' };
+}
+
+describe('a cleanup effect must not depend on the whole coordinator', () => {
+  it('keeps the prompt when it depends on the stable releaseSlot', () => {
+    expect(runOpenWithCleanupEffect(false).visible).toBe(true);
+  });
+
+  it('reproduces the reintroduced bug when it depends on the context object', () => {
+    // Caught by an audit AFTER the first self-cancel was fixed: the safety
+    // cleanup recreated the same failure through a different door.
+    expect(runOpenWithCleanupEffect(true).visible).toBe(false);
+  });
+});
+
 describe('a host must not release a slot it is holding', () => {
   it('stays on screen when it guards while active', () => {
     expect(runOpen(base)).toEqual({ visibleRenders: 1, slotsSpent: 1 });

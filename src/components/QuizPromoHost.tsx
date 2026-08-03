@@ -96,7 +96,15 @@ export default function QuizPromoHost({ inGap }: {
   // Release on unmount. Unreachable today, but a slot left active wedges the
   // coordinator's `if (activeId !== null) return` for every other prompt,
   // including badge unlocks.
-  useEffect(() => () => coord.releaseSlot('quizPromo'), [coord]);
+  // `coord.releaseSlot`, NOT `coord`. The context value is memoized on
+  // `activeId` (NudgeCoordinatorContext), so `coord`'s identity changes on the
+  // very transition that GRANTS this host its slot — and an effect keyed on
+  // `[coord]` then runs its cleanup one frame later and releases it. That is the
+  // self-cancel this whole file was rewritten to remove, reintroduced by the
+  // cleanup that was supposed to be the safe part. releaseSlot is a stable
+  // useCallback, so capturing the function pins the dependency.
+  const release = coord.releaseSlot;
+  useEffect(() => () => release('quizPromo'), [release]);
 
   // The cadence advances the moment it APPEARS, not when she answers it.
   // Marking on dismiss would let a prompt she swipes past reappear on the next

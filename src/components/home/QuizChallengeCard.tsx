@@ -26,7 +26,7 @@ export default function QuizChallengeCard({
   onOpenCollection: () => void;
 }) {
   const t = useT();
-  const { ready, bank, progress, session, segments } = useQuiz();
+  const { ready, bank, progress, session, segments, daily } = useQuiz();
 
   if (!ready || !bank) return null;
 
@@ -36,6 +36,10 @@ export default function QuizChallengeCard({
   // app on the results screen. "5 of 5 answered" reads as nothing left to do,
   // when in fact a puzzle piece is waiting behind one tap.
   const awaitingClaim = session?.phase === 'summary' && segments.every(s => s === 'correct');
+  // Capped, with nothing left in flight. Ranked BELOW the two in-progress states
+  // on purpose: a set she has already started is still finishable, and telling
+  // her she is done for the day while a half-answered set waits behind the tap
+  // would be a lie she can immediately disprove.
 
   return (
     <View style={styles.outer}>
@@ -69,7 +73,9 @@ export default function QuizChallengeCard({
               ? t('quiz.card.claim')
               : inProgress
                 ? t('quiz.card.answered', { n: answered })
-                : t('quiz.card.level', { n: levelFor(progress.completedSets) })}
+                : daily.reached
+                  ? t('quiz.daily.capCard', { total: daily.limit })
+                  : t('quiz.card.level', { n: levelFor(progress.completedSets) })}
           </Text>
         </View>
         <Feather name="chevron-right" size={20} color={TXTSUB} />

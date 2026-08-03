@@ -75,6 +75,55 @@ export function recordSet(
   return { v: 1, days: days.slice(-HISTORY_DAYS) };
 }
 
+/**
+ * THE DAILY CAP.
+ *
+ * Seven completed sets a day, and then she is done until tomorrow.
+ *
+ * This is a CONTENT constraint, not an engagement one. The bank is 327
+ * questions = 65 sets. Unthrottled, a motivated user empties it in a weekend and
+ * every set after that is a question she has already answered, dressed up as
+ * progress. Seven a day stretches the same bank across nine weeks, which is
+ * roughly how long it takes to earn two and a half paintings.
+ *
+ * COUNTED FROM COMPLETED SETS, not from starts. A set she abandoned halfway
+ * costs her nothing, and — more importantly — a set already in flight can always
+ * be finished. Blocking someone mid-question because the clock rolled over is
+ * the sort of thing that reads as a crash.
+ */
+export const DAILY_SET_LIMIT = 7;
+
+export interface DailyGate {
+  limit: number;
+  /** Sets completed today. Can exceed `limit` if the cap was ever raised. */
+  done: number;
+  /** Sets she may still start today. Clamped to 0. */
+  remaining: number;
+  /** Today is used up. */
+  reached: boolean;
+}
+
+export function dailyGate(h: QuizHistoryV1, todayYmd: string, limit = DAILY_SET_LIMIT): DailyGate {
+  const cap = Math.max(1, Math.floor(limit) || 1);
+  // An unparseable date must not hand out a free unlimited day, so it reads as
+  // zero done rather than as "no record, therefore no cap".
+  const day = isYmd(todayYmd) ? h.days.find(d => d.ymd === todayYmd) : undefined;
+  const done = int(day?.sets);
+  return { limit: cap, done, remaining: Math.max(0, cap - done), reached: done >= cap };
+}
+
+/**
+ * May she begin a set right now?
+ *
+ * `hasLiveSession` wins over the cap, always. She started that set legitimately
+ * — under the cap, or before midnight — and the only thing refusing it would
+ * achieve is stranding her on a half-answered screen with a session that
+ * persists and can never be finished or cleared.
+ */
+export function canStartSet(gate: DailyGate, hasLiveSession: boolean): boolean {
+  return hasLiveSession || !gate.reached;
+}
+
 /** Ascending window of the last `n` calendar days ending at `todayYmd`,
  *  including days she did nothing — a chart needs the gaps. */
 export function lastNDays(h: QuizHistoryV1, todayYmd: string, n: number): QuizDay[] {

@@ -67,6 +67,14 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'quiz.mystery.unlocked':          { en: 'Mystery reward unlocked', context: 'Replaces the countdown bar on the set that actually earns a card.' },
   'quiz.card.savedTo':              { en: 'Saved to My Cards · {n} of {total}', context: 'Small line above the Collect button telling her where the card went.' },
   'quiz.cards.goPlay':              { en: 'Start a quiz', context: 'Button in the empty card collection that opens the quiz.' },
+  // The daily cap. Seven sets, then she is done until tomorrow -- a content
+  // constraint (the bank is 65 sets) dressed as a kindness, so the copy must
+  // read as "that's a good day's work", never as "you are locked out".
+  'quiz.daily.capTitle':            { en: "That's your seven", context: 'Headline when the user has completed all 7 of today\'s quiz sets. Warm and congratulatory, not a lockout message. Adapt the number naturally into the sentence if your language needs it.' },
+  'quiz.daily.capBody':             { en: 'All {total} sets done today. Come back tomorrow for {total} more.', context: 'Body under quiz.daily.capTitle. {total} is 7 both times.' },
+  'quiz.daily.capCard':             { en: "Today's {total} sets are done", context: 'Home quiz card sub-line when the daily cap is reached. One short line.' },
+  'quiz.daily.lastOfDay':           { en: "That's your last set today", context: 'Small note on the results screen when committing this set uses up the 7th and final slot of the day. Gentle.' },
+  'quiz.daily.remaining':           { en: '{n} of {total} sets left today', context: 'Quiz progress screen row showing the daily allowance. {n} counts down to 0.' },
   'quiz.progress.bestStreak':       { en: 'Best run: {n} days', context: 'Shown when her best streak beats her current one.' },
   'common.close':                   { en: 'Close', context: 'Accessibility label for a tap-to-dismiss backdrop.' },
   'quiz.cards.title':               { en: 'My Cards', context: 'Header of the collected mystery-card screen.' },

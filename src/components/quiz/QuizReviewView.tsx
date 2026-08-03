@@ -23,7 +23,7 @@ import type { SegmentState } from '../../state/quizSession';
 
 export default function QuizReviewView({
   segments, correct, total, wrong, level, firstPassPerfect, completedSets,
-  onRetry, onContinue, onNextLevel,
+  lastOfDay, onRetry, onContinue, onNextLevel,
 }: {
   segments: SegmentState[];
   correct: number;
@@ -33,6 +33,9 @@ export default function QuizReviewView({
   firstPassPerfect: boolean;
   /** Sets completed BEFORE this one. The reward preview looks one ahead. */
   completedSets: number;
+  /** Committing this set spends the last of today's seven. Hides "next set" and
+   *  says so, rather than leaving a button that would silently do nothing. */
+  lastOfDay: boolean;
   onRetry: () => void;
   onContinue: () => void;
   /** Commit and start the next set without leaving. */
@@ -126,10 +129,19 @@ export default function QuizReviewView({
           </Text>
         </TouchableOpacity>
 
+        {/* The daily cap gets a line, not a dead button. open() refuses once the
+            seventh set is committed, so leaving "Next level" on screen would
+            give her a control that visibly does nothing. */}
+        {done && lastOfDay ? (
+          <Text style={styles.lastOfDay} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+            {t('quiz.daily.lastOfDay')}
+          </Text>
+        ) : null}
+
         {/* Every exit used to go home, so playing ten sets meant ten trips back
             through the home screen hunting for the card. Hidden when a reward is
             waiting — the celebration should not be skippable by accident. */}
-        {done && !earnsCard && !willFinishPainting ? (
+        {done && !lastOfDay && !earnsCard && !willFinishPainting ? (
           <TouchableOpacity
             style={styles.secondary}
             activeOpacity={0.7}
@@ -185,6 +197,12 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.latoBold, fontSize: 16.5, color: '#FFFFFF', letterSpacing: 0.4,
   },
   secondary: { height: 44, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  // Roughly the band the secondary button would have occupied, so the CTA does
+  // not jump up the screen on the one set in seven that ends the day.
+  lastOfDay: {
+    fontFamily: FONTS.lato, fontSize: 13, color: TXTSUB,
+    textAlign: 'center', marginTop: 13, marginBottom: 9, letterSpacing: 0.2,
+  },
   secondaryText: { fontFamily: FONTS.latoBold, fontSize: 14.5, color: ROSE, letterSpacing: 0.3 },
   unlocked: {
     flexDirection: 'row', alignItems: 'center', gap: 9,

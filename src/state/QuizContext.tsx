@@ -18,8 +18,8 @@ import {
   type CardProgressV1, type CardLikesV1,
 } from './cardDraw';
 import {
-  INITIAL_HISTORY, parseHistory, recordSet, summarize,
-  type QuizHistoryV1, type HistorySummary,
+  INITIAL_HISTORY, parseHistory, recordSet, summarize, dailyGate, canStartSet,
+  type QuizHistoryV1, type HistorySummary, type DailyGate,
 } from './quizHistory';
 import { MYSTERY_CARDS, cardById, type MysteryCard } from '../constants/mysteryCards';
 import { logEvent } from '../services/firebase';
@@ -75,7 +75,8 @@ interface QuizState {
   currentQuestion: QuizQuestion | null;
   /** 5 segments for the progress bar, positional. */
   segments: SegmentState[];
-  /** Start (or resume) the current set. */
+  /** Start (or resume) the current set. A no-op once the daily cap is reached
+   *  and there is nothing in flight to resume. */
   open: () => void;
   /** Answer the question on screen. Ignored unless one is awaiting an answer. */
   pick: (optionIndex: number) => void;
@@ -94,6 +95,11 @@ interface QuizState {
   history: QuizHistoryV1;
   /** Rolling streak / accuracy / activity, derived from history. */
   historySummary: HistorySummary;
+  /** Today's seven-set allowance: how many are gone, how many are left. */
+  daily: DailyGate;
+  /** May she begin a NEW set right now? False once today's seven are done.
+   *  A set already in flight is always resumable, cap or no cap. */
+  canStart: boolean;
   /** She has earned a draw and not taken it. Survives a force quit. */
   pendingDraw: boolean;
   /** The 4 face-down cards on the table right now. Stable across relaunches. */
@@ -122,6 +128,12 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
   const [cards, setCards] = useState<CardProgressV1>(INITIAL_CARD_PROGRESS);
   const [likes, setLikes] = useState<CardLikesV1>(INITIAL_CARD_LIKES);
   const [history, setHistory] = useState<QuizHistoryV1>(INITIAL_HISTORY);
+  // TODAY, AS STATE. It used to be a bare localYmd() call inside a useMemo keyed
+  // on `history`, which meant the date froze at whatever it was when the app
+  // launched: her streak stopped advancing at midnight, and the daily cap --
+  // which is entirely a question of what day it is -- would never have reset for
+  // anyone who leaves the app open.
+  const [todayYmd, setTodayYmd] = useState(localYmd);
 
   // Guards a write from landing before the read that should have preceded it.
   // Same failure this repo hit in adRevenue: an un-hydrated write erases real
@@ -159,6 +171,29 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
       }
     })();
     return () => { alive = false; };
+  }, []);
+
+  // Roll the date over: at the next local midnight while the app is open, and
+  // whenever it comes back to the foreground. The timer covers someone playing
+  // through midnight; the AppState listener covers the ordinary case of closing
+  // the app capped and reopening it the next morning.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const bump = () => setTodayYmd(prev => {
+      const now = localYmd();
+      return now === prev ? prev : now;      // same string = no re-render
+    });
+    const schedule = () => {
+      const now = new Date();
+      const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5);
+      // Clamped: a device whose clock is far in the past would otherwise ask for
+      // a delay past setTimeout's 32-bit ceiling and fire immediately, forever.
+      const ms = Math.min(Math.max(midnight.getTime() - now.getTime(), 1000), 86400000);
+      timer = setTimeout(() => { bump(); schedule(); }, ms);
+    };
+    schedule();
+    const sub = AppState.addEventListener('change', st => { if (st === 'active') bump(); });
+    return () => { if (timer) clearTimeout(timer); sub.remove(); };
   }, []);
 
   // ── Bank (cache-first, then network) ──────────────────────────────────────
@@ -260,18 +295,31 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
 
   const segments = useMemo(() => sessionSegments(session, SET_SIZE), [session]);
 
+  // Today's allowance. Derived, never stored: a counter of our own could drift
+  // from the history the progress screen reads, and history is already the
+  // append-only record every other daily number comes from.
+  const daily = useMemo(() => dailyGate(history, todayYmd), [history, todayYmd]);
+  const canStart = canStartSet(daily, !!session);
+
   // ── Actions ───────────────────────────────────────────────────────────────
   const open = useCallback(() => {
     setSession(prev => {
       // Resume rather than restart — the user may be mid-set.
       if (prev && prev.setIndex === progress.setIndex && prev.phase !== 'complete') return prev;
       if (!bank) return prev;
+      // THE DAILY CAP, enforced here rather than only in the UI. Every entry
+      // point funnels through open() -- the home card, the auto-open effect on
+      // the quiz screen, and "next set" on the results screen -- and a check in
+      // three components is a check that will be forgotten in the fourth.
+      // Reading `daily` (computed from history + todayYmd) rather than a counter
+      // of our own means it cannot drift from what the screens display.
+      if (daily.reached) return prev;
       const qs = questionsForSet(progress.setIndex, bank);
       if (qs.length < SET_SIZE) return prev;
       logEvent('quiz_set_start', { set_index: progress.setIndex });
       return initialSession(progress.setIndex, qs.map(q => q.id), QUIZ_BANK_VERSION);
     });
-  }, [bank, progress.setIndex]);
+  }, [bank, progress.setIndex, daily.reached]);
 
   const pick = useCallback((optionIndex: number) => {
     setSession(prev => {
@@ -331,6 +379,10 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
       perfect: firstPassPerfect ? 1 : 0,
     });
 
+    // localYmd() fresh, not the `todayYmd` state: a set finished at 00:00:02
+     // belongs to the day it ENDED on, and the state may be up to five seconds
+     // behind the timer above. Recording it against yesterday would give her an
+     // eighth set today.
     const ymd = localYmd();
     setProgress(p => applyCompletion(p, {
       firstPassWrong: done.firstPassWrong,
@@ -437,19 +489,19 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
     logEvent('card_open', { card_id: card.id, card_theme: card.theme, source: 'collection' });
   }, []);
 
-  const historySummary = useMemo(() => summarize(history, localYmd()), [history]);
+  const historySummary = useMemo(() => summarize(history, todayYmd), [history, todayYmd]);
 
   const abandon = useCallback(() => setSession(null), []);
 
   const value = useMemo<QuizState>(() => ({
     ready, bank, bankStatus, progress, session, questions, currentQuestion, segments,
     open, pick, next, retry, finish, abandon,
-    cards, likes, history, historySummary,
+    cards, likes, history, historySummary, daily, canStart,
     pendingDraw: cards.pendingDraw, drawSpread, collectedCards,
     drawCard, likeCard, cardIsLiked, logCardShare, logCardOpen,
   }), [ready, bank, bankStatus, progress, session, questions, currentQuestion, segments,
        open, pick, next, retry, finish, abandon,
-       cards, likes, history, historySummary, drawSpread, collectedCards,
+       cards, likes, history, historySummary, daily, canStart, drawSpread, collectedCards,
        drawCard, likeCard, cardIsLiked, logCardShare, logCardOpen]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
@@ -471,6 +523,7 @@ export function useQuiz(): QuizState {
     open: () => {}, pick: () => {}, next: () => {}, retry: () => {}, finish: () => {}, abandon: () => {},
     cards: INITIAL_CARD_PROGRESS, likes: INITIAL_CARD_LIKES, history: INITIAL_HISTORY,
     historySummary: { streak: 0, bestStreak: 0, activeDays: 0, setsLast7: 0, setsLast30: 0, accuracy: null },
+    daily: dailyGate(INITIAL_HISTORY, ''), canStart: false,
     pendingDraw: false, drawSpread: [], collectedCards: [],
     drawCard: () => {}, likeCard: () => {}, cardIsLiked: () => false,
     logCardShare: () => {}, logCardOpen: () => {},

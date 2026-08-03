@@ -43,7 +43,7 @@ function localYmd(now = new Date()): string {
 export default function QuizProgressScreen({ navigation }: RootStackScreenProps<'QuizProgress'>) {
   const t = useT();
   const insets = useSafeAreaInsets();
-  const { progress, bank, cards, likes, history, historySummary } = useQuiz();
+  const { progress, bank, cards, likes, history, historySummary, daily } = useQuiz();
 
   const answered = progress.completedSets * SET_SIZE;
   // First-pass accuracy: what she got right the first time she saw it. Guarded
@@ -98,6 +98,16 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
           <MaterialCommunityIcons name="medal-outline" size={17} color={ROSE} />
           <Text style={styles.lineText} maxFontSizeMultiplier={1.3}>
             {t('quiz.progress.level', { n: levelFor(progress.completedSets) })}
+          </Text>
+        </View>
+        {/* The daily allowance. Shown ALWAYS, including at 0 left -- this is the
+            one row on the screen that answers "why can't I keep going", and
+            hiding it in exactly the state that raises the question would be
+            perverse. */}
+        <View style={styles.line}>
+          <Feather name="sunrise" size={16} color={daily.reached ? TXTSUB : ROSE} />
+          <Text style={styles.lineText} maxFontSizeMultiplier={1.3}>
+            {t('quiz.daily.remaining', { n: daily.remaining, total: daily.limit })}
           </Text>
         </View>
         {/* Hidden at zero. This app's readers often arrive low, and a dashboard

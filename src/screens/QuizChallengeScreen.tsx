@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, BackHandler } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
-import { BG, TXT, TXTSUB, FONTS } from '../constants/theme';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { BG, TXT, TXTSUB, FONTS, ROSE, ROSE_WASH, BTN_RADIUS } from '../constants/theme';
 import { useT } from '../i18n/useT';
 import { useQuiz } from '../state/QuizContext';
 import { currentPosition, isTried, sessionSummary } from '../state/quizSession';
@@ -29,7 +30,7 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   const insets = useSafeAreaInsets();
   const {
     ready, bank, bankStatus, session, questions, currentQuestion, segments, progress,
-    open, pick, next, retry, finish, pendingDraw,
+    open, pick, next, retry, finish, pendingDraw, daily,
   } = useQuiz();
 
   // The draw overlay sits ON TOP of the results screen rather than being a
@@ -83,6 +84,12 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
     if (ready && bank && !leaving.current) open();
   }, [ready, bank, open]);
 
+  // Today is spent and there is nothing in flight. This has to be an explicit
+  // screen: open() refuses, so `session` stays null, and body() returns null for
+  // a null session -- which without this branch is a permanently blank page
+  // under a header, reachable from the home card by one tap.
+  const cappedOut = ready && !!bank && !session && daily.reached;
+
   // Android hardware back = the close button, not a silent no-op.
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -135,6 +142,10 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
           level={levelFor(progress.completedSets)}
           firstPassPerfect={summary.firstPassPerfect}
           completedSets={progress.completedSets}
+          // <= 1, not === 1: a clock change or a lowered cap can land her here
+          // with 0 remaining and a session still open, and `=== 1` would then
+          // offer a "next set" button that open() silently refuses.
+          lastOfDay={daily.remaining <= 1}
           onRetry={retry}
           onNextLevel={() => {
             // Commit and stay. `leaving` is NOT set: the auto-open effect is
@@ -211,7 +222,7 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
         <View style={styles.counterSpacer} />
       )}
 
-      {body()}
+      {cappedOut ? <DailyCapView limit={daily.limit} onClose={goHome} /> : body()}
 
       {/* The painting sits ON TOP of the card draw when both land on the same
           set (every 12th). She collects the picture, then the card — biggest
@@ -245,6 +256,35 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   );
 }
 
+/**
+ * Seven sets done. Congratulation, not a lockout.
+ *
+ * It offers a way onward rather than only a way out: she opened the quiz
+ * wanting to do something with it, and a screen whose single control is "close"
+ * is a dead end. The collection is the thing her seven sets were FOR.
+ */
+function DailyCapView({ limit, onClose }: { limit: number; onClose: () => void }) {
+  const t = useT();
+  return (
+    <View style={styles.capRoot}>
+      <View style={styles.capRing}>
+        <MaterialCommunityIcons name="check-decagram-outline" size={40} color={ROSE} />
+      </View>
+      <Text style={styles.capTitle} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+        {t('quiz.daily.capTitle')}
+      </Text>
+      <Text style={styles.capBody} maxFontSizeMultiplier={1.3}>
+        {t('quiz.daily.capBody', { total: limit })}
+      </Text>
+      <TouchableOpacity style={styles.capCta} activeOpacity={0.85} onPress={onClose} accessibilityRole="button">
+        <Text style={styles.capCtaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+          {t('common.close')}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: BG },
   header: {
@@ -263,4 +303,24 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4, textAlign: 'center', marginTop: 10, height: 18,
   },
   counterSpacer: { height: 28 },
+
+  capRoot: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 34, paddingBottom: 40 },
+  capRing: {
+    width: 84, height: 84, borderRadius: 42,
+    backgroundColor: ROSE_WASH, alignItems: 'center', justifyContent: 'center',
+  },
+  capTitle: {
+    fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 23,
+    color: TXT, textAlign: 'center', letterSpacing: 0.3, marginTop: 22,
+  },
+  capBody: {
+    fontFamily: FONTS.lato, fontSize: 14.5, lineHeight: 22, color: TXTSUB,
+    textAlign: 'center', marginTop: 12, letterSpacing: 0.2,
+  },
+  capCta: {
+    height: 52, minWidth: 200, paddingHorizontal: 28,
+    borderRadius: BTN_RADIUS, backgroundColor: ROSE,
+    alignItems: 'center', justifyContent: 'center', marginTop: 30,
+  },
+  capCtaText: { fontFamily: FONTS.latoBold, fontSize: 16, color: '#FFFFFF', letterSpacing: 0.4 },
 });

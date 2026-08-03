@@ -59,9 +59,13 @@ export interface PuzzleView {
 export function puzzleView(completedSets: number, artCount: number): PuzzleView {
   const done = Math.max(0, Math.floor(completedSets) || 0);
   const art = Math.max(1, Math.floor(artCount) || 1);
-  const completedPaintings = Math.floor(done / TILES_PER_PAINTING);
-  const rawIndex = completedPaintings;
+  const rawIndex = Math.floor(done / TILES_PER_PAINTING);
   const outOfArt = rawIndex >= art;
+  // CLAMPED, not raw. Unclamped this counts paintings that do not exist, and
+  // the progress row read "25 of 24 paintings" and kept climbing while the
+  // collection screen, which clamps on its own, said 24 of 24. Clamping at the
+  // source is what stops the next consumer reintroducing the same mismatch.
+  const completedPaintings = Math.min(rawIndex, art);
   const paintingIndex = outOfArt ? art - 1 : rawIndex;
   // Past the last artwork we show it fully unlocked rather than restarting a
   // board the user can never finish.

@@ -23,7 +23,7 @@
 #
 # Usage:
 #   scripts/upload_puzzle_art_r2.sh [SRC_DIR]
-#   SRC_DIR defaults to ~/Desktop/classical-bible-paintings/_processed
+#   SRC_DIR defaults to ~/Desktop/classical-bible-paintings/_curated
 #
 # ⚠️ Bump the /v1/ segment (here AND in ART_BASE in src/constants/quizArt.ts)
 # on a re-cut. A custom domain puts Cloudflare's cache in front of these, so

@@ -51,7 +51,11 @@ export default function QuizReviewView({
   // number or the screen that celebrates a card says "3 more to go" with an
   // empty bar — she watched that counter for three sets and never saw it land.
   const earnsCard = drawEarnedAt(completedSets + 1, MYSTERY_EVERY);
-  const willFinishPainting = (completedSets + 1) % TILES_PER_PAINTING === 0;
+  // The `!view.outOfArt` half is load-bearing. Past the last painting
+  // QuizChallengeScreen no longer shows PaintingComplete, so hiding the button
+  // to protect a celebration that will never come just deletes the button on
+  // every 4th set, forever, with Continue dumping her back to the home screen.
+  const willFinishPainting = (completedSets + 1) % TILES_PER_PAINTING === 0 && !view.outOfArt;
 
   return (
     <View style={styles.root}>

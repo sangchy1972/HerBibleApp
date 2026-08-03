@@ -7,7 +7,8 @@
 
 import {
   QUIZ_ART, QUIZ_ART_COUNT, artworkAt, artUrl, artThumbUrl, artSource,
-  artTitle, artDesc, artArtist, artCaption, FIRST_ART_LOCAL,
+  artTitle, artDesc, artArtist, artCaption, artThumbSource,
+  FIRST_ART_LOCAL, FIRST_ART_ID,
 } from '../src/constants/quizArt';
 import { TRANSLATIONS, type LanguageCode } from '../src/state/TranslationsContext';
 import { rewardPreview as rawPreview, TILES_PER_PAINTING } from '../src/state/quizProgress';
@@ -101,13 +102,23 @@ describe('art registry', () => {
     expect(artThumbUrl(a)).toBe(`https://quiz.everlandapps.com/v1/art/thumb/${a.id}.jpg`);
   });
 
+  it('resolves the bundled asset to a number, as Metro does', () => {
+    // PuzzleBoard branches on `typeof src === 'number'` to decide whether a
+    // source can ever report onError. If a require() ever resolved to an object
+    // that branch silently inverts and painting one locks forever.
+    expect(typeof artSource(QUIZ_ART[0])).toBe('number');
+  });
+
   it('serves painting one from the bundle and the rest from the CDN', () => {
     // The whole point of shipping one JPEG in the binary: a user who has never
     // had a network still finishes her first puzzle. If this ever regresses to
     // a URL, her first reward is four grey holes.
     expect(artSource(QUIZ_ART[0])).toBe(FIRST_ART_LOCAL);
+    expect(artThumbSource(QUIZ_ART[0])).toBe(FIRST_ART_LOCAL);
+    expect(QUIZ_ART[0].id).toBe(FIRST_ART_ID);
     for (const a of QUIZ_ART.slice(1)) {
       expect(artSource(a)).toEqual({ uri: artUrl(a) });
+      expect(artThumbSource(a)).toEqual({ uri: artThumbUrl(a) });
     }
   });
 

@@ -24,7 +24,7 @@ module.exports = {
     // constants/quizArt require()s the bundled first painting so puzzle one
     // works offline. Metro turns that into an asset id; node would try to parse
     // JPEG bytes as JavaScript, so tests get a plain number instead.
-    '\\.(jpg|jpeg|png|gif|webp)$': '<rootDir>/test/assetStub.ts',
+    '\\.(jpg|jpeg|png|gif|webp)$': '<rootDir>/test/assetStub.js',
   },
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: { strict: false, esModuleInterop: true, jsx: 'react' } }],

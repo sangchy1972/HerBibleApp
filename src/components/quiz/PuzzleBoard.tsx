@@ -5,7 +5,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { INK_06, INK_28, TXT, TXTSUB, FONTS } from '../../constants/theme';
 import { TILES_PER_PAINTING } from '../../state/quizProgress';
 import { artworkAt, artSource, artTitle, artArtist, type QuizArtwork } from '../../constants/quizArt';
-import { useTranslation } from '../../state/TranslationsContext';
+import { useUILanguage } from '../../state/UILanguageContext';
 import { jigsawPaths } from '../../services/jigsaw';
 
 // The 2x2 jigsaw board.
@@ -35,8 +35,8 @@ export default function PuzzleBoard({
   newTile?: number | null;
   showCaption?: boolean;
 }) {
-  const { current } = useTranslation();
-  const lang = current.code;
+  // UI language, NOT the Bible edition -- the two are chosen separately.
+  const { lang } = useUILanguage();
   const art = artworkAt(paintingIndex);
   const w = Math.max(1, size);
   const h = Math.max(1, Math.round(w / (art.aspect || 1)));
@@ -44,11 +44,16 @@ export default function PuzzleBoard({
 
   const paths = useMemo(() => jigsawPaths(w, h), [w, h]);
   const src = artSource(art);
+  // A require()d asset is already in the binary. Starting it `loaded` matters
+  // because a bundled source can never fire onError either, so a missed onLoad
+  // would leave the board locked forever with no cloud-off icon and no retry --
+  // and the offline first puzzle is the whole reason the file is bundled.
+  const isLocal = typeof src === 'number';
   const [failed, setFailed] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(isLocal);
   // Reset when the board is recycled onto a different painting, or a single
   // failure would stick for every later one.
-  useEffect(() => { setFailed(false); setLoaded(false); }, [art.id]);
+  useEffect(() => { setFailed(false); setLoaded(isLocal); }, [art.id, isLocal]);
 
   return (
     <View style={{ width: w }}>

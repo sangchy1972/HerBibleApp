@@ -9,10 +9,10 @@ import { useT } from '../i18n/useT';
 import { useQuiz } from '../state/QuizContext';
 import { puzzleView, TILES_PER_PAINTING } from '../state/quizProgress';
 import {
-  QUIZ_ART, QUIZ_ART_COUNT, artSource, artThumbUrl, artTitle, artArtist, artDesc,
+  QUIZ_ART, QUIZ_ART_COUNT, artSource, artThumbSource, artTitle, artArtist, artDesc, artCaption,
   type QuizArtwork,
 } from '../constants/quizArt';
-import { useTranslation } from '../state/TranslationsContext';
+import { useUILanguage } from '../state/UILanguageContext';
 import PuzzleBoard from '../components/quiz/PuzzleBoard';
 import PaintingShareArt, { PAINTING_SHARE_WIDTH } from '../components/quiz/PaintingShareArt';
 import { shareCard, saveCard } from '../services/cardShare';
@@ -31,8 +31,8 @@ const GRID_GAP = 10;
 
 export default function PuzzleCollectionScreen({ navigation }: RootStackScreenProps<'PuzzleCollection'>) {
   const t = useT();
-  const { current } = useTranslation();
-  const lang = current.code;
+  // UI language, NOT the Bible edition -- the two are chosen separately.
+  const { lang } = useUILanguage();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { progress } = useQuiz();
@@ -44,9 +44,12 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
   const boardW = Math.min(width - P * 2, 380);
   const thumb = Math.floor((width - P * 2 - GRID_GAP) / 2);
 
+  // Finished paintings only. Once the art runs out the hero board above IS the
+  // last painting, shown fully unlocked, so without the -1 it appears twice --
+  // the exact thing the "no in-progress painting in the grid" rule prevents.
   const finished = useMemo(
-    () => QUIZ_ART.slice(0, Math.min(view.completedPaintings, QUIZ_ART_COUNT)),
-    [view.completedPaintings],
+    () => QUIZ_ART.slice(0, Math.max(0, view.completedPaintings - (view.outOfArt ? 1 : 0))),
+    [view.completedPaintings, view.outOfArt],
   );
 
   return (
@@ -117,7 +120,7 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
                 accessibilityLabel={`${artTitle(a, lang)}, ${artArtist(a, lang)}`}
               >
                 <Image
-                  source={{ uri: artThumbUrl(a) }}
+                  source={artThumbSource(a)}
                   style={[styles.thumb, { width: thumb, height: Math.round(thumb / (a.aspect || 1)) }]}
                   resizeMode="cover"
                   accessibilityIgnoresInvertColors
@@ -142,8 +145,8 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
 /** Full painting, unseamed, with share and save. */
 function PaintingDetail({ art, onClose }: { art: QuizArtwork; onClose: () => void }) {
   const t = useT();
-  const { current } = useTranslation();
-  const lang = current.code;
+  // UI language, NOT the Bible edition -- the two are chosen separately.
+  const { lang } = useUILanguage();
   const { width, height } = useWindowDimensions();
   const shotRef = useRef<View>(null);
   const [busy, setBusy] = useState(false);
@@ -168,7 +171,7 @@ function PaintingDetail({ art, onClose }: { art: QuizArtwork; onClose: () => voi
   const onShare = async () => {
     if (busy) return;
     setBusy(true);
-    const r = await shareCard(shotRef.current, artTitle(art, lang));
+    const r = await shareCard(shotRef.current, artCaption(art, lang));
     if (r === 'unavailable' || r === 'failed') showToast(t('error.couldNotShare'));
     setBusy(false);
   };
@@ -312,7 +315,7 @@ const styles = StyleSheet.create({
   },
   // maxHeight not height: three lines of Spanish and six of German both have to
   // sit between the artist line and the buttons without pushing either off.
-  detailDescWrap: { maxHeight: 132, marginTop: 14, alignSelf: 'stretch' },
+  detailDescWrap: { flexGrow: 0, maxHeight: 132, marginTop: 14, alignSelf: 'stretch' },
   detailDescBox: { paddingHorizontal: 30 },
   detailDesc: {
     fontFamily: FONTS.lato, fontSize: 13.5, lineHeight: 21,

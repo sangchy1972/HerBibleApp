@@ -10,8 +10,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ROSE, BTN_RADIUS, FONTS } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
 import { useQuiz } from '../../state/QuizContext';
-import { artworkAt, artSource, artTitle, artArtist } from '../../constants/quizArt';
-import { useTranslation } from '../../state/TranslationsContext';
+import { artworkAt, artSource, artTitle, artArtist, artCaption } from '../../constants/quizArt';
+import { useUILanguage } from '../../state/UILanguageContext';
 import PuzzleBoard from './PuzzleBoard';
 import PaintingShareArt, { PAINTING_SHARE_WIDTH } from './PaintingShareArt';
 import { shareCard, saveCard } from '../../services/cardShare';
@@ -34,8 +34,8 @@ export default function PaintingComplete({
   onDone: () => void;
 }) {
   const t = useT();
-  const { current } = useTranslation();
-  const lang = current.code;
+  // UI language, NOT the Bible edition -- the two are chosen separately.
+  const { lang } = useUILanguage();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const art = artworkAt(paintingIndex);
@@ -97,7 +97,7 @@ export default function PaintingComplete({
   const onShare = useCallback(async () => {
     if (busy) return;
     setBusy(true);
-    const r = await shareCard(shotRef.current, artTitle(art, lang));
+    const r = await shareCard(shotRef.current, artCaption(art, lang));
     if (r === 'unavailable' || r === 'failed') showToast(t('error.couldNotShare'));
     setBusy(false);
   }, [busy, art, lang, showToast, t]);

@@ -35,7 +35,12 @@ describe('puzzleView', () => {
     expect(v.paintingIndex).toBe(2);          // last artwork, not 10
     expect(v.outOfArt).toBe(true);
     expect(v.tilesUnlocked).toBe(TILES_PER_PAINTING);   // shown whole, not restarted
-    expect(v.completedPaintings).toBe(10);    // still counted honestly
+    // completedPaintings CLAMPS too. It used to count honestly past the art,
+    // which sounds more correct and shipped as "25 of 24 paintings" climbing
+    // forever on the progress row while the collection screen, which clamps on
+    // its own, said 24 of 24. Nothing consumes the raw count: every caller
+    // renders it against a total or slices the registry with it.
+    expect(v.completedPaintings).toBe(3);
   });
 
   it('survives nonsense input', () => {

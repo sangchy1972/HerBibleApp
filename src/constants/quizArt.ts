@@ -614,6 +614,11 @@ export const QUIZ_ART: readonly QuizArtwork[] = [
 
 export const QUIZ_ART_COUNT = QUIZ_ART.length;
 
+/** The painting that ships in the binary. An id, not `QUIZ_ART[0].id`: the
+ *  header bans reordering but not PREPENDING, and a prepend would silently hand
+ *  Murillo's picture to whatever entry took index 0. */
+export const FIRST_ART_ID = '051';
+
 /** Bundled copy of the FIRST painting. A device that has never had a network
  *  still finishes puzzle one; every later board waits on the CDN. */
 export const FIRST_ART_LOCAL = require('../../assets/puzzle/first.jpg');
@@ -627,7 +632,16 @@ export const artThumbUrl = (a: QuizArtwork) => `${ART_BASE}/thumb/${a.id}.jpg`;
 
 /** Image source for a board: the bundled asset for painting one, a URL after. */
 export function artSource(a: QuizArtwork) {
-  return a.id === QUIZ_ART[0].id ? FIRST_ART_LOCAL : { uri: artUrl(a) };
+  return a.id === FIRST_ART_ID ? FIRST_ART_LOCAL : { uri: artUrl(a) };
+}
+
+/** Same split for the collection grid. Without it the offline user finishes her
+ *  first puzzle, opens the collection, and finds one grey square -- which is the
+ *  picture bundling the file was supposed to prevent. The bundled JPEG is
+ *  1200px and gets scaled down for the cell; a second 420px copy in the binary
+ *  would cost more than the scale does. */
+export function artThumbSource(a: QuizArtwork) {
+  return a.id === FIRST_ART_ID ? FIRST_ART_LOCAL : { uri: artThumbUrl(a) };
 }
 
 /** Never throws, never returns undefined - a reward screen is the last place

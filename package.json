@@ -12,8 +12,11 @@
     "test": "jest",
     "eas": "npx --yes eas-cli@latest",
     "build:android": "npx --yes eas-cli@latest build --platform android --profile production",
-    "build:version": "npx --yes eas-cli@latest build:version:get --platform android",
-    "submit:android": "npx --yes eas-cli@latest submit --platform android --latest"
+    "build:ios": "npx --yes eas-cli@latest build --platform ios --profile production",
+    "build:all": "npx --yes eas-cli@latest build --platform all --profile production",
+    "build:version": "npx --yes eas-cli@latest build:version:get --platform all",
+    "submit:android": "npx --yes eas-cli@latest submit --platform android --latest",
+    "submit:ios": "npx --yes eas-cli@latest submit --platform ios --latest"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",

@@ -15,8 +15,21 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, runOnJS,
 } from 'react-native-reanimated';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import Constants from 'expo-constants';
 import * as ImagePicker from 'expo-image-picker';
 import Glass from '../components/shared/Glass';
+
+// Read from the build, never typed in. This footer was hardcoded to '1.0.0' and
+// stayed there while app.json moved on, so the one place a user can check which
+// version she is running was quietly telling her the wrong number — and no test
+// could have caught a string literal.
+//
+// expoConfig is null in a bare/ejected runtime; nativeAppVersion is the real
+// Info.plist / build.gradle value, which is why it is the fallback rather than
+// another literal. The dash only shows if both are missing.
+const APP_VERSION =
+  Constants.expoConfig?.version ?? Constants.nativeAppVersion ?? '\u2014';
+
 import Logo from '../components/shared/Logo';
 import { ROSE, BTN_RADIUS, LAV, TXT, TXTSUB, P, FONTS, GREEN_DONE } from '../constants/theme';
 import { getHighlightColor } from '../constants/highlightColors';
@@ -848,7 +861,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
 
       <View style={styles.versionFooter}>
         <Logo size={44} style={styles.versionLogo} />
-        <Text style={styles.version}>{t('profile.version', { version: '1.0.0' })}</Text>
+        <Text style={styles.version}>{t('profile.version', { version: APP_VERSION })}</Text>
       </View>
       </TabSection>
       <View style={{ height: 23 }} />

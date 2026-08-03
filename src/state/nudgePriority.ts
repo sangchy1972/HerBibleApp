@@ -16,6 +16,7 @@ export type NudgeId =
   | 'moodCheckIn'
   | 'login'
   | 'widgetInstall'
+  | 'quizPromo'
   | 'streakCongrats'
   | 'rate'
   | 'adInterstitial';
@@ -31,6 +32,13 @@ export const NUDGE_PRIORITY: Record<NudgeId, number> = {
   moodCheckIn:       40,
   login:             50,
   widgetInstall:     60,
+  // Between the widget ask and the rate prompt. It yields to everything that is
+  // either a reward she earned or an ask that unlocks real functionality, and
+  // outranks only the rate prompt — which can always wait another day. It is
+  // BUDGETED (never ignoresBudget): a feature promo is the least important
+  // thing on this list, and the 2-per-open hard cap is already tight enough to
+  // crowd out a badge she just earned.
+  quizPromo:         65,
   streakCongrats:    70,
   rate:              80,
   adInterstitial:    90,

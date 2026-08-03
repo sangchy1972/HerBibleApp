@@ -429,7 +429,7 @@ export function maybeShowOnboardingInterstitial(): boolean {
 // Show an interstitial at a natural break (e.g. after Amen, after finishing a
 // plan day). Respects the remove-ads flag and the frequency cap, and silently
 // no-ops if no ad is loaded yet (a fresh one is always preloading for next time).
-export function maybeShowInterstitial(placement: 'prayer_end' | 'gospel_end' | 'plan_end' | 'nav' | 'app_open' | 'unknown' = 'unknown'): void {
+export function maybeShowInterstitial(placement: 'prayer_end' | 'gospel_end' | 'plan_end' | 'quiz_retry' | 'nav' | 'app_open' | 'unknown' = 'unknown'): void {
   if (adsRemoved || !initialized) return;
   // US users go through the waterfall controller (own cache, frequency cap,
   // impression-level logging). It returns silently if nothing is cached yet.

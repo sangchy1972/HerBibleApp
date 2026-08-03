@@ -38,6 +38,11 @@ const TABS = new Set(['prayer', 'bible', 'plan', 'profile']);
 const EXCLUDED = new Set([
   'PrayerFlow', 'GospelPsalm', 'MoodDashboard', 'PlanDayWalk', 'PlanVerseRead', 'PlanDayDone',
   'RemoveAds', 'HelpCenter', 'HelpAnswer', 'AboutUs', 'Policy', 'Notifications', 'AddWidget',
+  // Quiz is a flow like the others now: it shows its own interstitial on the
+  // retry transition. Left countable, entering and leaving it would trip the
+  // every-3rd-navigation ad within seconds of the one the retry just fired, and
+  // the 60 s floor would silently drop one of the two.
+  'Quiz', 'QuizProgress', 'PuzzleCollection', 'CardCollection',
 ]);
 
 let installYmd = '';

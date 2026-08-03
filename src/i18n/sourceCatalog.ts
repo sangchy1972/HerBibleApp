@@ -418,6 +418,14 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'notif.push.completeStreak.body.2':  { en: 'One more prayer completes today. A few quiet minutes with God?', context: 'Evening complete-streak push. Variant 2 body.' },
   'notif.push.completeStreak.body.3':  { en: 'Close the day in prayer and keep your streak alive.', context: 'Evening complete-streak push. Variant 3 body.' },
   // Widget-install nudge popup
+  // Quiz feature discovery. Shown in the afternoon lull, when everything else
+  // for the day is done and evening prayer has not opened yet. It is a promo,
+  // so the tone is an invitation, never a task or a guilt trip.
+  'nudge.quiz.title':              { en: 'Earn a card while you wait', context: 'Title of the quiz promo nudge, shown in the afternoon once the day\'s prayers and readings are done and evening prayer has not opened. Warm invitation. Keep to one short line.' },
+  'nudge.quiz.body':               { en: 'Answer five questions about Scripture and collect a card written for whatever you are carrying — plus a piece of a classical painting.', context: 'Body of the quiz promo nudge. Names both rewards: the mystery card (a short encouraging message) and the jigsaw piece of a classical painting.' },
+  'nudge.quiz.progress':           { en: '{n} more set to your next card', context: 'Small line under a 3-dot progress row in the quiz promo nudge. {n} is 1-3 sets of 5 questions. Use a plural form if your language needs one.' },
+  'nudge.quiz.cta':                { en: 'Take the quiz', context: 'Primary button of the quiz promo nudge. Opens the quiz.' },
+  'nudge.quiz.later':              { en: 'Not now', context: 'Quiet dismiss button on the quiz promo nudge. Match the wording of nudge.widget.later.' },
   'nudge.widget.title':            { en: 'Add the Her Bible widget', context: 'Title of the one-time widget-install nudge.' },
   'nudge.widget.body':             { en: 'Keep today\'s verse and your next prayer on your home screen.', context: 'Body of the widget-install nudge.' },
   'nudge.widget.cta':              { en: 'Add widget', context: 'CTA — opens the widget setup screen.' },

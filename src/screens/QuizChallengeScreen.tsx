@@ -17,6 +17,7 @@ import QuizReviewView from '../components/quiz/QuizReviewView';
 import MysteryDrawOverlay from '../components/quiz/MysteryDrawOverlay';
 import PaintingComplete from '../components/quiz/PaintingComplete';
 import type { OptionState } from '../components/quiz/QuizOptionButton';
+import { maybeShowInterstitial } from '../services/ads';
 import type { RootStackScreenProps } from '../navigation/types';
 
 // The full-screen quiz. Owns no state — every transition goes through
@@ -204,7 +205,28 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
           // painting are. `lifecycle.retired` is still false at this point.
           lastEver={(progress.setIndex + 1) * SET_SIZE >= (bank?.length ?? 0)}
           setsLeftAfter={Math.max(0, daily.remaining - 1)}
-          onRetry={retry}
+          onRetry={() => {
+            // Interstitial on the retry transition.
+            //
+            // WHY HERE and nowhere else in the quiz. It is a real break: she has
+            // read her results and tapped a button that changes what is on
+            // screen, which is the pattern the store policies ask for. Every
+            // other moment in this feature is either mid-question (disallowed)
+            // or already occupied by a reward — an ad landing on the card draw
+            // or the finished-painting celebration would step on the thing she
+            // played for.
+            //
+            // ORDER MATTERS: retry() first, so the questions are already on
+            // screen underneath and closing the ad returns her straight to
+            // them. Same shape as PrayerFlow's amen and PlanDayWalk's day-end.
+            // maybeShowInterstitial is synchronous, returns nothing, and
+            // silently no-ops when nothing is loaded — never branch on it.
+            //
+            // A user who never gets one wrong never sees this ad at all. That
+            // is the design, not an oversight.
+            retry();
+            maybeShowInterstitial('quiz_retry');
+          }}
           onNextLevel={() => {
             // Commit and stay. `leaving` is NOT set: the auto-open effect is
             // exactly what starts the next set, which is the whole point.

@@ -67,6 +67,7 @@ import { NudgeCoordinatorProvider } from './src/state/NudgeCoordinatorContext';
 import { FirstRunTourProvider } from './src/state/FirstRunTourContext';
 import { AudioMiniProvider } from './src/state/AudioMiniContext';
 import { SetReminderTimeProvider } from './src/state/SetReminderTimeContext';
+import { QuizPromoProvider } from './src/state/QuizPromoContext';
 import LoginPromptHost from './src/components/LoginPromptHost';
 import MoodCheckInSheet from './src/components/MoodCheckInSheet';
 import SetReminderTimeHost from './src/components/SetReminderTimeHost';
@@ -221,6 +222,7 @@ export default function App() {
                                         <LoginPromptProvider>
                                         <NudgeCoordinatorProvider>
                                         <SetReminderTimeProvider>
+                                        <QuizPromoProvider>
                                         <NavigationContainer ref={navRef} theme={NAV_THEME} onStateChange={onNavStateChange} onReady={() => setAppReady(true)}>
                                           <StatusBar style="dark" />
                                           <RootNavigator />
@@ -283,6 +285,7 @@ export default function App() {
                                             <LoadingOverlay appReady={appReady} onHide={hideLoading} />
                                           )}
                                         </NavigationContainer>
+                                        </QuizPromoProvider>
                                         </SetReminderTimeProvider>
                                         </NudgeCoordinatorProvider>
                                         </LoginPromptProvider>

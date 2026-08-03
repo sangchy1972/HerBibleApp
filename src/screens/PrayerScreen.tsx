@@ -40,6 +40,7 @@ import { hydrateCommentLikes } from '../state/verseCommentLikes';
 import MyReadingPlansCard from '../components/MyReadingPlansCard';
 import QuizChallengeCard from '../components/home/QuizChallengeCard';
 import RatePromptHost from '../components/RatePromptHost';
+import QuizPromoHost from '../components/QuizPromoHost';
 import { buildReadingPlansCard } from '../services/planRecommendations';
 import { useOnboarding } from '../state/OnboardingContext';
 import TabSection from '../components/shared/TabSection';
@@ -1352,6 +1353,13 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           home screen (moved off the prayer-end scene). Self-gates via cadence +
           the nudge coordinator. */}
       <RatePromptHost />
+
+      {/* "Finish a set, earn a reward card." Only in the afternoon lull —
+          everything for today is done and evening prayer has not opened yet —
+          and only after midday, which keeps it away from the morning open where
+          the reminder ask, the login prompt and the mood ritual already
+          compete for the coordinator's two slots. */}
+      <QuizPromoHost inGap={rhythm.state.kind === 'waitEvening' && now.getHours() >= 12} />
     </View>
   );
 }

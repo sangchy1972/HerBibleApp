@@ -41,9 +41,10 @@ export type RootStackParamList = {
   Notifications: undefined;
   OtherNotifications: undefined;
   Achievement: undefined;
-  /** Full-screen Bible quiz. Optional setIndex reserved for a future
-   *  "replay set N" deep link, so adding it later isn't a breaking change. */
-  Quiz: { setIndex?: number } | undefined;
+  /** Full-screen Bible quiz. No params: the set is whatever the ladder says,
+   *  and a "replay set N" deep link would need the session logic to accept an
+   *  override it does not have. */
+  Quiz: undefined;
   /** Puzzle collection — every artwork the quiz has earned. */
   PuzzleCollection: undefined;
   /** Mystery cards she has drawn. Its own route, not a band on the puzzle

@@ -7,7 +7,7 @@
 
 /** Tiles per painting. A 2×2 board, so one set = one quarter. */
 export const TILES_PER_PAINTING = 4;
-/** Sets between mystery-reward drops. Placeholder economy, tune freely. */
+/** Sets between mystery card draws. Load-bearing: this IS the reward economy. */
 export const MYSTERY_EVERY = 3;
 
 export interface QuizProgressV1 {

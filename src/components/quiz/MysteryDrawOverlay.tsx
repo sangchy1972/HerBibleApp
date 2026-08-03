@@ -7,11 +7,13 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing, interpolate,
 } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ROSE, BTN_RADIUS, FONTS } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
 import { useQuiz } from '../../state/QuizContext';
 import { useUILanguage } from '../../state/UILanguageContext';
 import { localizedCardBody, type MysteryCard } from '../../constants/mysteryCards';
+import type { UILanguageCode } from '../../state/UILanguageContext';
 import { MysteryCardBack, MysteryCardFront, CARD_RADIUS } from './MysteryCardFace';
 import MysteryCardArt, { CARD_SHARE_WIDTH } from './MysteryCardArt';
 import { shareCard, saveCard } from '../../services/cardShare';
@@ -45,10 +47,19 @@ export default function MysteryDrawOverlay({ onDone }: { onDone: () => void }) {
   const t = useT();
   const { lang } = useUILanguage();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const { drawSpread, drawCard, likeCard, cardIsLiked, logCardShare } = useQuiz();
   const shotRef = useRef<View>(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+
+  // Measured, not fixed. A hardcoded height clips the longest cards — the pool
+  // runs 27-48 words and the tallest need 7 lines at this width, so a 210pt box
+  // cuts the last sentence off mid-word after a 7-second reveal. The measuring
+  // copy renders off-screen at the final width and reports its intrinsic
+  // height; until it lands, `null` keeps the reveal from animating to a size we
+  // have not confirmed.
+  const [finalH, setFinalH] = useState<number | null>(null);
 
   const [phase, setPhase] = useState<Phase>('spread');
   const [chosen, setChosen] = useState<MysteryCard | null>(null);
@@ -88,12 +99,19 @@ export default function MysteryDrawOverlay({ onDone }: { onDone: () => void }) {
     return { gutter, gap, w, h, finalW: width - gutter * 2 };
   }, [width]);
 
+  // A REF, not `phase`. `phase` in this closure is a render behind, so two taps
+  // landing in the same frame both pass a state check — drawCard would then
+  // correctly collect only the first card while setChosen ran twice, and the
+  // SECOND card is what flips over, gets typed out, and receives her heart.
+  // She would like a card her collection does not contain.
+  const picked = useRef(false);
   const pick = useCallback((card: MysteryCard) => {
-    if (phase !== 'spread') return;
+    if (picked.current) return;
+    picked.current = true;
     setPhase('reveal');
     setChosen(card);
     drawCard(card.id);
-  }, [phase, drawCard]);
+  }, [drawCard]);
 
   // Any tap during reveal or typing jumps to the end state. She will see this
   // ~120 times; an animation with no way out becomes the thing she dreads about
@@ -116,9 +134,12 @@ export default function MysteryDrawOverlay({ onDone }: { onDone: () => void }) {
     if (typed) actions.value = withTiming(1, { duration: 250 });
   }, [typed, actions]);
 
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current); }, []);
   const showToast = useCallback((msg: string) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast(msg);
-    setTimeout(() => setToast(null), 1600);
+    toastTimer.current = setTimeout(() => setToast(null), 1600);
   }, []);
 
   const onShare = useCallback(async () => {
@@ -129,9 +150,14 @@ export default function MysteryDrawOverlay({ onDone }: { onDone: () => void }) {
     // that is comparable across the app, since the verse and badge sheets log
     // at the same point.
     logCardShare(chosen.id, 'system');
-    await shareCard(shotRef.current, t('quiz.card.share'));
+    // A false return means the sheet never opened (no share provider). Without
+    // this she taps, nothing happens, and there is no way to tell whether it
+    // worked.
+    // Silent on 'cancelled' — she changed her mind, that is not an error.
+    const r = await shareCard(shotRef.current, t('quiz.card.share'));
+    if (r === 'unavailable' || r === 'failed') showToast(t('error.couldNotShare'));
     setBusy(false);
-  }, [busy, chosen, logCardShare, t]);
+  }, [busy, chosen, logCardShare, showToast, t]);
 
   const onSave = useCallback(async () => {
     if (busy || !chosen) return;
@@ -161,6 +187,23 @@ export default function MysteryDrawOverlay({ onDone }: { onDone: () => void }) {
         {t('quiz.card.chooseOne')}
       </Animated.Text>
 
+      {/* Escape hatch. The scrim covers the screen's own close button and its
+          onPress is deliberately inert while she is choosing, so without this
+          iOS has NO way out of the spread — Android would have the hardware
+          back and iOS would have nothing. pendingDraw is untouched, so the same
+          spread is waiting for her next time. */}
+      {phase === 'spread' ? (
+        <TouchableOpacity
+          style={[styles.close, { top: insets.top + 8 }]}
+          onPress={onDone}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.close')}
+        >
+          <Feather name="x" size={22} color="rgba(255,255,255,0.75)" />
+        </TouchableOpacity>
+      ) : null}
+
       <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
         {spread.map((card, i) => (
           <DrawCard
@@ -172,11 +215,25 @@ export default function MysteryDrawOverlay({ onDone }: { onDone: () => void }) {
             phase={phase}
             isChosen={chosen?.id === card.id}
             typing={typing}
+            finalH={finalH}
             onPress={() => pick(card)}
             onTypingDone={() => setTyped(true)}
           />
         ))}
       </View>
+
+      {/* Measuring copy: the real front at the real width, laid out off-screen
+          so its intrinsic height can be read once. */}
+      {chosen && finalH == null ? (
+        <View style={styles.offscreen} pointerEvents="none">
+          <View
+            style={{ width: geom.finalW }}
+            onLayout={e => setFinalH(Math.round(e.nativeEvent.layout.height))}
+          >
+            <MysteryCardFront body={localizedCardBody(chosen, lang)} inline />
+          </View>
+        </View>
+      ) : null}
 
       {/* Off-screen capture source. Rendered at full resolution and parked far
           outside the viewport rather than hidden with opacity or display:none —
@@ -184,7 +241,7 @@ export default function MysteryDrawOverlay({ onDone }: { onDone: () => void }) {
       {chosen ? (
         <View style={styles.offscreen} pointerEvents="none" collapsable={false}>
           <View ref={shotRef} collapsable={false}>
-            <MysteryCardArt body={localizedCardBody(chosen, lang as never)} width={CARD_SHARE_WIDTH} />
+            <MysteryCardArt body={localizedCardBody(chosen, lang)} width={CARD_SHARE_WIDTH} />
           </View>
         </View>
       ) : null}
@@ -196,7 +253,10 @@ export default function MysteryDrawOverlay({ onDone }: { onDone: () => void }) {
       ) : null}
 
       {chosen ? (
-        <Animated.View style={[styles.actions, actionsStyle]} pointerEvents={typed ? 'auto' : 'none'}>
+        <Animated.View
+          style={[styles.actions, { bottom: Math.max(28, insets.bottom + 16) }, actionsStyle]}
+          pointerEvents={typed ? 'auto' : 'none'}
+        >
           <View style={styles.iconRow}>
             <IconAction
               icon={liked ? 'heart' : 'heart'}
@@ -237,15 +297,17 @@ function IconAction({
 }
 
 function DrawCard({
-  card, index, geom, lang, phase, isChosen, typing, onPress, onTypingDone,
+  card, index, geom, lang, phase, isChosen, typing, finalH, onPress, onTypingDone,
 }: {
   card: MysteryCard;
   index: number;
   geom: { gutter: number; gap: number; w: number; h: number; finalW: number };
-  lang: string;
+  lang: UILanguageCode;
   phase: Phase;
   isChosen: boolean;
   typing: boolean;
+  /** Measured intrinsic height of the revealed card, or null while measuring. */
+  finalH: number | null;
   onPress: () => void;
   onTypingDone: () => void;
 }) {
@@ -255,8 +317,10 @@ function DrawCard({
 
   const startLeft = geom.gutter + col * (geom.w + geom.gap);
   const startTop = height * 0.26 + row * (geom.h + geom.gap);
-  const finalTop = height * 0.28;
-  const finalH = 210;
+  const grownH = Math.max(210, finalH ?? 210);
+  // Centre the grown card on the same band the spread occupied, so it does not
+  // jump up or down as it widens.
+  const finalTop = Math.max(height * 0.14, height * 0.42 - grownH / 2);
 
   const enter = useSharedValue(0);
   const grow = useSharedValue(0);
@@ -288,7 +352,7 @@ function DrawCard({
     left: interpolate(grow.value, [0, 1], [startLeft, geom.gutter]),
     top: interpolate(grow.value, [0, 1], [startTop, finalTop]),
     width: interpolate(grow.value, [0, 1], [geom.w, geom.finalW]),
-    height: interpolate(grow.value, [0, 1], [geom.h, finalH]),
+    height: interpolate(grow.value, [0, 1], [geom.h, grownH]),
     opacity: fade.value * enter.value,
     transform: [
       { translateY: interpolate(enter.value, [0, 1], [24, 0]) },
@@ -305,7 +369,7 @@ function DrawCard({
     transform: [{ perspective: 1100 }, { rotateY: `${interpolate(flip.value, [0, 1], [180, 360])}deg` }],
   }));
 
-  const body = localizedCardBody(card, lang as never);
+  const body = localizedCardBody(card, lang);
 
   return (
     <Animated.View style={[styles.card, box]} pointerEvents={phase === 'spread' ? 'auto' : 'none'}>
@@ -331,7 +395,8 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.latoBold, fontSize: 13, letterSpacing: 1.6,
   },
   card: { position: 'absolute', borderRadius: CARD_RADIUS },
-  actions: { position: 'absolute', left: 22, right: 22, bottom: 36 },
+  actions: { position: 'absolute', left: 22, right: 22 },
+  close: { position: 'absolute', right: 14, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   iconRow: { flexDirection: 'row', justifyContent: 'center', gap: 34, marginBottom: 22 },
   iconAction: { alignItems: 'center', gap: 6 },
   iconDisc: {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, TouchableOpacity, StyleSheet, View } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import { ROSE, GREEN_DONE, TXT, TXTSUB, BTN_RADIUS, FONTS, INK_06, INK_10, GREEN_WASH, ROSE_WASH } from '../../constants/theme';
+import { ROSE, GREEN_DONE, TXT, TXTSUB, BTN_RADIUS, FONTS, INK_06, INK_10, GREEN_WASH } from '../../constants/theme';
 
 // One answer option.
 //

@@ -34,11 +34,17 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   // route of its own: the reward has to land in the same breath as the set that
   // earned it, not after a navigation transition.
   const [drawing, setDrawing] = useState(false);
+  // Backing out of the spread leaves pendingDraw true on purpose — the reward
+  // is not spent. Without this ref the effect below would immediately re-open
+  // the overlay, and the scrim would fade back in over the dismiss animation.
+  // She would appear to be trapped. The flag lives for this visit only, so the
+  // draw is offered again next time she opens the quiz.
+  const drawDismissed = useRef(false);
 
   // A draw interrupted by a force quit is offered again on the next open —
   // pendingDraw is persisted and only ever spent by collecting a card.
   useEffect(() => {
-    if (ready && pendingDraw && !drawing) setDrawing(true);
+    if (ready && pendingDraw && !drawing && !drawDismissed.current) setDrawing(true);
   }, [ready, pendingDraw, drawing]);
 
   // Start (or resume) as soon as the bank is available. Guarded inside `open`,
@@ -164,7 +170,9 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
       {body()}
 
       {drawing ? (
-        <MysteryDrawOverlay onDone={() => { setDrawing(false); navigation.goBack(); }} />
+        <MysteryDrawOverlay
+          onDone={() => { drawDismissed.current = true; setDrawing(false); navigation.goBack(); }}
+        />
       ) : null}
     </View>
   );

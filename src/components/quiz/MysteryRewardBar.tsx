@@ -7,10 +7,9 @@ import { mysteryView, MYSTERY_EVERY } from '../../state/quizProgress';
 
 // "N levels from the mystery reward."
 //
-// PLACEHOLDER ECONOMY — there is no reward behind this yet, only the counter.
-// It is shipped anyway because the count itself is the mechanic: a visible
-// "2 more" is what makes the next set feel like it's for something. Wire a real
-// drop into MYSTERY_EVERY when there is one; nothing here needs to change.
+// The counter behind the mystery card draw. MYSTERY_EVERY is load-bearing now:
+// hitting zero grants a real draw (see cardDraw.ts / MysteryDrawOverlay), so
+// changing it changes the reward economy, not just a label.
 //
 // The bar is continuous, not segmented: it is a countdown, not a per-question
 // record, and a second 5-segment bar next to the real one would read as the

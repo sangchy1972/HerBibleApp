@@ -105,6 +105,25 @@ describe('pool economics', () => {
     expect(new Set(s.candidates).size).toBe(CANDIDATES_PER_DRAW);
   });
 
+  it('always lays out four faces, even on the very last uncollected card', () => {
+    // At 39 of 40 the raw candidate list is ONE entry. Showing a single card
+    // under a prompt that says "choose one" is a joke at her expense after
+    // three completed sets, so the table is topped up from what she holds.
+    const p: CardProgressV1 = { v: 1, collected: IDS.slice(0, 39), drawsTaken: 39, pendingDraw: true };
+    const s = spreadFor(p, IDS);
+    expect(s.candidates).toHaveLength(CANDIDATES_PER_DRAW);
+    expect(new Set(s.candidates).size).toBe(CANDIDATES_PER_DRAW);
+    // The uncollected one is still on the table, and still first.
+    expect(IDS[s.candidates[0]]).toBe(IDS[39]);
+  });
+
+  it('tops up from two cards short as well', () => {
+    const p: CardProgressV1 = { v: 1, collected: IDS.slice(0, 38), drawsTaken: 38, pendingDraw: true };
+    const s = spreadFor(p, IDS);
+    expect(s.candidates).toHaveLength(CANDIDATES_PER_DRAW);
+    expect(new Set(s.candidates).size).toBe(CANDIDATES_PER_DRAW);
+  });
+
   it('reports the pool as not exhausted while anything is left', () => {
     expect(spreadFor(fresh(), IDS).poolExhausted).toBe(false);
     const nearly: CardProgressV1 = { v: 1, collected: IDS.slice(0, 39), drawsTaken: 39, pendingDraw: true };

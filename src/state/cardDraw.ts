@@ -118,13 +118,31 @@ export interface DrawSpread {
   poolExhausted: boolean;
 }
 
-/** The spread she is looking at right now. Stable across relaunches. */
+/**
+ * The spread she is looking at right now. Stable across relaunches.
+ *
+ * ALWAYS four faces when the pool allows it. `availableIndexes` only resets
+ * once every card is collected, so at 39-of-40 the raw candidate list is a
+ * single entry — and laying out ONE card under a prompt that says "choose one"
+ * is a joke at her expense after three completed sets. The last few draws top
+ * the table up with cards she already holds; the uncollected ones are still
+ * drawn first, so she cannot be handed a repeat while a new card is available.
+ */
 export function spreadFor(p: CardProgressV1, ids: readonly string[]): DrawSpread {
   const uncollected = new Set(ids).size - new Set(p.collected).size;
-  return {
-    candidates: candidatesFor(p.drawsTaken, availableIndexes(p.collected, ids)),
-    poolExhausted: uncollected <= 0,
-  };
+  const primary = candidatesFor(p.drawsTaken, availableIndexes(p.collected, ids));
+  let candidates = primary;
+
+  if (primary.length < CANDIDATES_PER_DRAW && ids.length >= CANDIDATES_PER_DRAW) {
+    const taken = new Set(primary);
+    const filler = candidatesFor(
+      p.drawsTaken + 1,
+      ids.map((_, i) => i).filter(i => !taken.has(i)),
+    );
+    candidates = [...primary, ...filler].slice(0, CANDIDATES_PER_DRAW);
+  }
+
+  return { candidates, poolExhausted: uncollected <= 0 };
 }
 
 /**

@@ -51,7 +51,16 @@ export const QUIZ_BANK_VERSION = 2;
 
 export const QUIZ_CDN_BASE = 'https://quiz.everlandapps.com/v1';
 
-/** Languages with a published bank. Anything else falls back to English. */
+/**
+ * Languages with a published bank.
+ *
+ * quizBankUrl serves quiz-en.json for anything unlisted, but parseBankFile then
+ * REJECTS it (`file.lang !== lang`), so an unlisted language downloads ~60 KB
+ * and shows no quiz at all. That is deliberate — a Japanese user reading
+ * English questions is worse than no card — but it is not a fallback, and
+ * calling it one has confused this twice. Add the language here only when its
+ * bank is actually published.
+ */
 export const QUIZ_LANGS = ['en', 'zh-Hans', 'zh-Hant', 'de', 'fr', 'es', 'pt'] as const;
 export type QuizLang = typeof QUIZ_LANGS[number];
 

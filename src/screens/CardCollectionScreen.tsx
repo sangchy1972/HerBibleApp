@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions, BackHandler,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -103,7 +103,7 @@ export default function CardCollectionScreen({ navigation }: RootStackScreenProp
           rows.map(c => (
             <CardRow
               key={c.id}
-              body={localizedCardBody(c, lang as never)}
+              body={localizedCardBody(c, lang)}
               liked={cardIsLiked(c.id)}
               onPress={() => openCard(c)}
             />
@@ -137,16 +137,32 @@ function CardDetail({ card, onClose }: { card: MysteryCard; onClose: () => void 
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  const body = localizedCardBody(card, lang as never);
+  const body = localizedCardBody(card, lang);
   const liked = cardIsLiked(card.id);
 
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 1600); };
+  // Android back closes the CARD, not the whole collection. Registered here so
+  // it sits above the navigator's default handler; without it she taps back to
+  // dismiss a card and loses the list behind it too.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => { onClose(); return true; });
+    return () => sub.remove();
+  }, [onClose]);
+
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current); }, []);
+  const showToast = (msg: string) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(msg);
+    toastTimer.current = setTimeout(() => setToast(null), 1600);
+  };
 
   const onShare = async () => {
     if (busy) return;
     setBusy(true);
     logCardShare(card.id, 'system');
-    await shareCard(shotRef.current, t('quiz.card.share'));
+    // Silent on 'cancelled' — she changed her mind, that is not an error.
+    const r = await shareCard(shotRef.current, t('quiz.card.share'));
+    if (r === 'unavailable' || r === 'failed') showToast(t('error.couldNotShare'));
     setBusy(false);
   };
 

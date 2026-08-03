@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { ROSE, GREEN_DONE, TXT, TXTSUB, BTN_RADIUS, FONTS, INK_06, INK_10, GREEN_WASH, ROSE_WASH } from '../../constants/theme';
+import { ROSE, GREEN_DONE, TXT, TXTSUB, BTN_RADIUS, FONTS, GREEN_WASH, ROSE_WASH } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
 import QuizSegmentBar from './QuizSegmentBar';
 import PuzzleBoard from './PuzzleBoard';

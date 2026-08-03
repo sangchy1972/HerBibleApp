@@ -25,21 +25,29 @@ export async function captureCard(node: unknown): Promise<string> {
   return uri.startsWith('file://') ? uri : `file://${uri}`;
 }
 
+export type ShareResult = 'shared' | 'cancelled' | 'unavailable' | 'failed';
+
 /**
- * System share sheet. Returns true when the image actually went somewhere we
- * can tell — a cancel is NOT an error and must not raise an alert, because
- * react-native-share reports a dismissal the same way it reports a failure.
+ * System share sheet.
+ *
+ * The distinction between the outcomes matters to the caller: `cancelled` is
+ * her changing her mind and must stay silent, while `unavailable` and `failed`
+ * are the app doing nothing and MUST say so — otherwise she taps share, the
+ * screen does not move, and there is no way to tell whether it worked.
+ *
+ * expo-sharing reports "no provider" by returning false from isAvailableAsync,
+ * and a dismissal as a thrown error indistinguishable from a real failure
+ * except by its message.
  */
-export async function shareCard(node: unknown, dialogTitle?: string): Promise<boolean> {
+export async function shareCard(node: unknown, dialogTitle?: string): Promise<ShareResult> {
   try {
-    if (!(await Sharing.isAvailableAsync())) return false;
+    if (!(await Sharing.isAvailableAsync())) return 'unavailable';
     const uri = await captureCard(node);
     await Sharing.shareAsync(uri, { mimeType: CAPTURE_MIME, dialogTitle });
-    return true;
+    return 'shared';
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    if (/cancel|dismiss/i.test(msg)) return false;
-    return false;
+    return /cancel|dismiss/i.test(msg) ? 'cancelled' : 'failed';
   }
 }
 

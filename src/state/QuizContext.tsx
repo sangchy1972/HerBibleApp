@@ -127,6 +127,8 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
   // Same failure this repo hit in adRevenue: an un-hydrated write erases real
   // state with an empty default.
   const hydrated = useRef(false);
+  /** Set finished by finish(), waiting for the commit effect to drain it. */
+  const pendingCommit = useRef<QuizSessionV1 | null>(null);
 
   // ── Hydrate ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -293,43 +295,76 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
     return s;
   }), []);
 
+  /**
+   * Commit the finished set.
+   *
+   * The updater ONLY stages the result; every side effect happens in the effect
+   * below. React guarantees a state updater is a pure function of its argument
+   * and nothing more — nesting setProgress / setHistory / logEvent inside
+   * setSession (and setCards inside setProgress, as this did) means a rebase or
+   * a future StrictMode re-invokes them, and each replay silently grants
+   * another completed set, another puzzle tile and another history row. Nothing
+   * reproduces it in this build; it is exactly the double-grant the rest of
+   * this file is written to avoid.
+   */
   const finish = useCallback(() => {
     setSession(prev => {
       if (!prev) return prev;
       const done = finishSession(prev);
       if (done === prev) return prev;          // still has wrong answers
-      const { firstPassPerfect } = sessionSummary(done);
-      logEvent('quiz_set_complete', {
-        set_index: done.setIndex,
-        first_pass_wrong: done.firstPassWrong,
-        perfect: firstPassPerfect ? 1 : 0,
-      });
-      const ymd = localYmd();
-      setProgress(p => {
-        const next = applyCompletion(p, {
-          firstPassWrong: done.firstPassWrong,
-          totalQuestions: done.answers.length,
-        }, ymd);
-        // The draw is earned HERE, at the commit, not when the overlay opens.
-        // She can background the app in between — pendingDraw is persisted, so
-        // the reward survives that. Derived from the NEXT completedSets so the
-        // set she just finished is the one that counts.
-        if (drawEarnedAt(next.completedSets, MYSTERY_EVERY)) {
-          setCards(c => grantDraw(c));
-          logEvent('quiz_draw_earned', { completed_sets: next.completedSets });
-        }
-        return next;
-      });
-      // Append-only and unbackfillable — if this write is ever skipped, that
-      // day is gone. Deliberately outside the progress updater so a bail-out
-      // there can never take the history with it.
-      setHistory(h => recordSet(h, ymd, {
-        questions: done.answers.length,
-        firstPassWrong: done.firstPassWrong,
-      }));
-      return null;                              // session cleared; ladder advanced
+      pendingCommit.current = done;
+      return null;                             // session cleared
     });
   }, []);
+
+  // Drain the staged commit. Runs once per session transition, so each write
+  // lands exactly once no matter how many times the updater was called.
+  useEffect(() => {
+    const done = pendingCommit.current;
+    if (!done) return;
+    pendingCommit.current = null;
+
+    const { firstPassPerfect } = sessionSummary(done);
+    logEvent('quiz_set_complete', {
+      set_index: done.setIndex,
+      first_pass_wrong: done.firstPassWrong,
+      perfect: firstPassPerfect ? 1 : 0,
+    });
+
+    const ymd = localYmd();
+    setProgress(p => applyCompletion(p, {
+      firstPassWrong: done.firstPassWrong,
+      totalQuestions: done.answers.length,
+    }, ymd));
+    // Append-only and unbackfillable — if this write is ever skipped, that day
+    // is gone.
+    setHistory(h => recordSet(h, ymd, {
+      questions: done.answers.length,
+      firstPassWrong: done.firstPassWrong,
+    }));
+  }, [session]);
+
+  /**
+   * Grant the draw once per newly completed set.
+   *
+   * Keyed on the committed count rather than fired inside the commit, so it
+   * cannot double-grant, and `lastGranted` makes a re-render idempotent on top
+   * of grantDraw already being so.
+   */
+  const lastGranted = useRef(-1);
+  useEffect(() => {
+    if (!hydrated.current) return;
+    const n = progress.completedSets;
+    // Seed on the first pass after hydration: a restored account at set 9 must
+    // not be handed a draw it already spent months ago.
+    if (lastGranted.current < 0) { lastGranted.current = n; return; }
+    if (n === lastGranted.current) return;
+    lastGranted.current = n;
+    if (drawEarnedAt(n, MYSTERY_EVERY)) {
+      setCards(c => grantDraw(c));
+      logEvent('quiz_draw_earned', { completed_sets: n });
+    }
+  }, [progress.completedSets]);
 
   // ── Mystery cards ─────────────────────────────────────────────────────────
   const cardIds = useMemo(() => MYSTERY_CARDS.map(c => c.id), []);

@@ -15,7 +15,10 @@ import { MYSTERY_EVERY } from '../src/state/quizProgress';
 const en = (id: string) => MYSTERY_CARDS.find(c => c.id === id)!.body.en!;
 const words = (s: string) => s.trim().split(/\s+/).length;
 /** Chinese length excluding punctuation. */
-const hanzi = (s: string) => s.replace(/[，。？！—；：、“”‘’（）]/g, '').length;
+const hanzi = (s: string) => s.replace(/[，。？！—；：、“”‘’「」（）]/g, '').length;
+
+/** Every language the pool must ship. */
+const LANGS = ['en', 'zh-Hans', 'zh-Hant', 'de', 'fr', 'es', 'pt'] as const;
 
 describe('pool shape', () => {
   it('has 40 cards, 4 per concern', () => {
@@ -71,10 +74,37 @@ describe('card copy fits the card', () => {
     }
   });
 
-  it('ships English and Chinese for every card', () => {
+  it('ships all 7 languages for every card', () => {
+    // localizedCardBody falls back to English, so a missing language is silent:
+    // a German user answers German questions, taps a German button, and reads
+    // English prose — which is the entire payload of the feature.
     for (const c of MYSTERY_CARDS) {
-      expect(`${c.id}:${!!c.body.en}`).toBe(`${c.id}:true`);
-      expect(`${c.id}:${!!c.body['zh-Hans']}`).toBe(`${c.id}:true`);
+      for (const lang of LANGS) {
+        expect(`${c.id}:${lang}:${!!c.body[lang]}`).toBe(`${c.id}:${lang}:true`);
+      }
+    }
+  });
+
+  it('keeps every localized body inside its length band', () => {
+    // The card renders at a fixed 14.1pt and does not scale with the OS font
+    // setting, so an over-long translation is clipped, not shrunk.
+    for (const c of MYSTERY_CARDS) {
+      for (const lang of ['de', 'fr', 'es', 'pt'] as const) {
+        const n = words(c.body[lang]!);
+        expect(`${c.id}:${lang}:${n >= 27 && n <= 48}`).toBe(`${c.id}:${lang}:true`);
+      }
+      const zt = hanzi(c.body['zh-Hant']!);
+      expect(`${c.id}:zh-Hant:${zt >= 38 && zt <= 65}`).toBe(`${c.id}:zh-Hant:true`);
+    }
+  });
+
+  it('has no Simplified characters leaking into Traditional Chinese', () => {
+    // zh-Hant was written for Taiwan/HK readers, not converted — a leaked
+    // Simplified glyph is the tell that someone ran a mechanical conversion.
+    const SIMPLIFIED = /[们个这为来说时华汉语过还没经点书爱见东车马鸟长门问间关无与将场际发广后历离灵]/;
+    for (const c of MYSTERY_CARDS) {
+      const hit = SIMPLIFIED.exec(c.body['zh-Hant']!);
+      expect(`${c.id}:${hit ? hit[0] : 'clean'}`).toBe(`${c.id}:clean`);
     }
   });
 });
@@ -97,12 +127,13 @@ describe('the formula', () => {
     }
   });
 
-  it('does not shout', () => {
+  it('does not shout, in any language', () => {
     // Register check. Someone speaking quietly to one tired woman at 1am does
-    // not use exclamation marks.
+    // not use exclamation marks. Spanish's opening ¡ is caught here too.
     for (const c of MYSTERY_CARDS) {
-      expect(`${c.id}:${c.body.en!.includes('!')}`).toBe(`${c.id}:false`);
-      expect(`${c.id}:${c.body['zh-Hans']!.includes('！')}`).toBe(`${c.id}:false`);
+      for (const lang of LANGS) {
+        expect(`${c.id}:${lang}:${/[!！¡]/.test(c.body[lang]!)}`).toBe(`${c.id}:${lang}:false`);
+      }
     }
   });
 });
@@ -139,7 +170,21 @@ describe('guardrails', () => {
     }
   });
 
-  it('keeps the Chinese out of third-person self-reference', () => {
+  it('keeps every language out of third-person self-reference', () => {
+    // God is the speaker everywhere. A sentence where the word for God is the
+    // subject reads as someone else talking ABOUT him and the voice collapses.
+    // unanswered-1 is the deliberate exception: it quotes her own question.
+    const GOD = /\b(Gott|Dieu|Dios|Deus|der Herr|le Seigneur|el Señor|o Senhor)\b/i;
+    for (const c of MYSTERY_CARDS) {
+      if (c.id === 'unanswered-1') continue;
+      for (const lang of ['de', 'fr', 'es', 'pt'] as const) {
+        expect(`${c.id}:${lang}:${GOD.test(c.body[lang]!)}`).toBe(`${c.id}:${lang}:false`);
+      }
+      expect(`${c.id}:zh-Hant:${/上帝|神(會|要|必)/.test(c.body['zh-Hant']!)}`).toBe(`${c.id}:zh-Hant:false`);
+    }
+  });
+
+  it('keeps the Simplified Chinese out of third-person self-reference', () => {
     // God is the speaker. A sentence where the Chinese word for God is the
     // subject reads as someone else talking ABOUT him, and the voice collapses.
     // unanswered-1 is the deliberate exception: it quotes her own question.
@@ -196,9 +241,17 @@ describe('lookup helpers', () => {
     expect(cardById('weary-2').theme).toBe('weary');
   });
 
-  it('falls back to English for an untranslated language', () => {
+  it('returns the real translation now that all 7 ship', () => {
     const c = MYSTERY_CARDS[0];
-    expect(localizedCardBody(c, 'de')).toBe(c.body.en);
-    expect(localizedCardBody(c, 'zh-Hans')).toBe(c.body['zh-Hans']);
+    expect(localizedCardBody(c, 'de')).toBe(c.body.de);
+    expect(localizedCardBody(c, 'zh-Hant')).toBe(c.body['zh-Hant']);
+    expect(localizedCardBody(c, 'pt')).toBe(c.body.pt);
+  });
+
+  it('still falls back to English for a language nobody has translated', () => {
+    // The fallback is not dead code — it is what keeps an 8th UI language from
+    // rendering blank cards on the day it is added, before its pass is done.
+    const partial = { ...MYSTERY_CARDS[0], body: { en: MYSTERY_CARDS[0].body.en } };
+    expect(localizedCardBody(partial, 'de')).toBe(MYSTERY_CARDS[0].body.en);
   });
 });

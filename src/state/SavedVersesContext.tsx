@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent } from '../services/firebase';
 
@@ -21,14 +21,30 @@ const STORAGE_KEY = 'savedVerses';
 
 export function SavedVersesProvider({ children }: { children: React.ReactNode }) {
   const [verses, setVerses] = useState<SavedVerse[]>([]);
+  // Guards a write from landing before the read that should have preceded it.
+  // Without it the persist effect fires on mount with the empty initial state
+  // and writes "[]" over her saved verses. Two ways that becomes permanent:
+  // the app is killed in the millisecond before the read resolves, or the
+  // stored JSON is malformed — the parse throws, the catch swallows it, and
+  // the [] this effect already wrote is now the only copy.
+  //
+  // It also matters for CLOUD RESTORE. restoreAndMerge writes the merged keys
+  // and then remounts the provider tree; a fresh SavedVersesProvider that
+  // persists [] on mount is exactly the stale-provider clobber that path was
+  // rewritten to prevent. `savedVerses` is in MERGERS, so this is real data.
+  //
+  // Same guard as QuizContext and BibleScreen's settings persist.
+  const hydrated = useRef(false);
 
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY)
       .then(raw => { if (raw) setVerses(JSON.parse(raw)); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => { hydrated.current = true; });
   }, []);
 
   useEffect(() => {
+    if (!hydrated.current) return;
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(verses)).catch(() => {});
   }, [verses]);
 

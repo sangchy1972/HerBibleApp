@@ -38,6 +38,33 @@ requirements — follow them by default without re-asking.
 - Commits **auto-sync** to GitHub out of band. A manual `git push` fails (no credentials) —
   that's expected, not a bug to chase.
 
+## Shipping a release
+
+- **ALWAYS build BOTH platforms.** Every release goes to the App Store and Play
+  together. `npm run build:all`. Never hand over an Android-only command.
+- `eas-cli` is installed nowhere — not globally, not as a dependency. Every EAS
+  command goes through `npx --yes eas-cli@latest`, which is what the `build:*`
+  and `submit:*` npm scripts already do.
+- Version lives in `app.json` (`version`). `versionCode` / `buildNumber` are
+  remote + autoIncrement — never edit them by hand.
+- `play-service-account.json` is gitignored and only needed for
+  `eas submit -p android`. Building never needs it, and uploading the AAB
+  manually in Play Console never needs it either.
+
+## Settled decisions (do not re-open, do not re-ask)
+
+- **The `app_open` hot-start interstitial STAYS.** Backgrounded ≥15s then
+  returning shows an interstitial (`services/adFrequency.ts`, day ≥ 3 users).
+  Audits will keep flagging it under Play's Disruptive Ads policy. The owner has
+  decided; the risk is understood and accepted. Do not raise it again.
+- **The `quiz_retry` interstitial is UNCAPPED.** Every tap of "Try those again"
+  fires one, throttled only by the global 60s `MIN_INTERVAL_MS`. More wrong
+  answers is intended to mean more impressions. Do not add a per-visit or
+  per-day cap.
+- The 400ms delay before `quiz_retry` shows is NOT a frequency control — it
+  stops a double-tap landing on the creative, which is an invalid-traffic risk
+  to the AdMob account. Keep it.
+
 ## Product facts (do not re-derive)
 
 - Bundle id: `com.holy.bible.kjv.audio.prayer`.

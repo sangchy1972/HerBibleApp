@@ -4,67 +4,100 @@ The reward behind the "mystery reward" counter in the Quiz Challenge. Every
 `MYSTERY_EVERY` (3) completed sets, the user draws one card from a face-down
 2×2 spread. The card flips and speaks to her.
 
-Status: **spec — not built**. Card copy is written (40 cards, English source).
+Status: copy **final** and shipped in `src/constants/mysteryCards.ts` (40 cards,
+en + zh-Hans). Draw logic **built** (`src/state/cardDraw.ts`). UI **not built**.
 
 ---
 
 ## 1. Content model
 
-A card is our own original writing in God's first person, **anchored to a named
-passage**, plus the reference. It is not a Bible quote.
+A card is our own writing in God's first person, anchored to a passage. It is
+not a Bible quote, and **no reference is ever shown**.
 
 ```ts
 interface MysteryCard {
-  id: string;        // 'presence-1' — stable, durable, never reused
-  theme: CardTheme;  // 10 themes
-  ref: string;       // 'Isaiah 41:10' — canonical English ref, localized at render
-  titleKey: string;  // i18n key for the 2-4 word card title
-  bodyKey: string;   // i18n key for the 35-60 word message
+  id: string;        // 'weary-2' — stable, durable, never reused
+  theme: CardTheme;  // one of 10 concerns. BACKEND ONLY — never rendered
+  ref: string;       // internal provenance ONLY — never rendered
+  body: Partial<Record<LanguageCode, string>>;   // 27-48 words / 38-65 汉字
 }
 ```
 
-### Why the message is original prose, not a verse
+### The formula
+
+REVISED after the first draft was rejected as *too poetic*. That draft wrote
+beautiful sentences about God; it did not answer her.
+
+1. **State her problem as a fact.** Not "Are you feeling…?" — the card assumes
+   it already knows and says it out loud, so she reads line one and thinks
+   *that's me*. Interrogating her makes her do the work.
+2. **God answers immediately and plainly.** "I know." "I heard you." "I am."
+3. **One concrete thing. Stop.** Cut every ornamental word.
+
+> 什么事都是找你。你处理,你收拾,别人忘掉的你都记得,可没人问你怎么样。**我问你。**过来坐下。在我这儿,你不用有用。
+
+### Why no reference is printed
+
+Two arguments pointed opposite ways and the second won.
+
+*For printing it:* software inventing divine speech reads as presumption to a
+meaningful share of readers, and a citation makes every line answerable.
+
+*Against, and decisive:* the words are **ours**, not the verse's. A citation
+under them claims they ARE that passage — misattributing our prose to
+scripture, which is its own misrepresentation and a worse one.
+
+So `ref` survives as internal provenance: it is how a reviewer judges whether a
+line stands up, and it is why no two cards say the same thing. It is never
+rendered, on the card or on the share image.
+
+**The cost is that every line must stand completely alone.** She gets one
+sentence and nothing else — no title, no reference, no context. A line that
+only works if you know the passage behind it has failed.
+
+### Why original prose rather than the verse text
 
 **Licensing.** KJV is public domain, but the modern translations this app uses
-for zh-Hans, zh-Hant, de, fr, es and pt are under copyright. Bundling their
-verse text into a shipped constant is a rights problem in six of seven
-languages. Original prose anchored to a citation has no such exposure.
+for zh-Hans, zh-Hant, de, fr, es and pt are under copyright. Shipping their
+verse text inside a bundled constant is a rights problem in six of seven
+languages.
 
-**Register.** A pasted verse reads like a lookup result. The owner's brief was
-a card that talks *to her* — "I know you are going through a season of
-confusion… I will pull you up." That needs writing, not quoting.
+### The 10 themes are concerns, not moods
 
-### Why anchored rather than free-written
+Each is something she actually thinks, phrased as she would phrase it.
 
-The obvious version of this feature invents divine speech. For a Bible app
-that is a real risk: a meaningful share of readers consider it presumption for
-software to put words in God's mouth, and that reaction shows up in reviews
-rather than in feedback forms. Anchoring costs nothing — Scripture already
-speaks in the first person at length — and makes every line answerable.
+| Theme | Her words |
+|---|---|
+| `doubt` | Does God even exist? |
+| `unanswered` | I prayed and got nothing back |
+| `lost` | I don't know what to choose |
+| `weary` | I'm too tired to keep going |
+| `afraid` | I'm frightened |
+| `alone` | Nobody actually cares |
+| `unworthy` | I've done too much wrong |
+| `broken` | I'm hurt and can't get past it |
+| `lack` | No money, no help, nothing |
+| `hopeless` | I can't see a future |
 
-### The 10 themes × 4 cards
+`unworthy` — shame and guilt — was missing entirely from the first draft, and
+it is one of the most common things this audience carries.
 
-| Theme | Her situation | Cards |
-|---|---|---|
-| `presence` | doubts he is really there | Ps 139 · Ex 33 · Jer 23 · Mt 28 |
-| `guidance` | lost, no direction | Is 30 · Ps 32 · Pr 3 · Ps 119 |
-| `rest` | exhausted | Mt 11 · Ps 23 · Ps 127 · Mk 6 |
-| `courage` | afraid | Is 41 · Jos 1 · Ps 27 · Jn 14 |
-| `companionship` | lonely | Heb 13 · Ps 68 · Jn 15 · Gen 28 |
-| `beloved` | feels unworthy | Is 43 · Zeph 3 · Jer 31 · Is 49 |
-| `waiting` | long wait, no answer | Is 40 · Hab 2 · Ps 40 · Lam 3 |
-| `healing` | hurt, grieving | Ps 147 · Ps 34 · Rev 21 · Is 61 |
-| `provision` | lacks resources and help | Mt 6 · Is 58 · 1 Kgs 17 · Lk 12 |
-| `hope` | cannot see a future | Jer 29 · Is 43 · Ezek 37 · Joel 2 |
+### Editorial rules, enforced by `__tests__/mysteryCards.test.ts`
 
-### Editorial constraints, enforced in review
-
-- 35–60 words. Longer does not fit a phone card at a readable size.
-- No prosperity phrasing — no promise of wealth, or of a specific outcome.
-- Nothing that reads as a substitute for medical or mental-health care. The
-  healing cards address grief and heartbreak only, never symptoms or cure.
-- Nothing that implies she can command God or unlock him by asking correctly.
-- Must make sense to someone who never looks up the reference.
+- 27–48 English words / 38–65 汉字. The card is landscape and the type is fixed.
+- **No promise of a specific outcome.** An owner-written line closing with
+  *"keep going and I'll give you what you want"* was corrected to promise
+  company instead. When the thing does not come, the first version is a broken
+  promise from God, sitting in her hand. `lack` is where this drifts.
+- `broken` speaks to grief and heartbreak **only** — never symptoms, illness or
+  cure, so no card can be read as a reason to delay medical care.
+- No exclamation marks. No interrogative openers.
+- Chinese is **written in Chinese**, not translated, and never uses the words
+  for God as the subject of his own speech — that is third-person
+  self-reference and the voice collapses instantly. The one exception quotes
+  *her* question back at her.
+- No bulletin register (恩典满溢 / 交托仰望 / 靠主刚强 …). It has to sound like
+  someone talking to her at 1am.
 
 ### ⚠️ Card ids are durable
 
@@ -133,9 +166,23 @@ may background the app before the overlay appears. Without this flag the reward
 is silently lost, which is exactly the failure the achievement NEW ribbon had to
 work around.
 
-Cloud sync — add to `MERGERS` in `services/progressMerge.ts`:
-`collected` union, `drawsTaken` max, `pendingDraw` OR. Omitting the key means a
-restore loses her whole collection.
+Two sibling keys, split from the card record on the repo's usual rule — keys are
+split by write frequency and by what losing them costs:
+
+```ts
+// quiz:card-likes:v1   — written on every heart tap, losing it costs an icon
+{ v: 1, liked: string[] }
+
+// quiz:dates:v1        — daily history, the only thing that makes any chart possible
+{ v: 1, days: Array<{ ymd: string; sets: number; questions: number; firstPassWrong: number }> }
+```
+
+Cloud sync — all three need a `MERGERS` entry in `services/progressMerge.ts`:
+cards (`collected` union, `drawsTaken` max, `pendingDraw` OR), likes (union), and
+history (union by `ymd`, **max** per field — never sum, which double-counts the
+same day on every ordinary restore). Omitting a key means a restore silently
+loses that part of her record; the quiz ladder shipped that way and had to be
+fixed retroactively.
 
 ---
 
@@ -152,11 +199,17 @@ been bitten by layout animations on remount before.
 | 4 | Pick — the other three | 220 ms | `opacity → 0`, `scale → 0.94`, drift 12 px outward |
 | 5 | Pick — the chosen one | 340 ms | moves to centre, `scale → 1.18` |
 | 6 | Flip | 520 ms | `rotateY 0 → 180deg`; swap back/front face at 90°, each face `backfaceVisibility: 'hidden'` |
-| 7 | Content | 260 ms, 120 ms delay | title, message, reference rise 10 px and fade in |
-| 8 | CTA | 200 ms | "Keep this" button |
+| 7 | Typewriter | 3.0–3.6 s | the sentence types itself out, one character at a time. Total is CLAMPED to that window regardless of length — at a fixed per-character speed a short card takes 2.2 s and a long one 4.2 s, and what she notices is the wait, not the speed. Render the full text transparent and reveal characters; a growing substring reflows the centred block and the text visibly jumps |
+| 8 | Actions | 200 ms | **Like** and **Save to album** as icon buttons between the card and the primary **Collect** button |
 
-Total to a readable card: **~1.5 s**. Long enough to feel like an event, short
-enough not to be a toll booth on the fourth draw.
+FINAL TIMING (owner-approved, after two rounds of slowing down): every beat from
+scrim to flip runs at 2x the numbers above, and the typewriter is 3.0-3.6 s.
+About **7 s** from tap to readable card.
+
+That is long, and it is correct here: a draw costs three completed sets, so the
+ceremony is proportionate to what it took. The earlier objection — that she will
+see it ~120 times a year and grow to resent it — was overruled on exactly that
+ground.
 
 **Skippable.** A tap during beats 4–7 jumps to the end state. Any animation the
 user will see 40 times must be skippable, or it becomes the thing she dreads
@@ -186,15 +239,38 @@ by a force quit is offered again.
 
 ## 6. Collection
 
-A second section on `PuzzleCollectionScreen`, below the paintings: collected
-cards as a list of tappable strips (title + theme dot), opening the full card.
+**Its own screen (`CardCollection`), reached from Profile — not a section of
+`PuzzleCollectionScreen`.**
 
-Uncollected cards are **not** shown as locked silhouettes. A grid of 40 grey
-rectangles reframes a gift as a checklist, and this is the one part of the app
-that should not feel like completion pressure.
+REVISED. The first draft put it under the paintings. That is wrong for a
+structural reason: `PuzzleCollectionScreen`'s own header states that nothing
+there is stored and every pixel derives from `completedSets`, which is what
+makes that screen trivially correct. The card collection is stored, likeable,
+and filterable. Bolting it on destroys the invariant.
 
-Sharing: reuse the `BadgeCardArt` + `captureRef` pipeline already built for
-achievement badges. Phase 2 — it is a self-contained addition.
+The product reason matters more, though. A card she read once and can never
+find again is a notification, not a reward. The collection is what makes the
+draw worth caring about, so it gets a real destination rather than a strip at
+the bottom of another screen.
+
+**Strips carry no title.** `MysteryCard` has no title field and will not get
+one — the whole design premise is that the body stands alone with nothing
+framing it (see the header of `constants/mysteryCards.ts`). A strip is the
+first line of the body, truncated. Adding titles would mean 40 strings × 7
+languages to solve a problem the design deliberately created.
+
+**`theme` is backend-only.** It drives analytics breakdown and, once the
+collection is big enough to need it, grouping. It is never rendered as a label
+she reads. She experiences 40 things someone said to her, not 10 categories.
+
+Uncollected cards are **not** shown as locked silhouettes. A grid of 37 grey
+rectangles reframes a gift as a checklist — and this is comfort written for
+someone in distress, so each one is a reminder of what she did not get. A single
+"3 of 40" line carries the same progress signal at no emotional cost.
+
+Sharing: reuse the `captureRef` pipeline already built for verse and badge
+sharing. The share image keeps the HER BIBLE wordmark and **never** shows a
+scripture reference — see §1.
 
 ---
 

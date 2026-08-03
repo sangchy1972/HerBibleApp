@@ -52,6 +52,35 @@ mergers, two hydration reads.
    but `parseCardProgress` (`cardDraw.ts:182`) must keep its `drawsTaken >= 0` guard
    rather than asserting `drawsTaken >= collected.length`.
 
+### A2. Daily history — the only way any chart is ever possible
+
+**Decided: build it.** Nothing today records WHEN she answered — `quizProgress.ts:29`
+stores `lastCompletedYmd`, one string. Without a new key there is no streak, no week,
+no trend, ever.
+
+```ts
+// AsyncStorage: quiz:dates:v1
+{ v: 1, days: Array<{ ymd: string; sets: number; questions: number; firstPassWrong: number }> }
+```
+
+Appended once per completed set, in `applyCompletion`'s caller. Capped at the **last 180
+days** — a bounded array is a fixed memory and merge cost, and no chart in this app looks
+back further.
+
+Storing per-day counters rather than a bare date array (the shape used by
+`readChapters:dates:v1` / `activity:dates`, `progressMerge.ts:160-162`) is the difference
+between "she was active" and "she did 3 sets and missed 2" — the second is worth the extra
+three integers, and re-deriving it later is impossible.
+
+**Merger: union by `ymd`, MAX per field.** Not sum. Sum looks more correct for two
+devices used on the same day, and corrupts every ordinary restore by double-counting the
+same day twice. Max can only under-count the rare same-day-two-device case; sum
+mis-counts always. Choose the failure that is rare and small.
+
+⚠️ **It starts empty and cannot be backfilled.** Every existing install shows a blank
+chart until she plays again. Ship the dashboard's numeric cards immediately and gate only
+the chart on `days.length >= 7`, or the first thing she sees is an empty graph.
+
 **Do not persist share/save.** Nothing in the UI renders "you shared this". A third
 key plus a merger for zero pixels. If the owner later wants a "shared" pip, add it then.
 
@@ -67,11 +96,24 @@ for save-to-album).
 
 | Event | Params | Notes |
 |---|---|---|
-| `card_like` | `card_id` (str, 40 vals), `card_theme` (str, 10 vals), `source` ('draw'\|'collection') | |
-| `card_unlike` | same | Separate event, not `liked: 0`. The console's Events list shows raw counts; a combined event forces every glance through a filter. Costs 1 of 500 event-name slots. |
-| `share` | `content_type: 'mystery_card'`, `item_id: <card_id>`, `method: 'system'\|'save'` | Keeps one cross-content share funnel. |
-| `card_share` | `card_id`, `card_theme`, `method` | Duplicate on purpose — `item_id` on the shared `share` event is polluted by unbounded verse references (`ShareVerseSheet.tsx:192`), so theme breakdown is unreadable there. **Do not sum both or shares double-count.** |
-| `card_open` | `card_id`, `card_theme`, `source` | Without it there is no way to know a collected card was ever re-read. |
+| `card_collect` | `card_id`, `card_theme` | **The funnel base — owner's call, and it is the right one.** Without it no rate is computable: likes/day is a raw number, likes ÷ collects is a behaviour. Fires once per draw, at the moment she taps a card. |
+| `card_open` | `card_id`, `card_theme`, `source` ('collection') | Re-reads from the collection. Not framed as a funnel step — it is a separate question ("does she come back to them"), not a stage between collect and like. |
+| `card_like` | `card_id`, `card_theme`, `source` ('draw'\|'collection') | **No `card_unlike`.** Not liking emits nothing; that is what "no signal" should look like. See the UI note below. |
+| `share` | `content_type: 'mystery_card'`, `item_id: <card_id>`, `method: 'system'\|'save'`, **`card_theme`** | The EXISTING GA4 recommended event (`ShareVerseSheet.tsx:192,253`; `AchievementUnlockSheet.tsx:143,158`), reused with a new `content_type` value — no new event name. Save-to-album is `method:'save'`, exactly as the badge sheet already does it. |
+
+**Revised from the first draft: no separate `card_share`.** The original reason for
+duplicating it was that `item_id` on the shared `share` event is polluted by unbounded
+verse references, so a theme breakdown is unreadable. Adding `card_theme` as an extra
+param on `share` solves that without a second event — filter `share` by
+`content_type = mystery_card`, break down by `card_theme`. This removes the
+double-counting trap the duplicate created, and one event name instead of two.
+
+**Like is a one-way signal, but a two-way control.** Analytics only ever sees a like.
+The heart still toggles locally, because a mis-tap she cannot undo is a worse experience
+than a slightly inflated like count — and un-liking emits nothing, so the console still
+shows only positive intent. Consequence to accept: lifetime `card_like` events can
+exceed the number of currently-liked cards. That is correct; they measure different
+things.
 
 **Firebase limits that bind here:** event name ≤40 chars, ≤25 params/event, param name
 ≤40 chars, string value ≤100 chars, 500 distinct event names/app. All fine. The real
@@ -89,9 +131,9 @@ values ≤36): `cards_liked_bucket` = `'0'|'1-3'|'4-9'|'10+'`. Without it there 
 to ask "what fraction of users like any card", because GA4 counts events, not users
 holding state.
 
-**Owner will be able to answer:** likes/day; theme ranking for likes, shares, opens;
-like rate per draw (`card_like` ÷ draws); share-vs-save split; whether liked cards get
-re-opened. **Will not:** which cards a *named user* likes (GA4 is not a per-user store —
+**Owner will be able to answer:** the funnel — collected → liked, collected → shared,
+collected → re-opened, each as a RATE rather than a raw count, because `card_collect`
+sits underneath all of them; theme ranking on every stage; share-vs-save split. **Will not:** which cards a *named user* likes (GA4 is not a per-user store —
 verify whether BigQuery export is on; if not, nothing gives you row-level data); a
 full top-40 ranking in a standard report; anything retroactive before ship.
 
@@ -147,17 +189,17 @@ READ_MEDIA_IMAGES gets rejected by Google Play's photo policy). New component
 
 **Not derivable — do not promise these:**
 
-- **Any time series.** Only `lastCompletedYmd`, a single string (`quizProgress.ts:29`).
-  No streak, no "this week", no calendar, no trend. Would need a new
-  `quiz:dates:v1` array + a `unionStringArray` merger — the exact shape of
-  `readChapters:dates:v1` / `activity:dates` (`progressMerge.ts:160-162`). It cannot be
-  backfilled, so any chart is blank for weeks on existing installs.
+- ~~Any time series.~~ **Now available** via `quiz:dates:v1` (§A2): daily sets, daily
+  questions, daily first-pass misses, and therefore streak, last-7-days, last-30-days,
+  and an accuracy trend at day granularity. ⚠️ Empty on every existing install until she
+  plays again — gate the chart on `days.length >= 7`.
 - **Per-theme / per-book accuracy.** The session is discarded at commit
   (`QuizContext.tsx:241` returns `null`); only aggregate counters survive. Which
   questions she missed is gone and is not reconstructable.
 - **Time per question, retry counts.** `quiz_retry_round` goes to Firebase only
   (`QuizContext.tsx:222`); nothing local.
-- **Accuracy trend.** Lifetime totals only; the derivative is unrecoverable.
+- **Accuracy trend before this ships.** Day-level accuracy exists from `quiz:dates:v1`
+  onward, but the history has no past — the curve starts the day she next plays.
 
 **Vanity metrics to refuse:** `totalCorrect` as a hero number (monotone, and it is
 mostly just `completedSets × 5` — it tells her nothing); repeating Level as the hero
@@ -172,9 +214,12 @@ when the home card already shows it (`QuizChallengeCard.tsx:72`).
 3. Bank coverage as a thin bar: "You've seen 140 of 327 questions." Answers the only
    question she actually asks about a quiz.
 4. `MysteryRewardBar` (existing) — draws until the next card.
-5. Two rows: puzzle strip → `PuzzleCollection`, cards strip → `CardCollection`.
+5. **Activity, last 30 days** — a small bar per day, sets completed. Gated on
+   `days.length >= 7`; below that the band is absent, not an empty axis.
+6. Two rows: puzzle strip → `PuzzleCollection`, cards strip → `CardCollection`.
 
-Five numbers. No chart until `quiz:dates:v1` has data.
+Five numbers and one chart. The chart is the only thing here she cannot already see
+somewhere else in the app.
 
 ---
 
@@ -229,16 +274,15 @@ matching `sectionTitle` at `ProfileScreen.tsx:748`.
 
 ## G. Open questions for the owner
 
-1. **Fix `quiz:progress:v1` sync in this block, or ship knowingly?** Right now a
-   reinstall wipes the quiz ladder. If cards sync and the ladder doesn't, a restored
-   device shows a full card collection at Level 1.
+1. ~~Fix `quiz:progress:v1` sync?~~ **DONE** — merged with a per-field max merger, plus
+   `quiz:cards:v1`, both with tests.
 2. **Is BigQuery export enabled on `herbible-d1cc7`?** If not, per-card ranking depends
    entirely on registering `card_id` as a custom dimension (40 values, one of 50 slots),
    and there is no row-level fallback.
 3. **Accept union-merge on likes** (an unlike can come back after a two-device restore),
    or pay for timestamps + tombstones?
-4. **Add `quiz:dates:v1` now?** It is the only way to ever chart activity, costs one
-   line per completion — but it starts empty, so any chart is blank for existing users
-   for weeks.
-5. **Card strips with no title** — accept a truncated first line, or commission 40
-   titles × 7 languages against the card's own "no title, no reference" rule?
+4. ~~Add `quiz:dates:v1`?~~ **DECIDED: yes**, with per-day counters rather than a bare
+   date array. See §A2.
+5. ~~Card strips with no title?~~ **DECIDED: no titles.** Strips show a truncated first
+   line. `theme` stays a backend-only field — used for analytics breakdown and for
+   grouping once the collection is large enough, never shown as a label she reads.

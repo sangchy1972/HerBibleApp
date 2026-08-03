@@ -95,6 +95,16 @@ requirements — follow them by default without re-asking.
   (quiz banks at `/v1/quiz-<lang>.json`). Both are path-versioned: a custom domain puts
   Cloudflare's cache in front, so re-cut content under the same key can serve stale for a long
   time — bump the `/v1/` segment instead of purging. Never per-file SHAs.
+- **Cloudflare Access service token** — Zero Trust → Access controls → Service
+  credentials → Service Tokens, named `herbible-app`, created 2026-06-06,
+  **Non-expiring** and deliberately so: the pair is inlined into the shipped
+  binary via `EXPO_PUBLIC_CF_ACCESS_CLIENT_ID` / `_SECRET`, so rotating it means
+  a release and waiting for users to update. A self-expiring token in front of a
+  client that cannot hot-update is a scheduled outage. Do not "fix" it by adding
+  an expiry, and do not confuse it with the User API Tokens under My Profile —
+  those are wrangler's and touching them cannot affect live users.
+  Its `Last Seen` column is the fastest way to answer "can live users still
+  reach the plans Worker".
 - **Ad unit / placement IDs** live in `docs/ad-unit-ids.md` (Meta Audience Network app id
   `1020655230368479` + its 6 placements, created for Meta *bidding* inside AdMob mediation).
   The app renders **interstitials only**, so only the Interstitial placement can ever fill,

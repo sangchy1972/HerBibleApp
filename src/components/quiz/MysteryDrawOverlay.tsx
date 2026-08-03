@@ -13,6 +13,8 @@ import { useQuiz } from '../../state/QuizContext';
 import { useUILanguage } from '../../state/UILanguageContext';
 import { localizedCardBody, type MysteryCard } from '../../constants/mysteryCards';
 import { MysteryCardBack, MysteryCardFront, CARD_RADIUS } from './MysteryCardFace';
+import MysteryCardArt, { CARD_SHARE_WIDTH } from './MysteryCardArt';
+import { shareCard, saveCard } from '../../services/cardShare';
 
 // The mystery card draw.
 //
@@ -43,7 +45,10 @@ export default function MysteryDrawOverlay({ onDone }: { onDone: () => void }) {
   const t = useT();
   const { lang } = useUILanguage();
   const { width } = useWindowDimensions();
-  const { drawSpread, drawCard, likeCard, cardIsLiked } = useQuiz();
+  const { drawSpread, drawCard, likeCard, cardIsLiked, logCardShare } = useQuiz();
+  const shotRef = useRef<View>(null);
+  const [busy, setBusy] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   const [phase, setPhase] = useState<Phase>('spread');
   const [chosen, setChosen] = useState<MysteryCard | null>(null);
@@ -111,6 +116,35 @@ export default function MysteryDrawOverlay({ onDone }: { onDone: () => void }) {
     if (typed) actions.value = withTiming(1, { duration: 250 });
   }, [typed, actions]);
 
+  const showToast = useCallback((msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 1600);
+  }, []);
+
+  const onShare = useCallback(async () => {
+    if (busy || !chosen) return;
+    setBusy(true);
+    // Log BEFORE the sheet opens. The OS gives no reliable "she actually sent
+    // it" callback, so the event means intent-to-share — which is the number
+    // that is comparable across the app, since the verse and badge sheets log
+    // at the same point.
+    logCardShare(chosen.id, 'system');
+    await shareCard(shotRef.current, t('quiz.card.share'));
+    setBusy(false);
+  }, [busy, chosen, logCardShare, t]);
+
+  const onSave = useCallback(async () => {
+    if (busy || !chosen) return;
+    setBusy(true);
+    logCardShare(chosen.id, 'save');
+    await saveCard(
+      shotRef.current,
+      () => showToast(t('shareVerse.saveAlert.title')),
+      { failTitle: t('error.couldNotSave'), tryAgain: t('common.tryAgain') },
+    );
+    setBusy(false);
+  }, [busy, chosen, logCardShare, showToast, t]);
+
   const scrimStyle = useAnimatedStyle(() => ({ opacity: scrim.value }));
   const promptStyle = useAnimatedStyle(() => ({ opacity: phase === 'spread' ? prompt.value : 0 }));
   const actionsStyle = useAnimatedStyle(() => ({ opacity: actions.value }));
@@ -144,6 +178,23 @@ export default function MysteryDrawOverlay({ onDone }: { onDone: () => void }) {
         ))}
       </View>
 
+      {/* Off-screen capture source. Rendered at full resolution and parked far
+          outside the viewport rather than hidden with opacity or display:none —
+          a node that is not laid out captures blank on Android. */}
+      {chosen ? (
+        <View style={styles.offscreen} pointerEvents="none" collapsable={false}>
+          <View ref={shotRef} collapsable={false}>
+            <MysteryCardArt body={localizedCardBody(chosen, lang as never)} width={CARD_SHARE_WIDTH} />
+          </View>
+        </View>
+      ) : null}
+
+      {toast ? (
+        <View style={styles.toast} pointerEvents="none">
+          <Text style={styles.toastText} numberOfLines={2}>{toast}</Text>
+        </View>
+      ) : null}
+
       {chosen ? (
         <Animated.View style={[styles.actions, actionsStyle]} pointerEvents={typed ? 'auto' : 'none'}>
           <View style={styles.iconRow}>
@@ -153,8 +204,8 @@ export default function MysteryDrawOverlay({ onDone }: { onDone: () => void }) {
               label={t('quiz.card.like')}
               onPress={() => likeCard(chosen.id, 'draw')}
             />
-            <IconAction icon="share-2" label={t('quiz.card.share')} onPress={() => {}} />
-            <IconAction icon="download" label={t('quiz.card.save')} onPress={() => {}} />
+            <IconAction icon="share-2" label={t('quiz.card.share')} onPress={onShare} />
+            <IconAction icon="download" label={t('quiz.card.save')} onPress={onSave} />
           </View>
           <TouchableOpacity style={styles.cta} activeOpacity={0.85} onPress={onDone} accessibilityRole="button">
             <Text style={styles.ctaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
@@ -295,4 +346,11 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   ctaText: { fontFamily: FONTS.latoBold, fontSize: 16.5, color: '#FFFFFF', letterSpacing: 0.4 },
+  offscreen: { position: 'absolute', left: -9999, top: 0 },
+  toast: {
+    position: 'absolute', left: 40, right: 40, bottom: 190,
+    backgroundColor: 'rgba(0,0,0,0.78)', borderRadius: 14,
+    paddingVertical: 12, paddingHorizontal: 16,
+  },
+  toastText: { color: '#FFFFFF', fontFamily: FONTS.lato, fontSize: 14, textAlign: 'center' },
 });

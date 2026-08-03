@@ -65,16 +65,6 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   // Two taps in one frame dispatch two GO_BACKs; the second pops the parent and
   // she lands two screens away from where she meant to be.
   const navLock = useRef(false);
-  // ONE retry ad per visit to the quiz.
-  //
-  // The 60 s global floor is the only other throttle in the app — there is no
-  // per-day impression cap anywhere — and a retry round of one or two questions
-  // takes 10-25 s. Uncapped, the woman who knows Scripture LEAST takes the most
-  // ads: 2-4 per set, 6-12 a day from this button alone. That is the opposite
-  // of the incentive a devotional app should create, and it is the pattern
-  // AdMob's own guidance names when it says not to attach an ad to a repeated
-  // action.
-  const retryAdShown = useRef(false);
   const goHome = () => {
     if (navLock.current) return;
     navLock.current = true;
@@ -235,14 +225,24 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
             // A user who never gets one wrong never sees this ad at all. That
             // is the design, not an oversight.
             retry();
-            if (retryAdShown.current) return;
-            retryAdShown.current = true;
-            // DELAYED, not immediate. "Try those again" is the primary footer
-            // CTA and a double-tap on a retry button is a reflex; presenting in
-            // the same touch window means the second tap lands on the creative.
-            // That is an accidental click, and at scale AdMob reads a pattern of
-            // them as invalid traffic. 400 ms is past the reflex and still
-            // inside the transition.
+            // EVERY retry, on purpose. An audit proposed capping this at one per
+            // visit; the owner rejected it, and the reasoning is his to make:
+            // more attempts should mean more impressions. Do not re-add a cap
+            // here without asking him.
+            //
+            // In practice MIN_INTERVAL_MS in services/ads.ts already holds it to
+            // one interstitial a minute across the whole app, and a retry round
+            // of one or two questions runs 10-25 s — so consecutive retries
+            // mostly fall inside that floor and show nothing. Measure
+            // ad_impression_custom with placement=quiz_retry rather than
+            // counting taps; the two numbers will differ a lot.
+            //
+            // The 400 ms is NOT a frequency control and should stay. "Try those
+            // again" is the primary footer CTA, a double-tap on a retry button
+            // is a reflex, and presenting inside the same touch window puts the
+            // second tap on the creative. At scale a pattern of accidental
+            // clicks is what gets an AdMob account flagged for invalid traffic —
+            // it costs revenue rather than protecting the user from it.
             setTimeout(() => maybeShowInterstitial('quiz_retry'), 400);
           }}
           onNextLevel={() => {

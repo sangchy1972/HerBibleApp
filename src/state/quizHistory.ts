@@ -78,7 +78,7 @@ export function recordSet(
 /**
  * THE DAILY CAP.
  *
- * Seven completed sets a day, and then she is done until tomorrow.
+ * Three completed sets a day, and then she is done until tomorrow.
  *
  * This is a CONTENT constraint, not an engagement one. The bank is 327
  * questions = 65 sets. Unthrottled, a motivated user empties it in a weekend and
@@ -93,11 +93,19 @@ export function recordSet(
  *      5       13.0 d            19.2 d            24.0 d       1.67
  *      3       21.7 d            32.0 d            40.0 d       1.00
  *
- * So seven does not solve the problem it was reached for -- it moves the day the
- * repeats start from day 2 to day 10. Three would give a whole month, and lands
- * exactly on MYSTERY_EVERY, so the rhythm becomes one card a day. Seven is the
- * owner's number and stands until he changes it; this table is here so the
- * decision is made against real figures.
+ * Seven moved the day the repeats start from day 2 to day 10, which is not
+ * really solving it. Three gives three weeks of fresh questions, and lands
+ * exactly on MYSTERY_EVERY -- so the rhythm is ONE CARD A DAY, which is a thing
+ * a person can notice and come back for. Seven gave 2.33 cards a day, a
+ * sawtooth nobody can feel.
+ *
+ * At three the content runs out in a deliberate order: questions repeat at day
+ * 22, the 24th painting completes at day 32, the 40th card at day 40. Something
+ * new keeps arriving for well over a month.
+ *
+ * NOT tunable per user, and deliberately not remote-config: the number is part
+ * of what the app IS, and a cap that moves is a cap she cannot build a habit
+ * around.
  *
  * The cliff the cap CANNOT fix is at 96 sets, where puzzleView goes outOfArt and
  * every results screen shows the same finished painting forever. That needs more
@@ -108,7 +116,7 @@ export function recordSet(
  * be finished. Blocking someone mid-question because the clock rolled over is
  * the sort of thing that reads as a crash.
  */
-export const DAILY_SET_LIMIT = 7;
+export const DAILY_SET_LIMIT = 3;
 
 export interface DailyGate {
   limit: number;

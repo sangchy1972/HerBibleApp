@@ -70,7 +70,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   // The daily cap. Seven sets, then she is done until tomorrow -- a content
   // constraint (the bank is 65 sets) dressed as a kindness, so the copy must
   // read as "that's a good day's work", never as "you are locked out".
-  'quiz.daily.capTitle':            { en: "That's your seven", context: 'Headline when the user has completed all 7 of today\'s quiz sets. Warm and congratulatory, not a lockout message. Adapt the number naturally into the sentence if your language needs it.' },
+  'quiz.daily.capTitle':            { en: "That's today's quiz done", context: 'Headline when the user has completed all of today\'s quiz sets. Warm and congratulatory, not a lockout message. Deliberately carries NO number — quiz.daily.capBody has it, and a headline naming the count has to be retranslated every time the cap moves.' },
   'quiz.daily.capBody':             { en: 'All {total} sets done today. Come back tomorrow for {total} more.', context: 'Body under quiz.daily.capTitle. {total} is 7 both times.' },
   'quiz.daily.capCard':             { en: "Today's {total} sets are done", context: 'Home quiz card sub-line when the daily cap is reached. One short line.' },
   'quiz.daily.lastOfDay':           { en: "That's your last set today", context: 'Small note on the results screen when committing this set uses up the 7th and final slot of the day. Gentle.' },

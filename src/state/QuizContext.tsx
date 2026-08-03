@@ -10,19 +10,38 @@ import {
   type QuizSessionV1, type SegmentState,
 } from './quizSession';
 import {
-  INITIAL_PROGRESS, applyCompletion, parseProgress, type QuizProgressV1,
+  INITIAL_PROGRESS, applyCompletion, parseProgress, MYSTERY_EVERY, type QuizProgressV1,
 } from './quizProgress';
+import {
+  INITIAL_CARD_PROGRESS, INITIAL_CARD_LIKES, parseCardProgress, parseCardLikes,
+  spreadFor, collectCard, grantDraw, drawEarnedAt, toggleLike, isLiked,
+  type CardProgressV1, type CardLikesV1,
+} from './cardDraw';
+import {
+  INITIAL_HISTORY, parseHistory, recordSet, summarize,
+  type QuizHistoryV1, type HistorySummary,
+} from './quizHistory';
+import { MYSTERY_CARDS, cardById, type MysteryCard } from '../constants/mysteryCards';
 import { logEvent } from '../services/firebase';
 
 // All quiz I/O in one place. The screens never touch AsyncStorage and never
 // touch the bank service; they get resolved questions and call actions.
 //
-// TWO KEYS, split by write frequency and by how much losing them costs:
-//   quiz:session:v1  — the in-flight set. Written on EVERY answer. Disposable:
-//                      a corrupt read just restarts the current set.
-//   quiz:progress:v1 — the ladder (sets completed, puzzle tiles). Written only
-//                      on completion. This one must never be lost.
+// FIVE KEYS, split by write frequency and by how much losing them costs.
 // ReadChaptersContext already splits its keys on the same principle.
+//   quiz:session:v1    — the in-flight set. Written on EVERY answer. Disposable:
+//                        a corrupt read just restarts the current set.
+//   quiz:progress:v1   — the ladder (sets completed, puzzle tiles). Written only
+//                        on completion. Must never be lost.
+//   quiz:cards:v1      — mystery cards collected + the unspent draw. Must never
+//                        be lost.
+//   quiz:card-likes:v1 — hearts. Written on every tap; losing it costs an icon.
+//   quiz:dates:v1      — daily history. Append-only and unbackfillable, so a
+//                        write that fails to happen is gone forever.
+//
+// All five are in MERGERS (services/progressMerge.ts). The ladder shipped
+// WITHOUT an entry and silently reset on every reinstall — do not add a sixth
+// key without adding its merger in the same commit.
 //
 // The bank comes from the CDN, so `bank` can legitimately be null forever on a
 // device that has never been online. `ready && !!bank` is the gate the home card
@@ -30,6 +49,9 @@ import { logEvent } from '../services/firebase';
 
 const SESSION_KEY = 'quiz:session:v1';
 const PROGRESS_KEY = 'quiz:progress:v1';
+const CARDS_KEY = 'quiz:cards:v1';
+const LIKES_KEY = 'quiz:card-likes:v1';
+const HISTORY_KEY = 'quiz:dates:v1';
 
 /**
  * `loading` and `unavailable` are NOT the same thing and must never be
@@ -65,6 +87,27 @@ interface QuizState {
   finish: () => void;
   /** Throw away the in-flight set without committing (debug / reset). */
   abandon: () => void;
+
+  // ── Mystery cards ────────────────────────────────────────────────────────
+  cards: CardProgressV1;
+  likes: CardLikesV1;
+  history: QuizHistoryV1;
+  /** Rolling streak / accuracy / activity, derived from history. */
+  historySummary: HistorySummary;
+  /** She has earned a draw and not taken it. Survives a force quit. */
+  pendingDraw: boolean;
+  /** The 4 face-down cards on the table right now. Stable across relaunches. */
+  drawSpread: MysteryCard[];
+  /** Collected cards, most recent first. */
+  collectedCards: MysteryCard[];
+  /** Take the card she tapped. Spends the draw. */
+  drawCard: (cardId: string) => void;
+  /** Heart toggle. Only the LIKE transition is logged; unliking emits nothing. */
+  likeCard: (cardId: string, source: 'draw' | 'collection') => void;
+  cardIsLiked: (cardId: string) => boolean;
+  /** Fire the share/save analytics for a card. The capture itself lives in the UI. */
+  logCardShare: (cardId: string, method: 'system' | 'save') => void;
+  logCardOpen: (cardId: string) => void;
 }
 
 const Ctx = createContext<QuizState | null>(null);
@@ -76,6 +119,9 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
   const [retryTick, setRetryTick] = useState(0);
   const [progress, setProgress] = useState<QuizProgressV1>(INITIAL_PROGRESS);
   const [session, setSession] = useState<QuizSessionV1 | null>(null);
+  const [cards, setCards] = useState<CardProgressV1>(INITIAL_CARD_PROGRESS);
+  const [likes, setLikes] = useState<CardLikesV1>(INITIAL_CARD_LIKES);
+  const [history, setHistory] = useState<QuizHistoryV1>(INITIAL_HISTORY);
 
   // Guards a write from landing before the read that should have preceded it.
   // Same failure this repo hit in adRevenue: an un-hydrated write erases real
@@ -87,9 +133,12 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
     let alive = true;
     (async () => {
       try {
-        const [rawProgress, rawSession] = await Promise.all([
+        const [rawProgress, rawSession, rawCards, rawLikes, rawHistory] = await Promise.all([
           AsyncStorage.getItem(PROGRESS_KEY).catch(() => null),
           AsyncStorage.getItem(SESSION_KEY).catch(() => null),
+          AsyncStorage.getItem(CARDS_KEY).catch(() => null),
+          AsyncStorage.getItem(LIKES_KEY).catch(() => null),
+          AsyncStorage.getItem(HISTORY_KEY).catch(() => null),
         ]);
         if (!alive) return;
         setProgress(parseProgress(rawProgress, QUIZ_BANK_VERSION));
@@ -97,6 +146,12 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
         // may no longer mean what they meant, and grading against the wrong
         // question is worse than restarting the set.
         setSession(parseSession(rawSession, QUIZ_BANK_VERSION));
+        // These three are NOT discarded on a bank-version bump. Cards, hearts
+        // and history are addressed by their own ids and dates; a reworded
+        // question has nothing to do with them.
+        setCards(parseCardProgress(rawCards));
+        setLikes(parseCardLikes(rawLikes));
+        setHistory(parseHistory(rawHistory));
       } finally {
         if (alive) { hydrated.current = true; setReady(true); }
       }
@@ -170,6 +225,21 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
     AsyncStorage.setItem(PROGRESS_KEY, JSON.stringify(progress)).catch(() => {});
   }, [progress]);
 
+  useEffect(() => {
+    if (!hydrated.current) return;
+    AsyncStorage.setItem(CARDS_KEY, JSON.stringify(cards)).catch(() => {});
+  }, [cards]);
+
+  useEffect(() => {
+    if (!hydrated.current) return;
+    AsyncStorage.setItem(LIKES_KEY, JSON.stringify(likes)).catch(() => {});
+  }, [likes]);
+
+  useEffect(() => {
+    if (!hydrated.current) return;
+    AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(history)).catch(() => {});
+  }, [history]);
+
   // ── Derived ───────────────────────────────────────────────────────────────
   // The set the session belongs to, NOT progress.setIndex: a session persists
   // across the commit boundary for one render, and reading the wrong index
@@ -234,21 +304,115 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
         first_pass_wrong: done.firstPassWrong,
         perfect: firstPassPerfect ? 1 : 0,
       });
-      setProgress(p => applyCompletion(p, {
+      const ymd = localYmd();
+      setProgress(p => {
+        const next = applyCompletion(p, {
+          firstPassWrong: done.firstPassWrong,
+          totalQuestions: done.answers.length,
+        }, ymd);
+        // The draw is earned HERE, at the commit, not when the overlay opens.
+        // She can background the app in between — pendingDraw is persisted, so
+        // the reward survives that. Derived from the NEXT completedSets so the
+        // set she just finished is the one that counts.
+        if (drawEarnedAt(next.completedSets, MYSTERY_EVERY)) {
+          setCards(c => grantDraw(c));
+          logEvent('quiz_draw_earned', { completed_sets: next.completedSets });
+        }
+        return next;
+      });
+      // Append-only and unbackfillable — if this write is ever skipped, that
+      // day is gone. Deliberately outside the progress updater so a bail-out
+      // there can never take the history with it.
+      setHistory(h => recordSet(h, ymd, {
+        questions: done.answers.length,
         firstPassWrong: done.firstPassWrong,
-        totalQuestions: done.answers.length,
-      }, localYmd()));
+      }));
       return null;                              // session cleared; ladder advanced
     });
   }, []);
+
+  // ── Mystery cards ─────────────────────────────────────────────────────────
+  const cardIds = useMemo(() => MYSTERY_CARDS.map(c => c.id), []);
+
+  const drawSpread = useMemo(
+    () => spreadFor(cards, cardIds).candidates.map(i => MYSTERY_CARDS[i]),
+    [cards, cardIds],
+  );
+
+  // Most recent first: the collection reads as "what she just got", not as a
+  // list she has to scroll to the bottom of.
+  const collectedCards = useMemo(
+    () => cards.collected.map(cardById).reverse(),
+    [cards.collected],
+  );
+
+  const drawCard = useCallback((cardId: string) => {
+    setCards(prev => {
+      // Guard on pendingDraw, not on the UI being open. A double tap in the
+      // same frame otherwise spends one draw and collects two cards.
+      if (!prev.pendingDraw) return prev;
+      const card = cardById(cardId);
+      // card_collect is the funnel BASE. Without it every later number is a raw
+      // count instead of a rate — likes/day tells you nothing, likes per card
+      // collected is a behaviour.
+      logEvent('card_collect', { card_id: card.id, card_theme: card.theme });
+      return collectCard(prev, cardId);
+    });
+  }, []);
+
+  const likeCard = useCallback((cardId: string, source: 'draw' | 'collection') => {
+    setLikes(prev => {
+      const next = toggleLike(prev, cardId);
+      if (next === prev) return prev;
+      // ONLY the like transition is logged. There is no card_unlike: "not
+      // liked" should emit nothing at all. The heart still toggles, because a
+      // mis-tap she cannot undo is worse than a slightly inflated like count —
+      // so lifetime card_like events can exceed currently-liked cards, and that
+      // is correct. They measure different things.
+      if (isLiked(next, cardId)) {
+        const card = cardById(cardId);
+        logEvent('card_like', { card_id: card.id, card_theme: card.theme, source });
+      }
+      return next;
+    });
+  }, []);
+
+  const cardIsLiked = useCallback((cardId: string) => isLiked(likes, cardId), [likes]);
+
+  const logCardShare = useCallback((cardId: string, method: 'system' | 'save') => {
+    const card = cardById(cardId);
+    // The EXISTING GA4 recommended `share` event, with a new content_type —
+    // same shape ShareVerseSheet and AchievementUnlockSheet already use, and
+    // save-to-album is method:'save' exactly as the badge sheet does it.
+    // card_theme rides along so a theme breakdown is possible without a second,
+    // double-countable event.
+    logEvent('share', {
+      content_type: 'mystery_card',
+      item_id: card.id,
+      method,
+      card_theme: card.theme,
+    });
+  }, []);
+
+  const logCardOpen = useCallback((cardId: string) => {
+    const card = cardById(cardId);
+    logEvent('card_open', { card_id: card.id, card_theme: card.theme, source: 'collection' });
+  }, []);
+
+  const historySummary = useMemo(() => summarize(history, localYmd()), [history]);
 
   const abandon = useCallback(() => setSession(null), []);
 
   const value = useMemo<QuizState>(() => ({
     ready, bank, bankStatus, progress, session, questions, currentQuestion, segments,
     open, pick, next, retry, finish, abandon,
+    cards, likes, history, historySummary,
+    pendingDraw: cards.pendingDraw, drawSpread, collectedCards,
+    drawCard, likeCard, cardIsLiked, logCardShare, logCardOpen,
   }), [ready, bank, bankStatus, progress, session, questions, currentQuestion, segments,
-       open, pick, next, retry, finish, abandon]);
+       open, pick, next, retry, finish, abandon,
+       cards, likes, history, historySummary, drawSpread, collectedCards,
+       drawCard, likeCard, cardIsLiked, logCardShare, logCardOpen]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -267,5 +431,10 @@ export function useQuiz(): QuizState {
     ready: false, bank: null, bankStatus: 'unavailable', progress: INITIAL_PROGRESS, session: null,
     questions: [], currentQuestion: null, segments: ['empty', 'empty', 'empty', 'empty', 'empty'],
     open: () => {}, pick: () => {}, next: () => {}, retry: () => {}, finish: () => {}, abandon: () => {},
+    cards: INITIAL_CARD_PROGRESS, likes: INITIAL_CARD_LIKES, history: INITIAL_HISTORY,
+    historySummary: { streak: 0, bestStreak: 0, activeDays: 0, setsLast7: 0, setsLast30: 0, accuracy: null },
+    pendingDraw: false, drawSpread: [], collectedCards: [],
+    drawCard: () => {}, likeCard: () => {}, cardIsLiked: () => false,
+    logCardShare: () => {}, logCardOpen: () => {},
   };
 }

@@ -26,7 +26,7 @@ export default function QuizChallengeCard({
   onOpenCollection: () => void;
 }) {
   const t = useT();
-  const { ready, bank, progress, session, segments, daily, lifecycle } = useQuiz();
+  const { ready, bank, progress, session, segments, daily, lifecycle, pendingDraw } = useQuiz();
 
   if (!ready || !bank) return null;
   // RETIRED. Every question in the bank has been served, so the card would be
@@ -37,7 +37,14 @@ export default function QuizChallengeCard({
   // Not a dead end: Profile keeps My Progress, My Cards and the puzzle
   // collection, so everything she earned is still one tap from the same place
   // it always was.
-  if (lifecycle.retired) return null;
+  //
+  // `&& !pendingDraw` is load-bearing. The set that retires the quiz ALSO earns
+  // a draw whenever the reachable-set count divides by MYSTERY_EVERY — which it
+  // does today, 66 / 3 — and this screen is the only route to the overlay that
+  // spends it. Hiding unconditionally cost her that card forever, with nothing
+  // anywhere even hinting one was owed. She still cannot START anything;
+  // canStart stays false.
+  if (lifecycle.retired && !pendingDraw) return null;
 
   const answered = segments.filter(s => s !== 'empty').length;
   const inProgress = !!session && answered > 0;

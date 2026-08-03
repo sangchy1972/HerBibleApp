@@ -8,6 +8,7 @@ import { useT } from '../i18n/useT';
 import { useQuiz } from '../state/QuizContext';
 import { currentPosition, isTried, sessionSummary } from '../state/quizSession';
 import { levelFor, MYSTERY_EVERY, TILES_PER_PAINTING } from '../state/quizProgress';
+import { SET_SIZE } from '../services/quizSets';
 import { drawEarnedAt } from '../state/cardDraw';
 import { QUIZ_ART_COUNT } from '../constants/quizArt';
 import QuizSegmentBar from '../components/quiz/QuizSegmentBar';
@@ -68,6 +69,15 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
     navLock.current = true;
     navigation.goBack();
   };
+  // Takes the lock too. It only READ it before, so "collection" followed
+  // quickly by "close" replaced this route and then dispatched GO_BACK with a
+  // dead source key — which bubbles to the parent navigator and pops her two
+  // screens away, the exact thing navLock exists to stop.
+  const goCollection = () => {
+    if (navLock.current) return;
+    navLock.current = true;
+    navigation.replace('PuzzleCollection');
+  };
 
   // A finished painting gets its own moment. Four sets and twenty questions is
   // a bigger thing than one set, and folding it into the same results card
@@ -119,12 +129,20 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   //
   // Nothing is lost by leaving: pendingDraw is persisted and offered again on
   // her next visit, and the set is already committed.
+  //
+  // `drawWillOpen`, NOT bare `pendingDraw`. A draw she has already dismissed
+  // this visit is owed but will not appear, and treating the two as the same
+  // thing is what let the painting branch below strand her: it returns before
+  // clearing the latch, so PaintingComplete would decline to leave (a draw is
+  // pending), the overlay would decline to open (the latch is set), and this
+  // net would decline to arm.
+  const drawWillOpen = pendingDraw && !drawDismissed.current;
   useEffect(() => {
-    if (!leaving.current || session || drawing || pendingDraw || finishedPainting != null) return;
+    if (!leaving.current || session || drawing || drawWillOpen || finishedPainting != null) return;
     const id = setTimeout(() => { if (leaving.current) goHome(); }, 1500);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, drawing, pendingDraw, finishedPainting]);
+  }, [session, drawing, drawWillOpen, finishedPainting]);
 
   // Android hardware back = the close button, not a silent no-op.
   useEffect(() => {
@@ -182,6 +200,9 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
           // with 0 remaining and a session still open, and `=== 1` would then
           // offer a "next set" button that open() silently refuses.
           lastOfDay={daily.remaining <= 1}
+          // Computed from the set she is ABOUT to commit, the same way earns and
+          // painting are. `lifecycle.retired` is still false at this point.
+          lastEver={(progress.setIndex + 1) * SET_SIZE >= (bank?.length ?? 0)}
           setsLeftAfter={Math.max(0, daily.remaining - 1)}
           onRetry={retry}
           onNextLevel={() => {
@@ -270,13 +291,13 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
 
       {retiredOut ? (
         <QuizDoneView
-          onCollection={() => { if (!navLock.current) navigation.replace('PuzzleCollection'); }}
+          onCollection={goCollection}
           onClose={goHome}
         />
       ) : cappedOut ? (
         <DailyCapView
           limit={daily.limit}
-          onCollection={() => { if (!navLock.current) navigation.replace('PuzzleCollection'); }}
+          onCollection={goCollection}
           onClose={goHome}
         />
       ) : body()}
@@ -294,6 +315,10 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
             // A leftover draw hands her back the quiz she came here for; a draw
             // she just earned takes her home with it.
             if (resumedDraw.current) { resumedDraw.current = false; return; }
+            // …unless that was the last set there will ever be. Falling through
+            // to QuizDoneView is the only moment the app gets to tell her she
+            // finished; going home would just make the card disappear.
+            if (lifecycle.retired) return;
             goHome();
           }}
         />
@@ -304,8 +329,15 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
           paintingIndex={finishedPainting}
           onDone={() => {
             setFinishedPainting(null);
-            // Only leave if no card draw is waiting underneath.
-            if (!pendingDraw) goHome();
+            // Leave unless a draw is actually going to open underneath. Testing
+            // `pendingDraw` alone kept her here for a draw she had already
+            // dismissed this visit, and the screen went blank.
+            if (drawWillOpen) return;
+            // The set that retires the quiz still gets its celebration; she then
+            // lands on QuizDoneView rather than being posted home with the card
+            // silently gone from the home screen.
+            if (lifecycle.retired) return;
+            goHome();
           }}
         />
       ) : null}

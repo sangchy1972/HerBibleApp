@@ -91,7 +91,10 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
             ? t('quiz.collection.allDone')
             : t('quiz.collection.tiles', { n: view.tilesUnlocked, total: TILES_PER_PAINTING })}
         </Text>
-        {!view.outOfArt && view.tilesUnlocked < TILES_PER_PAINTING ? (
+        {/* Same reason the mystery bar is hidden on the dashboard: "2 more
+            levels and this one is yours" is untrue once there are no more
+            levels to play. */}
+        {!lifecycle.retired && !view.outOfArt && view.tilesUnlocked < TILES_PER_PAINTING ? (
           <Text style={styles.nudge} maxFontSizeMultiplier={1.3}>
             {t('quiz.collection.nudge', { n: TILES_PER_PAINTING - view.tilesUnlocked })}
           </Text>

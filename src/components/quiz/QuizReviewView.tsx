@@ -24,7 +24,7 @@ import type { SegmentState } from '../../state/quizSession';
 
 export default function QuizReviewView({
   segments, correct, total, wrong, level, firstPassPerfect, completedSets,
-  lastOfDay, setsLeftAfter, onRetry, onContinue, onNextLevel,
+  lastOfDay, lastEver, setsLeftAfter, onRetry, onContinue, onNextLevel,
 }: {
   segments: SegmentState[];
   correct: number;
@@ -37,6 +37,9 @@ export default function QuizReviewView({
   /** Committing this set spends the last of today's three. Hides "next set" and
    *  says so, rather than leaving a button that would silently do nothing. */
   lastOfDay: boolean;
+  /** Committing this set uses up the last question in the bank, so there is no
+   *  next level to offer -- ever, not just today. */
+  lastEver: boolean;
   /** Sets left today AFTER this one commits. Shown on EVERY set, so the third
    *  ends a countdown she has been watching instead of ambushing her. */
   setsLeftAfter: number;
@@ -142,16 +145,18 @@ export default function QuizReviewView({
             give her a control that visibly does nothing. */}
         {done ? (
           <Text style={styles.lastOfDay} numberOfLines={2} maxFontSizeMultiplier={1.3}>
-            {lastOfDay
-              ? t('quiz.daily.lastOfDay')
-              : t('quiz.daily.remaining', { n: setsLeftAfter, total: DAILY_SET_LIMIT })}
+            {lastEver
+              ? t('quiz.done.title')
+              : lastOfDay
+                ? t('quiz.daily.lastOfDay')
+                : t('quiz.daily.remaining', { n: setsLeftAfter, total: DAILY_SET_LIMIT })}
           </Text>
         ) : null}
 
         {/* Every exit used to go home, so playing ten sets meant ten trips back
             through the home screen hunting for the card. Hidden when a reward is
             waiting — the celebration should not be skippable by accident. */}
-        {done && !lastOfDay && !earnsCard && !willFinishPainting ? (
+        {done && !lastOfDay && !lastEver && !earnsCard && !willFinishPainting ? (
           <TouchableOpacity
             style={styles.secondary}
             activeOpacity={0.7}

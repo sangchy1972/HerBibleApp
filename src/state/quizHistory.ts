@@ -81,7 +81,7 @@ export function recordSet(
  * Three completed sets a day, and then she is done until tomorrow.
  *
  * This is a CONTENT constraint, not an engagement one. The bank is 327
- * questions = 65 sets. Unthrottled, a motivated user empties it in a weekend and
+ * questions: 65 fresh sets, and a 66th that straddles the shuffle seam. Unthrottled, a motivated user empties it in a weekend and
  * every set after that is a question she has already answered, dressed up as
  * progress.
  *

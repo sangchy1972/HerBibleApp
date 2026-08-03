@@ -40,7 +40,7 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
   const insets = useSafeAreaInsets();
   const {
     progress, bank, cards, likes, history, historySummary, daily, todayYmd,
-    collectedCards, canStart, lifecycle,
+    collectedCards, canStart, lifecycle, pendingDraw,
   } = useQuiz();
   // collectedCards, NOT cards.collected: the context filters ids this build does
   // not know about, which a restore from a newer version can introduce. Counting
@@ -59,8 +59,10 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
   // rather than sitting at a permanently full bar. She never actually meets the
   // repeat -- quizLifecycle retires the quiz at the same moment -- but the label
   // still has to explain why there is nothing left to play.
-  const seen = Math.min(progress.setIndex * SET_SIZE, bank?.length ?? 0);
-  const fullCycle = !!bank && bank.length > 0 && seen >= bank.length;
+  // From the lifecycle, not re-derived: two copies of the same arithmetic is
+  // how the frozen-date bug ended up living on this screen twice.
+  const seen = lifecycle.seen;
+  const fullCycle = lifecycle.bankComplete;
   const coverage = bank && bank.length > 0 ? seen / bank.length : 0;
 
   // todayYmd from the context, not a local call: computed here it froze at
@@ -158,9 +160,11 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
         {bank && bank.length > 0 ? (
           <View style={styles.block}>
             <Text style={styles.blockLabel} maxFontSizeMultiplier={1.3}>
-              {fullCycle
-                ? t('quiz.progress.coverageDone', { total: bank.length })
-                : t('quiz.progress.coverage', { n: seen, total: bank.length })}
+              {lifecycle.retired
+                ? t('quiz.progress.coverageRetired', { total: bank.length })
+                : fullCycle
+                  ? t('quiz.progress.coverageDone', { total: bank.length })
+                  : t('quiz.progress.coverage', { n: seen, total: bank.length })}
             </Text>
             <View style={styles.track}>
               <View style={[styles.fill, { width: `${Math.round(coverage * 100)}%` }]} />
@@ -168,9 +172,13 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
           </View>
         ) : null}
 
-        <View style={styles.block}>
-          <MysteryRewardBar completedSets={progress.completedSets} />
-        </View>
+        {/* Hidden once retired: "3 sets from the next card" is a promise the
+            app has just removed the means to keep. */}
+        {lifecycle.retired ? null : (
+          <View style={styles.block}>
+            <MysteryRewardBar completedSets={progress.completedSets} />
+          </View>
+        )}
 
         {showChart ? (
           <View style={styles.block}>
@@ -199,18 +207,20 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
         {/* She opens her dashboard, reads "2 of 3 sets left today", and until
             now had nothing on the screen to tap. */}
         <TouchableOpacity
-          style={[styles.play, !canStart && styles.playOff]}
+          style={[styles.play, !canStart && !pendingDraw && styles.playOff]}
           activeOpacity={0.85}
-          disabled={!canStart}
+          disabled={!canStart && !pendingDraw}
           onPress={() => navigation.replace('Quiz')}
           accessibilityRole="button"
         >
           <Text style={styles.playText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
-            {canStart
-              ? t('quiz.cards.goPlay')
-              : lifecycle.retired
-                ? t('quiz.done.cardSub')
-                : t('quiz.daily.capCard', { total: daily.limit })}
+            {pendingDraw && !canStart
+              ? t('quiz.mystery.unlocked')
+              : canStart
+                ? t('quiz.cards.goPlay')
+                : lifecycle.retired
+                  ? t('quiz.done.cardSub')
+                  : t('quiz.daily.capCard', { total: daily.limit })}
           </Text>
         </TouchableOpacity>
 

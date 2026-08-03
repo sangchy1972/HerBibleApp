@@ -98,6 +98,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'quiz.progress.streak':           { en: '{n} days in a row', context: 'Row shown only when the streak is at least 1.' },
   'quiz.progress.coverage':         { en: 'You have seen {n} of {total} questions', context: 'Label above a thin progress bar.' },
   'quiz.progress.coverageDone':     { en: 'You have seen all {total} questions — they start again now', context: 'Replaces the coverage line once the whole bank has been served, so a permanently full bar has an explanation.' },
+  'quiz.progress.coverageRetired':  { en: 'All {total} questions answered', context: 'Replaces the coverage line once the quiz has RETIRED. Must not say the questions start again — retirement is precisely what stops that. Plain statement of fact, no promise about the future.' },
   'quiz.progress.activity':         { en: 'Last {n} days', context: 'Label above the small activity bar chart.' },
   'quiz.progress.puzzleRow':        { en: 'Puzzle collection', context: 'Row that opens the paintings screen.' },
   'quiz.progress.puzzleDetail':     { en: '{n} of {total} paintings', context: 'Sub-line on the puzzle row.' },

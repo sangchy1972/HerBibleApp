@@ -14,6 +14,8 @@ import { QUIZ_ART_COUNT } from '../src/constants/quizArt';
 import { MYSTERY_CARD_COUNT } from '../src/constants/mysteryCards';
 import { QUIZ_BANK_SIZE } from '../src/constants/bibleQuiz';
 import { SET_SIZE } from '../src/services/quizSets';
+import fs from 'fs';
+import path from 'path';
 
 describe('quizLifecycle', () => {
   it('does not retire a quiz she has not started', () => {
@@ -75,9 +77,18 @@ describe('reachableSets', () => {
 });
 
 describe('the content budget', () => {
-  // The bank is NOT bundled (it streams from the CDN in seven languages), so
-  // this is the declared size rather than a count. See QUIZ_BANK_SIZE.
   const BANK = QUIZ_BANK_SIZE;
+
+  it('keeps QUIZ_BANK_SIZE honest against the file that ships', () => {
+    // QUIZ_BANK_SIZE is hand-maintained, and every number below divides by it.
+    // Asserting it equals its own literal would only fail when someone edited
+    // it -- exactly the case where they already know. Counting the source of
+    // truth means a re-cut bank fails HERE, loudly, instead of quietly
+    // invalidating the whole content budget.
+    const src = path.join(__dirname, '..', 'docs', 'quiz-bank', 'quiz-en.json');
+    const file = JSON.parse(fs.readFileSync(src, 'utf8'));
+    expect(file.questions.length).toBe(QUIZ_BANK_SIZE);
+  });
 
   it('reports what the shipping bank actually reaches', () => {
     // NOT an aspiration — a statement of today. If this fails because the bank

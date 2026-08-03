@@ -9,7 +9,11 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "test": "jest"
+    "test": "jest",
+    "eas": "npx --yes eas-cli@latest",
+    "build:android": "npx --yes eas-cli@latest build --platform android --profile production",
+    "build:version": "npx --yes eas-cli@latest build:version:get --platform android",
+    "submit:android": "npx --yes eas-cli@latest submit --platform android --latest"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",

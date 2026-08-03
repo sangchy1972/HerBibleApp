@@ -115,7 +115,19 @@ export default function App() {
   // switch silences → no sound on iOS when the phone was on silent. Setting it
   // app-wide fixes every audio surface. No-ops safely on Android.
   React.useEffect(() => {
-    setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers' }).catch(() => {});
+    // shouldPlayInBackground: narration MUST survive leaving the app — this was
+    // missing, so on iOS the system paused audio the moment she backgrounded or
+    // locked the phone (Android was unaffected, which is why it only showed up
+    // on device). Pairs with ios.infoPlist.UIBackgroundModes = ['audio'] in
+    // app.json; without that declaration iOS ignores the flag entirely.
+    // interruptionMode stays 'doNotMix' is NOT wanted — 'mixWithOthers' lets a
+    // podcast/music keep playing alongside, which is what a devotional reader
+    // should do.
+    setAudioModeAsync({
+      playsInSilentMode: true,
+      interruptionMode: 'mixWithOthers',
+      shouldPlayInBackground: true,
+    }).catch(() => {});
   }, []);
 
   // One central screen-view hook: log the active route on every navigation

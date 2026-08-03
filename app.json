@@ -25,6 +25,9 @@
           "instagram",
           "instagram-stories",
           "whatsapp"
+        ],
+        "UIBackgroundModes": [
+          "audio"
         ]
       }
     },

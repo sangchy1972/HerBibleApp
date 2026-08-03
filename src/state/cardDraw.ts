@@ -159,6 +159,53 @@ export function drawEarnedAt(completedSets: number, every: number): boolean {
   return n > 0 && n % e === 0;
 }
 
+// ── Likes ────────────────────────────────────────────────────────────────────
+//
+// Its own key, not a field on CardProgressV1. Same split rule the quiz session
+// and the quiz ladder already follow: by write frequency, and by what losing it
+// costs. `collected` is written once per three sets and must never be lost;
+// `liked` is written on every heart tap and losing it costs an icon.
+//
+// ANALYTICS ONLY EVER SEES A LIKE. There is no unlike event — "not liked"
+// should emit nothing at all, which is what no signal ought to look like.
+//
+// The heart still TOGGLES though, and that is deliberate: a mis-tap she cannot
+// undo is worse than a slightly inflated like count. The consequence to accept
+// is that lifetime `card_like` events can exceed the number of currently-liked
+// cards. They measure different things and both are correct.
+
+export interface CardLikesV1 {
+  v: 1;
+  /** Card ids. Kept sorted so the cloud union merger produces stable output. */
+  liked: string[];
+}
+
+export const INITIAL_CARD_LIKES: CardLikesV1 = { v: 1, liked: [] };
+
+export function isLiked(l: CardLikesV1, cardId: string): boolean {
+  return l.liked.includes(cardId);
+}
+
+/** Returns the same object when nothing changes, so callers can skip the write. */
+export function toggleLike(l: CardLikesV1, cardId: string): CardLikesV1 {
+  if (!cardId) return l;
+  const has = l.liked.includes(cardId);
+  const liked = has ? l.liked.filter(x => x !== cardId) : [...l.liked, cardId].sort();
+  return { v: 1, liked };
+}
+
+export function parseCardLikes(raw: string | null): CardLikesV1 {
+  if (!raw) return INITIAL_CARD_LIKES;
+  try {
+    const p = JSON.parse(raw);
+    if (!p || typeof p !== 'object' || p.v !== 1 || !Array.isArray(p.liked)) return INITIAL_CARD_LIKES;
+    const liked = p.liked.filter((x: unknown) => typeof x === 'string' && x.length > 0);
+    return { v: 1, liked: [...new Set<string>(liked)].sort() };
+  } catch {
+    return INITIAL_CARD_LIKES;
+  }
+}
+
 /**
  * Parse the durable record. Never throws and never repairs partially.
  *

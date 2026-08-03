@@ -8,6 +8,7 @@ import {
   CANDIDATES_PER_DRAW, INITIAL_CARD_PROGRESS, mulberry32,
   candidatesFor, availableIndexes, spreadFor, collectCard, grantDraw,
   drawEarnedAt, parseCardProgress, type CardProgressV1,
+  INITIAL_CARD_LIKES, isLiked, toggleLike, parseCardLikes,
 } from '../src/state/cardDraw';
 import { MYSTERY_CARDS, MYSTERY_CARD_COUNT } from '../src/constants/mysteryCards';
 import { MYSTERY_EVERY } from '../src/state/quizProgress';
@@ -199,6 +200,40 @@ describe('parseCardProgress', () => {
   it('never throws on garbage', () => {
     for (const raw of [null, '', 'not json', '[]', '{"v":2}', '{}']) {
       expect(parseCardProgress(raw as string | null)).toEqual(INITIAL_CARD_PROGRESS);
+    }
+  });
+});
+
+describe('likes', () => {
+  it('toggles both ways — a mis-tap has to be recoverable', () => {
+    // Analytics only ever sees a like; there is no unlike event. The CONTROL is
+    // still two-way, because a heart she cannot un-tap is worse than a slightly
+    // inflated like count.
+    let l = toggleLike(INITIAL_CARD_LIKES, 'weary-2');
+    expect(isLiked(l, 'weary-2')).toBe(true);
+    l = toggleLike(l, 'weary-2');
+    expect(isLiked(l, 'weary-2')).toBe(false);
+  });
+
+  it('keeps the list sorted so the cloud union merger is stable', () => {
+    let l = toggleLike(INITIAL_CARD_LIKES, 'weary-2');
+    l = toggleLike(l, 'alone-1');
+    l = toggleLike(l, 'hopeless-4');
+    expect(l.liked).toEqual([...l.liked].sort());
+  });
+
+  it('returns the same object for an empty id, so callers can skip the write', () => {
+    expect(toggleLike(INITIAL_CARD_LIKES, '')).toBe(INITIAL_CARD_LIKES);
+  });
+
+  it('de-dupes and sorts on read', () => {
+    const raw = JSON.stringify({ v: 1, liked: ['b', 'a', 'b', '', 7] });
+    expect(parseCardLikes(raw).liked).toEqual(['a', 'b']);
+  });
+
+  it('never throws on garbage', () => {
+    for (const raw of [null, '', 'not json', '{"v":2}', '{"v":1}', '{"v":1,"liked":5}']) {
+      expect(parseCardLikes(raw as string | null)).toEqual(INITIAL_CARD_LIKES);
     }
   });
 });

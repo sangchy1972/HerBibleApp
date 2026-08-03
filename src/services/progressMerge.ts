@@ -187,6 +187,29 @@ const mergeCardProgress = jsonMerger<any>((l, r) => {
   };
 });
 
+// Daily quiz history. Union by date, MAX per field — deliberately not sum.
+//
+// Sum looks more correct for the one case where it matters (two devices used on
+// the same day) and corrupts the common case: every ordinary restore replays
+// the same day against itself and doubles it. Max can only ever UNDER-count the
+// rare two-device day. Choose the failure that is rare and small over the one
+// that is routine and wrong.
+const mergeQuizHistory = jsonMerger<any>((l, r) => {
+  const by = new Map<string, any>();
+  for (const d of [...(Array.isArray(l?.days) ? l.days : []), ...(Array.isArray(r?.days) ? r.days : [])]) {
+    if (!d || typeof d.ymd !== 'string') continue;
+    const prev = by.get(d.ymd);
+    by.set(d.ymd, prev ? {
+      ymd: d.ymd,
+      sets: Math.max(prev.sets ?? 0, d.sets ?? 0),
+      questions: Math.max(prev.questions ?? 0, d.questions ?? 0),
+      firstPassWrong: Math.max(prev.firstPassWrong ?? 0, d.firstPassWrong ?? 0),
+    } : d);
+  }
+  const days = [...by.values()].sort((a, b) => (a.ymd < b.ymd ? -1 : a.ymd > b.ymd ? 1 : 0));
+  return { v: 1, days: days.slice(-180) };   // HISTORY_DAYS
+});
+
 // The full backup manifest: every key that goes to the cloud, with its merge
 // strategy. Caches, ad/nudge state, attest tokens etc. are deliberately absent.
 export const MERGERS: Record<string, Merger> = {
@@ -218,6 +241,18 @@ export const MERGERS: Record<string, Merger> = {
   // restarting it.
   'quiz:progress:v1': mergeQuizProgress,
   'quiz:cards:v1': mergeCardProgress,
+  // Likes union. An unlike on one device can therefore be resurrected by a
+  // restore from another — accepted, the same trade already documented for
+  // achievements:seen:v1. The alternative is a timestamp on every heart tap
+  // plus a tombstone per unlike, to protect an icon.
+  'quiz:card-likes:v1': jsonMerger<any>((l, r) => ({
+    v: 1,
+    liked: Array.from(new Set([
+      ...(Array.isArray(l?.liked) ? l.liked : []),
+      ...(Array.isArray(r?.liked) ? r.liked : []),
+    ])).sort(),
+  })),
+  'quiz:dates:v1': mergeQuizHistory,
   'mood:v2': mergeMood,
   'shares:count': maxNumeric,
   'daily-verses:first-launch-date': minYmd,

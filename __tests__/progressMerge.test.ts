@@ -107,8 +107,21 @@ describe('mergeSnapshots', () => {
       // owned for months.
       'achievements:seen:v1',
       // The quiz shipped without these. A reinstall reset the whole ladder.
-      'quiz:progress:v1', 'quiz:cards:v1',
+      'quiz:progress:v1', 'quiz:cards:v1', 'quiz:card-likes:v1', 'quiz:dates:v1',
     ]) expect(BACKUP_KEYS).toContain(key);
+  });
+
+  test('daily history unions by date and takes the MAX, never the sum', () => {
+    // Sum looks right for two devices used on one day and corrupts every
+    // ordinary restore, which replays the same day against itself.
+    const day = (ymd: string, sets: number, questions: number, wrong: number) => ({ ymd, sets, questions, firstPassWrong: wrong });
+    const local = { 'quiz:dates:v1': JSON.stringify({ v: 1, days: [day('2026-08-01', 2, 10, 1), day('2026-08-02', 1, 5, 0)] }) };
+    const remote = { 'quiz:dates:v1': JSON.stringify({ v: 1, days: [day('2026-08-01', 2, 10, 1), day('2026-08-03', 3, 15, 2)] }) };
+    const out = JSON.parse(mergeSnapshots(local, remote).merged['quiz:dates:v1'] as string);
+    expect(out.days.map((d: any) => d.ymd)).toEqual(['2026-08-01', '2026-08-02', '2026-08-03']);
+    // The shared day is NOT 4 sets.
+    expect(out.days[0].sets).toBe(2);
+    expect(out.days[0].questions).toBe(10);
   });
 
   test('quiz ladder: every counter takes the max, so a stale device cannot drag her back', () => {

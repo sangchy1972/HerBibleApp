@@ -4,7 +4,8 @@ import Svg, { Defs, ClipPath, Path, Image as SvgImage, G } from 'react-native-sv
 import Feather from '@expo/vector-icons/Feather';
 import { INK_06, INK_28, TXT, TXTSUB, FONTS } from '../../constants/theme';
 import { TILES_PER_PAINTING } from '../../state/quizProgress';
-import { artworkAt, artUrl, type QuizArtwork } from '../../constants/quizArt';
+import { artworkAt, artSource, artTitle, artArtist, type QuizArtwork } from '../../constants/quizArt';
+import { useTranslation } from '../../state/TranslationsContext';
 import { jigsawPaths } from '../../services/jigsaw';
 
 // The 2x2 jigsaw board.
@@ -34,13 +35,15 @@ export default function PuzzleBoard({
   newTile?: number | null;
   showCaption?: boolean;
 }) {
+  const { current } = useTranslation();
+  const lang = current.code;
   const art = artworkAt(paintingIndex);
   const w = Math.max(1, size);
   const h = Math.max(1, Math.round(w / (art.aspect || 1)));
   const unlocked = Math.max(0, Math.min(TILES_PER_PAINTING, Math.floor(tilesUnlocked) || 0));
 
   const paths = useMemo(() => jigsawPaths(w, h), [w, h]);
-  const uri = artUrl(art);
+  const src = artSource(art);
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
   // Reset when the board is recycled onto a different painting, or a single
@@ -53,7 +56,7 @@ export default function PuzzleBoard({
           SvgImage gives no onError, so a dead CDN would otherwise show four
           empty holes with no way to fall back. */}
       <Image
-        source={{ uri }}
+        source={src}
         style={styles.probe}
         onLoad={() => setLoaded(true)}
         onError={() => setFailed(true)}
@@ -88,7 +91,7 @@ export default function PuzzleBoard({
           return (
             <G key={`p${i}`} clipPath={`url(#piece-${art.id}-${i})`}>
               <SvgImage
-                href={{ uri }}
+                href={src}
                 x={0}
                 y={0}
                 width={w}
@@ -144,18 +147,16 @@ export default function PuzzleBoard({
 
       {showCaption ? (
         <View style={styles.caption}>
-          <Text style={styles.title} numberOfLines={2} maxFontSizeMultiplier={1.3}>{art.title}</Text>
+          <Text style={styles.title} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+            {artTitle(art, lang)}
+          </Text>
           <Text style={styles.artist} numberOfLines={1} maxFontSizeMultiplier={1.2}>
-            {art.year ? `${art.artist} · ${art.year}` : art.artist}
+            {art.year ? `${artArtist(art, lang)} · ${art.year}` : artArtist(art, lang)}
           </Text>
         </View>
       ) : null}
     </View>
   );
-}
-
-export function artworkCaption(a: QuizArtwork): string {
-  return a.year ? `${a.title} — ${a.artist}, ${a.year}` : `${a.title} — ${a.artist}`;
 }
 
 const styles = StyleSheet.create({

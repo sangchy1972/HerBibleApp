@@ -21,6 +21,10 @@ module.exports = {
     // services/adRevenue persists its daily accumulators; an in-memory map is
     // all the tests need and keeps them free of the native module.
     '^@react-native-async-storage/async-storage$': '<rootDir>/test/asyncStorageStub.ts',
+    // constants/quizArt require()s the bundled first painting so puzzle one
+    // works offline. Metro turns that into an asset id; node would try to parse
+    // JPEG bytes as JavaScript, so tests get a plain number instead.
+    '\\.(jpg|jpeg|png|gif|webp)$': '<rootDir>/test/assetStub.ts',
   },
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: { strict: false, esModuleInterop: true, jsx: 'react' } }],

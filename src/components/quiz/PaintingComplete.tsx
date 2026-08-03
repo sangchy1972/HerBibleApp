@@ -10,7 +10,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ROSE, BTN_RADIUS, FONTS } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
 import { useQuiz } from '../../state/QuizContext';
-import { artworkAt, artUrl } from '../../constants/quizArt';
+import { artworkAt, artSource, artTitle, artArtist } from '../../constants/quizArt';
+import { useTranslation } from '../../state/TranslationsContext';
 import PuzzleBoard from './PuzzleBoard';
 import PaintingShareArt, { PAINTING_SHARE_WIDTH } from './PaintingShareArt';
 import { shareCard, saveCard } from '../../services/cardShare';
@@ -33,6 +34,8 @@ export default function PaintingComplete({
   onDone: () => void;
 }) {
   const t = useT();
+  const { current } = useTranslation();
+  const lang = current.code;
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const art = artworkAt(paintingIndex);
@@ -94,10 +97,10 @@ export default function PaintingComplete({
   const onShare = useCallback(async () => {
     if (busy) return;
     setBusy(true);
-    const r = await shareCard(shotRef.current, art.title);
+    const r = await shareCard(shotRef.current, artTitle(art, lang));
     if (r === 'unavailable' || r === 'failed') showToast(t('error.couldNotShare'));
     setBusy(false);
-  }, [busy, art.title, showToast, t]);
+  }, [busy, art, lang, showToast, t]);
 
   return (
     <View style={StyleSheet.absoluteFill}>
@@ -121,9 +124,11 @@ export default function PaintingComplete({
           <PuzzleBoard paintingIndex={paintingIndex} tilesUnlocked={4} size={boardW} />
         </View>
 
-        <Text style={styles.title} numberOfLines={2} maxFontSizeMultiplier={1.3}>{art.title}</Text>
+        <Text style={styles.title} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+          {artTitle(art, lang)}
+        </Text>
         <Text style={styles.artist} numberOfLines={1} maxFontSizeMultiplier={1.2}>
-          {art.year ? `${art.artist} · ${art.year}` : art.artist}
+          {art.year ? `${artArtist(art, lang)} · ${art.year}` : artArtist(art, lang)}
         </Text>
       </Animated.View>
 
@@ -151,10 +156,10 @@ export default function PaintingComplete({
       <View style={styles.offscreen} pointerEvents="none" collapsable={false}>
         <View ref={shotRef} collapsable={false}>
           <PaintingShareArt
-            uri={artUrl(art)}
+            source={artSource(art)}
             aspect={art.aspect}
-            title={art.title}
-            artist={art.artist}
+            title={artTitle(art, lang)}
+            artist={artArtist(art, lang)}
             year={art.year}
             width={PAINTING_SHARE_WIDTH}
           />

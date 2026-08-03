@@ -9,8 +9,10 @@ import { useT } from '../i18n/useT';
 import { useQuiz } from '../state/QuizContext';
 import { puzzleView, TILES_PER_PAINTING } from '../state/quizProgress';
 import {
-  QUIZ_ART, QUIZ_ART_COUNT, artUrl, artThumbUrl, type QuizArtwork,
+  QUIZ_ART, QUIZ_ART_COUNT, artSource, artThumbUrl, artTitle, artArtist, artDesc,
+  type QuizArtwork,
 } from '../constants/quizArt';
+import { useTranslation } from '../state/TranslationsContext';
 import PuzzleBoard from '../components/quiz/PuzzleBoard';
 import PaintingShareArt, { PAINTING_SHARE_WIDTH } from '../components/quiz/PaintingShareArt';
 import { shareCard, saveCard } from '../services/cardShare';
@@ -29,6 +31,8 @@ const GRID_GAP = 10;
 
 export default function PuzzleCollectionScreen({ navigation }: RootStackScreenProps<'PuzzleCollection'>) {
   const t = useT();
+  const { current } = useTranslation();
+  const lang = current.code;
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { progress } = useQuiz();
@@ -110,7 +114,7 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
                 activeOpacity={0.85}
                 onPress={() => setDetail(a)}
                 accessibilityRole="button"
-                accessibilityLabel={`${a.title}, ${a.artist}`}
+                accessibilityLabel={`${artTitle(a, lang)}, ${artArtist(a, lang)}`}
               >
                 <Image
                   source={{ uri: artThumbUrl(a) }}
@@ -118,8 +122,12 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
                   resizeMode="cover"
                   accessibilityIgnoresInvertColors
                 />
-                <Text style={styles.thumbTitle} numberOfLines={1} maxFontSizeMultiplier={1.2}>{a.title}</Text>
-                <Text style={styles.thumbArtist} numberOfLines={1} maxFontSizeMultiplier={1.2}>{a.artist}</Text>
+                <Text style={styles.thumbTitle} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+                  {artTitle(a, lang)}
+                </Text>
+                <Text style={styles.thumbArtist} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+                  {artArtist(a, lang)}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -134,6 +142,8 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
 /** Full painting, unseamed, with share and save. */
 function PaintingDetail({ art, onClose }: { art: QuizArtwork; onClose: () => void }) {
   const t = useT();
+  const { current } = useTranslation();
+  const lang = current.code;
   const { width, height } = useWindowDimensions();
   const shotRef = useRef<View>(null);
   const [busy, setBusy] = useState(false);
@@ -158,7 +168,7 @@ function PaintingDetail({ art, onClose }: { art: QuizArtwork; onClose: () => voi
   const onShare = async () => {
     if (busy) return;
     setBusy(true);
-    const r = await shareCard(shotRef.current, art.title);
+    const r = await shareCard(shotRef.current, artTitle(art, lang));
     if (r === 'unavailable' || r === 'failed') showToast(t('error.couldNotShare'));
     setBusy(false);
   };
@@ -186,15 +196,23 @@ function PaintingDetail({ art, onClose }: { art: QuizArtwork; onClose: () => voi
       {/* Shown WHOLE, with no seams. The jigsaw is how she earned it, not what
           it is. */}
       <Image
-        source={{ uri: artUrl(art) }}
+        source={artSource(art)}
         style={{ width: w, height: Math.round(w / (art.aspect || 1)), borderRadius: 12 }}
         resizeMode="cover"
         accessibilityIgnoresInvertColors
       />
-      <Text style={styles.detailTitle} numberOfLines={2} maxFontSizeMultiplier={1.3}>{art.title}</Text>
-      <Text style={styles.detailArtist} numberOfLines={1} maxFontSizeMultiplier={1.2}>
-        {art.year ? `${art.artist} · ${art.year}` : art.artist}
+      <Text style={styles.detailTitle} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+        {artTitle(art, lang)}
       </Text>
+      <Text style={styles.detailArtist} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+        {art.year ? `${artArtist(art, lang)} · ${art.year}` : artArtist(art, lang)}
+      </Text>
+      {/* The scene, in ~30 words. She earned a real painting of a real passage;
+          without this it is a pretty rectangle she cannot place. Scrolls,
+          because German runs long and a small screen would clip it. */}
+      <ScrollView style={styles.detailDescWrap} contentContainerStyle={styles.detailDescBox}>
+        <Text style={styles.detailDesc} maxFontSizeMultiplier={1.4}>{artDesc(art, lang)}</Text>
+      </ScrollView>
 
       <View style={styles.detailActions}>
         <IconAction icon="share-2" label={t('quiz.card.share')} onPress={onShare} />
@@ -210,10 +228,10 @@ function PaintingDetail({ art, onClose }: { art: QuizArtwork; onClose: () => voi
       <View style={styles.offscreen} pointerEvents="none" collapsable={false}>
         <View ref={shotRef} collapsable={false}>
           <PaintingShareArt
-            uri={artUrl(art)}
+            source={artSource(art)}
             aspect={art.aspect}
-            title={art.title}
-            artist={art.artist}
+            title={artTitle(art, lang)}
+            artist={artArtist(art, lang)}
             year={art.year}
             width={PAINTING_SHARE_WIDTH}
           />
@@ -292,7 +310,15 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.lato, fontSize: 13, color: 'rgba(255,255,255,0.6)',
     textAlign: 'center', marginTop: 5,
   },
-  detailActions: { flexDirection: 'row', justifyContent: 'center', gap: 34, marginTop: 30 },
+  // maxHeight not height: three lines of Spanish and six of German both have to
+  // sit between the artist line and the buttons without pushing either off.
+  detailDescWrap: { maxHeight: 132, marginTop: 14, alignSelf: 'stretch' },
+  detailDescBox: { paddingHorizontal: 30 },
+  detailDesc: {
+    fontFamily: FONTS.lato, fontSize: 13.5, lineHeight: 21,
+    color: 'rgba(255,255,255,0.74)', textAlign: 'center', letterSpacing: 0.2,
+  },
+  detailActions: { flexDirection: 'row', justifyContent: 'center', gap: 34, marginTop: 26 },
   iconAction: { alignItems: 'center', gap: 6 },
   iconDisc: {
     width: 48, height: 48, borderRadius: 24,

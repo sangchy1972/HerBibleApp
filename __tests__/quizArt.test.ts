@@ -1,4 +1,4 @@
-// The puzzle reward maths.
+// The puzzle art registry, and the reward maths that indexes it.
 //
 // The interesting bug here is off-by-one. The results screen shows the board as
 // it will be AFTER the set commits, and rings the tile that set earned — so it
@@ -6,11 +6,14 @@
 // completed counts. Getting that wrong rings the previous tile, or none.
 
 import {
-  QUIZ_ART, QUIZ_ART_COUNT, artworkAt, artUrl, artThumbUrl,
+  QUIZ_ART, QUIZ_ART_COUNT, artworkAt, artUrl, artThumbUrl, artSource,
+  artTitle, artDesc, artArtist, artCaption, FIRST_ART_LOCAL,
 } from '../src/constants/quizArt';
+import { TRANSLATIONS, type LanguageCode } from '../src/state/TranslationsContext';
 import { rewardPreview as rawPreview, TILES_PER_PAINTING } from '../src/state/quizProgress';
 
 const rewardPreview = (before: number) => rawPreview(before, QUIZ_ART_COUNT);
+const LANGS: LanguageCode[] = TRANSLATIONS.map(t => t.code);
 
 describe('art registry', () => {
   it('has unique, stable ids', () => {
@@ -22,19 +25,60 @@ describe('art registry', () => {
 
   it('exposes a count that matches the list', () => {
     expect(QUIZ_ART_COUNT).toBe(QUIZ_ART.length);
-    // 74 paintings x 4 sets = 296 sets to collect them all, against 65 sets per
-    // quiz bank cycle. The art outlasts the questions by a wide margin, which
-    // is the right way round — the reward should never run out first.
-    expect(QUIZ_ART_COUNT).toBe(74);
+    // 24 paintings x 4 sets = 96 sets to collect them all, against 65 sets per
+    // quiz bank cycle. The art outlasts the questions, which is the right way
+    // round — the reward should never run out first. The source set held 74;
+    // the rest were saints, apocrypha and donor Madonnas, not Bible scenes.
+    expect(QUIZ_ART_COUNT).toBe(24);
   });
 
-  it('credits every painting', () => {
+  it('credits every painting in every language the app ships', () => {
     // Title and artist are shown to the user. Partly because it is the decent
     // thing to do with somebody's Caravaggio, and partly because they ARE the
     // reward — she collected a painting that has a name, not a texture.
+    //
+    // Asserting against TRANSLATIONS rather than a literal list means adding a
+    // 8th app language fails HERE, at the registry, instead of silently
+    // serving her English captions inside an otherwise translated screen.
     for (const a of QUIZ_ART) {
-      expect(`${a.id}:title:${a.title.length > 0}`).toBe(`${a.id}:title:true`);
       expect(`${a.id}:artist:${a.artist.length > 0}`).toBe(`${a.id}:artist:true`);
+      for (const lang of LANGS) {
+        expect(`${a.id}:${lang}:title`).toBe(
+          artTitle(a, lang).length > 0 ? `${a.id}:${lang}:title` : `${a.id}:${lang}:TITLE MISSING`,
+        );
+        expect(`${a.id}:${lang}:desc`).toBe(
+          artDesc(a, lang).length > 0 ? `${a.id}:${lang}:desc` : `${a.id}:${lang}:DESC MISSING`,
+        );
+      }
+    }
+  });
+
+  it('cites a scripture reference for every painting', () => {
+    // The curation rule: if she cannot look the scene up, it does not belong in
+    // a Bible app. A blank ref is how a saint's legend sneaks back in.
+    for (const a of QUIZ_ART) {
+      expect(`${a.id}:${a.ref}`).toMatch(/^\d{3}:(\d )?[A-Z][a-z]+ \d+(:\d+(-\d+)?)?$/);
+    }
+  });
+
+  it('falls back to English rather than to blank', () => {
+    // A half-translated locale should render a real caption in the wrong
+    // language. A blank one reads as a bug and looks like data loss.
+    const stub = { ...QUIZ_ART[0], title: { en: 'T' }, desc: { en: 'D' }, artistCjk: undefined };
+    expect(artTitle(stub, 'fr')).toBe('T');
+    expect(artDesc(stub, 'fr')).toBe('D');
+    expect(artArtist(stub, 'fr')).toBe(stub.artist);
+  });
+
+  it('uses the Latin artist name for Latin-script locales only', () => {
+    for (const a of QUIZ_ART) {
+      for (const lang of ['en', 'de', 'fr', 'es', 'pt'] as LanguageCode[]) {
+        expect(artArtist(a, lang)).toBe(a.artist);
+      }
+      // CJK gets a transliteration; without it a Chinese caption reads half in
+      // Chinese and half in Spanish.
+      expect(artArtist(a, 'zh-Hans')).not.toBe(a.artist);
+      expect(artArtist(a, 'zh-Hant')).not.toBe(a.artist);
     }
   });
 
@@ -57,8 +101,24 @@ describe('art registry', () => {
     expect(artThumbUrl(a)).toBe(`https://quiz.everlandapps.com/v1/art/thumb/${a.id}.jpg`);
   });
 
+  it('serves painting one from the bundle and the rest from the CDN', () => {
+    // The whole point of shipping one JPEG in the binary: a user who has never
+    // had a network still finishes her first puzzle. If this ever regresses to
+    // a URL, her first reward is four grey holes.
+    expect(artSource(QUIZ_ART[0])).toBe(FIRST_ART_LOCAL);
+    for (const a of QUIZ_ART.slice(1)) {
+      expect(artSource(a)).toEqual({ uri: artUrl(a) });
+    }
+  });
+
   it('has ids that are safe as filenames', () => {
     for (const a of QUIZ_ART) expect(a.id).toMatch(/^\d{3}$/);
+  });
+
+  it('captions with the localized title and artist', () => {
+    const a = QUIZ_ART[0];
+    expect(artCaption(a, 'en')).toBe(`${artTitle(a, 'en')} — ${a.artist}, ${a.year}`);
+    expect(artCaption(a, 'zh-Hans')).toContain(artArtist(a, 'zh-Hans'));
   });
 
   it('clamps instead of returning undefined', () => {

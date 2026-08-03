@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, type ImageSourcePropType } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FONTS } from '../../constants/theme';
 import Logo from '../shared/Logo';
@@ -21,9 +21,10 @@ import { CARD_SATIN, CARD_CREAM } from './MysteryCardFace';
 export const PAINTING_SHARE_WIDTH = 1080;
 
 export default function PaintingShareArt({
-  uri, aspect, title, artist, year, width = PAINTING_SHARE_WIDTH,
+  source, aspect, title, artist, year, width = PAINTING_SHARE_WIDTH,
 }: {
-  uri: string;
+  /** A source, not a URL: painting one is a bundled require(), the rest are URIs. */
+  source: ImageSourcePropType;
   aspect: number;
   title: string;
   artist: string;
@@ -55,7 +56,7 @@ export default function PaintingShareArt({
         ]}
       >
         <Image
-          source={{ uri }}
+          source={source}
           style={{ width: inner, height: imgH, borderRadius: px(4) }}
           resizeMode="cover"
           accessibilityIgnoresInvertColors

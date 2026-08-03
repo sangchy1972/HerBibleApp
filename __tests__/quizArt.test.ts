@@ -122,6 +122,34 @@ describe('art registry', () => {
     }
   });
 
+  it('bundles exactly one painting, and it is the first one unlocked', () => {
+    // Binary size. Every extra painting in the app is ~150 KB of download for
+    // every user, including the ones who never open the quiz. One is enough:
+    // painting 1 unlocks at set 4 with no network needed, and by set 5 -- the
+    // first CDN request -- she has been in the app long enough to have had one.
+    const local = QUIZ_ART.filter(a => typeof artSource(a) === 'number');
+    expect(local.map(a => a.id)).toEqual([QUIZ_ART[0].id]);
+    const remote = QUIZ_ART.filter(a => typeof artThumbSource(a) === 'number');
+    expect(remote.map(a => a.id)).toEqual([QUIZ_ART[0].id]);
+  });
+
+  it('pins the unlock order', () => {
+    // The user unlocks painting N at 4N completed sets, and `completedPaintings`
+    // is stored as a COUNT, not as a list of ids -- so index 2 means "the third
+    // entry in this array, whatever it is today". Reordering or inserting
+    // silently changes which painting an existing user already owns, and she
+    // would watch a finished picture turn into a different one.
+    //
+    // Appending is safe and is the only safe edit. If this test fails because
+    // you added to the end, extend the literal. If it fails for any other
+    // reason, stop.
+    expect(QUIZ_ART.map(a => a.id)).toEqual([
+    '051', '085', '024', '042', '084', '031', '005', '050', '039', '021',
+    '001', '007', '091', '009', '002', '003', '047', '041', '088', '040',
+    '023', '078', '004', '012',
+    ]);
+  });
+
   it('has ids that are safe as filenames', () => {
     for (const a of QUIZ_ART) expect(a.id).toMatch(/^\d{3}$/);
   });

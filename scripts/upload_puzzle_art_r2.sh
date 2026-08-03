@@ -9,10 +9,14 @@
 # host list in src/services/cfImage.ts covers covers.everlandapps.com only, and
 # a resize that silently fails would push the full 4.6 MB set into a grid.
 #
-# SOURCE IS _curated, NOT _processed. _processed still holds the original 74;
-# the other 50 were saints, apocrypha and donor Madonnas rather than Bible
+# SOURCE IS _upload-to-r2, NOT _processed. _processed still holds the original
+# 74; the other 50 were saints, apocrypha and donor Madonnas rather than Bible
 # scenes, and uploading them would put art in the bucket that no id in
 # src/constants/quizArt.ts points at.
+#
+# That folder is laid out as the R2 KEYS (v1/art/full, v1/art/thumb) so the same
+# tree can be dragged onto the bucket root in the dashboard without renaming
+# anything afterwards. This script and a manual drag produce identical keys.
 #
 # The app ships WITHOUT any of this — PuzzleBoard renders locked/greyed pieces
 # until the images land, so a failed upload looks like "she has not earned it
@@ -23,7 +27,7 @@
 #
 # Usage:
 #   scripts/upload_puzzle_art_r2.sh [SRC_DIR]
-#   SRC_DIR defaults to ~/Desktop/classical-bible-paintings/_curated
+#   SRC_DIR defaults to ~/Desktop/classical-bible-paintings/_upload-to-r2/v1/art
 #
 # ⚠️ Bump the /v1/ segment (here AND in ART_BASE in src/constants/quizArt.ts)
 # on a re-cut. A custom domain puts Cloudflare's cache in front of these, so
@@ -32,7 +36,7 @@ set -euo pipefail
 
 BUCKET="herbible-quiz"                      # custom domain: quiz.everlandapps.com
 PREFIX="v1/art"
-SRC="${1:-${HOME}/Desktop/classical-bible-paintings/_curated}"
+SRC="${1:-${HOME}/Desktop/classical-bible-paintings/_upload-to-r2/v1/art}"
 
 if [ -n "${WRANGLER:-}" ] && [ -x "${WRANGLER}" ]; then WR=( "$WRANGLER" )
 elif command -v wrangler >/dev/null 2>&1; then WR=( wrangler )
@@ -47,7 +51,7 @@ echo "Using wrangler: ${WR[*]}"
 n_full="$(find "$SRC/full" -name '*.jpg' | wc -l | tr -d ' ')"
 if [ "$n_full" != "24" ]; then
   echo "expected 24 paintings in $SRC/full, found ${n_full}."
-  echo "The curated set lives in _curated; _processed is the unfiltered 74."
+  echo "The curated set lives in _upload-to-r2/v1/art; _processed is the raw 74."
   exit 1
 fi
 

@@ -8,6 +8,12 @@
 # Prerequisites (one-time, in any terminal):
 #   npx --yes wrangler login        # browser OAuth to the Cloudflare account
 #
+# ⚠️ If you have CLOUDFLARE_API_TOKEN (or CF_API_TOKEN / CLOUDFLARE_API_KEY) set
+# in your shell, wrangler uses it and IGNORES the OAuth login entirely — so a
+# stale token gives 401 "Invalid access token [code: 9109]" no matter how many
+# times you re-login. Unset it first, or replace it with a token that has
+# Account → Workers R2 Storage → Edit. The preflight below tells you which.
+#
 # Usage:
 #   scripts/upload_legal_r2.sh
 #
@@ -29,6 +35,19 @@ if [ -n "${WRANGLER:-}" ] && [ -x "${WRANGLER}" ]; then WR=( "$WRANGLER" )
 elif command -v wrangler >/dev/null 2>&1; then WR=( wrangler )
 else WR=( npx --yes wrangler ); fi
 echo "Using wrangler: ${WR[*]}"
+
+# Preflight: an env token silently outranks `wrangler login`, and the resulting
+# 401 names neither the variable nor the fix.
+for v in CLOUDFLARE_API_TOKEN CF_API_TOKEN CLOUDFLARE_API_KEY; do
+  if [ -n "${!v:-}" ]; then
+    echo
+    echo "NOTE: \$${v} is set, so wrangler will use it and ignore any OAuth login."
+    echo "      If this run fails with 401 / 'Invalid access token', either"
+    echo "        unset ${v}   (then: npx --yes wrangler login)"
+    echo "      or replace it with a token that has Workers R2 Storage → Edit."
+    echo
+  fi
+done
 
 for f in privacy.html support.html; do
   src="${REPO}/legal/${f}"

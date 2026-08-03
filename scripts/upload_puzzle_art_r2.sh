@@ -43,6 +43,19 @@ elif command -v wrangler >/dev/null 2>&1; then WR=( wrangler )
 else WR=( npx --yes wrangler ); fi
 echo "Using wrangler: ${WR[*]}"
 
+# Preflight: an env token silently outranks `wrangler login`, and the resulting
+# 401 names neither the variable nor the fix.
+for v in CLOUDFLARE_API_TOKEN CF_API_TOKEN CLOUDFLARE_API_KEY; do
+  if [ -n "${!v:-}" ]; then
+    echo
+    echo "NOTE: \$${v} is set, so wrangler will use it and ignore any OAuth login."
+    echo "      If this run fails with 401 / 'Invalid access token', either"
+    echo "        unset ${v}   (then: npx --yes wrangler login)"
+    echo "      or replace it with a token that has Workers R2 Storage \u2192 Edit."
+    echo
+  fi
+done
+
 [ -d "$SRC/full" ]  || { echo "not found: $SRC/full";  exit 1; }
 [ -d "$SRC/thumb" ] || { echo "not found: $SRC/thumb"; exit 1; }
 

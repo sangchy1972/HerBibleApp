@@ -45,8 +45,19 @@ requirements — follow them by default without re-asking.
 - `eas-cli` is installed nowhere — not globally, not as a dependency. Every EAS
   command goes through `npx --yes eas-cli@latest`, which is what the `build:*`
   and `submit:*` npm scripts already do.
-- Version lives in `app.json` (`version`). `versionCode` / `buildNumber` are
-  remote + autoIncrement — never edit them by hand.
+- **Propose the version number, then edit it — do not ask.** Every release,
+  say what the next version should be and why (semver against what shipped:
+  new user-facing feature → minor, fixes only → patch), and write it into
+  `app.json` in the same pass. The owner overrides if he disagrees; he should
+  never have to tell you to make the edit.
+- Version lives in `app.json` (`version`) and NOWHERE else — the Profile footer
+  reads it via `Constants.expoConfig?.version`. It was hardcoded once and spent
+  a release lying about which build the user had. `versionCode` / `buildNumber`
+  are remote + autoIncrement — never edit them by hand.
+- R2 upload scripts use `wrangler`. If `CLOUDFLARE_API_TOKEN` (or `CF_API_TOKEN`
+  / `CLOUDFLARE_API_KEY`) is set in the shell, wrangler uses it and IGNORES
+  `wrangler login`, so a stale token 401s forever. Every upload script now warns
+  about this up front.
 - `play-service-account.json` is gitignored and only needed for
   `eas submit -p android`. Building never needs it, and uploading the AAB
   manually in Play Console never needs it either.

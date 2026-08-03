@@ -43,6 +43,18 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   // She would appear to be trapped. The flag lives for this visit only, so the
   // draw is offered again next time she opens the quiz.
   const drawDismissed = useRef(false);
+  // Cleared whenever a NEW draw is granted. Without this, `drawDismissed` is a
+  // one-way latch for the whole visit: arrive with a leftover draw, deal with
+  // it, then earn another one three sets later, and the overlay silently
+  // refuses to open. onContinue has already committed and set `leaving`, so
+  // nothing navigates either — she lands on a blank body under the header with
+  // her new card swallowed. Exactly the class of dead end the daily-cap screen
+  // exists to prevent, one ref over.
+  const prevPending = useRef(false);
+  useEffect(() => {
+    if (pendingDraw && !prevPending.current) drawDismissed.current = false;
+    prevPending.current = pendingDraw;
+  }, [pendingDraw]);
   // True when the overlay was opened by a draw she earned in a PREVIOUS visit
   // rather than by the set she just finished. Collecting that one must leave
   // her on the quiz, not throw her home — she opened the app to answer
@@ -89,6 +101,25 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   // a null session -- which without this branch is a permanently blank page
   // under a header, reachable from the home card by one tap.
   const cappedOut = ready && !!bank && !session && daily.reached;
+
+  // SAFETY NET, deliberately on a timer rather than asserted at render.
+  //
+  // After a commit, exactly one of three things must own this screen: the draw
+  // overlay, the painting celebration, or navigation. The provider's commit
+  // effect drains AFTER this component's effects, so there is legitimately one
+  // frame in which none of them do -- which is why this cannot be a synchronous
+  // assertion. A second and a half later there is no legitimate reason to still
+  // be sitting here, and the alternative is a blank page whose only control is
+  // the X. The timer is cleared the moment any of the three arrives.
+  //
+  // Nothing is lost by leaving: pendingDraw is persisted and offered again on
+  // her next visit, and the set is already committed.
+  useEffect(() => {
+    if (!leaving.current || session || drawing || pendingDraw || finishedPainting != null) return;
+    const id = setTimeout(() => { if (leaving.current) goHome(); }, 1500);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, drawing, pendingDraw, finishedPainting]);
 
   // Android hardware back = the close button, not a silent no-op.
   useEffect(() => {
@@ -146,6 +177,7 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
           // with 0 remaining and a session still open, and `=== 1` would then
           // offer a "next set" button that open() silently refuses.
           lastOfDay={daily.remaining <= 1}
+          setsLeftAfter={Math.max(0, daily.remaining - 1)}
           onRetry={retry}
           onNextLevel={() => {
             // Commit and stay. `leaving` is NOT set: the auto-open effect is
@@ -177,8 +209,17 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
               ? pIdx
               : null;
             finish();
-            if (painting != null) setFinishedPainting(painting);
-            else if (!earns) goHome();
+            if (painting != null) { setFinishedPainting(painting); return; }
+            if (earns) {
+              // Cleared SYNCHRONOUSLY, here, not in the effect below. The grant
+              // lands a render later, so at this instant `drawDismissed` still
+              // reflects a draw she dismissed earlier in this visit -- and
+              // testing it here would send her home instead of showing the card
+              // she just earned.
+              drawDismissed.current = false;
+              return;
+            }
+            goHome();
           }}
         />
       );
@@ -222,7 +263,13 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
         <View style={styles.counterSpacer} />
       )}
 
-      {cappedOut ? <DailyCapView limit={daily.limit} onClose={goHome} /> : body()}
+      {cappedOut ? (
+        <DailyCapView
+          limit={daily.limit}
+          onCollection={() => { if (!navLock.current) navigation.replace('PuzzleCollection'); }}
+          onClose={goHome}
+        />
+      ) : body()}
 
       {/* The painting sits ON TOP of the card draw when both land on the same
           set (every 12th). She collects the picture, then the card — biggest
@@ -263,7 +310,13 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
  * wanting to do something with it, and a screen whose single control is "close"
  * is a dead end. The collection is the thing her seven sets were FOR.
  */
-function DailyCapView({ limit, onClose }: { limit: number; onClose: () => void }) {
+function DailyCapView({
+  limit, onCollection, onClose,
+}: {
+  limit: number;
+  onCollection: () => void;
+  onClose: () => void;
+}) {
   const t = useT();
   return (
     <View style={styles.capRoot}>
@@ -276,8 +329,15 @@ function DailyCapView({ limit, onClose }: { limit: number; onClose: () => void }
       <Text style={styles.capBody} maxFontSizeMultiplier={1.3}>
         {t('quiz.daily.capBody', { total: limit })}
       </Text>
-      <TouchableOpacity style={styles.capCta} activeOpacity={0.85} onPress={onClose} accessibilityRole="button">
+      {/* The collection is what her seven sets were FOR. A screen whose only
+          control is "close" sends her away from the thing she just earned. */}
+      <TouchableOpacity style={styles.capCta} activeOpacity={0.85} onPress={onCollection} accessibilityRole="button">
         <Text style={styles.capCtaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+          {t('quiz.progress.puzzleRow')}
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.capSecondary} activeOpacity={0.7} onPress={onClose} accessibilityRole="button">
+        <Text style={styles.capSecondaryText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
           {t('common.close')}
         </Text>
       </TouchableOpacity>
@@ -323,4 +383,6 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', marginTop: 30,
   },
   capCtaText: { fontFamily: FONTS.latoBold, fontSize: 16, color: '#FFFFFF', letterSpacing: 0.4 },
+  capSecondary: { height: 44, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
+  capSecondaryText: { fontFamily: FONTS.latoBold, fontSize: 14.5, color: ROSE, letterSpacing: 0.3 },
 });

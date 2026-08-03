@@ -83,8 +83,25 @@ export function recordSet(
  * This is a CONTENT constraint, not an engagement one. The bank is 327
  * questions = 65 sets. Unthrottled, a motivated user empties it in a weekend and
  * every set after that is a question she has already answered, dressed up as
- * progress. Seven a day stretches the same bank across nine weeks, which is
- * roughly how long it takes to earn two and a half paintings.
+ * progress.
+ *
+ * THE ARITHMETIC, because an earlier version of this comment got it wrong by a
+ * factor of seven and the wrong number is easier to repeat than to check:
+ *
+ *     cap   bank runs out   all 24 paintings   all 40 cards   cards/day
+ *      7        9.3 d            13.7 d            17.1 d       2.33
+ *      5       13.0 d            19.2 d            24.0 d       1.67
+ *      3       21.7 d            32.0 d            40.0 d       1.00
+ *
+ * So seven does not solve the problem it was reached for -- it moves the day the
+ * repeats start from day 2 to day 10. Three would give a whole month, and lands
+ * exactly on MYSTERY_EVERY, so the rhythm becomes one card a day. Seven is the
+ * owner's number and stands until he changes it; this table is here so the
+ * decision is made against real figures.
+ *
+ * The cliff the cap CANNOT fix is at 96 sets, where puzzleView goes outOfArt and
+ * every results screen shows the same finished painting forever. That needs more
+ * artwork or a real end state, not a smaller number here.
  *
  * COUNTED FROM COMPLETED SETS, not from starts. A set she abandoned halfway
  * costs her nothing, and — more importantly — a set already in flight can always

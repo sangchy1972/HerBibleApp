@@ -75,7 +75,9 @@ export default function QuizChallengeCard({
                 ? t('quiz.card.answered', { n: answered })
                 : daily.reached
                   ? t('quiz.daily.capCard', { total: daily.limit })
-                  : t('quiz.card.level', { n: levelFor(progress.completedSets) })}
+                  : daily.done > 0
+                    ? t('quiz.daily.remaining', { n: daily.remaining, total: daily.limit })
+                    : t('quiz.card.level', { n: levelFor(progress.completedSets) })}
           </Text>
         </View>
         <Feather name="chevron-right" size={20} color={TXTSUB} />

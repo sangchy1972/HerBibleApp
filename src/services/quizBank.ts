@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent } from './firebase';
+import { SET_SIZE } from './quizSets';
 import {
   QUIZ_BANK_VERSION, quizBankUrl, type QuizBankFile, type QuizQuestion,
 } from '../constants/bibleQuiz';
@@ -43,7 +44,12 @@ function sanitizeQuestion(raw: any): QuizQuestion | null {
 export function parseBankFile(raw: unknown, lang: string): QuizQuestion[] | null {
   const file = raw as QuizBankFile;
   if (!file || typeof file !== 'object') return null;
-  if (!Array.isArray(file.questions) || file.questions.length === 0) return null;
+  // SET_SIZE, not 1. A bank with 1-4 questions passes every other check and
+  // then makes QuizContext.open() refuse silently -- questionsForSet cannot fill
+  // a set -- so the screen renders a blank body under the header with no way
+  // forward. Rejecting it here means the app falls back to "no quiz yet", which
+  // is honest and recoverable.
+  if (!Array.isArray(file.questions) || file.questions.length < SET_SIZE) return null;
   if (file.questions.length > MAX_QUESTIONS) return null;
   if (Number.isInteger(file.bankVersion) && file.bankVersion !== QUIZ_BANK_VERSION) return null;
   if (typeof file.lang === 'string' && file.lang !== lang) return null;

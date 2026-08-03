@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ROSE, BTN_RADIUS, FONTS } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
 import { useQuiz } from '../../state/QuizContext';
-import { artworkAt, artSource, artTitle, artArtist, artCaption } from '../../constants/quizArt';
+import { artworkAt, artSource, artTitle, artArtist, artCaption, artDesc } from '../../constants/quizArt';
 import { useUILanguage } from '../../state/UILanguageContext';
 import PuzzleBoard from './PuzzleBoard';
 import PaintingShareArt, { PAINTING_SHARE_WIDTH } from './PaintingShareArt';
@@ -130,6 +130,12 @@ export default function PaintingComplete({
         <Text style={styles.artist} numberOfLines={1} maxFontSizeMultiplier={1.2}>
           {art.year ? `${artArtist(art, lang)} · ${art.year}` : artArtist(art, lang)}
         </Text>
+        {/* The scene, in ~30 words. Without it this is a handsome rectangle;
+            with it she has collected Genesis 24. It is the one line that makes
+            the reward belong in a Bible app. */}
+        <Text style={styles.desc} numberOfLines={4} maxFontSizeMultiplier={1.25}>
+          {artDesc(art, lang)}
+        </Text>
       </Animated.View>
 
       {toast ? (
@@ -215,6 +221,11 @@ const styles = StyleSheet.create({
   artist: {
     fontFamily: FONTS.lato, fontSize: 13, color: 'rgba(255,255,255,0.6)',
     textAlign: 'center', marginTop: 5, letterSpacing: 0.2,
+  },
+  desc: {
+    fontFamily: FONTS.lato, fontSize: 12.8, lineHeight: 19,
+    color: 'rgba(255,255,255,0.55)', textAlign: 'center',
+    marginTop: 12, paddingHorizontal: 12, letterSpacing: 0.2,
   },
   actions: { position: 'absolute', left: 22, right: 22 },
   iconRow: { flexDirection: 'row', justifyContent: 'center', gap: 34, marginBottom: 22 },

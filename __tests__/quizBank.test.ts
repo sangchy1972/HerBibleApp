@@ -9,6 +9,7 @@
 
 import { parseBankFile } from '../src/services/quizBank';
 import { QUIZ_BANK_VERSION } from '../src/constants/bibleQuiz';
+import { SET_SIZE } from '../src/services/quizSets';
 
 const q = (over: Record<string, unknown> = {}) => ({
   id: 1, question: 'Who?', options: ['a', 'b', 'c', 'd'], answerIndex: 2, ...over,
@@ -16,29 +17,46 @@ const q = (over: Record<string, unknown> = {}) => ({
 const file = (questions: unknown[], over: Record<string, unknown> = {}) => ({
   v: 1, lang: 'en', bankVersion: QUIZ_BANK_VERSION, count: questions.length, questions, ...over,
 });
+/** A bank with one question of interest and enough filler to clear SET_SIZE.
+ *  The interesting item stays at index 0 so assertions read the same as before. */
+const bank = (...qs: unknown[]) => [
+  ...qs,
+  ...Array.from({ length: Math.max(0, SET_SIZE - qs.length) }, (_, i) => q({ id: 900 + i })),
+];
 
 describe('parseBankFile — happy path', () => {
   it('accepts a well-formed bank', () => {
-    const out = parseBankFile(file([q(), q({ id: 2 })]), 'en');
-    expect(out).toHaveLength(2);
+    const out = parseBankFile(file(bank(q(), q({ id: 2 }))), 'en');
+    expect(out).toHaveLength(SET_SIZE);
     expect(out![0].answerIndex).toBe(2);
   });
 
   it('accepts 2-option True/False items', () => {
     // 60 of the 327 are True/False; rejecting them would silently halve sets.
-    const out = parseBankFile(file([q({ options: ['True', 'False'], answerIndex: 1 })]), 'en');
-    expect(out).toHaveLength(1);
+    const out = parseBankFile(file(bank(q({ options: ['True', 'False'], answerIndex: 1 }))), 'en');
+    expect(out).toHaveLength(SET_SIZE);
     expect(out![0].options).toEqual(['True', 'False']);
   });
 
   it('trims whitespace', () => {
-    const out = parseBankFile(file([q({ question: '  Who?  ', options: [' a ', 'b', 'c', 'd'] })]), 'en');
+    const out = parseBankFile(file(bank(q({ question: '  Who?  ', options: [' a ', 'b', 'c', 'd'] }))), 'en');
     expect(out![0].question).toBe('Who?');
     expect(out![0].options[0]).toBe('a');
   });
 
   it('tolerates a payload with no lang/bankVersion fields', () => {
-    expect(parseBankFile({ questions: [q()] }, 'en')).toHaveLength(1);
+    expect(parseBankFile({ questions: bank(q()) }, 'en')).toHaveLength(SET_SIZE);
+  });
+
+  it('rejects a bank too small to fill one set', () => {
+    // 1-4 questions passes every other check and then makes QuizContext.open()
+    // refuse silently -- questionsForSet cannot fill a set -- leaving a blank
+    // quiz screen with no way forward. "No quiz yet" is the honest failure.
+    for (let n = 1; n < SET_SIZE; n += 1) {
+      const qs = Array.from({ length: n }, (_, i) => q({ id: i + 1 }));
+      expect(`${n}:${parseBankFile(file(qs), 'en')}`).toBe(`${n}:null`);
+    }
+    expect(parseBankFile(file(bank()), 'en')).toHaveLength(SET_SIZE);
   });
 });
 

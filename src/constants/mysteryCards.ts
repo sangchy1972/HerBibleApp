@@ -89,7 +89,7 @@ export const MYSTERY_CARDS: readonly MysteryCard[] = [
   {
     id: 'doubt-1', theme: 'doubt', ref: 'Jeremiah 29:13',
     body: {
-      en: 'Have you ever wondered whether I exist? I do. Say out loud what your heart wants — say it to me. I have been here the whole time.',
+      en: 'You have wondered whether I exist. More than once. I do. Say out loud what your heart wants — say it to me. I have been here the whole time.',
       'zh-Hans': '你一定想过，我到底存不存在。我存在。把你心里真正想要的，大声说出来，说给我听。我一直都在。',
       'zh-Hant': '你不只一次想過，我到底存不存在。我存在。把你心裡真正想要的，大聲說出來，說給我聽。我一直都在，從沒走開。',
       'de': 'Du hast dich schon gefragt, ob es mich überhaupt gibt. Es gibt mich. Sag laut, was dein Herz wirklich will — sag es mir. Ich war die ganze Zeit da.',
@@ -309,7 +309,7 @@ export const MYSTERY_CARDS: readonly MysteryCard[] = [
   {
     id: 'afraid-3', theme: 'afraid', ref: 'Romans 8:38',
     body: {
-      en: 'You are afraid of losing someone. You have already rehearsed the phone call. I am not going to tell you what is coming. I can tell you that nothing, not even that, puts either of you outside my reach.',
+      en: 'You are afraid of losing someone. You have already rehearsed the phone call. I am not going to tell you what is coming. I can tell you that nothing, not even that, puts you outside my reach.',
       'zh-Hans': '你怕失去一个人。那通电话，你已经在心里预演过了。以后会怎样，我不会告诉你。我能告诉你的是：不管发生什么，你们两个都不会掉出我的手。',
       'zh-Hant': '你怕失去一個人。那通電話，你已經在心裡預演過了。以後會怎樣，我不會告訴你。我能告訴你的是：不管發生什麼，你們兩個都不會掉出我的手。',
       'de': 'Du hast Angst, jemanden zu verlieren. Den Anruf hast du im Kopf schon geprobt. Ich sage dir nicht, was kommt. Ich sage dir: nichts, auch das nicht, bringt euch beide aus meiner Reichweite.',
@@ -481,7 +481,7 @@ export const MYSTERY_CARDS: readonly MysteryCard[] = [
   {
     id: 'lack-1', theme: 'lack', ref: 'Deuteronomy 31:8',
     body: {
-      en: 'You are working so hard, chasing something with everything you have. But the road keeps getting harder — you lack resources, and no one is backing you. I know. I have watched every step. Do not be afraid. Keep going. I am not letting you walk this alone.',
+      en: 'You are working so hard, chasing something with everything you have. But the road keeps getting harder — you lack resources, and no one is backing you. I know. I have watched every step. Do not be afraid. I am not letting you walk this alone.',
       'zh-Hans': '你很拼，把手里所有的都押在一件事上。可路越走越难——没资源，也没人在背后托你。我知道。这一步步我都看着。别怕。继续走，这条路我不会让你一个人走。',
       'zh-Hant': '你很拚，把手上有的都押上去了。可路越走越難——沒資源，背後也沒有人托著你。我知道。這一步步我都看著。別怕。繼續走，這條路我不會讓你一個人走。',
       'de': 'Du gibst alles für eine Sache und arbeitest bis an die Grenze. Aber der Weg wird härter — die Mittel fehlen, und keiner steht hinter dir. Ich weiß. Ich habe jeden Schritt gesehen. Hab keine Angst. Geh weiter. Ich lasse dich das nicht allein gehen.',

@@ -8,6 +8,7 @@ import PuzzleBoard from './PuzzleBoard';
 import MysteryRewardBar from './MysteryRewardBar';
 import { rewardPreview, MYSTERY_EVERY, TILES_PER_PAINTING } from '../../state/quizProgress';
 import { drawEarnedAt } from '../../state/cardDraw';
+import { DAILY_SET_LIMIT } from '../../state/quizHistory';
 import { QUIZ_ART_COUNT } from '../../constants/quizArt';
 import type { SegmentState } from '../../state/quizSession';
 
@@ -23,7 +24,7 @@ import type { SegmentState } from '../../state/quizSession';
 
 export default function QuizReviewView({
   segments, correct, total, wrong, level, firstPassPerfect, completedSets,
-  lastOfDay, onRetry, onContinue, onNextLevel,
+  lastOfDay, setsLeftAfter, onRetry, onContinue, onNextLevel,
 }: {
   segments: SegmentState[];
   correct: number;
@@ -36,6 +37,9 @@ export default function QuizReviewView({
   /** Committing this set spends the last of today's seven. Hides "next set" and
    *  says so, rather than leaving a button that would silently do nothing. */
   lastOfDay: boolean;
+  /** Sets left today AFTER this one commits. Shown on EVERY set, so the seventh
+   *  ends a countdown she has been watching instead of ambushing her. */
+  setsLeftAfter: number;
   onRetry: () => void;
   onContinue: () => void;
   /** Commit and start the next set without leaving. */
@@ -95,11 +99,15 @@ export default function QuizReviewView({
             <Text style={styles.rewardLabel} maxFontSizeMultiplier={1.3}>
               {view.outOfArt ? t('quiz.reward.allArt') : t('quiz.reward.tile')}
             </Text>
+            {/* showCaption: six reward moments in seven were an unnamed quarter
+                of an unnamed picture. She is collecting a Caravaggio; the least
+                the screen can do is say so while she earns it. */}
             <PuzzleBoard
               paintingIndex={view.paintingIndex}
               tilesUnlocked={view.tilesUnlocked}
               size={boardSize}
               newTile={freshTile}
+              showCaption
             />
             <View style={styles.mystery}>
               {earnsCard ? (
@@ -132,9 +140,11 @@ export default function QuizReviewView({
         {/* The daily cap gets a line, not a dead button. open() refuses once the
             seventh set is committed, so leaving "Next level" on screen would
             give her a control that visibly does nothing. */}
-        {done && lastOfDay ? (
+        {done ? (
           <Text style={styles.lastOfDay} numberOfLines={2} maxFontSizeMultiplier={1.3}>
-            {t('quiz.daily.lastOfDay')}
+            {lastOfDay
+              ? t('quiz.daily.lastOfDay')
+              : t('quiz.daily.remaining', { n: setsLeftAfter, total: DAILY_SET_LIMIT })}
           </Text>
         ) : null}
 

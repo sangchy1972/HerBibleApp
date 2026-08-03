@@ -74,7 +74,10 @@ export async function saveCard(
     onOk();
     return true;
   } catch (e) {
-    Alert.alert(strings.failTitle, e instanceof Error ? e.message : strings.tryAgain);
+    // NEVER e.message. The platform's own text here is untranslated English
+    // ("The operation couldn't be completed…"), and putting it in front of her
+    // reads as the app breaking rather than as one save not working.
+    Alert.alert(strings.failTitle, strings.tryAgain);
     return false;
   }
 }

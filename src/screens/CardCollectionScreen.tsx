@@ -43,7 +43,7 @@ export default function CardCollectionScreen({ navigation }: RootStackScreenProp
   const t = useT();
   const { lang } = useUILanguage();
   const insets = useSafeAreaInsets();
-  const { collectedCards, cardIsLiked, logCardOpen } = useQuiz();
+  const { collectedCards, cardIsLiked, logCardOpen, canStart, daily } = useQuiz();
   const [likedOnly, setLikedOnly] = useState(false);
   const [detail, setDetail] = useState<MysteryCard | null>(null);
 
@@ -102,13 +102,17 @@ export default function CardCollectionScreen({ navigation }: RootStackScreenProp
                 Back, and nothing on it pointed at the thing that earns a card.
                 Profile can reach this on day one. */}
             <TouchableOpacity
-              style={styles.goPlay}
+              style={[styles.goPlay, !canStart && styles.goPlayOff]}
               activeOpacity={0.85}
               onPress={() => navigation.replace('Quiz')}
+              disabled={!canStart}
               accessibilityRole="button"
             >
+              {/* Dimmed rather than hidden once today is spent. replace() would
+                  otherwise walk her into the cap wall AND drop the screen she
+                  came from, so Close would land two pages back. */}
               <Text style={styles.goPlayText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
-                {t('quiz.cards.goPlay')}
+                {canStart ? t('quiz.cards.goPlay') : t('quiz.daily.capCard', { total: daily.limit })}
               </Text>
             </TouchableOpacity>
           </>
@@ -282,6 +286,7 @@ const styles = StyleSheet.create({
     height: 50, borderRadius: BTN_RADIUS, backgroundColor: ROSE,
     alignItems: 'center', justifyContent: 'center', marginTop: 22,
   },
+  goPlayOff: { opacity: 0.45 },
   goPlayText: { fontFamily: FONTS.latoBold, fontSize: 15.5, color: '#FFFFFF', letterSpacing: 0.4 },
   row: {
     flexDirection: 'row', alignItems: 'center',

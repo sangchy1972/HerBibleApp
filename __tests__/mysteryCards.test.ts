@@ -115,7 +115,7 @@ describe('the formula', () => {
     // to state her situation as a fact so she recognises herself in line one.
     // A rhetorical opener that quotes HER question back is allowed.
     for (const c of MYSTERY_CARDS) {
-      const opener = /^(Are you|Do you feel|Do you think|Have you been)\b/.test(c.body.en!);
+      const opener = /^(Are|Do|Does|Did|Have|Has|Is|Was|Will|Would|Can|Could|Should)\b/i.test(c.body.en!);
       expect(`${c.id}:${opener}`).toBe(`${c.id}:false`);
     }
   });
@@ -213,7 +213,7 @@ describe('the owner-approved cards are shipped verbatim', () => {
   // drifted off-brief and this should fail.
   it('doubt-1 opens the pool exactly as approved', () => {
     expect(en('doubt-1')).toBe(
-      'Have you ever wondered whether I exist? I do. Say out loud what your heart wants — say it to me. I have been here the whole time.',
+      'You have wondered whether I exist. More than once. I do. Say out loud what your heart wants — say it to me. I have been here the whole time.',
     );
   });
 

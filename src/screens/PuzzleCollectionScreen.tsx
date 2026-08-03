@@ -35,7 +35,7 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
   const { lang } = useUILanguage();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { progress } = useQuiz();
+  const { progress, canStart, daily } = useQuiz();
   const [detail, setDetail] = useState<QuizArtwork | null>(null);
 
   const view = puzzleView(progress.completedSets, QUIZ_ART_COUNT);
@@ -44,13 +44,18 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
   const boardW = Math.min(width - P * 2, 380);
   const thumb = Math.floor((width - P * 2 - GRID_GAP) / 2);
 
-  // Finished paintings only. Once the art runs out the hero board above IS the
-  // last painting, shown fully unlocked, so without the -1 it appears twice --
-  // the exact thing the "no in-progress painting in the grid" rule prevents.
+  // Every finished painting, unconditionally. The hero board carries the one in
+  // PROGRESS, so the two never overlap -- except once the art runs out, when the
+  // hero has nothing left to show and falls back to the last finished painting.
+  // Subtracting one there fixed the duplicate but hid painting 24 permanently:
+  // the hero board is not tappable, so she could not open, share or save the
+  // last picture she earned while the progress screen told her she had all 24.
+  // The hero is dropped instead -- see `showHero`.
   const finished = useMemo(
-    () => QUIZ_ART.slice(0, Math.max(0, view.completedPaintings - (view.outOfArt ? 1 : 0))),
-    [view.completedPaintings, view.outOfArt],
+    () => QUIZ_ART.slice(0, view.completedPaintings),
+    [view.completedPaintings],
   );
+  const showHero = !view.outOfArt;
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -70,14 +75,16 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 28 }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.boardWrap}>
-          <PuzzleBoard
-            paintingIndex={view.paintingIndex}
-            tilesUnlocked={view.tilesUnlocked}
-            size={boardW}
-            showCaption
-          />
-        </View>
+        {showHero ? (
+          <View style={styles.boardWrap}>
+            <PuzzleBoard
+              paintingIndex={view.paintingIndex}
+              tilesUnlocked={view.tilesUnlocked}
+              size={boardW}
+              showCaption
+            />
+          </View>
+        ) : null}
 
         <Text style={styles.captionSub} maxFontSizeMultiplier={1.3}>
           {view.outOfArt
@@ -98,13 +105,17 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
           <>
             <Text style={styles.empty} maxFontSizeMultiplier={1.3}>{t('quiz.collection.empty')}</Text>
             <TouchableOpacity
-              style={styles.goPlay}
+              style={[styles.goPlay, !canStart && styles.goPlayOff]}
               activeOpacity={0.85}
               onPress={() => navigation.replace('Quiz')}
+              disabled={!canStart}
               accessibilityRole="button"
             >
+              {/* Dimmed rather than hidden once today is spent. replace() would
+                  otherwise walk her into the cap wall AND drop the screen she
+                  came from, so Close would land two pages back. */}
               <Text style={styles.goPlayText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
-                {t('quiz.cards.goPlay')}
+                {canStart ? t('quiz.cards.goPlay') : t('quiz.daily.capCard', { total: daily.limit })}
               </Text>
             </TouchableOpacity>
           </>
@@ -295,6 +306,7 @@ const styles = StyleSheet.create({
     height: 50, borderRadius: BTN_RADIUS, backgroundColor: ROSE,
     alignItems: 'center', justifyContent: 'center', marginTop: 22,
   },
+  goPlayOff: { opacity: 0.45 },
   goPlayText: { fontFamily: FONTS.latoBold, fontSize: 15.5, color: '#FFFFFF', letterSpacing: 0.4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: GRID_GAP, rowGap: 18 },
   thumb: { borderRadius: 10, backgroundColor: INK_06 },

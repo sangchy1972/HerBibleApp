@@ -97,6 +97,9 @@ interface QuizState {
   historySummary: HistorySummary;
   /** Today's seven-set allowance: how many are gone, how many are left. */
   daily: DailyGate;
+  /** YYYY-MM-DD, local, ROLLED OVER at midnight. The single answer to "what day
+   *  is it" — screens that computed their own froze it at launch. */
+  todayYmd: string;
   /** May she begin a NEW set right now? False once today's seven are done.
    *  A set already in flight is always resumable, cap or no cap. */
   canStart: boolean;
@@ -496,12 +499,12 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
   const value = useMemo<QuizState>(() => ({
     ready, bank, bankStatus, progress, session, questions, currentQuestion, segments,
     open, pick, next, retry, finish, abandon,
-    cards, likes, history, historySummary, daily, canStart,
+    cards, likes, history, historySummary, daily, canStart, todayYmd,
     pendingDraw: cards.pendingDraw, drawSpread, collectedCards,
     drawCard, likeCard, cardIsLiked, logCardShare, logCardOpen,
   }), [ready, bank, bankStatus, progress, session, questions, currentQuestion, segments,
        open, pick, next, retry, finish, abandon,
-       cards, likes, history, historySummary, daily, canStart, drawSpread, collectedCards,
+       cards, likes, history, historySummary, daily, canStart, todayYmd, drawSpread, collectedCards,
        drawCard, likeCard, cardIsLiked, logCardShare, logCardOpen]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
@@ -523,7 +526,7 @@ export function useQuiz(): QuizState {
     open: () => {}, pick: () => {}, next: () => {}, retry: () => {}, finish: () => {}, abandon: () => {},
     cards: INITIAL_CARD_PROGRESS, likes: INITIAL_CARD_LIKES, history: INITIAL_HISTORY,
     historySummary: { streak: 0, bestStreak: 0, activeDays: 0, setsLast7: 0, setsLast30: 0, accuracy: null },
-    daily: dailyGate(INITIAL_HISTORY, ''), canStart: false,
+    daily: dailyGate(INITIAL_HISTORY, ''), canStart: false, todayYmd: '',
     pendingDraw: false, drawSpread: [], collectedCards: [],
     drawCard: () => {}, likeCard: () => {}, cardIsLiked: () => false,
     logCardShare: () => {}, logCardOpen: () => {},

@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import {
-  BG, TXT, TXTSUB, ROSE, GREEN_DONE, INK_06, INK_10, FONTS, P,
+  BG, TXT, TXTSUB, ROSE, GREEN_DONE, INK_06, INK_10, FONTS, P, BTN_RADIUS,
 } from '../constants/theme';
 import { useT } from '../i18n/useT';
 import { useQuiz } from '../state/QuizContext';
@@ -35,15 +35,18 @@ import type { RootStackScreenProps } from '../navigation/types';
 const CHART_MIN_DAYS = 7;
 const CHART_WINDOW = 30;
 
-function localYmd(now = new Date()): string {
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}`;
-}
-
 export default function QuizProgressScreen({ navigation }: RootStackScreenProps<'QuizProgress'>) {
   const t = useT();
   const insets = useSafeAreaInsets();
-  const { progress, bank, cards, likes, history, historySummary, daily } = useQuiz();
+  const {
+    progress, bank, cards, likes, history, historySummary, daily, todayYmd,
+    collectedCards, canStart,
+  } = useQuiz();
+  // collectedCards, NOT cards.collected: the context filters ids this build does
+  // not know about, which a restore from a newer version can introduce. Counting
+  // the raw array here made this screen and the card collection disagree, and
+  // could print "41 of 40".
+  const cardCount = collectedCards.length;
 
   const answered = progress.completedSets * SET_SIZE;
   // First-pass accuracy: what she got right the first time she saw it. Guarded
@@ -59,9 +62,12 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
   const fullCycle = !!bank && bank.length > 0 && seen >= bank.length;
   const coverage = bank && bank.length > 0 ? seen / bank.length : 0;
 
+  // todayYmd from the context, not a local call: computed here it froze at
+  // launch, so the chart's right-hand edge could be a different "today" from the
+  // streak and the daily allowance two rows above it.
   const days = useMemo(
-    () => lastNDays(history, localYmd(), CHART_WINDOW),
-    [history],
+    () => lastNDays(history, todayYmd, CHART_WINDOW),
+    [history, todayYmd],
   );
   const showChart = history.days.length >= CHART_MIN_DAYS;
   const peak = Math.max(1, ...days.map(d => d.sets));
@@ -91,7 +97,7 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
             label={t('quiz.progress.accuracy')}
             sub={answered > 0 ? t('quiz.progress.ofAnswered', { n: answered }) : undefined}
           />
-          <Stat value={String(cards.collected.length)} label={t('quiz.progress.cards')} />
+          <Stat value={String(cardCount)} label={t('quiz.progress.cards')} />
         </View>
 
         <View style={styles.line}>
@@ -185,6 +191,20 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
           </View>
         ) : null}
 
+        {/* She opens her dashboard, reads "3 of 7 sets left today", and until
+            now had nothing on the screen to tap. */}
+        <TouchableOpacity
+          style={[styles.play, !canStart && styles.playOff]}
+          activeOpacity={0.85}
+          disabled={!canStart}
+          onPress={() => navigation.replace('Quiz')}
+          accessibilityRole="button"
+        >
+          <Text style={styles.playText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+            {canStart ? t('quiz.cards.goPlay') : t('quiz.daily.capCard', { total: daily.limit })}
+          </Text>
+        </TouchableOpacity>
+
         <NavRow
           icon="image"
           title={t('quiz.progress.puzzleRow')}
@@ -195,7 +215,7 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
           icon="layers"
           title={t('quiz.progress.cardsRow')}
           detail={t('quiz.progress.cardsDetail', {
-            n: cards.collected.length, total: MYSTERY_CARD_COUNT, liked: likes.liked.length,
+            n: cardCount, total: MYSTERY_CARD_COUNT, liked: likes.liked.length,
           })}
           onPress={() => navigation.navigate('CardCollection')}
         />
@@ -236,6 +256,12 @@ function NavRow({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: BG },
+  play: {
+    height: 52, borderRadius: BTN_RADIUS, backgroundColor: ROSE,
+    alignItems: 'center', justifyContent: 'center', marginTop: 26, marginBottom: 4,
+  },
+  playOff: { opacity: 0.45 },
+  playText: { fontFamily: FONTS.latoBold, fontSize: 15.5, color: '#FFFFFF', letterSpacing: 0.4 },
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12, paddingTop: 6, paddingBottom: 8,

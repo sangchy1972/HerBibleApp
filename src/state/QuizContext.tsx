@@ -82,6 +82,18 @@ interface QuizState {
   open: () => void;
   /** Answer the question on screen. Ignored unless one is awaiting an answer. */
   pick: (optionIndex: number) => void;
+  /**
+   * Answer from the HOME card, starting the set if this is the first tap.
+   *
+   * Both halves have to land in ONE update. The home card renders the first
+   * question of a set that has not begun yet, so `open()` followed by `pick()`
+   * would have pick() read a session that does not exist for another render —
+   * the tap would be swallowed and the card would just sit there.
+   *
+   * Refuses for exactly the same reasons open() does (no bank, daily cap spent,
+   * retired), so the cap can't be bypassed by answering from home.
+   */
+  startAndPick: (optionIndex: number) => void;
   /** Reveal → next question, or → summary. */
   next: () => void;
   /** Summary → re-ask the ones still wrong. */
@@ -360,6 +372,40 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
     });
   }, [questions]);
 
+  // logEvent stays OUT of the updater — a state updater must be pure, or a
+  // rebase / StrictMode replay double-counts the set start. The ref makes it
+  // fire once per set even if two taps land in the same frame.
+  const homeStartLogged = useRef<number | null>(null);
+  const startAndPick = useCallback((optionIndex: number) => {
+    if (!session && bank && !daily.reached && !lifecycle.retired
+        && homeStartLogged.current !== progress.setIndex) {
+      homeStartLogged.current = progress.setIndex;
+      logEvent('quiz_set_start', { set_index: progress.setIndex, source: 'home' });
+    }
+    setSession(prev => {
+      let s = prev;
+      if (!s) {
+        // Same refusals as open(). The home card must not become a way around
+        // the daily cap just because the question is rendered in place.
+        if (!bank || daily.reached || lifecycle.retired) return prev;
+        const qs = questionsForSet(progress.setIndex, bank);
+        if (qs.length < SET_SIZE) return prev;
+        s = initialSession(progress.setIndex, qs.map(q => q.id), QUIZ_BANK_VERSION);
+      }
+      const pos = currentPosition(s);
+      if (pos == null) return s;
+      // `questions` is resolved from progress.setIndex while no session exists,
+      // which is the same set we just built — so this is the right question in
+      // both branches.
+      const q = questions[pos];
+      if (!q) return s;
+      // A second tap in the same batch receives the ALREADY-LOCKED session here
+      // and pickOption returns it untouched, so the double-tap guard still
+      // lives in the reducer.
+      return pickOption(s, optionIndex, optionIndex === q.answerIndex);
+    });
+  }, [bank, session, questions, progress.setIndex, daily.reached, lifecycle.retired]);
+
   const next = useCallback(() => setSession(prev => (prev ? advance(prev) : prev)), []);
   const retry = useCallback(() => setSession(prev => {
     if (!prev) return prev;
@@ -520,12 +566,12 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
 
   const value = useMemo<QuizState>(() => ({
     ready, bank, bankStatus, progress, session, questions, currentQuestion, segments,
-    open, pick, next, retry, finish, abandon,
+    open, pick, startAndPick, next, retry, finish, abandon,
     cards, likes, history, historySummary, daily, canStart, todayYmd, lifecycle,
     pendingDraw: cards.pendingDraw, drawSpread, collectedCards,
     drawCard, likeCard, cardIsLiked, logCardShare, logCardOpen,
   }), [ready, bank, bankStatus, progress, session, questions, currentQuestion, segments,
-       open, pick, next, retry, finish, abandon,
+       open, pick, startAndPick, next, retry, finish, abandon,
        cards, likes, history, historySummary, daily, canStart, todayYmd, lifecycle,
        drawSpread, collectedCards,
        drawCard, likeCard, cardIsLiked, logCardShare, logCardOpen]);
@@ -546,7 +592,7 @@ export function useQuiz(): QuizState {
   return {
     ready: false, bank: null, bankStatus: 'unavailable', progress: INITIAL_PROGRESS, session: null,
     questions: [], currentQuestion: null, segments: ['empty', 'empty', 'empty', 'empty', 'empty'],
-    open: () => {}, pick: () => {}, next: () => {}, retry: () => {}, finish: () => {}, abandon: () => {},
+    open: () => {}, pick: () => {}, startAndPick: () => {}, next: () => {}, retry: () => {}, finish: () => {}, abandon: () => {},
     cards: INITIAL_CARD_PROGRESS, likes: INITIAL_CARD_LIKES, history: INITIAL_HISTORY,
     historySummary: { streak: 0, bestStreak: 0, activeDays: 0, setsLast7: 0, setsLast30: 0, accuracy: null },
     daily: dailyGate(INITIAL_HISTORY, ''), canStart: false, todayYmd: '',

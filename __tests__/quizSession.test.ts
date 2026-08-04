@@ -269,3 +269,31 @@ describe('sessionAlignsWith — bank swapped under a live session', () => {
     expect(sessionAlignsWith(retry, [11, 22, 33, 44, 55])).toBe(true);
   });
 });
+
+// The home card renders the FIRST question of a set that has not started yet, so
+// a tap on an option has to start the set and answer it in the same update
+// (QuizContext.startAndPick). This is that composition — if it ever stops
+// producing a locked session with the answer recorded at position 0, a tap on
+// the home card silently does nothing.
+describe('start-and-answer in one step (home card)', () => {
+  it('locks with the answer recorded at position 0', () => {
+    const s = pickOption(initialSession(3, QIDS, 1, 1000), 2, true);
+    expect(s.phase).toBe('locked');
+    expect(currentPosition(s)).toBe(0);
+    expect(s.answers[0]).toMatchObject({ qid: 10, picked: 2, correct: true });
+    expect(sessionSegments(s)).toEqual(['correct', 'empty', 'empty', 'empty', 'empty']);
+  });
+
+  it('a second tap in the same batch is swallowed, not re-answered', () => {
+    // Both taps see no session; React hands the second updater the state the
+    // first produced, so the reducer's phase guard is what stops the double.
+    const first = pickOption(initialSession(3, QIDS, 1, 1000), 2, true);
+    expect(pickOption(first, 0, false)).toBe(first);
+  });
+
+  it('records a wrong first answer as tried, so the retry greys it out', () => {
+    const s = pickOption(initialSession(3, QIDS, 1, 1000), 1, false);
+    expect(isTried(s, 0, 1)).toBe(true);
+    expect(sessionSegments(s)[0]).toBe('wrong');
+  });
+});

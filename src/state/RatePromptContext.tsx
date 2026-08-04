@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Cadence rules (per product, denser re-ask):
@@ -63,18 +63,26 @@ export function RatePromptProvider({ children }: { children: React.ReactNode }) 
       .finally(() => setReady(true));
   }, []);
 
-  const persist = (next: Persisted) => {
+  // Patches merge onto the LATEST state via a ref, not onto the render's closure:
+  // markYes() and markRated() fire back-to-back (the second one after the store
+  // panel returns, from a callback that closed over the pre-markYes render), and
+  // with closure-captured state the second write silently reverted `choice`.
+  const latest = useRef(state);
+  latest.current = state;
+  const persist = (patch: Partial<Persisted>) => {
+    const next = { ...latest.current, ...patch, lastShownAt: Date.now() };
+    latest.current = next;
     setState(next);
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(() => {});
   };
 
   const value = useMemo<RatePromptState>(() => ({
     ready,
-    shouldAsk: () => rateShouldAsk(state),
-    markShown: () => persist({ ...state, lastShownAt: Date.now(), promptCount: state.promptCount + 1 }),
-    markYes:   () => persist({ ...state, choice: 'yes', lastShownAt: Date.now() }),
-    markNo:    () => persist({ ...state, choice: 'no',  lastShownAt: Date.now() }),
-    markRated: () => persist({ ...state, rated: true,   lastShownAt: Date.now() }),
+    shouldAsk: () => rateShouldAsk(latest.current),
+    markShown: () => persist({ promptCount: latest.current.promptCount + 1 }),
+    markYes:   () => persist({ choice: 'yes' }),
+    markNo:    () => persist({ choice: 'no' }),
+    markRated: () => persist({ rated: true }),
   }), [state, ready]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

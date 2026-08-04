@@ -1161,7 +1161,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'rate.title':                    { en: 'Are you satisfied with Her Bible?', context: 'Rate-app prompt title.' },
   'rate.body':                     { en: 'Your feedback is valuable to us!', context: 'Rate prompt body.' },
   'rate.no':                       { en: 'Not really',     context: 'Decline button on rate prompt.' },
-  'rate.yes':                      { en: 'Yes',            context: 'Accept button — triggers store review API.' },
+  'rate.yes':                      { en: 'Yes!',           context: 'Accept button — triggers store review API. Rendered UPPERCASE by the button style, so keep the exclamation mark but do not pre-uppercase.' },
 
   // ─── Sign-in sheet — additional ──────────────────────────────────────────
   'signIn.desc':                   { en: 'Sync your highlights, notes, saved verses, and reading streak across devices.', context: 'Description under sign-in sheet title.' },

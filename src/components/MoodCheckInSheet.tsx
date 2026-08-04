@@ -382,7 +382,11 @@ function DoneStep({ picks, onDone }: { picks: Record<string, Mood>; onDone: () =
   // Split the localized sentence on the rendered number rather than the token,
   // so every language's word order works.
   const headline = titleCase(t('moodCheckIn.done.title', { count }));
-  const parts = headline.split(String(count));
+  // Split on the FIRST occurrence only — a plain split() would render the number
+  // twice if the digits appear again anywhere in the localized sentence.
+  const countStr = String(count);
+  const at = headline.indexOf(countStr);
+  const parts = at < 0 ? [headline] : [headline.slice(0, at), headline.slice(at + countStr.length)];
   const entriesForCal = React.useMemo(() => {
     const m: Record<string, { mood: Mood; at: number }> = {};
     for (const [k, mood] of Object.entries(picks)) m[k] = { mood, at: 0 };

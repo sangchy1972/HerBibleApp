@@ -8,6 +8,14 @@
 // reliable source there; the legacy constants remain as an old-arch fallback.
 
 import { NativeModules, Platform } from 'react-native';
+// expo-localization reads the OS's PREFERRED-LANGUAGES LIST directly (the same
+// list Settings shows), which is the only authoritative source. Guarded require
+// so a build without the native module still falls through to Intl.
+let ExpoLocalization: { getLocales?: () => Array<{ languageTag?: string; languageCode?: string }> } | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  ExpoLocalization = require('expo-localization');
+} catch { /* not in this build */ }
 
 export type DetectedLanguage = 'en' | 'zh-Hans' | 'zh-Hant' | 'de' | 'fr' | 'es' | 'pt';
 
@@ -26,7 +34,27 @@ function normalize(rawTag: string): DetectedLanguage | null {
   return null;
 }
 
+// Fallback when the device language is one we don't ship. Spanish per the
+// owner: it is the largest non-English audience for this app, so an unsupported
+// locale lands somewhere useful rather than on English by accident. NOTE this
+// only applies when detection finds NO supported language — an English phone
+// still gets English, because 'en' is detected and returned above.
+const UNSUPPORTED_FALLBACK: DetectedLanguage = 'es';
+
 export function detectDeviceLanguage(): DetectedLanguage {
+  // 0) The OS preferred-languages LIST, in order. This is the authoritative
+  //    source and the reason detection used to look "wrong": Intl below reports
+  //    a single RESOLVED locale, which on Android can be a region/format locale
+  //    rather than the language she actually reads in. Walking the real list in
+  //    priority order and taking the first SUPPORTED entry is what the OS itself
+  //    does for app resources.
+  try {
+    const locales = ExpoLocalization?.getLocales?.() ?? [];
+    for (const l of locales) {
+      const m = normalize(String(l?.languageTag || l?.languageCode || ''));
+      if (m) return m;
+    }
+  } catch { /* fall through */ }
   // 1) Hermes Intl — works on both platforms under the new architecture.
   try {
     const loc = Intl.DateTimeFormat().resolvedOptions().locale;   // e.g. "pt-BR"
@@ -47,5 +75,5 @@ export function detectDeviceLanguage(): DetectedLanguage {
     const m = normalize(String(raw));
     if (m) return m;
   } catch { /* fall through */ }
-  return 'en';
+  return UNSUPPORTED_FALLBACK;
 }

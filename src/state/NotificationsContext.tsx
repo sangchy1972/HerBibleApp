@@ -385,6 +385,9 @@ interface NotificationsState {
    * whether permission ended up granted.
    */
   requestPermissionAndEnableDefaults: () => Promise<boolean>;
+  /** Read-only permission re-check (never prompts). For coming back from
+   *  the system settings page — adopts a switch flipped outside the app. */
+  syncPermissionFromSystem: () => Promise<boolean>;
   /** Atomically set BOTH reminder times + enable them and request OS permission,
    *  in a single persist (no stale-settings race). Returns whether permission
    *  ended up granted. Used by the "set your reminders" nudge. */
@@ -590,6 +593,34 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     return granted;
   }, [settings, persist]);
 
+  // Read the permission WITHOUT prompting, and adopt it if it turned on behind
+  // our back — which is exactly what happens when the user flips the switch on
+  // the system settings page we deep-linked her to.
+  //
+  // getPermissionsAsync, NOT requestPermissionsAsync. The latter looks harmless
+  // (it is a no-op once permission is settled) but for a user who has never
+  // been asked it RAISES THE OS DIALOG. On a return-from-Settings check that
+  // means someone who deliberately declined to flip the switch gets a system
+  // prompt thrown at her the instant she reappears — a second ask she never
+  // invited, one frame after she said no by walking away.
+  const syncPermissionFromSystem = useCallback(async (): Promise<boolean> => {
+    let granted = false;
+    try {
+      granted = (await Notifications.getPermissionsAsync()).granted;
+    } catch { /* no native module — treat as denied */ }
+    setPermissionGranted(granted);
+    // Same defaults as requestPermissionAndEnableDefaults: permission alone
+    // delivers nothing, the two daily reminders are the actual feature.
+    if (granted && !(settings.morning.enabled && settings.night.enabled)) {
+      persist({
+        ...settings,
+        morning: { ...settings.morning, enabled: true },
+        night: { ...settings.night, enabled: true },
+      });
+    }
+    return granted;
+  }, [settings, persist]);
+
   const configureReminders = useCallback(async (
     m: { hour: number; minute: number },
     e: { hour: number; minute: number },
@@ -634,9 +665,10 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     setEnabled,
     setSchedule,
     requestPermissionAndEnableDefaults,
+    syncPermissionFromSystem,
     configureReminders,
     enableReminderAt,
-  }), [ready, settings, permissionGranted, setEnabled, setSchedule, requestPermissionAndEnableDefaults, configureReminders, enableReminderAt]);
+  }), [ready, settings, permissionGranted, setEnabled, setSchedule, requestPermissionAndEnableDefaults, syncPermissionFromSystem, configureReminders, enableReminderAt]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

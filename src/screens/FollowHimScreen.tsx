@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ImageBackground, ActivityIndicator, AppState } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ImageBackground, AppState } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TXT, FONTS } from '../constants/theme';
@@ -38,49 +38,43 @@ interface Props {
 export default function FollowHimScreen({ onDone }: Props) {
   const insets = useSafeAreaInsets();
   const t = useT();
-  const { requestPermissionAndEnableDefaults } = useNotifications();
-  const [busy, setBusy] = useState(false);
+  const { syncPermissionFromSystem } = useNotifications();
   // Resolved once at mount — the screen shows for a single sitting, so it
   // doesn't need to react to the hour ticking over mid-view.
   const bg = useMemo(() => pickBackground(), []);
 
-  // Second chance after a refusal. The OS prompt is one-shot: once she has
-  // declined (or declined on an earlier run, which makes requestPermissions a
-  // silent no-op), no amount of asking will raise it again — the switch only
-  // exists in Settings from then on. Rather than drop her into the app with
-  // reminders silently dead, we show the coach card and hand her to the exact
-  // Settings page with the switch named and the gesture demonstrated.
+  // The two buttons are a clean fork, per user:
+  //   Skip     → into the app, nothing enabled. Unchanged.
+  //   Continue → the coach card, then the system notification-settings page.
+  //
+  // Continue deliberately does NOT fire the OS permission dialog first. One
+  // path for everybody: what she is told to do is what she then sees, whether
+  // or not this device has ever shown her the prompt. The alternative branched
+  // on invisible state — a user who declined on some earlier run gets no dialog
+  // at all (requestPermissionsAsync goes silently no-op once the answer is
+  // settled), so the same tap led two different places for reasons she could
+  // not see. This costs taps for a first-time user; that trade is the owner's,
+  // made knowingly.
   const [coach, setCoach] = useState(false);
   // True only between "she tapped Open Settings" and the next foreground, so a
   // routine backgrounding never triggers the re-check.
   const returning = useRef(false);
 
   const finish = () => { setCoach(false); onDone(); };
+  const onContinue = () => setCoach(true);
 
-  const onContinue = async () => {
-    if (busy) return;
-    setBusy(true);
-    let granted = false;
-    try {
-      // Fires the Android/iOS system permission dialog directly.
-      granted = await requestPermissionAndEnableDefaults();
-    } catch { /* treat as a refusal */ }
-    setBusy(false);
-    if (granted) { onDone(); return; }
-    setCoach(true);
-  };
-
-  // Came back from Settings. requestPermissionsAsync is documented as a no-op
-  // that resolves with the CURRENT status when there is nothing to prompt, so
-  // re-calling it both reads the new state and turns the reminders on in the
-  // same pass — no second code path, and no direct expo-notifications import
-  // here that would bypass the provider's guarded require.
+  // Came back from Settings — adopt the switch if she flipped it.
+  //
+  // syncPermissionFromSystem, NOT requestPermissionAndEnableDefaults: the
+  // latter can RAISE the OS dialog for a user who has never been asked, which
+  // on this path means throwing a system prompt at someone one frame after she
+  // walked out of Settings without granting. She already answered by leaving.
   useEffect(() => {
     if (!coach) return;
     const sub = AppState.addEventListener('change', s => {
       if (s !== 'active' || !returning.current) return;
       returning.current = false;
-      requestPermissionAndEnableDefaults()
+      syncPermissionFromSystem()
         .then(ok => { if (ok) finish(); })       // still off → leave the card up; Skip and X both still work
         .catch(() => {});
     });
@@ -104,7 +98,6 @@ export default function FollowHimScreen({ onDone }: Props) {
         onPress={onDone}
         style={[styles.skipBtn, { top: insets.top + 8 }]}
         hitSlop={12}
-        disabled={busy}
       >
         <Text style={styles.skipText}>{t('reminder.skip')}</Text>
       </TouchableOpacity>
@@ -112,10 +105,9 @@ export default function FollowHimScreen({ onDone }: Props) {
       <View style={[styles.bottom, { paddingBottom: insets.bottom + 28 }]}>
         <Text style={styles.title}>{t('reminder.title')}</Text>
         <Text style={styles.subtitle}>{t('reminder.subtitle')}</Text>
-        <TouchableOpacity onPress={onContinue} style={styles.cta} activeOpacity={0.9} disabled={busy}>
-          {busy
-            ? <ActivityIndicator color="#fff" />
-            : <Text style={styles.ctaText}>{t('common.continue').toUpperCase()}</Text>}
+        {/* No spinner: this opens a local card, there is nothing to await. */}
+        <TouchableOpacity onPress={onContinue} style={styles.cta} activeOpacity={0.9}>
+          <Text style={styles.ctaText}>{t('common.continue').toUpperCase()}</Text>
         </TouchableOpacity>
       </View>
     </>

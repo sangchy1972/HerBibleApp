@@ -334,10 +334,55 @@ function VerseStep({ mood, onContinue }: { mood: Mood; onContinue: () => void })
 }
 
 // ── Month completion ──────────────────────────────────────────────────────
+// ── Done-step choreography (2.0 s total, per user) ─────────────────────────
+//   0   ─560─▶ heading fades up
+//   420 ─680─▶ calendar fades up
+//   1100 ─..─▶ (settle)
+//   1620 ─380─▶ Done button                                       → ends at 2000
+const DS_HEAD = { at: 0, ms: 560 };
+const DS_CAL = { at: 420, ms: 680 };
+const DS_BTN = { at: 1620, ms: 380 };
+const DS_TOTAL = DS_BTN.at + DS_BTN.ms;   // 2000
+
+// Title Case for the headline (per user). Small words stay lowercase the way
+// English title case actually works — "of/the/this" inside a sentence-shaped
+// headline look wrong fully capitalised. The FIRST word is always capitalised.
+const TITLE_MINOR = new Set(['a', 'an', 'and', 'as', 'at', 'but', 'by', 'for', 'in', 'nor', 'of', 'on', 'or', 'so', 'the', 'to', 'up', 'yet']);
+function titleCase(input: string): string {
+  return input.replace(/[^\s]+/g, (w, i) => {
+    const lower = w.toLowerCase();
+    const bare = lower.replace(/[^a-z']/g, '');
+    if (i > 0 && TITLE_MINOR.has(bare)) return lower;
+    return w.charAt(0).toUpperCase() + w.slice(1);
+  });
+}
+
 function DoneStep({ picks, onDone }: { picks: Record<string, Mood>; onDone: () => void }) {
   const t = useT();
   const now = new Date();
   const { count } = monthStats(picks, now.getFullYear(), now.getMonth());
+
+  const headP = useSharedValue(0);
+  const calP = useSharedValue(0);
+  const btnP = useSharedValue(0);
+  useEffect(() => {
+    const ease = Easing.out(Easing.cubic);
+    headP.value = withTiming(1, { duration: DS_HEAD.ms, easing: ease });
+    calP.value = withDelay(DS_CAL.at, withTiming(1, { duration: DS_CAL.ms, easing: ease }));
+    btnP.value = withDelay(DS_BTN.at, withTiming(1, { duration: DS_BTN.ms, easing: ease }));
+    const wd = setTimeout(() => { headP.value = 1; calP.value = 1; btnP.value = 1; }, DS_TOTAL + 600);
+    return () => clearTimeout(wd);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const headStyle = useAnimatedStyle(() => ({ opacity: headP.value, transform: [{ translateY: (1 - headP.value) * 12 }] }));
+  const calStyle = useAnimatedStyle(() => ({ opacity: calP.value, transform: [{ translateY: (1 - calP.value) * 14 }] }));
+  const btnStyle = useAnimatedStyle(() => ({ opacity: btnP.value, transform: [{ translateY: (1 - btnP.value) * 10 }] }));
+
+  // The count renders rose + bold + 50 % larger, so it has to be its own <Text>.
+  // Split the localized sentence on the rendered number rather than the token,
+  // so every language's word order works.
+  const headline = titleCase(t('moodCheckIn.done.title', { count }));
+  const parts = headline.split(String(count));
   const entriesForCal = React.useMemo(() => {
     const m: Record<string, { mood: Mood; at: number }> = {};
     for (const [k, mood] of Object.entries(picks)) m[k] = { mood, at: 0 };
@@ -345,13 +390,26 @@ function DoneStep({ picks, onDone }: { picks: Record<string, Mood>; onDone: () =
   }, [picks]);
   return (
     <View style={{ paddingTop: 14 }}>
-      <Text style={styles.doneTitle}>{t('moodCheckIn.done.title', { count })}</Text>
-      <View style={{ marginTop: 18 }}>
+      <Animated.Text style={[styles.doneTitle, headStyle]}>
+        {parts.length > 1
+          ? parts.map((seg, i) => (
+              <React.Fragment key={i}>
+                {seg}
+                {i < parts.length - 1 && <Text style={styles.doneTitleCount}>{count}</Text>}
+              </React.Fragment>
+            ))
+          : headline}
+      </Animated.Text>
+      <Animated.View style={[{ marginTop: 18 }, calStyle]}>
         <MonthCalendar cursor={now} entries={entriesForCal} today={now} />
-      </View>
-      <TouchableOpacity style={styles.doneBtn} activeOpacity={0.9} onPress={onDone}>
-        <Text style={styles.doneBtnText}>{t('moodCheckIn.done.cta')}</Text>
-      </TouchableOpacity>
+      </Animated.View>
+      {/* Animated style on a WRAPPER so the touchable is never left
+          Reanimated-owned after the reveal. */}
+      <Animated.View style={btnStyle}>
+        <TouchableOpacity style={styles.doneBtn} activeOpacity={0.9} onPress={onDone}>
+          <Text style={styles.doneBtnText}>{t('moodCheckIn.done.cta')}</Text>
+        </TouchableOpacity>
+      </Animated.View>
     </View>
   );
 }
@@ -382,6 +440,14 @@ const styles = StyleSheet.create({
   doneTitle: {
     fontFamily: FONTS.loraBold, fontWeight: '600', color: TXT,
     fontSize: 24, lineHeight: 32, textAlign: 'center',
+    marginBottom: 10,   // +10 px below the headline (per user)
+  },
+  // The check-in count: theme rose (same as the Done button), bold, 50 % larger
+  // than the headline. lineHeight is left to the parent so the taller glyph
+  // doesn't stretch the line it sits in.
+  doneTitleCount: {
+    fontFamily: FONTS.loraBold, fontWeight: '600',
+    color: ROSE, fontSize: 36,   // 24 × 1.5
   },
   doneBtn: { marginTop: 26, backgroundColor: ROSE, height: 52, borderRadius: BTN_RADIUS, alignItems: 'center', justifyContent: 'center' },
   doneBtnText: { color: '#fff', fontSize: 18, fontWeight: '700', letterSpacing: 0.3 },

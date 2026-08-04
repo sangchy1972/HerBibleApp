@@ -88,6 +88,59 @@ Sender name + subject + a domain-signed sender is what turns *"noreply — Sign 
 to project-553397384848"* into *"Her Bible — Sign in to Her Bible"*. That is the
 line the user judges before opening anything.
 
+**5. Add a DMARC record.** Steps 1-4 fix what the user SEES; this fixes what
+Gmail's filter decides before she sees anything.
+
+Since November 2025 Gmail and Yahoo reject non-compliant mail from bulk senders
+outright rather than filing it as spam. Her Bible is nowhere near the 5,000/day
+"bulk" threshold, so it is not *required* — but a domain with no DMARC record is
+a domain with no stated policy, and low-volume senders are exactly the ones with
+no reputation to fall back on. It is one DNS record.
+
+At your DNS provider, on `everlandapps.com`:
+
+| Type | Name | Value |
+| --- | --- | --- |
+| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:dmarc@everlandapps.com; fo=1` |
+
+`p=none` means "monitor, do not reject" — it changes nothing about how your mail
+is handled, it just tells receivers you exist and asks them to report. Read the
+aggregate reports for a few weeks; once they show SPF and DKIM passing on
+everything you actually send, tighten to `p=quarantine`. **Do not start at
+`p=reject`** — a misaligned record on a domain you also send from by hand will
+bin your own mail.
+
+Step 2 (Customize domain) is what gives you SPF and DKIM. DMARC without those
+two does nothing, so do them in that order.
+
+### How to check it actually worked
+
+Do not guess from one inbox. Send yourself a link, open the message in Gmail on
+the web, ⋮ → **Show original**, and read the top three lines:
+
+```
+SPF:   PASS with domain everlandapps.com
+DKIM:  PASS with domain everlandapps.com
+DMARC: PASS
+```
+
+Three PASSes with **your** domain (not `firebaseapp.com`) is the whole test. If
+DKIM says `firebaseapp.com` while SPF says `everlandapps.com`, step 2's DNS
+records have not propagated yet — give it an hour.
+
+Also worth doing once: send to a Gmail, an Outlook/Hotmail and a Yahoo address
+and see where each lands. Gmail is the strictest of the three for a new sending
+domain, so passing there usually means the others are fine.
+
+### What will NOT help
+
+- Rewording the email. Spam scoring on a one-link transactional mail is
+  dominated by sender reputation, not wording.
+- Asking users to mark it "not spam". It helps that one user's future mail and
+  nobody else's.
+- Sending more mail to "warm up". Warming matters at thousands per day; at this
+  volume you are just sending unwanted mail.
+
 Note: `setEmailLanguage()` in `services/firebaseAuth.ts` is what makes the
 per-language subject actually get picked — Firebase auto-localises only its stock
 templates, and the moment you edit one it is served verbatim unless the request

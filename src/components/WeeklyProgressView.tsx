@@ -536,21 +536,33 @@ const styles = StyleSheet.create({
     marginTop: 30,                                                                // 50 → 30 (-20 px gap to the weekly card above per user)
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    paddingVertical: 36,                                                          // 20 → 36 (+~30 % card height per user)
+    // Was one paddingVertical: 36. Split because the two ends now move
+    // independently: 10px off the top pulls NEXT up toward the card edge, and
+    // 10px off the bottom lets Continue sit closer to it. Net card height is
+    // unchanged by this pair.
+    paddingTop: 26,                                                               // 36 → 26 (-10 px above NEXT, per user)
+    paddingBottom: 26,                                                            // 36 → 26 (Continue 10 px nearer the card's bottom edge)
     paddingHorizontal: 18,
   },
   nextMeta: { minWidth: 0 },
-  nextLabel: { fontSize: 12.65, fontFamily: FONTS.lato, fontWeight: '600', letterSpacing: 1.2, marginBottom: 4, textAlign: 'center' },  // Lato 600; centered with the title per user
+  // Serif, matching the page headline ("Your Day Starts in Faith") rather than
+  // the Lato it used to be — per user, the same typeface as the title.
+  // fontWeight stays '600': FONTS.loraBold + '700' makes Android drop Lora for
+  // system sans (project memory, same note as pageTitle).
+  nextLabel: { fontSize: 12.65, fontFamily: FONTS.loraBold, fontWeight: '600', letterSpacing: 1.2, marginBottom: 24, textAlign: 'center' },  // marginBottom 4 → 24 (+20 px above the plan name, per user)
   nextTitle: { fontSize: 20.24, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold, textAlign: 'center' },   // 17.6 → 20.24 (+15 %), centered per user
   nextContinueBtn: {
-    marginTop: 20,                                                               // 16 → 20 (a little more breathing room in the taller card)
+    marginTop: 30,                                                               // 20 → 30 (button sits 10 px lower, per user)
     alignSelf: 'stretch',
     height: 54,                                                                  // 46 → 54 (taller card per user)
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  nextContinueText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+  // 16 → 17.6 (+10 % per user). This lands it on the app's dominant primary-CTA
+  // size of 18 — at 16 it was the odd one out, SMALLER than nearly every other
+  // filled CTA in the app, which is why it read as slightly weak here.
+  nextContinueText: { color: '#FFFFFF', fontSize: 17.6, fontWeight: '700' },
   laterBtn: { marginTop: 14, alignItems: 'center', paddingVertical: 6 },
   laterText: { fontSize: 15, fontWeight: '600' },
 });

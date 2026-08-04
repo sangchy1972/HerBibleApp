@@ -1356,14 +1356,16 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             pointerEvents={buttonReady ? 'auto' : 'none'}
           >
             <TouchableOpacity
-              onPress={() => {
+              onPress={async () => {
                 if (isRedoRef.current) {
                   navigation.goBack();
-                } else if (isFirstEverRef.current && !permissionGranted) {
+                } else if (isFirstEverRef.current && !permissionGranted && !(await osNotificationsGranted())) {
                   // First-ever prayer (any kind) AND notifications still OFF →
-                  // show the one-time onboarding rationale. If permission is
-                  // already granted we skip it entirely and go straight to the
-                  // completion screen — never nag a user who already opted in.
+                  // show the one-time rationale. The check is against the LIVE OS
+                  // state, not just the cached flag: she may have granted
+                  // permission in system Settings while the app sat in the
+                  // background, and asking someone who already opted in is the
+                  // one outcome this screen must never produce.
                   setShowNotifRationale(true);
                 } else {
                   // Morning OR evening completion → Weekly progress screen
@@ -2016,6 +2018,15 @@ const styles = StyleSheet.create({
 // top-left, body paragraph below, a phone mockup centered, two buttons row at
 // the bottom (Skip / Allow notifications).
 // ─────────────────────────────────────────────────────────────────────────────
+
+// The live OS answer, not our cached flag. Returns true on any error so a
+// failure NEVER results in nagging a user who may already have allowed.
+async function osNotificationsGranted(): Promise<boolean> {
+  try {
+    const p = await Notifications.getPermissionsAsync();
+    return !!p.granted;
+  } catch { return true; }
+}
 
 function NotifRationaleScreen({ onDismiss }: { onDismiss: () => void }) {
   const insets = useSafeAreaInsets();

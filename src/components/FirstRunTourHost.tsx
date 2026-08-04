@@ -62,6 +62,18 @@ const EXIT_RADIUS = 44;
 const CARET = 9;
 const TIP_GAP = 10;
 const TIP_MAX_W = 300;
+
+// Every string in the coach-mark reads 8% larger than the app's usual scale, as
+// one factor rather than five re-typed numbers — so the steps can never drift
+// apart from each other, and the next adjustment is one edit.
+// Applied to the counter, title, body (and its line height), Skip and the CTA:
+// the whole bubble, since these are the only text in the tour.
+// The bubble does not need a matching width or height bump. Its height is
+// MEASURED (`tipH`) and the above/below placement is derived from that
+// measurement every step, so taller text re-places itself; the 300px cap just
+// means longer lines wrap, which the ScrollView-free card handles by growing.
+const TOUR_TEXT_SCALE = 1.08;
+const ts = (px: number) => Math.round(px * TOUR_TEXT_SCALE * 10) / 10;
 const SCRIM_COLOR = TXT;       // plum ink, not black — it's our ink colour
 const SCRIM_ALPHA = 0.72;
 
@@ -509,27 +521,29 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   counter: {
-    fontFamily: FONTS.lato, fontSize: 12, color: TXTSUB,
+    fontFamily: FONTS.lato, fontSize: ts(12), color: TXTSUB,
     letterSpacing: 0.6, marginBottom: 6,
   },
   // NOTE: FONTS.loraBold must pair with fontWeight '600' — '700' makes Android
   // drop Lora and fall back to system sans (project memory).
   title: {
-    fontFamily: FONTS.loraBold, fontSize: 18, fontWeight: '600',
+    fontFamily: FONTS.loraBold, fontSize: ts(18), fontWeight: '600',
     color: TXT, marginBottom: 6,
   },
-  body: { fontFamily: FONTS.lato, letterSpacing: 0.4, fontSize: 14.5, lineHeight: 21, color: TXTSUB },
+  // lineHeight scales with the size. Left at 21 it would have tightened from
+  // 1.45× to 1.34× and the three-line body would read denser, not larger.
+  body: { fontFamily: FONTS.lato, letterSpacing: 0.4, fontSize: ts(14.5), lineHeight: ts(21), color: TXTSUB },
   row: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     marginTop: 16,
   },
-  skip: { fontFamily: FONTS.lato, letterSpacing: 0.4, fontSize: 14, color: TXTSUB },
+  skip: { fontFamily: FONTS.lato, letterSpacing: 0.4, fontSize: ts(14), color: TXTSUB },
   cta: {
     backgroundColor: ROSE, borderRadius: BTN_RADIUS,
     paddingHorizontal: 20, paddingVertical: 9,
   },
   ctaText: {
-    fontFamily: FONTS.latoBold, fontWeight: '700', fontSize: 15,
+    fontFamily: FONTS.latoBold, fontWeight: '700', fontSize: ts(15),
     color: '#FFFFFF', letterSpacing: 0.2,
   },
 });

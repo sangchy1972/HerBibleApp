@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNudgeCoordinator } from '../state/NudgeCoordinatorContext';
 import { NUDGE_PRIORITY } from '../state/nudgePriority';
 import {
@@ -8,7 +8,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
-  Easing, FadeIn, useSharedValue, useAnimatedStyle, withTiming, runOnJS, cancelAnimation,
+  Easing, FadeIn, useSharedValue, useAnimatedStyle, withTiming, withDelay, runOnJS, cancelAnimation,
+  type SharedValue,
 } from 'react-native-reanimated';
 import MoodInputCard from './mood/MoodInputCard';
 import MonthCalendar from './mood/MonthCalendar';
@@ -202,6 +203,57 @@ function Sheet() {
 }
 
 // ── Verse step (waits for the user to tap Continue) ────────────────────────
+
+// ── Verse-step choreography (2.0 s total, per user) ─────────────────────────
+// Beats overlap slightly so it reads as one continuous reveal rather than four
+// separate effects:
+//   0 ──420──▶ heading fades up
+//   300 ─520─▶ card fades + lifts + settles from 0.96
+//   760 ─140─▶ date
+//   860 ─180─▶ reference
+//   1000 ─600─▶ verse, word by word (the "typing" beat)
+//   1620 ─380─▶ Continue button                                   → ends at 2000
+const VS_HEADING = { at: 0, ms: 420 };
+const VS_CARD = { at: 300, ms: 520 };
+const VS_DATE = { at: 760, ms: 140 };
+const VS_REF = { at: 860, ms: 180 };
+const VS_VERSE = { at: 1000, ms: 600 };
+const VS_BTN = { at: 1620, ms: 380 };
+const VS_TOTAL = VS_BTN.at + VS_BTN.ms;   // 2000
+
+// Words reveal in sequence off a single 0→1 value. Each word owns a slice of the
+// timeline and fades+rises within it, so a long verse still finishes on time
+// regardless of length. Word-level (not per-character) on purpose: a 100-char
+// verse would mean 100 animated views on a low-end device for no visible gain.
+function TypedText({ text, progress, style }: { text: string; progress: SharedValue<number>; style?: any }) {
+  const words = useMemo(() => text.split(/(\s+)/).filter(w => w.length > 0), [text]);
+  const n = words.filter(w => !/^\s+$/.test(w)).length || 1;
+  let wordIdx = -1;
+  return (
+    <View style={styles.typedWrap}>
+      {words.map((w, i) => {
+        if (/^\s+$/.test(w)) return <Text key={i} style={style}>{w}</Text>;
+        wordIdx += 1;
+        return <TypedWord key={i} word={w} index={wordIdx} total={n} progress={progress} style={style} />;
+      })}
+    </View>
+  );
+}
+
+function TypedWord({ word, index, total, progress, style }: {
+  word: string; index: number; total: number; progress: SharedValue<number>; style?: any;
+}) {
+  const st = useAnimatedStyle(() => {
+    // Each word's window is 35 % of the timeline, offset by its position — so
+    // words overlap and the line flows instead of ticking one at a time.
+    const span = 0.35;
+    const start = total > 1 ? (index / total) * (1 - span) : 0;
+    const p = Math.min(1, Math.max(0, (progress.value - start) / span));
+    return { opacity: p, transform: [{ translateY: (1 - p) * 5 }] };
+  });
+  return <Animated.Text style={[style, st]}>{word}</Animated.Text>;
+}
+
 function VerseStep({ mood, onContinue }: { mood: Mood; onContinue: () => void }) {
   const t = useT();
   const { lang } = useUILanguage();
@@ -213,12 +265,44 @@ function VerseStep({ mood, onContinue }: { mood: Mood; onContinue: () => void })
   const today = new Date();
   const dateStr = today.toLocaleDateString(localeFor(lang), { month: 'short', day: 'numeric', year: 'numeric' });
 
+  // One shared value per beat; the card's texts share `textP` so their windows
+  // stay locked to each other. Watchdog snaps everything visible if any timing
+  // is dropped — a reveal that stalls must never leave the verse blank.
+  const headP = useSharedValue(0);
+  const cardP = useSharedValue(0);
+  const dateP = useSharedValue(0);
+  const refP = useSharedValue(0);
+  const verseP = useSharedValue(0);
+  const btnP = useSharedValue(0);
+  useEffect(() => {
+    const ease = Easing.out(Easing.cubic);
+    headP.value = withTiming(1, { duration: VS_HEADING.ms, easing: ease });
+    cardP.value = withDelay(VS_CARD.at, withTiming(1, { duration: VS_CARD.ms, easing: ease }));
+    dateP.value = withDelay(VS_DATE.at, withTiming(1, { duration: VS_DATE.ms }));
+    refP.value = withDelay(VS_REF.at, withTiming(1, { duration: VS_REF.ms }));
+    verseP.value = withDelay(VS_VERSE.at, withTiming(1, { duration: VS_VERSE.ms, easing: Easing.linear }));
+    btnP.value = withDelay(VS_BTN.at, withTiming(1, { duration: VS_BTN.ms, easing: ease }));
+    const wd = setTimeout(() => {
+      headP.value = 1; cardP.value = 1; dateP.value = 1; refP.value = 1; verseP.value = 1; btnP.value = 1;
+    }, VS_TOTAL + 600);
+    return () => clearTimeout(wd);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const headStyle = useAnimatedStyle(() => ({ opacity: headP.value, transform: [{ translateY: (1 - headP.value) * 12 }] }));
+  const cardStyle = useAnimatedStyle(() => ({
+    opacity: cardP.value,
+    transform: [{ translateY: (1 - cardP.value) * 16 }, { scale: 0.96 + cardP.value * 0.04 }],
+  }));
+  const dateStyle = useAnimatedStyle(() => ({ opacity: dateP.value }));
+  const refStyle = useAnimatedStyle(() => ({ opacity: refP.value }));
+  const btnStyle = useAnimatedStyle(() => ({ opacity: btnP.value, transform: [{ translateY: (1 - btnP.value) * 10 }] }));
+
   return (
     <View style={{ paddingTop: 12 }}>
-      <Text style={styles.verseTitle}>
+      <Animated.Text style={[styles.verseTitle, headStyle]}>
         {t('mood.verseHeading', { mood: t(`mood.label.${mood}`).toLowerCase() })}
-      </Text>
-      <View style={styles.verseCardWrap}>
+      </Animated.Text>
+      <Animated.View style={[styles.verseCardWrap, cardStyle]}>
         <ImageBackground source={bgSource} style={styles.verseCard} imageStyle={styles.verseCardImg} resizeMode="cover">
           <LinearGradient
             colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.55)']}
@@ -226,15 +310,21 @@ function VerseStep({ mood, onContinue }: { mood: Mood; onContinue: () => void })
             style={StyleSheet.absoluteFillObject}
           />
           <View>
-            <Text style={styles.verseDate}>{dateStr}</Text>
-            <Text style={styles.verseRef}>{v.ref}</Text>
-            <Text style={styles.verseText}>{v.text}</Text>
+            <Animated.Text style={[styles.verseDate, dateStyle]}>{dateStr}</Animated.Text>
+            <Animated.Text style={[styles.verseRef, refStyle]}>{v.ref}</Animated.Text>
+            {/* The "typing" beat — words arrive in sequence. */}
+            <TypedText text={v.text} progress={verseP} style={styles.verseText} />
           </View>
         </ImageBackground>
-      </View>
-      <TouchableOpacity style={styles.doneBtn} activeOpacity={0.9} onPress={onContinue}>
-        <Text style={styles.doneBtnText}>{t('common.continue')}</Text>
-      </TouchableOpacity>
+      </Animated.View>
+      {/* Last beat. The animated style wraps the button rather than sitting on
+          it, so the touchable itself is never Reanimated-owned once the reveal
+          has finished (stale-hit-region rule this repo already follows). */}
+      <Animated.View style={btnStyle}>
+        <TouchableOpacity style={styles.doneBtn} activeOpacity={0.9} onPress={onContinue}>
+          <Text style={styles.doneBtnText}>{t('common.continue')}</Text>
+        </TouchableOpacity>
+      </Animated.View>
     </View>
   );
 }
@@ -281,6 +371,8 @@ const styles = StyleSheet.create({
   verseCardImg: { borderRadius: 20 },
   verseDate: { fontSize: 14, color: 'rgba(255,255,255,0.65)', marginBottom: 8 },
   verseRef: { fontSize: 18.3, fontWeight: '700', color: '#fff', letterSpacing: 0.3, marginBottom: 22 },
+  // Word-reveal container: row + wrap reproduces Text's line breaking.
+  typedWrap: { flexDirection: 'row', flexWrap: 'wrap' },
   verseText: { fontFamily: FONTS.merriweather, fontSize: 17.5, lineHeight: 27, color: 'rgba(255,255,255,0.96)' },
 
   doneTitle: {

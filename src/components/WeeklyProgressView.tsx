@@ -173,7 +173,7 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack, on
           the celebration title now frames the whole screen, not the card. */}
       <Animated.Text
         entering={FadeIn.duration(360)}
-        style={[styles.pageTitle, { marginTop: insets.top + 18 }]}
+        style={[styles.pageTitle, { marginTop: insets.top + 38 }]}
       >
         {headline}
       </Animated.Text>
@@ -209,7 +209,7 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack, on
               <View
                 key={i}
                 style={[
-                  styles.dayCircle,
+                  styles.dayCell,
                   done && styles.dayDone,
                   isToday && { borderWidth: 2, borderColor: accent },
                 ]}
@@ -423,16 +423,29 @@ const styles = StyleSheet.create({
   blobD: { width: 360, height: 360, bottom: -80, left: -100 },
   blobE: { width: 240, height: 240, bottom: '12%', right: -50 },
   // Translucent white card (reference layout): lottie + "Your Nth day" line +
-  // weekday calendar live together. Kept ~25 % shorter than the reference by
-  // the compact lottie + paddings.
+  // weekday calendar live together.
+  //
+  // borderRadius matches nextCard's 20 deliberately. At 24 against the Gospel
+  // card's 20 the two stacked cards read as two different components rather
+  // than one family — a 4px difference nobody can name but everybody sees.
+  //
+  // The vertical padding is doing the +25% height the design called for. The
+  // card has no fixed height (content drives it), so the arithmetic is against
+  // the reminders-ON stack, which is what this screen shows once a user has set
+  // reminders — i.e. almost always after day one:
+  //   lottie 166 + sub (11 + ~24) + dayRow (18 + 46) = 265
+  //   old height ≈ 290, target 362, so 97 of padding: 48 top + 50 bottom.
+  // With the reminder CTA visible the card is already much taller, so the same
+  // 97px is a smaller proportional bump there. That is the right trade — the
+  // reminders-ON state is the one being tuned.
   card: {
-    marginTop: 22,
+    marginTop: 32,                                                                // 22 → 32 (+10 px gap under the page title, per user)
     marginHorizontal: 16,
     backgroundColor: 'rgba(255,255,255,0.68)',
-    borderRadius: 24,
+    borderRadius: 20,                                                             // 24 → 20, matching nextCard
     paddingHorizontal: 22,
-    paddingTop: 18,
-    paddingBottom: 20,
+    paddingTop: 48,                                                               // 18 → 48
+    paddingBottom: 50,                                                            // 20 → 50
     alignItems: 'center',
   },
   dayRow: {
@@ -441,10 +454,15 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     marginTop: 18,
   },
-  dayCircle: {
+  // Rounded rectangle, not a circle (per user). Taller than wide so it reads as
+  // a rectangle rather than a rounded square — at 38×38 with a softened radius
+  // the eye still calls it a circle. Width stays 38: seven of these plus
+  // space-between already fill the card on an SE, so the growth has to be
+  // vertical.
+  dayCell: {
     width: 38,
-    height: 38,
-    borderRadius: 19,
+    height: 46,
+    borderRadius: 13,
     borderWidth: 1.5,
     borderColor: 'rgba(30,27,46,0.15)',
     alignItems: 'center',
@@ -456,12 +474,12 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     backgroundColor: '#F4D58A',
   },
-  dayLetter: { fontSize: 13, color: TXTSUB, fontWeight: '600' },
+  dayLetter: { fontSize: 14, color: TXTSUB, fontWeight: '600' },                  // 13 → 14 (+8 % per user)
   sub: {
     fontSize: 18,
     color: TXT,
     textAlign: 'center',
-    marginTop: 6,
+    marginTop: 11,                                                                // 6 → 11 (+5 px below the lottie, per user)
   },
   subStrong: { fontWeight: '700' },
   reminderBtn: {

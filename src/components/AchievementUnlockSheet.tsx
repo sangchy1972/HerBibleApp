@@ -261,7 +261,17 @@ export default function AchievementUnlockSheet() {
 
       {/* Off-screen full-resolution copy of the card — the capture source. */}
       <View style={styles.offscreen} pointerEvents="none">
-        <ViewShot ref={shotRef} options={{ format: CAPTURE_FORMAT, quality: CAPTURE_QUALITY, result: 'tmpfile' }} style={{ width: CAPTURE_W }}>
+        {/* WHITE BACKING, and it is not cosmetic: we export JPEG, which has no
+            alpha channel, so the card's rounded corners — transparent in the
+            view — flattened to BLACK in the shared image. Backing the capture
+            with an opaque colour makes those corners white instead. (Keeping
+            JPEG on purpose: PNG triples the file size for a photo-like card,
+            and several social targets recompress or mishandle PNG anyway.) */}
+        <ViewShot
+          ref={shotRef}
+          options={{ format: CAPTURE_FORMAT, quality: CAPTURE_QUALITY, result: 'tmpfile' }}
+          style={[styles.captureHost, { width: CAPTURE_W }]}
+        >
           <BadgeCardArt {...cardProps} width={CAPTURE_W} />
         </ViewShot>
       </View>
@@ -317,6 +327,8 @@ const styles = StyleSheet.create({
   collectText: { color: '#FFFFFF', fontFamily: FONTS.sansBold, fontWeight: '700', fontSize: 19, letterSpacing: 0.6 },
   // Off-screen capture host — rendered but pushed far off-screen and invisible.
   offscreen: { position: 'absolute', left: -10000, top: -10000, opacity: 0 },
+  // Opaque backing for the JPEG export — see the note at the capture host.
+  captureHost: { backgroundColor: '#FFFFFF' },
   toast: {
     position: 'absolute', alignSelf: 'center',
     backgroundColor: 'rgba(20,16,28,0.9)', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 20,

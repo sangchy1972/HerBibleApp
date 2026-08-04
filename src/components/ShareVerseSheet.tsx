@@ -339,7 +339,10 @@ export default function ShareVerseSheet({ reference, text, onClose, bgSource }: 
                   key={fmt}
                   ref={r => { fullRefs.current[fmt] = r; }}
                   options={{ format: CAPTURE_FORMAT, quality: CAPTURE_QUALITY, result: 'tmpfile' }}
-                  style={{ width: meta.w, height: meta.h }}
+                  // Opaque backing: JPEG has no alpha, so any transparent pixel
+                  // (a rounded corner, an image that fails to load) flattens to
+                  // BLACK in the shared file. Same fix as the badge card.
+                  style={{ width: meta.w, height: meta.h, backgroundColor: '#FFFFFF' }}
                 >
                   <VerseCardArt format={fmt} reference={reference} text={text} width={meta.w} bgSource={bgSource} />
                 </ViewShot>

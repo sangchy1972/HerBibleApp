@@ -87,11 +87,11 @@ Obrigada por caminhar com Her Bible.
 ```
 Découvrez le Défi Biblique : une façon paisible de passer du temps dans la Parole.
 
-• Répondez à cinq questions par série et voyez si vous connaissez les Écritures
-• Recevez une carte écrite pour ce que vous portez aujourd'hui
-• Reconstituez pièce par pièce des tableaux classiques de scènes bibliques
-• Trois séries par jour, pour en faire un rythme et jamais une corvée
-• Chaque carte et chaque tableau réunis restent dans votre Profil
+• Cinq questions par série, pour voir si vous connaissez les Écritures
+• Une carte écrite pour ce que vous portez aujourd'hui
+• Des tableaux classiques de scènes bibliques, reconstitués pièce par pièce
+• Trois séries par jour : un rythme, jamais une corvée
+• Vos cartes et vos tableaux restent dans votre Profil
 
 Ainsi que des améliorations de stabilité.
 

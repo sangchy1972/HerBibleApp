@@ -204,22 +204,26 @@ function Sheet() {
 
 // ── Verse step (waits for the user to tap Continue) ────────────────────────
 
-// ── Verse-step choreography (2.0 s total, per user) ─────────────────────────
-// Beats overlap slightly so it reads as one continuous reveal rather than four
-// separate effects:
-//   0 ──420──▶ heading fades up
-//   300 ─520─▶ card fades + lifts + settles from 0.96
-//   760 ─140─▶ date
-//   860 ─180─▶ reference
-//   1000 ─600─▶ verse, word by word (the "typing" beat)
-//   1620 ─380─▶ Continue button                                   → ends at 2000
-const VS_HEADING = { at: 0, ms: 420 };
-const VS_CARD = { at: 300, ms: 520 };
-const VS_DATE = { at: 760, ms: 140 };
-const VS_REF = { at: 860, ms: 180 };
-const VS_VERSE = { at: 1000, ms: 600 };
-const VS_BTN = { at: 1620, ms: 380 };
-const VS_TOTAL = VS_BTN.at + VS_BTN.ms;   // 2000
+// ── Verse-step choreography (3.3 s total, per user) ─────────────────────────
+// The content beats overlap so it reads as one continuous reveal, and they all
+// land by 2500. Then a deliberate HALF-SECOND of stillness — she finishes
+// reading the verse before anything asks for a tap — and only then the button:
+//   0    ─620─▶ heading fades up
+//   450  ─700─▶ card fades + lifts + settles from 0.96
+//   1100 ─200─▶ date
+//   1250 ─250─▶ reference
+//   1450 ─1050▶ verse, word by word (the "typing" beat)      → content done 2500
+//   ...............  500 ms pause, nothing moves  ...............
+//   3000 ─300─▶ Continue button                                   → ends at 3300
+const VS_HEADING = { at: 0, ms: 620 };
+const VS_CARD = { at: 450, ms: 700 };
+const VS_DATE = { at: 1100, ms: 200 };
+const VS_REF = { at: 1250, ms: 250 };
+const VS_VERSE = { at: 1450, ms: 1050 };
+const VS_CONTENT_END = VS_VERSE.at + VS_VERSE.ms;   // 2500
+const VS_GAP = 500;
+const VS_BTN = { at: VS_CONTENT_END + VS_GAP, ms: 300 };   // 3000
+const VS_TOTAL = VS_BTN.at + VS_BTN.ms;   // 3300
 
 // Words reveal in sequence off a single 0→1 value. Each word owns a slice of the
 // timeline and fades+rises within it, so a long verse still finishes on time

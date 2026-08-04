@@ -1294,6 +1294,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'moodCheckIn.input.save':        { en: "Save today's mood", context: 'Primary button that saves the picked mood + note.' },
   'moodCheckIn.slider.heavy':      { en: 'Heavy', context: 'Left end of the mood slider (most burdened / heavy feeling). One short word.' },
   'moodCheckIn.slider.radiant':    { en: 'Radiant', context: 'Right end of the mood slider (most joyful / radiant feeling). One short word.' },
+  'achievement.savedToast':        { en: 'Saved to your Achievements', context: 'Brief toast after tapping Collect on the badge-unlock screen. Tells her WHERE the badge went, since the screen closes — Achievements is the Profile section that lists every badge. Keep it short enough for one line in a small pill.' },
   'moodCheckIn.done.title':        { en: "You've completed {count} check-ins this month.", context: 'Headline on the completion step after saving. {count} = mood check-ins logged this month.' },
   'moodCheckIn.done.cta':          { en: 'Done', context: 'Button that closes the mood sheet after the completion step.' },
   'moodDashboard.monthTitle':      { en: 'Your heart with God', context: 'Default title of the month view in the mood dashboard. Devotional, poetic.' },

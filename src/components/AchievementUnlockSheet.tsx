@@ -58,6 +58,26 @@ const BADGE_MS = 1200;
 const RAYS_MS = 1400;
 const RAYS_DELAY = RISE_MS + BADGE_MS;   // rays only once the badge is fully up
 
+
+// The same translucent grey pill the save-verse and notes confirmations use.
+// Absolutely positioned at app root with pointerEvents="none", so it floats over
+// whatever screen she lands on and can never intercept a tap.
+function SavedToast({ label, bottom }: { label: string; bottom: number }) {
+  const o = useSharedValue(0);
+  useEffect(() => {
+    o.value = withTiming(1, { duration: 200 });
+    return () => { cancelAnimation(o); };
+  }, [o]);
+  const st = useAnimatedStyle(() => ({ opacity: o.value, transform: [{ translateY: (1 - o.value) * 8 }] }));
+  return (
+    <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+      <Animated.View style={[styles.toast, { bottom }, st]}>
+        <Text style={styles.toastText}>{label}</Text>
+      </Animated.View>
+    </View>
+  );
+}
+
 export default function AchievementUnlockSheet() {
   const { awardQueue, dismissAward } = useAchievements();
   const { current: translation } = useTranslation();
@@ -79,6 +99,20 @@ export default function AchievementUnlockSheet() {
   }, [visible]);
   const active = coord.isActive('achievementUnlock');
   const close = useCallback(() => { coord.notifyDismissed('achievementUnlock'); dismissAward(); }, [coord, dismissAward]);
+
+  // Collect closes the screen — which left a brand-new user with no idea the
+  // badge was kept anywhere. A short toast names the destination. It lives in
+  // the HOST's tree, not inside the Modal, because the Modal unmounts on the
+  // same tap; the host is app-root-mounted and stays.
+  const [savedToast, setSavedToast] = useState(false);
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (savedTimer.current) clearTimeout(savedTimer.current); }, []);
+  const onCollect = useCallback(() => {
+    setSavedToast(true);
+    if (savedTimer.current) clearTimeout(savedTimer.current);
+    savedTimer.current = setTimeout(() => setSavedToast(false), 2200);
+    close();
+  }, [close]);
 
   // Defer opening until any fullscreen interstitial ad has closed — otherwise
   // the slide-up would play hidden underneath the native ad overlay.
@@ -164,7 +198,11 @@ export default function AchievementUnlockSheet() {
     finally { setBusy(false); }
   }, [busy, captureCard, current, translation.code, showToast, t]);
 
-  if (!current) return null;
+  // Not `if (!current) return null` any more: the confirmation toast has to
+  // survive the badge being dequeued.
+  if (!current) {
+    return savedToast ? <SavedToast label={t('achievement.savedToast')} bottom={insets.bottom + 90} /> : null;
+  }
 
   const name = localizedAchievementName(current, translation.code);
   const description = localizedAchievementRule(current, translation.code);
@@ -215,7 +253,7 @@ export default function AchievementUnlockSheet() {
             </Animated.View>
           </View>
 
-          <TouchableOpacity onPress={close} activeOpacity={0.9} style={styles.collectBtn}>
+          <TouchableOpacity onPress={onCollect} activeOpacity={0.9} style={styles.collectBtn}>
             <Text style={styles.collectText}>{ui.collect}</Text>
           </TouchableOpacity>
         </View>

@@ -100,10 +100,32 @@ export function noteNavigation(routeName: string): void {
   }
 }
 
+/**
+ * Skip the hot-start interstitial on the NEXT return to the foreground.
+ *
+ * For excursions the app itself sent her on — today only the store-review
+ * handoff. Writing a real Play review takes well over HOTSTART_MIN_BG_MS, so
+ * without this the thank-you for doing us the favour is a full-screen ad the
+ * instant she comes back. One hop only.
+ *
+ * This does NOT touch the settled decision that the hot-start interstitial
+ * stays; it exempts a single trip that we initiated.
+ *
+ * Expires on its own: a handoff that never actually left the app would
+ * otherwise leave the flag armed and mute a genuine hot start hours later.
+ */
+const HOTSTART_SUPPRESS_WINDOW_MS = 10 * 60_000;
+let hotStartSuppressedUntil = 0;
+export function suppressNextHotStart(): void {
+  hotStartSuppressedUntil = Date.now() + HOTSTART_SUPPRESS_WINDOW_MS;
+}
+
 function onAppState(next: AppStateStatus): void {
   if (next === 'background' || next === 'inactive') { bgAt = Date.now(); return; }
   if (next === 'active') {
-    if (bgAt != null && Date.now() - bgAt >= HOTSTART_MIN_BG_MS && isAggressive()) {
+    const suppressed = hotStartSuppressedUntil > Date.now();
+    hotStartSuppressedUntil = 0;                     // consumed either way
+    if (!suppressed && bgAt != null && Date.now() - bgAt >= HOTSTART_MIN_BG_MS && isAggressive()) {
       maybeShowInterstitial('app_open');
     }
     bgAt = null;

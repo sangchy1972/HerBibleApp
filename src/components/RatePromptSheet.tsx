@@ -7,6 +7,7 @@ import Feather from '@expo/vector-icons/Feather';
 import * as StoreReview from 'expo-store-review';
 import Animated, { Easing, useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { TXT, TXTSUB, ROSE, INK_06, BTN_RADIUS, FONTS } from '../constants/theme';
+import { suppressNextHotStart } from '../services/adFrequency';
 import { useRatePrompt } from '../state/RatePromptContext';
 import { useT } from '../i18n/useT';
 
@@ -51,26 +52,40 @@ const PLAY_REVIEW_WEB = `https://play.google.com/store/apps/details?id=${PACKAGE
 // in-app panel), so it costs nothing in the normal case, and it can't go stale
 // the way a hardcoded id would.
 async function appleReviewUrl(): Promise<string | null> {
+  const ctl = new AbortController();
+  const to = setTimeout(() => ctl.abort(), 4000);
   try {
-    const ctl = new AbortController();
-    const to = setTimeout(() => ctl.abort(), 4000);
     const res = await fetch(`https://itunes.apple.com/lookup?bundleId=${PACKAGE_ID}`, { signal: ctl.signal });
-    clearTimeout(to);
     const json = await res.json();
     const id = json?.results?.[0]?.trackId;
     return typeof id === 'number' ? `https://apps.apple.com/app/id${id}?action=write-review` : null;
-  } catch { return null; }
+  } catch { return null; } finally { clearTimeout(to); }
+}
+
+/**
+ * Settled, failed, or still running after `ms`. Never rejects and never leaves an
+ * unhandled rejection behind, so a late failure can't surface as a redbox.
+ */
+async function outcomeOf(p: Promise<unknown>, ms: number): Promise<'settled' | 'failed' | 'timeout'> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<'timeout'>(res => { timer = setTimeout(() => res('timeout'), ms); });
+  const settled: Promise<'settled' | 'failed'> = p.then(() => 'settled' as const, () => 'failed' as const);
+  try { return await Promise.race([settled, timeout]); } finally { clearTimeout(timer); }
 }
 
 /** Last resort: the store's own write-a-review page. True if we got there. */
 async function openStoreReviewPage(): Promise<boolean> {
   // NEVER launch the store from the background. The user pressed Home / took a
   // call inside our handoff window: on Android 10+ the activity start is blocked
-  // anyway, and on iOS it would yank them out of whatever they switched to.
+  // anyway — and it still resolves, so we would have recorded a review that
+  // never happened — while on iOS it would yank them out of whatever they
+  // switched to, seconds after they left.
   if (AppState.currentState !== 'active') return false;
-  const urls = Platform.OS === 'android'
-    ? [PLAY_REVIEW, PLAY_REVIEW_WEB]
-    : [await appleReviewUrl()];
+  // Positive per-platform tests: an `!== 'android'` fallthrough would send an
+  // unbuilt web target to the App Store.
+  const urls = Platform.OS === 'ios' ? [await appleReviewUrl()]
+    : Platform.OS === 'android' ? [PLAY_REVIEW, PLAY_REVIEW_WEB]
+    : [];
   for (const url of urls) {
     if (!url) continue;
     // openURL, never canOpenURL: on Android 11+ the latter needs a <queries>
@@ -121,7 +136,12 @@ export default function RatePromptSheet({ onClose }: { onClose: () => void }) {
   const onYes = () => {
     if (busyRef.current) return;
     busyRef.current = true;
-    markYes();
+    // markYes() deliberately does NOT fire here. `choice: 'yes'` silences the
+    // prompt forever, so recording it up front meant one offline tap — no
+    // network for the Apple lookup, no Play on the device — permanently retired
+    // the only prompt we have AND got no review. It is recorded once the handoff
+    // actually lands; a failure falls back to the dismissed cadence and asks
+    // again in a few days.
     setHandingOff(true);
   };
 
@@ -132,10 +152,10 @@ export default function RatePromptSheet({ onClose }: { onClose: () => void }) {
     finish();
   };
 
-  // Context callbacks are re-created on every state write (markYes() causes one),
-  // so they must NOT be effect deps — the effect would re-run and hand off twice.
-  const api = useRef({ markRated, finish });
-  api.current = { markRated, finish };
+  // Context callbacks are re-created on every state write, so they must NOT be
+  // effect deps — the effect would re-run and hand off twice.
+  const api = useRef({ markYes, markRated, finish });
+  api.current = { markYes, markRated, finish };
 
   useEffect(() => {
     if (!handingOff) return;
@@ -153,21 +173,43 @@ export default function RatePromptSheet({ onClose }: { onClose: () => void }) {
       // foreground scene on iOS. The old code swallowed that rejection, which is
       // exactly why tapping Yes did NOTHING on the user's device. Any failure now
       // falls through to the store's own write-a-review page.
+      //
+      // iOS CAVEAT, so nobody trusts `done` more than it deserves: Apple's API
+      // has no completion handler, so requestReview() resolves immediately
+      // whether or not the panel appeared (it silently declines once the
+      // 3-per-365-days quota is spent). Our cadence asks at most once per
+      // install, so exhausting that quota isn't reachable in practice — but on
+      // iOS a resolve means "asked", never "shown".
       let done = false;
-      try {
-        if (await StoreReview.isAvailableAsync()) {
-          // NOTE: on Android this settles only when the panel CLOSES (the user may
-          // be typing a review), so it is deliberately not raced against a short
-          // timeout — that would fire the fallback on top of an open panel.
-          await StoreReview.requestReview();
-          done = true;
-        }
-      } catch { /* fall through to the store page */ }
-      if (done) { api.current.markRated(); api.current.finish(); return; }
+      if (AppState.currentState === 'active') {
+        // She is about to leave the app on our errand — don't let the hot-start
+        // interstitial be what greets her when she comes back from writing it.
+        suppressNextHotStart();
+        try {
+          if (await StoreReview.isAvailableAsync()) {
+            // BOUNDED. On Android the module settles this promise from inside
+            // Play's completion listener, via appContext.throwingActivity — and
+            // if our Activity is gone by then ("don't keep activities", a config
+            // change) that getter THROWS inside the listener and the promise is
+            // never settled at all. An unbounded await would swallow the tap
+            // forever.
+            //
+            // The window is "did the panel appear", not "did she finish": on
+            // Android the flow settles only when the panel CLOSES, and it runs in
+            // Play's own Activity, so ours has paused. A timeout while we are no
+            // longer foreground therefore means it DID show — treat that as done
+            // and never open the store page on top of an open panel.
+            const outcome = await outcomeOf(StoreReview.requestReview(), 5000);
+            done = outcome === 'settled'
+              || (outcome === 'timeout' && AppState.currentState !== 'active');
+          }
+        } catch { /* fall through to the store page */ }
+      }
+      if (done) { api.current.markYes(); api.current.markRated(); api.current.finish(); return; }
       // Gave up on this prompt already (watchdog / returned from the store) —
       // do not launch anything late.
       if (cancelled) { api.current.finish(); return; }
-      if (await openStoreReviewPage()) api.current.markRated();
+      if (await openStoreReviewPage()) { api.current.markYes(); api.current.markRated(); }
       api.current.finish();
     }, 400);
 

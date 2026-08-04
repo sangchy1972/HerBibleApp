@@ -9,6 +9,14 @@ import { VerseOfDayWidget } from './VerseOfDayWidget';
 // cross-process channel — the headless widget process can read it without a
 // custom native bridge.
 export const WIDGET_VERSE_KEY = 'verse-of-day-widget';
+// Whether a verse widget is currently ON her home screen. Android exposes no
+// API an app can poll for this, but the widget host DOES deliver lifecycle
+// actions to this handler — so we record them and let the in-app nudge read the
+// flag. WIDGET_ADDED/UPDATE prove one exists; WIDGET_DELETED only tells us THAT
+// instance went away, and she may still have another, so a delete leaves the
+// flag alone rather than claiming she has none (re-nagging someone who kept a
+// widget is worse than staying quiet).
+export const WIDGET_PRESENT_KEY = 'widget:present:v1';
 
 interface SegmentVerse { verse: string; reference: string; bg?: string | null }
 
@@ -80,6 +88,9 @@ export const widgetTaskHandler = async (props: WidgetTaskHandlerProps): Promise<
   const { widgetInfo, widgetAction, renderWidget } = props;
   if (!(VERSE_WIDGET_NAMES as readonly string[]).includes(widgetInfo.widgetName)) return;
   if (widgetAction === 'WIDGET_DELETED') return;
+  // Any action other than DELETE means a widget instance exists and is being
+  // rendered — that is our "she has one" signal.
+  try { await AsyncStorage.setItem(WIDGET_PRESENT_KEY, '1'); } catch {}
 
   const cache = await readCache();
   renderWidget(buildVerseWidgetElement(cache, { width: widgetInfo.width, height: widgetInfo.height }));

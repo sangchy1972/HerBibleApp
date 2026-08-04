@@ -6,27 +6,90 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import { usePrayer } from '../state/PrayerContext';
-import { useAchievements } from '../state/AchievementsContext';
+import { useGospelsPsalms } from '../state/GospelsPsalmsContext';
+import { useReadChapters } from '../state/ReadChaptersContext';
+import { usePlanCompletion } from '../state/PlanCompletionContext';
+import { WIDGET_PRESENT_KEY } from '../../widgets/widget-task-handler';
 import { useNudgeCoordinator } from '../state/NudgeCoordinatorContext';
 import { NUDGE_PRIORITY } from '../state/nudgePriority';
 import { useT } from '../i18n/useT';
 import { ROSE, TXT, TXTSUB, FONTS } from '../constants/theme';
 import type { RootStackParamList } from '../navigation/types';
 
-// One-time proactive nudge to add the home-screen widget — for engaged users
-// (prayed at least once) around day 3+. Coordinator-managed (priority 60) so it
-// never stacks; shown once ever, then never again.
-const SHOWN_KEY = 'nudge:widgetInstall:shown:v1';
+// Proactive nudge to add the home-screen widget.
+//
+// POLICY (per user):
+//  • Eligible from DAY ONE — no install-age floor. What earns the ask is USE,
+//    not tenure: she must have used MORE THAN TWO of the app's core features
+//    today-or-ever (morning prayer, Gospel & Psalm, Bible reading, a plan day).
+//    That lands the ask by her third completed task at the latest, i.e. at a
+//    moment she has just been rewarded rather than interrupted.
+//  • Repeats DAILY while she still has no widget, at that same earned moment.
+//  • After 3 asks she has not acted on, backs off to once every 3 DAYS. It never
+//    stops entirely — the widget is the app's main retention surface — but it
+//    stops behaving like a nag.
+//  • Goes quiet the moment a widget actually exists (WIDGET_PRESENT_KEY, written
+//    by the widget task handler when the host renders an instance).
+// Coordinator-managed (priority 60) so it can never stack with another prompt.
+const SHOWN_KEY = 'nudge:widgetInstall:shown:v1';        // legacy once-ever flag; still honoured as "added" for old installs
+const ASK_COUNT_KEY = 'nudge:widgetInstall:asks:v1';     // how many times she has been asked
+const LAST_ASK_YMD_KEY = 'nudge:widgetInstall:lastYmd:v1';
+const ASKS_BEFORE_BACKOFF = 3;
+const BACKOFF_DAYS = 3;
+const FEATURES_REQUIRED = 2;                             // "more than two features" → strictly greater
+const ymdOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const daysBetweenYmd = (a: string, b: string): number => {
+  const p = (x: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(x); return m ? new Date(+m[1], +m[2] - 1, +m[3]).getTime() : NaN; };
+  const d = (p(b) - p(a)) / 86400000;
+  return Number.isFinite(d) ? Math.round(d) : Infinity;
+};
 
 export default function WidgetInstallHost() {
   const t = useT();
   const nav = useNavigation<NavigationProp<RootStackParamList>>();
   const { everMorning } = usePrayer();
-  const { daysSinceFirstLaunch } = useAchievements();
+  const gp = useGospelsPsalms();
+  const { chaptersRead } = useReadChapters();
+  const { totalDayCompletions } = usePlanCompletion();
   const coord = useNudgeCoordinator();
-  const [shown, setShown] = useState<boolean | null>(null);   // null = loading
+  // null = still loading persisted state; nothing is eligible until it resolves.
+  const [gate, setGate] = useState<{ has: boolean; asks: number; lastYmd: string } | null>(null);
 
-  useEffect(() => { AsyncStorage.getItem(SHOWN_KEY).then(v => setShown(!!v)).catch(() => setShown(false)); }, []);
+  useEffect(() => {
+    (async () => {
+      try {
+        const [present, legacyShown, asks, lastYmd] = await AsyncStorage.multiGet(
+          [WIDGET_PRESENT_KEY, SHOWN_KEY, ASK_COUNT_KEY, LAST_ASK_YMD_KEY],
+        ).then(rows => rows.map(([, v]) => v));
+        setGate({
+          // A widget the host has rendered, OR the legacy once-ever flag from
+          // builds that had no detection (treat those users as done — asking
+          // someone who already added it is the worse error).
+          has: present === '1' || legacyShown === '1',
+          asks: Number(asks) || 0,
+          lastYmd: lastYmd ?? '',
+        });
+      } catch { setGate({ has: false, asks: 0, lastYmd: '' }); }
+    })();
+  }, []);
+
+  // How many DISTINCT core features she has used. Lifetime, not per-day: the
+  // point is "she knows what this app does", and that doesn't reset overnight.
+  const featuresUsed =
+    (everMorning ? 1 : 0)
+    + ((gp.morning.doneToday || gp.evening.doneToday
+        || gp.morning.day > 1 || gp.evening.day > 1
+        || gp.morning.complete || gp.evening.complete || gp.round > 1) ? 1 : 0)
+    + (chaptersRead > 0 ? 1 : 0)
+    + (totalDayCompletions > 0 ? 1 : 0);
+
+  const today = ymdOf(new Date());
+  const cadenceOk = !gate ? false
+    : gate.lastYmd === ''                                   // never asked
+      ? true
+      : gate.asks >= ASKS_BEFORE_BACKOFF
+        ? daysBetweenYmd(gate.lastYmd, today) >= BACKOFF_DAYS   // backed off
+        : gate.lastYmd !== today;                               // once per day
 
   // Android ONLY. iOS has no API to programmatically add a home-screen widget,
   // and the app ships no iOS WidgetKit widget — so nudging iOS users to "add the
@@ -38,7 +101,10 @@ export default function WidgetInstallHost() {
   // the widget's promise ("today's verse and your next prayer on your home
   // screen") is actually something she has experienced. The day-3 floor stays, and
   // the nudge coordinator still serialises this against every other prompt.
-  const eligible = Platform.OS === 'android' && shown === false && daysSinceFirstLaunch >= 3 && everMorning;
+  const eligible = Platform.OS === 'android'
+    && gate !== null && !gate.has
+    && featuresUsed > FEATURES_REQUIRED   // strictly MORE than two features
+    && cadenceOk;
 
   // `eligible` contains `shown === false`, and the effect below sets `shown`
   // true the moment the slot is granted — so without the `if (active) return`
@@ -74,8 +140,10 @@ export default function WidgetInstallHost() {
   useEffect(() => {
     if (active && !markedRef.current) {
       markedRef.current = true;
-      setShown(true);   // one-time: mark shown the moment it appears
-      AsyncStorage.setItem(SHOWN_KEY, '1').catch(() => {});
+      // Record THIS ask (count + date) rather than latching a once-ever flag —
+      // the cadence above needs both to decide when to come back.
+      setGate(g => (g ? { ...g, asks: g.asks + 1, lastYmd: today } : g));
+      AsyncStorage.multiSet([[ASK_COUNT_KEY, String((gate?.asks ?? 0) + 1)], [LAST_ASK_YMD_KEY, today]]).catch(() => {});
     }
     if (!active) markedRef.current = false;
   }, [active]);

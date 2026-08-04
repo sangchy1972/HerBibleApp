@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
     height: 54, borderRadius: BTN_RADIUS, backgroundColor: ROSE,
     alignItems: 'center', justifyContent: 'center',
   },
-  ctaText: { fontFamily: FONTS.latoBold, fontSize: 16.5, color: '#FFFFFF', letterSpacing: 0.4 },
+  ctaText: { fontFamily: FONTS.latoBold, fontSize: 17.5, color: '#FFFFFF', letterSpacing: 0.4 },   // CTA size unified at 17.5 (was 16.5) — per user
   offscreen: { position: 'absolute', left: -9999, top: 0 },
   toast: {
     position: 'absolute', left: 40, right: 40, bottom: 190,

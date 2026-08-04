@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT, textAlign: 'center', marginBottom: 8 },
   body: { fontSize: 14.5, lineHeight: 21, color: TXTSUB, textAlign: 'center', fontFamily: FONTS.lato, letterSpacing: 0.4, marginBottom: 20 },
   cta: { alignSelf: 'stretch', height: 48, borderRadius: 24, backgroundColor: ROSE, alignItems: 'center', justifyContent: 'center' },
-  ctaText: { color: '#FFFFFF', fontSize: 16.5, fontWeight: '700', letterSpacing: 0.3 },
+  ctaText: { color: '#FFFFFF', fontSize: 17.5, fontWeight: '700', letterSpacing: 0.3 },   // CTA size unified at 17.5 (was 16.5) — per user
   later: { marginTop: 10, paddingVertical: 8 },
   laterText: { color: TXTSUB, fontSize: 15, fontWeight: '600' },
 });

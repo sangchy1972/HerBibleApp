@@ -1804,7 +1804,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
   },
-  signInBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  signInBtnText: { color: '#fff', fontSize: 17.5, fontWeight: '700' },   // CTA size unified at 17.5 (was 16) — per user
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',

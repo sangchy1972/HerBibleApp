@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     shadowColor: ROSE, shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25, shadowRadius: 14, elevation: 4,
   },
-  shareBtnText: { fontFamily: FONTS.sansBold, fontSize: 16, fontWeight: '700', color: '#FFFFFF', letterSpacing: 0.4 },
+  shareBtnText: { fontFamily: FONTS.sansBold, fontSize: 17.5, fontWeight: '700', color: '#FFFFFF', letterSpacing: 0.4 },   // CTA size unified at 17.5 (was 16) — per user
   continueBtn: {
     height: 51.63, borderRadius: 17.07, backgroundColor: '#FFFFFF',             // 46.94 → 51.63 (+10 % per user)
     // No gray border per user — a soft shadow keeps the white button readable
@@ -186,5 +186,5 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08, shadowRadius: 8, elevation: 2,
   },
-  continueBtnText: { fontFamily: FONTS.sansBold, fontSize: 16, fontWeight: '700', color: TXT, letterSpacing: 0.4 },
+  continueBtnText: { fontFamily: FONTS.sansBold, fontSize: 17.5, fontWeight: '700', color: TXT, letterSpacing: 0.4 },   // CTA size unified at 17.5 (was 16) — per user
 });

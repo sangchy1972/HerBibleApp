@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   pipOn: { backgroundColor: ROSE },
   progressText: { fontSize: 12.5, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.3, marginBottom: 18 },
   cta: { alignSelf: 'stretch', height: 48, borderRadius: 24, backgroundColor: ROSE, alignItems: 'center', justifyContent: 'center' },
-  ctaText: { color: '#FFFFFF', fontSize: 16.5, fontWeight: '700', letterSpacing: 0.3 },
+  ctaText: { color: '#FFFFFF', fontSize: 17.5, fontWeight: '700', letterSpacing: 0.3 },   // CTA size unified at 17.5 (was 16.5) — per user
   later: { marginTop: 10, paddingVertical: 8 },
   laterText: { color: TXTSUB, fontSize: 15, fontWeight: '600' },
 });

@@ -559,10 +559,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // 16 → 17.6 (+10 % per user). This lands it on the app's dominant primary-CTA
-  // size of 18 — at 16 it was the odd one out, SMALLER than nearly every other
-  // filled CTA in the app, which is why it read as slightly weak here.
-  nextContinueText: { color: '#FFFFFF', fontSize: 17.6, fontWeight: '700' },
+  // 16 → 17.5, the unified secondary-CTA size. The app had TWO accidental
+  // families here (16 and 16.5) that no shared component enforced; 17.5
+  // collapses them into one value across all 11 sites. See PlanDayDone,
+  // ProfileScreen, QuizChallengeScreen and the four nudge cards.
+  nextContinueText: { color: '#FFFFFF', fontSize: 17.5, fontWeight: '700' },
   laterBtn: { marginTop: 14, alignItems: 'center', paddingVertical: 6 },
   laterText: { fontSize: 15, fontWeight: '600' },
 });

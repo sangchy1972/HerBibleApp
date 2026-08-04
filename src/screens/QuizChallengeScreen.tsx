@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
     borderRadius: BTN_RADIUS, backgroundColor: ROSE,
     alignItems: 'center', justifyContent: 'center', marginTop: 30,
   },
-  capCtaText: { fontFamily: FONTS.latoBold, fontSize: 16, color: '#FFFFFF', letterSpacing: 0.4 },
+  capCtaText: { fontFamily: FONTS.latoBold, fontSize: 17.5, color: '#FFFFFF', letterSpacing: 0.4 },   // CTA size unified at 17.5 (was 16) — per user
   capSecondary: { height: 44, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
   capSecondaryText: { fontFamily: FONTS.latoBold, fontSize: 14.5, color: ROSE, letterSpacing: 0.3 },
 });

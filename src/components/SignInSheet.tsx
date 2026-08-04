@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch', height: 52, borderRadius: BTN_RADIUS, backgroundColor: ROSE,
     alignItems: 'center', justifyContent: 'center',
   },
-  doneCtaText: { color: '#FFFFFF', fontSize: 16.5, fontWeight: '700', letterSpacing: 0.3 },
+  doneCtaText: { color: '#FFFFFF', fontSize: 17.5, fontWeight: '700', letterSpacing: 0.3 },   // CTA size unified at 17.5 (was 16.5) — per user
   cancel: {
     flexDirection: 'row',
     alignItems: 'center',

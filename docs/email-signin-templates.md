@@ -62,10 +62,16 @@ action links**, so the same Apply button fixes 2 and 5 together.
 
 Two fields, two different names, both user-facing:
 
-- **Public-facing name for project** (Authentication → Sign-in method → Google)
-  is what `%APP_NAME%` resolves to. It is ALSO the app name on the Google
-  sign-in consent screen, so `project-553397384848` is showing to every user who
-  taps "Continue with Google" today.
+- **App name** — what `%APP_NAME%` resolves to, AND the app name on the Google
+  sign-in consent screen, so `project-553397384848` was showing to every user who
+  tapped "Continue with Google". **It is no longer in Firebase.** Google moved
+  project branding out of Firebase and renamed the menu, so hunting for
+  "Public-facing name for project" under Authentication → Sign-in method → Google
+  finds nothing — that field is gone from that page, not hidden on it.
+  It now lives at **Google Cloud Console → APIs & Services → Google Auth
+  Platform → Branding → App name** (the menu was called "OAuth consent screen"
+  until 2024): `https://console.cloud.google.com/auth/branding?project=herbible-d1cc7`.
+  The page does not autosave — the Save button is below the fold.
 - **Sender name** (Templates → ✏️) is the inbox-list string. Independent field.
 
 ### Verify the link, do not assume
@@ -81,15 +87,25 @@ message.
 
 Both of these matter more than the HTML for staying out of spam.
 
-**1. Fix the project's public-facing name.** The current mail says *"Sign in to
+**1. Fix the project's app name.** The current mail says *"Sign in to
 project-553397384848"* — a raw project number in the subject line is the single
 loudest spam signal in the whole message, and it lands before the user opens
 anything.
 
-> Firebase Console → Authentication → Sign-in method → Google → **Public-facing
-> name for project** → change `project-553397384848` to `Her Bible` → Save.
+> **Google Cloud Console** → APIs & Services → **Google Auth Platform** →
+> **Branding** → **App name** → change `project-553397384848` to `Her Bible` →
+> scroll down → **Save**.
+>
+> Direct: `https://console.cloud.google.com/auth/branding?project=herbible-d1cc7`
+>
+> Not in Firebase — see the note above. If Branding is empty and offers "Get
+> started", the OAuth consent screen was never configured: App name `Her Bible`,
+> support email and developer contact both your own, defaults for the rest. No
+> Google verification submission is needed for this.
 
 This is the `%APP_NAME%` used below, so it fixes the subject and the body at once.
+Check it took by looking at the Subject **preview** after saving a template — if
+it still renders the project number, the Save on the Branding page did not land.
 
 **2. Point the sender at your own domain.** `noreply@herbible-d1cc7.firebaseapp.com`
 has no reputation with Gmail and no SPF/DKIM of yours, which is why Gmail said
@@ -155,7 +171,18 @@ inbox list shows next to the subject — the most-seen string in the whole email
 > Templates → ✏️ → **Sender name** → `Her Bible`
 
 **4. Set the subject per language.** The Subject field IS editable, and it is
-per-language (Template language selector at the bottom-left). Use these:
+per-language (Template language selector on the Templates page). Use these:
+
+⚠️ **Pick the right template type first.** The type dropdown at the top of the
+Templates page defaults to `Email address verification`. This app signs users in
+with a passwordless link, which is **`Email address sign-in`** — editing the
+verification template changes an email no user of this app ever receives.
+
+⚠️ **Sender name is per-language too.** Switching the language selector gives you
+a fresh, empty set of fields, so `Her Bible` has to be typed once per locale
+alongside the subject. A locale left blank silently falls back to English: no
+error, no warning, and nothing to notice later except a German user reading an
+English subject line.
 
 | Locale | Subject |
 | --- | --- |
@@ -183,11 +210,33 @@ outright rather than filing it as spam. Her Bible is nowhere near the 5,000/day
 a domain with no stated policy, and low-volume senders are exactly the ones with
 no reputation to fall back on. It is one DNS record.
 
-At your DNS provider, on `everlandapps.com`:
+Verified 2026-08-04: `_dmarc.everlandapps.com` returns NXDOMAIN, so this is a
+clean add with nothing to overwrite.
 
-| Type | Name | Value |
-| --- | --- | --- |
-| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:dmarc@everlandapps.com; fo=1` |
+Cloudflare → `everlandapps.com` → DNS → Records → **Add record**:
+
+| Type | Name | Value | Proxy |
+| --- | --- | --- | --- |
+| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:dmarc@everlandapps.com; fo=1` | n/a — TXT has no toggle |
+
+Name is `_dmarc`, **not** `_dmarc.everlandapps.com` — same relative-name rule that
+bites on the DKIM CNAMEs.
+
+#### The `rua` address must be on your own domain
+
+`rua=mailto:sangchy1972@gmail.com` **does not work.** DMARC requires the
+receiving domain to publish an authorisation record — `everlandapps.com._report
+._dmarc.gmail.com` — before a reporter will send cross-domain, and gmail.com's DNS
+is not yours to edit. Google's own reporters enforce this, so the reports would
+simply never arrive and the record would look fine while doing nothing.
+
+Use an address on `everlandapps.com` and forward it. Email Routing is already on
+for this domain (that is what `_spf.mx.cloudflare.net` in the SPF record is):
+
+> Cloudflare → `everlandapps.com` → **Email** → Email Routing → Routing rules →
+> **Create address** → custom address `dmarc` → Send to an email →
+> `sangchy1972@gmail.com` → Save, then confirm the verification mail Gmail
+> receives.
 
 `p=none` means "monitor, do not reject" — it changes nothing about how your mail
 is handled, it just tells receivers you exist and asks them to report. Read the

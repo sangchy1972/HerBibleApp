@@ -1006,7 +1006,7 @@ const styles = StyleSheet.create({
   timeRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: '#FFFFFF', borderRadius: 30, borderWidth: 0.5, borderColor: 'rgba(30,27,46,0.08)',
-    paddingVertical: 15, paddingHorizontal: 16, marginBottom: 11,
+    paddingVertical: 19.5, paddingHorizontal: 16, marginBottom: 11,   // 15 → 19.5 (+30 % row height per user; the row is padding-driven, no fixed height)
   },
   timeLabel: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   timeLabelText: { fontSize: 18, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4 },   // 16.5 → 18 (2nd +10 %)
@@ -1120,7 +1120,7 @@ const styles = StyleSheet.create({
   // Footer CTA.
   footer: { paddingTop: 6 },
   cta: { backgroundColor: ROSE, borderRadius: BTN_RADIUS, alignItems: 'center', justifyContent: 'center', paddingVertical: 16 },
-  ctaText: { fontSize: 16.5, fontWeight: '700', color: '#FFFFFF', fontFamily: FONTS.latoBold, letterSpacing: 0.2 },
+  ctaText: { fontSize: 18.15, fontWeight: '700', color: '#FFFFFF', fontFamily: FONTS.latoBold, letterSpacing: 0.2 },   // 16.5 → 18.15 (+10 % per user)
   laterBtn: { alignItems: 'center', paddingVertical: 12, marginTop: 4 },
   laterText: { fontSize: 14, color: 'rgba(30,27,46,0.45)', fontFamily: FONTS.lato, letterSpacing: 0.4 },
 });

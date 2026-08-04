@@ -170,19 +170,35 @@ inbox list shows next to the subject — the most-seen string in the whole email
 
 > Templates → ✏️ → **Sender name** → `Her Bible`
 
-**4. Set the subject per language.** The Subject field IS editable, and it is
-per-language (Template language selector on the Templates page). Use these:
+**4. Set the subject.** Two corrections to what this file used to claim, both
+found by looking at the actual console on 2026-08-04:
 
-⚠️ **Pick the right template type first.** The type dropdown at the top of the
-Templates page defaults to `Email address verification`. This app signs users in
-with a passwordless link, which is **`Email address sign-in`** — editing the
-verification template changes an email no user of this app ever receives.
+🔴 **There is no "Email address sign-in" template.** The Templates list offers
+Email address verification, Password reset, Email address change, Multi-factor
+enrollment notification, SMTP settings, SMS verification — and nothing for the
+passwordless magic link. Firebase has never shipped a console template for it.
+So the Sender name and Subject edited here apply to emails **this app's users
+never receive**: sign-in is email-link only. Whether the magic-link mail picks up
+the project-level Sender name at all is not answerable from the console.
 
-⚠️ **Sender name is per-language too.** Switching the language selector gives you
-a fresh, empty set of fields, so `Her Bible` has to be typed once per locale
-alongside the subject. A locale left blank silently falls back to English: no
-error, no warning, and nothing to notice later except a German user reading an
-English subject line.
+🔴 **The Template language selector is probably global, not per-locale.** The
+docs say `setLanguageCode` propagates to email templates, but there are
+long-standing unfixed reports (firebase-js-sdk#5846, angularfire#3296) that a
+**customised** template is served in the console-selected language to everyone,
+and Firebase's own note says customised templates do not get localised. So the
+"switch language, paste, repeat ×7" workflow this file used to describe is very
+likely wrong.
+
+Treat the subjects below as aspirational until a real email proves otherwise. If
+the selector is global, pick `English` and use `Sign in to Her Bible`: the body
+is read-only anyway, so the subject was the only localisable line, and the brand
+name is English in every locale. Seven languages needs Path B, which needs a
+backend — not worth it for one line.
+
+**Settle it empirically.** Send a real sign-in mail and check three things: does
+the sender read `Her Bible` or `noreply`; what is the subject; and — long-press
+the button — is the link on `everlandapps.com` or `firebaseapp.com`. The console
+cannot answer any of the three.
 
 | Locale | Subject |
 | --- | --- |
@@ -283,13 +299,16 @@ carries a language code.
 
 ## How localisation works here
 
-Firebase auto-localises only its **stock** templates. A customised template is
-sent exactly as written, so the app now sends a language code with the request
-(`auth().languageCode`, wired in `services/firebaseAuth.ts` →
-`setEmailLanguage`). Firebase then looks up the template stored for that locale.
+⚠️ **Superseded — see the two red flags in step 4.** This section describes the
+intent; the console appears not to honour it. `setEmailLanguage` in
+`services/firebaseAuth.ts` is still correct and harmless to keep (it also drives
+reCAPTCHA and OAuth popup locale), but do not assume it selects an email template
+until a real message proves it does.
 
-In the console, the Templates page has a **language selector** — switch it, paste
-the matching block, save, repeat. Locales the app sends:
+The intent was: Firebase auto-localises only its **stock** templates, a customised
+template is sent as written, so the app sends a language code
+(`auth().languageCode`) and Firebase looks up the template stored for that locale.
+Locales the app sends:
 
 | App language | Locale to select |
 | --- | --- |

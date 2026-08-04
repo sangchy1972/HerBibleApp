@@ -27,6 +27,7 @@ interface PrayerState {
   firstCompleteDate: string | null;   // earliest 'YYYY-MM-DD' with both done
   firstPrayedDate: string | null;     // earliest 'YYYY-MM-DD' with ANY prayer (m OR e) — the "streak started" date per user
   everPrayed: boolean;                // any record has m or e set — used to detect first-prayer onboarding moment
+  everMorning: boolean;               // any record has m set — a MORNING prayer has been completed at least once
   wasCompleteOn: (dateKey: string) => boolean;
   recordOn: (dateKey: string) => DayRecord;
   setMorning: (v: boolean) => void;
@@ -154,6 +155,7 @@ export function PrayerProvider({ children }: { children: React.ReactNode }) {
       firstCompleteDate: completeDates[0] ?? null,
       firstPrayedDate: prayedDates[0] ?? null,
       everPrayed: prayedDates.length > 0,
+      everMorning: Object.values(records).some(r => !!r?.m),
       wasCompleteOn: (dateKey) => {
         const r = records[dateKey];
         return !!(r && r.m && r.e);

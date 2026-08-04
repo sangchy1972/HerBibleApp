@@ -21,7 +21,7 @@ const SHOWN_KEY = 'nudge:widgetInstall:shown:v1';
 export default function WidgetInstallHost() {
   const t = useT();
   const nav = useNavigation<NavigationProp<RootStackParamList>>();
-  const { everPrayed } = usePrayer();
+  const { everMorning } = usePrayer();
   const { daysSinceFirstLaunch } = useAchievements();
   const coord = useNudgeCoordinator();
   const [shown, setShown] = useState<boolean | null>(null);   // null = loading
@@ -31,7 +31,14 @@ export default function WidgetInstallHost() {
   // Android ONLY. iOS has no API to programmatically add a home-screen widget,
   // and the app ships no iOS WidgetKit widget — so nudging iOS users to "add the
   // widget" leads nowhere. Gated off on iOS until a real iOS widget exists.
-  const eligible = Platform.OS === 'android' && shown === false && daysSinceFirstLaunch >= 3 && everPrayed;
+  // Timing (per user): only AFTER she has completed at least one MORNING prayer.
+  // `everPrayed` also counted an evening-only user, so the dialog could land on a
+  // quiet evening home screen with her morning steps still untouched — it read as
+  // an interruption rather than a reward. A finished morning prayer is the moment
+  // the widget's promise ("today's verse and your next prayer on your home
+  // screen") is actually something she has experienced. The day-3 floor stays, and
+  // the nudge coordinator still serialises this against every other prompt.
+  const eligible = Platform.OS === 'android' && shown === false && daysSinceFirstLaunch >= 3 && everMorning;
 
   // `eligible` contains `shown === false`, and the effect below sets `shown`
   // true the moment the slot is granted — so without the `if (active) return`

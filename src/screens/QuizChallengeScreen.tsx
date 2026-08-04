@@ -165,9 +165,8 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
     return currentQuestion.options.map((_, i) => {
       if (locked && answer) {
         if (answer.picked === i) return answer.correct ? 'correct' : 'wrong';
-        // Only reveal the right answer when she got it wrong — revealing it on
-        // a correct pick would draw the eye away from her own answer.
-        if (answer.correct === false && i === currentQuestion.answerIndex) return 'revealed';
+        // The right answer is NOT surfaced after a miss (per user): tinting it
+        // green handed her the answer before the retry round could ask again.
       }
       if (pos != null && isTried(session, pos, i)) return 'tried';
       return 'idle';
@@ -297,7 +296,6 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
         optionStates={optionStates}
         locked={!!locked}
         wasCorrect={answer?.correct === true}
-        isLast={step >= roundLength}
         onPick={pick}
         onNext={next}
       />
@@ -319,7 +317,7 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
         <View style={styles.close} />
       </View>
 
-      <QuizSegmentBar segments={segments} height={6} style={styles.bar} />
+      <QuizSegmentBar segments={segments} height={9} style={styles.bar} />
 
       {session && session.phase !== 'summary' ? (
         <Text style={styles.counter} maxFontSizeMultiplier={1.3}>
@@ -470,15 +468,22 @@ const styles = StyleSheet.create({
   close: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   headerCopy: { flex: 1, alignItems: 'center' },
   level: {
-    fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 18,
+    fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 19.26,   // 18 → +7 % per user
     color: TXT, letterSpacing: 0.3,
   },
-  bar: { marginHorizontal: 20 },
+  // 70 % of the width, centred (per user). It used to be `marginHorizontal: 20`
+  // against a track that also declared `width: '100%'`, which measured the
+  // parent and ran the bar off the right edge of the screen.
+  bar: { width: '70%', alignSelf: 'center' },
   counter: {
-    fontFamily: FONTS.lato, fontSize: 13, color: TXTSUB,
-    letterSpacing: 0.4, textAlign: 'center', marginTop: 10, height: 18,
+    // 13 → 14.3 (+10 %) and marginTop 10 → 15 (+5) per user. `height` grows with
+    // the type or Android clips the descenders.
+    fontFamily: FONTS.lato, fontSize: 14.3, color: TXTSUB,
+    letterSpacing: 0.4, textAlign: 'center', marginTop: 15, height: 20,
   },
-  counterSpacer: { height: 28 },
+  // Stands in for the counter on the summary — must match its total box
+  // (15 + 20) or the body jumps as the set ends.
+  counterSpacer: { height: 35 },
 
   capRoot: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 34, paddingBottom: 40 },
   capRing: {

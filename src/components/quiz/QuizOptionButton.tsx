@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, TouchableOpacity, StyleSheet, View } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import { ROSE, GREEN_DONE, TXT, TXTSUB, BTN_RADIUS, FONTS, INK_06, INK_10, GREEN_WASH } from '../../constants/theme';
+import { ROSE, GREEN_DONE, TXT, TXTSUB, BTN_RADIUS, FONTS, INK_06 } from '../../constants/theme';
 
 // One answer option.
 //
@@ -12,16 +12,19 @@ import { ROSE, GREEN_DONE, TXT, TXTSUB, BTN_RADIUS, FONTS, INK_06, INK_10, GREEN
 //   idle      untouched, awaiting a tap
 //   correct   the user picked this and it was right
 //   wrong     the user picked this and it was wrong
-//   revealed  the right answer, shown after a wrong pick
 //   tried     picked-and-wrong in an EARLIER round; greyed and inert, so the
 //             retry doesn't ask her to rule out the same option twice
 //
-// Styling is the app's ordinary button — no scalloped/filigree borders and no
-// shadow. CLAUDE.md keeps calling out the no-shadow CTAs, and Android's
-// elevation reads as a grey outline on a white card (the reason DailyRhythmBar
-// went flat).
+// THERE IS NO "revealed" STATE. A wrong pick used to tint the right answer green
+// immediately, which handed her the answer before the retry round could ask the
+// question again — the retry was pointless and the miss taught nothing. The
+// answer is now only ever confirmed by her getting it right. Do not add it back.
+//
+// Styling is the app's ordinary button: no scalloped/filigree borders, no ink
+// outline (per user — the hairline read as clutter), and the faintest possible
+// shadow so a white option still separates from the off-white screen.
 
-export type OptionState = 'idle' | 'correct' | 'wrong' | 'revealed' | 'tried';
+export type OptionState = 'idle' | 'correct' | 'wrong' | 'tried';
 
 export default function QuizOptionButton({
   label, state, disabled, onPress,
@@ -50,8 +53,8 @@ export default function QuizOptionButton({
       >
         {label}
       </Text>
-      {state === 'correct' || state === 'revealed' ? (
-        <Feather name="check" size={21} color={state === 'correct' ? '#FFFFFF' : GREEN_DONE} style={styles.mark} />
+      {state === 'correct' ? (
+        <Feather name="check" size={21} color="#FFFFFF" style={styles.mark} />
       ) : state === 'wrong' ? (
         <Feather name="x" size={21} color="#FFFFFF" style={styles.mark} />
       ) : state === 'tried' ? (
@@ -76,8 +79,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 11,
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: INK_10,
+    // The lightest shadow the app has — the ink hairline is gone, and a plain
+    // white box on the BG off-white would otherwise have no edge at all. Kept
+    // deliberately shallow (elevation 1): Android renders elevation as a grey
+    // rim, which is exactly what we just removed, so anything heavier undoes it.
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
   // Merriweather for the answer text (bundled; the reader already uses it).
   // 16 → 17.3 = the +8 % scale the user asked for over the reference design.
@@ -95,18 +105,16 @@ const styles = StyleSheet.create({
 
 const STATE_BOX: Record<OptionState, object> = {
   idle: {},
-  correct: { backgroundColor: GREEN_DONE, borderColor: GREEN_DONE },
-  wrong: { backgroundColor: ROSE, borderColor: ROSE },
-  // The right answer surfaced after a miss: tinted, not filled, so it reads as
-  // information rather than as something the user did.
-  revealed: { backgroundColor: GREEN_WASH, borderColor: GREEN_DONE, borderWidth: 1.5 },
-  tried: { backgroundColor: INK_06, borderColor: 'transparent' },
+  correct: { backgroundColor: GREEN_DONE },
+  wrong: { backgroundColor: ROSE },
+  // Inert, and flat: no shadow, because a greyed-out option should read as
+  // recessed rather than as another card sitting on the page.
+  tried: { backgroundColor: INK_06, shadowOpacity: 0, elevation: 0 },
 };
 
 const STATE_TEXT: Record<OptionState, object> = {
   idle: {},
   correct: { color: '#FFFFFF', fontFamily: FONTS.merriweatherBold, fontWeight: '700' },
   wrong: { color: '#FFFFFF', fontFamily: FONTS.merriweatherBold, fontWeight: '700' },
-  revealed: {},
   tried: { color: TXTSUB },
 };

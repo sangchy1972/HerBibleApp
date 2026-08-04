@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Feather from '@expo/vector-icons/Feather';
-import { ROSE, GREEN_DONE, TXT, TXTSUB, BTN_RADIUS, FONTS, P } from '../../constants/theme';
+import { ROSE, TXT, TXTSUB, BTN_RADIUS, FONTS, P } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
 import { useQuiz } from '../../state/QuizContext';
 import { levelFor } from '../../state/quizProgress';
@@ -10,6 +11,8 @@ import { currentPosition, isTried } from '../../state/quizSession';
 import { SET_SIZE } from '../../services/quizSets';
 import QuizSegmentBar from '../quiz/QuizSegmentBar';
 import QuizOptionButton, { type OptionState } from '../quiz/QuizOptionButton';
+import QuizVerdict from '../quiz/QuizVerdict';
+import { useAutoAdvance } from '../quiz/useAutoAdvance';
 
 // Home-screen Quiz Challenge, below My Reading Plans.
 //
@@ -40,6 +43,7 @@ export default function QuizChallengeCard({
   onOpenCollection: () => void;
 }) {
   const t = useT();
+  const isFocused = useIsFocused();
   const {
     ready, bank, progress, session, questions, currentQuestion, segments,
     daily, lifecycle, pendingDraw, startAndPick, next,
@@ -54,6 +58,9 @@ export default function QuizChallengeCard({
   // point of moving the quiz onto the home screen.
   const question = currentQuestion ?? (session ? null : questions[0] ?? null);
   const questionPos = pos ?? 0;
+  const roundLength = session ? session.queue.length : SET_SIZE;
+  const step = session ? session.cursor + 1 : 1;
+  const isLast = step >= roundLength;
 
   // One state per option, same rules as the full screen: `tried` beats
   // everything, so an option ruled out in an earlier round stays greyed.
@@ -62,14 +69,31 @@ export default function QuizChallengeCard({
     return question.options.map((_, i) => {
       if (locked && answer) {
         if (answer.picked === i) return answer.correct ? 'correct' : 'wrong';
-        // Only reveal the right answer after a miss — revealing it on a correct
-        // pick would draw the eye away from her own answer.
-        if (answer.correct === false && i === question.answerIndex) return 'revealed';
+        // The right answer is NOT surfaced after a miss (per user): tinting it
+        // green handed her the answer before the retry round could ask again.
       }
       if (isTried(session, questionPos, i)) return 'tried';
       return 'idle';
     });
   }, [question, locked, answer, session, questionPos]);
+
+  // Same held reveal as the full screen, then move on by itself. On the LAST
+  // question of the round that means handing off: the summary, the retry round,
+  // the puzzle tile and the card draw all live on the full screen, and next()
+  // runs first so it is already in `summary` when that screen mounts instead of
+  // flashing the answered question again.
+  //
+  // Above the early returns, like every other hook here — a conditional hook
+  // would blow up the moment the bank lands or the quiz retires.
+  useAutoAdvance(!!locked, () => {
+    next();
+    // `isFocused` is load-bearing: the card stays mounted when she switches tabs,
+    // so answering the last question and moving to the Bible reader inside the 2s
+    // hold would otherwise shove a full-screen quiz over what she is reading. The
+    // set just waits in `summary`, which the compact "Reward waiting" card already
+    // handles the next time she looks at home.
+    if (isLast && isFocused) onPress();
+  });
 
   if (!ready || !bank) return null;
   // RETIRED. Every question in the bank has been served, so the card would be
@@ -93,9 +117,6 @@ export default function QuizChallengeCard({
   // Today is spent with nothing in flight. Also covers `questions` coming back
   // short of a full set, which open() refuses to start.
   const cappedOut = !session && daily.reached;
-  const roundLength = session ? session.queue.length : SET_SIZE;
-  const step = session ? session.cursor + 1 : 1;
-  const isLast = step >= roundLength;
 
   const header = (
     <>
@@ -198,35 +219,10 @@ export default function QuizChallengeCard({
         </View>
 
         {/* Appears BELOW the options, never above: growing the card downward
-            leaves everything she is looking at exactly where it was, whereas
-            reserving the space permanently would put ~100dp of blank white in
-            the middle of the home screen. */}
+            leaves everything she is looking at exactly where it was. */}
         {locked ? (
-          <View style={styles.footer}>
-            <Text
-              style={[styles.verdict, { color: answer?.correct ? GREEN_DONE : ROSE }]}
-              numberOfLines={2}
-              maxFontSizeMultiplier={1.3}
-            >
-              {answer?.correct ? t('quiz.verdict.correct') : t('quiz.verdict.wrong')}
-            </Text>
-            <TouchableOpacity
-              style={styles.cta}
-              activeOpacity={0.85}
-              onPress={() => {
-                // Last one of the round → the summary, the retry round, the
-                // puzzle tile and the card draw all live on the full screen.
-                // next() first so it is already in `summary` when that screen
-                // mounts, instead of briefly re-rendering the answered question.
-                next();
-                if (isLast) onPress();
-              }}
-              accessibilityRole="button"
-            >
-              <Text style={styles.ctaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
-                {isLast ? t('quiz.action.seeResults') : t('quiz.action.next')}
-              </Text>
-            </TouchableOpacity>
+          <View style={styles.verdictSlot}>
+            <QuizVerdict correct={answer?.correct === true} />
           </View>
         ) : null}
       </View>
@@ -264,17 +260,14 @@ const styles = StyleSheet.create({
   },
   // The quiz's own question type: Merriweather at the +8 % scale.
   question: {
-    fontFamily: FONTS.merriweather, fontSize: 21.6, lineHeight: 31,
+    fontFamily: FONTS.merriweather, fontSize: 19.87, lineHeight: 28.5,
     color: TXT, letterSpacing: 0.1, marginTop: 16, marginBottom: 18,
   },
   // Cancels the trailing option's own 11 marginBottom so the card's 16 of
   // padding is the only gap under the last one.
   options: { marginBottom: -11 },
-  footer: { paddingTop: 16 },
-  verdict: {
-    fontFamily: FONTS.latoBold, fontSize: 15.5, letterSpacing: 0.3,
-    textAlign: 'center', marginBottom: 10,
-  },
+  // The 11 the last option already carries is part of this gap.
+  verdictSlot: { paddingTop: 10 },
   // The app's primary CTA: rose, BTN_RADIUS, no shadow. In the footer the
   // verdict's own marginBottom is the gap; the compact variant has no verdict
   // and adds ctaSpaced instead.

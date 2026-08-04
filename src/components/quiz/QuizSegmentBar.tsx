@@ -59,7 +59,11 @@ const styles = StyleSheet.create({
     backgroundColor: INK_10,
     overflow: 'hidden',
     position: 'relative',
-    width: '100%',
+    // NO `width: '100%'`. As a flex child the track already stretches, and the
+    // explicit 100% was measured against the PARENT — so the quiz header's
+    // `marginHorizontal: 20` pushed a full-parent-width bar 20 to the right and
+    // ran it off the screen edge. Any caller adding a margin or a narrower width
+    // would have hit the same thing.
   },
   fill: { position: 'absolute', top: 0, bottom: 0 },
   tick: {

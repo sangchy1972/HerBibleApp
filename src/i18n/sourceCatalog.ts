@@ -112,7 +112,6 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'quiz.header.progress':           { en: '{n} of {total}',                   context: 'Quiz header counter, e.g. 3 of 5.' },
   'quiz.verdict.correct':           { en: 'Correct!',                        context: 'Shown after the user picks the right answer. Warm, short.' },
   'quiz.verdict.wrong':             { en: 'Not quite',                       context: 'Shown after a wrong pick. Gentle, never harsh — the right answer is highlighted beside it.' },
-  'quiz.action.next':               { en: 'Next question',                   context: 'Button, advances to the next question.' },
   'quiz.action.seeResults':         { en: 'See results',                     context: 'Button on the last question of the round.' },
   'quiz.action.retry':              { en: 'Try those again',                 context: 'Button on the results screen when some answers are still wrong.' },
   'quiz.action.continue':           { en: 'Continue',                        context: 'Button on the results screen once every answer is correct. Commits the level.' },

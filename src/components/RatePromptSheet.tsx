@@ -1,5 +1,7 @@
-import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Image, Pressable, Platform, Linking } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  View, Text, TouchableOpacity, StyleSheet, Modal, Image, Pressable, Platform, Linking, AppState,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import * as StoreReview from 'expo-store-review';
@@ -62,11 +64,17 @@ async function appleReviewUrl(): Promise<string | null> {
 
 /** Last resort: the store's own write-a-review page. True if we got there. */
 async function openStoreReviewPage(): Promise<boolean> {
+  // NEVER launch the store from the background. The user pressed Home / took a
+  // call inside our handoff window: on Android 10+ the activity start is blocked
+  // anyway, and on iOS it would yank them out of whatever they switched to.
+  if (AppState.currentState !== 'active') return false;
   const urls = Platform.OS === 'android'
     ? [PLAY_REVIEW, PLAY_REVIEW_WEB]
     : [await appleReviewUrl()];
   for (const url of urls) {
     if (!url) continue;
+    // openURL, never canOpenURL: on Android 11+ the latter needs a <queries>
+    // manifest entry to answer truthfully and would falsely report "can't".
     try { await Linking.openURL(url); return true; } catch { /* try the next one */ }
   }
   return false;
@@ -91,37 +99,104 @@ export default function RatePromptSheet({ onClose }: { onClose: () => void }) {
   const dimStyle = useAnimatedStyle(() => ({ opacity: dim.value }));
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: ty.value }] }));
 
-  const onYes = () => {
-    markYes();
-    // Dismiss OUR sheet first: it's an RN Modal (its own native window), and
-    // the Play in-app review panel attaches to the Activity BELOW it — firing
-    // the request while our Modal is up leaves Google's sheet hidden behind
-    // it / unable to present. Classic RN + ReviewManager pitfall.
+  // Yes was tapped → the sheet's Modal is torn down on the very next render
+  // (nothing may sit over the app while we talk to the store), but this component
+  // stays MOUNTED, so the nudge coordinator keeps the `rate` slot. Releasing it
+  // here instead would let the next prompt in the queue present its own Modal
+  // into the handoff gap — `rate` is the lowest-priority nudge, and moodCheckIn /
+  // achievementUnlock both bypass the per-open budget, so one of them really can
+  // win the slot within a frame. Play's review panel would then be presented
+  // BEHIND that Modal: invisible, and the per-user quota spent for nothing.
+  const [handingOff, setHandingOff] = useState(false);
+  // One handoff per prompt, ever. Without this, a double-tap on YES! (the sheet
+  // is still on screen for a frame) queues two store launches.
+  const busyRef = useRef(false);
+  const closedRef = useRef(false);
+  const finish = useCallback(() => {
+    if (closedRef.current) return;
+    closedRef.current = true;
     onClose();
-    setTimeout(async () => {
+  }, [onClose]);
+
+  const onYes = () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    markYes();
+    setHandingOff(true);
+  };
+
+  const onNo = () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    markNo();          // "Not really" deliberately launches NOTHING.
+    finish();
+  };
+
+  // Context callbacks are re-created on every state write (markYes() causes one),
+  // so they must NOT be effect deps — the effect would re-run and hand off twice.
+  const api = useRef({ markRated, finish });
+  api.current = { markRated, finish };
+
+  useEffect(() => {
+    if (!handingOff) return;
+    let cancelled = false;
+    // Give the Modal's native window a beat to actually go away: Play's panel
+    // attaches to the Activity BELOW it. Classic RN + ReviewManager pitfall.
+    const handoff = setTimeout(async () => {
       // Preferred path: the in-app panel (Play In-App Review on Android,
-      // SKStoreReview/AppStore.requestReview on iOS) — rates without leaving
-      // the app, and it's the only path Apple permits when it's available.
+      // SKStoreReview / AppStore.requestReview on iOS) — rates without leaving
+      // the app, and the only path Apple permits when it is available.
       //
       // It fails for reasons we can neither predict nor detect: an install that
       // didn't come from Play (sideloaded AAB, `adb install`), Play's per-user
-      // quota, TestFlight on iOS (isAvailableAsync is false there by design).
-      // The old code swallowed that rejection, which is exactly why tapping Yes
-      // did NOTHING on the user's device. Any failure now falls through to the
-      // store's own write-a-review page, so Yes is never a dead end.
+      // quota, TestFlight on iOS (isAvailableAsync is false there by design), no
+      // foreground scene on iOS. The old code swallowed that rejection, which is
+      // exactly why tapping Yes did NOTHING on the user's device. Any failure now
+      // falls through to the store's own write-a-review page.
       let done = false;
       try {
         if (await StoreReview.isAvailableAsync()) {
+          // NOTE: on Android this settles only when the panel CLOSES (the user may
+          // be typing a review), so it is deliberately not raced against a short
+          // timeout — that would fire the fallback on top of an open panel.
           await StoreReview.requestReview();
           done = true;
         }
-      } catch { /* fall through */ }
-      if (!done) done = await openStoreReviewPage();
-      if (done) markRated();
-    }, 450);
-  };
+      } catch { /* fall through to the store page */ }
+      if (done) { api.current.markRated(); api.current.finish(); return; }
+      // Gave up on this prompt already (watchdog / returned from the store) —
+      // do not launch anything late.
+      if (cancelled) { api.current.finish(); return; }
+      if (await openStoreReviewPage()) api.current.markRated();
+      api.current.finish();
+    }, 400);
 
-  const onNo = () => { markNo(); onClose(); };
+    // Two independent releases so the slot can NEVER be held forever by a promise
+    // that doesn't settle: (a) we went out to the store and came back — the
+    // handoff is over by definition; (b) a plain 60s backstop.
+    let leftApp = false;
+    let backTimer: ReturnType<typeof setTimeout> | undefined;
+    const sub = AppState.addEventListener('change', s => {
+      if (s !== 'active') { leftApp = true; return; }
+      if (!leftApp) return;
+      // Settle a beat after the return so we don't release on the same frame the
+      // app is still restoring.
+      backTimer = setTimeout(() => api.current.finish(), 600);
+    });
+    const watchdog = setTimeout(() => api.current.finish(), 60_000);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(handoff);
+      clearTimeout(watchdog);
+      if (backTimer) clearTimeout(backTimer);
+      sub.remove();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handingOff]);
+
+  // Modal gone, component still mounted → slot held, zero touch surface.
+  if (handingOff) return null;
 
   return (
     <Modal transparent visible animationType="none" onRequestClose={onClose} statusBarTranslucent>

@@ -62,7 +62,6 @@ const LEGAL_TERMS_URL = 'https://covers.everlandapps.com/legal/support.html';
 const LEGAL_PRIVACY_URL = 'https://covers.everlandapps.com/legal/privacy.html';
 
 const TRIAL_SHEET_H = Math.round(Dimensions.get('window').height * 0.56);
-const HERO_MAX_H = Math.round(Dimensions.get('window').height * 0.34);
 const GIFT_BOX = require('../../assets/paywall/gift-box.png');
 // Two 16:9 hero photos (1600×900 webp, ≤150 KB each — cropped/compressed from
 // the user's originals, bundled into the binary so they're offline-ready).
@@ -514,7 +513,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
           {stepName === 'intro' && (
             <View style={styles.center}>
               <View style={styles.hero}>
-                <Image source={HERO_INTRO_IMG} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+                <Image source={HERO_INTRO_IMG} style={styles.heroImg} resizeMode="cover" />
               </View>
               <Text style={[styles.h, { textAlign: 'center', marginTop: 22 }]}>{t('onboarding.intro.title')}</Text>
               <Text style={[styles.sub, { textAlign: 'center', paddingHorizontal: 16 }]}>{t('onboarding.intro.sub')}</Text>
@@ -582,7 +581,7 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
           {stepName === 'encourage' && (
             <View style={styles.center}>
               <View style={styles.hero}>
-                <Image source={HERO_ENCOURAGE_IMG} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+                <Image source={HERO_ENCOURAGE_IMG} style={styles.heroImg} resizeMode="cover" />
               </View>
               <Text style={[styles.h, { textAlign: 'center', marginTop: 22 }]}>{t('onboarding.encourage.title')}</Text>
               {/* "2 million women" is pulled out of the sentence via a {highlight}
@@ -999,9 +998,20 @@ const styles = StyleSheet.create({
   // full-screen portrait, pushing the copy + CTA out of view — P0). The image
   // absolute-fills it with resizeMode="cover". aspectRatio matches the 16:9
   // (1600×900) sources exactly so the full curated crop shows — a mismatched
-  // box would silently re-crop the sides. HERO_MAX_H caps it at 34% of the
   // screen so the title, subtitle and Continue always fit above the fold.
-  hero: { width: '100%', aspectRatio: 16 / 9, maxHeight: HERO_MAX_H, borderRadius: 30, marginTop: 6, overflow: 'hidden' },
+  // The asset is EXACTLY 16:9, so the box is too — then `cover` shows the whole
+  // photo and can never crop to a corner. maxHeight was removed on purpose: with
+  // a fixed aspectRatio it could only ever make the box SHORTER than 16:9, which
+  // silently turned `cover` into a side-crop on short screens. At 16:9 the hero
+  // is ~24 % of a typical screen's height, well inside the old 34 % cap, so the
+  // copy below it still clears the fold on an SE-class device.
+  hero: { width: '100%', aspectRatio: 16 / 9, borderRadius: 30, marginTop: 6, overflow: 'hidden' },
+  // Explicit 100 %/100 % rather than absoluteFillObject — an absolutely
+  // positioned child that fails to resolve its insets renders at the image's
+  // INTRINSIC size (1600 × 900) anchored top-left, which is exactly the
+  // "zoomed into the top-left corner" symptom. A relative child sized to the
+  // parent cannot do that.
+  heroImg: { width: '100%', height: '100%' },
   // Time-picker rows (reminder step).
   timeRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

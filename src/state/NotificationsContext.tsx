@@ -385,9 +385,12 @@ interface NotificationsState {
    * whether permission ended up granted.
    */
   requestPermissionAndEnableDefaults: () => Promise<boolean>;
-  /** Read-only permission re-check (never prompts). For coming back from
-   *  the system settings page — adopts a switch flipped outside the app. */
-  syncPermissionFromSystem: () => Promise<boolean>;
+  /** Read-only permission re-check (never prompts). For coming back from the
+   *  system settings page — adopts a switch flipped outside the app.
+   *  `adoptDefaults` also switches the two daily reminders on; pass it ONLY
+   *  when permission was off before the trip, or it will resurrect reminders
+   *  the user turned off herself in Profile → Notifications. */
+  syncPermissionFromSystem: (adoptDefaults?: boolean) => Promise<boolean>;
   /** Atomically set BOTH reminder times + enable them and request OS permission,
    *  in a single persist (no stale-settings race). Returns whether permission
    *  ended up granted. Used by the "set your reminders" nudge. */
@@ -603,15 +606,26 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   // means someone who deliberately declined to flip the switch gets a system
   // prompt thrown at her the instant she reappears — a second ask she never
   // invited, one frame after she said no by walking away.
-  const syncPermissionFromSystem = useCallback(async (): Promise<boolean> => {
+  const syncPermissionFromSystem = useCallback(async (adoptDefaults = false): Promise<boolean> => {
     let granted = false;
     try {
       granted = (await Notifications.getPermissionsAsync()).granted;
     } catch { /* no native module — treat as denied */ }
     setPermissionGranted(granted);
-    // Same defaults as requestPermissionAndEnableDefaults: permission alone
-    // delivers nothing, the two daily reminders are the actual feature.
-    if (granted && !(settings.morning.enabled && settings.night.enabled)) {
+    // Turning the two daily reminders on is opt-IN behaviour, so the caller has
+    // to ask for it — and should only ask when permission was OFF before the
+    // trip it is reporting on. Otherwise this silently re-enables reminders the
+    // user deliberately switched off in Profile → Notifications: she turns the
+    // morning one off, meets the Follow Him screen again weeks later, taps
+    // through to Settings where permission is ALREADY granted, comes back, and
+    // her morning reminder is on again with nothing having said so.
+    //
+    // The caller must snapshot BEFORE leaving the app, not compare against
+    // `permissionGranted` here: the provider's own AppState effect re-reads the
+    // permission on every foreground, so by the time this runs the flag may
+    // already have flipped to true and the "was it off?" test would be lost to
+    // a race with no deterministic winner.
+    if (granted && adoptDefaults) {
       persist({
         ...settings,
         morning: { ...settings.morning, enabled: true },

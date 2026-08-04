@@ -38,7 +38,7 @@ interface Props {
 export default function FollowHimScreen({ onDone }: Props) {
   const insets = useSafeAreaInsets();
   const t = useT();
-  const { syncPermissionFromSystem } = useNotifications();
+  const { permissionGranted, syncPermissionFromSystem } = useNotifications();
   // Resolved once at mount — the screen shows for a single sitting, so it
   // doesn't need to react to the hour ticking over mid-view.
   const bg = useMemo(() => pickBackground(), []);
@@ -59,6 +59,13 @@ export default function FollowHimScreen({ onDone }: Props) {
   // True only between "she tapped Open Settings" and the next foreground, so a
   // routine backgrounding never triggers the re-check.
   const returning = useRef(false);
+  // Was permission already on when she left? Snapshotted HERE, before the app
+  // backgrounds, because the provider re-reads permission on every foreground —
+  // asking after the fact races that effect and can never be trusted. Decides
+  // one thing: whether coming back may switch the daily reminders on. If she
+  // already had permission and had turned a reminder off in Profile, this stays
+  // true and we leave her settings alone.
+  const grantedBefore = useRef(false);
 
   const finish = () => { setCoach(false); onDone(); };
   const onContinue = () => setCoach(true);
@@ -74,7 +81,7 @@ export default function FollowHimScreen({ onDone }: Props) {
     const sub = AppState.addEventListener('change', s => {
       if (s !== 'active' || !returning.current) return;
       returning.current = false;
-      syncPermissionFromSystem()
+      syncPermissionFromSystem(!grantedBefore.current)
         .then(ok => { if (ok) finish(); })       // still off → leave the card up; Skip and X both still work
         .catch(() => {});
     });
@@ -120,7 +127,11 @@ export default function FollowHimScreen({ onDone }: Props) {
         visible={coach}
         title={t('permCoach.notif.title')}
         switchLabel={t('permCoach.notif.switch')}
-        onOpenSettings={() => { returning.current = true; openNotificationSettings(); }}
+        onOpenSettings={() => {
+          returning.current = true;
+          grantedBefore.current = permissionGranted;
+          openNotificationSettings();
+        }}
         // Dismissing the card is the same decision as Skip: she has now
         // refused twice, so pressing again would be nagging.
         onDismiss={finish}

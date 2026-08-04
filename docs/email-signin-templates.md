@@ -60,8 +60,56 @@ has no reputation with Gmail and no SPF/DKIM of yours, which is why Gmail said
 > Authentication → Templates → **Customize domain** → enter `everlandapps.com` →
 > add the TXT/CNAME records it gives you at your DNS provider.
 
-You already control this domain (it is on Vercel), so it is a two-record change.
 Sender becomes `noreply@everlandapps.com`.
+
+#### ⚠️ DO NOT paste Firebase's SPF line as a new record
+
+Checked 2026-08-03: `everlandapps.com` **already has an SPF record**, from
+Cloudflare Email Routing —
+
+```
+v=spf1 include:_spf.mx.cloudflare.net ~all
+```
+
+Firebase's dialog tells you to add `v=spf1 include:_spf.firebasemail.com ~all`.
+Adding it as a second TXT record is the classic way to break this: RFC 7208
+allows **exactly one** SPF record per domain, and a receiver that finds two
+returns PermError and fails SPF for **everything** — Firebase's mail *and* the
+Cloudflare routing that works today. It does not degrade, it stops.
+
+MERGE them into the one record instead. Edit the existing TXT, do not add:
+
+```
+v=spf1 include:_spf.mx.cloudflare.net include:_spf.firebasemail.com ~all
+```
+
+#### The four records, as they should actually go in
+
+DNS for this domain is on **Cloudflare** (nameservers `henry.ns.cloudflare.com`),
+so: Cloudflare dashboard → `everlandapps.com` → **DNS** → **Records**.
+
+| Action | Type | Name | Content | Proxy |
+| --- | --- | --- | --- | --- |
+| **EDIT existing** | TXT | `@` | `v=spf1 include:_spf.mx.cloudflare.net include:_spf.firebasemail.com ~all` | — |
+| Add | TXT | `@` | `firebase=herbible-d1cc7` | — |
+| Add | CNAME | `firebase1._domainkey` | `mail-everlandapps-com.dkim1._domainkey.firebasemail.com` | **DNS only** |
+| Add | CNAME | `firebase2._domainkey` | `mail-everlandapps-com.dkim2._domainkey.firebasemail.com` | **DNS only** |
+
+Two Cloudflare-specific traps in that table:
+
+- **The DKIM CNAMEs must be grey-cloud "DNS only", not orange-cloud proxied.**
+  Cloudflare proxies a CNAME by answering with its own IPs, which is fine for a
+  website and fatal for DKIM — the receiver gets an address instead of the key
+  and DKIM fails. The toggle defaults to Proxied on new CNAME records.
+- Cloudflare's UI shows the name field relative to the zone, so enter
+  `firebase1._domainkey`, **not** the full `firebase1._domainkey.everlandapps.com`
+  the Firebase dialog prints. Typing the full name gets you
+  `firebase1._domainkey.everlandapps.com.everlandapps.com`.
+
+Firebase says verification can take up to 48h; in practice Cloudflare publishes
+in under a minute and Firebase's Verify button works on the next try. Also
+verified 2026-08-03: `_dmarc` does not exist yet and neither DKIM CNAME is
+present, so none of this has been half-done.
 
 **3. Set the sender name.** It currently reads `noreply`, which is what the
 inbox list shows next to the subject — the most-seen string in the whole email.

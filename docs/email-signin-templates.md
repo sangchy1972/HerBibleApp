@@ -39,6 +39,44 @@ bottleneck; not worth it just to move a logo.
 
 The templates at the bottom of this file are written for Path B.
 
+## Everything a user can actually see, and where it leaks
+
+Six surfaces. The project id `herbible-d1cc7` and the project number
+`553397384848` appear in three of them by default, which is the single biggest
+reason the mail reads as machine-generated rather than as a product.
+
+| # | What she sees | Default | Fixed by |
+| --- | --- | --- | --- |
+| 1 | Sender name (inbox list) | `noreply` | Templates → ✏️ → Sender name |
+| 2 | From address | `noreply@herbible-d1cc7.firebaseapp.com` 🔴 | **Apply custom domain** |
+| 3 | Subject | `Sign in to project-553397384848` 🔴 | Public-facing name |
+| 4 | Body sign-off | `Your %APP_NAME% team` | Public-facing name |
+| 5 | **The link itself** | `herbible-d1cc7.firebaseapp.com/__/auth/action?…` 🔴 | **Apply custom domain** |
+| 6 | Landing page | `everlandapps.com/finishSignIn.html` ✅ | already clean |
+
+**#5 is the one people forget.** It is visible on hover, on a long-press, and in
+the browser address bar during the redirect — and it is the URL a cautious user
+checks *before* tapping, which is exactly the wrong moment to show her a random
+Google subdomain. Firebase's "Customize domain" covers the From field **and the
+action links**, so the same Apply button fixes 2 and 5 together.
+
+Two fields, two different names, both user-facing:
+
+- **Public-facing name for project** (Authentication → Sign-in method → Google)
+  is what `%APP_NAME%` resolves to. It is ALSO the app name on the Google
+  sign-in consent screen, so `project-553397384848` is showing to every user who
+  taps "Continue with Google" today.
+- **Sender name** (Templates → ✏️) is the inbox-list string. Independent field.
+
+### Verify the link, do not assume
+
+After Apply, send yourself a sign-in mail and **long-press the button in the
+email to copy the link**. It must start with `https://everlandapps.com/` and
+contain no project id. If it still shows `firebaseapp.com`, or if it now 404s,
+the action-URL half did not take — use Templates → ✏️ → **Customize action URL**
+and set it explicitly. Do not judge this from the console; judge it from a real
+message.
+
 ## Path A — what to change in the console now
 
 Both of these matter more than the HTML for staying out of spam.

@@ -128,8 +128,18 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 8 },
   rowBody: { flex: 1, minWidth: 0 },
-  rowTitle: { fontSize: 16.5, fontWeight: '700', color: TXT, fontFamily: FONTS.latoBold, letterSpacing: 0.5, lineHeight: 22 },
-  rowMeta: { fontSize: 13, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.4, marginTop: 3 },
+  // Typographically identical to GospelPsalmCards' `title` / `subtitle` (per
+  // user). The two lists sit one above the other on the home screen and read as
+  // the same kind of row — a plan cover, a name, a line of meta — so every value
+  // is copied rather than approximated: size, weight, family, tracking, leading
+  // and the gap under the title. The old pair was close enough to look like a
+  // mistake (16.5 vs 17.28, '700' vs '600', 0.4 vs 0.5 tracking) without being
+  // close enough to look intentional.
+  //
+  // Applies to the ACTIVE plans too, not just the suggested ones — both lists
+  // share these two styles. That is the right outcome: they are the same row.
+  rowTitle: { fontSize: 17.28, fontWeight: '600', color: TXT, fontFamily: FONTS.latoBold, letterSpacing: 0.5, lineHeight: 22.68 },
+  rowMeta: { fontSize: 14.04, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.5, marginTop: 4 },
   ringText: { fontSize: 11.5, fontWeight: '700', color: TXT, fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6, marginBottom: 2 },
   dividerLabel: { fontSize: 12, fontWeight: '600', color: ROSE, fontFamily: FONTS.latoBold, letterSpacing: 1.1 },

@@ -23,6 +23,14 @@ interface AuthState {
   sendEmailLink: (email: string, appLanguage?: string) => Promise<void>;
   /** Completes magic-link sign-in from the tapped link (called by DeepLinkHandler). */
   completeEmailLink: (link: string) => Promise<void>;
+  /** Redeeming a tapped link right now. The sheet shows a spinner rather than
+   *  leaving "Check your email" on screen while the network round-trip runs. */
+  emailLinkBusy: boolean;
+  /** The last redemption failed (expired link, wrong device, no stored email).
+   *  DeepLinkHandler used to swallow this, so a dead link looked exactly like a
+   *  link she had not tapped yet. Cleared when she retries. */
+  emailLinkFailed: boolean;
+  clearEmailLinkError: () => void;
   /** Legacy local sign-in — still used by Apple until it migrates to Firebase. */
   signIn: (u: User) => void;
   signOut: () => void;
@@ -113,9 +121,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await sendEmailSignInLink(email, appLanguage);
   }, []);
 
+  // Redemption state, surfaced so the sheet can stop lying. The call is made
+  // by DeepLinkHandler, which has no UI of its own and was discarding the
+  // rejection — an expired or already-used link left her on "Check your email"
+  // indefinitely, indistinguishable from not having tapped it.
+  const [emailLinkBusy, setEmailLinkBusy] = useState(false);
+  const [emailLinkFailed, setEmailLinkFailed] = useState(false);
+  const clearEmailLinkError = useCallback(() => setEmailLinkFailed(false), []);
+
   const completeEmailLink = useCallback(async (link: string) => {
-    await completeEmailSignIn(link);   // onAuthChanged fires with the new user
-    recordSignInEvent('email_link');
+    setEmailLinkBusy(true);
+    setEmailLinkFailed(false);
+    try {
+      await completeEmailSignIn(link);   // onAuthChanged fires with the new user
+      recordSignInEvent('email_link');
+    } catch (e) {
+      setEmailLinkFailed(true);
+      throw e;                            // callers may still want to know
+    } finally {
+      setEmailLinkBusy(false);
+    }
   }, [recordSignInEvent]);
 
   const signIn = useCallback((u: User) => {
@@ -162,7 +187,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<AuthState>(() => ({
     user, signInWithGoogle, signInWithFacebook, signInWithApple, sendEmailLink, completeEmailLink, signIn, signOut, deleteAccount, updateProfile,
-  }), [user, signInWithGoogle, signInWithFacebook, signInWithApple, sendEmailLink, completeEmailLink, signIn, signOut, deleteAccount, updateProfile]);
+    emailLinkBusy, emailLinkFailed, clearEmailLinkError,
+  }), [user, signInWithGoogle, signInWithFacebook, signInWithApple, sendEmailLink, completeEmailLink, signIn, signOut, deleteAccount, updateProfile,
+       emailLinkBusy, emailLinkFailed, clearEmailLinkError]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

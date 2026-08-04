@@ -1178,6 +1178,17 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'signIn.email.sent.title':       { en: 'Check your email', context: 'Confirmation title after the magic link is sent.' },
   'signIn.email.sent.body':        { en: 'We sent a one-tap sign-in link to {email}. Open it to finish — no password needed.', context: 'Confirmation body. {email} is the address the link was sent to.' },
   'signIn.email.changeEmail':      { en: 'Use a different email', context: 'Link to go back and re-enter the email.' },
+  // Signed-in confirmation. She opened the magic link in a MAIL APP and the OS
+  // brought her back — without this she lands on the same "Check your email"
+  // screen she left, with no way to know it worked.
+  'signIn.email.sent.spamHint':    { en: "Can't find it? Check your spam or promotions folder.", context: 'Small hint under the "check your email" body. Magic-link mail lands in spam often enough that not saying this costs sign-ups.' },
+  'signIn.email.verifying':        { en: 'Signing you in…', context: 'Shown while the tapped magic link is being redeemed. Brief.' },
+  'signIn.email.linkFailed.title': { en: "That link didn't work", context: 'Title when redeeming the magic link failed — usually expired, already used, or opened on a different device. Not her fault; do not blame her.' },
+  'signIn.email.linkFailed.body':  { en: 'Sign-in links expire, and each one only works once. Send yourself a fresh one and it will go through.', context: 'Body under signIn.email.linkFailed.title. Explains why without jargon and says what to do.' },
+  'signIn.email.linkFailed.retry': { en: 'Send a new link', context: 'Button that returns to the email-entry form to request another link.' },
+  'signIn.done.title':             { en: "You're signed in", context: 'Title of the success state shown inside the sign-in sheet once the account is connected. Warm, past tense, no exclamation mark.' },
+  'signIn.done.body':              { en: 'Your prayers, notes and progress are backed up now, and will follow you to a new phone.', context: 'Body of the sign-in success state. Says what signing in actually bought her — not "welcome".' },
+  'signIn.done.cta':               { en: 'Continue', context: 'Button that closes the sign-in sheet after a successful sign-in.' },
   'signIn.email.back':             { en: 'Back', context: 'Back from the email form to the provider list.' },
   'signIn.email.error':            { en: "Couldn't send the link. Please try again.", context: 'Error toast when the magic link fails to send.' },
   'signIn.error.appleIOSOnly':     { en: 'Apple sign-in is iOS-only.', context: 'Error toast when Apple sign-in is attempted on Android.' },

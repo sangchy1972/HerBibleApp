@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Pressable, ActivityIndicator, TextInput, Keyboard } from 'react-native';
 import Svg, { Path, G } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
@@ -20,7 +20,7 @@ interface Props {
 }
 
 export default function SignInSheet({ onClose, onError }: Props) {
-  const { sendEmailLink } = useAuth();
+  const { sendEmailLink, user, emailLinkBusy, emailLinkFailed, clearEmailLinkError } = useAuth();
   const t = useT();
   const { current: translation } = useTranslation();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -47,6 +47,24 @@ export default function SignInSheet({ onClose, onError }: Props) {
       setEmailBusy(false);
     }
   };
+
+  // SIGNED IN — the one state this sheet was missing.
+  //
+  // The email link is opened in a MAIL APP, not here. She leaves, taps the
+  // link, and the OS brings this app forward; DeepLinkHandler completes the
+  // sign-in silently and the sheet was left sitting on "Check your email"
+  // forever, with no way to tell whether it had worked. She had to guess.
+  //
+  // Keyed on `user` rather than on the deep link, so it also covers Google,
+  // Apple and Facebook — and it does not care WHICH of the three mount points
+  // (Profile, Achievements, the login nudge) rendered the sheet.
+  //
+  // `signedInHere`: only celebrate a sign-in that happened WHILE this sheet was
+  // open. Without the ref the sheet would flash a success screen every time an
+  // already-signed-in user opened it, which is not what it means.
+  const wasSignedOut = useRef(!user);
+  const signedInHere = !!user && wasSignedOut.current;
+  useEffect(() => { if (!user) wasSignedOut.current = true; }, [user]);
 
   // Pre-warm Google's native stack the moment the sheet opens — configure +
   // Play Services check happen while the user reads the sheet, instead of
@@ -83,6 +101,11 @@ export default function SignInSheet({ onClose, onError }: Props) {
           alternate opens (the bug fixed in ProfileScreen). */}
       <Animated.View entering={SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic))} style={styles.sheet}>
         <View style={styles.handle} />
+
+        {signedInHere ? (
+          <SignedIn user={user} onDone={onClose} t={t} />
+        ) : (
+        <>
         <Text style={styles.title}>{t('signIn.sheet.title')}</Text>
         {mode === 'providers' ? (
         <>
@@ -178,12 +201,35 @@ export default function SignInSheet({ onClose, onError }: Props) {
             </>
           ) : (
             <View style={styles.emailSentWrap}>
-              <Feather name="mail" size={34} color={ROSE} style={{ marginBottom: 12 }} />
-              <Text style={styles.emailTitle}>{t('signIn.email.sent.title')}</Text>
-              <Text style={styles.emailSentBody}>{t('signIn.email.sent.body', { email: email.trim() })}</Text>
-              <TouchableOpacity onPress={() => setEmailSent(false)} hitSlop={8}>
-                <Text style={styles.emailChange}>{t('signIn.email.changeEmail')}</Text>
-              </TouchableOpacity>
+              {/* Three states, not one. She comes back to this screen from her
+                  mail app, and it has to tell her which of the three happened:
+                  still waiting, redeeming right now, or the link was no good. */}
+              {emailLinkBusy ? (
+                <>
+                  <ActivityIndicator color={ROSE} style={{ marginBottom: 12 }} />
+                  <Text style={styles.emailTitle}>{t('signIn.email.verifying')}</Text>
+                </>
+              ) : emailLinkFailed ? (
+                <>
+                  <Feather name="alert-circle" size={34} color={ROSE} style={{ marginBottom: 12 }} />
+                  <Text style={styles.emailTitle}>{t('signIn.email.linkFailed.title')}</Text>
+                  <Text style={styles.emailSentBody}>{t('signIn.email.linkFailed.body')}</Text>
+                  <TouchableOpacity onPress={() => { clearEmailLinkError(); setEmailSent(false); }} hitSlop={8}>
+                    <Text style={styles.emailChange}>{t('signIn.email.linkFailed.retry')}</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <Feather name="mail" size={34} color={ROSE} style={{ marginBottom: 12 }} />
+                  <Text style={styles.emailTitle}>{t('signIn.email.sent.title')}</Text>
+                  <Text style={styles.emailSentBody}>{t('signIn.email.sent.body', { email: email.trim() })}</Text>
+                  {/* Spam is where these land more often than anyone likes. */}
+                  <Text style={styles.emailSpamHint}>{t('signIn.email.sent.spamHint')}</Text>
+                  <TouchableOpacity onPress={() => setEmailSent(false)} hitSlop={8}>
+                    <Text style={styles.emailChange}>{t('signIn.email.changeEmail')}</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           )}
         </View>
@@ -197,6 +243,8 @@ export default function SignInSheet({ onClose, onError }: Props) {
           onOpenTerms={() => navigation.navigate('Policy', { id: 'terms' })}
           onOpenPrivacy={() => navigation.navigate('Policy', { id: 'privacy' })}
         />
+        )}
+        </>
         )}
 
         <TouchableOpacity onPress={onClose} hitSlop={10} style={styles.cancel}>
@@ -217,6 +265,47 @@ export default function SignInSheet({ onClose, onError }: Props) {
 //   • `disabled` greys nothing while THIS row is busy (the spinner is the
 //     signal) but dims the other rows so only one flow runs at a time.
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+/**
+ * The confirmation the sheet never had.
+ *
+ * She left this app for her mail app, tapped a link, and the OS brought her
+ * back. Landing on the same "Check your email" screen she left is the worst
+ * possible answer to "did that work?" — she has no way to tell the difference
+ * between success and a link that silently failed, so she taps it again, or
+ * gives up and assumes sign-in is broken.
+ *
+ * NO AUTO-DISMISS. She has just switched apps twice; a screen that vanishes on
+ * a timer is one she may never actually read. She closes it herself.
+ */
+function SignedIn({ user, onDone, t }: {
+  user: { name?: string; email?: string } | null;
+  onDone: () => void;
+  t: (k: string, p?: Record<string, string | number>) => string;
+}) {
+  // Name if the provider gave one, e-mail otherwise, nothing rather than a
+  // placeholder. "Signed in as undefined" is worse than no line at all.
+  const who = (user?.name || '').trim() || (user?.email || '').trim();
+  return (
+    <Animated.View entering={FadeIn.duration(260)} style={styles.doneWrap}>
+      <View style={styles.doneRing}>
+        <Feather name="check" size={30} color="#FFFFFF" />
+      </View>
+      <Text style={styles.doneTitle} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+        {t('signIn.done.title')}
+      </Text>
+      {who ? (
+        <Text style={styles.doneWho} numberOfLines={1} maxFontSizeMultiplier={1.2}>{who}</Text>
+      ) : null}
+      <Text style={styles.doneBody} maxFontSizeMultiplier={1.3}>{t('signIn.done.body')}</Text>
+      <TouchableOpacity style={styles.doneCta} activeOpacity={0.9} onPress={onDone} accessibilityRole="button">
+        <Text style={styles.doneCtaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+          {t('signIn.done.cta')}
+        </Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
 
 function ProviderButton({
   onPress, style, busy, disabled, spinnerColor, glyph, children,
@@ -402,6 +491,26 @@ const styles = StyleSheet.create({
   emailSentWrap: { alignItems: 'center', paddingHorizontal: 8, paddingVertical: 8 },
   emailSentBody: { fontSize: 14.5, lineHeight: 21, color: TXTSUB, textAlign: 'center', marginBottom: 16, paddingHorizontal: 8 },
   emailChange: { fontSize: 14, fontWeight: '700', color: ROSE },
+  emailSpamHint: {
+    fontSize: 13, lineHeight: 19, color: TXTSUB, textAlign: 'center',
+    marginTop: -8, marginBottom: 16, paddingHorizontal: 8, opacity: 0.85,
+  },
+  doneWrap: { alignItems: 'center', paddingTop: 6, paddingBottom: 4 },
+  doneRing: {
+    width: 64, height: 64, borderRadius: 32, backgroundColor: ROSE,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 16,
+  },
+  doneTitle: { fontSize: 21, fontWeight: '700', color: TXT, textAlign: 'center' },
+  doneWho: { fontSize: 15, fontWeight: '600', color: ROSE, textAlign: 'center', marginTop: 6 },
+  doneBody: {
+    fontSize: 14.5, lineHeight: 21, color: TXTSUB, textAlign: 'center',
+    marginTop: 10, marginBottom: 22, paddingHorizontal: 8,
+  },
+  doneCta: {
+    alignSelf: 'stretch', height: 52, borderRadius: BTN_RADIUS, backgroundColor: ROSE,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  doneCtaText: { color: '#FFFFFF', fontSize: 16.5, fontWeight: '700', letterSpacing: 0.3 },
   cancel: {
     flexDirection: 'row',
     alignItems: 'center',

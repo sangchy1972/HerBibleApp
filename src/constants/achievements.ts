@@ -598,7 +598,7 @@ export interface AchievementUiStrings {
 const UI: Record<LanguageCode, AchievementUiStrings> = {
   en: {
     title: 'Achievement', awarded: 'Badges Awarded', toCollect: 'Badges to be Collected',
-    congrats: 'CONGRATS', congratsTitle: 'Congrats!', newAchievement: 'New Achievement', collect: 'Collect', newRibbon: 'NEW',
+    congrats: 'CONGRATS', congratsTitle: 'Congratulations!', newAchievement: 'New Achievement', collect: 'Collect', newRibbon: 'NEW',
     earnedDescription: (n) => `You've earned the "${n}" badge`,
     ok: 'Continue', viewDetails: 'View Details',
     categories: { prayer: 'Prayer', scripture: 'Scripture', plan: 'Study Plans', note: 'Notes & Highlights', milestone: 'Milestones' },

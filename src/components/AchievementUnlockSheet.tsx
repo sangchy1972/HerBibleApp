@@ -51,9 +51,11 @@ const CAPTURE_MIME = 'image/jpeg';
 // so this is only animating its CHILDREN: there is no Reanimated-owned wrapper
 // around the modal and therefore none of the stale-touch-region risk that
 // motivated the original native-slide choice.
-const RISE_MS = 400;
-const BADGE_MS = 600;
-const RAYS_MS = 700;
+// Halved speed (per user): 400/600/700 → 800/1200/1400, so the full reveal runs
+// 3.4 s instead of 1.7 s and reads as a ceremony rather than a flash.
+const RISE_MS = 800;
+const BADGE_MS = 1200;
+const RAYS_MS = 1400;
 const RAYS_DELAY = RISE_MS + BADGE_MS;   // rays only once the badge is fully up
 
 export default function AchievementUnlockSheet() {
@@ -178,8 +180,12 @@ export default function AchievementUnlockSheet() {
   return (
     <Modal visible={show} animationType="none" onRequestClose={close} statusBarTranslucent>
       <Animated.View style={[StyleSheet.absoluteFillObject, riseStyle]}>
-        <LinearGradient colors={['#FFF6FA', '#FBE3EE']} style={StyleSheet.absoluteFillObject} />
-        <View style={[styles.root, { paddingTop: insets.top + 6, paddingBottom: insets.bottom + 16 }]}>
+        {/* Pink pulled 50 % lighter (per user): each stop moved half-way to white
+            — #FFF6FA → #FFFBFD, #FBE3EE → #FDF1F6. */}
+        <LinearGradient colors={['#FFFBFD', '#FDF1F6']} style={StyleSheet.absoluteFillObject} />
+        {/* +20 px at both ends (per user) — the headline sat on the status bar and
+            the Collect button on the gesture bar. */}
+        <View style={[styles.root, { paddingTop: insets.top + 26, paddingBottom: insets.bottom + 36 }]}>
           {/* Title only — no back button (per user). */}
           <Text style={styles.headerTitle}>{ui.congratsTitle}</Text>
 

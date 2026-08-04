@@ -1174,6 +1174,8 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reminder.title': '跟随祂',
     'reminder.subtitle': '开启提醒，每日领受祝福',
     'reminder.skip': '跳过',
+    'permCoach.notif.title': '允许 Her Bible 向你发送每日经文',
+    'permCoach.notif.switch': '允许通知',
     'bibleAudio.playing': '播放中',
     'bibleAudio.read': '阅读',
 
@@ -2378,6 +2380,8 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reminder.title': '跟隨祂',
     'reminder.subtitle': '開啟提醒，每日領受祝福',
     'reminder.skip': '跳過',
+    'permCoach.notif.title': '允許 Her Bible 向妳發送每日經文',
+    'permCoach.notif.switch': '允許通知',
     'bibleAudio.playing': '播放中',
     'bibleAudio.read': '閱讀',
 
@@ -3582,6 +3586,8 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reminder.title': 'Folge Ihm',
     'reminder.subtitle': 'Erlebe täglichen Segen — aktiviere die Erinnerung',
     'reminder.skip': 'Überspringen',
+    'permCoach.notif.title': 'Her Bible erlauben, dir Tagesverse zu senden',
+    'permCoach.notif.switch': 'Benachrichtigungen zulassen',
     'bibleAudio.playing': 'Wird abgespielt',
     'bibleAudio.read': 'Lesen',
 
@@ -4790,6 +4796,8 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reminder.title': 'Suis-le',
     'reminder.subtitle': 'Reçois des bénédictions chaque jour en activant le rappel',
     'reminder.skip': 'Passer',
+    'permCoach.notif.title': 'Autoriser Her Bible à t\'envoyer les versets du jour',
+    'permCoach.notif.switch': 'Autoriser les notifications',
     'bibleAudio.playing': 'Lecture',
     'bibleAudio.read': 'Lire',
 
@@ -5994,6 +6002,8 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reminder.title': 'Síguelo',
     'reminder.subtitle': 'Recibe bendiciones cada día activando el recordatorio',
     'reminder.skip': 'Omitir',
+    'permCoach.notif.title': 'Permite que Her Bible te envíe los versículos diarios',
+    'permCoach.notif.switch': 'Permitir notificaciones',
     'bibleAudio.playing': 'Reproduciendo',
     'bibleAudio.read': 'Leer',
 
@@ -7198,6 +7208,8 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reminder.title': 'Siga-O',
     'reminder.subtitle': 'Receba bênçãos diárias ativando o lembrete',
     'reminder.skip': 'Pular',
+    'permCoach.notif.title': 'Permita que o Her Bible envie os versículos diários',
+    'permCoach.notif.switch': 'Permitir notificações',
     'bibleAudio.playing': 'Tocando',
     'bibleAudio.read': 'Ler',
 

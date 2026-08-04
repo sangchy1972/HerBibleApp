@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ImageBackground, ActivityIndicator } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ImageBackground, ActivityIndicator, AppState } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TXT, FONTS } from '../constants/theme';
 import { useT } from '../i18n/useT';
 import { useNotifications } from '../state/NotificationsContext';
+import PermissionCoachOverlay, { openNotificationSettings } from '../components/PermissionCoachOverlay';
 
 // Full-screen notification opt-in shown to RETURNING users (gating lives in
 // ReminderInterstitialContext; RootNavigator renders this instead of the
@@ -43,17 +44,49 @@ export default function FollowHimScreen({ onDone }: Props) {
   // doesn't need to react to the hour ticking over mid-view.
   const bg = useMemo(() => pickBackground(), []);
 
+  // Second chance after a refusal. The OS prompt is one-shot: once she has
+  // declined (or declined on an earlier run, which makes requestPermissions a
+  // silent no-op), no amount of asking will raise it again — the switch only
+  // exists in Settings from then on. Rather than drop her into the app with
+  // reminders silently dead, we show the coach card and hand her to the exact
+  // Settings page with the switch named and the gesture demonstrated.
+  const [coach, setCoach] = useState(false);
+  // True only between "she tapped Open Settings" and the next foreground, so a
+  // routine backgrounding never triggers the re-check.
+  const returning = useRef(false);
+
+  const finish = () => { setCoach(false); onDone(); };
+
   const onContinue = async () => {
     if (busy) return;
     setBusy(true);
+    let granted = false;
     try {
-      // Fires the Android/iOS system permission dialog directly. We don't
-      // branch on the result — granted or denied, the user proceeds into
-      // the app; the gate just won't re-show once permission is granted.
-      await requestPermissionAndEnableDefaults();
-    } catch { /* proceed regardless */ }
-    onDone();
+      // Fires the Android/iOS system permission dialog directly.
+      granted = await requestPermissionAndEnableDefaults();
+    } catch { /* treat as a refusal */ }
+    setBusy(false);
+    if (granted) { onDone(); return; }
+    setCoach(true);
   };
+
+  // Came back from Settings. requestPermissionsAsync is documented as a no-op
+  // that resolves with the CURRENT status when there is nothing to prompt, so
+  // re-calling it both reads the new state and turns the reminders on in the
+  // same pass — no second code path, and no direct expo-notifications import
+  // here that would bypass the provider's guarded require.
+  useEffect(() => {
+    if (!coach) return;
+    const sub = AppState.addEventListener('change', s => {
+      if (s !== 'active' || !returning.current) return;
+      returning.current = false;
+      requestPermissionAndEnableDefaults()
+        .then(ok => { if (ok) finish(); })       // still off → leave the card up; Skip and X both still work
+        .catch(() => {});
+    });
+    return () => sub.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coach]);
 
   const Body = (
     <>
@@ -91,6 +124,15 @@ export default function FollowHimScreen({ onDone }: Props) {
   return (
     <ImageBackground source={bg} style={styles.root} resizeMode="cover">
       {Body}
+      <PermissionCoachOverlay
+        visible={coach}
+        title={t('permCoach.notif.title')}
+        switchLabel={t('permCoach.notif.switch')}
+        onOpenSettings={() => { returning.current = true; openNotificationSettings(); }}
+        // Dismissing the card is the same decision as Skip: she has now
+        // refused twice, so pressing again would be nagging.
+        onDismiss={finish}
+      />
     </ImageBackground>
   );
 }

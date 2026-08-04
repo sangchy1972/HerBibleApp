@@ -1327,6 +1327,10 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'reminder.title':                { en: 'Follow Him',                                            context: 'Large title on the full-screen reminder opt-in shown to returning users. "Him" = God/Jesus (capitalized, reverent).' },
   'reminder.subtitle':             { en: 'Experience daily blessings by turning on the reminder',  context: 'Subtitle under reminder.title — invites the user to enable daily notification reminders.' },
   'reminder.skip':                 { en: 'Skip',                                                  context: 'Top-right link on the reminder opt-in screen — the only way to dismiss without enabling notifications.' },
+  // Coach card shown after the OS permission prompt was refused — see
+  // PermissionCoachOverlay. It mimics the Settings row she is about to hunt for.
+  'permCoach.notif.title':         { en: 'Allow Her Bible to send you Daily Verses', context: 'Headline on the card that hands the user to system Settings after she declined the notification prompt. Names the OUTCOME (daily verses), not the permission. "Her Bible" is the app name — do not translate.' },
+  'permCoach.notif.switch':        { en: 'Allow notifications',                     context: 'Label on the mock Settings row the animated finger flips. MUST read like the switch she will actually find on the OS notification-settings page for this app, so use the platform wording your locale uses there — a label that does not match sends her looking for something that is not on screen.' },
 
   // ─── Full-screen Bible audio player ──────────────────────────────────────
   'bibleAudio.playing':            { en: 'Playing',                                               context: 'Top-bar title of the full-screen Bible narration player.' },

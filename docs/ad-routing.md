@@ -3,6 +3,11 @@
 > 现状记录，不是设计提案。写于 2026-08-05，对照代码逐行核对过。
 > 姊妹文档：`ad-unit-ids.md`（ID 注册表）· `ad-waterfall-US.md`（美国阶梯的内部机制）
 >
+> ⚠️ **2026-08-05 晚间更新：Android 已整体切换到「广告请求逻辑交付规格 v1.0」引擎**
+> （`services/adEngine.ts` + `adLadders.ts` + `adValueStore.ts`）。下文 §1–§2 的
+> 路由描述从此**仅适用于 iOS**；Android 的现行逻辑见文末 **§7**。
+> 展示触发层（§3）对两端仍然有效，未改动。
+>
 > **这份文档存在的理由**：「美国 / 非美」这条分叉只切在**一处**，不是切在整条链路上。
 > 三条广告路径里只有一条分地区，另外两条全球统一——这是最容易搞混的地方。
 
@@ -150,6 +155,57 @@ AdMob 行为政策禁止「通过发布商自建系统按实时价格信息程�
 | `src/services/adFrequency.ts` | 何时展示（day 分档、nav 计数、热启动） |
 | `src/services/adRevenue.ts` | 收入漏斗 / 阈值，按 `deviceRegion()` 取阈值 |
 | `src/services/adRevenueConfig.ts` | 远程配置 |
-| `plugins/withAdMobMediation.js` | 中介适配器开关（Meta 目前 `enabled: false`） |
+| `plugins/withAdMobMediation.js` | 中介适配器开关（Liftoff+Meta 开，Pangle/InMobi 关） |
+| `src/services/adEngine.ts` | **Android 请求引擎**（缓存、节奏、熔断、展示） |
+| `src/services/adLadders.ts` | 引擎的纯逻辑：三条阶梯、地区分组、选层选档 |
+| `src/services/adValueStore.ts` | paid 事件的原子写回（值窗口 / 计数 / LTV） |
 | `docs/ad-unit-ids.md` | 单元 / placement ID 注册表 |
 | `docs/ad-waterfall-US.md` | 美国阶梯的内部机制（底价、窗口移动、退避） |
+
+---
+
+## 7. Android 现行逻辑 — 请求引擎（spec v1.0，2026-08-05 上线）
+
+规格源文件：`~/Downloads/her_bible_ad_request_spec.html`；业主 Q&A 的修订全部并入下表。
+
+### 分层（每次发请求前重新判定，绝不缓存判定结果）
+
+| 状态 | 条件 | 请求层 | 安全网 |
+| --- | --- | --- | --- |
+| 纯新用户 | imps < 2 | newbie(5s) + 探测层(20s，3 次真实 no-fill 当日熔断) | US/T2→`splash_0`、WW→`ww_0`，**常驻** 3s |
+| 混合期 | imps ≥ 2 且 day ≤ 2 | newbie(5s) + 主层(30s/6 次) + 副层(3s，主层首发后 3s 起) | US→`splash_0`、T2/WW→`ww_0`，**仅缓存=0** 3s |
+| 老用户 | day ≥ 3 且 imps ≥ 2 | 主层 + 副层（同上） | 同混合期 |
+
+- newbie = `HB_newbie_splash_text_00`(5004598985)，退出条件 **day≥3 且 imps≥2**；
+  "onboarding 只展示一次"的旧锁已废除，它在整个新用户期反复供给缓存池。
+- 探测层：US `splash_1`($300) / T2 `splash_26`($100) / WW `ww_1`($80)。
+- 主层：`target_eCPM = avg(最近2次原始USD) × 1000 × 1.3` → 本区阶梯底价 ≥ target 的最低档；
+  低于本区最低档 → 最低档 + 本区无底价层；超本区封顶 → **借美国阶梯**；> $500 封 `splash_25`。
+- 副层：最近 1 次值所在档下移一档；触底 → 本区无底价层。**跨区借用只发生在主层。**
+- T2 安全网**新老不对称是业主定案**：新用户=`splash_0`，老用户=`ww_0`。
+- 三条阶梯：US splash_2-25($40-500/步20)、T2 splash_27-50($15-130/步5)、WW ww_2-25($8-54/步2)。
+
+### 硬规则
+
+- **存储全为原始单次 USD 收入**（`adEngine:value:v1`：last3/imps/max/ltv/全量样本≤1000），
+  eCPM 只在比较瞬间 ×1000 —— 不存 eCPM。
+- **网络错误不计熔断**（业主确认）：退避重试同一单元；只有真实 no-fill 计 3/6 振。
+  熔断按单元记录、当日有效、同日重启恢复（`adEngine:day:v1`）、本地自然日清零。
+- 缓存池全局 2 条；满 → 最低优先级在途标记废弃（结果到达即丢，RN 库无取消 API）。
+  **优先级 = 底价高者先，newbie 介于实底价与无底价之间，无底价永远最后**（展示与保留同序）。
+- 展示时机层不变：adFrequency 的 placement / day 分档 / 60s 全局间隔照旧；
+  onboarding 那次展示绕过 60s 但启动间隔时钟。
+- **全 live 单元，dev 包也是**（业主定案 2026-08-05）——调试机必须在 AdMob 注册为测试设备。
+- UMP 在 Android 上与 SDK init **并行、绝不阻塞**（最前面的展示可能非个性化，已接受）。
+
+### 埋点变化（仅 Android）
+
+- `ad_impression_custom` **改在 paid 回调发**，带真实 `value`(USD 原始值) + `unit` + `floor` +
+  placement + currency + precision —— 买量侧直接用。iOS 仍在 show 时发、无 value。
+- 新增 `ad_request`（仅探测/主/副层，慢节奏）、`ad_breaker`（熔断触发）。
+- `ads_route` 的 Android path 值 = `engine`。
+
+### iOS
+
+完全未动：US → 旧 26 层状态机（`usInterstitial.ts`），非美 → 单单元 preload。
+等业主给 iOS 的新单元集后再切。

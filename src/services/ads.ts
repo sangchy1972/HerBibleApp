@@ -50,6 +50,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent, setUserProps } from './firebase';
 import { ensureAttRequested } from './att';
 import { startUsController, stopUsController, usOnShowOpportunity, isUsControllerActive } from './usInterstitial';
+import { startAdEngine, stopAdEngine, isAdEngineActive, engineOnShowOpportunity } from './adEngine';
+import { hydrateAdValueStore } from './adValueStore';
 import { setInterstitialVisible } from './interstitialVisibility';
 import { deviceRegion } from './deviceRegion';
 import { initAdRevenue, onAdPaid } from './adRevenue';
@@ -202,9 +204,12 @@ export async function setAdsRemoved(value: boolean): Promise<void> {
   if (value) grantGeneration += 1;
   adsRemoved = value;
   setUserProps({ ads_removed: value ? 'on' : 'off' });   // payer cohort for BigQuery
-  // Tear the US waterfall down on purchase so its ticker + cached/in-flight ads
-  // stop immediately (not just no-op behind the flag).
-  if (value) { try { stopUsController(); } catch {} }
+  // Tear the request machinery down on purchase so tickers + cached/in-flight
+  // ads stop immediately (not just no-op behind the flag).
+  if (value) {
+    try { stopUsController(); } catch {}
+    try { stopAdEngine(); } catch {}
+  }
   try { await AsyncStorage.setItem(REMOVE_ADS_KEY, value ? '1' : '0'); } catch {}
 }
 
@@ -258,19 +263,23 @@ export async function initAds(): Promise<void> {
     void refreshAdRevenueConfig().catch(() => {});
   }
   try {
-    // UMP consent — MUST run BEFORE initializing the ads SDK. Fetches the latest
-    // consent info and, where the user's region (EEA / UK / Switzerland / etc.)
-    // requires it AND a consent message is configured in the AdMob console
-    // (Privacy & messaging), shows the consent form. Errors here must never
-    // block ads or the app, so each call is guarded.
+    // UMP consent. Two orders, on purpose:
+    //  • ANDROID (ad-request spec v1.0): UMP runs IN PARALLEL with SDK init and
+    //    never blocks any request. A request that goes out before the TCF
+    //    signal lands simply serves non-personalized; once the form is done the
+    //    SDK carries the signal automatically. Owner-confirmed trade-off.
+    //  • iOS (untouched until its own unit set arrives): serial, bounded —
+    //    consent gathered before the SDK reads the IDFA, as before.
     if (AdsConsentObj) {
-      try {
-        // Bounded: a UMP call that never settles would strand the whole init
-        // chain below it. Falling through just means the SDK serves per-region
-        // defaults — degraded, not broken.
-        await bounded(AdsConsentObj.requestInfoUpdate(), CONSENT_TIMEOUT_MS, null, 'ump_info');
-        await bounded(AdsConsentObj.loadAndShowConsentFormIfRequired(), CONSENT_TIMEOUT_MS, null, 'ump_form');
-      } catch { /* consent failure → fall through; SDK serves per region defaults */ }
+      const umpFlow = async () => {
+        try {
+          // Bounded: a UMP call that never settles must strand nothing.
+          await bounded(AdsConsentObj.requestInfoUpdate(), CONSENT_TIMEOUT_MS, null, 'ump_info');
+          await bounded(AdsConsentObj.loadAndShowConsentFormIfRequired(), CONSENT_TIMEOUT_MS, null, 'ump_form');
+        } catch { /* consent failure → SDK serves per-region defaults */ }
+      };
+      if (Platform.OS === 'android') void umpFlow();
+      else await umpFlow();
     }
     // iOS App Tracking Transparency — prompt for tracking BEFORE the GMA SDK
     // reads the IDFA. On "granted" AdMob serves personalized ads + the real
@@ -302,22 +311,24 @@ export async function initAds(): Promise<void> {
       const { ready, total, detail } = summarizeAdapterStatuses(statuses);
       logEvent('ads_adapters', { ready, total, detail });
     }
-    // US users (iOS OR Android) → the 26-unit waterfall controller. The ladder
-    // is platform-selected INSIDE usInterstitial (HB_int_splash_* on Android,
-    // HB_ios_splash_* on iOS), so each binary requests only its own units — the
-    // same JS ships in both. Everyone else (non-US, or region-undetectable) takes
-    // the simple single-unit preload (REAL_INTERSTITIAL_UNIT_ID, also per-platform).
-    // NOT in __DEV__: the ladder ids are LIVE units with no TestIds equivalent —
-    // same account-safety policy as INTERSTITIAL_UNIT_ID above. Verify the
-    // controller with a release build (internal/TestFlight) or by registering
-    // the device as an AdMob test device.
-    // Onboarding unit loads FIRST and in parallel with whichever route below —
-    // an extra independent request, so the first-open ad is ready as early as
-    // the SDK allows (the biggest fill-speed lever available: consent + ATT +
-    // initialize() are policy-ordered and can't be skipped or reordered).
+    // ── ANDROID: the ad-request-spec engine, ALL regions, dev builds included
+    // (owner decision 2026-08-05: live units only — the ladders have no TestIds
+    // equivalents; register debug devices as AdMob test devices instead). It
+    // owns the newbie unit too, so the legacy per-platform preloads below are
+    // iOS-only now. The engine logs its own ads_route.
+    if (Platform.OS === 'android' && InterstitialAdCls) {
+      await bounded(hydrateAdValueStore(), 2000, undefined, 'ad_value_store');
+      void startAdEngine({ Interstitial: InterstitialAdCls, AdEventType: AdEventTypeEnum, isAdsRemoved: () => adsRemoved });
+      return;
+    }
+
+    // ── iOS (untouched until its own unit set arrives): US → the 26-unit
+    // waterfall controller (LIVE units, hence !__DEV__ — verify via TestFlight
+    // or an AdMob test device); everyone else → the single-unit preload. The
+    // onboarding unit loads first, in parallel, as its own request.
     preloadOnboarding();
     const region = deviceRegion();
-    const useController = region === 'US' && (Platform.OS === 'ios' || Platform.OS === 'android') && !!InterstitialAdCls && !__DEV__;
+    const useController = region === 'US' && Platform.OS === 'ios' && !!InterstitialAdCls && !__DEV__;
     logEvent('ads_route', { region: region ?? 'unknown', path: useController ? 'us_controller' : 'preload' });
     if (useController) {
       startUsController({ Interstitial: InterstitialAdCls, AdEventType: AdEventTypeEnum, isAdsRemoved: () => adsRemoved });
@@ -414,6 +425,17 @@ function preloadOnboarding(): void {
 // interstitial keeps its distance.
 export function maybeShowOnboardingInterstitial(): boolean {
   if (adsRemoved || !initialized || onboardingShown) return false;
+  // ANDROID: the engine owns the newbie unit now. This shows the best cached ad
+  // (usually the newbie fill on a first open), bypassing the 60s floor — nothing
+  // can have shown before it — while still starting the interval clock. The
+  // once-per-onboarding latch stays HERE: the unit itself is reusable under the
+  // new spec, but the onboarding flow still only interrupts once.
+  if (isAdEngineActive()) {
+    if (!engineOnShowOpportunity('onboarding_first', true)) return false;
+    onboardingShown = true;
+    lastShownAt = Date.now();
+    return true;
+  }
   if (!onboardingInterstitial || !onboardingLoaded) return false;
   if (AppState.currentState !== 'active') return false;
   try {
@@ -431,7 +453,10 @@ export function maybeShowOnboardingInterstitial(): boolean {
 // no-ops if no ad is loaded yet (a fresh one is always preloading for next time).
 export function maybeShowInterstitial(placement: 'prayer_end' | 'gospel_end' | 'plan_end' | 'quiz_retry' | 'nav' | 'app_open' | 'unknown' = 'unknown'): void {
   if (adsRemoved || !initialized) return;
-  // US users go through the waterfall controller (own cache, frequency cap,
+  // ANDROID: the spec engine (own cache, 60s floor, paid-side impression
+  // logging). Returns silently if nothing is cached yet.
+  if (isAdEngineActive()) { engineOnShowOpportunity(placement); return; }
+  // iOS US: the waterfall controller (own cache, frequency cap,
   // impression-level logging). It returns silently if nothing is cached yet.
   if (isUsControllerActive()) { usOnShowOpportunity(placement); return; }
   // Non-US simple path: show the single preloaded interstitial.

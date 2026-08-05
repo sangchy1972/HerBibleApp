@@ -79,9 +79,10 @@ waterfall tier and a stale copy in a doc would be worse than no copy:
 
 | What | Where |
 | --- | --- |
-| Worldwide interstitial (non-US + all iOS) | `services/ads.ts` → `REAL_INTERSTITIAL_UNIT_ID` |
-| First-open onboarding interstitial | `services/ads.ts` → `REAL_ONBOARDING_UNIT_ID` |
-| US waterfall ladder, 26 tiers | `services/usInterstitial.ts` → `ANDROID_SUFFIX` / `IOS_SUFFIX` |
+| **ANDROID — everything** (newbie, probes, 3 ladders, nets) | `services/adLadders.ts` — the spec-v1.0 tables, unit-tested against the appendix |
+| iOS worldwide interstitial (non-US) | `services/ads.ts` → `REAL_INTERSTITIAL_UNIT_ID.ios` |
+| iOS first-open onboarding interstitial | `services/ads.ts` → `REAL_ONBOARDING_UNIT_ID.ios` |
+| iOS US waterfall ladder, 26 tiers | `services/usInterstitial.ts` → `IOS_SUFFIX` (ANDROID_SUFFIX is legacy — the engine superseded it) |
 
 iOS and Android unit IDs are **not** interchangeable — each lives under its own
 platform App ID. The US ladder is chosen by `Platform.OS` at runtime, so one JS

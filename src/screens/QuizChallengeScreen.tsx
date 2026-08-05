@@ -7,9 +7,8 @@ import { BG, TXT, TXTSUB, FONTS, ROSE, ROSE_WASH, BTN_RADIUS } from '../constant
 import { useT } from '../i18n/useT';
 import { useQuiz } from '../state/QuizContext';
 import { currentPosition, isTried, sessionSummary } from '../state/quizSession';
-import { levelFor, MYSTERY_EVERY, TILES_PER_PAINTING } from '../state/quizProgress';
+import { levelFor, TILES_PER_PAINTING } from '../state/quizProgress';
 import { SET_SIZE } from '../services/quizSets';
-import { drawEarnedAt } from '../state/cardDraw';
 import { QUIZ_ART_COUNT } from '../constants/quizArt';
 import QuizSegmentBar from '../components/quiz/QuizSegmentBar';
 import QuizQuestionView from '../components/quiz/QuizQuestionView';
@@ -48,20 +47,13 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   // Cleared whenever a NEW draw is granted. Without this, `drawDismissed` is a
   // one-way latch for the whole visit: arrive with a leftover draw, deal with
   // it, then earn another one three sets later, and the overlay silently
-  // refuses to open. onContinue has already committed and set `leaving`, so
-  // nothing navigates either — she lands on a blank body under the header with
-  // her new card swallowed. Exactly the class of dead end the daily-cap screen
-  // exists to prevent, one ref over.
+  // refuses to open — her new card swallowed with nothing anywhere hinting one
+  // was owed.
   const prevPending = useRef(false);
   useEffect(() => {
     if (pendingDraw && !prevPending.current) drawDismissed.current = false;
     prevPending.current = pendingDraw;
   }, [pendingDraw]);
-  // True when the overlay was opened by a draw she earned in a PREVIOUS visit
-  // rather than by the set she just finished. Collecting that one must leave
-  // her on the quiz, not throw her home — she opened the app to answer
-  // questions and an old reward ambushed her before the first one.
-  const resumedDraw = useRef(false);
   // Two taps in one frame dispatch two GO_BACKs; the second pops the parent and
   // she lands two screens away from where she meant to be.
   const navLock = useRef(false);
@@ -89,22 +81,19 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   // pendingDraw is persisted and only ever spent by collecting a card.
   useEffect(() => {
     if (!ready || !pendingDraw || drawing || drawDismissed.current) return;
-    // A draw that was already owed when the screen mounted is a leftover, not a
-    // reward for what she is doing right now.
-    if (!leaving.current) resumedDraw.current = true;
     setDrawing(true);
   }, [ready, pendingDraw, drawing]);
 
   // Start (or resume) as soon as the bank is available. Guarded inside `open`,
-  // which returns the existing session untouched if one is already in flight.
+  // which returns the existing session untouched if one is already in flight —
+  // and refuses outright once the day is capped or the bank is finished, in
+  // which case the capped/retired views below own the screen instead.
   //
-  // `leaving` matters: committing a set changes progress.setIndex, which
-  // changes `open`'s identity, which re-fires this effect during the frame
-  // between finish() and the screen unmounting — silently starting and
-  // persisting a session for the NEXT set the user never asked to begin.
-  const leaving = useRef(false);
+  // This effect is ALSO what makes "Next level" work: committing a set changes
+  // progress.setIndex, which re-fires it, which starts the next set — while any
+  // celebration (painting, card draw) plays out on top.
   useEffect(() => {
-    if (ready && bank && !leaving.current) open();
+    if (ready && bank) open();
   }, [ready, bank, open]);
 
   // Today is spent and there is nothing in flight. This has to be an explicit
@@ -117,33 +106,6 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   // gone -- the collection screens link here, and Android can restore this route
   // from a saved navigation state.
   const retiredOut = ready && !!bank && !session && lifecycle.retired;
-
-  // SAFETY NET, deliberately on a timer rather than asserted at render.
-  //
-  // After a commit, exactly one of three things must own this screen: the draw
-  // overlay, the painting celebration, or navigation. The provider's commit
-  // effect drains AFTER this component's effects, so there is legitimately one
-  // frame in which none of them do -- which is why this cannot be a synchronous
-  // assertion. A second and a half later there is no legitimate reason to still
-  // be sitting here, and the alternative is a blank page whose only control is
-  // the X. The timer is cleared the moment any of the three arrives.
-  //
-  // Nothing is lost by leaving: pendingDraw is persisted and offered again on
-  // her next visit, and the set is already committed.
-  //
-  // `drawWillOpen`, NOT bare `pendingDraw`. A draw she has already dismissed
-  // this visit is owed but will not appear, and treating the two as the same
-  // thing is what let the painting branch below strand her: it returns before
-  // clearing the latch, so PaintingComplete would decline to leave (a draw is
-  // pending), the overlay would decline to open (the latch is set), and this
-  // net would decline to arm.
-  const drawWillOpen = pendingDraw && !drawDismissed.current;
-  useEffect(() => {
-    if (!leaving.current || session || drawing || drawWillOpen || finishedPainting != null) return;
-    const id = setTimeout(() => { if (leaving.current) goHome(); }, 1500);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, drawing, drawWillOpen, finishedPainting]);
 
   // Android hardware back = the close button, not a silent no-op.
   useEffect(() => {
@@ -193,7 +155,6 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
           correct={summary.correct}
           total={questions.length}
           wrong={summary.wrong}
-          level={levelFor(progress.completedSets)}
           firstPassPerfect={summary.firstPassPerfect}
           completedSets={progress.completedSets}
           // <= 1, not === 1: a clock change or a lowered cap can land her here
@@ -245,46 +206,30 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
             setTimeout(() => maybeShowInterstitial('quiz_retry'), 400);
           }}
           onNextLevel={() => {
-            // Commit and stay. `leaving` is NOT set: the auto-open effect is
-            // exactly what starts the next set, which is the whole point.
-            finish();
-          }}
-          onContinue={() => {
-            leaving.current = true;
-            // Decided BEFORE finish(), synchronously, from the set she is about
-            // to commit. Navigating in the same tick as a granted draw would
-            // unmount the screen before the overlay could show and the reward
-            // would only surface on her next visit — but two sets in three earn
-            // nothing, and those must still take her home. Waiting on the
-            // pendingDraw effect for both would strand her on the results
-            // screen with a dead button.
-            const committed = progress.completedSets + 1;
-            const earns = drawEarnedAt(committed, MYSTERY_EVERY);
+            // Commit and stay. The auto-open effect starts the next set (or the
+            // capped/retired view takes the screen), so the button IS the next
+            // level — no trip home between sets.
+            //
             // The 4th, 8th, 12th… set completes a painting. Computed from the
-            // committed count, synchronously, for the same reason the draw is:
-            // the screen must know before finish() whether anything is going to
-            // hold it open.
+            // count she is ABOUT to commit, synchronously — the celebration has
+            // to mount in the same breath as the commit, not a render later.
             // Clamped: past the last painting there is nothing new to finish,
             // and an unclamped index would replay a full "picture complete"
             // celebration for artwork 25 every four sets, forever, while the
             // grid never grew. QuizReviewView already handles this via
             // view.outOfArt.
+            //
+            // A draw set (every 3rd) needs nothing from us here: the grant
+            // lands a render after finish(), the grant clears the dismissed
+            // latch, and the pendingDraw effect opens the overlay on top of
+            // whatever now owns the screen.
+            const committed = progress.completedSets + 1;
             const pIdx = committed / TILES_PER_PAINTING - 1;
             const painting = committed % TILES_PER_PAINTING === 0 && pIdx < QUIZ_ART_COUNT
               ? pIdx
               : null;
             finish();
-            if (painting != null) { setFinishedPainting(painting); return; }
-            if (earns) {
-              // Cleared SYNCHRONOUSLY, here, not in the effect below. The grant
-              // lands a render later, so at this instant `drawDismissed` still
-              // reflects a draw she dismissed earlier in this visit -- and
-              // testing it here would send her home instead of showing the card
-              // she just earned.
-              drawDismissed.current = false;
-              return;
-            }
-            goHome();
+            if (painting != null) setFinishedPainting(painting);
           }}
         />
       );
@@ -302,6 +247,11 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
     );
   };
 
+  // The results screen carries no level title, no bar and no counter (per
+  // user) — its own body has the reward layout, and two progress bars on one
+  // screen was exactly the complaint. Only the close button survives.
+  const inSummary = session?.phase === 'summary';
+
   return (
     <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.header}>
@@ -309,23 +259,28 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
           <Feather name="x" size={24} color={TXT} />
         </TouchableOpacity>
         <View style={styles.headerCopy}>
-          <Text style={styles.level} numberOfLines={1} maxFontSizeMultiplier={1.3}>
-            {t('quiz.header.level', { n: levelFor(progress.completedSets) })}
-          </Text>
+          {!inSummary ? (
+            <Text style={styles.level} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+              {t('quiz.header.level', { n: levelFor(progress.completedSets) })}
+            </Text>
+          ) : null}
         </View>
         {/* Balances the close button so the title stays optically centred. */}
         <View style={styles.close} />
       </View>
 
-      <QuizSegmentBar segments={segments} height={9} style={styles.bar} />
-
-      {session && session.phase !== 'summary' ? (
-        <Text style={styles.counter} maxFontSizeMultiplier={1.3}>
-          {t('quiz.header.progress', { n: step, total: roundLength })}
-        </Text>
-      ) : (
-        <View style={styles.counterSpacer} />
-      )}
+      {!inSummary ? (
+        <>
+          <QuizSegmentBar segments={segments} height={9} style={styles.bar} />
+          {session ? (
+            <Text style={styles.counter} maxFontSizeMultiplier={1.3}>
+              {t('quiz.header.progress', { n: step, total: roundLength })}
+            </Text>
+          ) : (
+            <View style={styles.counterSpacer} />
+          )}
+        </>
+      ) : null}
 
       {retiredOut ? (
         <QuizDoneView
@@ -350,14 +305,9 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
           onDone={() => {
             drawDismissed.current = true;
             setDrawing(false);
-            // A leftover draw hands her back the quiz she came here for; a draw
-            // she just earned takes her home with it.
-            if (resumedDraw.current) { resumedDraw.current = false; return; }
-            // …unless that was the last set there will ever be. Falling through
-            // to QuizDoneView is the only moment the app gets to tell her she
-            // finished; going home would just make the card disappear.
-            if (lifecycle.retired) return;
-            goHome();
+            // Always stays: underneath is whatever legitimately owns the screen
+            // now — the next set the commit auto-opened, the daily-cap view, or
+            // QuizDoneView on the set that finished the bank.
           }}
         />
       ) : null}
@@ -366,16 +316,10 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
         <PaintingComplete
           paintingIndex={finishedPainting}
           onDone={() => {
+            // Closing the celebration just uncovers the screen's real owner —
+            // the next set, the draw overlay (unblocked by this very state
+            // change), the daily-cap view, or QuizDoneView.
             setFinishedPainting(null);
-            // Leave unless a draw is actually going to open underneath. Testing
-            // `pendingDraw` alone kept her here for a draw she had already
-            // dismissed this visit, and the screen went blank.
-            if (drawWillOpen) return;
-            // The set that retires the quiz still gets its celebration; she then
-            // lands on QuizDoneView rather than being posted home with the card
-            // silently gone from the home screen.
-            if (lifecycle.retired) return;
-            goHome();
           }}
         />
       ) : null}

@@ -1,19 +1,25 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { ROSE, LAV, TXT, TXTSUB, FONTS, INK_10 } from '../../constants/theme';
+import { View, Text, StyleSheet, Image } from 'react-native';
+import { ROSE, TXT, TXTSUB, FONTS, INK_06 } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
 import { mysteryView, MYSTERY_EVERY } from '../../state/quizProgress';
 
-// "N levels from the mystery reward."
+// "Just N away from the mystery reward", with the gift waiting at the end of
+// the bar — the reference design's shape.
 //
-// The counter behind the mystery card draw. MYSTERY_EVERY is load-bearing now:
+// The counter behind the mystery card draw. MYSTERY_EVERY is load-bearing:
 // hitting zero grants a real draw (see cardDraw.ts / MysteryDrawOverlay), so
 // changing it changes the reward economy, not just a label.
 //
 // The bar is continuous, not segmented: it is a countdown, not a per-question
 // record, and a second 5-segment bar next to the real one would read as the
 // same information twice.
+
+const GIFT = require('../../../assets/reward-gift.png');
+// The processed asset is 160x180 (see the commit that added it); keep its
+// aspect so the ribbon doesn't squash.
+const GIFT_H = 52;
+const GIFT_W = GIFT_H * (160 / 180);
 
 export default function MysteryRewardBar({ completedSets }: { completedSets: number }) {
   const t = useT();
@@ -22,19 +28,32 @@ export default function MysteryRewardBar({ completedSets }: { completedSets: num
 
   return (
     <View style={styles.root}>
-      <View style={styles.head}>
-        <MaterialCommunityIcons name="gift-outline" size={18} color={LAV} />
-        <Text style={styles.label} numberOfLines={1} maxFontSizeMultiplier={1.3}>
-          {t('quiz.mystery.title')}
-        </Text>
-        <Text style={styles.count} numberOfLines={1} maxFontSizeMultiplier={1.3}>
-          {t('quiz.mystery.remaining', { n: remaining })}
-        </Text>
-      </View>
-      <View style={styles.track}>
-        {/* Width as a percentage string: the bar never needs onLayout, so it
-            can't flash at the wrong width on first paint. */}
-        <View style={[styles.fill, { width: `${pct * 100}%` }]} />
+      <Text style={styles.headline} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+        {t('quiz.mystery.away', { n: remaining })}
+      </Text>
+      <View style={styles.row}>
+        <View style={styles.track}>
+          {/* Width as a percentage string: the bar never needs onLayout, so it
+              can't flash at the wrong width on first paint. */}
+          {pct > 0 ? (
+            <View style={[styles.fill, { width: `${pct * 100}%` }]}>
+              {/* The count rides inside the fill once there is room for it,
+                  exactly like the reference. Below ~1/3 it wouldn't fit. */}
+              {pct >= 1 / MYSTERY_EVERY ? (
+                <Text style={styles.fillCount} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+                  {current}/{MYSTERY_EVERY}
+                </Text>
+              ) : null}
+            </View>
+          ) : (
+            <Text style={styles.emptyCount} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+              {current}/{MYSTERY_EVERY}
+            </Text>
+          )}
+        </View>
+        {/* The gift sits over the end of the track — what the bar is filling
+            toward, not a fourth segment of it. */}
+        <Image source={GIFT} style={styles.gift} accessibilityIgnoresInvertColors />
       </View>
     </View>
   );
@@ -42,15 +61,27 @@ export default function MysteryRewardBar({ completedSets }: { completedSets: num
 
 const styles = StyleSheet.create({
   root: { width: '100%' },
-  head: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  label: {
-    flex: 1, marginLeft: 8,
-    fontFamily: FONTS.latoBold, fontSize: 13.5, color: TXT, letterSpacing: 0.3,
+  headline: {
+    fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 17,
+    color: TXT, textAlign: 'center', letterSpacing: 0.2, marginBottom: 12,
   },
-  count: { fontFamily: FONTS.lato, fontSize: 13, color: TXTSUB, letterSpacing: 0.2 },
+  row: { flexDirection: 'row', alignItems: 'center' },
   track: {
-    height: 6, borderRadius: 10,
-    backgroundColor: INK_10, overflow: 'hidden',
+    flex: 1, height: 24, borderRadius: 12,
+    backgroundColor: INK_06, overflow: 'hidden',
+    justifyContent: 'center',
   },
-  fill: { height: '100%', borderRadius: 10, backgroundColor: ROSE },
+  fill: {
+    height: '100%', borderRadius: 12, backgroundColor: ROSE,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  fillCount: {
+    fontFamily: FONTS.latoBold, fontSize: 13.5, color: '#FFFFFF', letterSpacing: 0.4,
+  },
+  emptyCount: {
+    fontFamily: FONTS.latoBold, fontSize: 13.5, color: TXTSUB,
+    letterSpacing: 0.4, textAlign: 'center',
+  },
+  // Slight tuck over the track's end.
+  gift: { width: GIFT_W, height: GIFT_H, marginLeft: -14 },
 });

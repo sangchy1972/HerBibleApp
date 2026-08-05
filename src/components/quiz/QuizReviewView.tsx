@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { ROSE, GREEN_DONE, TXT, TXTSUB, BTN_RADIUS, FONTS, GREEN_WASH, ROSE_WASH } from '../../constants/theme';
+import { ROSE, TXT, TXTSUB, BTN_RADIUS, FONTS, ROSE_WASH } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
 import QuizSegmentBar from './QuizSegmentBar';
 import PuzzleBoard from './PuzzleBoard';
@@ -14,28 +14,33 @@ import type { SegmentState } from '../../state/quizSession';
 
 // End-of-round screen.
 //
-// Two shapes, one component, because they differ only in the CTA:
+// Two shapes, one component:
 //   wrong > 0 → "try those again" (the set is NOT finished; the reducer refuses
 //               to complete a set with a wrong answer still standing)
-//   wrong = 0 → "continue", which commits the set and advances the ladder
+//   wrong = 0 → the reward layout from the reference design: headline, "puzzle
+//               piece unlocked", the big board with 15dp side margins, the
+//               mystery-reward countdown, and ONE button — Next level.
+//
+// The done shape deliberately carries NO ring, NO score line, NO segment bar
+// and NO "Level N complete" (per user): all of that restated what the headline
+// already says, and the screen is about the reward now.
 //
 // Presentational: it reports what the reducer already decided and never
 // re-derives the score.
 
 export default function QuizReviewView({
-  segments, correct, total, wrong, level, firstPassPerfect, completedSets,
-  lastOfDay, lastEver, setsLeftAfter, onRetry, onContinue, onNextLevel,
+  segments, correct, total, wrong, firstPassPerfect, completedSets,
+  lastOfDay, lastEver, setsLeftAfter, onRetry, onNextLevel,
 }: {
   segments: SegmentState[];
   correct: number;
   total: number;
   wrong: number;
-  level: number;
   firstPassPerfect: boolean;
   /** Sets completed BEFORE this one. The reward preview looks one ahead. */
   completedSets: number;
-  /** Committing this set spends the last of today's three. Hides "next set" and
-   *  says so, rather than leaving a button that would silently do nothing. */
+  /** Committing this set spends the last of today's three. The CTA still
+   *  commits; the line above it says today ends here. */
   lastOfDay: boolean;
   /** Committing this set uses up the last question in the bank, so there is no
    *  next level to offer -- ever, not just today. */
@@ -44,8 +49,8 @@ export default function QuizReviewView({
    *  ends a countdown she has been watching instead of ambushing her. */
   setsLeftAfter: number;
   onRetry: () => void;
-  onContinue: () => void;
-  /** Commit and start the next set without leaving. */
+  /** Commit. The screen decides what owns it next — the next set, a
+   *  celebration, or the capped/retired view. */
   onNextLevel: () => void;
 }) {
   const t = useT();
@@ -56,118 +61,99 @@ export default function QuizReviewView({
   // ringed. Showing the pre-commit state would mean the reward only appears
   // once she has already tapped away from the screen celebrating it.
   const { view, freshTile } = rewardPreview(completedSets, QUIZ_ART_COUNT);
-  const boardSize = Math.min(width - 88, 240);
+  // 15dp side margins (per user) — the board is the screen's hero now.
+  const boardSize = width - 30;
   // The set she is about to commit. The counter has to read from the COMMITTED
   // number or the screen that celebrates a card says "3 more to go" with an
   // empty bar — she watched that counter for three sets and never saw it land.
   const earnsCard = drawEarnedAt(completedSets + 1, MYSTERY_EVERY);
-  // The `!view.outOfArt` half is load-bearing. Past the last painting
-  // QuizChallengeScreen no longer shows PaintingComplete, so hiding the button
-  // to protect a celebration that will never come just deletes the button on
-  // every 4th set, forever, with Continue dumping her back to the home screen.
-  const willFinishPainting = (completedSets + 1) % TILES_PER_PAINTING === 0 && !view.outOfArt;
+
+  if (!done) {
+    return (
+      <View style={styles.root}>
+        <ScrollView contentContainerStyle={styles.retryContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.ring}>
+            <MaterialCommunityIcons name="refresh" size={42} color={ROSE} />
+          </View>
+          <Text style={styles.headline} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+            {t('quiz.review.almost')}
+          </Text>
+          <Text style={styles.score} maxFontSizeMultiplier={1.3}>
+            {t('quiz.review.score', { n: correct, total })}
+          </Text>
+          <QuizSegmentBar segments={segments} height={8} style={styles.bar} />
+          <Text style={styles.sub} maxFontSizeMultiplier={1.3}>
+            {t('quiz.review.retryHint', { n: wrong })}
+          </Text>
+        </ScrollView>
+        <View style={styles.footer}>
+          <TouchableOpacity style={styles.cta} activeOpacity={0.85} onPress={onRetry} accessibilityRole="button">
+            <Text style={styles.ctaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+              {t('quiz.action.retry')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.root}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.ring, done && styles.ringDone]}>
-          <MaterialCommunityIcons
-            name={done ? 'medal-outline' : 'refresh'}
-            size={42}
-            color={done ? GREEN_DONE : ROSE}
-          />
-        </View>
-
         <Text style={styles.headline} numberOfLines={2} maxFontSizeMultiplier={1.3}>
-          {done
-            ? (firstPassPerfect ? t('quiz.review.perfect') : t('quiz.review.done'))
-            : t('quiz.review.almost')}
+          {firstPassPerfect ? t('quiz.review.perfect') : t('quiz.review.done')}
         </Text>
 
-        <Text style={styles.score} maxFontSizeMultiplier={1.3}>
-          {t('quiz.review.score', { n: correct, total })}
+        <Text style={styles.rewardLabel} maxFontSizeMultiplier={1.3}>
+          {view.outOfArt ? t('quiz.reward.allArt') : t('quiz.reward.tile')}
         </Text>
 
-        <QuizSegmentBar segments={segments} height={8} style={styles.bar} />
+        {/* showCaption: three reward moments in four were an unnamed quarter
+            of an unnamed picture. She is collecting a Caravaggio; the least
+            the screen can do is say so while she earns it. */}
+        <PuzzleBoard
+          paintingIndex={view.paintingIndex}
+          tilesUnlocked={view.tilesUnlocked}
+          size={boardSize}
+          newTile={freshTile}
+          showCaption
+        />
 
-        <Text style={styles.sub} maxFontSizeMultiplier={1.3}>
-          {done ? t('quiz.review.levelDone', { n: level }) : t('quiz.review.retryHint', { n: wrong })}
-        </Text>
-
-        {/* The reward only appears once the set is actually finished. Showing a
-            puzzle tile beside "2 still wrong" would promise something the user
-            hasn't earned and can't collect yet. */}
-        {done ? (
-          <>
-            <Text style={styles.rewardLabel} maxFontSizeMultiplier={1.3}>
-              {view.outOfArt ? t('quiz.reward.allArt') : t('quiz.reward.tile')}
-            </Text>
-            {/* showCaption: three reward moments in four were an unnamed quarter
-                of an unnamed picture. She is collecting a Caravaggio; the least
-                the screen can do is say so while she earns it. */}
-            <PuzzleBoard
-              paintingIndex={view.paintingIndex}
-              tilesUnlocked={view.tilesUnlocked}
-              size={boardSize}
-              newTile={freshTile}
-              showCaption
-            />
-            <View style={styles.mystery}>
-              {earnsCard ? (
-                <View style={styles.unlocked}>
-                  <MaterialCommunityIcons name="gift-outline" size={19} color={ROSE} />
-                  <Text style={styles.unlockedText} numberOfLines={2} maxFontSizeMultiplier={1.3}>
-                    {t('quiz.mystery.unlocked')}
-                  </Text>
-                </View>
-              ) : (
-                <MysteryRewardBar completedSets={completedSets + 1} />
-              )}
+        <View style={styles.mystery}>
+          {earnsCard ? (
+            <View style={styles.unlocked}>
+              <MaterialCommunityIcons name="gift-outline" size={19} color={ROSE} />
+              <Text style={styles.unlockedText} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+                {t('quiz.mystery.unlocked')}
+              </Text>
             </View>
-          </>
-        ) : null}
+          ) : (
+            <MysteryRewardBar completedSets={completedSets + 1} />
+          )}
+        </View>
       </ScrollView>
 
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.cta}
           activeOpacity={0.85}
-          onPress={done ? onContinue : onRetry}
+          onPress={onNextLevel}
           accessibilityRole="button"
         >
           <Text style={styles.ctaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
-            {done ? t('quiz.action.continue') : t('quiz.action.retry')}
+            {/* "Next level" would be a lie on the set that ends the day or the
+                bank — those commit the same way but land on the capped/finished
+                view, so the button says Continue there. */}
+            {lastOfDay || lastEver ? t('quiz.action.continue') : t('quiz.action.nextLevel')}
           </Text>
         </TouchableOpacity>
-
-        {/* The daily cap gets a line, not a dead button. open() refuses once the
-            third set is committed, so leaving "Next level" on screen would
-            give her a control that visibly does nothing. */}
-        {done ? (
-          <Text style={styles.lastOfDay} numberOfLines={2} maxFontSizeMultiplier={1.3}>
-            {lastEver
-              ? t('quiz.done.title')
-              : lastOfDay
-                ? t('quiz.daily.lastOfDay')
-                : t('quiz.daily.remaining', { n: setsLeftAfter, total: DAILY_SET_LIMIT })}
-          </Text>
-        ) : null}
-
-        {/* Every exit used to go home, so playing ten sets meant ten trips back
-            through the home screen hunting for the card. Hidden when a reward is
-            waiting — the celebration should not be skippable by accident. */}
-        {done && !lastOfDay && !lastEver && !earnsCard && !willFinishPainting ? (
-          <TouchableOpacity
-            style={styles.secondary}
-            activeOpacity={0.7}
-            onPress={onNextLevel}
-            accessibilityRole="button"
-          >
-            <Text style={styles.secondaryText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
-              {t('quiz.action.nextLevel')}
-            </Text>
-          </TouchableOpacity>
-        ) : null}
+        <Text style={styles.lastOfDay} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+          {lastEver
+            ? t('quiz.done.title')
+            : lastOfDay
+              ? t('quiz.daily.lastOfDay')
+              : t('quiz.daily.remaining', { n: setsLeftAfter, total: DAILY_SET_LIMIT })}
+        </Text>
       </View>
     </View>
   );
@@ -175,15 +161,17 @@ export default function QuizReviewView({
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  content: { paddingHorizontal: 24, paddingTop: 28, paddingBottom: 24, alignItems: 'center' },
-  // Tinted disc, no shadow — the app's badge treatment.
+  // 15dp sides so the board can run nearly edge to edge; headline pulled up —
+  // the top of the screen is just two lines of text over the board (per user).
+  content: { paddingHorizontal: 15, paddingTop: 6, paddingBottom: 24, alignItems: 'center' },
+  retryContent: { paddingHorizontal: 24, paddingTop: 28, paddingBottom: 24, alignItems: 'center' },
+  // Tinted disc, no shadow — the app's badge treatment (retry shape only).
   ring: {
     width: 84, height: 84, borderRadius: 42,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: ROSE_WASH,
     marginBottom: 20,
   },
-  ringDone: { backgroundColor: GREEN_WASH },
   headline: {
     fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 24,
     color: TXT, textAlign: 'center', letterSpacing: 0.3,
@@ -195,10 +183,10 @@ const styles = StyleSheet.create({
   bar: { marginTop: 22 },
   rewardLabel: {
     fontFamily: FONTS.latoBold, fontSize: 13.5, color: TXTSUB,
-    letterSpacing: 0.5, textAlign: 'center', marginTop: 30, marginBottom: 14,
+    letterSpacing: 0.5, textAlign: 'center', marginTop: 12, marginBottom: 14,
     textTransform: 'uppercase',
   },
-  mystery: { marginTop: 26, width: '100%' },
+  mystery: { marginTop: 24, width: '100%', paddingHorizontal: 9 },
   sub: {
     fontFamily: FONTS.lato, fontSize: 14.5, color: TXTSUB,
     textAlign: 'center', marginTop: 18, lineHeight: 21,
@@ -211,14 +199,10 @@ const styles = StyleSheet.create({
   ctaText: {
     fontFamily: FONTS.latoBold, fontSize: 16.5, color: '#FFFFFF', letterSpacing: 0.4,
   },
-  secondary: { height: 44, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
-  // Roughly the band the secondary button would have occupied, so the CTA does
-  // not jump up the screen on the one set in three that ends the day.
   lastOfDay: {
     fontFamily: FONTS.lato, fontSize: 13, color: TXTSUB,
-    textAlign: 'center', marginTop: 13, marginBottom: 9, letterSpacing: 0.2,
+    textAlign: 'center', marginTop: 12, letterSpacing: 0.2,
   },
-  secondaryText: { fontFamily: FONTS.latoBold, fontSize: 14.5, color: ROSE, letterSpacing: 0.3 },
   unlocked: {
     flexDirection: 'row', alignItems: 'center', gap: 9,
     backgroundColor: ROSE_WASH, borderRadius: 12,

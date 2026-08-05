@@ -1,28 +1,38 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
-import Svg, { Defs, ClipPath, Path, Image as SvgImage, G } from 'react-native-svg';
+import Svg, { Line, Rect, Path } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
-import { INK_06, INK_28, TXT, TXTSUB, FONTS } from '../../constants/theme';
+import { ROSE, INK_06, TXT, TXTSUB, FONTS } from '../../constants/theme';
 import { TILES_PER_PAINTING } from '../../state/quizProgress';
-import { artworkAt, artSource, artTitle, artArtist, type QuizArtwork } from '../../constants/quizArt';
+import { artworkAt, artSource, artTitle, artArtist } from '../../constants/quizArt';
 import { useUILanguage } from '../../state/UILanguageContext';
-import { jigsawPaths } from '../../services/jigsaw';
 
-// The 2x2 jigsaw board.
+// The 2x2 puzzle board.
 //
-// THE PICTURE IS DRAWN FOUR TIMES, each copy clipped to one piece — not cut
-// into four images. Four separately-scaled crops would each round their own
-// edges and the seams would not line up; one source clipped four ways keeps
-// every piece registered to the same pixel grid.
+// Straight quarters split by DASHED seams — not jigsaw-shaped pieces. The tabbed
+// pieces looked clever but read badly at this size (per user); the reference
+// design's dashes say "four parts, three to go" instantly.
 //
-// The tab and its socket are ONE curve, generated once in services/jigsaw.ts
-// and walked backwards by whichever piece traverses it in reverse. Generating
-// each side independently leaves a hairline of background along the seam, which
-// on a photograph reads as a rendering fault rather than as a puzzle.
-//
-// Locked pieces render as a soft ink fill with a lock glyph — not as a blurred
-// or greyed copy of the art. Showing her the picture she has not earned yet
-// removes the reason to earn it.
+// The WHOLE painting is always underneath. Locked quarters show it through a
+// heavy white wash — present but unmistakably not hers yet, the way the
+// reference does it — with a solid lock sitting on each. (This deliberately
+// replaces the old ink-fill-hides-the-art approach, per user.)
+
+/** Solid lock — filled shackle + rounded body with a cross on the face, the
+ *  reference design's shape rendered in the app's accent. Not a line icon. */
+function LockBadge({ size }: { size: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" style={styles.lockShadow}>
+      {/* Shackle */}
+      <Path d="M7.4 11 V7.8 a4.6 4.6 0 0 1 9.2 0 V11" stroke={ROSE} strokeWidth={3} fill="none" strokeLinecap="round" />
+      {/* Body */}
+      <Rect x={4} y={9.8} width={16} height={12.4} rx={3.4} fill={ROSE} />
+      {/* Cross punched out of the face */}
+      <Rect x={10.95} y={12.1} width={2.1} height={7.4} rx={1.05} fill="#FFFFFF" />
+      <Rect x={8.6} y={14.2} width={6.8} height={2.1} rx={1.05} fill="#FFFFFF" />
+    </Svg>
+  );
+}
 
 export default function PuzzleBoard({
   paintingIndex, tilesUnlocked, size, newTile, showCaption = false,
@@ -31,7 +41,7 @@ export default function PuzzleBoard({
   tilesUnlocked: number;
   /** Board WIDTH. Height comes from the painting's own aspect. */
   size: number;
-  /** Piece just unlocked, or null. Gets a ring so the reward is legible. */
+  /** Piece just unlocked, or null. Ringed so the reward is legible. */
   newTile?: number | null;
   showCaption?: boolean;
 }) {
@@ -42,7 +52,6 @@ export default function PuzzleBoard({
   const h = Math.max(1, Math.round(w / (art.aspect || 1)));
   const unlocked = Math.max(0, Math.min(TILES_PER_PAINTING, Math.floor(tilesUnlocked) || 0));
 
-  const paths = useMemo(() => jigsawPaths(w, h), [w, h]);
   const src = artSource(art);
   // A require()d asset is already in the binary. Starting it `loaded` matters
   // because a bundled source can never fire onError either, so a missed onLoad
@@ -55,100 +64,93 @@ export default function PuzzleBoard({
   // failure would stick for every later one.
   useEffect(() => { setFailed(false); setLoaded(isLocal); }, [art.id, isLocal]);
 
+  const showArt = loaded && !failed;
+  const lockSize = Math.max(30, Math.min(46, w * 0.115));
+
   return (
     <View style={{ width: w }}>
-      {/* Warms the OS image cache and tells us whether the fetch worked at all.
-          SvgImage gives no onError, so a dead CDN would otherwise show four
-          empty holes with no way to fall back. */}
-      <Image
-        source={src}
-        style={styles.probe}
-        onLoad={() => setLoaded(true)}
-        onError={() => setFailed(true)}
-        accessibilityIgnoresInvertColors
-      />
-
-      <Svg width={w} height={h} style={styles.board}>
-        <Defs>
-          {paths.map((d, i) => (
-            <ClipPath key={`c${i}`} id={`piece-${art.id}-${i}`}>
-              <Path d={d} />
-            </ClipPath>
-          ))}
-        </Defs>
-
-        {paths.map((d, i) => {
-          // Until the bitmap lands, an "unlocked" piece would draw nothing at
-          // all — SvgImage has no placeholder — so the whole celebration could
-          // be a dark scrim over a blank rectangle on a slow connection.
-          const open = i < unlocked && loaded && !failed;
-          if (!open) {
-            return (
-              <Path
-                key={`l${i}`}
-                d={d}
-                fill={open ? INK_06 : 'rgba(30,27,46,0.07)'}
-                stroke="rgba(255,255,255,0.55)"
-                strokeWidth={1}
-              />
-            );
-          }
-          return (
-            <G key={`p${i}`} clipPath={`url(#piece-${art.id}-${i})`}>
-              <SvgImage
-                href={src}
-                x={0}
-                y={0}
-                width={w}
-                height={h}
-                preserveAspectRatio="xMidYMid slice"
-              />
-            </G>
-          );
-        })}
-
-        {/* Seams last, over the art, so the board still reads as four pieces
-            once every one is open. */}
-        {paths.map((d, i) => (
-          <Path
-            key={`s${i}`}
-            d={d}
-            fill="none"
-            stroke={i === newTile ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.5)'}
-            strokeWidth={i === newTile ? 2.5 : 1}
+      <View style={[styles.board, { width: w, height: h }]}>
+        {showArt ? (
+          <Image
+            source={src}
+            style={{ width: w, height: h }}
+            resizeMode="cover"
+            onError={() => setFailed(true)}
+            accessibilityIgnoresInvertColors
           />
-        ))}
-      </Svg>
+        ) : (
+          // Probe: warms the cache and reports the fetch outcome while the
+          // board shows its neutral base.
+          <Image
+            source={src}
+            style={styles.probe}
+            onLoad={() => setLoaded(true)}
+            onError={() => setFailed(true)}
+            accessibilityIgnoresInvertColors
+          />
+        )}
 
-      {/* Lock glyphs sit outside the SVG: a Feather icon inside react-native-svg
-          would need a second font registration for no gain. Kept when the image
-          FAILS, so a dead CDN still reads as "not earned yet" rather than as a
-          blank grey box with no explanation. */}
-      {Array.from({ length: TILES_PER_PAINTING }, (_, i) => (
-        i < unlocked && !failed ? null : (
-          <View
-            key={`k${i}`}
-            pointerEvents="none"
-            style={[
-              styles.lock,
-              {
+        {/* Heavy white wash over each quarter not yet earned — the art stays
+            faintly visible under it. */}
+        {Array.from({ length: TILES_PER_PAINTING }, (_, i) => (
+          i < unlocked ? null : (
+            <View
+              key={`w${i}`}
+              pointerEvents="none"
+              style={[styles.wash, {
                 left: (i % 2) * (w / 2),
                 top: Math.floor(i / 2) * (h / 2),
                 width: w / 2,
                 height: h / 2,
-              },
-            ]}
-          >
-            <Feather name="lock" size={Math.max(13, w * 0.055)} color={INK_28} />
-          </View>
-        )
-      ))}
+              }]}
+            />
+          )
+        ))}
 
-      {failed ? (
-        <View pointerEvents="none" style={styles.offline}>
-          <Feather name="cloud-off" size={14} color={TXTSUB} />
-        </View>
-      ) : null}
+        {/* Dashed cross dividing the quarters, plus the fresh piece's ring. */}
+        <Svg width={w} height={h} style={StyleSheet.absoluteFill} pointerEvents="none">
+          <Line x1={w / 2} y1={0} x2={w / 2} y2={h} stroke="rgba(30,27,46,0.32)" strokeWidth={1.5} strokeDasharray="7 7" />
+          <Line x1={0} y1={h / 2} x2={w} y2={h / 2} stroke="rgba(30,27,46,0.32)" strokeWidth={1.5} strokeDasharray="7 7" />
+          {newTile != null && newTile >= 0 && newTile < TILES_PER_PAINTING ? (
+            <Rect
+              x={(newTile % 2) * (w / 2) + 2.5}
+              y={Math.floor(newTile / 2) * (h / 2) + 2.5}
+              width={w / 2 - 5}
+              height={h / 2 - 5}
+              rx={8}
+              fill="none"
+              stroke="rgba(255,255,255,0.95)"
+              strokeWidth={2.5}
+            />
+          ) : null}
+        </Svg>
+
+        {/* Locks over the quarters still to earn. Kept when the image FAILS, so
+            a dead CDN still reads as "not earned yet" rather than as a blank
+            grey box with no explanation. */}
+        {Array.from({ length: TILES_PER_PAINTING }, (_, i) => (
+          i < unlocked && !failed ? null : (
+            <View
+              key={`k${i}`}
+              pointerEvents="none"
+              style={[styles.lockCell, {
+                left: (i % 2) * (w / 2),
+                top: Math.floor(i / 2) * (h / 2),
+                width: w / 2,
+                height: h / 2,
+              }]}
+            >
+              <LockBadge size={lockSize} />
+            </View>
+          )
+        ))}
+
+        {failed ? (
+          <View pointerEvents="none" style={styles.offline}>
+            <Feather name="cloud-off" size={14} color={TXTSUB} />
+          </View>
+        ) : null}
+      </View>
 
       {showCaption ? (
         <View style={styles.caption}>
@@ -167,7 +169,16 @@ export default function PuzzleBoard({
 const styles = StyleSheet.create({
   probe: { width: 1, height: 1, opacity: 0, position: 'absolute' },
   board: { borderRadius: 14, overflow: 'hidden', backgroundColor: INK_06 },
-  lock: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
+  // Light enough that the painting reads through, heavy enough that "not yet"
+  // is unmistakable.
+  wash: { position: 'absolute', backgroundColor: 'rgba(255,255,255,0.84)' },
+  lockCell: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
+  // Feathered drop under the lock so it sits ON the washed art instead of
+  // floating in it. (Shadow props on an Svg root work on iOS; Android simply
+  // ignores them, which is fine — the solid fill carries the shape there.)
+  lockShadow: {
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.16, shadowRadius: 3,
+  },
   offline: { position: 'absolute', right: 8, top: 8, opacity: 0.8 },
   caption: { marginTop: 12, alignItems: 'center' },
   title: {

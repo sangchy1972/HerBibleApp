@@ -2,6 +2,13 @@
 
 > 实现文件：`src/services/usInterstitial.ts`（状态机）+ `src/services/ads.ts`（地区判定与分流）
 > 适用范围：**仅美国用户**。其他国家走 `ads.ts` 的简单单单元路径，后续单独实现。
+>
+> 📍 **先看 `docs/ad-routing.md`** —— 那份讲「哪个用户拿到哪个单元」（三条路径、路由判定、
+> 展示触发），本文只讲「美国这条路径内部怎么运转」。搞混单元配置时该翻的是那一份。
+>
+> ⚠️ 本文档 §8.5 与 §10 各有一个 `MIN_INTERVAL_MS`，是**两个不同文件里的同名常量**
+> （`ads.ts` 管非美、`usInterstitial.ts` 管美国），当前都是 60s 但互不联动。
+> 2026-08-05 更正：§10 此前误写为 90s。
 > 库：`react-native-google-mobile-ads` v15。Publisher：`ca-app-pub-4656643588243987`。
 
 本文件是给后续接手的程序 / 同事看的"当前真实规则"。分三部分：① 业务规则（瀑布流逻辑）；② 工程加固（退避、防崩溃、防泄漏）；③ 单元映射与事件埋点。
@@ -157,7 +164,7 @@ lo = clamp( floor(V / 20) + 1 , 2 , 25 )
 ```
 MIN_IDX=2  MAX_IDX=25  CACHE_TARGET=2  NOFILL_LIMIT=3
 STAGGER_MS=500  UNIT0_EMPTY_DELAY_MS=3000  TICK_MS=1000
-EXPIRY_MS=50min  FLOOR_COOLDOWN_MS=8s  MIN_INTERVAL_MS=90s  ECPM_PER_IMPRESSION=1000
+EXPIRY_MS=50min  FLOOR_COOLDOWN_MS=8s  MIN_INTERVAL_MS=60s  ECPM_PER_IMPRESSION=1000
 退避：netBackoffBase 5/10/20/40…cap60s · unit0BackoffBase 3/6…cap10s · ladderRetryBase 2s/4s（均带 ±20% 抖动）
 ```
 

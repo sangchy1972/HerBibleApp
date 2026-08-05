@@ -73,6 +73,10 @@ Publisher ID `pub-4656643588243987`. Units are defined in code rather than
 duplicated here, because they are selected at runtime per platform and per
 waterfall tier and a stale copy in a doc would be worse than no copy:
 
+> 📍 For WHICH user gets which of these — the region fork, the three parallel
+> paths, the dev-build downgrade — see `docs/ad-routing.md`. The table below is
+> only a map of where the ids live.
+
 | What | Where |
 | --- | --- |
 | Worldwide interstitial (non-US + all iOS) | `services/ads.ts` → `REAL_INTERSTITIAL_UNIT_ID` |

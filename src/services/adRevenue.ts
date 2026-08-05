@@ -99,11 +99,24 @@ function localDay(now: Date = new Date()): string {
 /**
  * Coerce whatever the bridge handed us into a finite non-negative number.
  *
- * The spec calls out decimal-separator corruption: some mediation adapters
- * stringify money using the device locale, so a German device can produce
- * "0,004". Number("0,004") is NaN — the value would silently vanish. Swapping a
- * lone comma for a dot recovers it. Grouping separators ("1,234.5") are left
- * alone because the dot already anchors the decimal.
+ * THE NORMAL CASE NEVER GETS HERE AS A STRING. Both native halves of
+ * react-native-google-mobile-ads send `value` as a NUMBER — Android computes
+ * `1e-6 * adValue.getValueMicros()` into putDouble(), iOS bridges GADAdValue's
+ * NSDecimalNumber — and neither path involves locale formatting, so a
+ * Portuguese or German device cannot corrupt the ordinary payload.
+ *
+ * The string branch is armor against MEDIATION adapters, which have been seen
+ * stringifying money with the device locale. Separator rules, in order:
+ *   • both '.' and ',' present → the RIGHTMOST one is the decimal separator,
+ *     the other is grouping:  "1.234,56" (pt/de) and "1,234.56" (en) → 1234.56.
+ *     The old rule ("a dot anchors the decimal") read the Portuguese form as
+ *     1.23456 — exactly the reversed-separator trap.
+ *   • only one kind, appearing ONCE → decimal separator: "0,004" → 0.004.
+ *     ("1,234" is genuinely ambiguous; per-impression revenue is fractions of
+ *     a currency unit, so the decimal reading is the sane one.)
+ *   • only one kind, appearing MORE THAN ONCE → grouping: "1,234,567" →
+ *     1234567. (The old single-swap produced "1.234,567" → NaN → 0 — the
+ *     impression silently vanished.)
  */
 export function normalizeValue(raw: unknown): number {
   let n: number;
@@ -111,7 +124,22 @@ export function normalizeValue(raw: unknown): number {
     n = raw;
   } else if (typeof raw === 'string') {
     const s = raw.trim();
-    const normalized = s.includes('.') ? s.replace(/,/g, '') : s.replace(',', '.');
+    const lastDot = s.lastIndexOf('.');
+    const lastComma = s.lastIndexOf(',');
+    let normalized: string;
+    if (lastDot >= 0 && lastComma >= 0) {
+      normalized = lastComma > lastDot
+        ? s.replace(/\./g, '').replace(',', '.')   // "1.234,56" → "1234.56"
+        : s.replace(/,/g, '');                     // "1,234.56" → "1234.56"
+    } else if (lastComma >= 0) {
+      normalized = s.indexOf(',') === lastComma
+        ? s.replace(',', '.')                      // "0,004" → "0.004"
+        : s.replace(/,/g, '');                     // "1,234,567" → "1234567"
+    } else if (lastDot >= 0 && s.indexOf('.') !== lastDot) {
+      normalized = s.replace(/\./g, '');           // "1.234.567" → "1234567"
+    } else {
+      normalized = s;                              // plain, or single-dot decimal
+    }
     n = Number(normalized);
   } else {
     n = NaN;

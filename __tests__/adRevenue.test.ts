@@ -45,8 +45,22 @@ describe('normalizeValue', () => {
     expect(normalizeValue('0,004')).toBeCloseTo(0.004);
   });
 
-  it('treats commas as grouping when a dot is already present', () => {
+  it('treats commas as grouping when the dot is the rightmost separator', () => {
     expect(normalizeValue('1,234.5')).toBeCloseTo(1234.5);
+  });
+
+  it('reads the EUROPEAN mixed form right — rightmost separator is the decimal', () => {
+    // Portuguese/German: '.' groups, ',' is the decimal. The old rule ("a dot
+    // anchors the decimal") stripped the comma and read this as 1.23456.
+    expect(normalizeValue('1.234,56')).toBeCloseTo(1234.56);
+    expect(normalizeValue('12.345,6')).toBeCloseTo(12345.6);
+  });
+
+  it('reads repeated same-kind separators as grouping, not as a broken decimal', () => {
+    // The old single-swap turned '1,234,567' into '1.234,567' → NaN → 0: the
+    // impression silently vanished from the accumulators.
+    expect(normalizeValue('1,234,567')).toBe(1234567);
+    expect(normalizeValue('1.234.567')).toBe(1234567);
   });
 
   it('floors garbage and negatives to 0 rather than poisoning the total', () => {

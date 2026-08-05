@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Her Bible · 广告单元与请求逻辑</title>
+<style>
+:root{
+  --rose:#E63F69; --ink:#1E1B2E; --sub:#6B6675; --line:#E7E1E6;
+  --bg:#FBF9FA; --card:#fff; --ok:#3FAE6A; --warn:#D98324; --bad:#D93B3B;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",sans-serif;}
+header{background:var(--card);border-bottom:1px solid var(--line);padding:22px 28px 0}
+h1{margin:0 0 4px;font-size:22px;letter-spacing:.2px}
+.meta{color:var(--sub);font-size:13px;margin-bottom:16px}
+nav{display:flex;gap:2px;flex-wrap:wrap}
+nav button{border:0;background:transparent;padding:11px 18px;font-size:14.5px;cursor:pointer;
+  color:var(--sub);border-bottom:2.5px solid transparent;font-family:inherit}
+nav button:hover{color:var(--ink)}
+nav button.on{color:var(--rose);border-bottom-color:var(--rose);font-weight:600}
+main{max-width:1180px;margin:0 auto;padding:26px 28px 90px}
+section{display:none} section.on{display:block}
+h2{font-size:19px;margin:30px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+h2:first-child{margin-top:4px}
+h3{font-size:15.5px;margin:22px 0 8px}
+table{width:100%;border-collapse:collapse;background:var(--card);margin:12px 0;font-size:13.5px;
+  border:1px solid var(--line);border-radius:8px;overflow:hidden}
+th,td{padding:8px 11px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#F6F2F4;font-weight:600;font-size:12.5px;color:var(--sub);
+  text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+code,.m{font-family:var(--mono);font-size:12.5px;background:#F4F0F2;padding:1.5px 5px;border-radius:4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+.note{border-left:3px solid var(--rose);background:#FEF5F8;padding:12px 16px;margin:14px 0;border-radius:0 8px 8px 0}
+.warn{border-left:3px solid var(--warn);background:#FDF6EC;padding:12px 16px;margin:14px 0;border-radius:0 8px 8px 0}
+.bad{border-left:3px solid var(--bad);background:#FDEDED;padding:12px 16px;margin:14px 0;border-radius:0 8px 8px 0}
+.ok{border-left:3px solid var(--ok);background:#EEF8F1;padding:12px 16px;margin:14px 0;border-radius:0 8px 8px 0}
+.pill{display:inline-block;padding:1px 8px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.p-live{background:#E4F5EA;color:#237547} .p-todo{background:#FDECEC;color:#B02A2A}
+.p-us{background:#E8EEFB;color:#2A4B96} .p-t2{background:#F3ECFB;color:#6B3FA0}
+.p-ww{background:#FBF1E6;color:#8A5A16} .p-all{background:#EFEDF1;color:#4A4553}
+ol,ul{padding-left:22px;margin:8px 0} li{margin:5px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin:14px 0}
+.kv{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:13px 15px}
+.kv b{display:block;font-size:12px;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;font-weight:600}
+.kv span{font-size:16px;font-family:var(--mono)}
+.sev{font-weight:700;margin-right:5px}
+details{background:var(--card);border:1px solid var(--line);border-radius:9px;margin:9px 0;padding:0 15px}
+summary{cursor:pointer;padding:12px 0;font-weight:600;font-size:14.5px;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary:before{content:"▸ ";color:var(--rose)}
+details[open] summary:before{content:"▾ "}
+details>*:last-child{margin-bottom:14px}
+svg{max-width:100%;height:auto;background:var(--card);border:1px solid var(--line);border-radius:10px}
+.small{font-size:13px;color:var(--sub)}
+.tag{font-size:11.5px;color:var(--sub);font-family:var(--mono)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Her Bible · 广告单元与请求逻辑</h1>
+  <div class="meta">Publisher <code>ca-app-pub-4656643588243987</code> · 仅插页格式 · 更新 2026-08-05</div>
+  <nav>
+    <button class="on" data-t="t-units">① 广告单元总表</button>
+    <button data-t="t-logic">② 新请求逻辑</button>
+    <button data-t="t-flow">③ 流程图</button>
+    <button data-t="t-risk">④ 风险审查</button>
+    <button data-t="t-now">⑤ 线上现状（对照）</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ══════════ TAB 1 ══════════ -->
+<section id="t-units" class="on">
+  <div class="bad">
+    <b>🔴 币种：这个账户报的是 HKD，不是 USD。</b><br>
+    <code>src/constants/adRevenueConfig.ts:100</code> 记着 2026-07-25 在控制台核对过：AdMob 账户报告币种是 <b>港币</b>。
+    所以下表所有底价、以及 PAID 回传的每一个 <code>value</code>，单位都是 <b>HK$</b>。
+    HK$40 ≈ US$5.1，HK$500 ≈ US$64 —— 作为插页 eCPM 是合理量级；若按 USD 理解，US$500 的插页现实中不存在，阶梯上半截全是死的。
+    <b>新方案文本里的「$300 / $120 / $60」需要明确标成 HK$。</b>
+  </div>
+
+  <h2>1.1 地区分档定义</h2>
+  <table>
+    <tr><th>档</th><th>范围</th><th>判定依据</th></tr>
+    <tr><td><span class="pill p-us">US</span></td><td>美国</td><td><code>deviceRegion() === 'US'</code></td></tr>
+    <tr><td><span class="pill p-t2">T2</span></td><td><b>全部欧洲国家 + 澳大利亚 + 新西兰</b></td><td>需新增判定（当前代码没有 T2 概念）</td></tr>
+    <tr><td><span class="pill p-ww">WW</span></td><td>其余全部，<b>含地区判定失败（null）</b></td><td>兜底</td></tr>
+  </table>
+  <div class="warn">
+    T2 目前是<b>无数据情况下的粗分</b>（owner 明示）。组内 eCPM 跨度极大 —— AU/NZ/NO/CH/UK/DE 接近美国，BG/RO/GR 约为其 1/10。
+    见风险审查 §11。
+  </div>
+
+  <h2>1.2 角色总表</h2>
+  <table>
+    <tr><th>角色</th><th>单元名</th><th>底价</th><th>用于</th><th>状态</th></tr>
+    <tr><td>新手专用</td><td><code>HB_newbie_splash_text_00</code></td><td><b>Google optimized floor · High</b></td><td><span class="pill p-all">全地区</span></td><td><span class="pill p-todo">待接入</span></td></tr>
+    <tr><td>US 顶端探针</td><td><code>HB_int_splash_1</code></td><td>HK$300</td><td><span class="pill p-us">US</span></td><td><span class="pill p-live">已存在</span></td></tr>
+    <tr><td>US 无底价兜底</td><td><code>HB_int_splash_0</code></td><td>无</td><td><span class="pill p-us">US</span> <span class="pill p-t2">T2</span></td><td><span class="pill p-live">已存在</span></td></tr>
+    <tr><td>US/T2 阶梯</td><td><code>HB_int_splash_2…25</code></td><td>HK$40…500（×$20）</td><td><span class="pill p-us">US</span> <span class="pill p-t2">T2</span></td><td><span class="pill p-live">已存在</span></td></tr>
+    <tr><td>T2 顶端探针</td><td><code>HB_int_splash_26</code></td><td>?</td><td><span class="pill p-t2">T2</span></td><td><span class="pill p-todo">代码中不存在</span></td></tr>
+    <tr><td>WW 顶端探针</td><td><code>HB_int_splash_ww_1</code></td><td>?</td><td><span class="pill p-ww">WW</span></td><td><span class="pill p-todo">代码中不存在</span></td></tr>
+    <tr><td>WW 无底价兜底</td><td><code>HB_int_splash_ww_0</code></td><td>无</td><td><span class="pill p-t2">T2</span> <span class="pill p-ww">WW</span></td><td><span class="pill p-todo">代码中不存在</span></td></tr>
+    <tr><td>WW 阶梯</td><td><code>HB_int_splash_ww_*</code></td><td>?</td><td><span class="pill p-ww">WW</span></td><td><span class="pill p-todo">代码中不存在</span></td></tr>
+    <tr><td>首开 onboarding</td><td>（现有）</td><td>无</td><td><span class="pill p-all">全地区</span></td><td><span class="pill p-live">已存在</span></td></tr>
+  </table>
+
+  <div class="bad">
+    <b>🔴 缺口清单 — 这些在写代码前必须补齐</b>
+    <ol>
+      <li><b>整套方案里没有一个 iOS 单元。</b> <code>HB_int_splash_*</code> 全是 Android 命名。iOS 用的是 <code>HB_ios_splash_00…25</code>，
+      两套 ID <b>挂在各自平台的 App ID 下、不可互换</b>。用错的失败模式是<b>静默 no-fill</b>，和「这个价位没人买」完全无法区分。</li>
+      <li><code>HB_int_splash_26</code> <b>不存在</b> —— 现有阶梯是 0…25，<code>MAX_IDX = 25</code> 已封顶。是笔误还是新建单元？</li>
+      <li><code>HB_int_splash_ww_0</code> / <code>_ww_1</code> / <code>_ww_*</code> 全系列<b>不存在</b>。现在全球只有单独一个单元。</li>
+      <li><code>HB_newbie_splash_text_00</code> 未接入代码，也<b>未确认它和现有 onboarding 单元是不是同一件事</b>（名字里的 <code>text</code> 与现有 onboarding 单元「text/image/rich-media only, 无 video」的描述高度吻合）。</li>
+    </ol>
+    需要一张 <b>(平台 × 地区档 × 角色) → 真实 unit ID</b> 的完整表，缺一个都不要开工。
+  </div>
+
+  <h2>1.3 现有阶梯真实 ID（代码内取，双平台对齐）</h2>
+  <p class="small">来源 <code>src/services/usInterstitial.ts</code> · 完整前缀 = <code>ca-app-pub-4656643588243987/&lt;后缀&gt;</code></p>
+  <div id="ladder"></div>
+
+  <h2>1.4 单单元路径（现有非美）</h2>
+  <table>
+    <tr><th>用途</th><th>Android</th><th>iOS</th><th>来源</th></tr>
+    <tr><td>全球主插页</td><td><code>5238876625</code></td><td><code>8692353122</code> <span class="tag">HB_ios_splash_ww_00</span></td><td><code>ads.ts</code> → <code>REAL_INTERSTITIAL_UNIT_ID</code></td></tr>
+    <tr><td>首开 onboarding</td><td><code>5004598985</code></td><td><code>7247618944</code></td><td><code>ads.ts</code> → <code>REAL_ONBOARDING_UNIT_ID</code></td></tr>
+  </table>
+</section>
+
+<!-- ══════════ TAB 2 ══════════ -->
+<section id="t-logic">
+  <h2>2.1 用户分层</h2>
+  <div class="grid">
+    <div class="kv"><b>新用户</b><span>day0 / day1 / day2</span></div>
+    <div class="kv"><b>视同新用户</b><span>终身展示次数 ≤ 2</span></div>
+    <div class="kv"><b>老用户</b><span>day ≥ 3 且 展示 &gt; 2</span></div>
+  </div>
+  <p>标记必须在 <b>GMA SDK 启动、发出第一个 ad request 的那一刻</b>就可用。</p>
+  <div class="warn">
+    <b>⚠️ 时序上做得到，但现有代码有一个会「默认判成新用户」的竞态。</b>
+    <code>installDayIndex()</code> 住在 <code>adFrequency.ts</code>，由 <code>initAdFrequency()</code> 填充，而
+    <code>App.tsx</code> 把它和 <code>initAds()</code> <b>并行 fire-and-forget，没有 await</b>。
+    在它 resolve 前 <code>installYmd === ''</code> → 返回 <b>0</b> → 所有人都长得像 day0。<br><br>
+    今天这个竞态是<b>良性</b>的（day0 = 温和档 = 少弹广告）。<b>新方案下方向反了</b>：判成新用户 = 三路并行 + 顶端探针，
+    一个老用户输了这个竞态，会话开头就往最贵的探针上打。<br><br>
+    另外：<b>「终身展示次数」这个计数器现在根本不存在。</b><code>todayImpr</code> 每日清空，<code>adRevenue.state</code> 每日 roll。需新建持久键，
+    在 <code>OPENED</code> 事件里 +1（不是 <code>show()</code>，不是 PAID —— PAID 可能不来），并做进后台强制落盘。
+  </div>
+
+  <h2>2.2 分支 A · 新用户 / 展示 ≤2 —— 三路并行</h2>
+  <p>每个用户<b>同时</b>向 3 个单元发请求。</p>
+  <table>
+    <tr><th>地区</th><th>并行请求</th><th>展示优先级（高 → 低）</th></tr>
+    <tr><td><span class="pill p-us">US</span></td>
+        <td><code>newbie_text_00</code> + <code>HB_int_splash_1</code> + <code>HB_int_splash_0</code></td>
+        <td><code>splash_1</code> ▸ <code>newbie_text_00</code> ▸ <code>splash_0</code></td></tr>
+    <tr><td><span class="pill p-t2">T2</span></td>
+        <td><code>newbie_text_00</code> + <code>HB_int_splash_26</code> + <code>HB_int_splash_ww_0</code></td>
+        <td><code>splash_26</code> ▸ <code>newbie_text_00</code> ▸ <code>ww_0</code></td></tr>
+    <tr><td><span class="pill p-ww">WW</span></td>
+        <td><code>newbie_text_00</code> + <code>HB_int_splash_ww_1</code> + <code>HB_int_splash_ww_0</code></td>
+        <td><code>ww_1</code> ▸ <code>newbie_text_00</code> ▸ <code>ww_0</code></td></tr>
+  </table>
+
+  <h3>请求节奏</h3>
+  <table>
+    <tr><th>单元类型</th><th>owner 规定</th><th>审查后的必要修正</th></tr>
+    <tr><td>无底价单元<br><code>newbie_text_00</code></td><td>no-fill 后<b>循环请求</b></td>
+        <td class="m" style="color:#B02A2A">必须加退避闸门。见风险 §1 —— 这是唯一一条能让账号被限制投放的设计</td></tr>
+    <tr><td>有底价单元<br><code>splash_1</code>/<code>_26</code>/<code>ww_1</code></td><td>每 <b>20s</b> 一次，连续 <b>3 次</b> no-fill → <b>当日熔断</b></td>
+        <td style="color:#237547">✅ 比现有 2s/4s 更保守，是净改进，保留</td></tr>
+    <tr><td>缓存</td><td>最多 <b>2 条</b></td><td>⚠️ 2 位 vs 4 个并行源（含 onboarding），见风险 §9</td></tr>
+  </table>
+
+  <h2>2.3 分支 B · 老用户 —— 按本地价值路由</h2>
+  <p>用本地记录的最近展示价值决定请求哪两层。</p>
+  <div class="card">
+    <b>owner 给的算例（US）：</b>前两次 eCPM = 100、80<br>
+    <span class="m">上层 = (100+80)/2 × 1.3 = 117 → 取高于 117 的那一层 → HB_int_splash_6（HK$120）</span><br>
+    <span class="m">下层 = 比最后一次(80)低一层 → HB_int_splash_3（HK$60）</span><br>
+    <span class="m">间隔 3s 发出下层 · 上层每 20s 重试 · 下层在价值刷新前循环请求作保底</span><br>
+    <span class="m">展示优先级：上层 ▸ 下层 · 缓存全空 → 必发 splash_0</span>
+  </div>
+  <table>
+    <tr><th>地区</th><th>阶梯系列</th><th>缓存全空时的兜底</th></tr>
+    <tr><td><span class="pill p-us">US</span></td><td><code>HB_int_splash_*</code></td><td><code>HB_int_splash_0</code></td></tr>
+    <tr><td><span class="pill p-t2">T2</span></td><td><code>HB_int_splash_*</code>（同 US）</td><td><code>HB_int_splash_0</code></td></tr>
+    <tr><td><span class="pill p-ww">WW</span></td><td><code>HB_int_splash_ww_*</code></td><td><code>HB_int_splash_ww_0</code></td></tr>
+  </table>
+
+  <h2>2.4 本地价值数据库</h2>
+  <p>每次展示结束后更新。<b>必须活在独立的持久键里</b> —— 不能挂在 <code>todayImpr</code>（每日清空）或 <code>adRevenue.state</code>（每日 roll）上。</p>
+  <table>
+    <tr><th>字段</th><th>含义</th><th>用途</th></tr>
+    <tr><td><code>recent3[]</code></td><td>最近 3 次展示价值</td><td>驱动分支 B 的上/下层选择</td></tr>
+    <tr><td><code>max</code></td><td>历史最高值</td><td>诊断 / 上限保护</td></tr>
+    <tr><td><code>median</code></td><td>历史中位数</td><td><b>建议用它替代均值做路由</b>（对数正态数据的均值会被单个离群点绑架）</td></tr>
+    <tr><td><code>mean</code></td><td>历史平均数</td><td>诊断</td></tr>
+    <tr><td><code>ltv</code></td><td>累计广告价值</td><td>用户价值分析</td></tr>
+    <tr><td><code>count</code></td><td>终身展示次数</td><td>分支 A/B 的判定依据</td></tr>
+  </table>
+
+  <h3>PAID 回传现状（owner 要求检查的部分）</h3>
+  <div class="ok">
+    <b>✅ 管道本身是扎实的，可以直接建在上面。</b> <a href="https://developers.google.com/admob/android/next-gen/impression-level-ad-revenue">impression-level ad revenue</a> 已接：
+    <code>ads.ts:338 attachPaidListener</code> + <code>usInterstitial.ts:267 attachLadderPaid</code>。三条关键处理必须原样继承：
+    <ol>
+      <li>在 <b>create 时</b>挂载、<b>故意不在 CLOSED 时拆</b> —— 部分 adapter 在 dismiss 之后才回传 PAID</li>
+      <li><code>paidSeen</code> 去重锁</li>
+      <li><code>epoch</code> 计数器防跨天脏回调</li>
+    </ol>
+  </div>
+  <div class="bad">
+    <b>🐛 但有一个现成的 bug，今天就在偷你的次日起点。</b><br>
+    <code>usInterstitial.ts:296-297</code> 把 <code>vEcpm</code> 无条件 push 进 <code>todayImpr</code>，<b>没有 &gt;0 判断</b>：
+    <pre class="m" style="margin:8px 0">if (myEpoch !== epoch || adsOff()) return;
+todayImpr.push(vEcpm);          // ← 缺 vEcpm > 0</pre>
+    而 <code>adRevenue.ts:277</code> 是有防护的（<code>if (value &lt;= 0) return;</code>），并注明「test/bidding 请求 AdMob 按设计返回 <code>precision=UNKNOWN</code> 且 <code>value=0</code>」。
+    所以今天：一条 0 值 PAID 混进 <code>todayImpr</code> → 次日「前 3 次均值」被拉到接近 0 → 第二天从 <code>idx2</code> 起步。
+    <b>这个 bug 今天是每日一次的影响；新方案里会变成每次曝光都影响路由。</b> 不管上不上新方案都该先修。
+  </div>
+  <div class="warn">
+    <b>⚠️ <code>precision === PUBLISHER_PROVIDED</code> 是自反馈陷阱。</b>
+    这个值的含义是「这笔钱来自你自己在中介组里手填的 eCPM」—— <b>它把你自己填的底价原样回传给你</b>。
+    喂进 <code>mean × 1.3</code>：请求 $120 → 以 PUBLISHER_PROVIDED $120 成交 → mean=120 → ×1.3 → 请求 $160 → …
+    一路自我强化到 no-fill，全程测的是你自己填的数字，不是市场价。<br>
+    <b>路由样本只接受 <code>PRECISE</code> / <code>ESTIMATED</code>；<code>UNKNOWN</code> / <code>PUBLISHER_PROVIDED</code> 只记账、不路由。</b>
+  </div>
+</section>
+
+<!-- ══════════ TAB 3 ══════════ -->
+<section id="t-flow">
+  <h2>请求逻辑流程图</h2>
+  <p class="small">底价单位 <b>HK$</b>。<span class="pill p-todo">红框</span>= 单元尚未在代码中存在。</p>
+  <svg viewBox="0 0 1140 1180" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,Segoe UI,Noto Sans SC,sans-serif">
+    <defs>
+      <marker id="a" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L8,3 z" fill="#6B6675"/></marker>
+      <style>
+        .b{fill:#fff;stroke:#E7E1E6;stroke-width:1.5;rx:9}
+        .t{font-size:12.5px;fill:#1E1B2E}
+        .ts{font-size:11px;fill:#6B6675}
+        .tb{font-size:13px;font-weight:600;fill:#1E1B2E}
+        .l{stroke:#6B6675;stroke-width:1.4;fill:none;marker-end:url(#a)}
+        .dec{fill:#FEF5F8;stroke:#E63F69;stroke-width:1.5}
+        .todo{fill:#FDEDED;stroke:#D93B3B;stroke-width:1.5;stroke-dasharray:4 3}
+        .mono{font-family:ui-monospace,Menlo,monospace;font-size:11px}
+      </style>
+    </defs>
+
+    <!-- start -->
+    <rect x="450" y="14" width="240" height="42" rx="21" fill="#1E1B2E"/>
+    <text x="570" y="40" class="tb" fill="#fff" text-anchor="middle">GMA SDK 启动</text>
+    <path class="l" d="M570,56 L570,84"/>
+
+    <!-- gate: read flags -->
+    <rect x="380" y="84" width="380" height="52" class="b" fill="#F6F2F4"/>
+    <text x="570" y="105" class="t" text-anchor="middle">读本地：firstLaunchYmd · 终身展示次数 · 价值库</text>
+    <text x="570" y="124" class="ts" text-anchor="middle">必须 await（bounded ~1.5s），不能靠 adFrequency 的初始化顺序</text>
+    <path class="l" d="M570,136 L570,166"/>
+
+    <!-- decision new/old -->
+    <path d="M570,166 L780,214 L570,262 L360,214 Z" class="dec"/>
+    <text x="570" y="210" class="tb" text-anchor="middle">day ≤ 2 或 展示次数 ≤ 2？</text>
+    <text x="570" y="228" class="ts" text-anchor="middle">分层判定</text>
+
+    <text x="330" y="207" class="tb" fill="#E63F69" text-anchor="end">是 → 分支 A</text>
+    <path class="l" d="M360,214 L250,214 L250,272"/>
+    <text x="812" y="207" class="tb" fill="#2A4B96">否 → 分支 B</text>
+    <path class="l" d="M780,214 L890,214 L890,272"/>
+
+    <!-- ============ BRANCH A ============ -->
+    <rect x="24" y="272" width="452" height="34" rx="8" fill="#E63F69"/>
+    <text x="250" y="294" class="tb" fill="#fff" text-anchor="middle">分支 A · 新用户 / 展示 ≤2 —— 三路并行</text>
+
+    <rect x="24" y="320" width="452" height="46" class="todo" rx="9"/>
+    <text x="250" y="340" class="t" text-anchor="middle" font-weight="600">① 100% 请求 HB_newbie_splash_text_00</text>
+    <text x="250" y="357" class="ts" text-anchor="middle">Google optimized floor · High　|　待接入</text>
+
+    <path class="l" d="M250,366 L250,392"/>
+    <rect x="24" y="392" width="452" height="34" class="b" fill="#F6F2F4"/>
+    <text x="250" y="414" class="t" text-anchor="middle" font-weight="600">② 同时按地区并行再请求 2 个</text>
+
+    <!-- 3 region boxes -->
+    <path class="l" d="M250,426 L250,444 L104,444 L104,470"/>
+    <path class="l" d="M250,444 L250,470"/>
+    <path class="l" d="M250,444 L396,444 L396,470"/>
+
+    <rect x="18" y="470" width="172" height="118" class="b"/>
+    <rect x="18" y="470" width="172" height="24" rx="9" fill="#E8EEFB"/>
+    <text x="104" y="487" class="tb" fill="#2A4B96" text-anchor="middle">US</text>
+    <text x="104" y="510" class="t mono" text-anchor="middle">HB_int_splash_1</text>
+    <text x="104" y="525" class="ts" text-anchor="middle">HK$300 · 20s/次 · 3 次熔断</text>
+    <text x="104" y="547" class="t mono" text-anchor="middle">HB_int_splash_0</text>
+    <text x="104" y="562" class="ts" text-anchor="middle">无底价 · 退避循环</text>
+    <text x="104" y="580" class="ts" text-anchor="middle" font-weight="600">1 ▸ newbie ▸ 0</text>
+
+    <rect x="200" y="470" width="172" height="118" class="b"/>
+    <rect x="200" y="470" width="172" height="24" rx="9" fill="#F3ECFB"/>
+    <text x="286" y="487" class="tb" fill="#6B3FA0" text-anchor="middle">T2 · 欧洲+AU/NZ</text>
+    <text x="286" y="510" class="t mono" fill="#D93B3B" text-anchor="middle">HB_int_splash_26</text>
+    <text x="286" y="525" class="ts" text-anchor="middle">底价? · 代码中不存在</text>
+    <text x="286" y="547" class="t mono" fill="#D93B3B" text-anchor="middle">HB_int_splash_ww_0</text>
+    <text x="286" y="562" class="ts" text-anchor="middle">无底价 · 不存在</text>
+    <text x="286" y="580" class="ts" text-anchor="middle" font-weight="600">26 ▸ newbie ▸ ww_0</text>
+
+    <rect x="382" y="470" width="172" height="118" class="b"/>
+    <rect x="382" y="470" width="172" height="24" rx="9" fill="#FBF1E6"/>
+    <text x="468" y="487" class="tb" fill="#8A5A16" text-anchor="middle">WW · 含判定失败</text>
+    <text x="468" y="510" class="t mono" fill="#D93B3B" text-anchor="middle">HB_int_splash_ww_1</text>
+    <text x="468" y="525" class="ts" text-anchor="middle">底价? · 不存在</text>
+    <text x="468" y="547" class="t mono" fill="#D93B3B" text-anchor="middle">HB_int_splash_ww_0</text>
+    <text x="468" y="562" class="ts" text-anchor="middle">无底价 · 不存在</text>
+    <text x="468" y="580" class="ts" text-anchor="middle" font-weight="600">ww_1 ▸ newbie ▸ ww_0</text>
+
+    <!-- ============ BRANCH B ============ -->
+    <rect x="600" y="272" width="516" height="34" rx="8" fill="#2A4B96"/>
+    <text x="858" y="294" class="tb" fill="#fff" text-anchor="middle">分支 B · 老用户 —— 按本地价值路由</text>
+
+    <rect x="600" y="320" width="516" height="60" class="b" fill="#F6F2F4"/>
+    <text x="858" y="340" class="t" text-anchor="middle">读 recent3[] → 取前两次 eCPM（HK$）</text>
+    <text x="858" y="360" class="t mono" text-anchor="middle">上层 = tier( mean(v1,v2) × 1.3 )　　下层 = tier(v_last) − 1</text>
+    <text x="858" y="374" class="ts" text-anchor="middle">建议改用 median 而非 mean —— 见风险 §7</text>
+    <path class="l" d="M858,380 L858,404"/>
+
+    <rect x="600" y="404" width="252" height="72" class="b"/>
+    <text x="726" y="425" class="tb" text-anchor="middle">上层（高价探测）</text>
+    <text x="726" y="444" class="ts" text-anchor="middle">例：117 → HB_int_splash_6</text>
+    <text x="726" y="461" class="ts" text-anchor="middle">HK$120 · 每 20s 一次</text>
+
+    <rect x="864" y="404" width="252" height="72" class="b"/>
+    <text x="990" y="425" class="tb" text-anchor="middle">下层（保底）</text>
+    <text x="990" y="444" class="ts" text-anchor="middle">例：80 低一层 → splash_3</text>
+    <text x="990" y="461" class="ts" text-anchor="middle">HK$60 · +3s 后发 · 循环</text>
+
+    <path class="l" d="M726,476 L726,500 L858,500 L858,524"/>
+    <path class="l" d="M990,476 L990,500 L858,500"/>
+
+    <rect x="600" y="524" width="516" height="34" class="b" fill="#F6F2F4"/>
+    <text x="858" y="546" class="t" text-anchor="middle" font-weight="600">展示优先级：上层 ▸ 下层</text>
+
+    <path class="l" d="M858,558 L858,584"/>
+    <path d="M858,584 L1058,620 L858,656 L658,620 Z" class="dec"/>
+    <text x="858" y="617" class="tb" text-anchor="middle">缓存池空？</text>
+    <text x="858" y="634" class="ts" text-anchor="middle">建议保留现有的 ≥3s 延迟</text>
+
+    <path class="l" d="M1058,620 L1096,620 L1096,700 L858,700 L858,724"/>
+    <text x="1104" y="616" class="ts">是</text>
+    <rect x="658" y="724" width="400" height="46" class="b" fill="#FDF6EC"/>
+    <text x="858" y="744" class="tb" text-anchor="middle">必发无底价兜底</text>
+    <text x="858" y="761" class="ts mono" text-anchor="middle">US/T2 → HB_int_splash_0　·　WW → HB_int_splash_ww_0</text>
+
+    <!-- ============ CONVERGE ============ -->
+    <path class="l" d="M250,588 L250,830 L560,830"/>
+    <path class="l" d="M858,770 L858,830 L580,830"/>
+    <rect x="380" y="810" width="380" height="40" rx="8" fill="#1E1B2E"/>
+    <text x="570" y="835" class="tb" fill="#fff" text-anchor="middle">展示插页（缓存最多 2 条）</text>
+
+    <path class="l" d="M570,850 L570,880"/>
+    <rect x="330" y="880" width="480" height="70" class="b" fill="#EEF8F1"/>
+    <text x="570" y="902" class="tb" text-anchor="middle">OPENED → 终身展示次数 +1</text>
+    <text x="570" y="921" class="t" text-anchor="middle">PAID 回传 → 更新本地价值库</text>
+    <text x="570" y="939" class="ts mono" text-anchor="middle">recent3 · max · median · mean · ltv　（仅 PRECISE / ESTIMATED 入路由样本）</text>
+
+    <path class="l" d="M330,915 L180,915 L180,214 L360,214" stroke-dasharray="5 4"/>
+    <text x="192" y="560" class="ts" fill="#E63F69">价值刷新后</text>
+    <text x="192" y="576" class="ts" fill="#E63F69">重新参与分层</text>
+
+    <!-- footnotes -->
+    <rect x="24" y="980" width="1092" height="176" class="b" fill="#FDEDED" stroke="#D93B3B"/>
+    <text x="44" y="1006" class="tb" fill="#B02A2A">⚠️ 图中三处必须修正后才能实现</text>
+    <text x="44" y="1030" class="t">1.「循环请求」必须带退避闸门（nextAt[]）。无退避的 no-fill 重发是 Ad serving limited 的典型触发信号。</text>
+    <text x="44" y="1052" class="t">2. 币种是 HK$ 不是 US$。PAID.value = 每次展示港币；eCPM = value × 1000。搞混这一跳，全量用户静默锁死在 idx2（HK$40）。</text>
+    <text x="44" y="1074" class="t">3. 整图没有 iOS 单元。iOS 用 HB_ios_splash_00…25，与 Android ID 不可互换，用错 = 静默 no-fill。</text>
+    <text x="44" y="1100" class="t">4. 所有请求必须在 if (!cacheFull()) 之内 —— 含循环的那一路。2 个缓存位 vs 4 个并行源（含 onboarding）。</text>
+    <text x="44" y="1122" class="t">5. tier() 索引越界现在是「静默 return，什么都不请求」。×1.3 超过 HK$500 或「低一层」低于 HK$40 时正好命中。</text>
+    <text x="44" y="1144" class="t">6. 保底层由「上一次价值低一层」推导 = 单点故障。一次高价成交会把安全网顶到打不到的价位。见风险 §5。</text>
+  </svg>
+</section>
+
+<!-- ══════════ TAB 4 ══════════ -->
+<section id="t-risk">
+  <h2>风险审查</h2>
+  <p class="small">由独立 subagent 实读代码后产出，按严重度排序。</p>
+
+  <h3 style="color:#B02A2A">🔴 高</h3>
+
+  <details open><summary>1 ·「循环请求」= 无退避重发，这是全案最危险的一条</summary>
+    <p><b>机制：</b>高 optimized floor 的单元<b>注定大比例 no-fill</b>。一次 no-fill 往返约 200–800ms。
+    若「循环」= 在 ERROR 回调里立刻重发，单台设备就是 <b>1.5–5 req/s ≈ 每小时 5,000–18,000 次请求</b>，而同期真实曝光是个位数。
+    即便收敛到 1s ticker 也是 3,600 次/小时。</p>
+    <p><b>现有代码从不这么干：</b><code>usInterstitial.ts:311-315</code> 的 <code>request()</code> 有三道闸 ——
+    <code>tierActive(idx)</code> 防重复加载、<code>nextAt[idx]</code> 退避时钟、<code>pump()</code> 里的 <code>if (!cacheFull())</code>。
+    <code>docs/ad-waterfall-US.md</code> §5 已把这条写成红线。<b>新方案在文字上直接推翻了那一段。</b></p>
+    <p><b>政策：</b>Ad serving limits（<code>support.google.com/admob/answer/9493252</code>）明确说限制投放是<b>无效流量保护</b>的执行手段；
+    无效流量定义（<code>answer/3342054</code>）中「通过自动化方式产生展示或请求」直接命中。</p>
+    <p><b>建议：</b>「循环」一律换成现成的退避曲线 ——
+    <code>unit0BackoffBase</code>(3/6…封顶10s)、<code>netBackoffBase</code>(5/10/20/40…封顶60s)、<code>ladderRetryBase</code>(2s/4s)。
+    <b>任何单元都不能有「没有 nextAt 闸门的请求路径」。</b></p>
+  </details>
+
+  <details open><summary>2 · 政策定性变了，而且升级条件已经成立</summary>
+    <p><code>docs/ad-waterfall-US.md</code> §11 的既定决策写了一句触发条件：<b>「若日后单元上挂载 bidding 广告源，风险显著升高。」</b>
+    <b>那个条件已经发生了</b> —— <code>plugins/withAdMobMediation.js:118</code>，Meta 于 2026-07-26 <code>enabled: true</code>，
+    而 Meta 插页<b>只能作为 bidding 广告源</b>。§11 里的「显著升高」不是未来时，是现在时。</p>
+    <p><b>更重要的定性变化：</b>现有瀑布流按<b>填充结果</b>（fill / no-fill）移动窗口，是<b>被动</b>的。
+    B 方案不是 —— 它按 <code>mean(最近两次实测 eCPM) × 1.3</code> 直接算出一个价格再挑单元发请求。
+    这正好是行为政策禁止的那句话的<b>字面描述</b>：「通过发布商自建系统，按实时价格信息程序化分配广告请求」
+    （<code>support.google.com/admob/answer/2753860</code>）。<b>现有实现的措辞辩护余地，在新方案里没有了。</b></p>
+    <p><b>建议：</b>不推翻既定决策，但要明确知道这次是在已知风险上<b>叠加一层定性更重的新风险</b>，而不是同一风险的量变。
+    Google 认可的等价路径：一个单元 + <b>bidding mediation group</b>（Meta 已就位）+ <b>optimized eCPM floor</b>，
+    让价格发现发生在 Google 服务端 —— 能拿到本方案约 90% 的收益、零政策敞口，且不用维护 26+ 单元的状态机。</p>
+  </details>
+
+  <details open><summary>3 · 整个方案里没有一个 iOS 单元；三组单元不存在</summary>
+    <p>见 Tab ① 的缺口清单。补充一个静默失败陷阱：<code>request()</code> 里 <code>if (!UNIT_IDS[idx]) return;</code>（<code>usInterstitial.ts:313</code>）
+    —— <b>索引越界不报错，会安静地什么都不请求</b>。<code>×1.3</code> 算出 &gt;HK$500 或「低一层」算出 &lt;HK$40 时正好命中
+    → 该用户整段会话零广告，且没有任何日志。所有索引计算加显式 <code>clamp</code>，越界要 <code>logEvent</code>。</p>
+  </details>
+
+  <details open><summary>4 · 币种与单位：账户报 HKD，方案里的「$300」没有定义币种</summary>
+    <p><b>最可能实际发生的 bug。</b>换算链条有两跳：<code>PAID.value</code> = 每次展示的<b>港币</b>
+    → <code>vEcpm = value × 1000</code> = <b>港币 eCPM</b> → 与阶梯底价比较。</p>
+    <p>owner 举例的「前两次 eCPM，例如 100 和 80」——<b>这两个数从哪来？</b>
+    若从 <code>adRevenue.ts</code> 口径取，那是<b>每次展示的港币</b>（约 0.1 / 0.08），×1.3 = 0.117
+    → 去阶梯里找「高于 0.117 的一层」→ <b>永远是 idx2</b>。
+    <b>每一个用户都会被永久锁在最低层，而且没有任何报错。</b></p>
+    <p>两个口径现在分居两个文件：<code>adRevenue.ts</code> 全程 per-impression，<code>usInterstitial.ts</code> 用 eCPM，<b>差 1000 倍</b>。</p>
+    <p><b>建议：</b>新价值存储用 branded type（<code>type EcpmHkd = number &amp; { __brand:'ecpm_hkd' }</code>）让 TS strict 替你抓这个错；
+    文档里「$」全改「HK$」；上线前真机打印一次 <code>ad_paid</code> 的 value/ecpm/currency，确认 ecpm 落在 40–500 而不是 0.04–0.5。</p>
+  </details>
+
+  <details open><summary>5 ·「保底层 = 上一次价值低一层」是单点故障</summary>
+    <p>假设用户稳定在 high=idx6(HK$120) / low=idx3(HK$60)。某次 idx3（底价只是下限）恰好赢到一条 HK$300 的广告 —— 完全正常。
+    于是下一轮「低一层」= HK$280 → idx14。<b>保底层瞬间从 $60 跳到 $280</b>，几乎必然 no-fill，上层更高也必然 no-fill。
+    该用户从此两个单元都打不到，只能靠应急路径活着。</p>
+    <p><b>现有设计没有这个洞：</b><code>unit0</code> 是与窗口<b>完全解耦</b>的常驻安全网（<code>usInterstitial.ts:460-462</code>），窗口再飘也影响不到它。
+    新方案把安全网接到了它要保护的那个信号上。反向也不稳：一次 0 值 PAID 会把保底层压到 idx2 以下 → 越界 → 静默不请求。</p>
+    <p><b>建议：</b>保底层用<b>固定低层</b>（idx2 或直接 unit0），不要从价值推导。
+    一定要动态就加硬上限 <code>min(tier(last)−1, tier(median_lifetime))</code>，并<b>保留 unit0 作为与路由无关的常驻兜底</b>。</p>
+  </details>
+
+  <details open><summary>6 · 删掉 climb-on-fill，价格发现天花板从 $500 掉到「保底层成交价 × 1.3」</summary>
+    <p><b>选择性采样偏差（censored sampling）：</b>高层 no-fill 时不产生样本，保底层 fill 时产生样本 → 样本池被保底层主导。
+    令保底层实际成交 ≈ F，稳态下 high = ceil(1.3F)。代入 F=HK$65：mean≈64 → ×1.3=83 → high=idx5($100)，low=idx3($60)。
+    <b>系统稳定在「比保底层高一两级」，而不是用户的真实上限。</b></p>
+    <p>从 $60 爬到 $500 需要 1.3ⁿ 走 <b>8 步</b>（60→78→101→132→171→222→289→375→488），每步都要求高层<b>恰好填充</b>。
+    叠加 60s 全局冷却和典型 2–3 条/会话的曝光量，<b>这条路实际走不通</b>。现有的 climb-on-fill 一次会话就能走完。</p>
+    <p><b>建议：</b>保留 climb-on-fill 作为<b>上探</b>信号（fill 就上移），价值只用于<b>设定起点</b> ——
+    这正是现有 §2「V → 起始窗口」的做法。新方案把「设定起点」的机制误用成了「持续驱动」。</p>
+  </details>
+
+  <h3 style="color:#8A5A16">🟡 中</h3>
+
+  <details><summary>7 · n=1~2 个样本的噪声远大于 1.3 这个信号</summary>
+    <p>插页 eCPM 近似对数正态，log 空间 σ ≈ 0.8–1.2。n=2 时均值标准误 ≈ σ/√2 ≈ 0.6–0.85 log 单位，
+    对应 95% 置信区间约为点估计的 <b>×0.2 到 ×5</b>。而 ×1.3 只有 <b>0.26 log 单位 —— 不到半个标准误</b>。
+    你在用一个远小于噪声的调整量做决策。</p>
+    <p>更根本的是<b>方差归因</b>：单条插页 eCPM 主要由「地理 + 时段 + 当时哪个广告主在投放」决定，
+    <b>用户间方差只占总方差的一小部分</b>。你测到的不是用户，是那一秒的拍卖。</p>
+    <p><b>建议：</b>阈值从 2 提到 <b>≥5</b>，并用<b>中位数或截尾均值</b>（方案本来就要记中位数了 —— 就用它）。
+    或者更诚实：承认单用户价值不可估，改用<b>群体维度</b>（地区 × 天数 × 平台）设静态起点，把个体路由整个砍掉。</p>
+  </details>
+
+  <details><summary>8 · 新老标记的时序竞态（详见 Tab ② 2.1）</summary>
+    <p><b>可行，但不能用现在 <code>installDayIndex()</code> 那条路。</b>
+    <code>initAds()</code> 在发第一个请求前已有一长串 await（AsyncStorage → bounded 2s → UMP 12s → ATT 30s → initialize 8s），
+    再插一次读取毫无压力。但 <code>installDayIndex()</code> 由 <code>initAdFrequency()</code> 填充，
+    <code>App.tsx</code> 与 <code>initAds()</code> <b>并行 fire-and-forget</b>，输了竞态就返回 0 = 所有人像 day0。</p>
+    <p><b>建议：</b>ads.ts 自己读，包在 <code>bounded(...,1500)</code> 里放在 <code>initialize()</code> 之前，不跨模块依赖初始化顺序；
+    计数器在 <b>OPENED</b> 里 +1；必须做进后台强制落盘，否则被 kill 会丢计数，用户可能<b>永远停在新用户档</b>。</p>
+  </details>
+
+  <details><summary>9 · 缓存 2 条 vs 4–5 个并行源 → match rate / show rate 会很难看</summary>
+    <p>day0 用户实际是 <b>onboarding + newbie + 高底价 + 无底价 = 4 个并行源</b>抢 2 个缓存位。</p>
+    <p><code>HB_newbie_splash_text_00</code> 结构性最惨：请求率 100%，但在三个地区里<b>展示优先级都排第二</b>，
+    而排它后面的无底价单元几乎必填充并立刻占满缓存位 → 「请求最多、展示最少」。</p>
+    <p><b>更糟的是它挂的是 Google optimized floor。</b>优化底价是 Google 用这个单元的历史表现算出来的，
+    它会读到「大量请求、大量 no-fill、填充了也很少展示」—— <b>你在主动毒化它的优化模型</b>。</p>
+    <p><b>建议：</b><code>cacheFull()</code> 闸门对所有源生效（含循环那一路）；缓存位 2→3，或并行源砍到 2；
+    先去后台看现有 match/show rate 基线 —— 若 show rate 已在 20% 上下，新方案会推到 10% 以下，那是会被人工看的水平。</p>
+  </details>
+
+  <details><summary>10 · PAID 的其余三个坑</summary>
+    <p><b>① PAID 晚于 CLOSED 到达。</b>现有 <code>pump()</code> 在 CLOSED 里就发下一轮请求（<code>usInterstitial.ts:623</code>），
+    但下一轮价位依赖刚那条的价值 —— <b>那个值可能还没到</b>。必须在 PAID 回调里<b>重新规划</b>，而不是只在 CLOSED 里规划。</p>
+    <p><b>② 生命周期统计量</b>（max / median / mean / LTV）是<b>终身</b>概念，必须独立持久键，
+    不能挂 <code>todayImpr</code>（<code>resetDailyState()</code> 清空）或 <code>adRevenue.state</code>（每天 roll）。</p>
+    <p><b>③ 币种切换会清空。</b><code>adRevenue.ts:231-235</code>：账户币种一变，<code>freshDay()</code> 把当天累加器和 carry 全清。
+    路由存储若复用这段状态，一次币种变更会<b>抹掉所有路由历史</b>，全量用户回落新用户档。</p>
+  </details>
+
+  <details><summary>11 · T2 复用美国单元，会推翻代码里已为同一理由做过的一次隔离</summary>
+    <p><code>ads.ts:80-86</code> 记录得很明确：全球流量原本和美国阶梯的 <code>unit0</code> 共用单元，
+    <b>导致后台美国阶梯的统计被污染</b>，所以才专门建了独立 ww 单元拆开。T2 复用 = 按比例重新引入这个已修问题。</p>
+    <ol>
+      <li><b>归因：</b>混入 T2 后「$120 这层的填充率」同时混着美国和欧洲两种需求，<b>你再也无法据此调底价</b> —— 而调底价正是这套阶梯存在的唯一理由。</li>
+      <li><b>底价不可分地区：</b>AdMob 手动底价是<b>每单元一个数、对全部流量生效</b>。而阶梯最低层 idx2 = HK$40(≈US$5.1)
+      <b>已经在多数欧洲市场的插页 eCPM 之上</b>。实际结果：T2 两层恒定 no-fill → 触底 → 8s 冷却空转 → 全靠 <code>_0</code> 兜底。
+      <b>换句话说 T2 这套路由什么都不会改变，只会平添请求量</b> —— 这是最实在的反对理由。</li>
+      <li><b>分组本身不成立：</b>组内跨度 ~10 倍，一套共享底价对这个集合没有意义。</li>
+    </ol>
+    <p><b>EEA 特有：</b>EEA 用户走 UMP（<code>ads.ts:266-273</code>）。<b>未同意</b>的用户只能拿非个性化广告，eCPM 通常掉 50–70%，
+    对任何有底价单元都是稳定 no-fill。<b>T2 的正确路由维度不是地区，是同意状态</b> —— 这个信号手里就有，只是没被用于路由。</p>
+    <p><b>建议：</b>T2 用独立单元 + 按欧洲实际水平重设底价（美国的 1/3–1/2，且需要低于 HK$40 的层）；
+    或更省事：<b>T2 先不做阶梯</b>，只做「同意 → 单元 A / 未同意 → 单元 B」这一个二分。</p>
+  </details>
+
+  <details><summary>12 · locale 判定对 T2 是系统性偏低，不是随机噪声</summary>
+    <p><code>deviceRegion.ts</code> 第三级 tz 兜底<b>只覆盖美国</b>（<code>US_TZ_RE</code>），欧洲和澳新没有任何 tz 兜底。</p>
+    <p>裸 <code>en</code> locale（欧洲、澳洲都常见）→ 前两级拿不到地区 → tz 不匹配美国 → <code>null</code> → 落到 WW。
+    <b>T2 会系统性漏掉一部分真实 T2 用户，方向固定向下。</b></p>
+    <p>反方向：欧洲用户把系统语言设成 <code>en-US</code>（欧洲很常见）→ 判成 US → 拿 HK$120/$300 底价打欧洲需求 → 稳定 no-fill
+    → <b>直接产生 §1 描述的循环请求</b>。</p>
+    <p><b>建议：</b>给 tz 兜底加一组 <code>Europe/*</code> + <code>Australia/*</code> + <code>Pacific/Auckland</code>（一行改动）；
+    上线前先只加埋点不改路由，用现有 <code>ads_route</code> 跑一周<b>先看清 locale 分布再决定 T2 值不值得做</b>。</p>
+  </details>
+
+  <details><summary>13 · newbie 单元与现有 onboarding 单元可能是同一件事</summary>
+    <p><code>preloadOnboarding()</code> 在路由判定<b>之前</b>无条件发出，<code>maybeShowOnboardingInterstitial()</code> 还<b>绕过 60s 冷却</b>并强制先展示一次。
+    所以新用户分支辛苦加载的三条广告，<b>最早也要等 60s 之后</b>才可能展示一条。</p>
+    <p><code>HB_newbie_splash_text_00</code> 名字里的 <code>text</code> 与现有 onboarding 单元「text/image/rich-media only，无 video」的描述高度吻合。
+    <b>先确认这两个是不是同一件事</b> —— 若职能重叠，应该是<b>替换</b>而不是再加一个，并发数从 4 降到 3。</p>
+  </details>
+
+  <h3 style="color:#237547">🟢 低 / 提示</h3>
+
+  <details><summary>14 ·「20s × 3 次熔断」是净改进，别改</summary>
+    <p>现有 <code>ladderRetryBase</code> 是 2s/4s，新方案的 20s 更保守，「3 次熔断」与现有 <code>unit1Blocked</code> 当日熔断同思路。保留。</p>
+  </details>
+
+  <details><summary>15 · 工程加固表必须整表搬过去</summary>
+    <p><code>docs/ad-waterfall-US.md</code> §7：C1（show() 挂 catch）、C2（50 分钟过期淘汰）、H1（<code>__cleanup()</code> 释放原生监听）、
+    H2（epoch 防跨天脏回调）、M3（clamp 防越界）、M4/M5（IAP 后彻底停机）。
+    <b>并行源从 3 涨到 5，每一条的泄漏面积同比放大。</b>特别是 H1 那套 <code>subs[]</code> + 「PAID 故意不进 subs」的处理非常微妙，重写最容易漏。</p>
+  </details>
+
+  <details><summary>16 ·「≤2 次展示的老用户」其实是你最低价值的人群</summary>
+    <p>day0-2 是新用户很合理（安装类广告主对新装机出价确实高）。但「装了很久、总共只看过 ≤2 条广告」的用户
+    <b>是几乎不用这个 app 的人</b> —— 留存最差的一档，不是高价值档。把 HK$300 探针指向他们，得到的会是纯 no-fill。</p>
+    <p><b>建议：</b>两类分开 —— day0-2 走新用户探针；「老用户但曝光少」直接走 B 的冷启动路径（<code>_0</code> 兜底 + 一层低价）。</p>
+  </details>
+
+  <details><summary>17 · 兜底触发比现有的更激进一点</summary>
+    <p>方案说「缓存一条都没有则<b>必</b>发 <code>_0</code>」，现有是「缓存空<b>且持续 ≥3s</b>」（<code>UNIT0_EMPTY_DELAY_MS</code>）。
+    差别：每次 CLOSED 后缓存都会瞬时为空，去掉 3s 意味着每条广告关闭都额外触发一次 <code>_0</code> 请求。<b>保留那 3 秒。</b></p>
+  </details>
+
+  <div class="note" style="margin-top:26px">
+    <b>如果只改三件事</b>
+    <ol>
+      <li><b>把每一处「循环请求」换成带 <code>nextAt[]</code> 闸门的退避。</b>
+      这是唯一一条能让 AdMob <b>账号被限制投放</b>的改动，也最容易改 —— 三条退避曲线就在 <code>usInterstitial.ts:169-180</code>。
+      没有这一条，其余讨论都不重要。</li>
+      <li><b>先把币种和单位口径钉死，再写路由代码。</b>账户报 HKD，<code>PAID.value</code> 是每次展示的港币，阶梯底价是港币 eCPM，中间差 ×1000。
+      搞错这一跳，全量用户静默锁死在 idx2 且不报错。顺手修 <code>usInterstitial.ts:297</code> 那个 0 值 PAID 进样本池的 bug —— 它今天就在偷你的次日起点。</li>
+      <li><b>T2 别复用美国单元，也别急着做 T2。</b>先给 <code>deviceRegion()</code> 加 Europe/Australia 的 tz 兜底，
+      用现有埋点跑一周拿到真实分布再决定。现在这个方案对 T2 用户的净效果是「什么都没变，但请求量翻了三倍」。</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ══════════ TAB 5 ══════════ -->
+<section id="t-now">
+  <h2>线上现状（新方案的对照基线）</h2>
+  <p class="small">详见 <code>docs/ad-routing.md</code>。</p>
+
+  <h3>三条独立路径</h3>
+  <table>
+    <tr><th>#</th><th>路径</th><th>分地区</th><th>Android</th><th>iOS</th></tr>
+    <tr><td>①</td><td>首开 onboarding 插屏</td><td><b>❌ 全球同一套</b></td><td><code>5004598985</code></td><td><code>7247618944</code></td></tr>
+    <tr><td>②</td><td>主插屏 · 美国</td><td>✅</td><td>26 层 <code>HB_int_splash_*</code></td><td>26 层 <code>HB_ios_splash_*</code></td></tr>
+    <tr><td>③</td><td>主插屏 · 其余全部</td><td>✅</td><td><code>5238876625</code></td><td><code>8692353122</code></td></tr>
+  </table>
+  <p>② 和 ③ 二选一；① 与它们<b>并行</b>，是第三个独立请求。</p>
+
+  <h3>路由判定 · <code>ads.ts:319-320</code></h3>
+  <pre class="m card">useController = region === 'US'
+             &amp;&amp; (iOS || Android)
+             &amp;&amp; !!InterstitialAdCls
+             &amp;&amp; !__DEV__;</pre>
+  <div class="warn"><b>阶梯在 dev 包里永远跑不到</b> —— 那 26 个 ID 是活单元、没有 test 对应物。
+  只能用 release / TestFlight / 注册测试设备验证。</div>
+
+  <h3>展示触发（全球统一，不分地区）</h3>
+  <table>
+    <tr><th>placement</th><th>触发</th><th>用户</th></tr>
+    <tr><td><code>prayer_end</code></td><td>祷告结束</td><td>全部</td></tr>
+    <tr><td><code>plan_end</code></td><td>计划当日结束</td><td>全部</td></tr>
+    <tr><td><code>gospel_end</code></td><td>Gospel &amp; Psalm 读完</td><td>全部</td></tr>
+    <tr><td><code>quiz_retry</code></td><td>点「Try those again」</td><td>全部 · 无日次上限（既定决策）</td></tr>
+    <tr><td><code>nav</code></td><td>每 3 次合格跳转</td><td>仅 day ≥ 3</td></tr>
+    <tr><td><code>app_open</code></td><td>退后台 ≥15s 回前台</td><td>仅 day ≥ 3 · 既定决策</td></tr>
+  </table>
+
+  <h3>🔴 两个同名常量</h3>
+  <table>
+    <tr><th>位置</th><th>值</th><th>管谁</th></tr>
+    <tr><td><code>usInterstitial.ts:122</code></td><td>60s</td><td>美国阶梯</td></tr>
+    <tr><td><code>ads.ts:181</code></td><td>60s</td><td>非美单单元</td></tr>
+  </table>
+  <p>两个值现在相同，所以重复是<b>隐形</b>的 —— 直到有人以为在改全局而另一条纹丝不动。</p>
+</section>
+
+</main>
+
+<script>
+// ── ladder data (from src/services/usInterstitial.ts) ──────────────────
+const AND=['3482477831','7490462459','8088924338','7843861841','1388088535','8847472238','4806634966','6221308891','7458368943','1854992392','5010783513','5418399088','3697701843','4105317418','2792235742','2903494925','8375313451','5749150119','9085759893','3192902443','9305251745','3496154776','6132714959','1879820771','7992170076','6679088408'];
+const IOS=['9512513187','7128278021','9525165051','8212083387','5815196351','1781984941','9468903270','8627016351','5202355204','7313934680','4461428682','7359090158','9522183676','9929413171','6896020332','5582938666','1643693655','2925021129','1393401895','2765203630','8356441665','6512876953','5199795283','5443337860','5008223593','4130256191'];
+const floor = i => i===0 ? '<span style="color:#6B6675">无底价 · 安全网</span>'
+                 : i===1 ? '<b>HK$300</b> · 新用户探针'
+                 : 'HK$'+(i*20);
+let rows='';
+for(let i=0;i<26;i++){
+  rows+=`<tr><td><b>${i}</b></td><td>${floor(i)}</td>
+    <td><code>HB_int_splash_${i}</code><br><span class="tag">${AND[i]}</span></td>
+    <td><code>HB_ios_splash_${String(i).padStart(2,'0')}</code><br><span class="tag">${IOS[i]}</span></td></tr>`;
+}
+document.getElementById('ladder').innerHTML =
+  `<table><tr><th>idx</th><th>底价</th><th>Android</th><th>iOS</th></tr>${rows}</table>`;
+
+// ── tabs ───────────────────────────────────────────────────────────────
+document.querySelectorAll('nav button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('section').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById(b.dataset.t).classList.add('on');
+    window.scrollTo(0,0);
+  };
+});
+</script>
+</body>
+</html>

@@ -270,8 +270,12 @@ function request(d: Desired): void {
       st.inFlight = false;
       if (myEpoch !== epoch) { cleanup(); return; }
       st.noFill = 0; st.attempts = 0; st.nextAt = Date.now() + d.gapMs;
-      if (st.abandoned || cacheFull()) {
-        // Arrived into a full cache: keep it only if it beats the worst slot.
+      // Full-cache arrivals only bump the WORST slot if they beat it — so a
+      // probe fill racing in behind two quick net fills still lands (the net
+      // gets evicted), while a net arriving behind two ladder fills is simply
+      // dropped. `abandoned` alone doesn't matter here: if a slot has freed up
+      // since the flag was set, a fill in hand is worth keeping.
+      if (cacheFull()) {
         const worst = [...cache].sort((a, b) => priorityOf(a.unit) - priorityOf(b.unit))[0];
         if (worst && priorityOf(d.unit) > priorityOf(worst.unit)) {
           cache = cache.filter(x => x !== worst);
@@ -312,9 +316,10 @@ function request(d: Desired): void {
     // some mediation adapters deliver revenue after dismiss.
     attachPaid(ad, d.unit);
     ad.load();
-    // Request observability for the paced layers only — the 3-5s loops would
-    // flood analytics for zero insight.
-    if (d.kind === 'probe' || d.kind === 'primary' || d.kind === 'secondary') {
+    // Request observability for the SLOW layers only (20s/30s pacing, breaker
+    // bounded). The secondary/newbie/net loops run every 3-5s on no-fill —
+    // logging those would flood analytics for zero insight.
+    if (d.kind === 'probe' || d.kind === 'primary') {
       logEvent('ad_request', { unit: d.unit.name, kind: d.kind, floor: d.unit.floor });
     }
   } catch { s.inFlight = false; }

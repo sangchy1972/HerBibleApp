@@ -39,6 +39,12 @@ const EMPTY: AdValueState = { v: 1, imps: 0, last3: [], max: 0, ltv: 0, values: 
 
 let state: AdValueState = { ...EMPTY, last3: [], values: [] };
 let hydrated = false;
+/** A paid event landed before hydration finished. The engine starts behind a
+ *  BOUNDED wait, so a wedged AsyncStorage read can resolve late — after real
+ *  impressions have already been recorded. A late hydrate must never clobber
+ *  those; losing the disk snapshot's history costs a re-calibration, losing a
+ *  live paid event costs real routing data. */
+let dirtySinceHydrateStarted = false;
 
 function sanitize(raw: unknown): AdValueState | null {
   const p = raw as Partial<AdValueState> | null;
@@ -65,7 +71,7 @@ export async function hydrateAdValueStore(): Promise<void> {
   if (hydrated) return;
   try {
     const raw = await AsyncStorage.getItem(KEY);
-    if (raw) {
+    if (raw && !dirtySinceHydrateStarted) {
       const clean = sanitize(JSON.parse(raw));
       if (clean) state = clean;
     }
@@ -85,6 +91,7 @@ export function adValueState(): Readonly<AdValueState> {
  * can lose at most the latest impression, never tear the invariant.
  */
 export function recordPaidValue(value: number): Readonly<AdValueState> {
+  dirtySinceHydrateStarted = true;
   const v = isFinite(value) && value >= 0 ? value : 0;
   state = {
     v: 1,
@@ -112,5 +119,6 @@ export function adValueStats(): { mean: number; median: number } {
 export function __resetAdValueStoreForTest(): void {
   state = { ...EMPTY, last3: [], values: [] };
   hydrated = false;
+  dirtySinceHydrateStarted = false;
 }
 export function __sanitizeForTest(raw: unknown): AdValueState | null { return sanitize(raw); }

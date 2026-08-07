@@ -78,11 +78,11 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { flex: 1 },
   content: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 24 },
-  // Merriweather. 19.87 → 18 (-5 % floored) and lineHeight 28.5 → 30 (+5 %
-  // ceiled), both per user — smaller type, more air between the lines.
+  // Merriweather, 19 (owner-picked after trying 18) over the +5%-ceiled
+  // lineHeight of 30 — more air between the lines.
   question: {
     fontFamily: FONTS.merriweather,
-    fontSize: 18,
+    fontSize: 19,
     lineHeight: 30,
     color: TXT,
     letterSpacing: 0.1,

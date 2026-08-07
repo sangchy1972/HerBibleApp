@@ -267,9 +267,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4, textAlign: 'center', marginTop: 10,
   },
   // The quiz's own question type: Merriweather at the +8 % scale.
-  // Mirrors the full screen's question type (18/30 per user).
+  // Mirrors the full screen's question type (19/30 per user).
   question: {
-    fontFamily: FONTS.merriweather, fontSize: 18, lineHeight: 30,
+    fontFamily: FONTS.merriweather, fontSize: 19, lineHeight: 30,
     color: TXT, letterSpacing: 0.1, marginTop: 16, marginBottom: 18,
   },
   // Cancels the trailing option's own 11 marginBottom so the card's 16 of

@@ -52,6 +52,7 @@ import { ensureAttRequested } from './att';
 import { startUsController, stopUsController, usOnShowOpportunity, isUsControllerActive } from './usInterstitial';
 import { startAdEngine, stopAdEngine, isAdEngineActive, engineOnShowOpportunity } from './adEngine';
 import { hydrateAdValueStore } from './adValueStore';
+import { isEmulatorDevice } from './deviceIntegrity';
 import { setInterstitialVisible } from './interstitialVisibility';
 import { deviceRegion } from './deviceRegion';
 import { initAdRevenue, onAdPaid } from './adRevenue';
@@ -238,6 +239,16 @@ export async function initAds(): Promise<void> {
     if (stored === '1') adsRemoved = true;
   } catch { /* default: ads on */ }
   if (adsRemoved) { initialized = true; return; }
+  // Emulators never get ads. Two independent reasons (see deviceIntegrity.ts):
+  // their clicks on LIVE units are invalid traffic — an AdMob account risk now
+  // that dev builds carry live units — and their software-GL stacks segfault
+  // under ad creatives (Crashlytics 2026-08-05: SIGSEGV in SwiftShader during a
+  // Vungle creative on a fake "OnePlus8Pro"). Real devices are unaffected.
+  if (isEmulatorDevice()) {
+    initialized = true;
+    logEvent('ads_route', { region: deviceRegion() ?? 'unknown', path: 'emulator_skip' });
+    return;
+  }
   // Impression-level revenue plumbing. BOTH must be in memory before the first
   // ad can serve: the accumulators (so a mid-day relaunch resumes instead of
   // re-firing today's LTV tiers) and the config (so the very first impression

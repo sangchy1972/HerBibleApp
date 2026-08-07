@@ -237,6 +237,9 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
     if (!currentQuestion) return null;
     return (
       <QuizQuestionView
+        // Remounted per question — round included, so a retry round re-asking
+        // the same position replays the options' slide-in entrance too.
+        key={`${session.round}:${pos}`}
         question={currentQuestion}
         optionStates={optionStates}
         locked={!!locked}

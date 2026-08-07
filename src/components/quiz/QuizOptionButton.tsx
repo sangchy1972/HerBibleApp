@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minHeight: 56,
     borderRadius: BTN_RADIUS,
-    paddingVertical: 14,
+    paddingVertical: 17,   // 14 → 17 (+3px above and below the label, per user — taller cards)
     paddingHorizontal: 16,
     marginBottom: 11,
     backgroundColor: '#FFFFFF',

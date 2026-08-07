@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { TXT, FONTS } from '../../constants/theme';
 import QuizOptionButton, { type OptionState } from './QuizOptionButton';
+import QuizOptionsEntrance from './QuizOptionsEntrance';
 import QuizVerdict from './QuizVerdict';
 import { useAutoAdvance } from './useAutoAdvance';
 import type { QuizQuestion } from '../../constants/bibleQuiz';
@@ -43,15 +44,19 @@ export default function QuizQuestionView({
           {question.question}
         </Text>
 
-        {question.options.map((label, i) => (
-          <QuizOptionButton
-            key={i}
-            label={label}
-            state={optionStates[i] ?? 'idle'}
-            disabled={locked}
-            onPress={() => onPick(i)}
-          />
-        ))}
+        {/* Entrance replay is driven by the parent remounting this view per
+            question (key = round:position on the screen). */}
+        <QuizOptionsEntrance>
+          {question.options.map((label, i) => (
+            <QuizOptionButton
+              key={i}
+              label={label}
+              state={optionStates[i] ?? 'idle'}
+              disabled={locked}
+              onPress={() => onPick(i)}
+            />
+          ))}
+        </QuizOptionsEntrance>
 
         {/* Directly under the options rather than pinned to the bottom of the
             screen: it lands next to the answer she just tapped, and appending
@@ -73,11 +78,12 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { flex: 1 },
   content: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 24 },
-  // Merriweather, 21.6 → 19.87 (-8 % per user).
+  // Merriweather. 19.87 → 18 (-5 % floored) and lineHeight 28.5 → 30 (+5 %
+  // ceiled), both per user — smaller type, more air between the lines.
   question: {
     fontFamily: FONTS.merriweather,
-    fontSize: 19.87,
-    lineHeight: 28.5,
+    fontSize: 18,
+    lineHeight: 30,
     color: TXT,
     letterSpacing: 0.1,
     marginBottom: 22,

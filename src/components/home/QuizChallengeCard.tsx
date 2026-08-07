@@ -11,6 +11,7 @@ import { currentPosition, isTried } from '../../state/quizSession';
 import { SET_SIZE } from '../../services/quizSets';
 import QuizSegmentBar from '../quiz/QuizSegmentBar';
 import QuizOptionButton, { type OptionState } from '../quiz/QuizOptionButton';
+import QuizOptionsEntrance from '../quiz/QuizOptionsEntrance';
 import QuizVerdict from '../quiz/QuizVerdict';
 import { useAutoAdvance } from '../quiz/useAutoAdvance';
 
@@ -204,18 +205,25 @@ export default function QuizChallengeCard({
         </Text>
 
         <View style={styles.options}>
-          {question.options.map((label, i) => (
-            <QuizOptionButton
-              key={i}
-              label={label}
-              state={optionStates[i] ?? 'idle'}
-              disabled={!!locked}
-              // Starts the set on the first tap. startAndPick does both halves in
-              // one update — open() then pick() would answer into a session that
-              // does not exist yet and the tap would be swallowed.
-              onPress={() => startAndPick(i)}
-            />
-          ))}
+          {/* Same slide-in as the full screen. Keyed by round:position so every
+              new question replays it; the pre-session preview (key 0:0) and the
+              session's own first question share a key on purpose — the card
+              must not re-animate under her finger when the first tap creates
+              the session. */}
+          <QuizOptionsEntrance key={`${session?.round ?? 0}:${questionPos}`}>
+            {question.options.map((label, i) => (
+              <QuizOptionButton
+                key={i}
+                label={label}
+                state={optionStates[i] ?? 'idle'}
+                disabled={!!locked}
+                // Starts the set on the first tap. startAndPick does both halves in
+                // one update — open() then pick() would answer into a session that
+                // does not exist yet and the tap would be swallowed.
+                onPress={() => startAndPick(i)}
+              />
+            ))}
+          </QuizOptionsEntrance>
         </View>
 
         {/* Appears BELOW the options, never above: growing the card downward
@@ -259,8 +267,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4, textAlign: 'center', marginTop: 10,
   },
   // The quiz's own question type: Merriweather at the +8 % scale.
+  // Mirrors the full screen's question type (18/30 per user).
   question: {
-    fontFamily: FONTS.merriweather, fontSize: 19.87, lineHeight: 28.5,
+    fontFamily: FONTS.merriweather, fontSize: 18, lineHeight: 30,
     color: TXT, letterSpacing: 0.1, marginTop: 16, marginBottom: 18,
   },
   // Cancels the trailing option's own 11 marginBottom so the card's 16 of

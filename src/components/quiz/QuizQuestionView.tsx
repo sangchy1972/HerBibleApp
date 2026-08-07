@@ -86,6 +86,7 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     color: TXT,
     letterSpacing: 0.1,
+    marginLeft: 3,     // question only — the options keep the shared 20 inset
     marginBottom: 22,
   },
   // The 11 the last option already carries is part of this gap.

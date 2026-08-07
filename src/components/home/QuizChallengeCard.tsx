@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   // Mirrors the full screen's question type (19/30 per user).
   question: {
     fontFamily: FONTS.merriweather, fontSize: 19, lineHeight: 30,
-    color: TXT, letterSpacing: 0.1, marginTop: 16, marginBottom: 18,
+    color: TXT, letterSpacing: 0.1, marginLeft: 3, marginTop: 16, marginBottom: 18,
   },
   // Cancels the trailing option's own 11 marginBottom so the card's 16 of
   // padding is the only gap under the last one.

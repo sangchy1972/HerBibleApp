@@ -99,7 +99,7 @@ export function noteNavigation(routeName: string): void {
   navCount += 1;
   if (navCount >= NAV_EVERY) {
     navCount = 0;
-    maybeShowInterstitial('nav');                    // ads layer enforces 60s floor + foreground
+    maybeShowInterstitial('nav');                    // ads layer enforces the interval floor + foreground
   }
 }
 
@@ -129,7 +129,7 @@ function onAppState(next: AppStateStatus): void {
     const suppressed = hotStartSuppressedUntil > Date.now();
     hotStartSuppressedUntil = 0;                     // consumed either way
     // NO day gate (owner 2026-08-08): a hot start monetizes from day 0. The
-    // 60s floor, the foreground check and the remove-ads flag all still apply
+    // interval floor, the foreground check and the remove-ads flag all still apply
     // inside maybeShowInterstitial, and a first-open session can't reach here
     // at all — bgAt is only set once the app has actually been backgrounded.
     if (!suppressed && bgAt != null && Date.now() - bgAt >= HOTSTART_MIN_BG_MS) {

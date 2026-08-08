@@ -119,7 +119,7 @@ const FLOOR_COOLDOWN_MS = 8000;     // pause when even $40 can't fill (avoid flo
 // AdMob paid value is dollars-per-impression (1e-6 × valueMicros). The ladder
 // floors are eCPM (per-1000). eCPM = perImpression × 1000.
 const ECPM_PER_IMPRESSION = 1000;
-// Global floor between any two interstitials (also the nav-trigger's 60s cooldown).
+// Global floor between any two interstitials — shared constant, see constants/adPacing.
 const MIN_INTERVAL_MS = MIN_AD_INTERVAL_MS;   // shared — see constants/adPacing
 
 const STORAGE_KEY = 'us:ad:state:v1';

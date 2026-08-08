@@ -391,7 +391,7 @@ export function isAdEngineActive(): boolean {
 /**
  * Show the highest-priority cached ad. Timing gates (which placements fire,
  * the day tiers, nav counting) all stay in adFrequency.ts — this only enforces
- * foreground + the 60s global floor. `bypassInterval` is for the one-time
+ * foreground + the global floor (constants/adPacing). `bypassInterval` is for the one-time
  * onboarding show, which still SETS lastShownAt so the next regular ad keeps
  * its distance.
  */

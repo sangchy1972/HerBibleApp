@@ -422,13 +422,13 @@ function preloadOnboarding(): void {
 // Callers (the onboarding flow) attempt right after the welcome screen and
 // then on each later step transition until it succeeds — it can never fire
 // twice (onboardingShown latches) and never fires after onboarding because
-// the flow stops calling. Bypasses the 60s cap (nothing can have shown
+// the flow stops calling. Bypasses the interval cap (nothing can have shown
 // before it on a first open) but SETS lastShownAt so the next regular
 // interstitial keeps its distance.
 export function maybeShowOnboardingInterstitial(): boolean {
   if (adsRemoved || !initialized || onboardingShown) return false;
   // ANDROID: the engine owns the newbie unit now. This shows the best cached ad
-  // (usually the newbie fill on a first open), bypassing the 60s floor — nothing
+  // (usually the newbie fill on a first open), bypassing the interval floor — nothing
   // can have shown before it — while still starting the interval clock. The
   // once-per-onboarding latch stays HERE: the unit itself is reusable under the
   // new spec, but the onboarding flow still only interrupts once.
@@ -455,7 +455,7 @@ export function maybeShowOnboardingInterstitial(): boolean {
 // no-ops if no ad is loaded yet (a fresh one is always preloading for next time).
 export function maybeShowInterstitial(placement: 'prayer_end' | 'gospel_end' | 'plan_end' | 'quiz_retry' | 'nav' | 'app_open' | 'unknown' = 'unknown'): void {
   if (adsRemoved || !initialized) return;
-  // ANDROID: the spec engine (own cache, 60s floor, paid-side impression
+  // ANDROID: the spec engine (own cache, shared interval floor, paid-side impression
   // logging). Returns silently if nothing is cached yet.
   if (isAdEngineActive()) { engineOnShowOpportunity(placement); return; }
   // iOS US: the waterfall controller (own cache, frequency cap,

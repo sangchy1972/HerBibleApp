@@ -1099,6 +1099,10 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
             hintText={rhythmSpec.hint}
             celebrate={rhythmCelebrate}
             onPress={rhythmSpec.onPress}
+            // ONE moving target at a time (per user): the pill breathes only
+            // while the big prayer CTA below has gone quiet. The bar itself
+            // adds the rest of the gates (not all-done, ceremony, motion).
+            pulseStart={!(canStart || readyToSwitch)}
           />
         </View>
       </TabSection>

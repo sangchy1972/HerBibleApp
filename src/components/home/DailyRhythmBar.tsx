@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, AccessibilityInfo } from 'react-native';
 import Svg, { Path, Defs, RadialGradient, Stop, Rect } from 'react-native-svg';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, withDelay, withSequence,
+  useSharedValue, useAnimatedStyle, withTiming, withDelay, withSequence, withRepeat,
   cancelAnimation, Easing, runOnJS, type SharedValue,
 } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
@@ -95,7 +95,7 @@ function Sparkle({ size }: { size: number }) {
 }
 
 export default function DailyRhythmBar({
-  todayYmd, dots, doneCount, allDone, text, hintText, celebrate, onPress,
+  todayYmd, dots, doneCount, allDone, text, hintText, celebrate, onPress, pulseStart = false,
 }: {
   todayYmd: string;
   dots: RhythmDotState[];              // length 5, canonical order
@@ -105,6 +105,10 @@ export default function DailyRhythmBar({
   hintText: string | null;             // rest states: tap pops this instead of navigating
   celebrate?: { title: string; body: string; cta: string } | null;   // waiting-for-evening: tap opens a congrats dialog instead of the toast
   onPress: (() => void) | null;        // step states: navigate
+  /** The screen's hand-off flag: true while the big prayer CTA below has
+   *  STOPPED breathing (its slot is done/locked), so this bar's Start pill
+   *  takes over as the one gently-moving target on the home screen. */
+  pulseStart?: boolean;
 }) {
   const t = useT();
   const isFocused = useIsFocused();
@@ -115,6 +119,22 @@ export default function DailyRhythmBar({
     const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', v => setReduceMotion(!!v));
     return () => { alive = false; sub?.remove?.(); };
   }, []);
+
+  // ── Start-pill breath (per user 2026-08-08) ───────────────────────────────
+  // The home screen keeps exactly ONE gently moving button as the user's next
+  // target. While the big prayer CTA breathes, this pill holds still; once
+  // that CTA goes quiet (slot done/locked → pulseStart flips true), the pill
+  // takes over — same asymmetric breath as the CTA (X 0.92↔1.0, Y 0.97↔1.0,
+  // 1180 ms/side) so the two read as one design. Nothing moves once all five
+  // segments are done (per user), during the sand ceremony, or under
+  // reduce-motion. The pill is DECORATIVE (the whole card is the touchable),
+  // so Reanimated owning it can never freeze a hit region.
+  const startPulse = useSharedValue(1);
+  const startPulseStyle = useAnimatedStyle(() => {
+    const px = startPulse.value;
+    const py = 0.97 + (px - 0.92) * (0.03 / 0.08);
+    return { transform: [{ scaleX: px }, { scaleY: py }] };
+  });
 
   // Track width, measured once — segment geometry derives from it. Until the
   // first onLayout, fills render at width 0 (segW=0 → snap path), then snap to
@@ -224,6 +244,24 @@ export default function DailyRhythmBar({
   const sandPhaseRef = useRef<'idle' | 'out' | 'in'>('idle');
   useEffect(() => () => { ceremonyTimers.current.forEach(clearTimeout); }, []);
   const setPhase = (p: 'idle' | 'out' | 'in') => { sandPhaseRef.current = p; setSandPhase(p); };
+
+  // Drive the Start-pill breath (declared above; the gates need sandPhase).
+  const startPulseActive =
+    pulseStart && onPress != null && !allDone && sandPhase === 'idle' && !reduceMotion;
+  useEffect(() => {
+    if (!startPulseActive) {
+      cancelAnimation(startPulse);
+      startPulse.value = withTiming(1, { duration: 180 });   // settle, never snap
+      return;
+    }
+    startPulse.value = 0.92;
+    startPulse.value = withRepeat(
+      withTiming(1, { duration: 1180, easing: Easing.inOut(Easing.quad) }),
+      -1,
+      true,
+    );
+    return () => cancelAnimation(startPulse);
+  }, [startPulseActive, startPulse]);
 
   const endCeremony = () => {
     if (sandPhaseRef.current !== 'in') return;           // watchdog + callback are both routed here
@@ -406,7 +444,7 @@ export default function DailyRhythmBar({
           </Animated.View>
           {onPress != null && (
             <View style={styles.rightZone}>
-              <View style={styles.startBtn}>
+              <Animated.View style={[styles.startBtn, startPulseStyle]}>
                 {/* ALWAYS one line, any locale: long labels (es "Empezar",
                     pt "Começar") auto-shrink to fit rather than wrapping. */}
                 <Text
@@ -417,7 +455,7 @@ export default function DailyRhythmBar({
                 >
                   {t('rhythm.start')}
                 </Text>
-              </View>
+              </Animated.View>
             </View>
           )}
         </View>

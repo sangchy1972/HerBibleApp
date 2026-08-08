@@ -146,11 +146,13 @@ describe('a host must not release a slot it is holding', () => {
 });
 
 describe('the budget is small enough that a wasted slot matters', () => {
-  it('allows one budgeted nudge and two blocking prompts per open', () => {
-    // Stated here so the numbers above are not folded constants. A single
-    // wasted budgeted slot IS the whole allowance for the open.
-    expect(MAX_BUDGETED_PER_OPEN).toBe(1);
-    expect(MAX_BLOCKING_PER_OPEN).toBe(2);
+  it('allows two budgeted nudges and three blocking prompts per wave', () => {
+    // Stated here so the numbers above are not folded constants. A wasted
+    // budgeted slot is now half the wave's allowance rather than all of it
+    // (1→2 per wave, owner 2026-08-08) — the handshake still has to be right,
+    // it just costs less when it isn't.
+    expect(MAX_BUDGETED_PER_OPEN).toBe(2);
+    expect(MAX_BLOCKING_PER_OPEN).toBe(3);
   });
 
   it('refuses even a badge unlock once both blocking slots are gone', () => {

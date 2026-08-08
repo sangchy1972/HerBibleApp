@@ -43,7 +43,7 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
   const budgetUsed = useRef(0);
   const shownThisOpen = useRef(0);          // TOTAL blocking prompts shown this open (the 2-cap)
   const lastBlockingAt = useRef(0);         // when the last blocking prompt was granted
-  const lastBudgetedAt = useRef(0);         // persisted; drives the 6h floor between budgeted nudges
+  const lastBudgetedAt = useRef(0);         // persisted; drives BUDGETED_NUDGE_FLOOR_MS between budgeted nudges
   // Bumped on any change that should re-run arbitration.
   const [version, setVersion] = useState(0);
   const bump = useCallback(() => setVersion(v => v + 1), []);

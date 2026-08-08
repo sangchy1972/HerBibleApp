@@ -17,7 +17,7 @@ import type { RootStackParamList } from '../navigation/types';
 // Deliberately NOT coordinator-managed. The coordinator serialises prompts that
 // compete for the HOME screen; this one is anchored to a moment (the ad just
 // closed, the user is already interrupted) and would otherwise be starved for
-// days behind the 2-per-open cap. It cannot collide with a sheet either, because
+// waves behind the per-wave blocking cap. It cannot collide with a sheet either, because
 // it navigates to a full-screen route instead of painting an overlay.
 
 const KEY = 'removeAdsPrompt:v1';

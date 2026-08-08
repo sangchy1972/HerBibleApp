@@ -50,9 +50,12 @@ describe('pickActiveNudge — arbitration', () => {
     expect(new Set(vals).size).toBe(vals.length);
   });
 
-  it('caps: 1 budgeted, 2 total blocking per open', () => {
-    expect(MAX_BUDGETED_PER_OPEN).toBe(1);
-    expect(MAX_BLOCKING_PER_OPEN).toBe(2);
+  it('caps per WAVE: 2 budgeted, 3 total blocking (owner 2026-08-08)', () => {
+    expect(MAX_BUDGETED_PER_OPEN).toBe(2);
+    expect(MAX_BLOCKING_PER_OPEN).toBe(3);
+    // The total cap is enforced ABOVE ignoresBudget, so it really is the ceiling
+    // on how many surfaces she can meet in one wave.
+    expect(MAX_BLOCKING_PER_OPEN).toBeGreaterThanOrEqual(MAX_BUDGETED_PER_OPEN);
   });
 });
 

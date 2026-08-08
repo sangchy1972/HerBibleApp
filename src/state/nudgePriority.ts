@@ -46,25 +46,27 @@ export const NUDGE_PRIORITY: Record<NudgeId, number> = {
   // either a reward she earned or an ask that unlocks real functionality, and
   // outranks only the rate prompt — which can always wait another day. It is
   // BUDGETED (never ignoresBudget): a feature promo is the least important
-  // thing on this list, and the 2-per-open hard cap is already tight enough to
-  // crowd out a badge she just earned.
+  // thing on this list, and the per-wave blocking cap is already tight enough
+  // to crowd out a badge she just earned.
   quizPromo:         65,
   streakCongrats:    70,
   rate:              80,
   adInterstitial:    90,
 };
 
-// At most this many BUDGETED (non-ignoresBudget) blocking nudges per app-open.
-export const MAX_BUDGETED_PER_OPEN = 1;
-// HARD cap on TOTAL blocking prompts shown in a row on one app-open — counting
-// rewards + the daily mood ritual too. The user must NEVER see more than two
-// stacked in sequence, so this is enforced above ignoresBudget.
-export const MAX_BLOCKING_PER_OPEN = 2;
-// Minimum spacing between two BUDGETED nudges (login/set-reminder/widget) so
-// they spread out over time instead of clustering on one morning open.
-export const BUDGETED_NUDGE_FLOOR_MS = 6 * 60 * 60 * 1000;
+// At most this many BUDGETED (non-ignoresBudget) blocking nudges per wave.
+// 1 → 2 (owner 2026-08-08).
+export const MAX_BUDGETED_PER_OPEN = 2;
+// HARD cap on TOTAL blocking prompts per wave — counting rewards, both guides
+// and the daily mood ritual too. Enforced ABOVE ignoresBudget, so it is the one
+// number that bounds how many surfaces she can meet in a row. 2 → 3 (owner).
+export const MAX_BLOCKING_PER_OPEN = 3;
+// Minimum spacing between two BUDGETED nudges (login/set-reminder/widget).
+// 6h → 30s (owner 2026-08-08): with the wave reset below doing the real pacing,
+// this is now just an anti-stacking gap, not a per-day rationing device.
+export const BUDGETED_NUDGE_FLOOR_MS = 30 * 1000;
 
-// After this much QUIET (no blocking prompt shown), the per-open counters reset
+// After this much QUIET (no blocking prompt shown), the per-wave counters reset
 // and the queue gets another wave — WITHOUT needing a background/foreground
 // cycle.
 //
@@ -73,9 +75,13 @@ export const BUDGETED_NUDGE_FLOOR_MS = 6 * 60 * 60 * 1000;
 // keeps using the app — reading, browsing plans, never leaving — saw the first
 // two prompts and NOTHING else, no matter how long she stayed. On day one that
 // queue is seven deep (badge, streak guide, mood, login, widget, plan guide,
-// rate), so five of them were reachable only by luck. The cap's real job is to
-// stop prompts STACKING back-to-back; ten minutes apart is not stacking.
-export const NUDGE_WAVE_QUIET_MS = 10 * 60 * 1000;
+// rate), so five of them were reachable only by luck.
+//
+// 10min → 10s (owner 2026-08-08). This is now the PRIMARY pacing mechanism:
+// three surfaces per wave, ten quiet seconds, then the next wave. The queue
+// drains within one sitting by design — the caps only stop prompts landing
+// back-to-back on the same tap.
+export const NUDGE_WAVE_QUIET_MS = 10 * 1000;
 
 /** Has enough quiet passed since the last blocking prompt to start a new wave?
  *  `lastShownAt === 0` means none has shown this open — nothing to reset. */

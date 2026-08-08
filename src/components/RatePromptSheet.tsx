@@ -28,10 +28,15 @@ const SHEET_TRAVEL = 420;
 // its top and sides while its bottom edge — and its drop shadow — ran straight
 // through the title. Per user: the disc must fully cover the emoji, and the
 // title must not touch it.
+//
+// 2026-08-08, per user: 124 → 105.4 (-15 %), shrunk DOWNWARD — the bottom edge
+// stays where it was (124-disc bottom = 57 + 62 = 119 = 66.3 + 52.7), so the
+// FACE (y 35–112, x 31–103 in box coords, measured) stays fully inside while
+// the sparkles now clear the top edge on purpose.
 const EMOJI_BOX = 132;
-const DISC = 124;
+const DISC = 105.4;
 const DISC_CX = 66;                                    // in EMOJI_BOX coordinates
-const DISC_CY = 57;
+const DISC_CY = 66.3;
 const BADGE_LIFT = 58;                                 // box's top edge, above the sheet's
 const DISC_TOP = DISC_CY - DISC / 2 - BADGE_LIFT;      // -63 → how far the disc peeks above
 const DISC_BOTTOM = DISC_CY + DISC / 2 - BADGE_LIFT;   // +61 → how far it reaches INTO the sheet
@@ -199,9 +204,29 @@ export default function RatePromptSheet({ onClose }: { onClose: () => void }) {
             // Play's own Activity, so ours has paused. A timeout while we are no
             // longer foreground therefore means it DID show — treat that as done
             // and never open the store page on top of an open panel.
+            //
+            // THE SILENT NO-OP (owner-reported "Yes does nothing"): Play is
+            // ALLOWED to complete launchReviewFlow without showing anything —
+            // quota spent (one test consumes it), install not from Play — and
+            // there is no API to ask whether it displayed. But a real panel
+            // pauses our Activity (AppState leaves 'active') and takes the user
+            // seconds; the no-op resolves in tens of ms with focus never lost.
+            // So on ANDROID a resolve only counts as shown if we lost focus or
+            // it took visibly long — otherwise we fall through to the market://
+            // write-review page, which always produces something on screen.
+            // iOS keeps trusting the resolve (Apple's API gives nothing else).
+            const t0 = Date.now();
+            let leftActive = false;
+            const probe = AppState.addEventListener('change', st => {
+              if (st !== 'active') leftActive = true;
+            });
             const outcome = await outcomeOf(StoreReview.requestReview(), 5000);
-            done = outcome === 'settled'
-              || (outcome === 'timeout' && AppState.currentState !== 'active');
+            probe.remove();
+            const elapsed = Date.now() - t0;
+            done = outcome === 'timeout'
+              ? (leftActive || AppState.currentState !== 'active')
+              : outcome === 'settled'
+                && (Platform.OS !== 'android' || leftActive || elapsed > 1500);
           }
         } catch { /* fall through to the store page */ }
       }
@@ -258,7 +283,7 @@ export default function RatePromptSheet({ onClose }: { onClose: () => void }) {
         <Animated.View style={[StyleSheet.absoluteFillObject, styles.dim, dimStyle]} pointerEvents="none" />
 
         <Animated.View
-          style={[styles.sheet, { paddingBottom: insets.bottom + 20 }, sheetStyle]}
+          style={[styles.sheet, { paddingBottom: insets.bottom + 35 }, sheetStyle]}   // +15 per user — taller card below Not really
         >
           {/* Emoji badge — a white disc overlapping the sheet's top edge with
               the sparkly smiley on top (sparkles overflow the disc). */}

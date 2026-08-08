@@ -3,7 +3,8 @@ import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   type NudgeId, type ArbiterReq,
-  MAX_BUDGETED_PER_OPEN, MAX_BLOCKING_PER_OPEN, BUDGETED_NUDGE_FLOOR_MS, pickActiveNudge,
+  MAX_BUDGETED_PER_OPEN, MAX_BLOCKING_PER_OPEN, BUDGETED_NUDGE_FLOOR_MS,
+  NUDGE_WAVE_QUIET_MS, startsNewWave, pickActiveNudge,
 } from './nudgePriority';
 import { useReminderInterstitial } from './ReminderInterstitialContext';
 import { useFirstRunTour } from './FirstRunTourContext';
@@ -41,6 +42,7 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
   const [activeId, setActiveId] = useState<NudgeId | null>(null);
   const budgetUsed = useRef(0);
   const shownThisOpen = useRef(0);          // TOTAL blocking prompts shown this open (the 2-cap)
+  const lastBlockingAt = useRef(0);         // when the last blocking prompt was granted
   const lastBudgetedAt = useRef(0);         // persisted; drives the 6h floor between budgeted nudges
   // Bumped on any change that should re-run arbitration.
   const [version, setVersion] = useState(0);
@@ -73,7 +75,7 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
   // Reset the per-open counters on every return to the foreground.
   useEffect(() => {
     const sub = AppState.addEventListener('change', s => {
-      if (s === 'active') { budgetUsed.current = 0; shownThisOpen.current = 0; bump(); }
+      if (s === 'active') { budgetUsed.current = 0; shownThisOpen.current = 0; lastBlockingAt.current = 0; bump(); }
     });
     return () => sub.remove();
   }, [bump]);
@@ -105,6 +107,14 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
     if (reminderGateUp) return;   // pre-tab Follow-Him gate up → suppress everything
     if (tourGateUp) return;       // first-run tour owed or running → suppress everything
     const now = Date.now();
+    // A new WAVE: the queue is up to seven deep on day one, and the 2-cap must
+    // not hold the rest hostage until she happens to background the app. Ten
+    // quiet minutes and the counters reset (see NUDGE_WAVE_QUIET_MS).
+    if (startsNewWave(lastBlockingAt.current, now)) {
+      budgetUsed.current = 0;
+      shownThisOpen.current = 0;
+      lastBlockingAt.current = 0;
+    }
     const withinFloor = now - lastBudgetedAt.current < BUDGETED_NUDGE_FLOOR_MS;
     const budgetRemaining = withinFloor ? 0 : (MAX_BUDGETED_PER_OPEN - budgetUsed.current);
     const blockingRemaining = MAX_BLOCKING_PER_OPEN - shownThisOpen.current;
@@ -120,9 +130,21 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
         lastBudgetedAt.current = now;
         AsyncStorage.setItem(LAST_BUDGETED_KEY, String(now)).catch(() => {});
       }
+      lastBlockingAt.current = now;
       setActiveId(pick);
+      return;
     }
-  }, [version, activeId, reminderGateUp, tourGateUp]);
+    // Nothing shown, but the cap is what's holding the queue AND something is
+    // waiting: re-arbitrate the moment the wave timer elapses. Without this the
+    // effect would only run again on the next request/dismiss, and the wave
+    // reset above would never be reached inside a quiet session.
+    if (blockingRemaining <= 0 && lastBlockingAt.current > 0
+        && reqs.some(r => r.eligible)) {
+      const wait = Math.max(250, NUDGE_WAVE_QUIET_MS - (now - lastBlockingAt.current));
+      const tm = setTimeout(bump, wait);
+      return () => clearTimeout(tm);
+    }
+  }, [version, activeId, reminderGateUp, tourGateUp, bump]);
 
   const value = useMemo<NudgeCoordinatorState>(() => ({
     requestSlot,

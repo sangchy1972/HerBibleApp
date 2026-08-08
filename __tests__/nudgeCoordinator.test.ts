@@ -1,4 +1,6 @@
-import { pickActiveNudge, NUDGE_PRIORITY, MAX_BUDGETED_PER_OPEN, MAX_BLOCKING_PER_OPEN, type ArbiterReq } from '../src/state/nudgePriority';
+import {
+  pickActiveNudge, NUDGE_PRIORITY, MAX_BUDGETED_PER_OPEN, MAX_BLOCKING_PER_OPEN, type ArbiterReq, startsNewWave, NUDGE_WAVE_QUIET_MS,
+} from '../src/state/nudgePriority';
 
 const req = (id: any, priority: number, eligible: boolean, ignoresBudget = false): ArbiterReq =>
   ({ id, priority, eligible, ignoresBudget });
@@ -51,5 +53,38 @@ describe('pickActiveNudge — arbitration', () => {
   it('caps: 1 budgeted, 2 total blocking per open', () => {
     expect(MAX_BUDGETED_PER_OPEN).toBe(1);
     expect(MAX_BLOCKING_PER_OPEN).toBe(2);
+  });
+});
+
+// ── Wave reset: the 2-per-open cap must not starve the queue ────────────────
+// Day one queues seven blocking prompts (badge, streak guide, mood, login,
+// widget, plan guide, rate). The cap's job is to stop them STACKING; it must
+// not mean "the other five are unreachable unless she backgrounds the app".
+describe('startsNewWave', () => {
+  const NOW = 1_800_000_000_000;
+
+  it('no prompt shown yet → nothing to reset', () => {
+    expect(startsNewWave(0, NOW)).toBe(false);
+  });
+
+  it('holds the cap while prompts are still recent', () => {
+    expect(startsNewWave(NOW - 1000, NOW)).toBe(false);
+    expect(startsNewWave(NOW - (NUDGE_WAVE_QUIET_MS - 1), NOW)).toBe(false);
+  });
+
+  it('releases it after the quiet window, no foregrounding needed', () => {
+    expect(startsNewWave(NOW - NUDGE_WAVE_QUIET_MS, NOW)).toBe(true);
+    expect(startsNewWave(NOW - 60 * 60 * 1000, NOW)).toBe(true);
+  });
+
+  it('a fresh wave lets the NEXT-highest queued prompt through', () => {
+    // Two already shown this open → capped.
+    const queue = [
+      { id: 'widgetInstall' as const, priority: NUDGE_PRIORITY.widgetInstall, eligible: true },
+      { id: 'rate' as const, priority: NUDGE_PRIORITY.rate, eligible: true },
+    ];
+    expect(pickActiveNudge(queue, 1, 0)).toBeNull();
+    // After the wave reset the caps are restored → highest priority wins.
+    expect(pickActiveNudge(queue, MAX_BUDGETED_PER_OPEN, MAX_BLOCKING_PER_OPEN)).toBe('widgetInstall');
   });
 });

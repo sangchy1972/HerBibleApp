@@ -64,6 +64,25 @@ export const MAX_BLOCKING_PER_OPEN = 2;
 // they spread out over time instead of clustering on one morning open.
 export const BUDGETED_NUDGE_FLOOR_MS = 6 * 60 * 60 * 1000;
 
+// After this much QUIET (no blocking prompt shown), the per-open counters reset
+// and the queue gets another wave — WITHOUT needing a background/foreground
+// cycle.
+//
+// Why this exists: MAX_BLOCKING_PER_OPEN used to be released only by an
+// AppState 'active' event, so a user who finishes her morning prayer and then
+// keeps using the app — reading, browsing plans, never leaving — saw the first
+// two prompts and NOTHING else, no matter how long she stayed. On day one that
+// queue is seven deep (badge, streak guide, mood, login, widget, plan guide,
+// rate), so five of them were reachable only by luck. The cap's real job is to
+// stop prompts STACKING back-to-back; ten minutes apart is not stacking.
+export const NUDGE_WAVE_QUIET_MS = 10 * 60 * 1000;
+
+/** Has enough quiet passed since the last blocking prompt to start a new wave?
+ *  `lastShownAt === 0` means none has shown this open — nothing to reset. */
+export function startsNewWave(lastShownAt: number, now: number): boolean {
+  return lastShownAt > 0 && now - lastShownAt >= NUDGE_WAVE_QUIET_MS;
+}
+
 export interface ArbiterReq {
   id: NudgeId;
   priority: number;

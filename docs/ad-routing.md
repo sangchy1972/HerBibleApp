@@ -100,13 +100,16 @@ AdMob 封号风险。所以 `!__DEV__` 是硬闸门。
 | `gospel_end` | Gospel & Psalm 读完 | 全部 | `GospelPsalmReader.tsx` |
 | `quiz_retry` | 点「Try those again」（延时 400ms） | 全部 | `QuizChallengeScreen.tsx` |
 | `nav` | 每 3 次合格跳转 | **仅 day ≥ 3** | `adFrequency.ts` |
-| `app_open` | 退后台 ≥15s 回前台 | **仅 day ≥ 3** | `adFrequency.ts` |
+| `app_open` | 退后台 ≥15s 回前台 | **全部用户(day 0 起)** | `adFrequency.ts` |
 
-- 天数 = 距首次启动的自然日（安装当天 = day0），常量 `AGGRESSIVE_FROM_DAY = 3`。
+- 天数 = 距首次启动的自然日（安装当天 = day0），常量 `AGGRESSIVE_FROM_DAY = 3`
+  —— **现在只管 `nav` 一个触发**；`app_open` 自 2026-08-08 起对所有用户开放（业主决定）。
 - `NAV_EVERY = 3`。「一次跳转」的计数细则见 `ad-waterfall-US.md` §8.5。
 - `quiz_retry` **无每日/每次上限**，且这是**既定决策**（CLAUDE.md → Settled decisions），
   审查会反复标记它，不要再加 cap。那 400ms 延时不是频控，是防双击落到创意上（无效流量风险）。
 - `app_open` 热启动插屏同样是**既定决策**，Play 的 Disruptive Ads 风险已知并接受。
+  2026-08-08 起覆盖**全部用户**（原为 day ≥ 3）——触达面变了，频次约束没变：
+  60s 全局间隔、前台判断、去广告开关、商店评价回程豁免全部照旧。
 
 `maybeShowInterstitial()` 内部再分流（`ads.ts:432`）：
 美国走 `usOnShowOpportunity(placement)`，非美走本地 `interstitial.show()`。

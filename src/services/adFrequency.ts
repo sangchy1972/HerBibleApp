@@ -3,11 +3,13 @@
 //
 // Two EXTRA show triggers layered on top of the baseline (prayer_end / plan_end,
 // which fire for everyone):
-//   • Navigation: every 3rd qualifying screen transition.
+//   • Navigation: every 3rd qualifying screen transition. AGGRESSIVE, and
+//     therefore still gated to established users — day 0–2 gentle, day ≥ 3 on.
 //   • Hot start: returning to the foreground after ≥15s in the background.
-//
-// Both are AGGRESSIVE and therefore gated to established users only — days 0–3
-// stay gentle (baseline only); day ≥ 4 turns the extra triggers on.
+//     EVERY USER from day 0 (owner decision 2026-08-08 — previously day ≥ 3).
+//     It rides the same global 60s floor + foreground check as every other
+//     placement, and the store-review excursion is still exempt, so the widening
+//     is a reach change, not a frequency change.
 //
 // Counting rules (per product decision):
 //   • A run of CONSECUTIVE tab↔tab switches (prayer/bible/plan/profile) counts as
@@ -28,7 +30,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { maybeShowInterstitial } from './ads';
 
 const INSTALL_KEY = 'ads:firstLaunchYmd';
-const AGGRESSIVE_FROM_DAY = 3;     // day0..day2 gentle; day>=3 (the 4th day) aggressive
+const AGGRESSIVE_FROM_DAY = 3;     // NAV only: day0..day2 gentle; day>=3 aggressive
 const NAV_EVERY = 3;               // show on every 3rd qualifying transition
 const HOTSTART_MIN_BG_MS = 15_000; // must be backgrounded ≥15s to count as a hot start
 
@@ -67,7 +69,8 @@ export function installDayIndex(): number {
   if (!installYmd) return 0;
   return daysBetween(installYmd, ymd());
 }
-/** Aggressive extra triggers are only for established (day ≥ 4) users. */
+/** The NAV trigger is only for established (day ≥ 3) users. The hot-start
+ *  trigger deliberately does NOT consult this — it fires for everyone. */
 function isAggressive(): boolean {
   return installDayIndex() >= AGGRESSIVE_FROM_DAY;
 }
@@ -125,7 +128,11 @@ function onAppState(next: AppStateStatus): void {
   if (next === 'active') {
     const suppressed = hotStartSuppressedUntil > Date.now();
     hotStartSuppressedUntil = 0;                     // consumed either way
-    if (!suppressed && bgAt != null && Date.now() - bgAt >= HOTSTART_MIN_BG_MS && isAggressive()) {
+    // NO day gate (owner 2026-08-08): a hot start monetizes from day 0. The
+    // 60s floor, the foreground check and the remove-ads flag all still apply
+    // inside maybeShowInterstitial, and a first-open session can't reach here
+    // at all — bgAt is only set once the app has actually been backgrounded.
+    if (!suppressed && bgAt != null && Date.now() - bgAt >= HOTSTART_MIN_BG_MS) {
       maybeShowInterstitial('app_open');
     }
     bgAt = null;

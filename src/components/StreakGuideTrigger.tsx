@@ -66,10 +66,14 @@ export default function StreakGuideTrigger() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused, eligible, active]);
 
-  // Granted → begin (once per grant). Guide over → give the slot back.
+  // Granted → begin (once per grant), but only while home is actually focused
+  // — a grant can land in the same frame a tab switch blurs the screen, and a
+  // step whose screen isn't there would be dismissed on arrival. Waiting for
+  // refocus keeps the grant and shows the guide when she's really looking.
+  // Guide over → give the slot back.
   const startedRef = useRef(false);
   useEffect(() => {
-    if (active && !startedRef.current && guide.stage === 'idle') {
+    if (active && !startedRef.current && guide.stage === 'idle' && isFocused) {
       startedRef.current = true;
       guide.begin();
       return;
@@ -80,7 +84,7 @@ export default function StreakGuideTrigger() {
       coord.releaseSlot('streakGuide');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, guide.stage]);
+  }, [active, guide.stage, isFocused]);
 
   return null;
 }

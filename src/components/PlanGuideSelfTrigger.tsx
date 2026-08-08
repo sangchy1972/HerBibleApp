@@ -73,7 +73,11 @@ export default function PlanGuideSelfTrigger() {
 
   const startedRef = useRef(false);
   useEffect(() => {
-    if (active && !startedRef.current && guide.stage === 'idle' && eligibleRef.current) {
+    // isFocused is load-bearing: with non-lazy tabs both triggers can be
+    // mounted at once, and a grant meant for the HOME path must never start
+    // the SELF path from an unfocused Plan screen (an invisible guide that
+    // only the 30s watchdog would clean up).
+    if (active && !startedRef.current && guide.stage === 'idle' && eligibleRef.current && isFocused) {
       startedRef.current = true;
       guide.begin('self');
       return;
@@ -85,7 +89,7 @@ export default function PlanGuideSelfTrigger() {
       coord.releaseSlot('planGuide');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, guide.stage]);
+  }, [active, guide.stage, isFocused]);
 
   return null;
 }

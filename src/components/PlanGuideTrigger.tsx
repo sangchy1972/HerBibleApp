@@ -72,10 +72,11 @@ export default function PlanGuideTrigger({ ctaQuiet }: { ctaQuiet: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused, eligible, active]);
 
-  // Granted → begin('home') once; guide over → give the slot back.
+  // Granted → begin('home') once, and only while home is actually focused
+  // (see StreakGuideTrigger); guide over → give the slot back.
   const startedRef = useRef(false);
   useEffect(() => {
-    if (active && !startedRef.current && guide.stage === 'idle') {
+    if (active && !startedRef.current && guide.stage === 'idle' && isFocused) {
       startedRef.current = true;
       guide.begin('home');
       return;
@@ -87,7 +88,7 @@ export default function PlanGuideTrigger({ ctaQuiet }: { ctaQuiet: boolean }) {
       coord.releaseSlot('planGuide');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, guide.stage]);
+  }, [active, guide.stage, isFocused]);
 
   return null;
 }

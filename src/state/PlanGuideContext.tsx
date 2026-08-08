@@ -67,6 +67,13 @@ export function PlanGuideProvider({ children }: { children: React.ReactNode }) {
   const [visited, setVisited] = useState(true);    // same safe default
   const [stage, setStage] = useState<PlanGuideStage>('idle');
   const [entry, setEntry] = useState<PlanGuideEntry>('home');
+  // Synchronous stage mirror — see StreakGuideContext: side effects never live
+  // inside setState updaters, and transitions never read a stale stage.
+  const stageRef = useRef<PlanGuideStage>('idle');
+  const go = useCallback((next: PlanGuideStage) => {
+    stageRef.current = next;
+    setStage(next);
+  }, []);
   const [homeFocused, setHomeFocused] = useState(false);
   const [planFocused, setPlanFocused] = useState(false);
 
@@ -89,16 +96,14 @@ export function PlanGuideProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const begin = useCallback((e: PlanGuideEntry) => {
-    setStage(s => {
-      if (s !== 'idle') return s;
-      setEntry(e);
-      // Once ever — burn on display so a crash mid-guide can't loop it.
-      setDone(true);
-      AsyncStorage.setItem(DONE_KEY, '1').catch(() => {});
-      logEvent('plan_guide_start', { entry: e });
-      return planGuideSteps(e)[0];
-    });
-  }, []);
+    if (stageRef.current !== 'idle') return;
+    setEntry(e);
+    // Once ever — burn on display so a crash mid-guide can't loop it.
+    setDone(true);
+    AsyncStorage.setItem(DONE_KEY, '1').catch(() => {});
+    logEvent('plan_guide_start', { entry: e });
+    go(planGuideSteps(e)[0]);
+  }, [go]);
 
   const openPlanTabRef = useRef<(() => void) | null>(null);
   const showExploreRef = useRef<(() => void) | null>(null);
@@ -108,39 +113,36 @@ export function PlanGuideProvider({ children }: { children: React.ReactNode }) {
   const setRevealMoodHandler = useCallback((fn: () => Promise<void>) => { revealMoodRef.current = fn; }, []);
 
   const next = useCallback(() => {
-    setStage(s => {
-      if (s === 'tab') {
-        logEvent('plan_guide_step', { step: 'explore' });
-        // Stage flips first, then the navigation — the home focus-loss
-        // dismissal only fires on 'tab', so it cannot kill its own hand-off.
-        setTimeout(() => openPlanTabRef.current?.(), 0);
-        return 'explore';
-      }
-      if (s === 'explore') {
-        logEvent('plan_guide_step', { step: 'mood' });
-        // Switch the segment, then bring the mood row into view. The host's
-        // measure-retry loop tolerates however long the scroll takes.
-        setTimeout(() => {
-          showExploreRef.current?.();
-          revealMoodRef.current?.().catch(() => {});
-        }, 0);
-        return 'mood';
-      }
-      if (s === 'mood') {
-        logEvent('plan_guide_end', { how: 'finish', at_step: 'mood' });
-        return 'idle';
-      }
-      return s;
-    });
-  }, []);
+    const s = stageRef.current;
+    if (s === 'tab') {
+      logEvent('plan_guide_step', { step: 'explore' });
+      // Stage flips first, then the navigation — the home focus-loss
+      // dismissal only fires on 'tab', so it cannot kill its own hand-off.
+      go('explore');
+      openPlanTabRef.current?.();
+      return;
+    }
+    if (s === 'explore') {
+      logEvent('plan_guide_step', { step: 'mood' });
+      // Switch the segment, then bring the mood row into view. The host's
+      // measure-retry loop tolerates however long the scroll takes.
+      go('mood');
+      showExploreRef.current?.();
+      revealMoodRef.current?.().catch(() => {});
+      return;
+    }
+    if (s === 'mood') {
+      logEvent('plan_guide_end', { how: 'finish', at_step: 'mood' });
+      go('idle');
+    }
+  }, [go]);
 
   const dismiss = useCallback((how: string) => {
-    setStage(s => {
-      if (s === 'idle') return s;
-      logEvent('plan_guide_end', { how, at_step: s });
-      return 'idle';
-    });
-  }, []);
+    const s = stageRef.current;
+    if (s === 'idle') return;
+    logEvent('plan_guide_end', { how, at_step: s });
+    go('idle');
+  }, [go]);
 
   const planTabRef = useRef<React.RefObject<View | null> | null>(null);
   const exploreRef = useRef<React.RefObject<View | null> | null>(null);

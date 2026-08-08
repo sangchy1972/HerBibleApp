@@ -64,6 +64,15 @@ export function StreakGuideProvider({ children }: { children: React.ReactNode })
   // wrong-fire, only a late one.
   const { totalComplete, mDone, eDone } = usePrayer();
   const [stage, setStage] = useState<StreakGuideStage>('idle');
+  // Synchronous mirror of `stage`. Transitions read/write THIS and then call
+  // setStage with the plain value — never side effects inside an updater (the
+  // QuizContext double-grant lesson), and never a race between two callers
+  // reading a stale render's stage.
+  const stageRef = useRef<StreakGuideStage>('idle');
+  const go = useCallback((next: StreakGuideStage) => {
+    stageRef.current = next;
+    setStage(next);
+  }, []);
   const [ready, setReady] = useState(false);
   const [lastShown, setLastShown] = useState<string | null>(null);
   const [homeFocused, setHomeFocused] = useState(false);
@@ -81,39 +90,34 @@ export function StreakGuideProvider({ children }: { children: React.ReactNode })
     streakGuideEligible(totalComplete, mDone, eDone, lastShown, todayYmd());
 
   const begin = useCallback(() => {
-    setStage(s => {
-      if (s !== 'idle') return s;
-      // Burn today's flag the moment it becomes visible — a force-quit mid-guide
-      // must not re-arm it the same day.
-      const ymd = todayYmd();
-      setLastShown(ymd);
-      AsyncStorage.setItem(SHOWN_KEY, ymd).catch(() => {});
-      logEvent('streak_guide_start', { remaining: mDone ? 'evening' : 'morning' });
-      return 'step1';
-    });
-  }, [mDone]);
+    if (stageRef.current !== 'idle') return;
+    // Burn today's flag the moment it becomes visible — a force-quit mid-guide
+    // must not re-arm it the same day.
+    const ymd = todayYmd();
+    setLastShown(ymd);
+    AsyncStorage.setItem(SHOWN_KEY, ymd).catch(() => {});
+    logEvent('streak_guide_start', { remaining: mDone ? 'evening' : 'morning' });
+    go('step1');
+  }, [mDone, go]);
 
   const openStreakRef = useRef<(() => void) | null>(null);
   const setOpenStreakHandler = useCallback((fn: () => void) => { openStreakRef.current = fn; }, []);
 
   const advanceToStreak = useCallback(() => {
-    setStage(s => {
-      if (s !== 'step1') return s;
-      logEvent('streak_guide_step', { step: 2 });
-      return 'step2';
-    });
+    if (stageRef.current !== 'step1') return;
+    logEvent('streak_guide_step', { step: 2 });
     // Stage flips first: PrayerScreen's focus-loss dismissal only fires on
     // step1, so the navigation that follows cannot kill its own step 2.
+    go('step2');
     openStreakRef.current?.();
-  }, []);
+  }, [go]);
 
   const dismiss = useCallback((how: string) => {
-    setStage(s => {
-      if (s === 'idle') return s;
-      logEvent('streak_guide_end', { how, at_step: s === 'step1' ? 1 : 2 });
-      return 'idle';
-    });
-  }, []);
+    const s = stageRef.current;
+    if (s === 'idle') return;
+    logEvent('streak_guide_end', { how, at_step: s === 'step1' ? 1 : 2 });
+    go('idle');
+  }, [go]);
 
   const milestoneRef = useRef<React.RefObject<View | null> | null>(null);
   const registerMilestoneMeasurer = useCallback((ref: React.RefObject<View | null>) => {

@@ -291,13 +291,25 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'tour.rhythm.title':             { en: 'Check your daily tasks here', context: 'Coach-mark title over the Daily Rhythm bar at the top of the home screen. Deliberately CONCRETE per user: it must say this bar is where today\'s tasks + progress live, not an abstract feature name.' },
   'tour.rhythm.body':              { en: "Today's prayers and readings live in this bar — complete them one by one and watch your progress fill up.", context: 'Coach-mark body for the rhythm bar. The bar lists the day\'s tasks (morning/evening prayer, readings) and its 5-segment progress bar fills as she completes each one.' },
   'tour.streak.title':             { en: 'Keep your streak going', context: 'Coach-mark title over the streak badge (flame icon + day count, top-right of the header).' },
-  'tour.streak.body':              { en: 'Complete both morning and evening prayer each day to light your flame and keep your streak growing!', context: 'Coach-mark body for the streak badge. BOTH prayers are required: PrayerContext computes currentStreak from days where r.m && r.e, so a day with only one prayer does NOT light the flame. The previous copy promised "a prayer each day" and was wrong — it taught new users a rule the app does not follow, on the one screen whose whole job is explaining the rule. Use the locale\'s established names for the two prayers (see prayer.start.morning / prayer.start.evening).' },
+  'tour.streak.body':              { en: 'Complete **both morning and evening prayer** each day to light your flame and keep your streak growing!', context: 'Coach-mark body for the streak badge. BOTH prayers are required: PrayerContext computes currentStreak from days where r.m && r.e, so a day with only one prayer does NOT light the flame. The previous copy promised "a prayer each day" and was wrong — it taught new users a rule the app does not follow, on the one screen whose whole job is explaining the rule. Use the locale\'s established names for the two prayers (see prayer.start.morning / prayer.start.evening).' },
   'tour.verse.title':              { en: "Start with today's verse", context: 'Coach-mark title over the big photo verse card. LAST step of the tour — invites her to begin her first prayer from this card.' },
   'tour.verse.body':               { en: 'Tap this card to begin your first prayer — it takes just a few minutes.', context: 'Coach-mark body for the verse hero card. Tapping the card opens the prayer flow. Audience is women — use the feminine form where the language marks gender.' },
   'tour.next':                     { en: 'Next', context: 'Advance button on the first two coach-marks. Keep it short.' },
   'tour.finish':                   { en: 'Start praying', context: 'Primary CTA on the LAST coach-mark. Closes the tour and opens the prayer flow.' },
   'tour.skip':                     { en: 'Skip', context: 'Text-only dismiss link on every coach-mark. Ends the tour for good.' },
   'tour.progress':                 { en: '{n} of {total}', context: 'Tiny step counter above the coach-mark title, e.g. "1 of 3". Keep both placeholders.' },
+
+  // ── Rookie streak guide (2-step spotlight after the first half-lit day) ────
+  // **bold** markers are rendered by InlineBold — keep them around the phrase
+  // that names the remaining prayer / the both-prayers rule in EVERY language.
+  'streakGuide.step1.title':       { en: "Light today's flame", context: 'Coach-mark title over the streak flame pill, right after the user completed ONE of the two daily prayers.' },
+  'streakGuide.step1.night':       { en: 'A beautiful start! Complete your **Night Prayer** today to light your flame and begin your streak.', context: 'Step-1 body when the MORNING prayer is done and the night prayer remains. Bold the night-prayer name.' },
+  'streakGuide.step1.morning':     { en: 'A beautiful start! Complete your **Morning Prayer** today to light your flame and begin your streak.', context: 'Step-1 body when the EVENING prayer was done first (night-time installer) and the morning prayer remains. Bold the morning-prayer name.' },
+  'streakGuide.step2.title':       { en: 'Grow your flame', context: 'Coach-mark title over the milestone card on the streak screen (step 2 of the rookie guide).' },
+  'streakGuide.step2.body':        { en: 'Light your flame day after day to unlock milestones and watch it grow.', context: 'Step-2 body. The spotlighted card shows "N more days to unlock your next milestone" with two flames.' },
+  'streakGuide.continue':          { en: 'Continue', context: 'Step-1 primary button — advances to the streak screen for step 2.' },
+  'streakGuide.btn.tonight':       { en: 'Come Back Tonight', context: 'Step-2 primary button when the morning prayer is done but the night prayer has not OPENED yet (before 18:00). Dismisses the guide.' },
+  'streakGuide.btn.done':          { en: 'Got it', context: 'Step-2 fallback button when nothing remains to start (safety rail). Dismisses.' },
 
   'audioMini.playing':             { en: 'Now playing', context: 'Floating pill shown when Bible narration keeps playing after the user leaves the Bible tab. Above it is the chapter, e.g. "John 3". Keep very short.' },
 

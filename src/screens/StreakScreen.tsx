@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -17,6 +17,8 @@ const LATO_BOLD = 'Lato_700Bold';
 import DayCircle from '../components/shared/DayCircle';
 import FireFlame from '../components/shared/FireFlame';
 import { usePrayer } from '../state/PrayerContext';
+import { useIsFocused } from '@react-navigation/native';
+import { useStreakGuide } from '../state/StreakGuideContext';
 import type { RootStackScreenProps } from '../navigation/types';
 
 // Animated hero flame (user's FireStreak Lottie, extracted from dotLottie to
@@ -75,6 +77,33 @@ export default function StreakScreen({ navigation }: RootStackScreenProps<'Strea
   const { lang } = useUILanguage();
   const { mDone, eDone, totalComplete, maxStreak, firstPrayedDate, wasCompleteOn } = usePrayer();
   const [info, setInfo] = useState(false);
+
+  // ── Rookie streak guide, step 2 ──────────────────────────────────────────
+  // This screen owns the milestone card the guide spotlights, the focus flag
+  // that gates its overlay, and the way from its final CTA into a prayer flow.
+  const guide = useStreakGuide();
+  const isFocused = useIsFocused();
+  const milestoneCardRef = useRef<View>(null);
+  const setStreakFocused = guide.setStreakFocused;
+  useEffect(() => {
+    setStreakFocused(isFocused);
+    return () => setStreakFocused(false);
+  }, [isFocused, setStreakFocused]);
+  useEffect(() => {
+    guide.registerMilestoneMeasurer(milestoneCardRef);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const setStartPrayer = guide.setStartPrayerHandler;
+  useEffect(() => {
+    setStartPrayer((kind) => navigation.navigate('PrayerFlow', { kind }));
+  }, [setStartPrayer, navigation]);
+  // Backing out (gesture, header chevron) while step 2 is up ends the guide —
+  // a stage armed under some other screen is a stuck scrim waiting to happen.
+  // The final CTA is safe: it dismisses BEFORE it navigates.
+  useEffect(() => {
+    if (!isFocused && guide.stage === 'step2') guide.dismiss('left_streak');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFocused, guide.stage]);
   // Headline number = total days at 100 % progress. Flame level scales with it.
   const lvl = streakLevel(totalComplete);
   const next = LEVEL_INFO[lvl].next;
@@ -198,7 +227,7 @@ export default function StreakScreen({ navigation }: RootStackScreenProps<'Strea
         </Animated.View>
 
         <Animated.View entering={ENTER(3)} style={styles.sectionPad}>
-          <View style={[card, styles.milestoneCard]}>
+          <View ref={milestoneCardRef} collapsable={false} style={[card, styles.milestoneCard]}>
             <View style={styles.milestoneRow}>
               <View style={styles.milestoneFlame}>
                 <FireFlame size={40} />

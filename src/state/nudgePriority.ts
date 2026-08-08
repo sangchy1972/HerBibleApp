@@ -13,6 +13,7 @@ export type NudgeId =
   | 'achievementUnlock'
   | 'followHimOptin'
   | 'setReminderTime'
+  | 'streakGuide'
   | 'moodCheckIn'
   | 'login'
   | 'widgetInstall'
@@ -29,6 +30,10 @@ export const NUDGE_PRIORITY: Record<NudgeId, number> = {
   achievementUnlock: 10,
   followHimOptin:    20,
   setReminderTime:   30,
+  // The rookie streak guide: a day-1 teaching moment right after a prayer
+  // lands. Above the mood ritual (it fires at the exact half-lit moment and
+  // the mood sheet can wait a minute), below the asks that unlock hardware.
+  streakGuide:       35,
   moodCheckIn:       40,
   login:             50,
   widgetInstall:     60,

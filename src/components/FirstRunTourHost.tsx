@@ -12,6 +12,7 @@ import Animated, {
 import { ROSE, TXT, TXTSUB, FONTS, P, BTN_RADIUS } from '../constants/theme';
 import { useT } from '../i18n/useT';
 import { useFirstRunTour, measureRefInWindow, TOUR_STEPS, type Rect } from '../state/FirstRunTourContext';
+import InlineBold from './shared/InlineBold';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -475,7 +476,7 @@ export default function FirstRunTourHost() {
             {t('tour.progress', { n: step + 1, total: TOUR_STEPS.length })}
           </Text>
           <Text style={styles.title}>{t(`tour.${stepId}.title`)}</Text>
-          <Text style={styles.body}>{t(`tour.${stepId}.body`)}</Text>
+          <InlineBold text={t(`tour.${stepId}.body`)} style={styles.body} boldStyle={styles.bodyBold} />
           <View style={styles.row}>
             <TouchableOpacity onPress={() => leave('skip')} hitSlop={12} activeOpacity={0.7}>
               <Text style={styles.skip}>{t('tour.skip')}</Text>
@@ -533,6 +534,9 @@ const styles = StyleSheet.create({
   // lineHeight scales with the size. Left at 21 it would have tightened from
   // 1.45× to 1.34× and the three-line body would read denser, not larger.
   body: { fontFamily: FONTS.lato, letterSpacing: 0.4, fontSize: ts(14.5), lineHeight: ts(21), color: TXTSUB },
+  // **bold** spans in the catalog copy (e.g. "both morning and evening prayer",
+  // per user) — heavier AND inked so they carry against the grey body.
+  bodyBold: { fontFamily: FONTS.latoBold, fontWeight: '700', color: TXT },
   row: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     marginTop: 16,

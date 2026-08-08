@@ -40,6 +40,7 @@ import { hydrateCommentLikes } from '../state/verseCommentLikes';
 import MyReadingPlansCard from '../components/MyReadingPlansCard';
 import QuizChallengeCard from '../components/home/QuizChallengeCard';
 import RatePromptHost from '../components/RatePromptHost';
+import StreakGuideTrigger from '../components/StreakGuideTrigger';
 import QuizPromoHost from '../components/QuizPromoHost';
 import { buildReadingPlansCard } from '../services/planRecommendations';
 import { useOnboarding } from '../state/OnboardingContext';
@@ -1353,6 +1354,9 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           home screen (moved off the prayer-end scene). Self-gates via cadence +
           the nudge coordinator. */}
       <RatePromptHost />
+      {/* Rookie streak guide (2 steps: flame pill here → milestone card on the
+          streak screen). Coordinator-managed; renders nothing itself. */}
+      <StreakGuideTrigger />
 
       {/* "Finish a set, earn a reward card." Only in the afternoon lull —
           everything for today is done and evening prayer has not opened yet —

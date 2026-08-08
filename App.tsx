@@ -65,6 +65,8 @@ import AchievementUnlockSheet from './src/components/AchievementUnlockSheet';
 import { LoginPromptProvider } from './src/state/LoginPromptContext';
 import { NudgeCoordinatorProvider } from './src/state/NudgeCoordinatorContext';
 import { FirstRunTourProvider } from './src/state/FirstRunTourContext';
+import { StreakGuideProvider } from './src/state/StreakGuideContext';
+import StreakGuideHost from './src/components/StreakGuideHost';
 import { AudioMiniProvider } from './src/state/AudioMiniContext';
 import { SetReminderTimeProvider } from './src/state/SetReminderTimeContext';
 import { QuizPromoProvider } from './src/state/QuizPromoContext';
@@ -214,6 +216,7 @@ export default function App() {
                                     first-run tour — and BELOW OnboardingProvider,
                                     which it reads. */}
                                 <FirstRunTourProvider>
+                                <StreakGuideProvider>
                                 <AudioMiniProvider>
                                   <RatePromptProvider>
                                     <MoodCheckInProvider>
@@ -265,6 +268,11 @@ export default function App() {
                                               below the tour + launch overlay. */}
                                           <AudioMiniHost />
                                           <FirstRunTourHost />
+                                          {/* Rookie streak guide overlay (2-step
+                                              spotlight). Root-mounted for the
+                                              same reason as the tour: it must
+                                              cover the tab bar. */}
+                                          <StreakGuideHost />
                                           {/* Mirrors today's verse + the card's
                                               background image to the home-screen
                                               widget. Null render; needs DailyVerses
@@ -294,6 +302,7 @@ export default function App() {
                                     </MoodCheckInProvider>
                                   </RatePromptProvider>
                                 </AudioMiniProvider>
+                                </StreakGuideProvider>
                                 </FirstRunTourProvider>
                                 </OnboardingProvider>
                                 </BadgesProvider>

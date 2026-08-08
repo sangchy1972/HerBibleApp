@@ -29,7 +29,7 @@
 // SHOW priority — and cache keep/cancel priority — is by floor, highest first;
 // the newbie unit (backend-dynamic floor) sits between real floors and the
 // no-floor nets; no-floor is always last. Show timing itself stays owned by
-// adFrequency.ts + the 60s global gap, unchanged.
+// adFrequency.ts + the global gap in constants/adPacing, unchanged.
 //
 // LIVE UNITS ONLY, dev builds included (owner decision 2026-08-05; the ladder
 // has no test-id equivalents). Debug devices must be registered as AdMob test
@@ -45,6 +45,7 @@ import { logEvent } from './firebase';
 import { setInterstitialVisible } from './interstitialVisibility';
 import { onAdPaid, normalizeValue } from './adRevenue';
 import { deviceRegion } from './deviceRegion';
+import { MIN_AD_INTERVAL_MS } from '../constants/adPacing';
 import {
   classifyRegion, planLayers, priorityOf, NEWBIE_UNIT, type AdUnit, type Region,
 } from './adLadders';
@@ -61,7 +62,10 @@ const SECONDARY_AFTER_PRIMARY_MS = 3000;   // secondary first send ≥3s after p
 const PROBE_BREAKER = 3;           // consecutive REAL no-fills → out for the day
 const PRIMARY_BREAKER = 6;
 const EXPIRY_MS = 50 * 60 * 1000;  // evict before AdMob's ~1h expiry
-const MIN_INTERVAL_MS = 60 * 1000; // global floor between any two interstitials
+// The global floor lives in ONE place now (constants/adPacing) — it used to be
+// re-typed here and in two other files, which is exactly the trap
+// docs/ad-routing.md §4 warned about.
+const MIN_INTERVAL_MS = MIN_AD_INTERVAL_MS;
 const BREAKER_KEY = 'adEngine:day:v1';
 
 type Placement = 'prayer_end' | 'gospel_end' | 'plan_end' | 'quiz_retry' | 'nav' | 'app_open' | 'onboarding_first' | 'unknown';

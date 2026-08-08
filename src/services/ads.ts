@@ -56,6 +56,7 @@ import { setInterstitialVisible } from './interstitialVisibility';
 import { deviceRegion } from './deviceRegion';
 import { initAdRevenue, onAdPaid } from './adRevenue';
 import { hydrateAdRevenueConfig, refreshAdRevenueConfig, isFirstRun } from './adRevenueConfig';
+import { MIN_AD_INTERVAL_MS } from '../constants/adPacing';
 
 let mobileAdsFn: any = null;
 let InterstitialAdCls: any = null;
@@ -180,7 +181,8 @@ const REMOVE_ADS_KEY = 'ads:removed:v1';
 
 // Frequency cap: never show two interstitials within this window, so e.g.
 // finishing morning prayer and a plan day back-to-back won't double-pop.
-const MIN_INTERVAL_MS = 60 * 1000;
+// One shared constant across all three show paths — see constants/adPacing.
+const MIN_INTERVAL_MS = MIN_AD_INTERVAL_MS;   // shared — see constants/adPacing
 
 let adsRemoved = false;
 let initialized = false;

@@ -31,6 +31,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent } from './firebase';
 import { setInterstitialVisible } from './interstitialVisibility';
 import { onAdPaid, normalizeValue } from './adRevenue';
+import { MIN_AD_INTERVAL_MS } from '../constants/adPacing';
 
 // ── Constants (spec §0) ──────────────────────────────────────────────────────
 const PUB = 'ca-app-pub-4656643588243987';
@@ -119,7 +120,7 @@ const FLOOR_COOLDOWN_MS = 8000;     // pause when even $40 can't fill (avoid flo
 // floors are eCPM (per-1000). eCPM = perImpression × 1000.
 const ECPM_PER_IMPRESSION = 1000;
 // Global floor between any two interstitials (also the nav-trigger's 60s cooldown).
-const MIN_INTERVAL_MS = 60 * 1000;
+const MIN_INTERVAL_MS = MIN_AD_INTERVAL_MS;   // shared — see constants/adPacing
 
 const STORAGE_KEY = 'us:ad:state:v1';
 

@@ -7,7 +7,7 @@
 //     therefore still gated to established users — day 0–2 gentle, day ≥ 3 on.
 //   • Hot start: returning to the foreground after ≥15s in the background.
 //     EVERY USER from day 0 (owner decision 2026-08-08 — previously day ≥ 3).
-//     It rides the same global 60s floor + foreground check as every other
+//     It rides the same global floor (constants/adPacing) + foreground check as every other
 //     placement, and the store-review excursion is still exempt, so the widening
 //     is a reach change, not a frequency change.
 //

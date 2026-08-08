@@ -14,6 +14,7 @@ export type NudgeId =
   | 'followHimOptin'
   | 'setReminderTime'
   | 'streakGuide'
+  | 'planGuide'
   | 'moodCheckIn'
   | 'login'
   | 'widgetInstall'
@@ -34,6 +35,10 @@ export const NUDGE_PRIORITY: Record<NudgeId, number> = {
   // lands. Above the mood ritual (it fires at the exact half-lit moment and
   // the mood sheet can wait a minute), below the asks that unlock hardware.
   streakGuide:       35,
+  // Plan discovery: the once-ever feature tutorial. Below the streak guide (a
+  // fresher, time-sensitive moment) so on a day both fire, streak teaches
+  // first and this one takes the next opening.
+  planGuide:         38,
   moodCheckIn:       40,
   login:             50,
   widgetInstall:     60,

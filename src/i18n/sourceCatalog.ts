@@ -311,6 +311,16 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'streakGuide.btn.tonight':       { en: 'Come Back Tonight', context: 'Step-2 primary button when the morning prayer is done but the night prayer has not OPENED yet (before 18:00). Dismisses the guide.' },
   'streakGuide.btn.done':          { en: 'Got it', context: 'Step-2 fallback button when nothing remains to start (safety rail). Dismisses.' },
 
+  // ── Plan-discovery guide (once-ever; 3 steps from home, 2 when she finds the
+  // tab herself). Same InlineBold **markers** convention as streakGuide. ──────
+  'planGuide.tab.title':           { en: 'Discover Reading Plans', context: 'Coach-mark title over the Plan icon in the bottom tab bar, nudging a user who has never opened that tab.' },
+  'planGuide.tab.body':            { en: "There's more here than prayer — guided Bible plans live under **Plan**. Let's take a look!", context: 'Body for the tab-bar step. **Plan** is the tab\'s label (nav.tab.plan) — keep the bolded word identical to that label in each language.' },
+  'planGuide.explore.title':       { en: 'Explore the library', context: 'Coach-mark title over the "Explore" pill on the My Plans screen.' },
+  'planGuide.explore.body':        { en: 'The **Explore** tab gathers every plan — for every season of her walk with God.', context: 'Body for the Explore-pill step. **Explore** must match plan.tab.explore exactly. Audience is women.' },
+  'planGuide.mood.title':          { en: 'Start with your heart', context: 'Coach-mark title over the "How are you feeling today?" emotion-pills row.' },
+  'planGuide.mood.body':           { en: "Not sure where to begin? Pick **how you're feeling today** and we'll match a plan to it.", context: 'Body for the mood-row step. The bolded phrase echoes plan.tab.howFeelingToday.' },
+  'planGuide.start':               { en: 'Start Exploring', context: 'Final CTA of the plan guide — closes it, leaving the user on the Explore tab.' },
+
   'audioMini.playing':             { en: 'Now playing', context: 'Floating pill shown when Bible narration keeps playing after the user leaves the Bible tab. Above it is the chapter, e.g. "John 3". Keep very short.' },
 
   'prayer.startMorning':           { en: 'Start Morning Prayer →', context: 'Primary CTA button when morning slot is active. Arrow is decorative — preserve in target language if possible.' },

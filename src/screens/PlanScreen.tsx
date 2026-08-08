@@ -21,6 +21,8 @@ import { useUILanguage } from '../state/UILanguageContext';
 import { localeFor } from '../i18n/locale';
 import { useOnboarding } from '../state/OnboardingContext';
 import { scorePlan, recommendPlans } from '../services/planRecommendations';
+import { usePlanGuide } from '../state/PlanGuideContext';
+import PlanGuideSelfTrigger from '../components/PlanGuideSelfTrigger';
 
 const TABS = ['current', 'explore', 'completed'] as const;
 type TabId = typeof TABS[number];
@@ -79,6 +81,55 @@ export default function PlanScreen() {
   const route = useRoute<RouteProp<TabParamList, 'plan'>>();
   const scrollRef = useRef<ScrollView>(null);
   const [tab, setTab] = useState<TabId>('current');
+
+  // ── Plan-discovery guide wiring ───────────────────────────────────────────
+  // This screen owns two of the guide's anchors (the Explore pill, the
+  // how-are-you-feeling row), the segment switcher, and the scroll-into-view.
+  // The trigger/focus/visited logic lives in <PlanGuideSelfTrigger>.
+  const guide = usePlanGuide();
+  const explorePillRef = useRef<View>(null);
+  const moodSectionRef = useRef<View>(null);
+  // Current scroll offset — revealMood turns a window-space delta into an
+  // absolute scrollTo target.
+  const scrollYRef = useRef(0);
+  useEffect(() => {
+    guide.registerExploreMeasurer(explorePillRef);
+    guide.registerMoodMeasurer(moodSectionRef);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const setShowExplore = guide.setShowExploreHandler;
+  useEffect(() => {
+    setShowExplore(() => setTab('explore'));
+  }, [setShowExplore]);
+  const setRevealMood = guide.setRevealMoodHandler;
+  useEffect(() => {
+    // Bring the mood row to ~130dp from the top of the window. Retries while
+    // the Explore content is still mounting (the guide switches the segment in
+    // the same breath); resolves once scrolled — the overlay's own confirming
+    // re-measure then locks the hole onto the settled position.
+    setRevealMood(async () => {
+      for (let i = 0; i < 8; i += 1) {
+        const scrolled = await new Promise<boolean>(res => {
+          const node = moodSectionRef.current;
+          if (!node) { res(false); return; }
+          let fired = false;
+          const cap = setTimeout(() => { if (!fired) res(false); }, 250);
+          node.measureInWindow((x, y, w, h) => {
+            fired = true;
+            clearTimeout(cap);
+            if (!(h > 0)) { res(false); return; }
+            const delta = y - 130;
+            if (Math.abs(delta) > 8) {
+              scrollRef.current?.scrollTo({ y: Math.max(0, scrollYRef.current + delta), animated: true });
+            }
+            res(true);
+          });
+        });
+        if (scrolled) { await new Promise(r => setTimeout(r, 480)); return; }
+        await new Promise(r => setTimeout(r, 250));
+      }
+    });
+  }, [setRevealMood]);
   const { lang } = useUILanguage();
   // Bumped each time the screen comes into focus (and each time the
   // Profile "My Plan" tile re-enters with a fresh `reset` param). Used
@@ -243,10 +294,13 @@ export default function PlanScreen() {
 
   return (
     <View style={styles.container}>
+      <PlanGuideSelfTrigger />
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 8 }]}
+        onScroll={e => { scrollYRef.current = e.nativeEvent.contentOffset.y; }}
+        scrollEventThrottle={32}
       >
         {/* Page-level fade-in. `key={fadeKey}` forces a remount every time
             the screen gains focus or the Profile My-Plan tile re-enters
@@ -265,6 +319,9 @@ export default function PlanScreen() {
             return (
               <TouchableOpacity
                 key={tabId}
+                // The guide spotlights the Explore pill — measured off the
+                // touchable itself so the hole frames exactly the hit area.
+                ref={tabId === 'explore' ? explorePillRef : undefined}
                 onPress={() => setTab(tabId)}
                 style={styles.tab}
                 activeOpacity={0.85}
@@ -385,11 +442,11 @@ export default function PlanScreen() {
                   scrolls HORIZONTALLY: each pill sizes to its own label (no
                   flex:1, no numberOfLines truncation), so the full word always
                   reads — the old fixed 5-up grid squashed them to "WE…/FE…". */}
+              <View ref={moodSectionRef} collapsable={false} style={{ marginBottom: 28 }}>
               <Text style={[styles.bigSectionLabel, { marginTop: -7 }]}>{t('plansMeta.section.emotions')}</Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                style={{ marginBottom: 28 }}
                 contentContainerStyle={styles.emotionScrollContent}
               >
                 <View style={styles.emotionGrid}>
@@ -409,6 +466,7 @@ export default function PlanScreen() {
                   ))}
                 </View>
               </ScrollView>
+              </View>
 
               {/* The four non-emotion sections, driven by the centralized
                   PLAN_SECTIONS list. No one-liner under the title per user —

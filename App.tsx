@@ -67,6 +67,8 @@ import { NudgeCoordinatorProvider } from './src/state/NudgeCoordinatorContext';
 import { FirstRunTourProvider } from './src/state/FirstRunTourContext';
 import { StreakGuideProvider } from './src/state/StreakGuideContext';
 import StreakGuideHost from './src/components/StreakGuideHost';
+import { PlanGuideProvider } from './src/state/PlanGuideContext';
+import PlanGuideHost from './src/components/PlanGuideHost';
 import { AudioMiniProvider } from './src/state/AudioMiniContext';
 import { SetReminderTimeProvider } from './src/state/SetReminderTimeContext';
 import { QuizPromoProvider } from './src/state/QuizPromoContext';
@@ -217,6 +219,7 @@ export default function App() {
                                     which it reads. */}
                                 <FirstRunTourProvider>
                                 <StreakGuideProvider>
+                                <PlanGuideProvider>
                                 <AudioMiniProvider>
                                   <RatePromptProvider>
                                     <MoodCheckInProvider>
@@ -273,6 +276,7 @@ export default function App() {
                                               same reason as the tour: it must
                                               cover the tab bar. */}
                                           <StreakGuideHost />
+                                          <PlanGuideHost />
                                           {/* Mirrors today's verse + the card's
                                               background image to the home-screen
                                               widget. Null render; needs DailyVerses
@@ -302,6 +306,7 @@ export default function App() {
                                     </MoodCheckInProvider>
                                   </RatePromptProvider>
                                 </AudioMiniProvider>
+                                </PlanGuideProvider>
                                 </StreakGuideProvider>
                                 </FirstRunTourProvider>
                                 </OnboardingProvider>

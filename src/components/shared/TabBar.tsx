@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { useTabBarHidden } from '../../state/immersiveReading';
+import { usePlanGuide } from '../../state/PlanGuideContext';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { ROSE, LAV, TXTSUB } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
@@ -68,6 +69,15 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
   const t = useT();
   const active = state.routes[state.index].name as TabId;
 
+  // The plan-discovery guide spotlights the Plan tab item; the bar owns that
+  // anchor (icon + label, the whole touch target).
+  const guide = usePlanGuide();
+  const planItemRef = useRef<View>(null);
+  useEffect(() => {
+    guide.registerPlanTabMeasurer(planItemRef);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Immersive reading (Bible tab): slide the bar down out of view while the user
   // reads. Height is measured rather than assumed so the travel is exact on
   // every device (inset-less phones, tall gesture bars). translateY only — the
@@ -106,6 +116,7 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
         return (
           <TouchableOpacity
             key={id}
+            ref={id === 'plan' ? planItemRef : undefined}
             onPress={() => navigation.navigate(id)}
             style={styles.tab}
             activeOpacity={0.7}

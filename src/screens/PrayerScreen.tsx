@@ -41,6 +41,7 @@ import MyReadingPlansCard from '../components/MyReadingPlansCard';
 import QuizChallengeCard from '../components/home/QuizChallengeCard';
 import RatePromptHost from '../components/RatePromptHost';
 import StreakGuideTrigger from '../components/StreakGuideTrigger';
+import PlanGuideTrigger from '../components/PlanGuideTrigger';
 import QuizPromoHost from '../components/QuizPromoHost';
 import { buildReadingPlansCard } from '../services/planRecommendations';
 import { useOnboarding } from '../state/OnboardingContext';
@@ -1361,6 +1362,10 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
       {/* Rookie streak guide (2 steps: flame pill here → milestone card on the
           streak screen). Coordinator-managed; renders nothing itself. */}
       <StreakGuideTrigger />
+      {/* Plan-discovery nudge for users who have never opened the Plan tab —
+          fires only while the prayer CTA is quiet (same flag that hands the
+          breathing animation to the rhythm bar). */}
+      <PlanGuideTrigger ctaQuiet={!(canStart || readyToSwitch)} />
 
       {/* "Finish a set, earn a reward card." Only in the afternoon lull —
           everything for today is done and evening prayer has not opened yet —

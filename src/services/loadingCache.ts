@@ -43,20 +43,66 @@ function cacheFile(filename: string): File | null {
   try { return dir ? new File(dir, filename) : null; } catch { return null; }
 }
 
-// Local file:// URI for a cached loading image, or null if not on disk.
+// ── Truncation guard ─────────────────────────────────────────────────────────
+// A download interrupted mid-stream (app killed during the background warm-up,
+// connection cut) used to leave a PARTIAL file on disk, and `exists` treated it
+// as done forever. Android decodes a truncated JPEG as a sharp top strip over
+// flat grey — exactly the broken launch screen the owner screenshotted
+// (2026-08-08). Two defenses now:
+//   • downloads land in a .part temp file and are RENAMED into the real name
+//     only after validating — the final name never holds an incomplete file;
+//   • every read re-validates, so devices already poisoned by an old build
+//     heal themselves (bad file deleted → bundled fallback this launch →
+//     re-downloaded clean in the background).
+const MIN_VALID_BYTES = 16 * 1024;   // variants are ~100-300 KB; anything under 16 KB is debris
+
+function isHealthyImageFile(f: File): boolean {
+  try {
+    if (!f.exists || f.size < MIN_VALID_BYTES) return false;
+    const b = f.bytesSync();
+    if (b.length < 4) return false;
+    // Only JPEG carries a cheap completeness proof: it must END with the EOI
+    // marker FF D9. A non-JPEG variant (webp/avif via format=auto) is accepted
+    // as-is — for those the atomic rename above is the completeness guarantee.
+    const isJpeg = b[0] === 0xff && b[1] === 0xd8;
+    if (!isJpeg) return true;
+    return b[b.length - 2] === 0xff && b[b.length - 1] === 0xd9;
+  } catch { return false; }
+}
+
+// Local file:// URI for a cached loading image, or null if not on disk (or on
+// disk but truncated — deleted on sight so the pool re-downloads it).
 // Synchronous — safe to call during render to pick the instant backdrop.
 export function cachedLoadingImage(filename: string): string | null {
   const f = cacheFile(filename);
-  try { return f && f.exists ? f.uri : null; } catch { return null; }
+  try {
+    if (!f || !f.exists) return null;
+    if (!isHealthyImageFile(f)) {
+      try { f.delete(); } catch {}
+      return null;
+    }
+    return f.uri;
+  } catch { return null; }
 }
 
 async function downloadIfMissing(filename: string): Promise<void> {
   const f = cacheFile(filename);
   if (!f) return;
   try {
-    if (f.exists) return;
+    if (f.exists) {
+      if (isHealthyImageFile(f)) return;
+      // Poisoned partial from an interrupted session — replace it.
+      try { f.delete(); } catch {}
+    }
     const parent = f.parentDirectory;
     if (!parent.exists) parent.create({ intermediates: true, idempotent: true });
+    // Download to a TEMP name and publish by rename. downloadFileAsync writes
+    // straight into its target, so a mid-stream kill used to leave a partial
+    // file under the REAL name — permanently trusted by the exists check.
+    // The .part name is never read by anyone and pruneExcept sweeps strays.
+    const tmp = cacheFile(`${filename}.part`);
+    if (!tmp) return;
+    try { if (tmp.exists) tmp.delete(); } catch {}
     const raw = loadingImageUrl(filename);
     // Prefer a Cloudflare screen-width variant (~100-200 KB) over the multi-MB
     // original — a loading screen shouldn't pull a 6 MB photo. If Image
@@ -64,13 +110,18 @@ async function downloadIfMissing(filename: string): Promise<void> {
     // to the raw original. Either way we end up with a usable cached file.
     const sized = cfImage(raw, SCREEN_W);
     try {
-      await File.downloadFileAsync(sized, f);
+      await File.downloadFileAsync(sized, tmp);
     } catch {
-      // A failed first attempt can leave a partial file → delete before the
+      // A failed first attempt can leave a partial temp → delete before the
       // raw retry so downloadFileAsync doesn't throw on an existing target.
-      try { if (f.exists) f.delete(); } catch {}
-      if (sized !== raw) await File.downloadFileAsync(raw, f);
+      try { if (tmp.exists) tmp.delete(); } catch {}
+      if (sized !== raw) await File.downloadFileAsync(raw, tmp);
     }
+    if (!isHealthyImageFile(tmp)) {
+      try { tmp.delete(); } catch {}
+      return;                          // next warm-up retries from scratch
+    }
+    tmp.move(f);                       // atomic publish — complete files only
   } catch { /* offline / not uploaded yet → fallback image is used */ }
 }
 

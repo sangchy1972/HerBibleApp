@@ -8,6 +8,7 @@ import {
 } from './nudgePriority';
 import { useReminderInterstitial } from './ReminderInterstitialContext';
 import { useFirstRunTour } from './FirstRunTourContext';
+import { usePromptSurfaceSafe } from './promptSurface';
 
 const LAST_BUDGETED_KEY = 'nudge:lastBudgetedAt:v1';
 
@@ -68,6 +69,14 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
   const tour = useFirstRunTour();
   const tourGateUp = tour.ready && (tour.pending || tour.active);
 
+  // WHERE the user is. Five prompt hosts live at app root with no screen gating
+  // of their own, so without this a grant could paint a sheet over the Bible
+  // reader, a plan day, the prayer flow, the paywall, or a fullscreen ad. Gating
+  // the coordinator covers every blocking prompt at once — and can't be
+  // forgotten by whoever adds the next host. NEW GRANTS only: a prompt already
+  // holding the slot keeps it, and a queued request just waits for a tab.
+  const surfaceSafe = usePromptSurfaceSafe();
+
   useEffect(() => {
     AsyncStorage.getItem(LAST_BUDGETED_KEY).then(v => { if (v) lastBudgetedAt.current = Number(v) || 0; }).catch(() => {});
   }, []);
@@ -106,6 +115,7 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
     if (activeId !== null) return;
     if (reminderGateUp) return;   // pre-tab Follow-Him gate up → suppress everything
     if (tourGateUp) return;       // first-run tour owed or running → suppress everything
+    if (!surfaceSafe) return;     // she's mid-flow / mid-ad → don't ambush her
     const now = Date.now();
     // A new WAVE: the queue is up to seven deep on day one, and the 2-cap must
     // not hold the rest hostage until she happens to background the app. Ten
@@ -144,7 +154,7 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
       const tm = setTimeout(bump, wait);
       return () => clearTimeout(tm);
     }
-  }, [version, activeId, reminderGateUp, tourGateUp, bump]);
+  }, [version, activeId, reminderGateUp, tourGateUp, surfaceSafe, bump]);
 
   const value = useMemo<NudgeCoordinatorState>(() => ({
     requestSlot,

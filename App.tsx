@@ -89,6 +89,7 @@ import { setAppRemountHandler, initCloudBackup } from './src/services/cloudBacku
 import { initAds } from './src/services/ads';
 import { ensureAttRequested } from './src/services/att';
 import { initAdFrequency, noteNavigation } from './src/services/adFrequency';
+import { setPromptRoute } from './src/state/promptSurface';
 import { initIap } from './src/services/iap';
 
 export default function App() {
@@ -142,6 +143,9 @@ export default function App() {
   const navRef = useNavigationContainerRef();
   const onNavStateChange = React.useCallback(() => {
     const name = navRef.getCurrentRoute()?.name;
+    // Also feeds the prompt-surface gate: blocking prompts may only be granted
+    // while she is on one of the four tabs (state/promptSurface).
+    setPromptRoute(name ?? null);
     if (name) { logScreenView(name); noteNavigation(name); }
   }, [navRef]);
 

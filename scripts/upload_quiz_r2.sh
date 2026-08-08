@@ -28,11 +28,12 @@ set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 BUCKET="herbible-quiz"                      # custom domain: quiz.everlandapps.com
-# Path version. BUMP THIS AND QUIZ_CDN_BASE TOGETHER on any re-cut: a custom
-# domain puts Cloudflare's cache in front of these keys, so re-uploading under
-# the SAME prefix can serve the old bank for a long time. Override for a dry run:
-#   QUIZ_PREFIX=v2-test scripts/upload_quiz_r2.sh
-PREFIX="${QUIZ_PREFIX:-v2}"
+# Path version. Bumping it is the CHEAP way to cache-bust; replacing objects in
+# place is the other way, and it requires a manual purge (see the tail of this
+# script). The v3 re-cut took the in-place route on purpose so existing installs
+# would follow. Override for a dry run:
+#   QUIZ_PREFIX=v1-test scripts/upload_quiz_r2.sh
+PREFIX="${QUIZ_PREFIX:-v1}"
 SRC="${1:-${REPO}/docs/quiz-bank}"
 
 # Resolve a usable wrangler: $WRANGLER env override → on PATH → npx fallback.
@@ -106,3 +107,18 @@ echo "  curl -s  https://quiz.everlandapps.com/${PREFIX}/quiz-zh-Hant.json | hea
 echo
 echo "Then confirm the app agrees:"
 echo "  grep QUIZ_CDN_BASE src/constants/bibleQuiz.ts   # must end in /${PREFIX}"
+echo
+echo "🔴 NOT LIVE YET IF YOU REPLACED EXISTING OBJECTS."
+echo "   quiz.everlandapps.com is a custom domain, so Cloudflare's edge cache sits"
+echo "   in front of R2 and will keep serving the OLD bodies. And a stale body is"
+echo "   worse than stale questions: parseBankFile rejects any file whose"
+echo "   bankVersion != QUIZ_BANK_VERSION, so the quiz card vanishes instead."
+echo
+echo "   Purge: Cloudflare -> everlandapps.com -> Caching -> Configuration"
+echo "          -> Purge Cache -> Custom Purge -> URL, all seven:"
+while IFS= read -r lang; do
+  echo "            https://quiz.everlandapps.com/${PREFIX}/quiz-${lang}.json"
+done <<< "$LANGS"
+echo
+echo "   Verify the purge took (age should reset, body should be the new size):"
+echo "     curl -sI https://quiz.everlandapps.com/${PREFIX}/quiz-en.json | grep -i 'age\|cf-cache-status\|content-length'"

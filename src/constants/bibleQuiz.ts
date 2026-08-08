@@ -47,7 +47,14 @@ export interface QuizQuestion {
  * would silently serve a different quiz, and switching language mid-ladder
  * would scramble a user's progress.
  *
- * v3 (2026-08-08) is a re-cut, not an edit: 327 -> 650.
+ * v3 (2026-08-08) is a re-cut, not an edit: 327 -> 650. Published by REPLACING
+ * the /v1/ objects rather than bumping the path (owner's call, small user base).
+ *
+ * 🔴 That makes the Cloudflare purge load-bearing, and the failure is not
+ * "she sees old questions". parseBankFile REJECTS any file whose bankVersion is
+ * not this constant (quizBank.ts), so a stale v2 body served from the edge to a
+ * v3 client parses to null and the quiz card DISAPPEARS. Safe, but broken, for
+ * as long as the cache lives. Purge every one of the seven URLs after upload.
  *   - 115 of the original 327 were DROPPED. A pastor audit found the legacy set
  *     had been seeded partly from a generic Jewish/Israel trivia file: modern
  *     Israel, Jewish-American history, Scientology, Catholic canonisation, an
@@ -85,7 +92,7 @@ export const QUIZ_BANK_VERSION = 3;
  */
 export const QUIZ_BANK_SIZE = 650;
 
-export const QUIZ_CDN_BASE = 'https://quiz.everlandapps.com/v2';
+export const QUIZ_CDN_BASE = 'https://quiz.everlandapps.com/v1';
 
 /**
  * Languages with a published bank.

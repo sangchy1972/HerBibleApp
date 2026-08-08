@@ -46,8 +46,25 @@ export interface QuizQuestion {
  * addresses questions by position, so a language with a different question set
  * would silently serve a different quiz, and switching language mid-ladder
  * would scramble a user's progress.
+ *
+ * v3 (2026-08-08) is a re-cut, not an edit: 327 -> 650.
+ *   - 115 of the original 327 were DROPPED. A pastor audit found the legacy set
+ *     had been seeded partly from a generic Jewish/Israel trivia file: modern
+ *     Israel, Jewish-American history, Scientology, Catholic canonisation, an
+ *     English-idiom quiz, and eight questions whose quotation had gone missing
+ *     so they were literally unanswerable.
+ *   - 47 more were fixed (typos reached the CORRECT answer three times:
+ *     "Kindgom", "Rehab" for Rahab, "Ninevah" for Nineveh).
+ *   - 438 new questions were written to a 5:2 New/Old Testament brief and
+ *     reviewed question-by-question. All 66 books now have coverage.
+ *   - Every locale is aligned to ITS OWN Bible rather than translated from the
+ *     KJV: RVR1909 / LSG1910 / Luther 1912 / Almeida / 和合本. Three questions
+ *     were replaced at the SOURCE because they were KJV-only readings that
+ *     three or four languages independently flagged (Mars' hill, Habakkuk's
+ *     "tower", Zephaniah's "singing") — fixing the English removes the problem
+ *     from every language at once, and from every language added later.
  */
-export const QUIZ_BANK_VERSION = 2;
+export const QUIZ_BANK_VERSION = 3;
 
 /**
  * How many questions the CDN bank currently holds.
@@ -61,10 +78,14 @@ export const QUIZ_BANK_VERSION = 2;
  * ⚠️ Update this whenever the bank is re-cut. If it drifts, the only thing that
  * breaks is the budget arithmetic — which is exactly the thing that must not
  * drift quietly, hence the test.
+ *
+ * At 650 the collections are finally all reachable: 130 sets unlock 32 paintings
+ * (24 exist) and 43 cards (40 exist). The old 327 stranded them at 16/24 and
+ * 22/40 — a ceiling a daily player hit in about three weeks.
  */
-export const QUIZ_BANK_SIZE = 327;
+export const QUIZ_BANK_SIZE = 650;
 
-export const QUIZ_CDN_BASE = 'https://quiz.everlandapps.com/v1';
+export const QUIZ_CDN_BASE = 'https://quiz.everlandapps.com/v2';
 
 /**
  * Languages with a published bank.

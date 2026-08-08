@@ -92,10 +92,10 @@ describe('the content budget', () => {
 
   it('reports what the shipping bank actually reaches', () => {
     // NOT an aspiration — a statement of today. If this fails because the bank
-    // grew, that is the good failure: update the numbers and check the gap
-    // below closed.
-    expect(BANK).toBe(327);
-    expect(reachableRewards(BANK)).toEqual({ sets: 66, paintings: 16, cards: 22 });
+    // grew, that is the good failure: update the numbers and re-check the
+    // headroom assertion below.
+    expect(BANK).toBe(650);
+    expect(reachableRewards(BANK)).toEqual({ sets: 130, paintings: 32, cards: 43 });
   });
 
   it('names the bank size that leaves nothing stranded', () => {
@@ -114,16 +114,22 @@ describe('the content budget', () => {
     expect(r.paintings).toBe(30);
   });
 
-  it('records the gap the bank still has to close', () => {
-    // THE ONE NUMBER TO ACT ON. Until the bank reaches 600 questions,
-    // retirement strands both collections partway and no amount of UI work
-    // fixes it: the paintings screen sits at 16 of 24 and My Cards at 22 of 40,
-    // permanently, with the only entry point gone.
-    //
-    // Delete this test when the gap is zero.
+  it('has closed the gap, with headroom left over', () => {
+    // This test used to name the shortfall: at 327 the bank stranded the
+    // collections at 16 of 24 paintings and 22 of 40 cards, permanently, with
+    // the entry point gone. The v3 re-cut to 650 closed it. Kept rather than
+    // deleted, inverted, because the failure it now guards is the one that
+    // would be silent: shrinking the bank, or adding collectibles past what
+    // 650 questions can unlock, re-strands them exactly as before.
     const need = bankSizeToCollectEverything(QUIZ_ART_COUNT, MYSTERY_CARD_COUNT);
-    expect(need - BANK).toBe(273);
-    expect(Math.ceil((need - BANK) / SET_SIZE)).toBe(55);   // 55 more sets' worth
+    expect(need).toBeLessThanOrEqual(BANK);
+    expect(BANK - need).toBe(50);                          // 10 sets' worth of slack
+
+    // Room to grow the collections without touching the bank. Spend it and
+    // this number drops; spend more than it and `need` overtakes BANK above.
+    const r = reachableRewards(BANK);
+    expect(r.paintings - QUIZ_ART_COUNT).toBe(8);          // 24 -> up to 32
+    expect(r.cards - MYSTERY_CARD_COUNT).toBe(3);          // 40 -> up to 43
   });
 
   it('keeps the reward divisors honest', () => {

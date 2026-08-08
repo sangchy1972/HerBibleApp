@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Upload the quiz question banks to R2 (quiz.everlandapps.com/v1).
+# Upload the quiz question banks to R2 (quiz.everlandapps.com/<PREFIX>).
 #
 # NOTE the bucket: the quiz has its OWN bucket, not the covers/badges one.
 #
@@ -19,8 +19,8 @@
 #   scripts/upload_quiz_r2.sh [SRC_DIR]
 #   (SRC_DIR defaults to docs/quiz-bank in this repo)
 #
-# Idempotent: re-running overwrites the same keys. Bump the /v1/ segment (here
-# AND in QUIZ_CDN_BASE) on a re-cut of the bank to cache-bust.
+# Idempotent: re-running overwrites the same keys. Bump PREFIX (here AND in
+# QUIZ_CDN_BASE) on a re-cut of the bank to cache-bust.
 #
 # ⚠️ Content edits also need QUIZ_BANK_VERSION bumped in src/constants/bibleQuiz.ts,
 # or an in-flight session grades answers against questions the user never saw.
@@ -28,7 +28,11 @@ set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 BUCKET="herbible-quiz"                      # custom domain: quiz.everlandapps.com
-PREFIX="v1"
+# Path version. BUMP THIS AND QUIZ_CDN_BASE TOGETHER on any re-cut: a custom
+# domain puts Cloudflare's cache in front of these keys, so re-uploading under
+# the SAME prefix can serve the old bank for a long time. Override for a dry run:
+#   QUIZ_PREFIX=v2-test scripts/upload_quiz_r2.sh
+PREFIX="${QUIZ_PREFIX:-v2}"
 SRC="${1:-${REPO}/docs/quiz-bank}"
 
 # Resolve a usable wrangler: $WRANGLER env override → on PATH → npx fallback.
@@ -82,6 +86,9 @@ while IFS= read -r lang; do
       if(!Number.isInteger(q.answerIndex)||q.answerIndex<0||q.answerIndex>=q.options.length)
         throw new Error("answerIndex out of range "+q?.id);
     }
+    if(typeof b.count==="number" && b.count!==qs.length) throw new Error("count "+b.count+" != "+qs.length);
+    const ids=new Set(); for(const q of qs){ if(ids.has(q.id)) throw new Error("duplicate id "+q.id); ids.add(q.id); }
+    for(const q of qs){ if(q.options.length!==2 && q.options.length!==4) throw new Error("option count "+q.options.length+" at id "+q.id); }
     process.stdout.write(String(qs.length));
   ' "$p" > /tmp/quizcount || { echo "!!! INVALID: ${f}"; exit 1; }
   echo ">>> ${f}  ($(cat /tmp/quizcount) questions)"
@@ -94,5 +101,8 @@ done <<< "$LANGS"
 echo
 echo "Uploaded ${uploaded} banks. Missing: ${missing}."
 echo "Verify:"
-echo "  curl -sI https://quiz.everlandapps.com/v1/quiz-en.json"
-echo "  curl -s  https://quiz.everlandapps.com/v1/quiz-es.json | head -c 200"
+echo "  curl -sI https://quiz.everlandapps.com/${PREFIX}/quiz-en.json"
+echo "  curl -s  https://quiz.everlandapps.com/${PREFIX}/quiz-zh-Hant.json | head -c 200"
+echo
+echo "Then confirm the app agrees:"
+echo "  grep QUIZ_CDN_BASE src/constants/bibleQuiz.ts   # must end in /${PREFIX}"

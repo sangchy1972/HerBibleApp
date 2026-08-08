@@ -86,20 +86,29 @@ describe('celebrations stack, never own', () => {
 });
 
 describe('the last set of the bank', () => {
-  const LAST = reachableSets(QUIZ_BANK_SIZE);          // 66 against today's bank
+  const LAST = reachableSets(QUIZ_BANK_SIZE);          // 130 against today's bank
 
   it('retires the quiz only once it is committed', () => {
     expect(quizLifecycle(LAST - 1, QUIZ_BANK_SIZE).retired).toBe(false);
     expect(quizLifecycle(LAST, QUIZ_BANK_SIZE).retired).toBe(true);
   });
 
-  it('earns a mystery card, which is why retirement must not hide the overlay', () => {
-    // 66 % 3 === 0. The set that ends the quiz is also a draw set. The overlay
-    // opens over QuizDoneView (the base after a retiring commit), and the home
-    // card keeps a door open while `pendingDraw` is true — if either stops
-    // being true the last card of the bank becomes unredeemable.
-    expect(drawEarnedAt(LAST, MYSTERY_EVERY)).toBe(true);
-    expect(celebrationsAfterCommit(LAST - 1).draw).toBe(true);
+  it('keeps the overlay reachable on whichever set retires the quiz', () => {
+    // Whether the retiring set ALSO earns a card depends on the bank size, and
+    // it just changed: at 327 questions LAST was 66 and 66 % 3 === 0, so the
+    // two collided; at 650 it is 130 and 130 % 3 === 1, so they do not. The
+    // collision is what nearly shipped the last card unredeemable, and the next
+    // re-cut can bring it back — so assert the property, not the arithmetic of
+    // one bank size.
+    const retiringSetAlsoDraws = drawEarnedAt(LAST, MYSTERY_EVERY);
+    expect(retiringSetAlsoDraws).toBe(LAST % MYSTERY_EVERY === 0);
+
+    // The last draw of the bank, wherever it falls, must still land somewhere
+    // the user can reach: the overlay opens over QuizDoneView, and the home
+    // card keeps a door open while `pendingDraw` is true.
+    const lastDrawSet = LAST - (LAST % MYSTERY_EVERY);
+    expect(drawEarnedAt(lastDrawSet, MYSTERY_EVERY)).toBe(true);
+    expect(celebrationsAfterCommit(lastDrawSet - 1).draw).toBe(true);
     expect(baseAfterCommit(LAST, 1)).toBe('done');
   });
 });

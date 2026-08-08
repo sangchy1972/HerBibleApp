@@ -11,7 +11,7 @@ import type { QuizQuestion } from '../src/constants/bibleQuiz';
 
 // The real bank now lives on the CDN, so set composition is tested against a
 // synthetic bank of the SAME SIZE — the algorithm only ever sees a length.
-const N = 327;
+const N = 650;
 const fakeBank: QuizQuestion[] = Array.from({ length: N }, (_, i) => ({
   id: i + 1, question: `q${i}`, options: ['a', 'b', 'c', 'd'], answerIndex: i % 4,
 }));
@@ -23,17 +23,17 @@ describe('bank constants', () => {
     // v2 = the two language-dependent questions were removed. Anything that
     // changes the SET of questions must bump this, or an in-flight session
     // grades answers against questions the user never saw.
-    expect(QUIZ_BANK_VERSION).toBe(2);
+    expect(QUIZ_BANK_VERSION).toBe(3);
   });
 
   it('builds a CDN url per language', () => {
-    expect(quizBankUrl('es')).toBe('https://quiz.everlandapps.com/v1/quiz-es.json');
-    expect(quizBankUrl('zh-Hant')).toBe('https://quiz.everlandapps.com/v1/quiz-zh-Hant.json');
+    expect(quizBankUrl('es')).toBe('https://quiz.everlandapps.com/v2/quiz-es.json');
+    expect(quizBankUrl('zh-Hant')).toBe('https://quiz.everlandapps.com/v2/quiz-zh-Hant.json');
   });
 
   it('falls back to English for an unpublished language', () => {
-    expect(quizBankUrl('ja')).toBe('https://quiz.everlandapps.com/v1/quiz-en.json');
-    expect(quizBankUrl('')).toBe('https://quiz.everlandapps.com/v1/quiz-en.json');
+    expect(quizBankUrl('ja')).toBe('https://quiz.everlandapps.com/v2/quiz-en.json');
+    expect(quizBankUrl('')).toBe('https://quiz.everlandapps.com/v2/quiz-en.json');
   });
 
   it('publishes all 7 app languages', () => {
@@ -75,15 +75,23 @@ describe('cyclePermutation', () => {
 });
 
 describe('setPositions', () => {
-  // GOLDEN SNAPSHOT. If these change, QUIZ_SEED or the mixer moved, and every
-  // existing user's queue silently reshuffled. There is no migration for that.
+  // GOLDEN SNAPSHOT. If these change WITHOUT the bank size changing, QUIZ_SEED
+  // or the mixer moved, and every existing user's queue silently reshuffled.
+  // There is no migration for that.
+  //
+  // Regenerated 2026-08-08 for the v3 re-cut (327 -> 650). The values are a
+  // function of N, so a bank resize legitimately moves them — and does reshuffle
+  // every in-progress queue. That is accepted here rather than migrated: 115 of
+  // the old questions were deleted outright, so a mid-ladder user's remaining
+  // queue could not have been preserved in any case. She keeps her setIndex,
+  // her paintings and her cards; only which questions come next changes.
   it('matches the frozen golden values', () => {
-    expect(setPositions(0, N)).toEqual([1, 209, 22, 82, 61]);
-    expect(setPositions(1, N)).toEqual([312, 56, 99, 125, 48]);
+    expect(setPositions(0, N)).toEqual([349, 116, 167, 313, 57]);
+    expect(setPositions(1, N)).toEqual([231, 470, 149, 271, 630]);
   });
 
   it('always returns exactly 5, for any index', () => {
-    for (const k of [0, 1, 7, 64, 65, 66, 200, 5000]) {
+    for (const k of [0, 1, 7, 128, 129, 130, 400, 5000]) {
       expect(setPositions(k, N).length).toBe(SET_SIZE);
     }
   });
@@ -96,12 +104,12 @@ describe('setPositions', () => {
 
   it('covers the whole bank by the end of the cycle', () => {
     const all = new Set<number>();
-    for (let k = 0; k < 66; k += 1) setPositions(k, N).forEach(x => all.add(x));
-    expect(all.size).toBe(N);      // 330 draws, 327 distinct = the cycle seam
+    for (let k = 0; k < 130; k += 1) setPositions(k, N).forEach(x => all.add(x));
+    expect(all.size).toBe(N);      // 650 draws over 130 sets, all 650 distinct
   });
 
   it('keeps every position inside the bank', () => {
-    for (const k of [0, 65, 66, 131, 1000]) {
+    for (const k of [0, 129, 130, 259, 1000]) {
       for (const p of setPositions(k, N)) {
         expect(p).toBeGreaterThanOrEqual(0);
         expect(p).toBeLessThan(N);
@@ -136,7 +144,7 @@ describe('questionsForSet', () => {
   });
 
   it('reports the cycle length', () => {
-    expect(setsPerCycle(N)).toBe(65);
+    expect(setsPerCycle(N)).toBe(130);
   });
 });
 

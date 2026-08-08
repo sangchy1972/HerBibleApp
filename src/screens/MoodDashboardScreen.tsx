@@ -101,8 +101,16 @@ function MonthView({
   const m0 = cursor.getMonth();
   const { count, pct } = monthStats(picks, y, m0);
   const streak = currentStreak(picks);
-  const monthYear = cursor.toLocaleDateString(localeFor(lang), { month: 'long', year: 'numeric' });
-  const monthShort = cursor.toLocaleDateString(localeFor(lang), { month: 'short' }).toUpperCase();
+  // LABELS format a NOON-of-the-15th anchor, never the cursor itself. The
+  // cursor is pinned to local MIDNIGHT of the 1st, and Hermes' Android
+  // toLocaleDateString can render a Date in UTC instead of the device zone —
+  // east of UTC that walks "Aug 1 00:00" back into July, so the header said
+  // "July 2026" over a perfectly correct August grid (the grid reads local
+  // getters and was never wrong). Noon mid-month is unreachable by any ±14h
+  // zone skew, whichever way the engine renders it.
+  const labelAnchor = new Date(y, m0, 15, 12);
+  const monthYear = labelAnchor.toLocaleDateString(localeFor(lang), { month: 'long', year: 'numeric' });
+  const monthShort = labelAnchor.toLocaleDateString(localeFor(lang), { month: 'short' }).toUpperCase();
 
   const shiftMonth = (d: number) => setCursor(new Date(y, m0 + d, 1));
   const shiftYear = (d: number) => setCursor(new Date(y + d, m0, 1));
@@ -163,7 +171,8 @@ function YearView({
 
   const now = new Date();
   const { pct, dayOfYear, total, daysRemaining } = yearStats(picks, year, now);
-  const monthShort = (i: number) => new Date(2021, i, 1).toLocaleDateString(localeFor(lang), { month: 'short' }).toUpperCase();
+  // Noon of the 15th, not midnight of the 1st — see the note in MonthView.
+  const monthShort = (i: number) => new Date(2021, i, 15, 12).toLocaleDateString(localeFor(lang), { month: 'short' }).toUpperCase();
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>

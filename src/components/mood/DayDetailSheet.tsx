@@ -58,7 +58,10 @@ export default function DayDetailSheet({ dateKey, onClose }: { dateKey: string; 
   };
 
   const [y, m, d] = dateKey.split('-').map(Number);
-  const date = new Date(y, m - 1, d);
+  // NOON, not midnight: Hermes' Android toLocaleDateString can render in UTC,
+  // and east of UTC a local-midnight date walks back a whole day (same quirk
+  // that mislabeled the dashboard's month header). Noon survives ±14h intact.
+  const date = new Date(y, m - 1, d, 12);
   const longLabel = date.toLocaleDateString(localeFor(lang), { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
   const onSave = (mood: Mood, note: string) => {

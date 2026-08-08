@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TXT, FONTS } from '../constants/theme';
 import { useT } from '../i18n/useT';
 import { useNotifications } from '../state/NotificationsContext';
+import { useReminderInterstitial } from '../state/ReminderInterstitialContext';
 import PermissionCoachOverlay, { openNotificationSettings } from '../components/PermissionCoachOverlay';
 
 // Full-screen notification opt-in shown to RETURNING users (gating lives in
@@ -39,6 +40,16 @@ export default function FollowHimScreen({ onDone }: Props) {
   const insets = useSafeAreaInsets();
   const t = useT();
   const { permissionGranted, syncPermissionFromSystem } = useNotifications();
+  // Tell the nudge coordinator this pre-tab gate is genuinely on screen, so it
+  // holds other prompts back for exactly as long as that is true — and not a
+  // moment longer. It used to infer this from `shouldShow`, which is also true
+  // during the questionnaire (rendered ahead of this screen) and silenced every
+  // prompt in the app for a screen that wasn't there.
+  const { setOnScreen } = useReminderInterstitial();
+  useEffect(() => {
+    setOnScreen(true);
+    return () => setOnScreen(false);
+  }, [setOnScreen]);
   // Resolved once at mount — the screen shows for a single sitting, so it
   // doesn't need to react to the hour ticking over mid-view.
   const bg = useMemo(() => pickBackground(), []);

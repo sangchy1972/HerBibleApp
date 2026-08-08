@@ -32,7 +32,9 @@ export type RootStackParamList = {
   PrayerFlow: { kind: 'morning' | 'evening'; day?: number };
   GospelPsalm: { slot: 'morning' | 'evening' };
   MoodDashboard: undefined;
-  RemoveAds: undefined;
+  // `proactive` marks the post-ad pitch (RemoveAdsPromptHost) as opposed to the
+  // Profile banner — analytics only; the screen behaves identically.
+  RemoveAds: { proactive?: boolean } | undefined;
   HelpCenter: undefined;
   HelpAnswer: { id: string };
   AddWidget: undefined;

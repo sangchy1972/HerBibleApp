@@ -3,14 +3,21 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Cadence for the "set your prayer reminders" nudge. The HOST gates on
 // "notifications still OFF + onboarding done"; this context only owns the
-// timing so we re-ask without nagging. First prompt ~20h after we first became
-// eligible (so it never lands in the same session the user just declined during
-// onboarding), then an escalating gap 3,4,5,6,7 capped at 7 days. Once the user
-// completes the setup once (`configured`) we never nag again.
+// timing. First prompt ~20h after we first became eligible (so it never lands in
+// the same session the user just declined during onboarding), then ONCE A DAY
+// for as long as notifications stay off (owner 2026-08-08 — it used to escalate
+// 3,4,5,6,7 days, which the owner judged far too slow). Once the setup is
+// completed (`configured`) we never nag again.
+//
+// The permission side is genuinely live, not cached: NotificationsContext
+// re-reads getPermissionsAsync() on every foreground, so a user who grants and
+// later REVOKES in system settings comes back into scope automatically.
 
 const STORAGE_KEY = 'setReminderNudge:v1';
-const DAY_MS = 86_400_000;
 const FIRST_DELAY_MS = 20 * 3_600_000;   // ~20h after the baseline
+
+const ymdOf = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 export interface SetReminderPersisted {
   baselineAt: number;   // ms when first eligible (0 = not tracking yet)
@@ -25,8 +32,10 @@ export function setReminderShouldShow(s: SetReminderPersisted, now = Date.now())
   if (s.configured) return false;
   if (s.baselineAt === 0) return false;
   if (s.promptCount === 0) return now - s.baselineAt >= FIRST_DELAY_MS;
-  const gapDays = Math.min(7, 2 + s.promptCount);   // 3,4,5,6,7 …
-  return now - s.lastShownAt >= gapDays * DAY_MS;
+  // Daily, and at most once a day — compared on the LOCAL CALENDAR DAY, not on
+  // a rolling 24h window: a 24h gap drifts later every day (10:00 → 10:05 → …)
+  // until it lands outside her usual session and the ask silently stops.
+  return ymdOf(new Date(s.lastShownAt)) !== ymdOf(new Date(now));
 }
 
 interface State {

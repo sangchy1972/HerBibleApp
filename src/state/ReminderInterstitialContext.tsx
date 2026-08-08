@@ -45,6 +45,10 @@ function currentWindow(): 'day' | 'night' {
 interface State {
   ready: boolean;
   shouldShow: boolean;
+  /** TRUE only while FollowHimScreen is literally mounted. The nudge
+   *  coordinator gates on THIS, never on `shouldShow` — see setOnScreen. */
+  onScreen: boolean;
+  setOnScreen: (v: boolean) => void;
   /** Call after the user interacts (Continue or Skip) — records the current
    *  day+window slot so it won't re-show until the next window (and never
    *  again once notifications are granted). */
@@ -56,6 +60,13 @@ const Ctx = createContext<State | null>(null);
 export function ReminderInterstitialProvider({ children }: { children: React.ReactNode }) {
   const today = useCurrentDayYmd();
   const [ready, setReady] = useState(false);
+  // Reported by FollowHimScreen's own mount/unmount. `shouldShow` is NOT a
+  // substitute: RootNavigator renders the questionnaire ahead of this gate, so a
+  // returning user who never finished onboarding has shouldShow true with the
+  // screen nowhere on screen — and the coordinator used to go silent on that
+  // inferred flag alone. Per owner: this screen may only hold other prompts back
+  // while it is genuinely occupying the display.
+  const [onScreen, setOnScreen] = useState(false);
   const [firstLaunchDay, setFirstLaunchDay] = useState<string | null>(null);
   const [lastShownSlot, setLastShownSlot] = useState<string | null>(null);
   const [notifGranted, setNotifGranted] = useState(false);
@@ -118,7 +129,10 @@ export function ReminderInterstitialProvider({ children }: { children: React.Rea
     && !notifGranted
   ), [ready, firstLaunchDay, today, lastShownSlot, slot, notifGranted]);
 
-  const value = useMemo<State>(() => ({ ready, shouldShow, markShownToday }), [ready, shouldShow, markShownToday]);
+  const value = useMemo<State>(
+    () => ({ ready, shouldShow, onScreen, setOnScreen, markShownToday }),
+    [ready, shouldShow, onScreen, markShownToday],
+  );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

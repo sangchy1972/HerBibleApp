@@ -36,7 +36,10 @@ const ASK_COUNT_KEY = 'nudge:widgetInstall:asks:v1';     // how many times she h
 const LAST_ASK_YMD_KEY = 'nudge:widgetInstall:lastYmd:v1';
 const ASKS_BEFORE_BACKOFF = 3;
 const BACKOFF_DAYS = 3;
-const FEATURES_REQUIRED = 2;                             // "more than two features" → strictly greater
+// ONE core feature is enough (owner 2026-08-08, was 2 → i.e. strictly 3 of 4).
+// The old bar was the reason nobody ever saw this dialog: it needed three of
+// {morning prayer, Gospel & Psalm, a Bible chapter, a plan day} in one lifetime.
+const FEATURES_REQUIRED = 0;                             // strictly greater → ≥ 1 feature
 const ymdOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const daysBetweenYmd = (a: string, b: string): number => {
   const p = (x: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(x); return m ? new Date(+m[1], +m[2] - 1, +m[3]).getTime() : NaN; };
@@ -94,16 +97,13 @@ export default function WidgetInstallHost() {
   // Android ONLY. iOS has no API to programmatically add a home-screen widget,
   // and the app ships no iOS WidgetKit widget — so nudging iOS users to "add the
   // widget" leads nowhere. Gated off on iOS until a real iOS widget exists.
-  // Timing (per user): only AFTER she has completed at least one MORNING prayer.
-  // `everPrayed` also counted an evening-only user, so the dialog could land on a
-  // quiet evening home screen with her morning steps still untouched — it read as
-  // an interruption rather than a reward. A finished morning prayer is the moment
-  // the widget's promise ("today's verse and your next prayer on your home
-  // screen") is actually something she has experienced. The day-3 floor stays, and
-  // the nudge coordinator still serialises this against every other prompt.
+  // Timing: after she has used ANY ONE core feature (owner 2026-08-08). There is
+  // NO install-age floor — an older comment here claimed a "day-3 floor" that the
+  // code has never had. The nudge coordinator still serialises this against every
+  // other prompt.
   const eligible = Platform.OS === 'android'
     && gate !== null && !gate.has
-    && featuresUsed > FEATURES_REQUIRED   // strictly MORE than two features
+    && featuresUsed > FEATURES_REQUIRED   // ≥ 1 of the four core features
     && cadenceOk;
 
   // `eligible` contains `shown === false`, and the effect below sets `shown`

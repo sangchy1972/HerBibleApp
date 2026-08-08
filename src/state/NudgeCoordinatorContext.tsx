@@ -49,8 +49,14 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
   // Suppress ALL coordinator prompts while the full-screen "Follow Him" opt-in
   // (a pre-tab gate that replaces the tabs) is showing — otherwise a sheet could
   // render on top of it (both are notif-off surfaces, so they collide).
+  // OBSERVED, not inferred (owner 2026-08-08): only while FollowHimScreen is
+  // actually mounted. It used to read `ready && shouldShow`, which is true
+  // during the questionnaire too (RootNavigator renders that first), so a
+  // returning user mid-onboarding had every coordinator prompt — mood, login,
+  // rate, widget, both guides — silenced by a screen that wasn't there. The
+  // exclusion itself stays: nothing may paint over a pre-tab full-screen gate.
   const reminder = useReminderInterstitial();
-  const reminderGateUp = reminder.ready && reminder.shouldShow;
+  const reminderGateUp = reminder.onScreen;
 
   // Same idea for the first-run home tour. Priority alone would NOT be enough:
   // arbitration never preempts a visible prompt, and the mood sheet self-fires

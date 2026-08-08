@@ -76,6 +76,7 @@ import LoginPromptHost from './src/components/LoginPromptHost';
 import MoodCheckInSheet from './src/components/MoodCheckInSheet';
 import SetReminderTimeHost from './src/components/SetReminderTimeHost';
 import WidgetInstallHost from './src/components/WidgetInstallHost';
+import RemoveAdsPromptHost from './src/components/RemoveAdsPromptHost';
 import FirstRunTourHost from './src/components/FirstRunTourHost';
 import AudioMiniHost from './src/components/AudioMiniHost';
 import DeepLinkHandler from './src/navigation/DeepLinkHandler';
@@ -262,6 +263,11 @@ export default function App() {
                                           {/* One-time widget-install nudge
                                               (engaged users, day 3+). */}
                                           <WidgetInstallHost />
+                                          {/* Proactive remove-ads pitch: opens
+                                              the paywall after the first ad of
+                                              a qualifying day (2nd active day,
+                                              then every 7). Null render. */}
+                                          <RemoveAdsPromptHost />
                                           {/* 3-step first-run spotlight. Mounted
                                               at app root so it covers the tab bar
                                               as well as the screen. */}

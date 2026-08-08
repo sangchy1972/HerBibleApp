@@ -1,12 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import {
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, ActivityIndicator,
+  Modal, Image, Dimensions,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
+import Animated, {
+  FadeInRight, Easing, useSharedValue, useAnimatedStyle, withTiming, runOnJS,
+} from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { ROSE, BTN_RADIUS, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import Logo from '../components/shared/Logo';
 import type { RootStackScreenProps } from '../navigation/types';
 import { useT } from '../i18n/useT';
 import { initIap, fetchPrices, purchasePlan, restorePurchases } from '../services/iap';
+
+// Same gift art the onboarding trial sheet uses.
+const GIFT_BOX = require('../../assets/paywall/gift-box.png');
+const TRIAL_SHEET_H = Math.round(Dimensions.get('window').height * 0.56);
 
 type PlanId = 'lifetime' | 'annual' | 'monthly';
 
@@ -53,6 +64,66 @@ export default function RemoveAdsScreen({ navigation }: RootStackScreenProps<'Re
   const [selected, setSelected] = useState<PlanId>('lifetime');
   const [prices, setPrices] = useState<Record<PlanId, string>>(FALLBACK_PRICES);
   const [busy, setBusy] = useState(false);
+
+  // ── The 7-day-trial sheet, offered when the paywall is CLOSED ─────────────
+  // Day one's rhythm, reproduced here (owner 2026-08-08): paywall → close →
+  // one last soft pitch. It runs for BOTH ways in, the proactive post-ad prompt
+  // and the Profile banner, so the manual path gets it too.
+  const [showTrial, setShowTrial] = useState(false);
+  const closePaywall = () => {
+    if (showTrial) { navigation.goBack(); return; }   // already offered → leave
+    setShowTrial(true);
+  };
+  const declineTrial = () => { setShowTrial(false); navigation.goBack(); };
+  // Slide-up + swipe-down dismiss (project rule: EVERY bottom sheet). Same
+  // geometry and thresholds as the onboarding trial sheet so the two read as
+  // one surface.
+  const trialDragY = useSharedValue(TRIAL_SHEET_H);
+  useEffect(() => {
+    if (showTrial) {
+      trialDragY.value = TRIAL_SHEET_H;
+      trialDragY.value = withTiming(0, { duration: 420, easing: Easing.out(Easing.cubic) });
+    } else {
+      trialDragY.value = TRIAL_SHEET_H;
+    }
+  }, [showTrial, trialDragY]);
+  const trialPan = Gesture.Pan()
+    .activeOffsetY(12)
+    .onUpdate((e) => {
+      'worklet';
+      if (e.translationY > 0) trialDragY.value = e.translationY;
+    })
+    .onEnd((e) => {
+      'worklet';
+      if (e.translationY > 120 || e.velocityY > 800) {
+        trialDragY.value = withTiming(TRIAL_SHEET_H, { duration: 240 }, (f) => { if (f) runOnJS(declineTrial)(); });
+      } else {
+        trialDragY.value = withTiming(0, { duration: 220 });
+      }
+    });
+  const trialSheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: trialDragY.value }] }));
+
+  const onTrial = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const outcome = await purchasePlan('annual');
+      if (outcome === 'purchased') {
+        setShowTrial(false);
+        Alert.alert(
+          t('paywall.alert.success.title'),
+          t('paywall.alert.success.body'),
+          [{ text: t('common.continue'), onPress: () => navigation.goBack() }],
+        );
+      } else if (outcome === 'pending') {
+        Alert.alert(t('paywall.alert.pending.title'), t('paywall.alert.pending.body'));
+      } else if (outcome === 'error' || outcome === 'unavailable') {
+        Alert.alert(t('paywall.alert.error.title'), t('paywall.alert.error.body'));
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
 
   // Localized store prices (StoreKit / Play Billing). initIap() is idempotent —
   // normally already connected from App launch, this is just the safety call.
@@ -110,7 +181,7 @@ export default function RemoveAdsScreen({ navigation }: RootStackScreenProps<'Re
   return (
     <View style={[styles.root, { paddingTop: insets.top + 6 }]}>
       <View style={styles.topRow}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12} style={styles.closeBtn}>
+        <TouchableOpacity onPress={closePaywall} hitSlop={12} style={styles.closeBtn}>
           <Feather name="x" size={20} color={TXT} />
         </TouchableOpacity>
         <TouchableOpacity onPress={onRestore} hitSlop={10}>
@@ -177,6 +248,37 @@ export default function RemoveAdsScreen({ navigation }: RootStackScreenProps<'Re
           <TouchableOpacity onPress={() => navigation.navigate('Policy', { id: 'privacy' })}><Text style={styles.legal}>{t('paywall.privacy')}</Text></TouchableOpacity>
         </View>
       </View>
+
+      {/* Free-trial offer sheet — one last soft pitch when the paywall's X is
+          tapped, mirroring onboarding's. Declining it in ANY way (X, backdrop,
+          swipe-down) leaves the screen. */}
+      <Modal visible={showTrial} transparent animationType="none" onRequestClose={declineTrial} statusBarTranslucent>
+        <View style={styles.trialOverlay}>
+          <TouchableOpacity style={styles.trialBackdrop} activeOpacity={1} onPress={declineTrial} />
+          <GestureDetector gesture={trialPan}>
+            <Animated.View style={[styles.trialSheet, trialSheetStyle]}>
+              <View style={styles.trialHandle} />
+              <TouchableOpacity onPress={declineTrial} hitSlop={12} style={styles.trialClose}>
+                <Feather name="x" size={20} color={TXTSUB} />
+              </TouchableOpacity>
+              <Image source={GIFT_BOX} style={styles.trialGiftImg} resizeMode="contain" />
+              <Text style={styles.trialTitle}>{t('obTrial.title')}</Text>
+              {(['b1', 'b2', 'b3'] as const).map((k, i) => (
+                <Animated.View key={k} entering={FadeInRight.duration(450).delay(120 + i * 60)} style={styles.trialBenefitRow}>
+                  <Feather name="check" size={18} color={ROSE} />
+                  <Text style={styles.trialBenefitText}>{t(`obTrial.${k}`)}</Text>
+                </Animated.View>
+              ))}
+              <Text style={styles.trialPriceLine}>{t('obTrial.priceLine', { price: prices.annual })}</Text>
+              <TouchableOpacity onPress={onTrial} activeOpacity={0.85} style={[styles.cta, busy && styles.ctaBusy]} disabled={busy}>
+                {busy
+                  ? <ActivityIndicator color="#FFFFFF" />
+                  : <Text style={styles.ctaText}>{t('obTrial.cta')}</Text>}
+              </TouchableOpacity>
+            </Animated.View>
+          </GestureDetector>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -301,4 +403,32 @@ const styles = StyleSheet.create({
   },
   legal: { color: TXTSUB, fontSize: 13, fontWeight: '500' },
   legalSep: { color: TXTSUB, fontSize: 13 },
+
+  // Trial sheet — geometry copied from OnboardingFlow's so the two pitches are
+  // the same surface in two places.
+  trialOverlay: { flex: 1, justifyContent: 'flex-end' },
+  trialBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(20,16,28,0.42)' },
+  trialSheet: {
+    height: TRIAL_SHEET_H,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 22, borderTopRightRadius: 22,
+    paddingHorizontal: 24, paddingBottom: 22,
+  },
+  trialHandle: {
+    alignSelf: 'center', width: 42, height: 4.5, borderRadius: 3,
+    backgroundColor: 'rgba(30,27,46,0.18)', marginTop: 10, marginBottom: 4,
+  },
+  trialClose: {
+    position: 'absolute', top: 16, right: 16, zIndex: 2,
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: 'rgba(30,27,46,0.06)', alignItems: 'center', justifyContent: 'center',
+  },
+  trialGiftImg: { width: 96, height: 96, marginTop: 8, marginBottom: 14 },
+  trialTitle: { fontSize: 28, fontFamily: FONTS.loraBold, fontWeight: '600', color: TXT, marginBottom: 16 },
+  trialBenefitRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 13 },
+  trialBenefitText: { flex: 1, fontSize: 16, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4 },
+  trialPriceLine: {
+    fontSize: 14, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.4,
+    textAlign: 'center', marginTop: 16, marginBottom: 12,
+  },
 });

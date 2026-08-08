@@ -203,14 +203,19 @@ export default function SpotlightCoach({
   const handleSkip = useCallback(() => leave(onSkip), [leave, onSkip]);
   const handlePrimary = useCallback(() => leave(onPrimary), [leave, onPrimary]);
 
-  // Android hardware back = skip.
+  // Android hardware back = skip — but ONLY while the overlay is actually on
+  // screen. This component stays mounted (rendering null) through screen
+  // transitions and while an anchor is still being measured; intercepting the
+  // hardware back then would swallow presses aimed at a perfectly normal app.
   useEffect(() => {
+    if (!focused || !target) return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => { handleSkip(); return true; });
     return () => sub.remove();
-  }, [handleSkip]);
+  }, [focused, target, handleSkip]);
 
   // Backgrounding mid-flight: freeze, snap on return, re-measure.
   useEffect(() => {
+    if (!focused) return;
     const sub = AppState.addEventListener('change', s => {
       if (leaving.current) return;
       if (s !== 'active') {
@@ -223,7 +228,7 @@ export default function SpotlightCoach({
       }
     });
     return () => sub.remove();
-  }, [target, radius, put, scrim, sx, sy, sw, sh, sr, halo]);
+  }, [focused, target, radius, put, scrim, sx, sy, sw, sh, sr, halo]);
 
   // Last-resort watchdog — bypasses `leaving` on purpose: the case it exists
   // for is an exit that STARTED but never completed.
@@ -268,16 +273,28 @@ export default function SpotlightCoach({
   }));
   const SETTLED = { opacity: 1 } as const;
 
-  if (!focused || !target) return null;
+  if (!focused) return null;
 
   return (
+    // The ROOT mounts the moment the step's screen has focus — BEFORE the
+    // anchor is measured — because it is the coordinate-space origin every
+    // hole position is normalized against; measuring the anchor without it
+    // painted the first frame a status-bar-height off on Samsung/OneUI.
+    // It is box-none and, until `target` exists, has NO children: a user mid-
+    // measurement is touching the ordinary app, not an invisible shield. The
+    // touch shield below only exists alongside a VISIBLE scrim — this app has
+    // been burned by invisible full-screen layers before; never again.
     <View style={styles.root} ref={rootRef} collapsable={false} pointerEvents="box-none">
-      <View style={StyleSheet.absoluteFillObject} pointerEvents={isLeaving ? 'none' : 'auto'} />
-      <Svg width={W} height={H} style={StyleSheet.absoluteFillObject} pointerEvents="none">
-        <AnimatedPath animatedProps={pathProps} fill={TXT} fillRule="evenodd" stroke={ROSE} strokeWidth={2} />
-      </Svg>
+      {target != null && (
+        <View style={StyleSheet.absoluteFillObject} pointerEvents={isLeaving ? 'none' : 'auto'} />
+      )}
+      {target != null && (
+        <Svg width={W} height={H} style={StyleSheet.absoluteFillObject} pointerEvents="none">
+          <AnimatedPath animatedProps={pathProps} fill={TXT} fillRule="evenodd" stroke={ROSE} strokeWidth={2} />
+        </Svg>
+      )}
 
-      <Animated.View
+      {target != null && <Animated.View
         style={[
           styles.tipWrap,
           { left: tipLeft, top: tipTop, width: tipW, opacity: tipH === 0 ? 0 : undefined },
@@ -303,7 +320,7 @@ export default function SpotlightCoach({
             </TouchableOpacity>
           </View>
         </View>
-      </Animated.View>
+      </Animated.View>}
     </View>
   );
 }

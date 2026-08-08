@@ -3,7 +3,7 @@ import { useNudgeCoordinator } from '../state/NudgeCoordinatorContext';
 import { NUDGE_PRIORITY } from '../state/nudgePriority';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions,
-  ImageBackground, Keyboard, Platform, useWindowDimensions,
+  ImageBackground, Keyboard, Platform, useWindowDimensions, BackHandler,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -36,7 +36,7 @@ type Step = 'input' | 'verse' | 'done';
 // when the context's promptVisible flag is set (self-triggered once/day) AND
 // the nudge coordinator has granted it the single on-screen slot.
 export default function MoodCheckInSheet() {
-  const { promptVisible } = useMoodCheckIn();
+  const { promptVisible, markShownNow } = useMoodCheckIn();
   const coord = useNudgeCoordinator();
   useEffect(() => {
     if (promptVisible) {
@@ -48,7 +48,34 @@ export default function MoodCheckInSheet() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [promptVisible]);
-  if (!promptVisible || !coord.isActive('moodCheckIn')) return null;
+
+  // ALL HOOKS ABOVE THE EARLY RETURN. (Both of the effects below were briefly
+  // written under it — a conditional hook, which React rejects outright the
+  // moment the condition flips.)
+  //
+  // Unmount MUST release. ReminderInterstitialContext re-derives its day/night
+  // slot on every foreground, so a notifications-off user returning after 18:00
+  // has the whole tab tree swapped out for FollowHimScreen mid-session — every
+  // home-hosted trigger unmounts, and a slot still held would block every later
+  // prompt. `releaseSlot` (not `coord`) is pinned: the context value is memoized
+  // on activeId, so a [coord]-keyed cleanup would fire on the very grant it was
+  // meant to protect.
+  const releaseOnUnmount = coord.releaseSlot;
+  useEffect(() => () => releaseOnUnmount('moodCheckIn'), [releaseOnUnmount]);
+
+  // Burn today's flag only once the coordinator has GRANTED the slot, i.e. the
+  // sheet is really on screen. The context used to persist it when it merely
+  // wanted to show, so a grant that never came (a gate up, the wave cap, a
+  // force-quit) spent today's check-in silently.
+  const granted = promptVisible && coord.isActive('moodCheckIn');
+  const markedRef = useRef(false);
+  useEffect(() => {
+    if (granted && !markedRef.current) { markedRef.current = true; markShownNow(); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [granted]);
+
+  if (!granted) return null;
+
   return <Sheet />;
 }
 
@@ -135,6 +162,14 @@ function Sheet() {
 
   const now = new Date();
   const dateLabel = now.toLocaleDateString(localeFor(lang), { weekday: 'long', month: 'long', day: 'numeric' });
+
+  // Android hardware BACK. Without this the press goes to the navigator, which
+  // pops the screen (or exits to the launcher from the home tab) while this
+  // scrim stays up over whatever is now underneath.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => { dismiss(); return true; });
+    return () => sub.remove();
+  }, [dismiss]);
 
   return (
     // The ROOT is box-none, always: it spans the whole screen (including the
@@ -392,6 +427,7 @@ function DoneStep({ picks, onDone }: { picks: Record<string, Mood>; onDone: () =
     for (const [k, mood] of Object.entries(picks)) m[k] = { mood, at: 0 };
     return m;
   }, [picks]);
+
   return (
     <View style={{ paddingTop: 14 }}>
       <Animated.Text style={[styles.doneTitle, headStyle]}>

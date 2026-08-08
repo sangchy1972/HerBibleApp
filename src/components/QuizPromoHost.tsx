@@ -1,7 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, {
+  Easing, useSharedValue, useAnimatedStyle, withTiming,
+} from 'react-native-reanimated';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import { useQuiz } from '../state/QuizContext';
@@ -120,6 +122,20 @@ export default function QuizPromoHost({ inGap }: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
+  // SHARED VALUE, never `entering=`. This card lives inside an RN <Modal>, and
+  // Reanimated LAYOUT animations do not reliably run there on the new
+  // architecture (CommentsSheet and PrayerFlow both hit it) — a dropped entrance
+  // leaves the card at opacity 0 inside a TRANSPARENT full-screen native window:
+  // a dim wash with an invisible CTA that swallows every touch in the app. The
+  // watchdog snaps it visible if the timing is dropped.
+  const cardO = useSharedValue(0);
+  useEffect(() => {
+    cardO.value = withTiming(1, { duration: 200, easing: Easing.out(Easing.quad) });
+    const wd = setTimeout(() => { cardO.value = 1; }, 900);
+    return () => clearTimeout(wd);
+  }, [cardO]);
+  const cardStyle = useAnimatedStyle(() => ({ opacity: cardO.value }));
+
   if (!active) return null;
 
   const dismiss = () => { coord.notifyDismissed('quizPromo'); coord.releaseSlot('quizPromo'); };
@@ -146,7 +162,7 @@ export default function QuizPromoHost({ inGap }: {
     <Modal transparent visible statusBarTranslucent animationType="none" onRequestClose={dismiss}>
     <View style={styles.overlay}>
       <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={dismiss} />
-      <Animated.View entering={FadeIn.duration(200)} style={styles.card}>
+      <Animated.View style={[styles.card, cardStyle]}>
         <View style={styles.icon}>
           <MaterialCommunityIcons name="cards-outline" size={26} color={ROSE} />
         </View>

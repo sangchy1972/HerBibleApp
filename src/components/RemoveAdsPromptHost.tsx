@@ -6,6 +6,7 @@ import { logEvent } from '../services/firebase';
 import { onInterstitialVisibility } from '../services/interstitialVisibility';
 import { areAdsRemoved } from '../services/ads';
 import { removeAdsShouldAsk, type RemoveAdsPromptState } from '../state/removeAdsPrompt';
+import { nudgeActive } from '../state/promptSurface';
 import type { RootStackParamList } from '../navigation/types';
 
 // Proactive remove-ads pitch (owner 2026-08-08). Renders NOTHING: it listens
@@ -17,8 +18,14 @@ import type { RootStackParamList } from '../navigation/types';
 // Deliberately NOT coordinator-managed. The coordinator serialises prompts that
 // compete for the HOME screen; this one is anchored to a moment (the ad just
 // closed, the user is already interrupted) and would otherwise be starved for
-// waves behind the per-wave blocking cap. It cannot collide with a sheet either, because
-// it navigates to a full-screen route instead of painting an overlay.
+// waves behind the per-wave blocking cap.
+//
+// It DOES still have to yield to a live prompt, though — "it navigates instead of
+// painting an overlay" was wrong in both directions: root-mounted hosts are later
+// siblings of the navigator, so on Android their scrim paints OVER the pushed
+// route, and on iOS the route is a natively-presented fullScreenModal that hides
+// the sheet while it still holds the slot. So we check nudgeActive() and skip
+// (today's ad slot is still spent, so the cadence stays honest).
 
 const KEY = 'removeAdsPrompt:v1';
 
@@ -89,7 +96,7 @@ export default function RemoveAdsPromptHost() {
       const cur = stateRef.current;
       if (!cur) return;
       const today = ymdOf(new Date());
-      if (!removeAdsShouldAsk(cur, today, areAdsRemoved())) {
+      if (nudgeActive() || !removeAdsShouldAsk(cur, today, areAdsRemoved())) {
         // Still spend today's ad slot: "the FIRST ad of the day" must mean the
         // first one, not "the first one that happened to qualify".
         if (cur.lastAdDayYmd !== today) save({ ...cur, lastAdDayYmd: today });

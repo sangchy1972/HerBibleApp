@@ -75,6 +75,10 @@ export function StreakGuideProvider({ children }: { children: React.ReactNode })
   }, []);
   const [ready, setReady] = useState(false);
   const [lastShown, setLastShown] = useState<string | null>(null);
+  // Synchronous mirror — begin() must see the flag it just wrote, not the value
+  // from the render that scheduled it.
+  const lastShownRef = useRef<string | null>(null);
+  lastShownRef.current = lastShown;
   const [homeFocused, setHomeFocused] = useState(false);
   const [streakFocused, setStreakFocused] = useState(false);
 
@@ -91,9 +95,15 @@ export function StreakGuideProvider({ children }: { children: React.ReactNode })
 
   const begin = useCallback(() => {
     if (stageRef.current !== 'idle') return;
+    // ALSO guard on today's flag. A home-hosted trigger can remount while the
+    // slot is still granted (FollowHimScreen swapping the tab tree out mid-
+    // session), and its startedRef resets to false — a stage-only guard would
+    // then replay the guide on a day whose flag is already burned.
+    if (lastShownRef.current === todayYmd()) return;
     // Burn today's flag the moment it becomes visible — a force-quit mid-guide
     // must not re-arm it the same day.
     const ymd = todayYmd();
+    lastShownRef.current = ymd;
     setLastShown(ymd);
     AsyncStorage.setItem(SHOWN_KEY, ymd).catch(() => {});
     logEvent('streak_guide_start', { remaining: mDone ? 'evening' : 'morning' });

@@ -64,6 +64,9 @@ const Ctx = createContext<PlanGuideState | null>(null);
 export function PlanGuideProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [done, setDone] = useState(true);          // assume done until storage says otherwise
+  // Synchronous mirror, for the same reason StreakGuideContext keeps one.
+  const doneRef = useRef(true);
+  doneRef.current = done;
   const [visited, setVisited] = useState(true);    // same safe default
   const [stage, setStage] = useState<PlanGuideStage>('idle');
   const [entry, setEntry] = useState<PlanGuideEntry>('home');
@@ -97,8 +100,12 @@ export function PlanGuideProvider({ children }: { children: React.ReactNode }) {
 
   const begin = useCallback((e: PlanGuideEntry) => {
     if (stageRef.current !== 'idle') return;
+    // ALSO guard on the once-ever flag — a trigger can remount while the slot is
+    // still granted (see StreakGuideContext.begin) and replay the guide.
+    if (doneRef.current) return;
     setEntry(e);
     // Once ever — burn on display so a crash mid-guide can't loop it.
+    doneRef.current = true;
     setDone(true);
     AsyncStorage.setItem(DONE_KEY, '1').catch(() => {});
     logEvent('plan_guide_start', { entry: e });

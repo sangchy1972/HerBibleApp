@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { useSheetSurface } from '../state/promptSurface';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, SlideInDown, Easing } from 'react-native-reanimated';
 import { ROSE, TXT, TXTSUB, P } from '../constants/theme';
@@ -58,6 +59,11 @@ interface Props {
 }
 
 export default function TimePickerSheet({ initialHour, initialMinute, title, minHour = 0, maxHour = 23, onConfirm, onClose }: Props) {
+  // These sheets live INSIDE their screen, but the root-mounted nudges are later
+  // siblings of the navigator — so a nudge's zIndex 60 beats this sheet's 200 and
+  // would land on top, orphaning it behind a second scrim. Claiming the surface
+  // holds every blocking prompt back for as long as this is mounted.
+  useSheetSurface(true);
   const t = useT();
   const insets = useSafeAreaInsets();
   const [hour, setHour] = useState(Math.min(maxHour, Math.max(minHour, initialHour)));

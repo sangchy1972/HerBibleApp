@@ -59,6 +59,7 @@ export default function PlanGuideTrigger({ ctaQuiet }: { ctaQuiet: boolean }) {
       requestedRef.current = true;
       coord.requestSlot({
         id: 'planGuide',
+        owner: 'home',
         priority: NUDGE_PRIORITY.planGuide,
         canShow: () => eligibleRef.current,
         // A one-time feature tutorial the owner wants reliably delivered on
@@ -67,7 +68,7 @@ export default function PlanGuideTrigger({ ctaQuiet }: { ctaQuiet: boolean }) {
       });
     } else if (requestedRef.current) {
       requestedRef.current = false;
-      coord.releaseSlot('planGuide');
+      coord.releaseSlot('planGuide', 'home');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused, eligible, active]);
@@ -85,7 +86,7 @@ export default function PlanGuideTrigger({ ctaQuiet }: { ctaQuiet: boolean }) {
       startedRef.current = false;
       requestedRef.current = false;
       coord.notifyDismissed('planGuide');
-      coord.releaseSlot('planGuide');
+      coord.releaseSlot('planGuide', 'home');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, guide.stage, isFocused]);

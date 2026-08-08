@@ -54,6 +54,8 @@ interface MoodCheckInState {
   promptVisible: boolean;
   openPrompt: () => void;
   closePrompt: () => void;
+  /** Burn today's flag — called by the sheet once it is really on screen. */
+  markShownNow: () => void;
   shouldShow: () => boolean;
   markShown: () => void;
   recordPick: (mood: Mood, note?: string) => void;
@@ -129,8 +131,11 @@ export function MoodCheckInProvider({ children }: { children: React.ReactNode })
     firedRef.current = true;
     if (computeShouldShow(state)) {
       const timer = setTimeout(() => {
+        // ONLY request. `lastShownAt` used to be persisted here — before the
+        // coordinator had granted anything — so a grant that never came (a gate
+        // up, the wave cap, a force-quit) still burned today's check-in. The
+        // SHEET marks it now, when it is actually on screen (markShownNow).
         setPromptVisible(true);
-        persist({ ...state, lastShownAt: Date.now() });
       }, OPEN_DELAY_MS);
       return () => clearTimeout(timer);
     }
@@ -152,6 +157,7 @@ export function MoodCheckInProvider({ children }: { children: React.ReactNode })
       promptVisible,
       openPrompt: () => setPromptVisible(true),
       closePrompt: () => setPromptVisible(false),
+      markShownNow: () => persist({ ...state, lastShownAt: Date.now() }),
       shouldShow: () => computeShouldShow(state),
       markShown: () => persist({ ...state, lastShownAt: Date.now() }),
       recordPick: (mood, note) => {

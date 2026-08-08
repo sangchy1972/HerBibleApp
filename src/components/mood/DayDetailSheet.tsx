@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions,
   Keyboard, Platform, useWindowDimensions,
 } from 'react-native';
+import { useSheetSurface } from '../../state/promptSurface';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { Easing, useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
@@ -18,6 +19,11 @@ const SCREEN_H = Dimensions.get('window').height;
 
 // Bottom sheet for a single day: review its mood + note, or edit / back-fill it.
 export default function DayDetailSheet({ dateKey, onClose }: { dateKey: string; onClose: () => void }) {
+  // These sheets live INSIDE their screen, but the root-mounted nudges are later
+  // siblings of the navigator — so a nudge's zIndex 60 beats this sheet's 200 and
+  // would land on top, orphaning it behind a second scrim. Claiming the surface
+  // holds every blocking prompt back for as long as this is mounted.
+  useSheetSurface(true);
   const insets = useSafeAreaInsets();
   const t = useT();
   const { lang } = useUILanguage();

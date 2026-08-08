@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, BackHandler } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import TimePickerSheet from './TimePickerSheet';
@@ -40,22 +40,47 @@ export default function SetReminderTimeHost() {
   }, [eligible]);
 
   const active = coord.isActive('setReminderTime');
-
-  // Count the show exactly once when it actually appears.
-  const shownRef = useRef(false);
+  // Android hardware BACK, ABOVE every early return (a hook under one is
+  // conditional and React rejects it when the condition flips). Without this the
+  // press goes to the navigator, which pops the screen — or exits to the
+  // launcher from the home tab — while this scrim stays up over whatever is now
+  // underneath. Routed through a ref because `dismiss` is defined further down.
+  const dismissRef = useRef<() => void>(() => {});
   useEffect(() => {
-    if (active && !shownRef.current) { shownRef.current = true; srt.markShown(); }
-    if (!active) shownRef.current = false;
+    if (!active) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => { dismissRef.current(); return true; });
+    return () => sub.remove();
+  }, [active]);
+
+
+  // Count the show exactly once PER GRANT. A remount while the slot is still
+  // active (FollowHimScreen swapping the tab tree out mid-session) reset a plain
+  // boolean to false and markShown ran twice, double-counting the cadence.
+  const shownForRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (active && shownForRef.current !== true) { shownForRef.current = true; srt.markShown(); }
+    if (!active) shownForRef.current = null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
   const [step, setStep] = useState<'rationale' | 'morning' | 'evening'>('rationale');
   const [mTime, setMTime] = useState({ hour: 8, minute: 0 });
 
+  // Unmount MUST release. ReminderInterstitialContext re-derives its day/night
+  // slot on every foreground, so a notifications-off user returning after 18:00
+  // has the whole tab tree swapped out for FollowHimScreen mid-session — every
+  // home-hosted trigger unmounts, and a slot still held would block every later
+  // prompt. `releaseSlot` (not `coord`) is pinned: the context value is memoized
+  // on activeId, so a [coord]-keyed cleanup would fire on the very grant it was
+  // meant to protect.
+  const releaseOnUnmount = coord.releaseSlot;
+  useEffect(() => () => releaseOnUnmount('setReminderTime'), [releaseOnUnmount]);
+
   if (!active) return null;
 
   const dismiss = () => {
     coord.notifyDismissed('setReminderTime');
+  dismissRef.current = dismiss;
     coord.releaseSlot('setReminderTime');
     setStep('rationale');
   };
@@ -91,6 +116,7 @@ export default function SetReminderTimeHost() {
     );
   }
 
+
   return (
     <View style={styles.overlay}>
       <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={dismiss} />
@@ -110,7 +136,7 @@ export default function SetReminderTimeHost() {
 }
 
 const styles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, zIndex: 60, backgroundColor: 'rgba(20,12,24,0.45)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
+  overlay: { ...StyleSheet.absoluteFillObject, zIndex: 60, elevation: 60, backgroundColor: 'rgba(20,12,24,0.45)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
   card: { width: '100%', backgroundColor: '#FFFFFF', borderRadius: 20, paddingTop: 24, paddingBottom: 16, paddingHorizontal: 22, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 24, elevation: 8 },   // 22 → 28.6 (+30 % card radius per user)
   icon: { width: 56, height: 56, borderRadius: 28, backgroundColor: `${ROSE}16`, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
   title: { fontSize: 20, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT, textAlign: 'center', marginBottom: 8 },

@@ -8,7 +8,7 @@ import {
 } from './nudgePriority';
 import { useReminderInterstitial } from './ReminderInterstitialContext';
 import { useFirstRunTour } from './FirstRunTourContext';
-import { usePromptSurfaceSafe } from './promptSurface';
+import { usePromptSurfaceSafe, setNudgeActive } from './promptSurface';
 
 const LAST_BUDGETED_KEY = 'nudge:lastBudgetedAt:v1';
 
@@ -27,11 +27,16 @@ interface NudgeRequest {
   canShow: () => boolean;
   /** Reward / daily-ritual prompts bypass the per-open budget. */
   ignoresBudget?: boolean;
+  /** Optional owner tag for slot ids shared by MORE THAN ONE host (today the
+   *  two plan-guide triggers). releaseSlot(id, owner) then deletes the entry
+   *  only if it is still that owner's — otherwise the host going ineligible
+   *  silently deletes the OTHER host's live request and the nudge is lost. */
+  owner?: string;
 }
 
 interface NudgeCoordinatorState {
   requestSlot: (req: NudgeRequest) => void;
-  releaseSlot: (id: NudgeId) => void;
+  releaseSlot: (id: NudgeId, owner?: string) => void;
   isActive: (id: NudgeId) => boolean;
   notifyDismissed: (id: NudgeId) => void;
 }
@@ -82,9 +87,20 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
   }, []);
 
   // Reset the per-open counters on every return to the foreground.
+  const foregroundTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => () => { foregroundTimers.current.forEach(clearTimeout); }, []);
   useEffect(() => {
     const sub = AppState.addEventListener('change', s => {
-      if (s === 'active') { budgetUsed.current = 0; shownThisOpen.current = 0; lastBlockingAt.current = 0; bump(); }
+        if (s === 'active') {
+        budgetUsed.current = 0; shownThisOpen.current = 0; lastBlockingAt.current = 0;
+        // DELAYED, not synchronous. On a hot start the app_open interstitial is
+        // requested off InteractionManager, so arbitrating here would grant a
+        // slot in the same frame and the ad would then cover the prompt it just
+        // granted. A beat's delay lets isInterstitialVisible() claim the screen
+        // first, and the surface gate refuses.
+        const tm = setTimeout(bump, 1200);
+        foregroundTimers.current.push(tm);
+      }
     });
     return () => sub.remove();
   }, [bump]);
@@ -97,8 +113,12 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
     if (!prev) bump();
   }, [bump]);
 
-  const releaseSlot = useCallback((id: NudgeId) => {
-    if (!requests.current.has(id)) return;
+  const releaseSlot = useCallback((id: NudgeId, owner?: string) => {
+    const cur = requests.current.get(id);
+    if (!cur) return;
+    // Shared slot id: only the host that actually owns the live request may
+    // release it (see NudgeRequest.owner).
+    if (owner != null && cur.owner != null && cur.owner !== owner) return;
     requests.current.delete(id);
     setActiveId(a => (a === id ? null : a));
     bump();
@@ -144,17 +164,46 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
       setActiveId(pick);
       return;
     }
-    // Nothing shown, but the cap is what's holding the queue AND something is
-    // waiting: re-arbitrate the moment the wave timer elapses. Without this the
-    // effect would only run again on the next request/dismiss, and the wave
-    // reset above would never be reached inside a quiet session.
-    if (blockingRemaining <= 0 && lastBlockingAt.current > 0
-        && reqs.some(r => r.eligible)) {
-      const wait = Math.max(250, NUDGE_WAVE_QUIET_MS - (now - lastBlockingAt.current));
-      const tm = setTimeout(bump, wait);
-      return () => clearTimeout(tm);
+    // Nothing shown but something IS waiting → re-arbitrate the moment whichever
+    // clock is holding it back elapses. Without this the effect only re-runs on
+    // the next request/dismiss/foreground, so a queue blocked purely by a timer
+    // stalls with slots still free — the 30s budgeted floor inside a 10s wave
+    // hits this constantly, and widget + rate were dropping out of day one.
+    if (reqs.some(r => r.eligible)) {
+      const waits: number[] = [];
+      if (blockingRemaining <= 0 && lastBlockingAt.current > 0) {
+        waits.push(NUDGE_WAVE_QUIET_MS - (now - lastBlockingAt.current));
+      }
+      if (withinFloor) waits.push(BUDGETED_NUDGE_FLOOR_MS - (now - lastBudgetedAt.current));
+      if (waits.length) {
+        const tm = setTimeout(bump, Math.max(250, Math.min(...waits)));
+        return () => clearTimeout(tm);
+      }
     }
   }, [version, activeId, reminderGateUp, tourGateUp, surfaceSafe, bump]);
+
+  // Publish "a prompt is up" for non-coordinator surfaces — today the proactive
+  // paywall, which navigates to a full-screen route and would otherwise land on
+  // top of (Android) or underneath (iOS fullScreenModal) a live sheet.
+  useEffect(() => { setNudgeActive(activeId !== null); }, [activeId]);
+
+  // SAFETY VALVE. `activeId` is cleared only by notifyDismissed/releaseSlot, so a
+  // host that unmounts while holding the slot — and five of them have no unmount
+  // release — would block every later prompt for the session. The real path:
+  // ReminderInterstitialContext re-derives its day/night slot on every
+  // foreground, so a notifications-off user who returns after 18:00 has the whole
+  // tab tree swapped out for FollowHimScreen mid-session, unmounting every
+  // home-hosted trigger. If the active id has no live request behind it, drop it.
+  useEffect(() => {
+    if (activeId === null) return;
+    const tm = setTimeout(() => {
+      if (!requests.current.has(activeId)) {
+        setActiveId(null);
+        bump();
+      }
+    }, 1500);
+    return () => clearTimeout(tm);
+  }, [activeId, bump]);
 
   const value = useMemo<NudgeCoordinatorState>(() => ({
     requestSlot,

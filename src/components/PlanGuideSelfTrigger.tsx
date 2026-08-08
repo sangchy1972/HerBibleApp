@@ -60,13 +60,14 @@ export default function PlanGuideSelfTrigger() {
       requestedRef.current = true;
       coord.requestSlot({
         id: 'planGuide',
+        owner: 'self',
         priority: NUDGE_PRIORITY.planGuide,
         canShow: () => eligibleRef.current,
         ignoresBudget: true,
       });
     } else if (requestedRef.current) {
       requestedRef.current = false;
-      coord.releaseSlot('planGuide');
+      coord.releaseSlot('planGuide', 'self');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused, eligible, active]);
@@ -86,7 +87,7 @@ export default function PlanGuideSelfTrigger() {
       startedRef.current = false;
       requestedRef.current = false;
       coord.notifyDismissed('planGuide');
-      coord.releaseSlot('planGuide');
+      coord.releaseSlot('planGuide', 'self');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, guide.stage, isFocused]);

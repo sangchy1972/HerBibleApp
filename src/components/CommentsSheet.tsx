@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { useSheetSurface } from '../state/promptSurface';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,6 +36,11 @@ function hashIdx(str: string, mod: number): number {
 export default function CommentsSheet({ ymd, slot, count, onClose }: {
   ymd: string; slot: VerseSlot; count: number; onClose: () => void;
 }) {
+  // These sheets live INSIDE their screen, but the root-mounted nudges are later
+  // siblings of the navigator — so a nudge's zIndex 60 beats this sheet's 200 and
+  // would land on top, orphaning it behind a second scrim. Claiming the surface
+  // holds every blocking prompt back for as long as this is mounted.
+  useSheetSurface(true);
   const insets = useSafeAreaInsets();
   const t = useT();
   const { lang } = useUILanguage();

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Linking, Platform, type ImageSourcePropType } from 'react-native';
+import { useSheetSurface } from '../state/promptSurface';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, G } from 'react-native-svg';
@@ -83,6 +84,11 @@ const APP_CONFIG: Record<AppKey, { label: string; scheme: string; iosStore: stri
 };
 
 export default function ShareVerseSheet({ reference, text, onClose, bgSource }: Props) {
+  // These sheets live INSIDE their screen, but the root-mounted nudges are later
+  // siblings of the navigator — so a nudge's zIndex 60 beats this sheet's 200 and
+  // would land on top, orphaning it behind a second scrim. Claiming the surface
+  // holds every blocking prompt back for as long as this is mounted.
+  useSheetSurface(true);
   const { recordShare } = useShare();
   const insets = useSafeAreaInsets();
   const t = useT();

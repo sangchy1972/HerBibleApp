@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Pressable, ActivityIndicator, TextInput, Keyboard } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Pressable, ActivityIndicator, TextInput, Keyboard, BackHandler } from 'react-native';
 import Svg, { Path, G } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -86,6 +86,14 @@ export default function SignInSheet({ onClose, onError }: Props) {
     const onHide = Keyboard.addListener(hideEvt, () => setKbHeight(0));
     return () => { onShow.remove(); onHide.remove(); };
   }, []);
+
+  // Android hardware BACK. Without this the press goes to the navigator, which
+  // pops the screen (or exits to the launcher from the home tab) while this
+  // scrim stays up over whatever is now underneath.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => { onClose(); return true; });
+    return () => sub.remove();
+  }, [onClose]);
 
   return (
     <View style={[styles.overlay, kbHeight ? { paddingBottom: kbHeight } : null]}>
@@ -389,6 +397,7 @@ export function AppleGlyph({ color = '#FFFFFF' }: { color?: string }) {
 }
 
 function FacebookGlyph() {
+
   return (
     <Svg width={20} height={20} viewBox="0 0 24 24">
       <Path
@@ -403,7 +412,7 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'flex-end',
-    zIndex: 100,
+    zIndex: 100, elevation: 100,
   },
   backdrop: { backgroundColor: 'rgba(0,0,0,0.4)' },
   sheet: {

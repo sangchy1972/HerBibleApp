@@ -37,10 +37,13 @@ export default function RatePromptHost() {
   // Record the show exactly once — the instant the coordinator grants the slot.
   // markShown flips `eligible` false, but `active` stays true (the coordinator
   // never preempts a live prompt) so the sheet remains until the user closes it.
-  const shownRef = useRef(false);
+  // Keyed on the GRANT, not on mount: a remount while the slot is still active
+  // (FollowHimScreen swapping the tab tree out mid-session) reset shownRef to
+  // false and markShown ran a second time, double-counting the cadence.
+  const shownForRef = useRef<boolean | null>(null);
   useEffect(() => {
-    if (active && !shownRef.current) { shownRef.current = true; rate.markShown(); }
-    if (!active) shownRef.current = false;
+    if (active && shownForRef.current !== true) { shownForRef.current = true; rate.markShown(); }
+    if (!active) shownForRef.current = null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
@@ -48,6 +51,16 @@ export default function RatePromptHost() {
     coord.notifyDismissed('rate');
     coord.releaseSlot('rate');
   }, [coord]);
+
+  // Unmount MUST release. ReminderInterstitialContext re-derives its day/night
+  // slot on every foreground, so a notifications-off user returning after 18:00
+  // has the whole tab tree swapped out for FollowHimScreen mid-session — every
+  // home-hosted trigger unmounts, and a slot still held would block every later
+  // prompt. `releaseSlot` (not `coord`) is pinned: the context value is memoized
+  // on activeId, so a [coord]-keyed cleanup would fire on the very grant it was
+  // meant to protect.
+  const releaseOnUnmount = coord.releaseSlot;
+  useEffect(() => () => releaseOnUnmount('rate'), [releaseOnUnmount]);
 
   if (!active) return null;
   return <RatePromptSheet onClose={close} />;

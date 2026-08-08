@@ -89,7 +89,7 @@ import { setAppRemountHandler, initCloudBackup } from './src/services/cloudBacku
 import { initAds } from './src/services/ads';
 import { ensureAttRequested } from './src/services/att';
 import { initAdFrequency, noteNavigation } from './src/services/adFrequency';
-import { setPromptRoute } from './src/state/promptSurface';
+import { setPromptRoute, setLaunchOverlayUp } from './src/state/promptSurface';
 import { initIap } from './src/services/iap';
 
 export default function App() {
@@ -163,6 +163,9 @@ export default function App() {
   // Stable callback so LoadingOverlay's timers/effects don't reset on every
   // re-render (an inline arrow would churn its 6s safety-cap effect).
   const hideLoading = React.useCallback(() => setLoadingDone(true), []);
+  // The launch overlay is pointerEvents="none", so a prompt granted underneath it
+  // is invisible-but-live. Report its state to the prompt-surface gate.
+  React.useEffect(() => { setLaunchOverlayUp(!loadingDone); }, [loadingDone]);
 
   const [fontsLoaded] = useFonts({
     // Preload the @expo/vector-icons fonts we use up front. Without this they
@@ -234,7 +237,7 @@ export default function App() {
                                         <NudgeCoordinatorProvider>
                                         <SetReminderTimeProvider>
                                         <QuizPromoProvider>
-                                        <NavigationContainer ref={navRef} theme={NAV_THEME} onStateChange={onNavStateChange} onReady={() => setAppReady(true)}>
+                                        <NavigationContainer ref={navRef} theme={NAV_THEME} onStateChange={onNavStateChange} onReady={() => { setAppReady(true); onNavStateChange(); }}>
                                           <StatusBar style="dark" />
                                           <RootNavigator />
                                           {/* Mounted inside NavigationContainer

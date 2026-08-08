@@ -86,5 +86,15 @@ export default function StreakGuideTrigger() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, guide.stage, isFocused]);
 
+  // Unmount MUST release. ReminderInterstitialContext re-derives its day/night
+  // slot on every foreground, so a notifications-off user returning after 18:00
+  // has the whole tab tree swapped out for FollowHimScreen mid-session — every
+  // home-hosted trigger unmounts, and a slot still held would block every later
+  // prompt. `releaseSlot` (not `coord`) is pinned: the context value is memoized
+  // on activeId, so a [coord]-keyed cleanup would fire on the very grant it was
+  // meant to protect.
+  const releaseOnUnmount = coord.releaseSlot;
+  useEffect(() => () => releaseOnUnmount('streakGuide'), [releaseOnUnmount]);
+
   return null;
 }

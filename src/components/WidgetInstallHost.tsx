@@ -13,6 +13,9 @@ import { WIDGET_PRESENT_KEY } from '../../widgets/widget-task-handler';
 import { useNudgeCoordinator } from '../state/NudgeCoordinatorContext';
 import { NUDGE_PRIORITY } from '../state/nudgePriority';
 import { useT } from '../i18n/useT';
+import { useDailyVerses } from '../state/DailyVersesContext';
+import { requestPin as requestPinWidget, isPinSupported } from '../../modules/expo-pin-widget';
+import { syncVerseWidget } from '../../widgets/syncVerseWidget';
 import { ROSE, TXT, TXTSUB, FONTS } from '../constants/theme';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -54,6 +57,7 @@ export default function WidgetInstallHost() {
   const gp = useGospelsPsalms();
   const { chaptersRead } = useReadChapters();
   const { totalDayCompletions } = usePlanCompletion();
+  const { getVerse, todayDay } = useDailyVerses();
   const coord = useNudgeCoordinator();
   // null = still loading persisted state; nothing is eligible until it resolves.
   const [gate, setGate] = useState<{ has: boolean; asks: number; lastYmd: string } | null>(null);
@@ -164,7 +168,42 @@ export default function WidgetInstallHost() {
 
   const dismiss = () => { coord.notifyDismissed('widgetInstall'); coord.releaseSlot('widgetInstall'); };
   dismissRef.current = dismiss;
-  const onAdd = () => { dismiss(); setTimeout(() => { try { nav.navigate('AddWidget'); } catch { /* route may not be mounted */ } }, 60); };
+  // "Add widget" now DOES it. It used to navigate to AddWidgetScreen, where she
+  // had to tap Install and then confirm a second branded rationale before the
+  // launcher's dialog appeared — three taps after she had already said yes, and
+  // the owner's report was the honest outcome: he tapped Add widget and no widget
+  // ever reached his home screen. This dialog IS the rationale; the OS dialog
+  // that follows is the launcher's own, which is what keeps it Play-compliant.
+  //
+  // Order matters, and it is the order AddWidgetScreen already had to discover:
+  // let our overlay actually unmount first (dismiss, then a frame), because
+  // firing requestPinAppWidget while something of ours is still on top gets the
+  // launcher's dialog swallowed. Then seed today's verse so a freshly pinned
+  // widget is never blank, then pin.
+  //
+  // Falls back to the screen — never to nothing — when the launcher does not
+  // support pinning or refuses, so she still gets the manual instructions.
+  const onAdd = () => {
+    dismiss();
+    requestAnimationFrame(() => {
+      (async () => {
+        try {
+          const m = getVerse(todayDay, 'morning');
+          const e = getVerse(todayDay, 'evening');
+          await syncVerseWidget({
+            morning: m ? { verse: m.modernText, reference: m.reference.full_reference } : null,
+            evening: e ? { verse: e.modernText, reference: e.reference.full_reference } : null,
+            amenLabel: t('widget.amen'),
+          });
+        } catch { /* a blank-but-pinned widget still beats no widget */ }
+        let pinned = false;
+        try { pinned = isPinSupported() ? await requestPinWidget() : false; } catch { pinned = false; }
+        if (!pinned) {
+          try { nav.navigate('AddWidget'); } catch { /* route may not be mounted */ }
+        }
+      })();
+    });
+  };
 
 
   return (

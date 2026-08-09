@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, TouchableOpacity, StyleSheet, View } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import { ROSE, GREEN_DONE, TXT, TXTSUB, BTN_RADIUS, FONTS, INK_06 } from '../../constants/theme';
+import { ROSE, GREEN_DONE, TXT, TXTSUB, BTN_RADIUS, FONTS, INK_06, INK_10 } from '../../constants/theme';
 
 // One answer option.
 //
@@ -79,15 +79,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 11,
     backgroundColor: '#FFFFFF',
-    // The lightest shadow the app has — the ink hairline is gone, and a plain
-    // white box on the BG off-white would otherwise have no edge at all. Kept
-    // deliberately shallow (elevation 1): Android renders elevation as a grey
-    // rim, which is exactly what we just removed, so anything heavier undoes it.
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    // A light hairline, NOT a shadow (per user 2026-08-09). The shadow was too
+    // faint to read as an edge on the white quiz card — on the prayer-end screen
+    // the options looked like floating text. A 1px INK_10 border is unambiguous
+    // at any brightness, costs no overdraw, and renders identically on both
+    // platforms (Android drew the shadow as its own grey rim anyway).
+    borderWidth: 1,
+    borderColor: INK_10,
   },
   // Merriweather for the answer text (bundled; the reader already uses it).
   // 16 → 17.3 = the +8 % scale the user asked for over the reference design.
@@ -105,11 +103,11 @@ const styles = StyleSheet.create({
 
 const STATE_BOX: Record<OptionState, object> = {
   idle: {},
-  correct: { backgroundColor: GREEN_DONE },
-  wrong: { backgroundColor: ROSE },
+  correct: { backgroundColor: GREEN_DONE, borderColor: GREEN_DONE },
+  wrong: { backgroundColor: ROSE, borderColor: ROSE },
   // Inert, and flat: no shadow, because a greyed-out option should read as
   // recessed rather than as another card sitting on the page.
-  tried: { backgroundColor: INK_06, shadowOpacity: 0, elevation: 0 },
+  tried: { backgroundColor: INK_06, borderColor: 'transparent' },
 };
 
 const STATE_TEXT: Record<OptionState, object> = {

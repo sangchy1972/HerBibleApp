@@ -181,7 +181,7 @@ export default function WeeklyProgressView({
           collapse inside a ScrollView's content container. */}
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 58 }]}
       >
       {/* Headline at the very top of the page (reference layout, per user) —
           the celebration title now frames the whole screen, not the card. */}
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#FBE5EF' },
   // Bottom padding so the last CTA clears the home indicator when the content
   // scrolls on small screens; on tall screens it's invisible whitespace.
-  scrollContent: { paddingBottom: 28 },
+  scrollContent: { paddingBottom: 58 },   // 28 → 58 (+30 per user); insets.bottom is added inline
   // Page headline — top of the screen, above the card (reference layout).
   pageTitle: {
     fontSize: 27,
@@ -505,8 +505,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.68)',
     borderRadius: 20,                                                             // 24 → 20, matching nextCard
     paddingHorizontal: 22,
-    paddingTop: 48,                                                               // 18 → 48
-    paddingBottom: 50,                                                            // 20 → 50
+    // −10 % on the card's total height (per user). With the reminder CTA showing —
+    // the state he was looking at — the stack is lottie 166 + sub 45 + dayRow 56 +
+    // CTA 82 = 349, so 447 − 45 = 402. The padding is the only knob (content
+    // drives the height), and the 45 comes mostly off the BOTTOM because that is
+    // where the visible empty space was: 31 below, 14 above.
+    paddingTop: 34,                                                               // 48 → 34
+    paddingBottom: 19,                                                            // 50 → 19
     alignItems: 'center',
   },
   dayRow: {
@@ -595,7 +600,10 @@ const styles = StyleSheet.create({
   // children that would otherwise square off the corners.
   gpBanner: {
     marginHorizontal: 16,
-    marginTop: 30,
+    // 30 → 20 so the gap ABOVE the banner matches the gap below it. The quiz card
+    // owns that lower gap (its own paddingTop: 20), and 30-above/20-below read as
+    // a mistake even though neither number is wrong on its own.
+    marginTop: 20,
     height: 100,
     borderRadius: 20,
     overflow: 'hidden',

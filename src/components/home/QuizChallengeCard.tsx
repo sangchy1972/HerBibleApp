@@ -133,7 +133,7 @@ export default function QuizChallengeCard({
 
       {/* Under the title, as on the full screen (and as the reference layout the
           user asked for). */}
-      <QuizSegmentBar segments={segments} height={6} style={styles.bar} />
+      <QuizSegmentBar segments={segments} height={7.2} style={styles.bar} />   {/* 6 → 7.2 (+20 %, per user) */}
 
       <Text style={styles.status} numberOfLines={1}>
         {inSummary
@@ -240,8 +240,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
     paddingHorizontal: 16,
-    paddingTop: 15,
-    paddingBottom: 16,
+    paddingTop: 25,                // 15 → 25 (+10 px above the title, per user)
+    paddingBottom: 26,             // 16 → 26 (+10 px below the last option)
   },
   header: { flexDirection: 'row', alignItems: 'center' },
   headerCopy: { flex: 1, minWidth: 0, marginLeft: 14 },
@@ -255,13 +255,17 @@ const styles = StyleSheet.create({
   bar: { marginTop: 14 },
   // Centred under the bar, matching the full screen's counter row.
   status: {
-    fontFamily: FONTS.lato, fontSize: 13, color: TXTSUB,
+    // 13 → 14.3 (+10 %) → 17.16 (+20 % more, per user)
+    fontFamily: FONTS.lato, fontSize: 17.16, color: TXTSUB,
     letterSpacing: 0.4, textAlign: 'center', marginTop: 10,
   },
   // The quiz's own question type: Merriweather at the +8 % scale.
   // Mirrors the full screen's question type (19/30 per user).
   question: {
-    fontFamily: FONTS.merriweather, fontSize: 19, lineHeight: 30,
+    // 19 → 17.1 (−10 %, per user). lineHeight scales with it: 30 against 17.1
+    // would be a 1.75 ratio, which reads as a gap between lines rather than a
+    // paragraph — and the point of this pass was to make the card tighter.
+    fontFamily: FONTS.merriweather, fontSize: 17.1, lineHeight: 27,
     color: TXT, letterSpacing: 0.1, marginLeft: 3, marginTop: 16, marginBottom: 18,
   },
   // Cancels the trailing option's own 11 marginBottom so the card's 16 of

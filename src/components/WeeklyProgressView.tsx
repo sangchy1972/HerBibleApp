@@ -5,7 +5,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import LottieView from 'lottie-react-native';
 import Animated, {
-  FadeIn, SlideInDown, Easing, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, interpolate,
+  FadeIn, SlideInDown, Easing, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming,
+  interpolate, cancelAnimation,
 } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { ROSE, LAV, TXT, TXTSUB, FONTS } from '../constants/theme';
@@ -418,6 +419,11 @@ function PulseArrow({ color }: { color: string }) {
       withTiming(0, { duration: 700, easing: Easing.inOut(Easing.cubic) }),
       withTiming(0, { duration: 300 }),                                        // a beat's rest, so it pulses rather than throbs
     ), -1, false);
+    // PrayerFlow is a route that unmounts, and every prayer mounts this screen
+    // again — an infinite repeat left running is a driver with no consumer. The
+    // repo convention (DayCircle, DailyRhythmBar, useTabFocusEntrance) is to
+    // cancel; these two were the only infinite loops in the app that did not.
+    return () => cancelAnimation(s);
   }, [s]);
   const style = useAnimatedStyle(() => ({ transform: [{ scale: 1 + s.value * 0.12 }] }));
   return (
@@ -438,6 +444,7 @@ function ReminderToggleHint() {
       withTiming(1, { duration: 900 }),                                        // rest at ON
       withTiming(0, { duration: 0 }),                                          // reset to OFF
     ), -1, false);
+    return () => cancelAnimation(t);
   }, [t]);
   const TRAVEL = 18;   // 40 track − 2×2 padding − 18 knob
   const knobStyle = useAnimatedStyle(() => ({ transform: [{ translateX: t.value * TRAVEL }] }));

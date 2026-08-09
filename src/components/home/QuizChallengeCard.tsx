@@ -72,11 +72,15 @@ export default function QuizChallengeCard({
         if (answer.picked === i) return answer.correct ? 'correct' : 'wrong';
         // The right answer is NOT surfaced after a miss (per user): tinting it
         // green handed her the answer before the retry round could ask again.
-        // No 'tried' either, because QuizOptionButton disables that state from
-        // the INSIDE: a card stranded in `locked` would still have some options
-        // dead, and `locked` on this card is ALWAYS the stranded case — the
-        // reveal timer only runs on the full screen. Every option has to be
-        // able to hand off.
+        // No 'tried' either — it would hint at a ruled-out option in the one
+        // state where she has just answered and is owed nothing.
+        //
+        // (Until 2026-08-09 there was a second, harder reason: QuizOptionButton
+        // disabled `tried` from the INSIDE, overriding this card's deliberate
+        // disabled={false}, so a greyed option here was a dead tap that fired
+        // neither the answer nor the hand-off. That decision now belongs to the
+        // caller, so `tried` in the ANSWERING phase below is tappable and hands
+        // off like every other option.)
         return 'idle';
       }
       if (tried[i]) return 'tried';
@@ -135,7 +139,7 @@ export default function QuizChallengeCard({
           user asked for). */}
       <QuizSegmentBar segments={segments} height={7.2} style={styles.bar} />   {/* 6 → 7.2 (+20 %, per user) */}
 
-      <Text style={styles.status} numberOfLines={1}>
+      <Text style={styles.status} numberOfLines={1} maxFontSizeMultiplier={1.1}>
         {inSummary
           ? segments.every(s => s === 'correct') ? t('quiz.card.claim') : t('quiz.card.answered', { n: answered })
           : cappedOut
@@ -153,31 +157,35 @@ export default function QuizChallengeCard({
   if (!question || inSummary || cappedOut) {
     return (
       <View style={styles.outer}>
-        {/* Pressable, NOT TouchableOpacity, and the button is its own target.
-            Owner report: "See results" did nothing — no navigation at all.
-            TouchableOpacity animates its press opacity through the LEGACY
-            Animated API, i.e. it is itself an Animated.View. Here that animated
-            view IS the whole card, and it sits inside TabSection's REANIMATED
-            view. Two animation owners nested around one big touch target is the
-            documented Android/Fabric hazard in useTabFocusEntrance's own header
-            comment: native hit regions stay pinned to the layout that existed
-            when the animation attached — and this card's layout changes size
-            drastically (tall question card → compact teaser) while she is away
-            in the full-screen quiz, so the region it re-attaches with is the
-            wrong one. It also explains why the same `onPress` works in the
-            answering branch below, where the touchable is only the small header
-            row rather than the entire card.
-            Pressable uses a plain View + Pressability, so it removes one owner
-            from that nesting; and the CTA below is now a real button, giving the
-            tap a second, independent path instead of relying on one big
-            surface. */}
-        <Pressable
-          style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-          onPress={onPress}
-          accessibilityRole="button"
-          accessibilityLabel={t('quiz.card.title')}
-        >
-          {header}
+        {/* Owner report: "See results" did nothing — no navigation at all.
+            This branch is now STRUCTURALLY IDENTICAL to the answering branch
+            below: a plain View card, with the touch target on the small header
+            row, and the CTA as its own SIBLING target. That configuration is the
+            one he demonstrated works (he reached 5 of 5 through it), which is the
+            only evidence either of us has.
+            A first attempt blamed nesting a TouchableOpacity's legacy Animated
+            view inside TabSection's Reanimated one, pinning the hit region to a
+            stale layout. That diagnosis was WRONG and the disproof is in
+            useTabFocusEntrance: its focus effect returns settle(true), so the
+            view is handed back to plain RN on BLUR — it is not Reanimated-owned
+            while she is away in the quiz — and with no freezeOnBlur anywhere in
+            the app the tall→compact layout commits under plain RN, so the
+            re-attach on focus uses the NEW layout. On the prayer-end screen
+            there is no TabSection at all. Recording it because the wrong theory
+            is the expensive part: two independent, small hit regions is a real
+            change; "one fewer animation owner" was not.
+            Pressable rather than TouchableOpacity is kept — it is a plain View
+            plus Pressability, and the inner target claims the responder during
+            bubbling with no capture handler in the way. */}
+        <View style={styles.card}>
+          <Pressable
+            onPress={onPress}
+            style={({ pressed }) => (pressed ? styles.cardPressed : undefined)}
+            accessibilityRole="button"
+            accessibilityLabel={t('quiz.card.title')}
+          >
+            {header}
+          </Pressable>
           {inSummary ? (
             <Pressable
               onPress={onPress}
@@ -190,7 +198,7 @@ export default function QuizChallengeCard({
               </Text>
             </Pressable>
           ) : null}
-        </Pressable>
+        </View>
       </View>
     );
   }
@@ -304,6 +312,8 @@ const styles = StyleSheet.create({
   // Pressable has no built-in activeOpacity; this is TouchableOpacity's 0.85.
   cardPressed: { opacity: 0.85 },
   ctaText: {
-    fontFamily: FONTS.latoBold, fontSize: 16.5, color: '#FFFFFF', letterSpacing: 0.4,
+    // 16.5 → 17.5, the one secondary-CTA size (dev-guide §1). This site and
+    // QuizReviewView were the two that survived the collapse to a single value.
+    fontFamily: FONTS.latoBold, fontSize: 17.5, color: '#FFFFFF', letterSpacing: 0.4,
   },
 });

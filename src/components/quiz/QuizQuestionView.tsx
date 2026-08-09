@@ -52,7 +52,12 @@ export default function QuizQuestionView({
               key={i}
               label={label}
               state={optionStates[i] ?? 'idle'}
-              disabled={locked}
+              // `tried` moved out of QuizOptionButton (it used to disable that
+              // state from the inside, which silently overrode the home card's
+              // deliberate disabled={false}). The full screen still refuses one:
+              // an option already ruled out in an earlier round must not be
+              // re-pickable here.
+              disabled={locked || optionStates[i] === 'tried'}
               onPress={() => onPick(i)}
             />
           ))}

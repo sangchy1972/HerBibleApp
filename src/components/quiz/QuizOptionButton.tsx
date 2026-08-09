@@ -20,9 +20,13 @@ import { ROSE, GREEN_DONE, TXT, TXTSUB, BTN_RADIUS, FONTS, INK_06, INK_10 } from
 // question again — the retry was pointless and the miss taught nothing. The
 // answer is now only ever confirmed by her getting it right. Do not add it back.
 //
-// Styling is the app's ordinary button: no scalloped/filigree borders, no ink
-// outline (per user — the hairline read as clutter), and the faintest possible
-// shadow so a white option still separates from the off-white screen.
+// Styling is the app's ordinary button: no scalloped/filigree borders, and a
+// LIGHT INK HAIRLINE so a white option still separates from the off-white screen.
+// That hairline was removed once as clutter and replaced with the faintest
+// possible shadow; the owner reversed it on 2026-08-09 because on the white quiz
+// card the shadow was too faint to read as an edge and the options looked like
+// floating text. A border is unambiguous at any brightness and renders identically
+// on both platforms — Android drew that shadow as its own grey rim anyway.
 
 export type OptionState = 'idle' | 'correct' | 'wrong' | 'tried';
 
@@ -40,9 +44,16 @@ export default function QuizOptionButton({
       style={[styles.base, STATE_BOX[state]]}
       activeOpacity={0.85}
       onPress={onPress}
-      disabled={disabled || state === 'tried'}
+      // `disabled` comes from the CALLER, and `tried` is no longer folded in here.
+      // The full screen still refuses a tried option (QuizQuestionView passes it),
+      // but the home card passes disabled={false} on purpose so EVERY option can
+      // hand off to the full screen — and this line silently overrode that, so a
+      // greyed option on a retry round fired neither startAndPick nor the
+      // navigation. A tap that does nothing at all, on the card whose whole job
+      // is to hand off.
+      disabled={disabled}
       accessibilityRole="button"
-      accessibilityState={{ disabled: disabled || state === 'tried', selected: filled }}
+      accessibilityState={{ disabled, selected: filled }}
     >
       <Text
         style={[styles.label, STATE_TEXT[state]]}

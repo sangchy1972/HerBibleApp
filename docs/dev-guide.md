@@ -382,10 +382,27 @@ BillingClient and binding to the Play Store service. On a slow device that blew 
 - The card owns its own outer spacing, so "hidden" really means zero height.
 
 ### Current styling
-- Question 19 / lineHeight 30, +3 px left inset. Options: no border, very light shadow.
+- Question **19 / lineHeight 30** on the full screen, **17.1 / 27** on the card (owner
+  −10 % there, 2026-08-09), +3 px left inset on both.
+- Options carry a **1 px `INK_10` hairline and NO shadow** (reversed 2026-08-09: the
+  shadow was too faint to read as an edge on the white card, so the options looked like
+  floating text). The answered states paint the border with their fill so no seam shows,
+  and `tried` clears it rather than clearing a shadow. `tried`'s *disabling* belongs to
+  the CALLER, not to `QuizOptionButton` — the card passes `disabled={false}` so every
+  option can hand off, and folding `tried` in from the inside made a greyed option on a
+  retry round a tap that did nothing at all.
 - Options slide in from the right, 0.1 s stagger, 0.5 s total, mount-keyed
   `round:position` so a retry replays it. Shared values with a handback (§3).
-- Segment bar directly under the title, height 6. Never give the track a `width: '100%'`.
+- Segment bar directly under the title, height **7.2** on the card (+20 %, owner
+  2026-08-09), 6 elsewhere. Never give the track a `width: '100%'`.
+- The compact "See results" state is **a plain View card with two SIBLING targets** — a
+  `Pressable` on the header row and another on the CTA — never one card-wide touchable.
+  The owner reported that a card-wide target did nothing; the small-header shape is the
+  one configuration he demonstrated working. A first fix blamed nesting a
+  TouchableOpacity's legacy Animated view inside TabSection's Reanimated one; that theory
+  is wrong (`useTabFocusEntrance` hands the view back to plain RN on BLUR, and there is
+  no `freezeOnBlur`, so the compact layout commits un-owned), and it is recorded here so
+  nobody re-derives it.
 - Verdict: +20 % bold, floats up 30 px over 0.4 s, rendered **below** the options so the
   card grows downward and nothing she is looking at moves.
 - Results screen: no level title, no top bar, no medal ring, no score line, no

@@ -220,8 +220,14 @@ export default function RatePromptSheet({ onClose }: { onClose: () => void }) {
             const probe = AppState.addEventListener('change', st => {
               if (st !== 'active') leftActive = true;
             });
-            const outcome = await outcomeOf(StoreReview.requestReview(), 5000);
-            probe.remove();
+            let outcome: 'settled' | 'timeout' | 'failed';
+            try {
+              outcome = await outcomeOf(StoreReview.requestReview(), 5000);
+            } finally {
+              // finally: requestReview can throw SYNCHRONOUSLY on a runtime without
+              // the native module, and that leaked one AppState listener per Yes.
+              probe.remove();
+            }
             const elapsed = Date.now() - t0;
             done = outcome === 'timeout'
               ? (leftActive || AppState.currentState !== 'active')

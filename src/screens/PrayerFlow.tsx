@@ -969,11 +969,14 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   //     her to set a time she had already set. She has done her part the moment
   //     she picks a time; what may still be missing is PERMISSION, which is a
   //     different question and gets its own ask. Burn the flag either way.
-  // Her pick, kept so the second push can re-arm the slot SHE prayed at the time
-  // SHE chose. Without it, "Turn on notifications" fell through to
-  // requestPermissionAndEnableDefaults, which force-enables BOTH slots at the
-  // defaults — resurrecting an evening reminder she may have switched off and
-  // silently replacing her choice with 20:00.
+  // Her pick, kept so the second push re-arms the slot SHE prayed rather than
+  // enabling both. Correcting an overstatement in the commit that added this:
+  // requestPermissionAndEnableDefaults SPREADS the existing settings and only
+  // flips `enabled`, so it does NOT overwrite her hour and minute. What it does do
+  // is force BOTH slots on — resurrecting an evening reminder she may have
+  // switched off herself, which is the failure syncPermissionFromSystem's own
+  // contract warns about. That half was real; "replaces her time with 20:00" was
+  // not.
   const pickedTimeRef = useRef<{ hour: number; minute: number } | null>(null);
   // Both async CTAs need this: on Android there is a real 100-400 ms gap between
   // the tap and the OS dialog covering the screen, and a second tap in that gap
@@ -1533,12 +1536,23 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
         statusBarTranslucent
         onRequestClose={() => setShowVerseShare(false)}
       >
-        <ShareVerseSheet
-          reference={verseRef}
-          text={verseText}
-          bgSource={bgImage}
-          onClose={() => setShowVerseShare(false)}
-        />
+        {/* CONDITIONAL, not just the Modal's `visible` — the twin of this was
+            fixed on PrayerScreen today and this one was missed, which is the
+            ledger's own lesson about re-checking every consumer. On iOS
+            `_shouldShowModal()` is `visible || state.isRendered`, and isRendered
+            clears only on the native onDismiss — which never fires if `visible`
+            flips false before the presentation completed. ShareVerseSheet holds
+            useSheetSurface(true), so a stranded mount pins the GLOBAL sheetDepth
+            at 1 and the coordinator then refuses every blocking prompt in the app
+            for the rest of the session. */}
+        {showVerseShare && !!verseRef && !!verseText && (
+          <ShareVerseSheet
+            reference={verseRef}
+            text={verseText}
+            bgSource={bgImage}
+            onClose={() => setShowVerseShare(false)}
+          />
+        )}
       </Modal>
 
       {/* Verse-note sheet — separate from the in-flow reflection sheet

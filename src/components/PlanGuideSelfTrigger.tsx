@@ -92,5 +92,10 @@ export default function PlanGuideSelfTrigger() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, guide.stage, isFocused]);
 
+  // Unmount MUST release — see the long note in PlanGuideTrigger. Owner tag 'self'
+  // so this can never delete the HOME trigger's pending request.
+  const releaseOnUnmount = coord.releaseSlot;
+  useEffect(() => () => releaseOnUnmount('planGuide', 'self'), [releaseOnUnmount]);
+
   return null;
 }

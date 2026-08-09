@@ -1765,7 +1765,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.18, shadowRadius: 18, elevation: 10,
   },
-  pastPromptTitle: { fontSize: 19, fontWeight: '700', color: TXT, textAlign: 'center', marginBottom: 10, fontFamily: FONTS.loraBold },
+  pastPromptTitle: { fontSize: 19, fontWeight: '600', color: TXT, textAlign: 'center', marginBottom: 10, fontFamily: FONTS.loraBold },   // '700' makes Android drop Lora for system sans (§1)
   pastPromptBody: { fontSize: 14.5, lineHeight: 21, color: TXTSUB, textAlign: 'center', marginBottom: 20 },
   pastPromptConfirm: { height: 48, borderRadius: BTN_RADIUS, backgroundColor: ROSE, alignItems: 'center', justifyContent: 'center' },
   pastPromptConfirmText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },

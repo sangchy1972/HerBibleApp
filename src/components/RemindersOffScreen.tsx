@@ -29,6 +29,7 @@ const APP_ICON = require('../../assets/icon.png');
 const CREAM = '#F5F0E6';
 const YELLOW = '#EDB94D';
 const GREY = '#A79FA6';
+const SWITCH_ON = '#3FAE6A';   // matches PermissionCoachOverlay's switchTrackOn
 
 export default function RemindersOffScreen({ onTurnOn, onSkip }: {
   /** Fires the OS dialog again (or Settings when the OS will no longer show it). */
@@ -131,7 +132,9 @@ function MockSwitchWithFinger() {
   }, [p]);
   const TRAVEL = 22;
   const knob = useAnimatedStyle(() => ({ transform: [{ translateX: p.value * TRAVEL }] }));
-  const track = useAnimatedStyle(() => ({ backgroundColor: p.value > 0.5 ? '#3DA35D' : 'rgba(30,27,46,0.18)' }));
+  // Same green as PermissionCoachOverlay's mock switch — the two screens appear back
+  // to back in one funnel, and two shades read as two different switches.
+  const track = useAnimatedStyle(() => ({ backgroundColor: p.value > 0.5 ? SWITCH_ON : 'rgba(30,27,46,0.18)' }));
   const hand = useAnimatedStyle(() => ({
     transform: [
       { translateX: p.value * TRAVEL },

@@ -559,6 +559,7 @@ export default function PlanScreen() {
                 onChangeText={setQuery}
                 onFocus={onSearchFocus}
                 onBlur={() => setSearchFocused(false)}
+                onSubmit={blurSearch}
                 active={searchActive}
                 onCancel={cancelSearch}
                 disabled={guideBusy}

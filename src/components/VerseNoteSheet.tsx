@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Keyboard, Platform, Alert,
@@ -6,8 +6,7 @@ import {
 import { useSheetSurface } from '../state/promptSurface';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
-  FadeIn, SlideInDown, Easing,
-  useSharedValue, useAnimatedStyle, withTiming, runOnJS,
+  Easing, useSharedValue, useAnimatedStyle, withTiming, runOnJS,
 } from 'react-native-reanimated';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { ROSE, TXT, TXTSUB, P, FONTS } from '../constants/theme';
@@ -79,7 +78,21 @@ export default function VerseNoteSheet({ verseRef, verseText, existingNote, onCl
 
   // Swipe-down → attemptDismiss. Animate the sheet with the gesture so it
   // feels physical, then snap back / hand off based on threshold.
-  const dragY = useSharedValue(0);
+  // Seeded off-screen so the SAME value drives the entrance and the swipe-down
+  // pan — no second transform to fight it. `entering=` was banned here for the
+  // usual reason (§2 rule 2): this sheet is mounted inside an RN <Modal> by
+  // PlanDayWalk, and a dropped animation left a colourless alpha-1 absolute-fill
+  // root in a native window with the sheet off-screen and the dismiss target
+  // inside an opacity-0 subtree.
+  const dragY = useSharedValue(SHEET_TRAVEL);
+  const dim = useSharedValue(0);
+  useEffect(() => {
+    dim.value = withTiming(1, { duration: 300 });
+    dragY.value = withTiming(0, { duration: 420, easing: Easing.out(Easing.cubic) });
+    const wd = setTimeout(() => { dim.value = 1; dragY.value = 0; }, 900);
+    return () => clearTimeout(wd);
+  }, [dim, dragY]);
+  const dimStyle = useAnimatedStyle(() => ({ opacity: dim.value }));
   const pan = Gesture.Pan()
     .activeOffsetY(12)
     .onUpdate((e) => { 'worklet'; if (e.translationY > 0) dragY.value = e.translationY; })
@@ -95,17 +108,15 @@ export default function VerseNoteSheet({ verseRef, verseText, existingNote, onCl
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: dragY.value }] }));
 
   return (
-    <View style={styles.overlay}>
+    <View style={styles.overlay} pointerEvents="box-none">
       <Animated.View
-        entering={FadeIn.duration(300)}
-        style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.45)' }]}
+        style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.45)' }, dimStyle]}
       >
         <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={attemptDismiss} />
       </Animated.View>
 
       <GestureDetector gesture={pan}>
         <Animated.View
-          entering={SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic))}
           style={[styles.sheet, sheetStyle]}
         >
           <KeyboardAvoidingView
@@ -146,6 +157,9 @@ export default function VerseNoteSheet({ verseRef, verseText, existingNote, onCl
     </View>
   );
 }
+
+// Entrance travel — generous; it only has to start off-screen.
+const SHEET_TRAVEL = 900;
 
 const styles = StyleSheet.create({
   overlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'flex-end', zIndex: 200 },

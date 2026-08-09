@@ -3,7 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet, Image, Modal, Platform, Linki
 import Constants from 'expo-constants';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Animated, {
-  FadeIn, Easing, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, interpolate,
+  Easing, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, interpolate,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import { TXT, TXTSUB, FONTS } from '../constants/theme';
 import { useT } from '../i18n/useT';
@@ -56,6 +57,19 @@ export default function PermissionCoachOverlay({
   visible, title, switchLabel, onOpenSettings, onDismiss, secondaryLabel, onSecondary,
 }: PermissionCoachProps) {
   const t = useT();
+  // Shared value + watchdog, not `entering=` (§2 rule 2): this renders inside an
+  // RN <Modal>. Less dangerous than most — the dismiss target is a SIBLING of the
+  // card and the root carries a visible 55 % dim, so a dropped entrance is a dim
+  // screen she can tap away rather than a dead app — but dismissing counts as a
+  // refusal that spends the day's ask, so an invisible card costs her the ask.
+  const appear = useSharedValue(0);
+  useEffect(() => {
+    if (!visible) { appear.value = 0; return; }
+    appear.value = withTiming(1, { duration: 220 });
+    const wd = setTimeout(() => { appear.value = 1; }, 900);
+    return () => clearTimeout(wd);
+  }, [visible, appear]);
+  const appearStyle = useAnimatedStyle(() => ({ opacity: appear.value }));
   if (!visible) return null;
 
   return (
@@ -65,7 +79,7 @@ export default function PermissionCoachOverlay({
     <Modal transparent visible statusBarTranslucent animationType="fade" onRequestClose={onDismiss}>
       <View style={styles.root}>
         <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onDismiss} />
-        <Animated.View entering={FadeIn.duration(220)} style={styles.card}>
+        <Animated.View style={[styles.card, appearStyle]}>
           <TouchableOpacity onPress={onDismiss} hitSlop={14} style={styles.close}>
             <MaterialCommunityIcons name="close" size={22} color={TXTSUB} />
           </TouchableOpacity>
@@ -119,6 +133,7 @@ function MockSwitchWithFinger() {
       withTiming(1, { duration: 900 }),                                       // rest, on
       withTiming(0, { duration: 0 }),                                         // cut, don't rewind
     ), -1, false);
+    return () => cancelAnimation(p);
   }, [p]);
 
   const TRAVEL = 22;   // 52 track − 2×3 padding − 24 knob

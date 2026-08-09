@@ -91,5 +91,22 @@ export default function PlanGuideTrigger({ ctaQuiet }: { ctaQuiet: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, guide.stage, isFocused]);
 
+  // Unmount MUST release, with the OWNER tag. Six of the eight coordinator hosts
+  // had this and the two plan-guide triggers did not. It matters here for the same
+  // reason StreakGuideTrigger documents: ReminderInterstitialContext re-derives its
+  // slot on every foreground, so a notifications-off user returning after 18:00 has
+  // the whole tab tree swapped out for FollowHimScreen and every home-hosted
+  // trigger unmounts. If the slot was granted, `activeId` stays 'planGuide' and the
+  // coordinator's safety valve CANNOT clear it — its test is "no live request", and
+  // the request survives the unmount too. Every blocking prompt in the app is then
+  // silenced until she happens to switch tabs.
+  //
+  // `releaseSlot` pinned, not `coord`: the context value is memoized on activeId,
+  // so a [coord]-keyed cleanup fires on the very grant it was meant to protect.
+  // And the owner tag, because a blanket release would delete the SELF trigger's
+  // request — which is the whole reason `owner` exists.
+  const releaseOnUnmount = coord.releaseSlot;
+  useEffect(() => () => releaseOnUnmount('planGuide', 'home'), [releaseOnUnmount]);
+
   return null;
 }

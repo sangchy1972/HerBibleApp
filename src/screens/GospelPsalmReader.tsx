@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#DEDAE3',
     shadowOpacity: 0, elevation: 0,
   },
-  amenText: { color: '#fff', fontSize: 18, fontWeight: '700', letterSpacing: 0.5, fontFamily: FONTS.loraBold },
+  amenText: { color: '#fff', fontSize: 18, fontWeight: '600', letterSpacing: 0.5, fontFamily: FONTS.loraBold },   // '700' makes Android drop Lora for system sans (§1)
   amenTextDisabled: { color: '#A49DAE' },
   toast: {
     position: 'absolute', alignSelf: 'center',

@@ -11,7 +11,7 @@ import { isInterstitialVisible, onInterstitialVisibility } from '../services/int
 // were safe only by accident of where they live. Gating the COORDINATOR covers
 // every blocking prompt at once and can't be forgotten by the next host.
 //
-// A prompt may be granted only on one of the four TAB surfaces, and never while
+// A prompt may be granted only on one of the the TAB surfaces, and never while
 // a fullscreen interstitial is up. Everything else — flow screens, readers,
 // modal routes, celebration screens — is content the user chose to be in.
 //

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Keyboard } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { ROSE, TXT, TXTSUB, FONTS } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
@@ -17,12 +17,15 @@ import { useT } from '../../i18n/useT';
 // the page renders the browse layout or results.
 
 export default function PlanSearchField({
-  value, onChangeText, onFocus, onBlur, active, onCancel, disabled, inputRef,
+  value, onChangeText, onFocus, onBlur, onSubmit, active, onCancel, disabled, inputRef,
 }: {
   value: string;
   onChangeText: (v: string) => void;
   onFocus: () => void;
   onBlur: () => void;
+  /** The keyboard's Search key. Must be the caller's blurSearch, never a bare
+   *  Keyboard.dismiss — see the note at the call site. */
+  onSubmit: () => void;
   /** Searching (focused or non-empty) — reveals Cancel. */
   active: boolean;
   onCancel: () => void;
@@ -46,7 +49,14 @@ export default function PlanSearchField({
           placeholderTextColor={TXTSUB}
           style={styles.input}
           returnKeyType="search"
-          onSubmitEditing={Keyboard.dismiss}
+          // NOT Keyboard.dismiss — §6b rule 2, which this file's own feature wrote:
+          // a bare dismiss hides the keyboard on Android while the input KEEPS
+          // focus, so onBlur never fires and `searchFocused` stops matching
+          // reality. It gates useSheetSurface, so a lie there holds the global
+          // sheetDepth and silences every blocking prompt while she is just
+          // reading results. Every other exit already routes through blurSearch;
+          // the keyboard's own Search key was the one that did not.
+          onSubmitEditing={onSubmit}
           autoCorrect={false}
           autoCapitalize="none"
           // Longest plan title in the catalog is 66 characters; past that she is

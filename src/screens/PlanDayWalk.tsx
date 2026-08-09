@@ -901,7 +901,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.6, marginTop: 20, marginBottom: 20,                         // +20 px before, +8 px after (12 → 20) per user
   },
   captionWide: { marginBottom: 20 },                                            // unified to 20 to match sectionCaption (was 22 — 2px inconsistency across page types)
-  verseRef: { fontSize: 18.4, fontWeight: '700', fontFamily: FONTS.loraBold, color: ROSE, marginBottom: 26, letterSpacing: 0.4 },
+  verseRef: { fontSize: 18.4, fontWeight: '600', fontFamily: FONTS.loraBold, color: ROSE, marginBottom: 26, letterSpacing: 0.4 },   // '700' makes Android drop Lora for system sans (§1)
   verseBodyLarge: {
     fontFamily: FONTS.serif, fontVariationSettings: SERIF_BODY,
     fontSize: 23, lineHeight: 35, color: TXT,
@@ -911,7 +911,7 @@ const styles = StyleSheet.create({
   prayerBody: { fontFamily: FONTS.serif, fontVariationSettings: SERIF_BODY, fontSize: 19.5, lineHeight: 33, color: TXT },
 
   chapterHeader: {
-    fontFamily: FONTS.loraBold, fontSize: 14, fontWeight: '700',
+    fontFamily: FONTS.loraBold, fontSize: 14, fontWeight: '600',   // '700' makes Android drop Lora for system sans (§1)
     color: TXTSUB, letterSpacing: 1, textTransform: 'uppercase',
     marginBottom: 16,
   },

@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSheetSurface } from '../state/promptSurface';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeIn, SlideInDown, Easing } from 'react-native-reanimated';
+import Animated, {
+  Easing, useSharedValue, useAnimatedStyle, withTiming,
+} from 'react-native-reanimated';
 import { ROSE, TXT, TXTSUB, P } from '../constants/theme';
 import { useT } from '../i18n/useT';
 
 const ITEM_H = 44;
+// Entrance travel — generous; it only has to start off-screen.
+const SHEET_TRAVEL = 900;
 const VISIBLE = 5;
 
 function ScrollWheel<T>({ values, value, onChange, format }: {
@@ -73,21 +77,40 @@ export default function TimePickerSheet({ initialHour, initialMinute, title, min
   // caller to invent one. English-only is acceptable for the unused default.
   const displayTitle = title ?? 'Pick a time';
 
+  // Shared values + watchdog, NOT `entering=` (dev-guide §2 rule 2). This sheet is
+  // mounted inside an RN <Modal> by OnboardingFlow, where layout animations are
+  // unreliable on the new architecture — and a dropped one here left an alpha-1
+  // colourless absolute-fill root in a native window with the sheet off-screen and
+  // the only dismiss target inside an opacity-0 subtree: dead to touch, during
+  // onboarding, with nothing visible to explain it. It also now holds
+  // useSheetSurface(true), so a stranded mount pins the global sheetDepth.
+  const dim = useSharedValue(0);
+  const ty = useSharedValue(SHEET_TRAVEL);
+  useEffect(() => {
+    dim.value = withTiming(1, { duration: 300 });
+    ty.value = withTiming(0, { duration: 420, easing: Easing.out(Easing.cubic) });
+    const wd = setTimeout(() => { dim.value = 1; ty.value = 0; }, 900);
+    return () => clearTimeout(wd);
+  }, [dim, ty]);
+  const dimStyle = useAnimatedStyle(() => ({ opacity: dim.value }));
+  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: ty.value }] }));
+
   const hours = Array.from({ length: maxHour - minHour + 1 }, (_, i) => minHour + i);
   const minutes = Array.from({ length: 60 }, (_, i) => i);
   const pad = (n: number) => String(n).padStart(2, '0');
 
   return (
-    <View style={styles.overlay}>
+    // box-none: the root must never capture on its own (§2 rule 1). The dismiss
+    // target below is a real child and carries the dim itself, so it stays
+    // hit-testable even if the fade is dropped.
+    <View style={styles.overlay} pointerEvents="box-none">
       <Animated.View
-        entering={FadeIn.duration(300)}
-        style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.45)' }]}
+        style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.45)' }, dimStyle]}
       >
         <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={onClose} />
       </Animated.View>
       <Animated.View
-        entering={SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic))}
-        style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 12) + 16 }]}
+        style={[styles.sheet, sheetStyle, { paddingBottom: Math.max(insets.bottom, 12) + 16 }]}
       >
         <View style={styles.handle} />
         <Text style={styles.title}>{displayTitle}</Text>

@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center', marginBottom: 12,
   },
   header: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  title: { fontSize: 18, fontWeight: '700', color: TXT, fontFamily: FONTS.loraBold },
+  title: { fontSize: 18, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold },   // '700' makes Android drop Lora for system sans (§1)
   count: { fontSize: 15, fontWeight: '600', color: TXTSUB },
   closeBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(30,27,46,0.05)' },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 17 },

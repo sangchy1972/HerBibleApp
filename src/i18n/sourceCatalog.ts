@@ -1366,6 +1366,10 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   // Coach card shown after the OS permission prompt was refused — see
   // PermissionCoachOverlay. It mimics the Settings row she is about to hunt for.
   'permCoach.notif.title':         { en: 'Allow Her Bible to send you Daily Verses', context: 'Headline on the card that hands the user to system Settings after she declined the notification prompt. Names the OUTCOME (daily verses), not the permission. "Her Bible" is the app name — do not translate.' },
+  // The FLOATING coach card (modules/expo-settings-coach) — the same guidance
+  // drawn ON TOP of the system Settings app once "Appear on top" is granted.
+  'permCoach.float.body':          { en: 'Find this app in the list and turn the switch on.', context: 'Body of the card that floats over the system Settings app. Read at a glance on a screen that is not ours, so keep it to one imperative line.' },
+  'permCoach.float.enable':        { en: 'Show me these steps on top of Settings', context: 'Secondary link under the coach card CTA. Opens the "Appear on top" permission page so the guidance can float over Settings next time. An extra, never the way forward — must not sound required.' },
   'permCoach.notif.switch':        { en: 'Allow notifications',                     context: 'Label on the mock Settings row the animated finger flips. MUST read like the switch she will actually find on the OS notification-settings page for this app, so use the platform wording your locale uses there — a label that does not match sends her looking for something that is not on screen.' },
 
   // ─── Full-screen Bible audio player ──────────────────────────────────────

@@ -4,6 +4,9 @@ import Feather from '@expo/vector-icons/Feather';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import TimePickerSheet from './TimePickerSheet';
 import PermissionCoachOverlay, { openNotificationSettings } from './PermissionCoachOverlay';
+import {
+  canFloatOverSettings, openOverlaySettings, showSettingsCoach, hideSettingsCoach,
+} from '../../modules/expo-settings-coach';
 import { useNotifications } from '../state/NotificationsContext';
 import { useOnboarding } from '../state/OnboardingContext';
 import { useSetReminderTime } from '../state/SetReminderTimeContext';
@@ -31,16 +34,26 @@ import { ROSE, TXT, TXTSUB, FONTS } from '../constants/theme';
 //          notification settings page (not the app-info root).
 //   morning/evening  the time pickers, unchanged.
 //
-// What we deliberately do NOT copy from the competitor: their card is drawn ON
-// TOP of the Settings app, which needs SYSTEM_ALERT_WINDOW — a permission this
-// app has in `blockedPermissions` on purpose, does not need (our reminders are
-// notifications, not floating windows), and would have to justify in review.
-// From Android 12 the Settings UI also sets
-// SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS and drops touches from untrusted
-// overlays, so that card would be inert there anyway. Ours lands immediately
-// BEFORE the jump instead, and we deep-link to the app's notification page
-// whose FIRST row is the master switch — so there is no long list to hunt
-// through and nothing to highlight.
+// THE FLOATING CARD (owner asked for it twice, so it is built). Once she has
+// granted "Appear on top", the same guidance is ALSO drawn on top of the Settings
+// app itself via modules/expo-settings-coach — the competitor's trick, with our
+// own card. Two things are worth knowing before touching this:
+//
+//   • It is an ENHANCEMENT, never the path. Without the overlay permission the
+//     in-app card + deep link is the whole flow, and that is what works on every
+//     device. We never spend the notification funnel on a trip to grant an
+//     overlay permission: the card offers it as a secondary line, the CTA never
+//     diverts to it.
+//   • From Android 12, Settings may call Window#setHideOverlayWindows(true) on
+//     permission screens to block overlay tapjacking. Where it does, the OS hides
+//     the card and there is nothing to fix. It shows on the screens that do not
+//     set the flag — which is what the competitor's One UI screenshots show.
+//
+// The copy stays honest about it too: reminders need NOTIFICATIONS. "Appear on
+// top" only buys the guided hand-off, and our card says that rather than claiming
+// — as the competitor's does — that a floating window is what delivers reminders.
+// We deep-link to the app's notification page, whose FIRST row is the master
+// switch, so there is no long list to hunt through either way.
 export type ReminderAskStep = 'osAsk' | 'push' | 'coach' | 'morning' | 'evening';
 export default function SetReminderTimeHost() {
   const t = useT();
@@ -132,6 +145,9 @@ export default function SetReminderTimeHost() {
     if (!active || step !== 'coach') return;
     const sub = AppState.addEventListener('change', st => {
       if (st !== 'active') return;
+      // The overlay lives outside our Activity, so coming back is exactly when it
+      // must go. Its own timeout is the backstop, not the plan.
+      hideSettingsCoach();
       notif.syncPermissionFromSystem(true).then(granted => {
         if (granted) { srt.markConfigured(); dismissRef.current(); }
       }).catch(() => {});
@@ -153,6 +169,7 @@ export default function SetReminderTimeHost() {
   if (!active) return null;
 
   const dismiss = () => {
+    hideSettingsCoach();
     coord.notifyDismissed('setReminderTime');
     coord.releaseSlot('setReminderTime');
     setStep('osAsk');
@@ -173,7 +190,24 @@ export default function SetReminderTimeHost() {
         visible
         title={t('permCoach.notif.title')}
         switchLabel={t('permCoach.notif.switch')}
-        onOpenSettings={openNotificationSettings}
+        // Float the same guidance over Settings when she has granted "Appear on
+        // top"; otherwise this is exactly the flow that shipped before. Raised
+        // BEFORE the jump so the window is already up when Settings appears.
+        onOpenSettings={() => {
+          if (canFloatOverSettings()) {
+            showSettingsCoach({
+              title: t('permCoach.notif.title'),
+              body: t('permCoach.float.body'),
+              switchLabel: t('permCoach.notif.switch'),
+            });
+          }
+          openNotificationSettings();
+        }}
+        // Secondary, and secondary on purpose (see the note at the top of this
+        // file): offered only when we do not already have it, never in place of
+        // the CTA.
+        secondaryLabel={canFloatOverSettings() ? undefined : t('permCoach.float.enable')}
+        onSecondary={openOverlaySettings}
         // Dismissing the card is the same refusal as Cancel on the push card —
         // she has now said no twice, and the daily cadence brings this back
         // tomorrow. Nagging inside one visit is what the cadence exists to avoid.

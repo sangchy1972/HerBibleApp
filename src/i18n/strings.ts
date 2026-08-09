@@ -1200,6 +1200,8 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reminder.skip': '跳过',
     'permCoach.notif.title': '允许 Her Bible 向你发送每日经文',
     'permCoach.notif.switch': '允许通知',
+    'permCoach.float.body': '在列表中找到本应用，把开关打开。',
+    'permCoach.float.enable': '把步骤显示在系统设置之上',
     'bibleAudio.playing': '播放中',
     'bibleAudio.read': '阅读',
 
@@ -2430,6 +2432,8 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reminder.skip': '跳過',
     'permCoach.notif.title': '允許 Her Bible 向妳發送每日經文',
     'permCoach.notif.switch': '允許通知',
+    'permCoach.float.body': '在列表中找到本應用，把開關打開。',
+    'permCoach.float.enable': '把步驟顯示在系統設定之上',
     'bibleAudio.playing': '播放中',
     'bibleAudio.read': '閱讀',
 
@@ -3660,6 +3664,8 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reminder.skip': 'Überspringen',
     'permCoach.notif.title': 'Her Bible erlauben, dir Tagesverse zu senden',
     'permCoach.notif.switch': 'Benachrichtigungen zulassen',
+    'permCoach.float.body': 'Finde diese App in der Liste und schalte sie ein.',
+    'permCoach.float.enable': 'Schritte über den Einstellungen anzeigen',
     'bibleAudio.playing': 'Wird abgespielt',
     'bibleAudio.read': 'Lesen',
 
@@ -4894,6 +4900,8 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reminder.skip': 'Passer',
     'permCoach.notif.title': 'Autoriser Her Bible à t\'envoyer les versets du jour',
     'permCoach.notif.switch': 'Autoriser les notifications',
+    'permCoach.float.body': "Trouve cette application dans la liste et active l'interrupteur.",
+    'permCoach.float.enable': 'Afficher les étapes au-dessus des Réglages',
     'bibleAudio.playing': 'Lecture',
     'bibleAudio.read': 'Lire',
 
@@ -6124,6 +6132,8 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reminder.skip': 'Omitir',
     'permCoach.notif.title': 'Permite que Her Bible te envíe los versículos diarios',
     'permCoach.notif.switch': 'Permitir notificaciones',
+    'permCoach.float.body': 'Busca esta app en la lista y activa el interruptor.',
+    'permCoach.float.enable': 'Mostrar los pasos sobre los Ajustes',
     'bibleAudio.playing': 'Reproduciendo',
     'bibleAudio.read': 'Leer',
 
@@ -7354,6 +7364,8 @@ export const STRINGS: Record<Exclude<UILanguageCode, 'en'>, TranslationMap> = {
     'reminder.skip': 'Pular',
     'permCoach.notif.title': 'Permita que o Her Bible envie os versículos diários',
     'permCoach.notif.switch': 'Permitir notificações',
+    'permCoach.float.body': 'Encontre este app na lista e ative a chave.',
+    'permCoach.float.enable': 'Mostrar os passos sobre as Configurações',
     'bibleAudio.playing': 'Tocando',
     'bibleAudio.read': 'Ler',
 

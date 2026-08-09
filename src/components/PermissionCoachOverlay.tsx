@@ -42,10 +42,15 @@ export interface PermissionCoachProps {
   onOpenSettings: () => void;
   /** X, scrim tap, and Android back. */
   onDismiss: () => void;
+  /** Optional second line under the CTA. Used for the "guide me on top of
+   *  Settings" opt-in, which needs SYSTEM_ALERT_WINDOW — an enhancement, so it
+   *  must never look like the way forward. Omit it and nothing renders. */
+  secondaryLabel?: string;
+  onSecondary?: () => void;
 }
 
 export default function PermissionCoachOverlay({
-  visible, title, switchLabel, onOpenSettings, onDismiss,
+  visible, title, switchLabel, onOpenSettings, onDismiss, secondaryLabel, onSecondary,
 }: PermissionCoachProps) {
   const t = useT();
   if (!visible) return null;
@@ -85,6 +90,14 @@ export default function PermissionCoachOverlay({
               {t('common.openSettings')}
             </Text>
           </TouchableOpacity>
+
+          {secondaryLabel && onSecondary ? (
+            <TouchableOpacity onPress={onSecondary} hitSlop={8} style={styles.secondary}>
+              <Text style={styles.secondaryText} numberOfLines={2} maxFontSizeMultiplier={1.2}>
+                {secondaryLabel}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
         </Animated.View>
       </View>
     </Modal>
@@ -151,6 +164,8 @@ export function openNotificationSettings(): void {
 }
 
 const styles = StyleSheet.create({
+  secondary: { marginTop: 12, alignItems: 'center', paddingVertical: 4 },
+  secondaryText: { fontSize: 13.5, color: TXTSUB, fontFamily: FONTS.lato, textAlign: 'center', letterSpacing: 0.3 },
   root: { flex: 1, backgroundColor: 'rgba(20,12,24,0.55)', justifyContent: 'flex-end', padding: 16 },
   card: {
     backgroundColor: '#FFFFFF',

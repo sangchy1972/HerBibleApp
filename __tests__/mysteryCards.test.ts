@@ -21,17 +21,23 @@ const hanzi = (s: string) => s.replace(/[，。？！—；：、“”‘’「
 const LANGS = ['en', 'zh-Hans', 'zh-Hant', 'de', 'fr', 'es', 'pt'] as const;
 
 describe('pool shape', () => {
-  it('has 40 cards, 4 per concern', () => {
-    expect(MYSTERY_CARD_COUNT).toBe(40);
+  it('has 43 cards over 10 concerns — four each, plus the last three', () => {
+    // 43, not 40, and NOT 4-per-theme any more. 130 sets yield exactly 43 draws
+    // once the final cycle absorbs the leftover set, so 43 is the number that
+    // completes the collection precisely as the quiz retires. The extra three
+    // (weary-5, afraid-5, alone-5) were an owner call to break the symmetry
+    // rather than add a whole eleventh concern for the sake of the grid.
+    expect(MYSTERY_CARD_COUNT).toBe(43);
     expect(CARD_THEMES).toHaveLength(10);
-    for (const theme of CARD_THEMES) {
-      expect(MYSTERY_CARDS.filter(c => c.theme === theme)).toHaveLength(4);
-    }
+    const per = CARD_THEMES.map(t => MYSTERY_CARDS.filter(c => c.theme === t).length);
+    expect(per.reduce((a, b) => a + b, 0)).toBe(MYSTERY_CARD_COUNT);
+    // No theme is thin: every concern still has at least four ways in.
+    for (const n of per) expect(n).toBeGreaterThanOrEqual(4);
+    expect(per.filter(n => n === 5)).toHaveLength(3);
   });
 
   it('outlasts a full quiz bank cycle by a wide margin', () => {
-    // 40 draws x 3 sets = 120 sets, against 65 sets per bank cycle. She meets a
-    // repeated question long before a repeated card.
+    // She meets a repeated question long before a repeated card.
     expect(MYSTERY_CARD_COUNT * MYSTERY_EVERY).toBeGreaterThan(65);
   });
 

@@ -1,5 +1,5 @@
 import { SET_SIZE } from '../services/quizSets';
-import { TILES_PER_PAINTING, MYSTERY_EVERY } from './quizProgress';
+import { TILES_PER_PAINTING, MYSTERY_EVERY, totalTiles, puzzleView } from './quizProgress';
 
 // When the quiz is finished, and what she can have collected by then.
 //
@@ -74,14 +74,27 @@ export interface Reachable {
   cards: number;
 }
 
-/** What a bank of this size lets her finish before the quiz retires. */
-export function reachableRewards(bankSize: number): Reachable {
+/**
+ * What a bank of this size lets her finish before the quiz retires.
+ *
+ * `artCount` / `lastTiles` describe the art SHAPE. Omit them and paintings are
+ * counted as if every one were four tiles and there were an endless supply,
+ * which is what this used to assume. Pass them and the final painting's real
+ * size is used — the shipped collection ends on a two-tile diptych precisely so
+ * that 130 sets finish 33 paintings instead of stranding two sets after 32.
+ *
+ * `cards` is unaffected by the tail rule: sliding the last draw onto the final
+ * set changes WHEN it lands, not how many there are.
+ */
+export function reachableRewards(
+  bankSize: number, artCount = 0, lastTiles = TILES_PER_PAINTING,
+): Reachable {
   const sets = reachableSets(bankSize);
-  return {
-    sets,
-    paintings: Math.floor(sets / TILES_PER_PAINTING),
-    cards: Math.floor(sets / MYSTERY_EVERY),
-  };
+  const art = Math.max(0, Math.floor(artCount) || 0);
+  const paintings = art > 0
+    ? puzzleView(sets, art, lastTiles).completedPaintings
+    : Math.floor(sets / TILES_PER_PAINTING);
+  return { sets, paintings, cards: Math.floor(sets / MYSTERY_EVERY) };
 }
 
 /**
@@ -93,9 +106,11 @@ export function reachableRewards(bankSize: number): Reachable {
  * 40 cards were written and rewritten twice. Questions are the cheap side of the
  * equation, so they are the side that should move.
  */
-export function bankSizeToCollectEverything(paintings: number, cards: number): number {
+export function bankSizeToCollectEverything(
+  paintings: number, cards: number, lastTiles = TILES_PER_PAINTING,
+): number {
   const setsNeeded = Math.max(
-    Math.max(0, Math.floor(paintings)) * TILES_PER_PAINTING,
+    totalTiles(Math.max(1, Math.floor(paintings)), lastTiles),
     Math.max(0, Math.floor(cards)) * MYSTERY_EVERY,
   );
   // The bank must be large enough that reachableSets() >= setsNeeded. Ceil

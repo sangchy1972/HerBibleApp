@@ -7,9 +7,9 @@ import Feather from '@expo/vector-icons/Feather';
 import { BG, TXT, TXTSUB, INK_06, ROSE, BTN_RADIUS, FONTS, P } from '../constants/theme';
 import { useT } from '../i18n/useT';
 import { useQuiz } from '../state/QuizContext';
-import { puzzleView, TILES_PER_PAINTING } from '../state/quizProgress';
+import { puzzleView } from '../state/quizProgress';
 import {
-  QUIZ_ART, QUIZ_ART_COUNT, artSource, artThumbSource, artTitle, artArtist, artDesc, artCaption,
+  QUIZ_ART, QUIZ_ART_COUNT, LAST_ART_TILES, artSource, artThumbSource, artTitle, artArtist, artDesc, artCaption,
   type QuizArtwork,
 } from '../constants/quizArt';
 import { useUILanguage } from '../state/UILanguageContext';
@@ -38,7 +38,7 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
   const { progress, bank, canStart, daily, lifecycle } = useQuiz();
   const [detail, setDetail] = useState<QuizArtwork | null>(null);
 
-  const view = puzzleView(progress.completedSets, QUIZ_ART_COUNT);
+  const view = puzzleView(progress.completedSets, QUIZ_ART_COUNT, LAST_ART_TILES);
   // Adaptive, not fixed: iPhone SE to Pro Max is a 110pt spread and a hardcoded
   // board would either overflow the small screen or float in the large one.
   const boardW = Math.min(width - P * 2, 380);
@@ -80,6 +80,7 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
             <PuzzleBoard
               paintingIndex={view.paintingIndex}
               tilesUnlocked={view.tilesUnlocked}
+              tileCount={view.tiles.length}
               size={boardW}
               showCaption
             />
@@ -89,14 +90,14 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
         <Text style={styles.captionSub} maxFontSizeMultiplier={1.3}>
           {view.outOfArt
             ? t('quiz.collection.allDone')
-            : t('quiz.collection.tiles', { n: view.tilesUnlocked, total: TILES_PER_PAINTING })}
+            : t('quiz.collection.tiles', { n: view.tilesUnlocked, total: view.tiles.length })}
         </Text>
         {/* Same reason the mystery bar is hidden on the dashboard: "2 more
             levels and this one is yours" is untrue once there are no more
             levels to play. */}
-        {!lifecycle.retired && !view.outOfArt && view.tilesUnlocked < TILES_PER_PAINTING ? (
+        {!lifecycle.retired && !view.outOfArt && view.tilesUnlocked < view.tiles.length ? (
           <Text style={styles.nudge} maxFontSizeMultiplier={1.3}>
-            {t('quiz.collection.nudge', { n: TILES_PER_PAINTING - view.tilesUnlocked })}
+            {t('quiz.collection.nudge', { n: view.tiles.length - view.tilesUnlocked })}
           </Text>
         ) : null}
 

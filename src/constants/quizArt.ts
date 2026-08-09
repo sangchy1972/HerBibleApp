@@ -1,6 +1,6 @@
 import type { LanguageCode } from '../state/TranslationsContext';
 
-// The puzzle artworks - 24 classical paintings of biblical scenes.
+// The puzzle artworks - 33 classical paintings of biblical scenes.
 //
 // CURATED, NOT COLLECTED. The source set held 74 works, and most of the ones
 // cut were not Bible scenes at all: Saint Jerome, Francis of Assisi, the
@@ -15,13 +15,13 @@ import type { LanguageCode } from '../state/TranslationsContext';
 // puzzleView unlocks these by index, so she walks scripture in sequence as she
 // plays - worth more than any arrangement by artist or by date.
 //
-// HOW MANY. 327 questions = 65 sets per bank cycle, 4 sets per painting. 24
+// HOW MANY. 650 questions = 130 sets per bank cycle, 4 sets per painting. 24
 // paintings = 96 sets, so the art outlasts a full pass through every question
 // with room over. 74 would have been four and a half cycles of art nobody
 // reaches, at
 // four times the translation cost.
 //
-// PUBLIC DOMAIN. Every artist died before 1900, and all 24 photographs come
+// PUBLIC DOMAIN. Every artist died before 1900, and all 33 photographs come
 // from Wikimedia Commons rather than from museum sites - several museums
 // assert reproduction rights over their own photography of public-domain
 // works, which is a claim we have no interest in testing.
@@ -802,9 +802,56 @@ export const QUIZ_ART: readonly QuizArtwork[] = [
       'pt': 'João 8. Quando lhe perguntam o que fazer com ela, Cristo se abaixa e escreve no pó. Bruegel pintou o pequeno painel todo em cinzas e inscreveu as palavras em flamengo: quem não tiver pecado.',
     },
   },
+  // ── The finale (2026-08-08) ──────────────────────────────────────────
+  // The 33rd and LAST painting, and the only DIPTYCH: two halves rather than
+  // four quarters, because 130 sets leave exactly two after 32 four-tile boards
+  // (see LAST_ART_TILES below). Chosen for that as much as for the subject —
+  // it is the widest work in the pool at 1.43, and the composition already
+  // divides where the split falls, the Baptist and the crowd on the left,
+  // Christ coming down the road on the right.
+  //
+  // Ivanov gave twenty years to this one canvas. Ending the collection on the
+  // moment the whole book has been pointing at, in the picture a man spent his
+  // life on, is the finale this deserves.
+  {
+    id: '017', aspect: 1.434, ref: 'John 1:29',
+    artist: 'Alexander Ivanov', year: '1857',
+    artistCjk: { 'zh-Hans': '亚历山大·伊万诺夫', 'zh-Hant': '亞歷山大·伊凡諾夫' },
+    title: {
+      en: 'The Appearance of Christ Before the People',
+      'zh-Hans': '基督向民众显现',
+      'zh-Hant': '基督向民眾顯現',
+      'de': 'Die Erscheinung Christi vor dem Volk',
+      'fr': 'L\'Apparition du Christ au peuple',
+      'es': 'La aparición de Cristo ante el pueblo',
+      'pt': 'A Aparição de Cristo ao Povo',
+    },
+    desc: {
+      en: 'John 1. John is still baptising when he sees him on the road and stops mid-sentence to point: behold the Lamb of God. Nobody in the crowd has turned yet. Ivanov worked on this one canvas for twenty years.',
+      'zh-Hans': '约翰福音 1。约翰正在施洗，忽然看见他走在路上，话说到一半便停住，抬手指去：看哪，神的羔羊。人群里还没有一个人回过头来。伊万诺夫为这一幅画画了二十年。',
+      'zh-Hant': '約翰福音 1。約翰正在施洗，忽然看見他走在路上，話說到一半便停住，抬手指去：看哪，神的羔羊。人群裡還沒有一個人回過頭來。伊凡諾夫為這一幅畫畫了二十年。',
+      'de': 'Johannes 1. Johannes tauft noch, da sieht er ihn auf der Straße, bricht mitten im Satz ab und zeigt hin: Siehe, das Lamm Gottes. In der Menge hat sich noch niemand umgedreht. Ivanov arbeitete zwanzig Jahre an dieser einen Leinwand.',
+      'fr': 'Jean 1. Jean baptise encore lorsqu\'il l\'aperçoit sur la route ; il s\'interrompt au milieu d\'une phrase et le montre du doigt : voici l\'Agneau de Dieu. Personne dans la foule ne s\'est encore retourné. Ivanov a travaillé vingt ans à cette seule toile.',
+      'es': 'Juan 1. Juan sigue bautizando cuando lo ve en el camino, se corta a mitad de frase y señala: he aquí el Cordero de Dios. Nadie entre la gente se ha vuelto todavía. Ivanov trabajó veinte años en este único lienzo.',
+      'pt': 'João 1. João ainda batiza quando o vê na estrada, interrompe-se no meio da frase e aponta: eis o Cordeiro de Deus. Ninguém na multidão se virou ainda. Ivanov trabalhou vinte anos nesta única tela.',
+    },
+  },
 ] as const;
 
 export const QUIZ_ART_COUNT = QUIZ_ART.length;
+
+/**
+ * Tiles on the FINAL painting — a DIPTYCH, split left/right, not a 2x2.
+ *
+ * 650 questions is 130 sets and 32 four-tile boards absorb only 128, so without
+ * this the last two sets of the entire game would unlock nothing at all. Two
+ * halves make 32x4 + 2 = 130 exactly: the 130th set finishes the 33rd painting,
+ * the same set that earns the last mystery card and retires the quiz.
+ *
+ * Changing the bank size means recomputing this. __tests__/quizLifecycle.test.ts
+ * pins the arithmetic so the mismatch cannot ship quietly.
+ */
+export const LAST_ART_TILES = 2;
 
 /** The painting that ships in the binary. An id, not `QUIZ_ART[0].id`: the
  *  header bans reordering but not PREPENDING, and a prepend would silently hand

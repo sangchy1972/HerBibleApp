@@ -7,7 +7,7 @@
 import {
   CANDIDATES_PER_DRAW, INITIAL_CARD_PROGRESS, mulberry32,
   candidatesFor, availableIndexes, spreadFor, collectCard, grantDraw, grantDrawsThrough,
-  drawEarnedAt, parseCardProgress, type CardProgressV1,
+  drawEarnedAt, resolveDraw, parseCardProgress, type CardProgressV1,
   INITIAL_CARD_LIKES, isLiked, toggleLike, parseCardLikes,
 } from '../src/state/cardDraw';
 import { MYSTERY_CARDS, MYSTERY_CARD_COUNT } from '../src/constants/mysteryCards';
@@ -303,5 +303,95 @@ describe('likes', () => {
     for (const raw of [null, '', 'not json', '{"v":2}', '{"v":1}', '{"v":1,"liked":5}']) {
       expect(parseCardLikes(raw as string | null)).toEqual(INITIAL_CARD_LIKES);
     }
+  });
+});
+
+
+// ── resolveDraw: the filler must never eat a reward ──────────────────────────
+//
+// spreadFor tops the table up with cards she already holds once fewer than four
+// remain uncollected. The faces are DOWN and only the chosen one is ever turned
+// over, so tapping filler used to spend a whole draw on a duplicate in silence.
+// Monte Carlo over the shipped economy: 43 draws against 40 cards collected
+// 39.47 on average and completed the set only 51% of the time; at 43 cards, with
+// no slack at all, it would have been 9%. This is what makes 43/43 exact.
+describe('resolveDraw', () => {
+  const IDS = ['a', 'b', 'c', 'd', 'e'];
+
+  it('honours the tap when the tapped card is one she does not have', () => {
+    expect(resolveDraw([0, 1, 2, 3], 2, ['e'], IDS)).toBe(2);
+  });
+
+  it('redirects a tap on filler to the one uncollected card on the table', () => {
+    // Table is [d(new), a(held), b(held), c(held)] and her finger lands on b.
+    expect(resolveDraw([3, 0, 1, 2], 2, ['a', 'b', 'c'], IDS)).toBe(0);
+  });
+
+  it('picks the FIRST uncollected when several are still on the table', () => {
+    expect(resolveDraw([2, 3, 0, 1], 3, ['a', 'b'], IDS)).toBe(0);
+  });
+
+  it('honours the tap once everything is collected — repeats are the point then', () => {
+    const all = [...IDS];
+    expect(resolveDraw([0, 1, 2, 3], 2, all, IDS)).toBe(2);
+    expect(resolveDraw([0, 1, 2, 3], 0, all, IDS)).toBe(0);
+  });
+
+  it('clamps a nonsense index instead of returning undefined', () => {
+    expect(resolveDraw([0, 1], 99, [], IDS)).toBe(1);
+    expect(resolveDraw([0, 1], -4, [], IDS)).toBe(0);
+    expect(resolveDraw([0, 1], NaN, [], IDS)).toBe(0);
+    expect(resolveDraw([], 0, [], IDS)).toBe(0);
+  });
+
+  it('collects all 43 in 43 draws no matter where she taps', () => {
+    // The whole point, end to end: worst case is a player who always taps the
+    // last position, which is exactly the position spreadFor fills with cards
+    // she already owns.
+    const ids = Array.from({ length: 43 }, (_, i) => `c${i}`);
+    let p = fresh();
+    for (let draw = 0; draw < 43; draw += 1) {
+      const s = spreadFor(p, ids);
+      const at = resolveDraw(s.candidates, s.candidates.length - 1, p.collected, ids);
+      p = collectCard({ ...p, pendingDraw: true }, ids[s.candidates[at]!]!);
+    }
+    expect(p.collected).toHaveLength(43);
+    expect(new Set(p.collected).size).toBe(43);
+  });
+});
+
+// ── The tail: the last draw slides onto the final set ────────────────────────
+describe('drawEarnedAt with a known total', () => {
+  it('leaves the plain every-3 rule alone when the total is unknown', () => {
+    for (const n of [3, 6, 129]) expect(drawEarnedAt(n, 3)).toBe(true);
+    expect(drawEarnedAt(130, 3)).toBe(false);
+  });
+
+  it('absorbs the leftover set into the final cycle', () => {
+    const TOTAL = 130;
+    expect(drawEarnedAt(126, 3, TOTAL)).toBe(true);    // last whole cycle
+    expect(drawEarnedAt(127, 3, TOTAL)).toBe(false);
+    expect(drawEarnedAt(128, 3, TOTAL)).toBe(false);
+    expect(drawEarnedAt(129, 3, TOTAL)).toBe(false);   // would have paid out before
+    expect(drawEarnedAt(130, 3, TOTAL)).toBe(true);    // the 43rd, on the final set
+  });
+
+  it('changes when the last draw lands, never how many there are', () => {
+    for (const total of [30, 100, 130, 131, 132]) {
+      let plain = 0; let tailed = 0;
+      for (let n = 1; n <= total; n += 1) {
+        if (n % 3 === 0) plain += 1;
+        if (drawEarnedAt(n, 3, total)) tailed += 1;
+      }
+      expect(`${total}:${tailed}`).toBe(`${total}:${plain}`);
+    }
+  });
+
+  it('grants the tail draw through the crash-safe watermark too', () => {
+    let p: CardProgressV1 = { ...fresh(), grantedThroughSets: 126 };
+    p = grantDrawsThrough(p, 129, 3, 130);
+    expect(p.pendingDraw).toBe(false);                 // nothing owed at 127-129
+    p = grantDrawsThrough(p, 130, 3, 130);
+    expect(p.pendingDraw).toBe(true);
   });
 });

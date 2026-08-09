@@ -10,7 +10,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ROSE, BTN_RADIUS, FONTS } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
 import { useQuiz } from '../../state/QuizContext';
-import { artworkAt, artSource, artTitle, artArtist, artCaption, artDesc } from '../../constants/quizArt';
+import { artworkAt, artSource, artTitle, artArtist, artCaption, artDesc, QUIZ_ART_COUNT, LAST_ART_TILES } from '../../constants/quizArt';
+import { tilesOfPainting } from '../../state/quizProgress';
 import { useUILanguage } from '../../state/UILanguageContext';
 import PuzzleBoard from './PuzzleBoard';
 import PaintingShareArt, { PAINTING_SHARE_WIDTH } from './PaintingShareArt';
@@ -127,7 +128,15 @@ export default function PaintingComplete({
             pointerEvents="none"
             style={[styles.halo, { width: boardW + 46, height: boardW / (art.aspect || 1) + 46 }, haloStyle]}
           />
-          <PuzzleBoard paintingIndex={paintingIndex} tilesUnlocked={4} size={boardW} />
+          {/* The finished picture, whole. tilesUnlocked === tileCount for both
+              layouts, so the diptych celebrates as two lit halves rather than a
+              2x2 with two phantom quarters still washed over. */}
+          <PuzzleBoard
+            paintingIndex={paintingIndex}
+            tileCount={tilesOfPainting(paintingIndex, QUIZ_ART_COUNT, LAST_ART_TILES)}
+            tilesUnlocked={tilesOfPainting(paintingIndex, QUIZ_ART_COUNT, LAST_ART_TILES)}
+            size={boardW}
+          />
         </View>
 
         <Text style={styles.title} numberOfLines={2} maxFontSizeMultiplier={1.3}>

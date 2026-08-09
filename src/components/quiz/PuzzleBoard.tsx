@@ -7,6 +7,19 @@ import Svg, { Line, Rect, Path } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
 import { ROSE, INK_06, TXT, TXTSUB, FONTS } from '../../constants/theme';
 import { TILES_PER_PAINTING } from '../../state/quizProgress';
+
+/**
+ * Where tile `i` sits, as fractions of the board.
+ *
+ * TWO layouts, because the last painting is a DIPTYCH. Four tiles are the usual
+ * 2x2 quarters; two are LEFT and RIGHT halves, full height — a diptych split
+ * horizontally is what the form actually is, and stacking them would read as a
+ * 2x2 board with half of it missing.
+ */
+function tileRect(i: number, count: number) {
+  if (count === 2) return { fx: i, fy: 0, fw: 1 / 2, fh: 1 };
+  return { fx: i % 2, fy: Math.floor(i / 2), fw: 1 / 2, fh: 1 / 2 };
+}
 import { artworkAt, artSource, artTitle, artArtist } from '../../constants/quizArt';
 import { useUILanguage } from '../../state/UILanguageContext';
 
@@ -39,10 +52,14 @@ function LockBadge({ size }: { size: number }) {
 
 export default function PuzzleBoard({
   paintingIndex, tilesUnlocked, size, newTile, showCaption = false,
-  revealNewTile = false, revealDelayMs = 0,
+  revealNewTile = false, revealDelayMs = 0, tileCount = TILES_PER_PAINTING,
 }: {
   paintingIndex: number;
   tilesUnlocked: number;
+  /** How many pieces THIS painting has. 4 everywhere except the final diptych,
+   *  which has 2. Passed rather than derived so the board never has to know
+   *  which painting is last. */
+  tileCount?: number;
   /** Board WIDTH. Height comes from the painting's own aspect. */
   size: number;
   /** Piece just unlocked, or null. Ringed so the reward is legible. */
@@ -62,7 +79,8 @@ export default function PuzzleBoard({
   const art = artworkAt(paintingIndex);
   const w = Math.max(1, size);
   const h = Math.max(1, Math.round(w / (art.aspect || 1)));
-  const unlocked = Math.max(0, Math.min(TILES_PER_PAINTING, Math.floor(tilesUnlocked) || 0));
+  const pieces = tileCount === 2 ? 2 : TILES_PER_PAINTING;
+  const unlocked = Math.max(0, Math.min(pieces, Math.floor(tilesUnlocked) || 0));
 
   const src = artSource(art);
   // A require()d asset is already in the binary. Starting it `loaded` matters
@@ -123,73 +141,73 @@ export default function PuzzleBoard({
 
         {/* Heavy white wash over each quarter not yet earned — the art stays
             faintly visible under it. */}
-        {Array.from({ length: TILES_PER_PAINTING }, (_, i) => (
-          i < unlocked ? null : (
+        {Array.from({ length: pieces }, (_, i) => {
+          if (i < unlocked) return null;
+          const r = tileRect(i, pieces);
+          return (
             <View
               key={`w${i}`}
               pointerEvents="none"
-              style={[styles.wash, {
-                left: (i % 2) * (w / 2),
-                top: Math.floor(i / 2) * (h / 2),
-                width: w / 2,
-                height: h / 2,
-              }]}
+              style={[styles.wash, { left: r.fx * w, top: r.fy * h, width: r.fw * w, height: r.fh * h }]}
             />
-          )
-        ))}
+          );
+        })}
 
         {/* The fresh quarter's own wash, on top of the art and under the
             dashes. It fades out to reveal full colour. Rendered only in reveal
             mode so the static board keeps exactly its old layer stack. */}
-        {revealNewTile && newTile != null && newTile >= 0 && newTile < TILES_PER_PAINTING ? (
+        {revealNewTile && newTile != null && newTile >= 0 && newTile < pieces ? (
           <Animated.View
             pointerEvents="none"
-            style={[styles.wash, newTileWashStyle, {
-              left: (newTile % 2) * (w / 2),
-              top: Math.floor(newTile / 2) * (h / 2),
-              width: w / 2,
-              height: h / 2,
-            }]}
+            style={[styles.wash, newTileWashStyle, (() => {
+              const r = tileRect(newTile, pieces);
+              return { left: r.fx * w, top: r.fy * h, width: r.fw * w, height: r.fh * h };
+            })()]}
           />
         ) : null}
 
         {/* Dashed cross dividing the quarters, plus the fresh piece's ring. */}
         <Svg width={w} height={h} style={StyleSheet.absoluteFill} pointerEvents="none">
+          {/* The vertical seam splits both layouts; the horizontal one exists
+              only on a 2x2. A diptych with a cross drawn on it would claim four
+              pieces and then hand her two. */}
           <Line x1={w / 2} y1={0} x2={w / 2} y2={h} stroke="rgba(30,27,46,0.32)" strokeWidth={1.5} strokeDasharray="7 7" />
-          <Line x1={0} y1={h / 2} x2={w} y2={h / 2} stroke="rgba(30,27,46,0.32)" strokeWidth={1.5} strokeDasharray="7 7" />
-          {newTile != null && newTile >= 0 && newTile < TILES_PER_PAINTING ? (
-            <Rect
-              x={(newTile % 2) * (w / 2) + 2.5}
-              y={Math.floor(newTile / 2) * (h / 2) + 2.5}
-              width={w / 2 - 5}
-              height={h / 2 - 5}
-              rx={8}
-              fill="none"
-              stroke="rgba(255,255,255,0.95)"
-              strokeWidth={2.5}
-            />
+          {pieces === TILES_PER_PAINTING ? (
+            <Line x1={0} y1={h / 2} x2={w} y2={h / 2} stroke="rgba(30,27,46,0.32)" strokeWidth={1.5} strokeDasharray="7 7" />
           ) : null}
+          {newTile != null && newTile >= 0 && newTile < pieces ? (() => {
+            const r = tileRect(newTile, pieces);
+            return (
+              <Rect
+                x={r.fx * w + 2.5}
+                y={r.fy * h + 2.5}
+                width={r.fw * w - 5}
+                height={r.fh * h - 5}
+                rx={8}
+                fill="none"
+                stroke="rgba(255,255,255,0.95)"
+                strokeWidth={2.5}
+              />
+            );
+          })() : null}
         </Svg>
 
         {/* Locks over the quarters still to earn. Kept when the image FAILS, so
             a dead CDN still reads as "not earned yet" rather than as a blank
             grey box with no explanation. */}
-        {Array.from({ length: TILES_PER_PAINTING }, (_, i) => (
-          i < unlocked && !failed ? null : (
+        {Array.from({ length: pieces }, (_, i) => {
+          if (i < unlocked && !failed) return null;
+          const r = tileRect(i, pieces);
+          return (
             <View
               key={`k${i}`}
               pointerEvents="none"
-              style={[styles.lockCell, {
-                left: (i % 2) * (w / 2),
-                top: Math.floor(i / 2) * (h / 2),
-                width: w / 2,
-                height: h / 2,
-              }]}
+              style={[styles.lockCell, { left: r.fx * w, top: r.fy * h, width: r.fw * w, height: r.fh * h }]}
             >
               <LockBadge size={lockSize} />
             </View>
-          )
-        ))}
+          );
+        })}
 
         {failed ? (
           <View pointerEvents="none" style={styles.offline}>

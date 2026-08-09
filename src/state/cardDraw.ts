@@ -157,6 +157,45 @@ export function spreadFor(p: CardProgressV1, ids: readonly string[]): DrawSpread
 }
 
 /**
+ * Which card a tap on spread position `tappedIndex` should actually hand her.
+ *
+ * Returns an index into `candidates` — the tapped one when it is a card she does
+ * not have, and the first uncollected one on the table otherwise.
+ *
+ * WHY THIS EXISTS. spreadFor tops the table up with cards she already holds once
+ * fewer than four remain uncollected (a single face under "choose one" is a joke
+ * after three completed sets). But the faces are FACE DOWN and only the chosen
+ * one is ever turned over — the other three fade out unrevealed — so tapping the
+ * filler silently spent a whole reward on a duplicate. With 43 draws over 40
+ * cards that cost the average player half a card and left only 51% of players
+ * who finished the entire bank with a complete collection; at 43 cards it would
+ * have been 9%. Since the position she taps carries no information about what is
+ * under it, resolving the tap to a card she is missing is not a lie — it is the
+ * same arbitrary assignment spreadFor already made, minus the wasted reward.
+ * With this, 43 draws collect 43 distinct cards deterministically.
+ *
+ * Once EVERYTHING is collected the pool resets and repeats are the point, so the
+ * tap is honoured exactly as made.
+ */
+export function resolveDraw(
+  candidates: readonly number[],
+  tappedIndex: number,
+  collected: readonly string[],
+  ids: readonly string[],
+): number {
+  if (candidates.length === 0) return 0;
+  const i = Math.min(Math.max(0, Math.floor(tappedIndex) || 0), candidates.length - 1);
+  const held = new Set(collected);
+  const isNew = (poolIndex: number) => {
+    const id = ids[poolIndex];
+    return typeof id === 'string' && !held.has(id);
+  };
+  if (isNew(candidates[i]!)) return i;
+  const firstNew = candidates.findIndex(isNew);
+  return firstNew === -1 ? i : firstNew;
+}
+
+/**
  * Commit a pick.
  *
  * `pendingDraw` clears here and nowhere else — the draw is spent the moment she
@@ -190,12 +229,13 @@ export function grantDrawsThrough(
   p: CardProgressV1,
   completedSets: number,
   every: number,
+  totalSets = 0,
 ): CardProgressV1 {
   const n = Math.max(0, Math.floor(completedSets) || 0);
   if (n <= p.grantedThroughSets) return p;
   let owed = false;
   for (let k = p.grantedThroughSets + 1; k <= n; k += 1) {
-    if (drawEarnedAt(k, every)) { owed = true; break; }
+    if (drawEarnedAt(k, every, totalSets)) { owed = true; break; }
   }
   return {
     ...p,
@@ -209,11 +249,25 @@ export function grantDraw(p: CardProgressV1): CardProgressV1 {
   return p.pendingDraw ? p : { ...p, pendingDraw: true };
 }
 
-/** Does completing set number `completedSets` (1-based) earn a draw? */
-export function drawEarnedAt(completedSets: number, every: number): boolean {
+/**
+ * Does completing set number `completedSets` (1-based) earn a draw?
+ *
+ * `totalSets` is how many sets the bank allows in total. Pass it and the LAST
+ * draw slides onto the final set, absorbing the remainder: 130 sets give
+ * 42 cycles of 3 plus one of 4, i.e. draws at 3..126 and then 130, which is 43
+ * draws with no dead set. Omit it (0) and the plain every-N rule applies —
+ * that is the right answer when the bank is not on the device yet, since the
+ * tail cannot be located without knowing where the end is.
+ */
+export function drawEarnedAt(completedSets: number, every: number, totalSets = 0): boolean {
   const n = Math.floor(completedSets);
   const e = Math.max(1, Math.floor(every) || 1);
-  return n > 0 && n % e === 0;
+  if (n <= 0) return false;
+  const total = Math.max(0, Math.floor(totalSets) || 0);
+  const cycles = Math.floor(total / e);
+  if (total <= 0 || cycles < 1) return n % e === 0;
+  // Every whole cycle before the last, then the last one on the final set.
+  return n === total || (n % e === 0 && n <= e * (cycles - 1));
 }
 
 // ── Likes ────────────────────────────────────────────────────────────────────

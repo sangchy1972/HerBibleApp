@@ -47,7 +47,7 @@ export default function QuizPromoHost({ inGap }: {
 }) {
   const t = useT();
   const nav = useNavigation<NavigationProp<RootStackParamList>>();
-  const { ready, bank, progress, lifecycle, daily, canStart } = useQuiz();
+  const { ready, bank, progress, lifecycle, daily, canStart, totalSets } = useQuiz();
   const promo = useQuizPromo();
   const coord = useNudgeCoordinator();
 
@@ -147,7 +147,7 @@ export default function QuizPromoHost({ inGap }: {
     setTimeout(() => { try { nav.navigate('Quiz'); } catch { /* route may not be mounted */ } }, 60);
   };
 
-  const mystery = mysteryView(progress.completedSets);
+  const mystery = mysteryView(progress.completedSets, totalSets);
   // "N sets to your next card". For a first-timer that is the full 3, which is
   // also the daily allowance — so the honest promise is "one afternoon".
   const setsToCard = Math.min(mystery.remaining, daily.remaining);

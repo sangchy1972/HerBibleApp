@@ -5,10 +5,76 @@
 // the GospelsPsalmsContext doctrine — a derived view can't drift out of sync
 // with the counter that produced it, and there is no stuck state to migrate.
 
-/** Tiles per painting. A 2×2 board, so one set = one quarter. */
+/** Tiles on a STANDARD painting. A 2×2 board, so one set = one quarter. */
 export const TILES_PER_PAINTING = 4;
 /** Sets between mystery card draws. Load-bearing: this IS the reward economy. */
 export const MYSTERY_EVERY = 3;
+
+// ── The tail ─────────────────────────────────────────────────────────────────
+//
+// 650 questions = 130 sets, and neither reward divides into it:
+//   130 / 4 tiles  = 32.5 paintings
+//   130 / 3 sets   = 43.33 draws
+//
+// Left alone, both remainders are dead sets — the last two sets of the game
+// would unlock no tile at all (the 33rd painting never existing), and the 130th
+// would earn no card. The fix in both cases is to make the FINAL unit absorb the
+// remainder rather than to drop it:
+//
+//   • the last painting is a DIPTYCH — 2 tiles, left and right — so
+//     32×4 + 2 = 130 exactly, and 33 paintings are collectable.
+//   • the last draw costs 4 sets instead of 3, so 42×3 + 4 = 130 exactly, and
+//     43 cards are collectable.
+//
+// Both land on set 130 together, which is also the set that retires the quiz.
+//
+// Everything below takes the totals as ARGUMENTS rather than reading them from
+// the art list or the bank. This module is deliberately zero-import (the
+// GospelsPsalmsContext doctrine) and the totals are exactly the things that
+// change when content ships.
+
+/** Tiles on painting `index` — `lastTiles` for the final one, 4 for the rest. */
+export function tilesOfPainting(index: number, artCount: number, lastTiles = TILES_PER_PAINTING): number {
+  const art = Math.max(1, Math.floor(artCount) || 1);
+  const last = Math.max(1, Math.floor(lastTiles) || TILES_PER_PAINTING);
+  return Math.floor(index) >= art - 1 ? last : TILES_PER_PAINTING;
+}
+
+/** Sets it takes to finish every painting. */
+export function totalTiles(artCount: number, lastTiles = TILES_PER_PAINTING): number {
+  const art = Math.max(1, Math.floor(artCount) || 1);
+  const last = Math.max(1, Math.floor(lastTiles) || TILES_PER_PAINTING);
+  return (art - 1) * TILES_PER_PAINTING + last;
+}
+
+/**
+ * The painting a commit just FINISHED, or null.
+ *
+ * `committed` is 1-based (the set she has just completed). Replaces a
+ * `committed % 4 === 0` test that is wrong the moment the last painting is not
+ * four tiles: it would fire on set 128 (correct) and then never again, so the
+ * diptych would be completed with no celebration at all.
+ */
+export function paintingFinishedBy(
+  committed: number, artCount: number, lastTiles = TILES_PER_PAINTING,
+): number | null {
+  const n = Math.floor(committed) || 0;
+  const art = Math.max(1, Math.floor(artCount) || 1);
+  const last = Math.max(1, Math.floor(lastTiles) || TILES_PER_PAINTING);
+  if (n <= 0 || n > totalTiles(art, last)) return null;
+  const { paintingIndex, tileInPainting } = locate(n - 1, art, last);
+  return tileInPainting + 1 >= tilesOfPainting(paintingIndex, art, last) ? paintingIndex : null;
+}
+
+/** Painting and tile-within-it for a 0-based tile ordinal. */
+function locate(tileOrdinal: number, artCount: number, lastTiles: number) {
+  const art = Math.max(1, Math.floor(artCount) || 1);
+  const beforeLast = (art - 1) * TILES_PER_PAINTING;
+  if (tileOrdinal < beforeLast) {
+    return { paintingIndex: Math.floor(tileOrdinal / TILES_PER_PAINTING), tileInPainting: tileOrdinal % TILES_PER_PAINTING };
+  }
+  return { paintingIndex: art - 1, tileInPainting: tileOrdinal - beforeLast };
+}
 
 export interface QuizProgressV1 {
   v: 1;
@@ -56,26 +122,38 @@ export interface PuzzleView {
  * end — "crash-free is non-negotiable", and a reward screen is exactly where an
  * out-of-range index would land on a user who has been enjoying the feature.
  */
-export function puzzleView(completedSets: number, artCount: number): PuzzleView {
+export function puzzleView(completedSets: number, artCount: number, lastTiles = TILES_PER_PAINTING): PuzzleView {
   const done = Math.max(0, Math.floor(completedSets) || 0);
   const art = Math.max(1, Math.floor(artCount) || 1);
-  const rawIndex = Math.floor(done / TILES_PER_PAINTING);
-  const outOfArt = rawIndex >= art;
-  // CLAMPED, not raw. Unclamped this counts paintings that do not exist, and
-  // the progress row read "25 of 24 paintings" and kept climbing while the
-  // collection screen, which clamps on its own, said 24 of 24. Clamping at the
-  // source is what stops the next consumer reintroducing the same mismatch.
-  const completedPaintings = Math.min(rawIndex, art);
-  const paintingIndex = outOfArt ? art - 1 : rawIndex;
-  // Past the last artwork we show it fully unlocked rather than restarting a
-  // board the user can never finish.
-  const tilesUnlocked = outOfArt ? TILES_PER_PAINTING : done % TILES_PER_PAINTING;
+  const last = Math.max(1, Math.floor(lastTiles) || TILES_PER_PAINTING);
+  const total = totalTiles(art, last);
+  const outOfArt = done >= total;
+
+  if (outOfArt) {
+    // Past the last artwork we show it fully unlocked rather than restarting a
+    // board the user can never finish.
+    const tilesHere = last;
+    return {
+      paintingIndex: art - 1,
+      tilesUnlocked: tilesHere,
+      tiles: Array.from({ length: tilesHere }, () => 'unlocked' as const),
+      // CLAMPED, not raw. Unclamped this counts paintings that do not exist, and
+      // the progress row read "25 of 24 paintings" and kept climbing while the
+      // collection screen, which clamps on its own, said 24 of 24. Clamping at
+      // the source is what stops the next consumer reintroducing the mismatch.
+      completedPaintings: art,
+      outOfArt: true,
+    };
+  }
+
+  const { paintingIndex, tileInPainting } = locate(done, art, last);
+  const tilesHere = tilesOfPainting(paintingIndex, art, last);
   return {
     paintingIndex,
-    tilesUnlocked,
-    tiles: Array.from({ length: TILES_PER_PAINTING }, (_, i) => (i < tilesUnlocked ? 'unlocked' : 'locked')),
-    completedPaintings,
-    outOfArt,
+    tilesUnlocked: tileInPainting,
+    tiles: Array.from({ length: tilesHere }, (_, i) => (i < tileInPainting ? 'unlocked' : 'locked')),
+    completedPaintings: paintingIndex,
+    outOfArt: false,
   };
 }
 
@@ -95,26 +173,29 @@ export interface RewardPreview {
  * finished picture. The last tile of a painting has to stay on the painting it
  * belongs to; the roll-over happens on the NEXT set.
  */
-export function rewardPreview(completedSetsBefore: number, artCount: number): RewardPreview {
+export function rewardPreview(
+  completedSetsBefore: number, artCount: number, lastTiles = TILES_PER_PAINTING,
+): RewardPreview {
   const before = Math.max(0, Math.floor(completedSetsBefore) || 0);
   const earned = before + 1;
   const art = Math.max(1, Math.floor(artCount) || 1);
+  const last = Math.max(1, Math.floor(lastTiles) || TILES_PER_PAINTING);
 
-  const paintingRaw = Math.floor((earned - 1) / TILES_PER_PAINTING);
-  const outOfArt = paintingRaw >= art;
-  const tileInPainting = (earned - 1) % TILES_PER_PAINTING;
+  const outOfArt = earned > totalTiles(art, last);
+  if (outOfArt) return { view: puzzleView(earned, art, last), freshTile: null };
 
-  const view: PuzzleView = outOfArt
-    ? { ...puzzleView(earned, art) }
-    : {
-      paintingIndex: paintingRaw,
-      tilesUnlocked: tileInPainting + 1,
-      tiles: Array.from({ length: TILES_PER_PAINTING }, (_, i) => (i <= tileInPainting ? 'unlocked' : 'locked')),
-      completedPaintings: Math.floor(earned / TILES_PER_PAINTING),
-      outOfArt: false,
-    };
-
-  return { view, freshTile: outOfArt ? null : tileInPainting };
+  const { paintingIndex, tileInPainting } = locate(earned - 1, art, last);
+  const tilesHere = tilesOfPainting(paintingIndex, art, last);
+  const view: PuzzleView = {
+    paintingIndex,
+    tilesUnlocked: tileInPainting + 1,
+    tiles: Array.from({ length: tilesHere }, (_, i) => (i <= tileInPainting ? 'unlocked' : 'locked')),
+    // +1 only when this tile FINISHES the picture; the roll-over otherwise
+    // happens on the next set.
+    completedPaintings: paintingIndex + (tileInPainting + 1 >= tilesHere ? 1 : 0),
+    outOfArt: false,
+  };
+  return { view, freshTile: tileInPainting };
 }
 
 export interface MysteryView {
@@ -123,10 +204,37 @@ export interface MysteryView {
   remaining: number;
 }
 
-/** The mystery-card countdown — "N sets from the next draw". Real, not
- *  decorative: hitting zero grants an actual draw via grantDrawsThrough. */
-export function mysteryView(completedSets: number): MysteryView {
+/**
+ * Where the last draw lands, and how long its cycle is.
+ *
+ * `totalSets` <= 0 means "we do not know yet" (no bank on the device), and the
+ * plain every-3 rule applies — the tail cannot be computed without knowing
+ * where the end is, and guessing would be worse than deferring.
+ */
+export function finalCycle(totalSets: number): { at: number; length: number } | null {
+  const total = Math.max(0, Math.floor(totalSets) || 0);
+  const cycles = Math.floor(total / MYSTERY_EVERY);
+  if (cycles < 1) return null;
+  // 42 whole cycles then one of 3 + leftover. For 130 that is 3+1 = 4.
+  return { at: total, length: MYSTERY_EVERY + (total % MYSTERY_EVERY) };
+}
+
+/**
+ * The mystery-card countdown — "N sets from the next draw". Real, not
+ * decorative: hitting zero grants an actual draw via grantDrawsThrough.
+ *
+ * `totalSets` makes the FINAL cycle longer so the leftover sets are not dead.
+ * Without it the bar would read 3/3 at set 129 and hand her nothing, then run
+ * set 130 with no counter at all.
+ */
+export function mysteryView(completedSets: number, totalSets = 0): MysteryView {
   const done = Math.max(0, Math.floor(completedSets) || 0);
+  const fin = finalCycle(totalSets);
+  // In the final cycle once every whole cycle before it is spent.
+  if (fin && done >= fin.at - fin.length && done < fin.at) {
+    const current = done - (fin.at - fin.length);
+    return { current, target: fin.length, remaining: fin.length - current };
+  }
   const current = done % MYSTERY_EVERY;
   return { current, target: MYSTERY_EVERY, remaining: MYSTERY_EVERY - current };
 }

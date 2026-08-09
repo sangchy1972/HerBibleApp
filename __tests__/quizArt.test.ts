@@ -26,11 +26,11 @@ describe('art registry', () => {
 
   it('exposes a count that matches the list', () => {
     expect(QUIZ_ART_COUNT).toBe(QUIZ_ART.length);
-    // 24 paintings x 4 sets = 96 sets to collect them all, against 65 sets per
-    // quiz bank cycle. The art outlasts the questions, which is the right way
-    // round — the reward should never run out first. The source set held 74;
-    // the rest were saints, apocrypha and donor Madonnas, not Bible scenes.
-    expect(QUIZ_ART_COUNT).toBe(32);
+    // 32 four-tile boards plus a two-tile diptych = 130 sets, which is exactly
+    // what a 650-question bank yields. The source set held 74; the rest were
+    // saints, apocrypha and donor Madonnas, not Bible scenes.
+    // The arithmetic itself is pinned in quizLifecycle.test.ts.
+    expect(QUIZ_ART_COUNT).toBe(33);
   });
 
   it('credits every painting in every language the app ships', () => {
@@ -150,6 +150,11 @@ describe('art registry', () => {
     // v2, appended 2026-08-08. Chronological within this batch only — see the
     // banner in quizArt.ts for why they could not be merged into the sequence.
     '043', '011', '032', '022', '048', '027', '026', '016',
+    // The finale, appended 2026-08-08. LAST in the array is load-bearing, not
+    // incidental: LAST_ART_TILES applies to whichever painting is last, so
+    // appending anything after this one silently turns Ivanov back into a 2x2
+    // and makes the new arrival the diptych instead.
+    '017',
     ]);
   });
 

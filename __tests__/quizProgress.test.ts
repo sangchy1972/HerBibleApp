@@ -3,7 +3,8 @@
 
 import {
   TILES_PER_PAINTING, MYSTERY_EVERY, INITIAL_PROGRESS,
-  puzzleView, mysteryView, levelFor, applyCompletion, parseProgress,
+  puzzleView, rewardPreview, mysteryView, levelFor, applyCompletion, parseProgress,
+  totalTiles, tilesOfPainting, paintingFinishedBy,
 } from '../src/state/quizProgress';
 
 describe('puzzleView', () => {
@@ -135,5 +136,90 @@ describe('parseProgress', () => {
     expect(p.completedSets).toBe(0);
     expect(p.perfectSets).toBe(2);
     expect(p.totalCorrect).toBe(0);
+  });
+});
+
+
+// ── The diptych: the final painting is two halves, not four quarters ─────────
+//
+// 130 sets do not divide by 4. Without a short last painting the last two sets
+// of the whole game unlock nothing at all. Everything below is the arithmetic
+// that makes 32x4 + 2 = 130 land exactly; quizLifecycle.test.ts pins it against
+// the shipped constants.
+describe('the last painting is short', () => {
+  const ART = 33; const LAST = 2;
+
+  it('counts the tiles the collection actually costs', () => {
+    expect(totalTiles(ART, LAST)).toBe(130);
+    expect(totalTiles(33)).toBe(132);                    // default: all four-tile
+    expect(tilesOfPainting(0, ART, LAST)).toBe(4);
+    expect(tilesOfPainting(31, ART, LAST)).toBe(4);
+    expect(tilesOfPainting(32, ART, LAST)).toBe(2);      // the diptych
+  });
+
+  it('walks the seam between painting 32 and the diptych', () => {
+    expect(puzzleView(127, ART, LAST)).toMatchObject({ paintingIndex: 31, tilesUnlocked: 3 });
+    // 128 finishes painting 32 and moves her onto the diptych, empty.
+    const at128 = puzzleView(128, ART, LAST);
+    expect(at128).toMatchObject({ paintingIndex: 32, tilesUnlocked: 0, completedPaintings: 32 });
+    expect(at128.tiles).toEqual(['locked', 'locked']);   // TWO, not four
+    expect(puzzleView(129, ART, LAST).tiles).toEqual(['unlocked', 'locked']);
+  });
+
+  it('is complete at 130, not at 132', () => {
+    const done = puzzleView(130, ART, LAST);
+    expect(done.outOfArt).toBe(true);
+    expect(done.completedPaintings).toBe(33);
+    expect(done.tiles).toEqual(['unlocked', 'unlocked']);
+    expect(puzzleView(129, ART, LAST).outOfArt).toBe(false);
+  });
+
+  it('rings the right half on the last set she will ever play', () => {
+    expect(rewardPreview(128, ART, LAST)).toMatchObject({ freshTile: 0 });
+    const last = rewardPreview(129, ART, LAST);
+    expect(last.freshTile).toBe(1);
+    expect(last.view.tiles).toEqual(['unlocked', 'unlocked']);
+    expect(last.view.completedPaintings).toBe(33);       // credited on the set that finishes it
+    expect(rewardPreview(130, ART, LAST).freshTile).toBeNull();
+  });
+
+  it('fires the completion celebration for the diptych', () => {
+    // `committed % 4 === 0` fired on 128 and then never again, so the finale
+    // would have been completed in silence.
+    expect(paintingFinishedBy(4, ART, LAST)).toBe(0);
+    expect(paintingFinishedBy(128, ART, LAST)).toBe(31);
+    expect(paintingFinishedBy(129, ART, LAST)).toBeNull();
+    expect(paintingFinishedBy(130, ART, LAST)).toBe(32);
+    expect(paintingFinishedBy(131, ART, LAST)).toBeNull();
+    expect(paintingFinishedBy(0, ART, LAST)).toBeNull();
+  });
+
+  it('survives nonsense without throwing', () => {
+    expect(() => puzzleView(NaN, ART, LAST)).not.toThrow();
+    expect(puzzleView(-5, ART, 0).tilesUnlocked).toBe(0);
+    expect(totalTiles(0, 2)).toBe(2);
+    expect(tilesOfPainting(-3, ART, LAST)).toBe(4);
+  });
+});
+
+// ── The mystery countdown's final cycle is four sets long ────────────────────
+describe('mysteryView with a known total', () => {
+  const TOTAL = 130;
+
+  it('is the plain 3-cycle everywhere but the end', () => {
+    expect(mysteryView(0, TOTAL)).toEqual({ current: 0, target: 3, remaining: 3 });
+    expect(mysteryView(4, TOTAL)).toEqual({ current: 1, target: 3, remaining: 2 });
+    expect(mysteryView(125, TOTAL)).toEqual({ current: 2, target: 3, remaining: 1 });
+  });
+
+  it('switches to a 4-set target for the last stretch', () => {
+    // Without this the bar reads 3/3 at set 129 and hands her nothing.
+    expect(mysteryView(126, TOTAL)).toEqual({ current: 0, target: 4, remaining: 4 });
+    expect(mysteryView(127, TOTAL)).toEqual({ current: 1, target: 4, remaining: 3 });
+    expect(mysteryView(129, TOTAL)).toEqual({ current: 3, target: 4, remaining: 1 });
+  });
+
+  it('falls back to the 3-cycle when the total is unknown', () => {
+    expect(mysteryView(127)).toEqual({ current: 1, target: 3, remaining: 2 });
   });
 });

@@ -7,9 +7,9 @@ import { BG, TXT, TXTSUB, FONTS, ROSE, ROSE_WASH, BTN_RADIUS } from '../constant
 import { useT } from '../i18n/useT';
 import { useQuiz } from '../state/QuizContext';
 import { currentPosition, triedFlags, sessionSummary } from '../state/quizSession';
-import { levelFor, TILES_PER_PAINTING } from '../state/quizProgress';
+import { levelFor, paintingFinishedBy } from '../state/quizProgress';
 import { SET_SIZE } from '../services/quizSets';
-import { QUIZ_ART_COUNT } from '../constants/quizArt';
+import { QUIZ_ART_COUNT, LAST_ART_TILES } from '../constants/quizArt';
 import QuizSegmentBar from '../components/quiz/QuizSegmentBar';
 import QuizQuestionView from '../components/quiz/QuizQuestionView';
 import QuizReviewView from '../components/quiz/QuizReviewView';
@@ -30,7 +30,7 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   const t = useT();
   const insets = useSafeAreaInsets();
   const {
-    ready, bank, bankStatus, retryBank, session, questions, currentQuestion, segments, progress,
+    ready, bank, bankStatus, retryBank, session, questions, currentQuestion, segments, progress, totalSets,
     open, pick, next, retry, finish, pendingDraw, daily, lifecycle,
   } = useQuiz();
 
@@ -193,6 +193,7 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
           // painting are. `lifecycle.retired` is still false at this point.
           lastEver={(progress.setIndex + 1) * SET_SIZE >= (bank?.length ?? 0)}
           setsLeftAfter={Math.max(0, daily.remaining - 1)}
+          totalSets={totalSets}
           onRetry={() => {
             // Interstitial on the retry transition.
             //
@@ -261,10 +262,7 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
             // latch, and the pendingDraw effect opens the overlay on top of
             // whatever now owns the screen.
             const committed = progress.completedSets + 1;
-            const pIdx = committed / TILES_PER_PAINTING - 1;
-            const painting = committed % TILES_PER_PAINTING === 0 && pIdx < QUIZ_ART_COUNT
-              ? pIdx
-              : null;
+            const painting = paintingFinishedBy(committed, QUIZ_ART_COUNT, LAST_ART_TILES);
             finish();
             if (painting != null) setFinishedPainting(painting);
           }}

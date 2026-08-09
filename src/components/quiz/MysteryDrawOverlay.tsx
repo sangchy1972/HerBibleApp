@@ -55,7 +55,7 @@ export default function MysteryDrawOverlay({
   const { lang } = useUILanguage();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const { drawSpread, drawCard, likeCard, cardIsLiked, logCardShare, collectedCards } = useQuiz();
+  const { drawSpread, resolveDrawPick, drawCard, likeCard, cardIsLiked, logCardShare, collectedCards } = useQuiz();
   const collectedCount = collectedCards.length;
   const shotRef = useRef<View>(null);
   const [busy, setBusy] = useState(false);
@@ -77,7 +77,15 @@ export default function MysteryDrawOverlay({
 
   // Frozen on mount. `drawSpread` recomputes the moment the card is collected —
   // reading it live would swap the four faces out from under the reveal.
-  const spread = useRef(drawSpread).current;
+  //
+  // STATE, not a ref, because the tapped position may be rewritten once: when
+  // the table has been topped up with cards she already holds, resolveDraw
+  // hands her a missing one instead, and it has to appear at the position her
+  // finger is on. Nothing else is ever revealed, so nothing else can disagree.
+  const [spread, setSpread] = useState<MysteryCard[]>(() => drawSpread);
+  // Which POSITION flips. Not `chosen?.id === card.id`: after the rewrite the
+  // same card can sit at two positions, and an id comparison would flip both.
+  const [chosenIndex, setChosenIndex] = useState<number | null>(null);
 
   const scrim = useSharedValue(0);
   const prompt = useSharedValue(0);
@@ -119,13 +127,17 @@ export default function MysteryDrawOverlay({
   // SECOND card is what flips over, gets typed out, and receives her heart.
   // She would like a card her collection does not contain.
   const picked = useRef(false);
-  const pick = useCallback((card: MysteryCard) => {
+  const pick = useCallback((index: number) => {
     if (picked.current) return;
+    const card = resolveDrawPick(index);
+    if (!card) return;
     picked.current = true;
+    setSpread(prev => prev.map((c, i) => (i === index ? card : c)));
+    setChosenIndex(index);
     setPhase('reveal');
     setChosen(card);
     drawCard(card.id);
-  }, [drawCard]);
+  }, [drawCard, resolveDrawPick]);
 
   // Any tap during reveal or typing jumps to the end state. She will see this
   // ~22 times in all; an animation with no way out becomes the thing she dreads about
@@ -221,16 +233,16 @@ export default function MysteryDrawOverlay({
       <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
         {spread.map((card, i) => (
           <DrawCard
-            key={card.id}
+            key={i}
             card={card}
             index={i}
             geom={geom}
             lang={lang}
             phase={phase}
-            isChosen={chosen?.id === card.id}
+            isChosen={chosenIndex === i}
             typing={typing}
             finalH={finalH}
-            onPress={() => pick(card)}
+            onPress={() => pick(i)}
             onTypingDone={() => setTyped(true)}
           />
         ))}

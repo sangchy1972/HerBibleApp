@@ -575,11 +575,61 @@ export const MYSTERY_CARDS: readonly MysteryCard[] = [
       'pt': 'Você tenta imaginar daqui a cinco anos e não vem nada. Só mais disso. Eu sei. Eu não estou te pedindo pra imaginar nada. Estou te pedindo pra atravessar o dia de hoje, comigo do lado.',
     },
   },
+  // ── The last three (2026-08-08) ──────────────────────────────────────
+  // APPENDED, never inserted — collected ids are durable.
+  //
+  // 40 -> 43 because 130 sets yield exactly 43 draws once the final cycle
+  // absorbs the leftover set (see the tail note in state/quizProgress.ts). 43
+  // draws over 40 cards left the average player a card short; 43 over 43, with
+  // resolveDraw guaranteeing an uncollected card while any remain, collects the
+  // set exactly.
+  //
+  // This breaks the 4-per-theme symmetry on purpose (owner's call). Each fills
+  // a situation none of the existing forty says: the faith that has gone flat
+  // and is being carried out of habit, fear FOR A CHILD rather than for
+  // herself, and being the only one around her who believes any of it.
+  {
+    id: 'weary-5', theme: 'weary', ref: 'Psalm 51:12',
+    body: {
+      en: 'It used to mean something. Now you say the words and feel nothing, and you keep going only because stopping feels worse. I am not grading the feeling. You came anyway tonight, and that is not nothing to me.',
+      'zh-Hans': '从前这些话是有分量的。如今你照旧说出口，心里却什么也没有，还撑着，只因为停下来更难受。我不看你有没有感觉。你今晚还是来了，这在我这里不是小事。',
+      'zh-Hant': '從前這些話是有分量的。如今你照舊說出口，心裡卻什麼也沒有，還撐著，只因為停下來更難受。我不看你有沒有感覺。你今晚還是來了，這在我這裡不是小事。',
+      'de': 'Früher hat das etwas bedeutet. Jetzt sprichst du die Worte und spürst nichts, und du machst weiter, weil Aufhören sich schlimmer anfühlt. Ich bewerte das Gefühl nicht. Du bist heute Abend trotzdem gekommen, und das ist mir nicht wenig.',
+      'fr': 'Avant, cela voulait dire quelque chose. Maintenant tu dis les mots et tu ne ressens rien, et tu continues parce qu\'arrêter serait pire. Je ne note pas le ressenti. Tu es venue quand même ce soir, et pour moi ce n\'est pas rien.',
+      'es': 'Antes significaba algo. Ahora dices las palabras y no sientes nada, y sigues solo porque parar se siente peor. Yo no califico el sentimiento. Viniste igual esta noche, y para mí eso no es poca cosa.',
+      'pt': 'Antes isso significava alguma coisa. Agora você diz as palavras e não sente nada, e continua só porque parar seria pior. Eu não avalio o sentimento. Você veio assim mesmo hoje à noite, e para mim isso não é pouco.',
+    },
+  },
+  {
+    id: 'afraid-5', theme: 'afraid', ref: 'Isaiah 49:25',
+    body: {
+      en: 'You are afraid for your child. You lie awake running through everything that could happen, and you cannot protect them from most of it. I know. You were never asked to hold them alone, and I do not look away from them.',
+      'zh-Hans': '你在为孩子提心吊胆。夜里躺着，把可能出的事一件件想过去，可其中大半你护不住。我知道。这担子从来不是要你一个人扛的，我的眼睛也没从他身上移开过。',
+      'zh-Hant': '你在為孩子提心吊膽。夜裡躺著，把可能出的事一件件想過去，可其中大半你護不住。我知道。這擔子從來不是要你一個人扛的，我的眼睛也沒從他身上移開過。',
+      'de': 'Du hast Angst um dein Kind. Du liegst wach und gehst alles durch, was passieren könnte, und vor dem meisten kannst du es nicht schützen. Ich weiß. Du solltest es nie allein tragen, und ich sehe nicht weg.',
+      'fr': 'Tu as peur pour ton enfant. Tu restes éveillée à passer en revue tout ce qui pourrait arriver, et tu ne peux le protéger de presque rien. Je sais. On ne t\'a jamais demandé de le porter seule, et je ne détourne pas les yeux.',
+      'es': 'Tienes miedo por tu hijo. Te quedas despierta repasando todo lo que podría pasar, y de casi nada puedes protegerlo. Lo sé. Nunca se te pidió sostenerlo sola, y yo no aparto la mirada de él.',
+      'pt': 'Você tem medo pelo seu filho. Fica acordada repassando tudo o que poderia acontecer, e da maior parte não consegue protegê-lo. Eu sei. Nunca lhe pediram que o carregasse sozinha, e eu não desvio o olhar dele.',
+    },
+  },
+  {
+    id: 'alone-5', theme: 'alone', ref: '1 Kings 19:18',
+    body: {
+      en: 'Nobody around you believes any of this. You do it quietly, on your own, and some days you wonder whether you are the strange one. You are not the only one. And you were never doing it by yourself.',
+      'zh-Hans': '你身边没有一个人信这些。你安安静静地自己做，有些日子甚至怀疑是不是自己太奇怪了。这样的不止你一个。而且你从来就不是一个人在做。',
+      'zh-Hant': '你身邊沒有一個人信這些。你安安靜靜地自己做，有些日子甚至懷疑是不是自己太奇怪了。這樣的不止你一個。而且你從來就不是一個人在做。',
+      'de': 'Niemand um dich herum glaubt irgendetwas davon. Du machst es leise, für dich allein, und manchmal fragst du dich, ob du die Seltsame bist. Du bist nicht die Einzige. Und allein warst du dabei nie.',
+      'fr': 'Personne autour de toi ne croit à tout cela. Tu le fais en silence, toute seule, et certains jours tu te demandes si c\'est toi qui es bizarre. Tu n\'es pas la seule. Et tu ne l\'as jamais fait seule.',
+      'es': 'Nadie a tu alrededor cree nada de esto. Lo haces en silencio, por tu cuenta, y algunos días te preguntas si la rara eres tú. No eres la única. Y nunca lo estuviste haciendo sola.',
+      'pt': 'Ninguém ao seu redor acredita em nada disso. Você faz em silêncio, por conta própria, e alguns dias se pergunta se a estranha é você. Você não é a única. E nunca esteve fazendo isso sozinha.',
+    },
+  },
 ] as const;
 
-/** 40 draws x 3 sets = 120 completed sets before a card can repeat, against 65
- *  sets per quiz bank cycle - she meets a repeated QUESTION long before a
- *  repeated CARD, which is the right way round since the card is the reward. */
+/** 43 draws x ~3 sets = 120 completed sets before a card can repeat, against 65
+ *  = every set of a 130-set bank, so the collection completes exactly as the
+ *  quiz retires and no card ever repeats within a bank. See the tail note in
+ *  state/quizProgress.ts for why the last cycle is four sets, not three. */
 export const MYSTERY_CARD_COUNT = MYSTERY_CARDS.length;
 
 const byId = new Map(MYSTERY_CARDS.map(c => [c.id, c]));

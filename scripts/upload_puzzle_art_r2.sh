@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Upload the puzzle paintings to R2 (quiz.everlandapps.com/v1/art).
 #
-# 24 public-domain classical paintings of biblical scenes, two sizes each:
+# 33 public-domain classical paintings of biblical scenes, two sizes each:
 #   full/  ~1200px long side, q82  — the board and the full-screen view
 #   thumb/ 420px, q80              — the collection grid
 #

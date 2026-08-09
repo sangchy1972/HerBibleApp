@@ -14,14 +14,14 @@ import {
 } from './quizProgress';
 import {
   INITIAL_CARD_PROGRESS, INITIAL_CARD_LIKES, parseCardProgress, parseCardLikes,
-  spreadFor, collectCard, grantDrawsThrough, toggleLike, isLiked,
+  spreadFor, collectCard, grantDrawsThrough, resolveDraw, toggleLike, isLiked,
   type CardProgressV1, type CardLikesV1,
 } from './cardDraw';
 import {
   INITIAL_HISTORY, parseHistory, recordSet, summarize, dailyGate, canStartSet,
   type QuizHistoryV1, type HistorySummary, type DailyGate,
 } from './quizHistory';
-import { quizLifecycle, type QuizLifecycle } from './quizLifecycle';
+import { quizLifecycle, reachableSets, type QuizLifecycle } from './quizLifecycle';
 import { MYSTERY_CARDS, cardById, type MysteryCard } from '../constants/mysteryCards';
 import { logEvent } from '../services/firebase';
 
@@ -117,6 +117,9 @@ interface QuizState {
   /** YYYY-MM-DD, local, ROLLED OVER at midnight. The single answer to "what day
    *  is it" — screens that computed their own froze it at launch. */
   todayYmd: string;
+  /** Sets this bank allows in total. 0 until the bank lands. The reward tail
+   *  (last painting, last draw) is measured from it. */
+  totalSets: number;
   /** May she begin a NEW set right now? False once today's allowance is spent,
    *  and false forever once the quiz has retired. A set already in flight is
    *  always resumable — cap or no cap, retired or not. */
@@ -129,6 +132,9 @@ interface QuizState {
   pendingDraw: boolean;
   /** The 4 face-down cards on the table right now. Stable across relaunches. */
   drawSpread: MysteryCard[];
+  /** What a tap on spread position `index` actually hands her. See resolveDraw:
+   *  the filler faces exist to fill the table, not to eat a reward. */
+  resolveDrawPick: (index: number) => MysteryCard | null;
   /** Collected cards, most recent first. */
   collectedCards: MysteryCard[];
   /** Take the card she tapped. Spends the draw. */
@@ -367,6 +373,7 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
   // goBack(), and the screen she came from no longer existed. On a restored
   // Android nav stack goBack() has nowhere to go at all, and navLock had already
   // latched — a blank page with a dead X and dead hardware back.
+  const totalSets = useMemo(() => reachableSets(bank?.length ?? 0), [bank]);
   const canStart = !!bank && canStartSet(daily, !!session) && !lifecycle.retired;
 
   // ── Actions ───────────────────────────────────────────────────────────────
@@ -515,22 +522,27 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
   useEffect(() => {
     if (!hydrated.current) return;
     setCards(prev => {
-      const next = grantDrawsThrough(prev, progress.completedSets, MYSTERY_EVERY);
+      const next = grantDrawsThrough(prev, progress.completedSets, MYSTERY_EVERY, totalSets);
       if (next !== prev && next.pendingDraw && !prev.pendingDraw) {
         logEvent('quiz_draw_earned', { completed_sets: progress.completedSets });
       }
       return next;
     });
-  }, [progress.completedSets]);
+  }, [progress.completedSets, totalSets]);
 
   // ── Mystery cards ─────────────────────────────────────────────────────────
   const cardIds = useMemo(() => MYSTERY_CARDS.map(c => c.id), []);
   const knownCardIds = useMemo(() => new Set(cardIds), [cardIds]);
 
+  const spreadCandidates = useMemo(() => spreadFor(cards, cardIds).candidates, [cards, cardIds]);
   const drawSpread = useMemo(
-    () => spreadFor(cards, cardIds).candidates.map(i => MYSTERY_CARDS[i]),
-    [cards, cardIds],
+    () => spreadCandidates.map(i => MYSTERY_CARDS[i]!),
+    [spreadCandidates],
   );
+  const resolveDrawPick = useCallback((index: number): MysteryCard | null => {
+    const at = resolveDraw(spreadCandidates, index, cards.collected, cardIds);
+    return MYSTERY_CARDS[spreadCandidates[at]!] ?? null;
+  }, [spreadCandidates, cards.collected, cardIds]);
 
   // Most recent first: the collection reads as "what she just got", not as a
   // list she has to scroll to the bottom of.
@@ -604,12 +616,12 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
     ready, bank, bankStatus, retryBank, progress, session, questions, currentQuestion, segments,
     open, pick, startAndPick, next, retry, finish, abandon,
     cards, likes, history, historySummary, daily, canStart, todayYmd, lifecycle,
-    pendingDraw: cards.pendingDraw, drawSpread, collectedCards,
+    pendingDraw: cards.pendingDraw, drawSpread, resolveDrawPick, totalSets, collectedCards,
     drawCard, likeCard, cardIsLiked, logCardShare, logCardOpen,
   }), [ready, bank, bankStatus, retryBank, progress, session, questions, currentQuestion, segments,
        open, pick, startAndPick, next, retry, finish, abandon,
        cards, likes, history, historySummary, daily, canStart, todayYmd, lifecycle,
-       drawSpread, collectedCards,
+       drawSpread, resolveDrawPick, totalSets, collectedCards,
        drawCard, likeCard, cardIsLiked, logCardShare, logCardOpen]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
@@ -633,7 +645,7 @@ export function useQuiz(): QuizState {
     historySummary: { streak: 0, bestStreak: 0, activeDays: 0, setsLast7: 0, setsLast30: 0, accuracy: null },
     daily: dailyGate(INITIAL_HISTORY, ''), canStart: false, todayYmd: '',
     lifecycle: quizLifecycle(0, 0),
-    pendingDraw: false, drawSpread: [], collectedCards: [],
+    pendingDraw: false, drawSpread: [], resolveDrawPick: () => null, totalSets: 0, collectedCards: [],
     drawCard: () => {}, likeCard: () => {}, cardIsLiked: () => false,
     logCardShare: () => {}, logCardOpen: () => {},
   };

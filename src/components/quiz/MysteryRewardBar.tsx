@@ -29,9 +29,14 @@ const GIFT_W = GIFT_H * (160 / 180);
 const TRACK_H = 28.8;
 
 export default function MysteryRewardBar({
-  completedSets, animate = false, fillDelayMs = 0,
+  completedSets, totalSets = 0, animate = false, fillDelayMs = 0,
 }: {
   completedSets: number;
+  /** Sets the bank allows in total. The FINAL cycle is longer than the rest —
+   *  it absorbs the leftover so no set is dead — so the track reads x/4 there
+   *  rather than x/3. Without it the bar would show 3/3 at set 129 and hand
+   *  her nothing, then run set 130 with the counter already full. */
+  totalSets?: number;
   /** Run the fill animation from the PREVIOUS step rather than painting the
    *  final width. Off by default so every other caller keeps a static bar. */
   animate?: boolean;
@@ -46,15 +51,15 @@ export default function MysteryRewardBar({
   // mount, and by then the entering configs are already captured — the first
   // playthrough would animate anyway, which is the run that matters.
   const reduceMotion = useReducedMotion();
-  const { current, remaining } = mysteryView(completedSets);
-  const pct = Math.max(0, Math.min(1, current / MYSTERY_EVERY));
+  const { current, remaining, target } = mysteryView(completedSets, totalSets);
+  const pct = Math.max(0, Math.min(1, current / target));
   // Where the bar stood BEFORE this set. current is 0..MYSTERY_EVERY-1 (a full
   // bar is the earnsCard branch upstream), so the previous step is one less.
   // Zero IS reachable — the retry screen passes completedSets un-incremented, so
   // a miss on the first set of a cycle asks for step -1. The clamp is what makes
   // that an empty bar instead of a negative width, and it is load-bearing, not
   // belt-and-braces.
-  const prevPct = Math.max(0, Math.min(1, (current - 1) / MYSTERY_EVERY));
+  const prevPct = Math.max(0, Math.min(1, (current - 1) / target));
 
   // 0 → 1 drives the fill's width between prevPct and pct. Starting at 1 when
   // not animating means the static callers paint the final width on frame one
@@ -70,7 +75,7 @@ export default function MysteryRewardBar({
       // stopping dead, which is what makes it read as progress being credited.
       easing: Easing.out(Easing.cubic),
     }));
-  }, [shouldAnimate, fillDelayMs, grow, current]);
+  }, [shouldAnimate, fillDelayMs, grow, current, target]);
 
   const fillStyle = useAnimatedStyle(() => ({
     width: `${interpolate(grow.value, [0, 1], [prevPct * 100, pct * 100])}%`,
@@ -124,7 +129,7 @@ export default function MysteryRewardBar({
               note in the styles. */}
           <View style={styles.countLayer} pointerEvents="none">
             <Text style={styles.count} numberOfLines={1} maxFontSizeMultiplier={1.2}>
-              {current}/{MYSTERY_EVERY}
+              {current}/{target}
             </Text>
           </View>
         </View>

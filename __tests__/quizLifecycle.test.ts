@@ -9,8 +9,9 @@
 import {
   quizLifecycle, reachableSets, reachableRewards, bankSizeToCollectEverything,
 } from '../src/state/quizLifecycle';
-import { TILES_PER_PAINTING, MYSTERY_EVERY } from '../src/state/quizProgress';
-import { QUIZ_ART_COUNT } from '../src/constants/quizArt';
+import { TILES_PER_PAINTING, MYSTERY_EVERY, totalTiles } from '../src/state/quizProgress';
+import { drawEarnedAt } from '../src/state/cardDraw';
+import { QUIZ_ART_COUNT, LAST_ART_TILES } from '../src/constants/quizArt';
 import { MYSTERY_CARD_COUNT } from '../src/constants/mysteryCards';
 import { QUIZ_BANK_SIZE } from '../src/constants/bibleQuiz';
 import { SET_SIZE } from '../src/services/quizSets';
@@ -93,47 +94,63 @@ describe('the content budget', () => {
   it('reports what the shipping bank actually reaches', () => {
     // NOT an aspiration — a statement of today. If this fails because the bank
     // grew, that is the good failure: update the numbers and re-check the
-    // headroom assertion below.
+    // exactness assertions below.
     expect(BANK).toBe(650);
-    expect(reachableRewards(BANK)).toEqual({ sets: 130, paintings: 32, cards: 43 });
+    expect(reachableRewards(BANK, QUIZ_ART_COUNT, LAST_ART_TILES))
+      .toEqual({ sets: 130, paintings: 33, cards: 43 });
   });
 
-  it('names the bank size that leaves nothing stranded', () => {
-    // 32 paintings x 4 sets = 128 sets; 40 cards x 3 sets = 120 sets. Adding
-    // eight paintings flipped which collection binds: it used to be the cards
-    // at 120 sets, it is now the paintings at 128, so 128 x 5 = 640 questions.
-    const need = bankSizeToCollectEverything(QUIZ_ART_COUNT, MYSTERY_CARD_COUNT);
-    expect(need).toBe(640);
-    const r = reachableRewards(need);
-    expect(r.sets).toBe(128);
-    // >= not ===: the paintings now bind at 128 sets, and by then she has
-    // earned enough for 42 cards against a pool of 40. The order of the last two
-    // rewards therefore FLIPPED with this batch — the cards finish 8 sets early
-    // and the collection ends on a painting. That is the better ending of the
-    // two, and it is a consequence rather than a decision, so it is pinned here.
-    expect(r.cards).toBeGreaterThanOrEqual(MYSTERY_CARD_COUNT);
-    expect(r.paintings).toBeGreaterThanOrEqual(QUIZ_ART_COUNT);
-    expect(r.cards).toBe(42);
+  it('spends every set: the paintings land exactly on the last one', () => {
+    // THE POINT OF THE DIPTYCH. 130 sets do not divide by 4, so 32 four-tile
+    // boards absorb 128 and the last two sets of the entire game would unlock
+    // nothing at all. Making the 33rd painting two halves closes it to the set:
+    //   32 x 4 + 2 = 130.
+    // If this ever fails, one of three things moved — the bank, the art count,
+    // or LAST_ART_TILES — and the other two have to move with it.
+    expect(totalTiles(QUIZ_ART_COUNT, LAST_ART_TILES)).toBe(reachableSets(BANK));
+    expect(QUIZ_ART_COUNT).toBe(33);
+    expect(LAST_ART_TILES).toBe(2);
   });
 
-  it('has closed the gap, with headroom left over', () => {
-    // This test used to name the shortfall: at 327 the bank stranded the
-    // collections at 16 of 24 paintings and 22 of 40 cards, permanently, with
-    // the entry point gone. The v3 re-cut to 650 closed it. Kept rather than
-    // deleted, inverted, because the failure it now guards is the one that
-    // would be silent: shrinking the bank, or adding collectibles past what
-    // 650 questions can unlock, re-strands them exactly as before.
-    const need = bankSizeToCollectEverything(QUIZ_ART_COUNT, MYSTERY_CARD_COUNT);
-    expect(need).toBeLessThanOrEqual(BANK);
-    expect(BANK - need).toBe(10);                          // 2 sets' worth of slack
+  it('spends every set: the cards land exactly on the last one too', () => {
+    // Same remainder problem, same fix at the other end. 130 / 3 = 43.33, so
+    // the FINAL cycle costs 4 sets instead of 3 and the 43rd draw lands on set
+    // 130 — the same set that finishes the diptych and retires the quiz.
+    const sets = reachableSets(BANK);
+    const draws: number[] = [];
+    for (let n = 1; n <= sets; n += 1) if (drawEarnedAt(n, MYSTERY_EVERY, sets)) draws.push(n);
 
-    // The v2 art batch spent most of the headroom: 50 questions of slack became
-    // 10, and the paintings are now full at 32 of a reachable 32. Adding a 33rd
-    // painting REQUIRES growing the bank first, which is what the assertion
-    // above will catch.
-    const r = reachableRewards(BANK);
-    expect(r.paintings - QUIZ_ART_COUNT).toBe(0);          // no room left
-    expect(r.cards - MYSTERY_CARD_COUNT).toBe(3);          // 40 -> up to 43
+    expect(draws).toHaveLength(MYSTERY_CARD_COUNT);       // 43 draws, 43 cards
+    expect(draws[draws.length - 1]).toBe(sets);           // the last one is the last set
+    expect(draws[draws.length - 2]).toBe(sets - 4);       // ...and it cost 4, not 3
+    expect(draws.slice(0, -1)).toEqual(
+      Array.from({ length: MYSTERY_CARD_COUNT - 1 }, (_, i) => (i + 1) * MYSTERY_EVERY),
+    );
+  });
+
+  it('collects everything, and only just', () => {
+    // The bank is now EXACTLY the size both collections need — no slack either
+    // way. That is deliberate but it is also brittle by construction, so it is
+    // pinned: adding a painting or a card without growing the bank strands it,
+    // and this is the test that says so before a release does.
+    const need = bankSizeToCollectEverything(QUIZ_ART_COUNT, MYSTERY_CARD_COUNT, LAST_ART_TILES);
+    expect(need).toBe(BANK);
+
+    const r = reachableRewards(BANK, QUIZ_ART_COUNT, LAST_ART_TILES);
+    expect(r.paintings).toBe(QUIZ_ART_COUNT);             // 33 of 33
+    expect(r.cards).toBe(MYSTERY_CARD_COUNT);             // 43 of 43
+  });
+
+  it('the last painting and the last card arrive together, on the final set', () => {
+    // The finale. Set 130 completes the diptych, hands her the 43rd card and
+    // retires the quiz in one move — worth pinning because three independent
+    // rules have to agree for it, and nothing else would notice if one drifted.
+    const sets = reachableSets(BANK);
+    expect(totalTiles(QUIZ_ART_COUNT, LAST_ART_TILES)).toBe(sets);
+    expect(drawEarnedAt(sets, MYSTERY_EVERY, sets)).toBe(true);
+    expect(quizLifecycle(sets, BANK).retired).toBe(true);
+    // ...and the set before it does NOT also pay out a card.
+    expect(drawEarnedAt(sets - 1, MYSTERY_EVERY, sets)).toBe(false);
   });
 
   it('keeps the reward divisors honest', () => {

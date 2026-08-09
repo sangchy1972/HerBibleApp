@@ -13,7 +13,7 @@ import MysteryRewardBar from './MysteryRewardBar';
 import { rewardPreview, MYSTERY_EVERY, TILES_PER_PAINTING } from '../../state/quizProgress';
 import { drawEarnedAt } from '../../state/cardDraw';
 import { DAILY_SET_LIMIT } from '../../state/quizHistory';
-import { QUIZ_ART_COUNT } from '../../constants/quizArt';
+import { QUIZ_ART_COUNT, LAST_ART_TILES } from '../../constants/quizArt';
 import type { SegmentState } from '../../state/quizSession';
 import type { StyleProp, ViewStyle } from 'react-native';
 
@@ -59,8 +59,8 @@ const T_RETRY_CTA = T_MYSTERY + 420;
 const RISE_MS = 420;
 /** It rises this far while fading in. */
 const RISE_FROM = 22;
-/** Margin after the last element before we declare the screen settled and hand
- *  the screen settled. Covers a dropped frame. */
+/** Margin after the last element lands before the screen is declared settled.
+ *  Covers a dropped frame. */
 const SETTLE_PAD = 300;
 
 // One element's arrival.
@@ -127,7 +127,7 @@ function Rise({
 
 export default function QuizReviewView({
   segments, correct, total, wrong, firstPassPerfect, completedSets,
-  lastOfDay, lastEver, setsLeftAfter, onRetry, onNextLevel,
+  lastOfDay, lastEver, setsLeftAfter, totalSets, onRetry, onNextLevel,
 }: {
   segments: SegmentState[];
   correct: number;
@@ -145,6 +145,8 @@ export default function QuizReviewView({
   /** Sets left today AFTER this one commits. Shown on EVERY set, so the third
    *  ends a countdown she has been watching instead of ambushing her. */
   setsLeftAfter: number;
+  /** Sets this bank allows in total — what the reward tail is measured from. */
+  totalSets: number;
   onRetry: () => void;
   /** Commit. The screen decides what owns it next — the next set, a
    *  celebration, or the capped/retired view. */
@@ -221,13 +223,13 @@ export default function QuizReviewView({
   // The board shows the state AFTER this set commits, with the tile it earns
   // ringed. Showing the pre-commit state would mean the reward only appears
   // once she has already tapped away from the screen celebrating it.
-  const { view, freshTile } = rewardPreview(completedSets, QUIZ_ART_COUNT);
+  const { view, freshTile } = rewardPreview(completedSets, QUIZ_ART_COUNT, LAST_ART_TILES);
   // 15dp side margins (per user) — the board is the screen's hero now.
   const boardSize = width - 30;
   // The set she is about to commit. The counter has to read from the COMMITTED
   // number or the screen that celebrates a card says "3 more to go" with an
   // empty bar — she watched that counter for three sets and never saw it land.
-  const earnsCard = drawEarnedAt(completedSets + 1, MYSTERY_EVERY);
+  const earnsCard = drawEarnedAt(completedSets + 1, MYSTERY_EVERY, totalSets);
 
   if (!done) {
     // Same staggered arrival as the reward shape, and the same mystery bar at
@@ -259,7 +261,7 @@ export default function QuizReviewView({
             {/* completedSets, NOT +1: this set has not been earned yet. The bar
                 shows where she stands, static — there is no step to animate to
                 until she gets them right. */}
-            <MysteryRewardBar completedSets={completedSets} />
+            <MysteryRewardBar completedSets={completedSets} totalSets={totalSets} />
           </Rise>
         </ScrollView>
         {/* ctaWrap stays a PLAIN View so nothing Reanimated owns the touchable's
@@ -313,6 +315,7 @@ export default function QuizReviewView({
           <PuzzleBoard
             paintingIndex={view.paintingIndex}
             tilesUnlocked={view.tilesUnlocked}
+            tileCount={view.tiles.length}
             size={boardSize}
             newTile={freshTile}
             showCaption
@@ -332,6 +335,7 @@ export default function QuizReviewView({
           ) : (
             <MysteryRewardBar
               completedSets={completedSets + 1}
+              totalSets={totalSets}
               animate={!reduceMotion}
               fillDelayMs={T_FILL}
             />

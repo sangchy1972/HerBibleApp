@@ -11,7 +11,7 @@ import { useQuiz } from '../state/QuizContext';
 import { levelFor, puzzleView } from '../state/quizProgress';
 import { lastNDays } from '../state/quizHistory';
 import { SET_SIZE } from '../services/quizSets';
-import { QUIZ_ART_COUNT } from '../constants/quizArt';
+import { QUIZ_ART_COUNT, LAST_ART_TILES } from '../constants/quizArt';
 import { MYSTERY_CARD_COUNT } from '../constants/mysteryCards';
 import MysteryRewardBar from '../components/quiz/MysteryRewardBar';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -40,7 +40,7 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
   const insets = useSafeAreaInsets();
   const {
     progress, bank, cards, likes, history, historySummary, daily, todayYmd,
-    collectedCards, canStart, lifecycle, pendingDraw,
+    collectedCards, canStart, lifecycle, pendingDraw, totalSets,
   } = useQuiz();
   // collectedCards, NOT cards.collected: the context filters ids this build does
   // not know about, which a restore from a newer version can introduce. Counting
@@ -52,7 +52,7 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
   // First-pass accuracy: what she got right the first time she saw it. Guarded
   // at zero sets — a brand-new user would otherwise read "NaN%".
   const accuracy = answered > 0 ? progress.totalCorrect / answered : null;
-  const puzzle = puzzleView(progress.completedSets, QUIZ_ART_COUNT);
+  const puzzle = puzzleView(progress.completedSets, QUIZ_ART_COUNT, LAST_ART_TILES);
 
   // Capped at the bank size on purpose: the set stream cycles, so past set 65
   // she has genuinely seen everything and starts again. The label switches
@@ -176,7 +176,7 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
             app has just removed the means to keep. */}
         {lifecycle.retired ? null : (
           <View style={styles.block}>
-            <MysteryRewardBar completedSets={progress.completedSets} />
+            <MysteryRewardBar completedSets={progress.completedSets} totalSets={totalSets} />
           </View>
         )}
 

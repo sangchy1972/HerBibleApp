@@ -131,7 +131,14 @@ export default function SetReminderTimeHost() {
       // Granted: reminders are already live at the defaults, so the flag burns
       // here too — she must never be asked to "set a reminder" again, whatever
       // she does with the time pickers that follow.
-      if (granted) { srt.markConfigured(); setStep('morning'); } else setStep('push');
+      // Time pickers ONLY if she has never chosen times. A user who set them and
+      // later revoked the permission in Settings comes back through here — she
+      // needs the permission, not to pick 20:00 all over again. That split is the
+      // whole point of `configured` now (see SetReminderTimeContext).
+      if (!granted) { setStep('push'); return; }
+      if (srtRef.current.configured) { dismissRef.current(); return; }
+      srt.markConfigured();
+      setStep('morning');
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -27,6 +27,8 @@ import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useNotes } from '../state/NotesContext';
 import { useNotifications } from '../state/NotificationsContext';
 import { useSetReminderTime } from '../state/SetReminderTimeContext';
+import ReminderTimeScreen from '../components/ReminderTimeScreen';
+import RemindersOffScreen from '../components/RemindersOffScreen';
 import { useActivity } from '../state/ActivityContext';
 import { useDailyVerses } from '../state/DailyVersesContext';
 import { useTranslation } from '../state/TranslationsContext';
@@ -300,7 +302,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const { addNote } = useNotes();
   const { markToday } = useActivity();
   const { notifRationaleShown, markNotifRationaleShown } = useOnboarding();
-  const { enableReminderAt, permissionGranted } = useNotifications();
+  const { enableReminderAt, permissionGranted, requestPermissionAndEnableDefaults } = useNotifications();
   const { markConfigured: markReminderConfigured } = useSetReminderTime();
   const { kind } = route.params;
   const morning = kind === 'morning';
@@ -435,6 +437,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const [showNotifRationale, setShowNotifRationale] = useState(false);
   const [showSheet, setShowSheet] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  // The full-screen reminder flow that replaced the habit sheet: pick a time,
+  // then — only when the OS permission is refused — the second push.
+  const [showReminderTime, setShowReminderTime] = useState(false);
+  const [showRemindersOff, setShowRemindersOff] = useState(false);
   const [showNoteSheet, setShowNoteSheet] = useState(false);
   const [noteText, setNoteText] = useState('');
   // Keyboard height for the reflection sheet — drives a deterministic lift so
@@ -926,18 +932,11 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // RatePromptHost now asks on the home screen instead.
   const finishFlow = () => navigation.goBack();
 
-  const handleWeeklyOpenReminder = () => {
-    // Keep the weekly/sapling celebration visible — the habit sheet overlays it.
-    // (Previously this hid the weekly screen, which re-exposed the maroon Amen
-    // screen underneath, so the sheet appeared to "jump back" a screen.)
-    // Entrance rides habitDragY: start off-screen BEFORE showing (no
-    // first-frame flash — see openNoteSheet), then slide up.
-    habitDragY.value = height;
-    habitBackdropO.value = 0;
-    setShowSheet(true);
-    habitDragY.value = withTiming(0, { duration: 420, easing: Easing.out(Easing.cubic) });
-    habitBackdropO.value = withTiming(1, { duration: 220 });
-  };
+  // FULL SCREEN now, not the half-height habit sheet (owner 2026-08-09): this is
+  // the single most valuable ask in the app and a half sheet read as an aside.
+  // The weekly celebration stays mounted underneath, so cancelling lands back on
+  // it rather than on the maroon Amen screen.
+  const handleWeeklyOpenReminder = () => setShowReminderTime(true);
 
   // Set the daily reminder to the chosen time + request permission, then close
   // the sheet back to the weekly screen.
@@ -966,11 +965,26 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     let granted = false;
     try { granted = await enableReminderAt(morning ? 'morning' : 'night', hour, minute); } catch { granted = false; }
     markReminderConfigured();
-    handleSheetClose();
-    // After the sheet's own close animation, never during it: the rationale is a
-    // full-screen absolute-fill sibling, and stacking it on a closing overlay is
-    // how this repo has swallowed screens before.
-    if (!granted) setTimeout(() => setShowNotifRationale(true), 300);
+    setShowReminderTime(false);
+    setShowSheet(false);
+    setShowTimePicker(false);
+    // Declined (or Android has spent its two asks, so no dialog appeared at all)
+    // → the full-screen second push. One frame after the time screen unmounts,
+    // never during it: stacking a full-screen sibling on a closing overlay is how
+    // this repo has swallowed screens before.
+    if (!granted) setTimeout(() => setShowRemindersOff(true), 260);
+  };
+
+  // "Turn on notifications" on that screen. requestPermissionAndEnableDefaults
+  // fires the OS dialog again — a safe no-op that just reports the current status
+  // when the OS will no longer show it, which is exactly when the coach card and
+  // the settings trip are the only way left.
+  const handleRemindersOffTurnOn = async () => {
+    let granted = false;
+    try { granted = await requestPermissionAndEnableDefaults(); } catch { granted = false; }
+    if (granted) { setShowRemindersOff(false); return; }
+    setShowRemindersOff(false);
+    setTimeout(() => setShowNotifRationale(true), 260);
   };
 
   const handleWeeklyBack = () => {
@@ -1431,6 +1445,29 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             onOpenPuzzleCollection={handleOpenPuzzleCollection}
           />
         </View>
+      )}
+
+      {/* The full-screen reminder flow. Rendered AFTER the weekly view so it sits
+          on top of it — siblings, so source order is the z-order — and the weekly
+          celebration stays mounted underneath, which is what "Not now" returns
+          to. Both own their own safe-area padding and their own hardware back. */}
+      {showReminderTime && (
+        <ReminderTimeScreen
+          slot={morning ? 'morning' : 'night'}
+          // Seeded per slot: the morning wheel opens at 08:00, the night one at
+          // 20:00, so the common case is one tap on Save.
+          initialHour={morning ? 8 : 20}
+          initialMinute={0}
+          onSave={handleHabitConfirm}
+          onSkip={() => setShowReminderTime(false)}
+        />
+      )}
+
+      {showRemindersOff && (
+        <RemindersOffScreen
+          onTurnOn={handleRemindersOffTurnOn}
+          onSkip={() => setShowRemindersOff(false)}
+        />
       )}
 
       {showNotifRationale && (

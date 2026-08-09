@@ -1366,6 +1366,24 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   // Coach card shown after the OS permission prompt was refused — see
   // PermissionCoachOverlay. It mimics the Settings row she is about to hunt for.
   'permCoach.notif.title':         { en: 'Allow Her Bible to send you Daily Verses', context: 'Headline on the card that hands the user to system Settings after she declined the notification prompt. Names the OUTCOME (daily verses), not the permission. "Her Bible" is the app name — do not translate.' },
+  // ─── Full-screen reminder flow, straight after a prayer ──────────────────
+  // ReminderTimeScreen (cream ground, rose CTA) then, only if she declines the
+  // OS dialog, RemindersOffScreen.
+  'reminderTime.title.morning':    { en: 'When would you like to do this morning prayer?', context: 'Full-screen headline over the reminder time wheels, after a MORNING prayer. Asks about the prayer itself, not about "a notification" — the time she picks is when we will call her back to it.' },
+  'reminderTime.title.night':      { en: 'When would you like to do this night prayer?', context: 'Same headline after an EVENING prayer. Keep the two parallel in your language.' },
+  'reminderTime.save':             { en: 'Save', context: 'Primary button under the time wheels. One word.' },
+  'reminderTime.skip':             { en: 'Not now', context: 'Quiet dismiss under the Save button. Deliberately lighter than Save.' },
+
+  'remindersOff.title':            { en: "It looks like reminders aren't on yet", context: 'Full-screen headline shown ONLY after she declines the OS notification dialog. Observational, not scolding — "it looks like", not "you did not".' },
+  'remindersOff.without':          { en: 'Without a reminder', context: 'Label on the SHORT grey bar of the two-bar illustration.' },
+  'remindersOff.withoutValue':     { en: 'Some days', context: 'Text inside the short grey bar. Short — it sits inside the bar. Deliberately NOT a percentage: we have no measurement of our own users to quote.' },
+  'remindersOff.with':             { en: 'With a reminder', context: 'Label on the TALL yellow bar.' },
+  'remindersOff.withValue':        { en: 'Every day', context: 'Text inside the tall yellow bar. Pairs with "Some days" — the contrast IS the argument.' },
+  'remindersOff.claim':            { en: 'A reminder at the time you pick is what turns one prayer into a daily habit.', context: 'One line under the two bars. States what a reminder DOES; do not turn it into a statistic about our users.' },
+  'remindersOff.allowLabel':       { en: 'Allow notifications', context: 'Sub-label under the app name on the mock permission row, matching the OS dialog she is about to see.' },
+  'remindersOff.cta':              { en: 'Turn on notifications', context: 'Primary button. Re-opens the OS permission dialog (or the settings page once the OS refuses to show it again).' },
+  'remindersOff.skip':             { en: 'Not now', context: 'Quiet dismiss. She will be asked again tomorrow, so this must not feel final.' },
+
   // The FLOATING coach card (modules/expo-settings-coach) — the same guidance
   // drawn ON TOP of the system Settings app once "Appear on top" is granted.
   'permCoach.float.body':          { en: 'Find this app in the list and turn the switch on.', context: 'Body of the card that floats over the system Settings app. Read at a glance on a screen that is not ours, so keep it to one imperative line.' },

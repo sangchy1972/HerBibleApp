@@ -40,8 +40,17 @@ describe('setReminderShouldShow — cadence', () => {
     expect(setReminderShouldShow(s, NOW + 19 * 3_600_000)).toBe(false);
     expect(setReminderShouldShow(s, NOW + 21 * 3_600_000)).toBe(true);
   });
-  it('configured → never again', () => {
-    expect(setReminderShouldShow({ baselineAt: NOW, lastShownAt: NOW, promptCount: 3, configured: true }, NOW + 99 * DAY)).toBe(false);
+  // Owner 2026-08-09, reversing the rule this test used to pin. `configured`
+  // means "she has chosen her times", nothing more. It must NOT stop the cadence:
+  // the host is gated on `!permissionGranted`, so a user who set her times and
+  // later revoked notifications in Settings has to come back into scope — and
+  // what she is asked for then is the PERMISSION, not the times she already
+  // picked (SetReminderTimeHost skips its time pickers when configured).
+  it('configured does NOT stop the cadence — the permission ask must keep coming', () => {
+    const s = { baselineAt: NOW, lastShownAt: NOW, promptCount: 3, configured: true };
+    expect(setReminderShouldShow(s, NOW + 99 * DAY)).toBe(true);
+    // Still at most once per calendar day, configured or not.
+    expect(setReminderShouldShow(s, NOW + 60_000)).toBe(false);
   });
   // Owner 2026-08-08: the escalating 3-to-7-day gap is gone. Once the first ask
   // has happened it re-asks EVERY DAY while notifications stay off, at most once

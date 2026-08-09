@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, BackHandler } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, BackHandler } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Feather from '@expo/vector-icons/Feather';
 import Animated, {
   FadeIn, Easing, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, interpolate,
 } from 'react-native-reanimated';
@@ -45,6 +46,17 @@ export default function RemindersOffScreen({ onTurnOn, onSkip }: {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 30, paddingBottom: insets.bottom + 20 }]}>
+      {/* SCROLLS, with the CTA pinned outside it. The content is ~526dp of fixed
+          boxes before any text (the bar cards alone are 188), so on a 360×640
+          Android with a 3-button nav bar — or a 4.7" iPhone in Spanish, where the
+          claim wraps to three lines — the rose button fell off the bottom edge.
+          On the one screen whose only job is turning notifications on. This is the
+          same failure the weekly screen already paid for; same fix. */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}
+        bounces={false}
+      >
       <Animated.Text entering={FadeIn.duration(320)} style={styles.title}>
         {t('remindersOff.title')}
       </Animated.Text>
@@ -69,7 +81,7 @@ export default function RemindersOffScreen({ onTurnOn, onSkip }: {
         <MockSwitchWithFinger />
       </Animated.View>
 
-      <View style={styles.spacer} />
+      </ScrollView>
 
       <TouchableOpacity style={styles.cta} activeOpacity={0.9} onPress={onTurnOn} accessibilityRole="button">
         <Text style={styles.ctaText}>{t('remindersOff.cta')}</Text>
@@ -89,7 +101,11 @@ function Bar({ label, value, fill, heightPct, starred }: {
 }) {
   return (
     <View style={styles.barCol}>
-      {starred ? <Text style={styles.bell}>{'\u{1F514}'}</Text> : <View style={styles.bellSpacer} />}
+      {/* Vector, not the 🔔 emoji: §1 grants exactly two emoji exceptions and this
+          is not one of them, and the glyph differs between One UI and Pixel. */}
+      {starred
+        ? <View style={styles.bell}><Feather name="bell" size={20} color={YELLOW} /></View>
+        : <View style={styles.bellSpacer} />}
       <View style={styles.barCard}>
         <Text style={styles.barLabel} numberOfLines={2} maxFontSizeMultiplier={1.2}>{label}</Text>
         <View style={[styles.barFill, { backgroundColor: fill, height: `${Math.round(heightPct * 100)}%` }]}>
@@ -152,7 +168,7 @@ const styles = StyleSheet.create({
   },
   bars: { flexDirection: 'row', gap: 14, justifyContent: 'center' },
   barCol: { flex: 1, maxWidth: 150, alignItems: 'center' },
-  bell: { fontSize: 22, marginBottom: 2 },
+  bell: { height: 26, justifyContent: 'center', marginBottom: 0 },
   bellSpacer: { height: 26 },
   // Fixed height so the two fills are comparable; overflow hidden keeps the
   // fill's square top edge inside the card's rounded corners.
@@ -200,7 +216,9 @@ const styles = StyleSheet.create({
   track: { ...StyleSheet.absoluteFillObject, borderRadius: 14 },
   knob: { position: 'absolute', left: 3, width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFFFFF' },
   hand: { position: 'absolute', left: 2, top: 15, fontSize: 22 },
-  spacer: { flex: 1 },
+  // flexGrow so short content still pushes the CTA to the bottom on a tall
+  // screen, and paddingBottom so the last block never sits against the button.
+  scroll: { flexGrow: 1, justifyContent: 'center', paddingBottom: 20 },
   cta: {
     height: 56,
     borderRadius: BTN_RADIUS,

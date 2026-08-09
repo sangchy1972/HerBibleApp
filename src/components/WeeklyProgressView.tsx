@@ -124,14 +124,24 @@ export default function WeeklyProgressView({
   // Reminders already active? (OS permission granted AND a daily slot enabled.)
   // If so, we hide the "Open Daily Verse Reminder" CTA entirely — no point
   // nudging a user who's already set up.
-  // Gated on "is a reminder SCHEDULED", not on "is permission granted" (owner
-  // 2026-08-09). With the permission in it, a user who picked a time but whose OS
-  // permission was denied was offered "Set a Daily Prayer Reminder" again after
-  // every single prayer — for a time she had already chosen. The missing piece in
-  // that state is permission, and PrayerFlow now escalates to the notification
-  // rationale at the moment it fails, which is where that ask belongs.
-  const { settings } = useNotifications();
-  const remindersOn = settings.morning.enabled || settings.night.enabled;
+  // Two conditions, and BOTH are load-bearing.
+  //
+  // I broke this earlier today by gating on the schedule alone — "she already has
+  // a reminder, stop offering one". That is wrong because `NotifMap` DEFAULTS ship
+  // `morning.enabled: true` and `night.enabled: true`, and nothing in the app ever
+  // writes `enabled: false` except the Profile toggles. So the schedule test is
+  // TRUE for every user from the moment they install, the CTA stopped rendering
+  // for everyone, and the entire full-screen reminder flow became unreachable —
+  // including for the permission-denied users it exists for. "Has a schedule" is
+  // not a fact about her; it is a fact about our defaults.
+  //
+  // What she has actually DONE is `configured` (she picked times) — that is the
+  // flag that suppresses the time picker, and PrayerFlow branches on it so a
+  // returning user is asked for the PERMISSION instead of for times she chose.
+  // Here we only need "are reminders actually going to arrive": permission AND a
+  // slot enabled. While notifications are off, the CTA stays.
+  const { permissionGranted, settings } = useNotifications();
+  const remindersOn = permissionGranted && (settings.morning.enabled || settings.night.enabled);
 
   // Day completion is what drives the hero + today's calendar glyph — NOT which
   // slot was just prayed. Per user: the FIRST prayer of the day (morning OR

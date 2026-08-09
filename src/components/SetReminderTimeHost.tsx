@@ -67,7 +67,16 @@ export default function SetReminderTimeHost() {
   const srtRef = useRef(srt);
   useEffect(() => { srtRef.current = srt; });
 
-  const eligible = notif.ready && srt.ready && onboarding.done && !notif.permissionGranted;
+  // `finishing` is not a nicety, it is the fix for a self-cancelling grant.
+  // `requestPermissionAndEnableDefaults` calls setPermissionGranted(true) BEFORE
+  // it resolves, so the moment she taps Allow this host stops being `eligible` —
+  // and the register effect's else-branch then releases its own slot, activeId
+  // clears synchronously, and `if (!active) return null` unmounts the time picker
+  // we had just mounted. She saw it for one frame and never got to pick a time.
+  // The flag keeps us eligible through our own tail; `dismiss()` clears it.
+  const [finishing, setFinishing] = useState(false);
+  const eligible = notif.ready && srt.ready && onboarding.done
+    && (!notif.permissionGranted || finishing);
 
   // Anchor the cadence baseline the first time we're eligible.
   useEffect(() => { if (eligible) srt.noteEligible(); /* eslint-disable-next-line */ }, [eligible]);
@@ -137,7 +146,10 @@ export default function SetReminderTimeHost() {
       // whole point of `configured` now (see SetReminderTimeContext).
       if (!granted) { setStep('push'); return; }
       if (srtRef.current.configured) { dismissRef.current(); return; }
-      srt.markConfigured();
+      // Hold eligibility open BEFORE the state that would drop it (see the
+      // `finishing` note above), then mark and advance.
+      setFinishing(true);
+      srtRef.current.markConfigured();
       setStep('morning');
     })();
     return () => { cancelled = true; };
@@ -180,6 +192,7 @@ export default function SetReminderTimeHost() {
     coord.notifyDismissed('setReminderTime');
     coord.releaseSlot('setReminderTime');
     setStep('osAsk');
+    setFinishing(false);   // stop holding eligibility open — see the note above
   };
   dismissRef.current = dismiss;
 

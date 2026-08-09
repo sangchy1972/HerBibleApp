@@ -303,7 +303,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const { markToday } = useActivity();
   const { notifRationaleShown, markNotifRationaleShown } = useOnboarding();
   const { enableReminderAt, permissionGranted, requestPermissionAndEnableDefaults } = useNotifications();
-  const { markConfigured: markReminderConfigured } = useSetReminderTime();
+  const { markConfigured: markReminderConfigured, configured: reminderConfigured } = useSetReminderTime();
   const { kind } = route.params;
   const morning = kind === 'morning';
   // Past-day replay: when a specific `day` is passed (from See Past Days), we
@@ -936,7 +936,15 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // the single most valuable ask in the app and a half sheet read as an aside.
   // The weekly celebration stays mounted underneath, so cancelling lands back on
   // it rather than on the maroon Amen screen.
-  const handleWeeklyOpenReminder = () => setShowReminderTime(true);
+  //
+  // Branches on `configured`, which is the whole point of that flag: she has
+  // already chosen her times, so the CTA she is tapping now can only be about the
+  // PERMISSION. Sending her back through the time picker for times she picked is
+  // exactly the "why is it asking me twice" complaint.
+  const handleWeeklyOpenReminder = () => {
+    if (reminderConfigured) setShowRemindersOff(true);
+    else setShowReminderTime(true);
+  };
 
   // Set the daily reminder to the chosen time + request permission, then close
   // the sheet back to the weekly screen.
@@ -961,9 +969,26 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   //     her to set a time she had already set. She has done her part the moment
   //     she picks a time; what may still be missing is PERMISSION, which is a
   //     different question and gets its own ask. Burn the flag either way.
+  // Her pick, kept so the second push can re-arm the slot SHE prayed at the time
+  // SHE chose. Without it, "Turn on notifications" fell through to
+  // requestPermissionAndEnableDefaults, which force-enables BOTH slots at the
+  // defaults — resurrecting an evening reminder she may have switched off and
+  // silently replacing her choice with 20:00.
+  const pickedTimeRef = useRef<{ hour: number; minute: number } | null>(null);
+  // Both async CTAs need this: on Android there is a real 100-400 ms gap between
+  // the tap and the OS dialog covering the screen, and a second tap in that gap
+  // fires a duplicate permission request whose rejection we read as "denied" —
+  // showing "reminders aren't on yet" to someone who has just tapped Allow.
+  // Onboarding's notify step already guards the identical call this way.
+  const notifBusyRef = useRef(false);
+
   const handleHabitConfirm = async (hour: number, minute: number) => {
+    if (notifBusyRef.current) return;
+    notifBusyRef.current = true;
+    pickedTimeRef.current = { hour, minute };
     let granted = false;
     try { granted = await enableReminderAt(morning ? 'morning' : 'night', hour, minute); } catch { granted = false; }
+    notifBusyRef.current = false;
     markReminderConfigured();
     setShowReminderTime(false);
     setShowSheet(false);
@@ -980,10 +1005,21 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // when the OS will no longer show it, which is exactly when the coach card and
   // the settings trip are the only way left.
   const handleRemindersOffTurnOn = async () => {
+    if (notifBusyRef.current) return;
+    notifBusyRef.current = true;
+    const picked = pickedTimeRef.current;
     let granted = false;
-    try { granted = await requestPermissionAndEnableDefaults(); } catch { granted = false; }
-    if (granted) { setShowRemindersOff(false); return; }
+    try {
+      // Re-arm the slot she prayed at the time she picked, NOT the defaults. Only
+      // when she reached this screen without picking anything (the CTA branch for
+      // an already-configured user) do we fall back to enabling both defaults.
+      granted = picked
+        ? await enableReminderAt(morning ? 'morning' : 'night', picked.hour, picked.minute)
+        : await requestPermissionAndEnableDefaults();
+    } catch { granted = false; }
+    notifBusyRef.current = false;
     setShowRemindersOff(false);
+    if (granted) return;
     setTimeout(() => setShowNotifRationale(true), 260);
   };
 

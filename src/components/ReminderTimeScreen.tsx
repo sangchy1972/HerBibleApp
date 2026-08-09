@@ -60,10 +60,22 @@ function Wheel<T>({ values, value, onChange, format, width }: {
   );
 }
 
+// The window each slot may be scheduled in. Not cosmetic: `syncNotifeeReminders`
+// picks its copy pool from the SLOT, so a morning reminder set to 23:00 sends a
+// "good morning" devotional at eleven at night, every day — and an evening one set
+// to 08:00 lands in the same minute as the morning default, so she gets two
+// notifications at once saying opposite things. The sheet this screen replaced
+// enforced exactly this window (TimePickerSheet's minHour/maxHour); losing it was
+// a regression, not a simplification.
+const WINDOW: Record<'morning' | 'night', { min: number; max: number }> = {
+  morning: { min: 0, max: 17 },
+  night: { min: 18, max: 23 },
+};
+
 export default function ReminderTimeScreen({
   slot, initialHour, initialMinute, onSave, onSkip,
 }: {
-  /** Drives the headline: "this morning prayer" vs "this night prayer". */
+  /** Drives the headline AND the schedulable window. */
   slot: 'morning' | 'night';
   initialHour: number;
   initialMinute: number;
@@ -75,15 +87,33 @@ export default function ReminderTimeScreen({
   // Full-screen and blocking: nothing else may be granted over it.
   useSheetSurface(true);
 
-  const [h24, setH24] = useState(Math.min(23, Math.max(0, initialHour)));
+  const win = WINDOW[slot];
+  const [h24, setH24] = useState(Math.min(win.max, Math.max(win.min, initialHour)));
   const [minute, setMinute] = useState(Math.min(59, Math.max(0, initialMinute)));
 
   // 12-hour split. Kept as (period, hour12) in the UI and reassembled on save,
   // so scrolling the hour wheel past 12 can never silently flip AM↔PM.
   const period: 'AM' | 'PM' = h24 >= 12 ? 'PM' : 'AM';
   const hour12 = h24 % 12 === 0 ? 12 : h24 % 12;
-  const setPeriod = (p: 'AM' | 'PM') => setH24(p === 'AM' ? hour12 % 12 : (hour12 % 12) + 12);
-  const setHour12 = (v: number) => setH24(period === 'AM' ? v % 12 : (v % 12) + 12);
+
+  // The wheels only ever OFFER what the slot allows, so there is nothing to
+  // validate on save and no way to land on an hour that would send the wrong
+  // copy. Every hour in the window, expressed as (period, hour12), grouped.
+  const allowed = Array.from({ length: win.max - win.min + 1 }, (_, i) => win.min + i);
+  const periods = Array.from(new Set(allowed.map(h => (h >= 12 ? 'PM' : 'AM')))) as ('AM' | 'PM')[];
+  const hoursForPeriod = (p: 'AM' | 'PM') => {
+    const hs = allowed.filter(h => (h >= 12 ? 'PM' : 'AM') === p).map(h => (h % 12 === 0 ? 12 : h % 12));
+    // 12 sorts first inside its own half (12 AM = 00:00, 12 PM = noon).
+    return hs.sort((a, b) => (a === 12 ? -1 : b === 12 ? 1 : a - b));
+  };
+  const toH24 = (p: 'AM' | 'PM', h12: number) => (p === 'AM' ? h12 % 12 : (h12 % 12) + 12);
+  // Switching period can land on an hour that period does not offer (night only
+  // has PM at all, morning's PM half stops at 5). Clamp to the nearest allowed.
+  const setPeriod = (p: 'AM' | 'PM') => {
+    const hs = hoursForPeriod(p);
+    setH24(toH24(p, hs.includes(hour12) ? hour12 : hs[0]));
+  };
+  const setHour12 = (v: number) => setH24(toH24(period, v));
 
   // Android back = skip. Without it the press reaches the navigator and pops the
   // prayer flow out from under this screen.
@@ -103,13 +133,17 @@ export default function ReminderTimeScreen({
       <View style={styles.wheels}>
         <Wheel
           width={104}
-          values={['AM', 'PM'] as const}
+          values={periods}
           value={period}
           onChange={setPeriod}
         />
         <Wheel
+          // Keyed on the period so the hour column REMOUNTS when the half
+          // changes — its contentOffset is an initial value, so a live column
+          // would keep showing the old scroll position after a clamp.
+          key={period}
           width={104}
-          values={Array.from({ length: 12 }, (_, i) => i + 1)}
+          values={hoursForPeriod(period)}
           value={hour12}
           onChange={setHour12}
           format={pad2}

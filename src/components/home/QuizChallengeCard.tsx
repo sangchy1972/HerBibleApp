@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useIsFocused } from '@react-navigation/native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Feather from '@expo/vector-icons/Feather';
 import { ROSE, TXT, TXTSUB, BTN_RADIUS, FONTS, P } from '../../constants/theme';
@@ -12,8 +11,6 @@ import { SET_SIZE } from '../../services/quizSets';
 import QuizSegmentBar from '../quiz/QuizSegmentBar';
 import QuizOptionButton, { type OptionState } from '../quiz/QuizOptionButton';
 import QuizOptionsEntrance from '../quiz/QuizOptionsEntrance';
-import QuizVerdict from '../quiz/QuizVerdict';
-import { useAutoAdvance } from '../quiz/useAutoAdvance';
 
 // Home-screen Quiz Challenge, below My Reading Plans.
 //
@@ -23,10 +20,12 @@ import { useAutoAdvance } from '../quiz/useAutoAdvance';
 // all answerable in place — so the tap that starts a set is the tap that answers
 // the first question, with no navigation in between.
 //
-// The split with QuizChallengeScreen is deliberate: home owns ANSWERING, the
-// screen owns RESULTS AND REWARDS (retry, puzzle tile, mystery draw, finished
-// painting). So the last question's CTA hands off to the screen rather than
-// growing a second copy of the results flow here.
+// It is a PREVIEW, not a second quiz: the question and its options are live and
+// tappable, but ANY tap records the answer and hands off to the full-screen quiz
+// (owner 2026-08-09 — a set half-played inside a home card read as a bug). The
+// screen owns everything after that first tap: the reveal, the verdict, the
+// remaining questions, the summary, the retry round, the puzzle tile and the
+// mystery draw.
 //
 // Type sizes, fonts and option styling are the quiz's own (QuizOptionButton is
 // literally the same component the full screen uses), so the card reads as the
@@ -44,10 +43,9 @@ export default function QuizChallengeCard({
   onOpenCollection: () => void;
 }) {
   const t = useT();
-  const isFocused = useIsFocused();
   const {
     ready, bank, progress, session, questions, currentQuestion, segments,
-    daily, lifecycle, pendingDraw, startAndPick, next,
+    daily, lifecycle, pendingDraw, startAndPick,
   } = useQuiz();
 
   const pos = currentPosition(session);
@@ -61,7 +59,6 @@ export default function QuizChallengeCard({
   const questionPos = pos ?? 0;
   const roundLength = session ? session.queue.length : SET_SIZE;
   const step = session ? session.cursor + 1 : 1;
-  const isLast = step >= roundLength;
 
   // One state per option, same rules as the full screen: `tried` beats
   // everything, so an option ruled out in an earlier round stays greyed.
@@ -77,24 +74,6 @@ export default function QuizChallengeCard({
       return 'idle';
     });
   }, [question, locked, answer, session, questionPos]);
-
-  // Same held reveal as the full screen, then move on by itself. On the LAST
-  // question of the round that means handing off: the summary, the retry round,
-  // the puzzle tile and the card draw all live on the full screen, and next()
-  // runs first so it is already in `summary` when that screen mounts instead of
-  // flashing the answered question again.
-  //
-  // Above the early returns, like every other hook here — a conditional hook
-  // would blow up the moment the bank lands or the quiz retires.
-  useAutoAdvance(!!locked, () => {
-    next();
-    // `isFocused` is load-bearing: the card stays mounted when she switches tabs,
-    // so answering the last question and moving to the Bible reader inside the 2s
-    // hold would otherwise shove a full-screen quiz over what she is reading. The
-    // set just waits in `summary`, which the compact "Reward waiting" card already
-    // handles the next time she looks at home.
-    if (isLast && isFocused) onPress();
-  });
 
   if (!ready || !bank) return null;
   // RETIRED. Every question in the bank has been served, so the card would be
@@ -217,22 +196,18 @@ export default function QuizChallengeCard({
                 label={label}
                 state={optionStates[i] ?? 'idle'}
                 disabled={!!locked}
-                // Starts the set on the first tap. startAndPick does both halves in
-                // one update — open() then pick() would answer into a session that
-                // does not exist yet and the tap would be swallowed.
-                onPress={() => startAndPick(i)}
+                // ANY tap goes FULL SCREEN (per user 2026-08-09). startAndPick
+                // records the answer in the same update that starts the set —
+                // open() then pick() would answer into a session that does not
+                // exist yet and the tap would be swallowed — and then we hand
+                // off, so the reveal, the verdict and the rest of the set all
+                // happen on the full-screen quiz instead of half-playing here.
+                onPress={() => { startAndPick(i); onPress(); }}
               />
             ))}
           </QuizOptionsEntrance>
         </View>
 
-        {/* Appears BELOW the options, never above: growing the card downward
-            leaves everything she is looking at exactly where it was. */}
-        {locked ? (
-          <View style={styles.verdictSlot}>
-            <QuizVerdict correct={answer?.correct === true} />
-          </View>
-        ) : null}
       </View>
     </View>
   );
@@ -275,8 +250,6 @@ const styles = StyleSheet.create({
   // Cancels the trailing option's own 11 marginBottom so the card's 16 of
   // padding is the only gap under the last one.
   options: { marginBottom: -11 },
-  // The 11 the last option already carries is part of this gap.
-  verdictSlot: { paddingTop: 10 },
   // The app's primary CTA: rose, BTN_RADIUS, no shadow. In the footer the
   // verdict's own marginBottom is the gap; the compact variant has no verdict
   // and adds ctaSpaced instead.

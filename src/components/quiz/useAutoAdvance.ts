@@ -3,8 +3,9 @@ import { useEffect, useRef } from 'react';
 // There is no "Next question" button any more (per user): once an answer locks,
 // the reveal is held and the quiz moves on by itself.
 //
-// Shared by the full screen and the home card so the two can never hold the
-// reveal for different lengths of time.
+// Used by the full screen (QuizQuestionView). The home card used to share it,
+// but it no longer answers in place — any tap there hands off to the full screen
+// (see QuizChallengeCard), which then runs this hold.
 
 /** How long the coloured answer stays on screen before advancing. */
 export const REVEAL_HOLD_MS = 2000;

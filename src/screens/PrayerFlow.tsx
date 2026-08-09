@@ -958,6 +958,13 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     navigation.replace('GospelPsalm', { slot: morning ? 'morning' : 'evening' });
   };
 
+  // The quiz card on the weekly screen. navigate(), NOT replace(): the weekly
+  // screen is the hub she came from, and backing out of the quiz should put her
+  // back in front of the Gospel & Psalm banner rather than dumping her home with
+  // that reading silently skipped. showWeekly stays true so it is still there.
+  const handleOpenQuiz = () => navigation.navigate('Quiz');
+  const handleOpenPuzzleCollection = () => navigation.navigate('PuzzleCollection');
+
   const handleSheetClose = () => {
     // Return to the weekly/sapling screen (still mounted underneath) rather than
     // exiting the whole flow — the user reaches it FROM weekly and expects to
@@ -1392,6 +1399,8 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             onOpenReminder={handleWeeklyOpenReminder}
             onBack={handleWeeklyBack}
             onStartGospelPsalm={handleStartGospelPsalm}
+            onOpenQuiz={handleOpenQuiz}
+            onOpenPuzzleCollection={handleOpenPuzzleCollection}
           />
         </View>
       )}

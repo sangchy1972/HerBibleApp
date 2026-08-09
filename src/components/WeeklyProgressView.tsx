@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
@@ -7,12 +7,14 @@ import LottieView from 'lottie-react-native';
 import Animated, {
   FadeIn, SlideInDown, Easing, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, interpolate,
 } from 'react-native-reanimated';
+import Feather from '@expo/vector-icons/Feather';
 import { ROSE, LAV, TXT, TXTSUB, FONTS } from '../constants/theme';
 import { usePrayer } from '../state/PrayerContext';
 import { useNotifications } from '../state/NotificationsContext';
 import { useT } from '../i18n/useT';
 import { useUILanguage } from '../state/UILanguageContext';
 import { useGospelsPsalms } from '../state/GospelsPsalmsContext';
+import QuizChallengeCard from './home/QuizChallengeCard';
 
 // Hero animation (replaces the old assets/weekly-jesus.png placeholder slot):
 // the user's plant-loader Lottie, extracted from dotLottie into plain JSON.
@@ -21,6 +23,13 @@ import { useGospelsPsalms } from '../state/GospelsPsalmsContext';
 const HERO_LOTTIE = require('../../assets/lottie/weekly-plant.json');
 // Evening completion shows the streak fire instead of the plant (per user).
 const FIRE_LOTTIE = require('../../assets/lottie/fire-streak.json');
+
+// Gospel & Psalm banner artwork. The two bundled atmospheric photos (the same
+// pair FollowHimScreen and the prayer-background fallback use) — BUNDLED, not
+// CDN, because this banner appears the instant a prayer ends and a placeholder
+// grey box there would look broken. Cover-cropped, then veiled left→right.
+const BANNER_DAY = require('../../assets/follow_him_day.webp');
+const BANNER_NIGHT = require('../../assets/follow_him_night.webp');
 
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -96,11 +105,16 @@ interface Props {
   morning: boolean;
   onOpenReminder: () => void;
   onBack: () => void;
-  /** Open today's Gospel & Psalms reader for this slot (the "next" CTA). */
+  /** Open today's Gospel & Psalms reader for this slot (the banner tap). */
   onStartGospelPsalm: () => void;
+  /** Full-screen quiz / puzzle collection, from the quiz card at the bottom. */
+  onOpenQuiz: () => void;
+  onOpenPuzzleCollection: () => void;
 }
 
-export default function WeeklyProgressView({ morning, onOpenReminder, onBack, onStartGospelPsalm }: Props) {
+export default function WeeklyProgressView({
+  morning, onOpenReminder, onBack, onStartGospelPsalm, onOpenQuiz, onOpenPuzzleCollection,
+}: Props) {
   const t = useT();
   const { lang } = useUILanguage();
   const insets = useSafeAreaInsets();
@@ -236,29 +250,55 @@ export default function WeeklyProgressView({ morning, onOpenReminder, onBack, on
         )}
       </Animated.View>
 
-      {/* Below the card: when today's Gospel & Psalms isn't read, a "next"
-          card (with Start) is the primary CTA + a small "Maybe later" keeps
-          the plain dismiss. Otherwise the plain Back button. 50 px below the
-          card per user; text color follows the slot accent. */}
+      {/* Below the card, in order: the Gospel & Psalm banner (only while today's
+          reading is outstanding), the quiz card, then the way out.
+          The banner replaced a tall card whose full-width "Continue" was the
+          only way forward — per user it read as a wall she had to click
+          through. It is half that height, carries just the plan name, and the
+          WHOLE strip is the target. */}
       <Animated.View entering={FadeIn.duration(360).delay(360)}>
         {showNext ? (
-          <>
-            <View style={styles.nextCard}>
-              <View style={styles.nextMeta}>
-                <Text style={[styles.nextLabel, { color: accent }]}>{t('weekly.next.label')}</Text>
-                {/* No numeric N/89 progress (per user) — just the plan name. */}
-                <Text style={styles.nextTitle} numberOfLines={1}>{t('gp.section')}</Text>
-              </View>
-              {/* Continue sits full-width at the BOTTOM of the card so tapping it
-                  reads as "carry straight on into Gospel & Psalm" (per user). */}
-              <TouchableOpacity onPress={onStartGospelPsalm} activeOpacity={0.85} style={[styles.nextContinueBtn, { backgroundColor: accent }]}>
-                <Text style={styles.nextContinueText}>{t('weekly.next.start')}</Text>
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity onPress={onBack} hitSlop={12} style={styles.laterBtn}>
-              <Text style={[styles.laterText, { color: accent }]}>{t('weekly.later')}</Text>
-            </TouchableOpacity>
-          </>
+          <TouchableOpacity
+            onPress={onStartGospelPsalm}
+            activeOpacity={0.88}
+            style={styles.gpBanner}
+            accessibilityRole="button"
+            accessibilityLabel={t('gp.section')}
+          >
+            <Image source={morning ? BANNER_DAY : BANNER_NIGHT} style={styles.gpBannerImg} resizeMode="cover" />
+            {/* Left→right "gradually colouring" veil (per user): near-solid white
+                under the title so serif on photo stays legible without a scrim
+                box, thinning to almost nothing on the right where the photo —
+                and the arrow — live. */}
+            <LinearGradient
+              colors={['rgba(255,255,255,0.97)', 'rgba(255,255,255,0.88)', 'rgba(255,255,255,0.30)']}
+              locations={[0, 0.5, 1]}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={StyleSheet.absoluteFillObject}
+            />
+            <Text style={styles.gpBannerTitle} numberOfLines={1}>{t('gp.section')}</Text>
+            {/* Decorative, NOT its own touchable: the banner is one target, and a
+                nested button here would carve a dead zone out of it. */}
+            <PulseArrow color={accent} />
+          </TouchableOpacity>
+        ) : null}
+
+        {/* The home screen's quiz card, unchanged and in its own right — she has
+            just finished praying, which is exactly when she has a minute for it
+            (per user). Renders zero height when the CDN bank hasn't landed.
+            -1 horizontal reconciles the card's own P (17) with this screen's 16;
+            stacked cards whose edges miss by a pixel read as misaligned. */}
+        <View style={styles.quizWrap}>
+          <QuizChallengeCard onPress={onOpenQuiz} onOpenCollection={onOpenPuzzleCollection} />
+        </View>
+
+        {/* Way out. Same two forms as before — a quiet link when the banner is
+            offering something, the white pill when it isn't. */}
+        {showNext ? (
+          <TouchableOpacity onPress={onBack} hitSlop={12} style={styles.laterBtn}>
+            <Text style={[styles.laterText, { color: accent }]}>{t('weekly.later')}</Text>
+          </TouchableOpacity>
         ) : (
           <TouchableOpacity onPress={onBack} activeOpacity={0.85} style={styles.backBtn}>
             <Text style={[styles.backText, { color: accent }]}>{t('weekly.back')}</Text>
@@ -347,6 +387,27 @@ function PrayingHandsGlyph({ color, small }: { color: string; small?: boolean })
         fill={color}
       />
     </Svg>
+  );
+}
+
+// The banner's arrow: an accent disc that breathes (1 → 1.12 → 1, ~1.7 s) so
+// the strip reads as tappable without a button label. Shared values, not a
+// layout animation — this screen is rendered inside PrayerFlow's absolute-fill
+// overlay, where `entering` has bitten us before.
+function PulseArrow({ color }: { color: string }) {
+  const s = useSharedValue(0);
+  useEffect(() => {
+    s.value = withRepeat(withSequence(
+      withTiming(1, { duration: 700, easing: Easing.inOut(Easing.cubic) }),
+      withTiming(0, { duration: 700, easing: Easing.inOut(Easing.cubic) }),
+      withTiming(0, { duration: 300 }),                                        // a beat's rest, so it pulses rather than throbs
+    ), -1, false);
+  }, [s]);
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: 1 + s.value * 0.12 }] }));
+  return (
+    <Animated.View style={[styles.gpArrow, { backgroundColor: color }, style]} pointerEvents="none">
+      <Feather name="arrow-right" size={22} color="#FFFFFF" />
+    </Animated.View>
   );
 }
 
@@ -454,15 +515,14 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     marginTop: 18,
   },
-  // Rounded rectangle, not a circle (per user). Taller than wide so it reads as
-  // a rectangle rather than a rounded square — at 38×38 with a softened radius
-  // the eye still calls it a circle. Width stays 38: seven of these plus
-  // space-between already fill the card on an SE, so the growth has to be
-  // vertical.
+  // SQUARE (per user 2026-08-09 — it was 38×46). Width stays 38: seven of these
+  // plus space-between already fill the card on an SE, so it is the height that
+  // came down. The radius came down with it — at 38×38 with the old 13 the eye
+  // calls it a circle, which is what the rectangle was avoiding.
   dayCell: {
     width: 38,
-    height: 46,
-    borderRadius: 13,
+    height: 38,                                                                 // 46 → 38: SQUARE, per user
+    borderRadius: 11,                                                           // 13 → 11 so a 38×38 box still reads as a square, not a circle
     borderWidth: 1.5,
     borderColor: 'rgba(30,27,46,0.15)',
     alignItems: 'center',
@@ -474,12 +534,12 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     backgroundColor: '#F4D58A',
   },
-  dayLetter: { fontSize: 14, color: TXTSUB, fontWeight: '600' },                  // 13 → 14 (+8 % per user)
+  dayLetter: { fontSize: 14, color: TXTSUB, fontWeight: '700' },                  // 13 → 14 (+8 %); '600' → '700' bold, per user
   sub: {
     fontSize: 18,
     color: TXT,
     textAlign: 'center',
-    marginTop: 11,                                                                // 6 → 11 (+5 px below the lottie, per user)
+    marginTop: 21,                                                                // 6 → 11 → 21 (+10 px more below the lottie, per user)
   },
   subStrong: { fontWeight: '700' },
   reminderBtn: {
@@ -527,43 +587,43 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   backText: { fontSize: 18, fontWeight: '700' },                                  // color set inline (morning → ROSE / evening → LAV)
-  // Gospel & Psalms "next" card — shown in the Back slot when today's reading
-  // isn't done. Same 50 px top gap as the Back button.
-  // Vertical layout (was a single row): meta on top, full-width Continue at the
-  // bottom. The column + button make the card ~60 % taller per user.
-  nextCard: {
+  // Gospel & Psalm banner — replaces the old NEXT card (label + centered plan
+  // name + full-width Continue, ~200 tall). 100 is that halved, per user, which
+  // is why the label and the button are gone rather than merely tightened: at
+  // this height only one line of type fits, and the arrow carries the verb.
+  // `overflow: hidden` is load-bearing — the photo and the veil are absolute
+  // children that would otherwise square off the corners.
+  gpBanner: {
     marginHorizontal: 16,
-    marginTop: 30,                                                                // 50 → 30 (-20 px gap to the weekly card above per user)
-    backgroundColor: '#FFFFFF',
+    marginTop: 30,
+    height: 100,
     borderRadius: 20,
-    // Was one paddingVertical: 36. Split because the two ends now move
-    // independently: 10px off the top pulls NEXT up toward the card edge, and
-    // 10px off the bottom lets Continue sit closer to it. Net card height is
-    // unchanged by this pair.
-    paddingTop: 26,                                                               // 36 → 26 (-10 px above NEXT, per user)
-    paddingBottom: 26,                                                            // 36 → 26 (Continue 10 px nearer the card's bottom edge)
-    paddingHorizontal: 18,
-  },
-  nextMeta: { minWidth: 0 },
-  // Serif, matching the page headline ("Your Day Starts in Faith") rather than
-  // the Lato it used to be — per user, the same typeface as the title.
-  // fontWeight stays '600': FONTS.loraBold + '700' makes Android drop Lora for
-  // system sans (project memory, same note as pageTitle).
-  nextLabel: { fontSize: 12.65, fontFamily: FONTS.loraBold, fontWeight: '600', letterSpacing: 1.2, marginBottom: 24, textAlign: 'center' },  // marginBottom 4 → 24 (+20 px above the plan name, per user)
-  nextTitle: { fontSize: 20.24, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold, textAlign: 'center' },   // 17.6 → 20.24 (+15 %), centered per user
-  nextContinueBtn: {
-    marginTop: 30,                                                               // 20 → 30 (button sits 10 px lower, per user)
-    alignSelf: 'stretch',
-    height: 54,                                                                  // 46 → 54 (taller card per user)
-    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',                                                   // shows for the frame before the webp decodes
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 20,
   },
-  // 16 → 17.5, the unified secondary-CTA size. The app had TWO accidental
-  // families here (16 and 16.5) that no shared component enforced; 17.5
-  // collapses them into one value across all 11 sites. See PlanDayDone,
-  // ProfileScreen, QuizChallengeScreen and the four nudge cards.
-  nextContinueText: { color: '#FFFFFF', fontSize: 17.5, fontWeight: '700' },
+  // No width/height: the four zero insets give the Image its frame, and cover
+  // then crops the photo to it (any explicit size fights the banner's height).
+  gpBannerImg: StyleSheet.absoluteFillObject,
+  // Serif at the old nextTitle's size, left-aligned now that it shares the row
+  // with the arrow. '600' not '700': FONTS.loraBold + 700 makes Android drop
+  // Lora for system sans (project rule).
+  gpBannerTitle: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 20.24,
+    fontFamily: FONTS.loraBold,
+    fontWeight: '600',
+    color: TXT,
+  },
+  gpArrow: {
+    width: 44, height: 44, borderRadius: 22,
+    alignItems: 'center', justifyContent: 'center',
+    marginLeft: 12,
+  },
+  quizWrap: { marginHorizontal: -1 },
   laterBtn: { marginTop: 14, alignItems: 'center', paddingVertical: 6 },
   laterText: { fontSize: 15, fontWeight: '600' },
 });

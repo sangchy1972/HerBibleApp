@@ -374,6 +374,24 @@ Also: the page `ScrollView` needs `keyboardShouldPersistTaps="handled"`, or the 
 on a chip is swallowed as a keyboard dismissal and the blur unmounts what she was
 reaching for.
 
+### The keyboard rules (all three exist because of a real failure mode)
+`sheetDepth` in `promptSurface.ts` is a **global counter**, and PlanScreen — unlike every
+other `useSheetSurface` caller — **never unmounts**. So the hold must be bounded by an
+actual keyboard session:
+1. Gate on **`searchFocused && useIsFocused()`**, never on "has text". Leaving a word in
+   the field or switching tabs while focused would otherwise hold the count for the rest
+   of the session and silence *every* blocking prompt in the app.
+2. Every exit goes through **one `blurSearch()`**: `blur()` **before**
+   `Keyboard.dismiss()`. A bare `Keyboard.dismiss()` hides the keyboard on Android while
+   the input keeps focus, so `onBlur` never fires and the flag stops matching reality.
+3. **Switching segments unmounts the field**, and React Native does not reliably fire
+   `onBlur` for a TextInput unmounted while focused — so the tab change calls
+   `blurSearch()` explicitly.
+Android hardware back leaves search before it leaves the screen (`BackHandler`, armed only
+while searching). Note `edgeToEdgeEnabled: true`: the window does not resize for the
+keyboard, so the field is at the TOP of the body on purpose and the results scroll under
+the keyboard. No `KeyboardAvoidingView` — this repo has found it unreliable on Android.
+
 ### Behaviour details
 180 ms debounce (not for the main thread — 113 bundled objects is sub-millisecond — but
 to stop the list flickering mid-word). Results capped at 30 rows + "show all N", because

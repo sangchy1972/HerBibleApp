@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, LayoutChangeEvent, Keyboard, type TextInput } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, LayoutChangeEvent, Keyboard, BackHandler, type TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, FadeIn,
 } from 'react-native-reanimated';
-import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect, useIsFocused } from '@react-navigation/native';
 import type { NavigationProp, RouteProp } from '@react-navigation/native';
 import { ROSE, BTN_RADIUS, TXT, TXTSUB, P, FONTS, GREEN_DONE } from '../constants/theme';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
@@ -256,16 +256,40 @@ export default function PlanScreen() {
   // be spent having taught nothing (the overlay would show a scrim with no hole
   // until its 30s watchdog fired). Disable the field and drop any live query.
   const guideBusy = guide.stage !== 'idle';
+  const blurSearch = useCallback(() => {
+    setSearchFocused(false);
+    searchRef.current?.blur();     // BEFORE dismiss: on Android the input keeps
+    Keyboard.dismiss();            // focus through a bare dismiss, so no onBlur
+  }, []);
   useEffect(() => {
     if (!guideBusy) return;
     setQuery('');
-    setSearchFocused(false);
-    Keyboard.dismiss();
-  }, [guideBusy]);
-  // While she is searching, hold the prompt surface: `plan` IS in TAB_ROUTES, so
-  // without this the mood sheet (1.8s after mount), login, widget or rate prompt
-  // can paint over a live search field with the keyboard up.
-  useSheetSurface(searchActive);
+    blurSearch();
+  }, [guideBusy, blurSearch]);
+  // Switching segments unmounts the field. React Native does NOT reliably fire
+  // onBlur for a TextInput that unmounts while focused, so without this
+  // `searchFocused` stays true for a field that no longer exists — and the
+  // global sheetDepth stays held. Her query survives; only the focus does not.
+  useEffect(() => {
+    if (tab !== 'explore') blurSearch();
+  }, [tab, blurSearch]);
+  // Hold the prompt surface while the FIELD IS FOCUSED on a focused tab. `plan` IS
+  // in TAB_ROUTES, so without this a nudge can paint over a live search field
+  // with the keyboard up — and QuizPromoHost is a real RN <Modal>, i.e. a native
+  // window that swallows every touch in the app while it is visible.
+  //
+  // Both conditions are load-bearing, because `sheetDepth` is a GLOBAL counter
+  // and this screen never unmounts:
+  //   • `searchFocused`, not `searchActive` — gating on "has text" would keep the
+  //     hold forever the moment she leaves a word in the field, and a prompt over
+  //     a result list she is calmly reading is ordinary app behaviour, not an
+  //     ambush. The ambush window is exactly "keyboard up, mid-typing".
+  //   • `isFocused` — otherwise switching tabs with the field still focused
+  //     leaks the count and silences EVERY blocking prompt in the app (mood,
+  //     login, widget, rate, both guides, badge unlocks) for the rest of the
+  //     session. Same failure the Follow-Him gate caused in 2026-08-08.
+  const tabFocused = useIsFocused();
+  useSheetSurface(searchFocused && tabFocused);
   // 180ms — the catalog is 113 bundled objects, so this is not protecting the
   // main thread (a full pass is sub-millisecond), it stops the list flickering
   // mid-word. Tighter than the Bible reader's 250ms because there is no network.
@@ -297,6 +321,22 @@ export default function PlanScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedQuery, hits.length]);
 
+  // Android hardware back leaves SEARCH first (the repo pattern — see
+  // MoodCheckInSheet / SignInSheet). Registered only while searching and torn
+  // down the instant she isn't, so it can never become a trap: without it, back
+  // closes the keyboard and the next press leaves the tab entirely with her
+  // results still on screen. The guide clears the query before it shows, so this
+  // and SpotlightCoach's own handler are never armed at the same time.
+  useEffect(() => {
+    if (!searchActive) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setQuery('');
+      blurSearch();
+      return true;
+    });
+    return () => sub.remove();
+  }, [searchActive, blurSearch]);
+
   const openedSearchRef = useRef(false);
   const onSearchFocus = () => {
     setSearchFocused(true);
@@ -307,9 +347,7 @@ export default function PlanScreen() {
   };
   const cancelSearch = () => {
     setQuery('');
-    setSearchFocused(false);
-    searchRef.current?.blur();
-    Keyboard.dismiss();
+    blurSearch();
   };
   // A result tap leaves the keyboard behind and warms the plan body, so the
   // detail screen renders from cache instead of a spinner (same prefetch the
@@ -319,7 +357,7 @@ export default function PlanScreen() {
       item_list_name: 'plan_search', item_id: slug,
       search_term: debouncedQuery.slice(0, 100), rank, result_count: hits.length,
     });
-    Keyboard.dismiss();
+    blurSearch();
     loadPlan(slug).catch(() => {});
     openCorpusPlan(slug);
   };
@@ -532,7 +570,7 @@ export default function PlanScreen() {
                     setQuery(label);
                   }}
                   onOpenCategory={(section, title) => {
-                    Keyboard.dismiss();
+                    blurSearch();
                     navigation.navigate('PlanCategory', { primary: section, title });
                   }}
                 />

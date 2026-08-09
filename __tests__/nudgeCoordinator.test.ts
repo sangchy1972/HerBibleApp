@@ -91,3 +91,34 @@ describe('startsNewWave', () => {
     expect(pickActiveNudge(queue, MAX_BUDGETED_PER_OPEN, MAX_BLOCKING_PER_OPEN)).toBe('widgetInstall');
   });
 });
+
+// ── Re-grant hazard behind notifyDismissed ─────────────────────────────────
+// notifyDismissed now DELETES the request as well as clearing activeId. That
+// removed a race (the next arbitration re-granting the prompt she just closed,
+// which nothing stopped for `canShow: () => true` hosts) but it puts a duty on
+// every host: a prompt that is still WANTED after a dismissal has to
+// re-register. Pinning the two shapes here so the next host copies a correct one.
+describe('dismiss → re-grant contract', () => {
+  it('a queue-style host must re-request: same visible flag, grant lost', () => {
+    // The badge sheet's shape. After close() the request is gone and `visible`
+    // is unchanged (another badge is queued), so only an `active`-keyed effect
+    // re-registers it — otherwise badge #2 never appears.
+    const reqs = [{ id: 'achievementUnlock' as const, priority: NUDGE_PRIORITY.achievementUnlock, eligible: true, ignoresBudget: true }];
+    expect(pickActiveNudge(reqs, 0, MAX_BLOCKING_PER_OPEN)).toBe('achievementUnlock');
+    // …and with nothing registered (the state right after notifyDismissed):
+    expect(pickActiveNudge([], MAX_BUDGETED_PER_OPEN, MAX_BLOCKING_PER_OPEN)).toBeNull();
+  });
+
+  it('a flag-style host needs nothing: its canShow goes false the same tick', () => {
+    const reqs = [{ id: 'moodCheckIn' as const, priority: NUDGE_PRIORITY.moodCheckIn, eligible: false, ignoresBudget: true }];
+    expect(pickActiveNudge(reqs, MAX_BUDGETED_PER_OPEN, MAX_BLOCKING_PER_OPEN)).toBeNull();
+  });
+
+  it('an ineligible request never blocks a lower-priority eligible one', () => {
+    const reqs = [
+      { id: 'setReminderTime' as const, priority: NUDGE_PRIORITY.setReminderTime, eligible: false },
+      { id: 'rate' as const, priority: NUDGE_PRIORITY.rate, eligible: true },
+    ];
+    expect(pickActiveNudge(reqs, MAX_BUDGETED_PER_OPEN, MAX_BLOCKING_PER_OPEN)).toBe('rate');
+  });
+});

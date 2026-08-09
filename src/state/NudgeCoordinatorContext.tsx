@@ -86,21 +86,22 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
     AsyncStorage.getItem(LAST_BUDGETED_KEY).then(v => { if (v) lastBudgetedAt.current = Number(v) || 0; }).catch(() => {});
   }, []);
 
-  // Reset the per-open counters on every return to the foreground.
-  const foregroundTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  useEffect(() => () => { foregroundTimers.current.forEach(clearTimeout); }, []);
+  // Reset the per-wave counters on every return to the foreground.
+  // ONE timer, replaced each time — an array of them grew without bound across a
+  // long session of backgrounding and returning.
+  const foregroundTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (foregroundTimer.current) clearTimeout(foregroundTimer.current); }, []);
   useEffect(() => {
     const sub = AppState.addEventListener('change', s => {
-        if (s === 'active') {
-        budgetUsed.current = 0; shownThisOpen.current = 0; lastBlockingAt.current = 0;
-        // DELAYED, not synchronous. On a hot start the app_open interstitial is
-        // requested off InteractionManager, so arbitrating here would grant a
-        // slot in the same frame and the ad would then cover the prompt it just
-        // granted. A beat's delay lets isInterstitialVisible() claim the screen
-        // first, and the surface gate refuses.
-        const tm = setTimeout(bump, 1200);
-        foregroundTimers.current.push(tm);
-      }
+      if (s !== 'active') return;
+      budgetUsed.current = 0; shownThisOpen.current = 0; lastBlockingAt.current = 0;
+      // DELAYED, not synchronous. On a hot start the app_open interstitial is
+      // requested off InteractionManager, so arbitrating here would grant a slot
+      // in the same frame and the ad would then cover the prompt it just
+      // granted. A beat's delay lets isInterstitialVisible() claim the screen
+      // first, and the surface gate refuses.
+      if (foregroundTimer.current) clearTimeout(foregroundTimer.current);
+      foregroundTimer.current = setTimeout(bump, 1200);
     });
     return () => sub.remove();
   }, [bump]);
@@ -125,6 +126,14 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
   }, [bump]);
 
   const notifyDismissed = useCallback((id: NudgeId) => {
+    // DELETE the request too. It used to only clear activeId and leave the entry
+    // in the map, so the next arbitration could immediately re-grant the prompt
+    // she just closed — for `canShow: () => true` hosts (mood, login, badge)
+    // nothing else would have stopped it. It only worked because child effects
+    // commit before the provider's, i.e. the host's own release usually won the
+    // race. Every call site already pairs this with a release (directly or via
+    // its own effect), so deleting here matches the intent and removes the race.
+    requests.current.delete(id);
     setActiveId(a => (a === id ? null : a));
     bump();
   }, [bump]);

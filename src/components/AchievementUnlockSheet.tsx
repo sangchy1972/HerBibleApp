@@ -92,12 +92,17 @@ export default function AchievementUnlockSheet() {
   // mood sheet / login. ignoresBudget: rewards always show; a multi-badge queue
   // drains one-by-one across successive activations.
   const coord = useNudgeCoordinator();
+  const active = coord.isActive('achievementUnlock');
+  // `active` is in the deps for the MULTI-BADGE queue. close() calls
+  // notifyDismissed, which drops the request; if another badge is still queued
+  // `visible` never changes, so a [visible]-only effect would not re-register
+  // and the second badge would never appear. Re-requesting whenever the grant is
+  // lost while still visible is what drains the queue one-by-one.
   useEffect(() => {
     if (visible) coord.requestSlot({ id: 'achievementUnlock', priority: NUDGE_PRIORITY.achievementUnlock, canShow: () => true, ignoresBudget: true });
     else coord.releaseSlot('achievementUnlock');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible]);
-  const active = coord.isActive('achievementUnlock');
+  }, [visible, active]);
   const close = useCallback(() => { coord.notifyDismissed('achievementUnlock'); dismissAward(); }, [coord, dismissAward]);
 
   // Collect closes the screen — which left a brand-new user with no idea the

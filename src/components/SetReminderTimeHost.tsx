@@ -32,14 +32,18 @@ export default function SetReminderTimeHost() {
   // Anchor the cadence baseline the first time we're eligible.
   useEffect(() => { if (eligible) srt.noteEligible(); /* eslint-disable-next-line */ }, [eligible]);
 
+  const active = coord.isActive('setReminderTime');
+
   // Register with the coordinator while eligible; canShow re-checks the cadence.
+  // `active` is in the deps because notifyDismissed drops the request: without
+  // it, a session that outlives the day (app left open) would never re-register
+  // once dismissed, and tomorrow's ask would be lost. Declared ABOVE the effect
+  // — referencing a const from an effect defined earlier is a TDZ crash.
   useEffect(() => {
     if (eligible) coord.requestSlot({ id: 'setReminderTime', priority: NUDGE_PRIORITY.setReminderTime, canShow: () => srtRef.current.shouldShow() });
     else coord.releaseSlot('setReminderTime');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eligible]);
-
-  const active = coord.isActive('setReminderTime');
+  }, [eligible, active]);
   // Android hardware BACK, ABOVE every early return (a hook under one is
   // conditional and React rejects it when the condition flips). Without this the
   // press goes to the navigator, which pops the screen — or exits to the
@@ -80,10 +84,10 @@ export default function SetReminderTimeHost() {
 
   const dismiss = () => {
     coord.notifyDismissed('setReminderTime');
-  dismissRef.current = dismiss;
     coord.releaseSlot('setReminderTime');
     setStep('rationale');
   };
+  dismissRef.current = dismiss;
 
   const onEveningConfirm = async (hour: number, minute: number) => {
     await notif.configureReminders(mTime, { hour, minute });   // atomic: both times + permission

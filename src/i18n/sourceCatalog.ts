@@ -79,6 +79,8 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   // Distinct from the daily cap: there is no "tomorrow" to come back to until
   // the bank grows, and promising one would be a lie.
   'quiz.done.title':                { en: "You've answered them all", context: 'Headline once the user has seen every question in the quiz bank and the quiz has retired from the home screen. Celebratory. Must NOT say "come back tomorrow" — there is nothing new until more questions ship.' },
+  'quiz.error.title':               { en: "Can't load the quiz right now", context: 'Headline on the quiz screen when the question bank could not be fetched from the CDN (offline, or the server is unreachable). Paired with a Try again button.' },
+  'quiz.error.desc':                { en: 'Please check your connection and try again.', context: 'Body under quiz.error.title.' },
   'quiz.done.body':                 { en: 'Every question, answered. Your paintings and cards are still in your collection, and more questions are on the way.', context: 'Body under quiz.done.title. Reassures her that nothing she collected is gone and that the feature has a future.' },
   'quiz.done.cardSub':              { en: 'Every question answered', context: 'Short label replacing the start button on the collection screens once the quiz has retired. One line.' },
   'quiz.progress.bestStreak':       { en: 'Best run: {n} days', context: 'Shown when her best streak beats her current one.' },

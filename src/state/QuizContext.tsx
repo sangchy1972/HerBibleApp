@@ -69,6 +69,9 @@ interface QuizState {
   /** null = no bank on this device yet. The home card hides itself. */
   bank: QuizQuestion[] | null;
   bankStatus: BankStatus;
+  /** Ask for another bank fetch. The unavailable view needs a real retry — the
+   *  foreground listener alone means force-quitting is the only other way. */
+  retryBank: () => void;
   progress: QuizProgressV1;
   session: QuizSessionV1 | null;
   /** The 5 questions of the CURRENT set, resolved. Empty when there is no bank. */
@@ -144,7 +147,13 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
   const [ready, setReady] = useState(false);
   const [bank, setBank] = useState<QuizQuestion[] | null>(null);
   const [bankStatus, setBankStatus] = useState<BankStatus>('loading');
+  /** Which language the bank in state was fetched for. A ref as well as state
+   *  because the fetch callback closes over a stale render otherwise. */
+  const [bankLang, setBankLangState] = useState<string | null>(null);
+  const bankLangRef = useRef<string | null>(null);
+  const setBankLang = useCallback((l: string) => { bankLangRef.current = l; setBankLangState(l); }, []);
   const [retryTick, setRetryTick] = useState(0);
+  const retryBank = useCallback(() => setRetryTick(t => t + 1), []);
   const [progress, setProgress] = useState<QuizProgressV1>(INITIAL_PROGRESS);
   const [session, setSession] = useState<QuizSessionV1 | null>(null);
   const [cards, setCards] = useState<CardProgressV1>(INITIAL_CARD_PROGRESS);
@@ -232,7 +241,13 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
     loadBank(language)
       .then(b => {
         if (!alive) return;
-        if (b) setBank(b);
+        if (b) { setBank(b); setBankLang(language); }
+        // A DIFFERENT language failing must clear the bank. Keeping it meant a
+        // user who switched to Spanish and hit a failed fetch kept reading
+        // ENGLISH questions under a Spanish UI — worse than showing nothing,
+        // which is exactly what quizBank's own header says. Keeping it is only
+        // right when the SAME language is merely refreshing.
+        else if (bankLangRef.current !== null && bankLangRef.current !== language) setBank(null);
         setBankStatus(b ? 'ready' : 'unavailable');
         if (b) reconcileSession(b);
       })
@@ -331,7 +346,15 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
   // The retired half is NOT overridden by a live session. A session cannot
   // outlive retirement: the set that retires the quiz is committed before
   // setIndex advances, so by the time `retired` is true that session is gone.
-  const canStart = canStartSet(daily, !!session) && !lifecycle.retired;
+  // `!!bank` FIRST. Without it this was true on a device that has no questions:
+  // quizLifecycle(x, 0).retired is deliberately false (a null bank must not read
+  // as "finished"), and a fresh `daily` allows a set — so every "Go play" button
+  // lit up, and all three of them navigate with REPLACE. She left the collection
+  // screen, QuizChallengeScreen mounted, its bank-unavailable effect fired
+  // goBack(), and the screen she came from no longer existed. On a restored
+  // Android nav stack goBack() has nowhere to go at all, and navLock had already
+  // latched — a blank page with a dead X and dead hardware back.
+  const canStart = !!bank && canStartSet(daily, !!session) && !lifecycle.retired;
 
   // ── Actions ───────────────────────────────────────────────────────────────
   const open = useCallback(() => {
@@ -565,12 +588,12 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
   const abandon = useCallback(() => setSession(null), []);
 
   const value = useMemo<QuizState>(() => ({
-    ready, bank, bankStatus, progress, session, questions, currentQuestion, segments,
+    ready, bank, bankStatus, retryBank, progress, session, questions, currentQuestion, segments,
     open, pick, startAndPick, next, retry, finish, abandon,
     cards, likes, history, historySummary, daily, canStart, todayYmd, lifecycle,
     pendingDraw: cards.pendingDraw, drawSpread, collectedCards,
     drawCard, likeCard, cardIsLiked, logCardShare, logCardOpen,
-  }), [ready, bank, bankStatus, progress, session, questions, currentQuestion, segments,
+  }), [ready, bank, bankStatus, retryBank, progress, session, questions, currentQuestion, segments,
        open, pick, startAndPick, next, retry, finish, abandon,
        cards, likes, history, historySummary, daily, canStart, todayYmd, lifecycle,
        drawSpread, collectedCards,
@@ -590,7 +613,7 @@ export function useQuiz(): QuizState {
   const ctx = useContext(Ctx);
   if (ctx) return ctx;
   return {
-    ready: false, bank: null, bankStatus: 'unavailable', progress: INITIAL_PROGRESS, session: null,
+    ready: false, bank: null, bankStatus: 'unavailable', retryBank: () => {}, progress: INITIAL_PROGRESS, session: null,
     questions: [], currentQuestion: null, segments: ['empty', 'empty', 'empty', 'empty', 'empty'],
     open: () => {}, pick: () => {}, startAndPick: () => {}, next: () => {}, retry: () => {}, finish: () => {}, abandon: () => {},
     cards: INITIAL_CARD_PROGRESS, likes: INITIAL_CARD_LIKES, history: INITIAL_HISTORY,

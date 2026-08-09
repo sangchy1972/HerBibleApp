@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import Animated, {
-  FadeInDown, useSharedValue, useAnimatedStyle, withTiming, withRepeat, withDelay,
+  useSharedValue, useAnimatedStyle, withTiming, withRepeat, withDelay,
   Easing, useReducedMotion,
 } from 'react-native-reanimated';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -15,6 +15,7 @@ import { drawEarnedAt } from '../../state/cardDraw';
 import { DAILY_SET_LIMIT } from '../../state/quizHistory';
 import { QUIZ_ART_COUNT } from '../../constants/quizArt';
 import type { SegmentState } from '../../state/quizSession';
+import type { StyleProp, ViewStyle } from 'react-native';
 
 // End-of-round screen.
 //
@@ -54,6 +55,53 @@ const T_FOOTNOTE = T_CTA - 220;   // before the CTA: the button is the last thin
 // to leave — every retry round, and stacked on top of the interstitial's own
 // deliberate 400 ms. It lands just after the mystery bar instead.
 const T_RETRY_CTA = T_MYSTERY + 420;
+/** How long one element takes to arrive. */
+const RISE_MS = 420;
+/** It rises this far while fading in. */
+const RISE_FROM = 22;
+/** Margin after the last element before we declare the screen settled and hand
+ *  the whole tree back to plain Views. Covers a dropped frame. */
+const SETTLE_PAD = 300;
+
+// One element's arrival.
+//
+// SHARED VALUES, NEVER `entering=`. This is a repo rule, written down in
+// QuizVerdict and QuizOptionsEntrance, and this file broke it: Reanimated
+// LAYOUT animations do not reliably run inside a `fullScreenModal` on the new
+// architecture, and this screen IS one (RootNavigator registers Quiz that way).
+// A dropped entrance leaves the config captured at mount with nothing to ever
+// set it — i.e. the entire results screen stuck at opacity 0, permanently, with
+// no recovery. The watchdog below is what makes a dropped timing merely ugly
+// instead of fatal.
+//
+// pointerEvents none while moving, then HAND BACK to a plain View: a
+// Reanimated-owned view can freeze its native touch region at the position it
+// was attached in, on Android/Fabric.
+function Rise({
+  at, settled, style, children,
+}: {
+  /** Ms from mount. */
+  at: number;
+  /** Once true, this is a plain View at rest — no Reanimated, no transform. */
+  settled: boolean;
+  style?: StyleProp<ViewStyle>;
+  /** Optional: the retry CTA's fill is a bare coloured layer with nothing in it. */
+  children?: React.ReactNode;
+}) {
+  const p = useSharedValue(0);
+  useEffect(() => {
+    p.value = 0;
+    p.value = withDelay(at, withTiming(1, { duration: RISE_MS, easing: Easing.out(Easing.cubic) }));
+    const wd = setTimeout(() => { p.value = 1; }, at + RISE_MS + SETTLE_PAD);
+    return () => clearTimeout(wd);
+  }, [at, p]);
+  const st = useAnimatedStyle(() => ({
+    opacity: p.value,
+    transform: [{ translateY: (1 - p.value) * RISE_FROM }],
+  }));
+  if (settled) return <View style={style}>{children}</View>;
+  return <Animated.View style={[style, st]} pointerEvents="none">{children}</Animated.View>;
+}
 
 export default function QuizReviewView({
   segments, correct, total, wrong, firstPassPerfect, completedSets,
@@ -94,11 +142,33 @@ export default function QuizReviewView({
   // which is the only run that matters. Two other screens in this app have the
   // same hole; this one does not.
   const reduceMotion = useReducedMotion();
-  /** Entering animation for one step of the timeline. */
-  const step = (delay: number) =>
-    reduceMotion
-      ? FadeInDown.duration(1).delay(0)
-      : FadeInDown.duration(420).delay(delay).easing(Easing.out(Easing.cubic));
+
+  /** The CTA beat for whichever shape is rendering. */
+  const ctaAt = done ? T_CTA : T_RETRY_CTA;
+
+  // Two REAL pieces of state, not two animation configs.
+  //
+  // `settled` hands the whole tree back to plain Views once everything has
+  // landed. `ctaLive` is what makes the button tappable — and it is the fix for
+  // a defect that shipped on both shapes: the TouchableOpacity was laid out at
+  // full size from mount while only the pill and the label faded in, so for
+  // 2.5 s there was a full-width, 54 pt, INVISIBLE, live "Next level" in the
+  // footer. One stray tap committed the set and destroyed the reward reveal she
+  // had earned, irreversibly. Wrapping the footer in an Animated.View (the
+  // earlier fix on the retry shape) does NOT solve this: opacity 0 still takes
+  // touches in RN, and on Fabric the hit region sits at the animation's final
+  // position while the transform runs on the UI thread. Only `disabled` does.
+  const [settled, setSettled] = useState(reduceMotion);
+  const [ctaLive, setCtaLive] = useState(reduceMotion);
+  useEffect(() => {
+    if (reduceMotion) { setSettled(true); setCtaLive(true); return; }
+    setSettled(false); setCtaLive(false);
+    const a = setTimeout(() => setCtaLive(true), ctaAt);
+    // The last thing to arrive is the CTA on the retry shape and the footnote's
+    // sibling CTA on the reward shape — both at ctaAt.
+    const b = setTimeout(() => setSettled(true), ctaAt + RISE_MS + SETTLE_PAD);
+    return () => { clearTimeout(a); clearTimeout(b); };
+  }, [reduceMotion, ctaAt]);
 
   // Breathing CTA — the SAME gesture as the home screen's Start Prayer button
   // (PrayerScreen: 0.92 ↔ 1.0 at 1180 ms, with the vertical amplitude ~3/8 of
@@ -146,39 +216,53 @@ export default function QuizReviewView({
     return (
       <View style={styles.root}>
         <ScrollView contentContainerStyle={styles.retryContent} showsVerticalScrollIndicator={false}>
-          <Animated.View entering={step(T_HEADLINE)}>
+          <Rise at={T_HEADLINE} settled={settled}>
             {/* The glyphs read as "two slash five" and the per-question state is
                 colour-only, so the ring speaks the sentence the old score line
                 used to say. That is also what keeps quiz.review.score alive. */}
             <QuizSegmentRing segments={segments} label={t('quiz.review.score', { n: correct, total })} />
-          </Animated.View>
-          <Animated.Text entering={step(T_LABEL)} style={styles.retryHeadline} numberOfLines={2} maxFontSizeMultiplier={1.3}>
-            {t('quiz.review.almost')}
-          </Animated.Text>
-          <Animated.Text entering={step(T_BOARD)} style={styles.sub} maxFontSizeMultiplier={1.3}>
-            {t('quiz.review.retryHint', { n: wrong })}
-          </Animated.Text>
+          </Rise>
+          <Rise at={T_LABEL} settled={settled}>
+            <Text style={styles.retryHeadline} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+              {t('quiz.review.almost')}
+            </Text>
+          </Rise>
+          <Rise at={T_BOARD} settled={settled}>
+            <Text style={styles.sub} maxFontSizeMultiplier={1.3}>
+              {t('quiz.review.retryHint', { n: wrong })}
+            </Text>
+          </Rise>
 
-          <Animated.View entering={step(T_MYSTERY)} style={styles.retryMystery}>
+          <Rise at={T_MYSTERY} settled={settled} style={styles.retryMystery}>
             {/* completedSets, NOT +1: this set has not been earned yet. The bar
                 shows where she stands, static — there is no step to animate to
                 until she gets them right. */}
             <MysteryRewardBar completedSets={completedSets} />
-          </Animated.View>
+          </Rise>
         </ScrollView>
-        {/* The WHOLE footer enters as one. Animating only the pill and the label
-            left a fully tappable but invisible button sitting in the footer
-            until the CTA beat landed. */}
-        <Animated.View entering={step(T_RETRY_CTA)} style={styles.footer}>
+        {/* ctaWrap stays a PLAIN View so nothing Reanimated owns the touchable's
+            box; the arrival rides a decorative layer, and `disabled` — not
+            opacity — is what keeps it untappable until it is visible. */}
+        <View style={styles.footer}>
           <View style={styles.ctaWrap}>
-            <View pointerEvents="none" style={styles.ctaPulseBg} />
-            <TouchableOpacity style={styles.ctaHit} activeOpacity={0.85} onPress={onRetry} accessibilityRole="button">
-              <Text style={styles.retryCtaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
-                {t('quiz.action.retry')}
-              </Text>
+            <Rise at={T_RETRY_CTA} settled={settled} style={styles.ctaPulseBg} />
+            <TouchableOpacity
+              style={styles.ctaHit}
+              activeOpacity={0.85}
+              onPress={onRetry}
+              disabled={!ctaLive}
+              accessibilityRole="button"
+              accessibilityElementsHidden={!ctaLive}
+              importantForAccessibility={ctaLive ? 'yes' : 'no-hide-descendants'}
+            >
+              <Rise at={T_RETRY_CTA} settled={settled}>
+                <Text style={styles.retryCtaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+                  {t('quiz.action.retry')}
+                </Text>
+              </Rise>
             </TouchableOpacity>
           </View>
-        </Animated.View>
+        </View>
       </View>
     );
   }
@@ -186,18 +270,22 @@ export default function QuizReviewView({
   return (
     <View style={styles.root}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Animated.Text entering={step(T_HEADLINE)} style={styles.headline} numberOfLines={2} maxFontSizeMultiplier={1.3}>
-          {firstPassPerfect ? t('quiz.review.perfect') : t('quiz.review.done')}
-        </Animated.Text>
+        <Rise at={T_HEADLINE} settled={settled}>
+          <Text style={styles.headline} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+            {firstPassPerfect ? t('quiz.review.perfect') : t('quiz.review.done')}
+          </Text>
+        </Rise>
 
-        <Animated.Text entering={step(T_LABEL)} style={styles.rewardLabel} maxFontSizeMultiplier={1.3}>
-          {view.outOfArt ? t('quiz.reward.allArt') : t('quiz.reward.tile')}
-        </Animated.Text>
+        <Rise at={T_LABEL} settled={settled}>
+          <Text style={styles.rewardLabel} maxFontSizeMultiplier={1.3}>
+            {view.outOfArt ? t('quiz.reward.allArt') : t('quiz.reward.tile')}
+          </Text>
+        </Rise>
 
         {/* showCaption: three reward moments in four were an unnamed quarter
             of an unnamed picture. She is collecting a Caravaggio; the least
             the screen can do is say so while she earns it. */}
-        <Animated.View entering={step(T_BOARD)}>
+        <Rise at={T_BOARD} settled={settled}>
           <PuzzleBoard
             paintingIndex={view.paintingIndex}
             tilesUnlocked={view.tilesUnlocked}
@@ -207,9 +295,9 @@ export default function QuizReviewView({
             revealNewTile={!reduceMotion}
             revealDelayMs={T_TILE}
           />
-        </Animated.View>
+        </Rise>
 
-        <Animated.View entering={step(T_MYSTERY)} style={styles.mystery}>
+        <Rise at={T_MYSTERY} settled={settled} style={styles.mystery}>
           {earnsCard ? (
             <View style={styles.unlocked}>
               <MaterialCommunityIcons name="gift-outline" size={19} color={ROSE} />
@@ -224,7 +312,7 @@ export default function QuizReviewView({
               fillDelayMs={T_FILL}
             />
           )}
-        </Animated.View>
+        </Rise>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -234,32 +322,43 @@ export default function QuizReviewView({
             and a 0.92 scaleX would shrink the target ~8 % mid-breath. */}
         {/* ctaWrap stays a PLAIN View: PrayerScreen's note explains that a
             Reanimated-owned wrapper can freeze the native hit region at its
-            attach-time position, and a FadeInDown translate would do exactly
-            that for its 420 ms. The entrance rides the decorative fill and the
-            label instead, so nothing animates the touchable's own box. */}
+            attach-time position. The arrival rides the decorative fill and the
+            label; `disabled` is what gates the touch. */}
         <View style={styles.ctaWrap}>
-          <Animated.View entering={step(T_CTA)} pointerEvents="none" style={[styles.ctaPulseBg, pulseStyle]} />
+          {/* Two layers on purpose: Rise owns the ARRIVAL (opacity + lift) and
+              hands back at settle, the inner Animated.View owns the BREATH,
+              which has to keep running long after everything has settled. */}
+          <Rise at={T_CTA} settled={settled} style={styles.ctaPulseLayer}>
+            <Animated.View pointerEvents="none" style={[styles.ctaPulseBg, pulseStyle]} />
+          </Rise>
           <TouchableOpacity
             style={styles.ctaHit}
             activeOpacity={0.85}
             onPress={onNextLevel}
+            disabled={!ctaLive}
             accessibilityRole="button"
+            accessibilityElementsHidden={!ctaLive}
+            importantForAccessibility={ctaLive ? 'yes' : 'no-hide-descendants'}
           >
-            <Animated.Text entering={step(T_CTA)} style={styles.ctaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
-              {/* "Next level" would be a lie on the set that ends the day or the
-                  bank — those commit the same way but land on the capped/finished
-                  view, so the button says Continue there. */}
-              {lastOfDay || lastEver ? t('quiz.action.continue') : t('quiz.action.nextLevel')}
-            </Animated.Text>
+            <Rise at={T_CTA} settled={settled}>
+              <Text style={styles.ctaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+                {/* "Next level" would be a lie on the set that ends the day or the
+                    bank — those commit the same way but land on the capped/finished
+                    view, so the button says Continue there. */}
+                {lastOfDay || lastEver ? t('quiz.action.continue') : t('quiz.action.nextLevel')}
+              </Text>
+            </Rise>
           </TouchableOpacity>
         </View>
-        <Animated.Text entering={step(T_FOOTNOTE)} style={styles.lastOfDay} numberOfLines={2} maxFontSizeMultiplier={1.3}>
-          {lastEver
-            ? t('quiz.done.title')
-            : lastOfDay
-              ? t('quiz.daily.lastOfDay')
-              : t('quiz.daily.remaining', { n: setsLeftAfter, total: DAILY_SET_LIMIT })}
-        </Animated.Text>
+        <Rise at={T_FOOTNOTE} settled={settled}>
+          <Text style={styles.lastOfDay} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+            {lastEver
+              ? t('quiz.done.title')
+              : lastOfDay
+                ? t('quiz.daily.lastOfDay')
+                : t('quiz.daily.remaining', { n: setsLeftAfter, total: DAILY_SET_LIMIT })}
+          </Text>
+        </Rise>
       </View>
     </View>
   );
@@ -299,6 +398,9 @@ const styles = StyleSheet.create({
   ctaWrap: {
     height: 54, alignSelf: 'stretch', justifyContent: 'center',
   },
+  // Positioning only — Rise puts the arrival on this, the pill inside carries
+  // the fill so the breath survives the handback to a plain View.
+  ctaPulseLayer: { ...StyleSheet.absoluteFillObject },
   ctaPulseBg: { ...StyleSheet.absoluteFillObject, borderRadius: BTN_RADIUS, backgroundColor: ROSE },
   ctaHit: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   // Kept separate from ctaText even though both buttons now pulse: only the

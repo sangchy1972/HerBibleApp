@@ -4,7 +4,7 @@
 import {
   initialSession, pickOption, advance, startRetryRound, finishSession,
   currentPosition, wrongPositions, isTried, sessionSegments, sessionSummary,
-  parseSession, sessionAlignsWith, type QuizSessionV1,
+  parseSession, sessionAlignsWith, triedFlags, type QuizSessionV1,
 } from '../src/state/quizSession';
 
 const QIDS = [10, 20, 30, 40, 50];
@@ -295,5 +295,64 @@ describe('start-and-answer in one step (home card)', () => {
     const s = pickOption(initialSession(3, QIDS, 1, 1000), 1, false);
     expect(isTried(s, 0, 1)).toBe(true);
     expect(sessionSegments(s)[0]).toBe('wrong');
+  });
+});
+
+
+// ── triedFlags: the lock-out invariant ────────────────────────────────────────
+//
+// `tried` grows monotonically and nothing bounds it against the option count.
+// If every option ends up greyed the set can never be finished and, because the
+// session is persisted, it comes back identical on every relaunch — the whole
+// feature bricked. These pin the guard, not the happy path.
+describe('triedFlags', () => {
+  it('greys exactly the options already tried, positionally', () => {
+    let s = fresh();
+    s = advance(pickOption(s, 2, false));          // q0: tried 2
+    for (let i = 0; i < 4; i++) s = advance(pickOption(s, 0, true));
+    s = startRetryRound(s);
+    expect(triedFlags(s, 0, 4)).toEqual([false, false, true, false]);
+    // A question she never got wrong greys nothing.
+    expect(triedFlags(s, 1, 4)).toEqual([false, false, false, false]);
+  });
+
+  it('NEVER returns all-true, even when every option has been tried', () => {
+    // Only reachable when the correct option is itself in `tried` — which is
+    // what a bank re-cut that moves an answerIndex under a live session does.
+    // Forced directly here because content currently prevents it, and content
+    // is not a guarantee.
+    const s = fresh();
+    const rigged: QuizSessionV1 = {
+      ...s,
+      round: 1,
+      phase: 'answering',
+      queue: [0],
+      answers: s.answers.map((a, i) => (i === 0 ? { ...a, tried: [0, 1, 2, 3] } : a)),
+    };
+    const flags = triedFlags(rigged, 0, 4);
+    expect(flags).toEqual([false, false, false, false]);
+    expect(flags.some(f => !f)).toBe(true);        // at least one is tappable
+  });
+
+  it('drops ALL flags rather than the last one, since we cannot tell which is bogus', () => {
+    const s = fresh();
+    const rigged: QuizSessionV1 = {
+      ...s,
+      answers: s.answers.map((a, i) => (i === 0 ? { ...a, tried: [0, 1] } : a)),
+    };
+    expect(triedFlags(rigged, 0, 2)).toEqual([false, false]);
+  });
+
+  it('is safe on a null session and on a zero option count', () => {
+    expect(triedFlags(null, 0, 4)).toEqual([false, false, false, false]);
+    expect(triedFlags(fresh(), 0, 0)).toEqual([]);
+  });
+
+  it('two-option questions still leave one tappable after a miss', () => {
+    let s = fresh();
+    s = advance(pickOption(s, 1, false));
+    for (let i = 0; i < 4; i++) s = advance(pickOption(s, 0, true));
+    s = startRetryRound(s);
+    expect(triedFlags(s, 0, 2)).toEqual([false, true]);
   });
 });

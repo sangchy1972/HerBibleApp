@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, BackHandler } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, BackHandler, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { BG, TXT, TXTSUB, FONTS, ROSE, ROSE_WASH, BTN_RADIUS } from '../constants/theme';
 import { useT } from '../i18n/useT';
 import { useQuiz } from '../state/QuizContext';
-import { currentPosition, isTried, sessionSummary } from '../state/quizSession';
+import { currentPosition, triedFlags, sessionSummary } from '../state/quizSession';
 import { levelFor, TILES_PER_PAINTING } from '../state/quizProgress';
 import { SET_SIZE } from '../services/quizSets';
 import { QUIZ_ART_COUNT } from '../constants/quizArt';
@@ -30,7 +30,7 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   const t = useT();
   const insets = useSafeAreaInsets();
   const {
-    ready, bank, bankStatus, session, questions, currentQuestion, segments, progress,
+    ready, bank, bankStatus, retryBank, session, questions, currentQuestion, segments, progress,
     open, pick, next, retry, finish, pendingDraw, daily, lifecycle,
   } = useQuiz();
 
@@ -56,9 +56,21 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   }, [pendingDraw]);
   // Two taps in one frame dispatch two GO_BACKs; the second pops the parent and
   // she lands two screens away from where she meant to be.
+  const retryAdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (retryAdTimer.current) clearTimeout(retryAdTimer.current); }, []);
   const navLock = useRef(false);
+  // Reset when this route stops being focused. The lock is there to swallow a
+  // SECOND tap in the same frame, not to be a one-way latch for the life of the
+  // screen — and it was the latter: goHome() also fires from the
+  // bank-unavailable effect with no user action at all, so the lock could be
+  // spent before she ever touched anything.
+  useEffect(() => navigation.addListener('blur', () => { navLock.current = false; }), [navigation]);
   const goHome = () => {
     if (navLock.current) return;
+    // A goBack() with nowhere to go is a silent no-op that still burns the lock,
+    // and the hardware-back handler below swallows the event — X and back both
+    // dead, forever. Android can restore straight onto this route.
+    if (!navigation.canGoBack()) return;
     navLock.current = true;
     navigation.goBack();
   };
@@ -110,6 +122,9 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   // Android hardware back = the close button, not a silent no-op.
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      // Hand the event back to the OS when there is nowhere to go, rather than
+      // swallowing it and leaving her on a screen with no way out.
+      if (!navigation.canGoBack()) return false;
       goHome();
       return true;
     });
@@ -124,13 +139,16 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   // ruled out in an earlier round stays greyed even after she picks a new one.
   const optionStates = useMemo<OptionState[]>(() => {
     if (!currentQuestion) return [];
+    // triedFlags, not isTried per option: it carries the invariant that the
+    // options can never ALL be greyed, which is a permanent lock-out.
+    const tried = pos != null ? triedFlags(session, pos, currentQuestion.options.length) : [];
     return currentQuestion.options.map((_, i) => {
       if (locked && answer) {
         if (answer.picked === i) return answer.correct ? 'correct' : 'wrong';
         // The right answer is NOT surfaced after a miss (per user): tinting it
         // green handed her the answer before the retry round could ask again.
       }
-      if (pos != null && isTried(session, pos, i)) return 'tried';
+      if (tried[i]) return 'tried';
       return 'idle';
     });
   }, [currentQuestion, locked, answer, session, pos]);
@@ -139,12 +157,20 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   const roundLength = session ? session.queue.length : 0;
   const step = session ? session.cursor + 1 : 0;
 
-  // Leave only when the bank is genuinely UNAVAILABLE — never merely because it
-  // is reloading. Keying this on `!bank` used to eject the user mid-question
-  // the instant she changed app language, since that re-triggers the fetch.
+  // No bank yet. Two distinct screens, because they are two distinct facts, and
+  // collapsing them is what produced a HEADER OVER NOTHING for up to the full
+  // 15 s fetch timeout — reachable on a cold start and on Android's restore of
+  // a saved nav state onto this route.
+  const bankLoading = ready && !bank && bankStatus === 'loading';
+  const bankFailed = ready && !bank && bankStatus === 'unavailable';
+  // Bounce her home when there IS a home to bounce to; otherwise stay and show
+  // the retry view. The old unconditional goHome() burned navLock on a
+  // goBack() that could be a no-op, leaving X and hardware back both dead on a
+  // blank page.
   useEffect(() => {
-    if (ready && bankStatus === 'unavailable' && !bank) goHome();
-  }, [ready, bankStatus, bank, navigation]);
+    if (bankFailed && navigation.canGoBack()) goHome();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bankFailed, navigation]);
 
   const body = () => {
     if (!session) return null;
@@ -203,7 +229,16 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
             // second tap on the creative. At scale a pattern of accidental
             // clicks is what gets an AdMob account flagged for invalid traffic —
             // it costs revenue rather than protecting the user from it.
-            setTimeout(() => maybeShowInterstitial('quiz_retry'), 400);
+            // Held so unmount can cancel it. Without that, tapping "Try those
+            // again" and then X (or Android back) inside 400 ms fired a
+            // full-screen interstitial OVER THE HOME SCREEN, with no preceding
+            // user action — maybeShowInterstitial only checks AppState and has
+            // no idea this screen is gone.
+            if (retryAdTimer.current) clearTimeout(retryAdTimer.current);
+            retryAdTimer.current = setTimeout(() => {
+              retryAdTimer.current = null;
+              maybeShowInterstitial('quiz_retry');
+            }, 400);
           }}
           onNextLevel={() => {
             // Commit and stay. The auto-open effect starts the next set (or the
@@ -285,7 +320,13 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
         </>
       ) : null}
 
-      {retiredOut ? (
+      {bankLoading ? (
+        <View style={styles.capRoot}>
+          <ActivityIndicator size="large" color={ROSE} />
+        </View>
+      ) : bankFailed ? (
+        <BankErrorView onRetry={retryBank} onClose={goHome} />
+      ) : retiredOut ? (
         <QuizDoneView
           onCollection={goCollection}
           onClose={goHome}
@@ -326,6 +367,41 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
           }}
         />
       ) : null}
+    </View>
+  );
+}
+
+/**
+ * The bank could not be fetched. Offline, or the CDN is unreachable.
+ *
+ * Exists because "no bank" used to render as an empty page under a header, with
+ * an effect quietly trying to navigate away from it. A retry button is the
+ * point: without one the only other trigger is the foreground listener, i.e.
+ * she has to background the app and come back and hope.
+ */
+function BankErrorView({ onRetry, onClose }: { onRetry: () => void; onClose: () => void }) {
+  const t = useT();
+  return (
+    <View style={styles.capRoot}>
+      <View style={styles.capRing}>
+        <MaterialCommunityIcons name="cloud-off-outline" size={40} color={ROSE} />
+      </View>
+      <Text style={styles.capTitle} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+        {t('quiz.error.title')}
+      </Text>
+      <Text style={styles.capBody} maxFontSizeMultiplier={1.3}>
+        {t('quiz.error.desc')}
+      </Text>
+      <TouchableOpacity style={styles.capCta} activeOpacity={0.85} onPress={onRetry} accessibilityRole="button">
+        <Text style={styles.capCtaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+          {t('common.retry')}
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.capSecondary} activeOpacity={0.7} onPress={onClose} accessibilityRole="button">
+        <Text style={styles.capSecondaryText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+          {t('common.close')}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }

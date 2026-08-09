@@ -6,7 +6,7 @@ import { ROSE, TXT, TXTSUB, BTN_RADIUS, FONTS, P } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
 import { useQuiz } from '../../state/QuizContext';
 import { levelFor } from '../../state/quizProgress';
-import { currentPosition, isTried } from '../../state/quizSession';
+import { currentPosition, triedFlags } from '../../state/quizSession';
 import { SET_SIZE } from '../../services/quizSets';
 import QuizSegmentBar from '../quiz/QuizSegmentBar';
 import QuizOptionButton, { type OptionState } from '../quiz/QuizOptionButton';
@@ -64,13 +64,16 @@ export default function QuizChallengeCard({
   // everything, so an option ruled out in an earlier round stays greyed.
   const optionStates = useMemo<OptionState[]>(() => {
     if (!question) return [];
+    // Shared with the full screen via triedFlags so the "never grey them all"
+    // invariant cannot hold on one surface and not the other.
+    const tried = triedFlags(session, questionPos, question.options.length);
     return question.options.map((_, i) => {
       if (locked && answer) {
         if (answer.picked === i) return answer.correct ? 'correct' : 'wrong';
         // The right answer is NOT surfaced after a miss (per user): tinting it
         // green handed her the answer before the retry round could ask again.
       }
-      if (isTried(session, questionPos, i)) return 'tried';
+      if (tried[i]) return 'tried';
       return 'idle';
     });
   }, [question, locked, answer, session, questionPos]);
@@ -195,14 +198,22 @@ export default function QuizChallengeCard({
                 key={i}
                 label={label}
                 state={optionStates[i] ?? 'idle'}
-                disabled={!!locked}
-                // ANY tap goes FULL SCREEN (per user 2026-08-09). startAndPick
-                // records the answer in the same update that starts the set —
-                // open() then pick() would answer into a session that does not
-                // exist yet and the tap would be swallowed — and then we hand
-                // off, so the reveal, the verdict and the rest of the set all
-                // happen on the full-screen quiz instead of half-playing here.
-                onPress={() => { startAndPick(i); onPress(); }}
+                disabled={false}
+                // NEVER disabled, not even while `locked`.
+                //
+                // `locked` is the 2 s answer reveal, and it is left ONLY by
+                // useAutoAdvance's timer — which lives on QuizQuestionView, i.e.
+                // only on the full screen. Leaving the quiz inside that window
+                // (X, or Android back) stranded the session in `locked`, and the
+                // session is persisted on every answer, so the card came back
+                // showing that question with all four options dead. Every tap a
+                // no-op, on every relaunch, until she happened to hit the header
+                // instead. That is the whole feature bricked by a 2 s window.
+                //
+                // Handing off is the correct behaviour anyway: the full screen
+                // resumes the session and its auto-advance immediately unsticks
+                // the reveal.
+                onPress={() => { if (!locked) startAndPick(i); onPress(); }}
               />
             ))}
           </QuizOptionsEntrance>

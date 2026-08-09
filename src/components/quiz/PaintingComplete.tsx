@@ -3,7 +3,7 @@ import {
   View, Text, TouchableOpacity, StyleSheet, BackHandler, useWindowDimensions,
 } from 'react-native';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, withDelay, withRepeat, Easing, interpolate,
+  useSharedValue, useAnimatedStyle, withTiming, withDelay, withRepeat, Easing, interpolate, useReducedMotion,
 } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -60,11 +60,17 @@ export default function PaintingComplete({
   const rise = useSharedValue(0);
   const halo = useSharedValue(0);
 
+  // The halo was the one UNGATED infinite withRepeat left in the quiz: it ran
+  // forever on a celebration that waits for a tap, on a screen that has no
+  // other reason to be moving. Reanimated's synchronous hook, not
+  // AccessibilityInfo's promise, which resolves after the first frame.
+  const reduceMotion = useReducedMotion();
   useEffect(() => {
+    if (reduceMotion) { scrim.value = 0.88; rise.value = 1; halo.value = 0; return; }
     scrim.value = withTiming(0.88, { duration: 520, easing: Easing.out(Easing.quad) });
     rise.value = withDelay(260, withTiming(1, { duration: 620, easing: Easing.out(Easing.cubic) }));
     halo.value = withDelay(700, withRepeat(withTiming(1, { duration: 2200, easing: Easing.inOut(Easing.quad) }), -1, true));
-  }, [scrim, rise, halo]);
+  }, [reduceMotion, scrim, rise, halo]);
 
   const scrimStyle = useAnimatedStyle(() => ({ opacity: scrim.value }));
   const riseStyle = useAnimatedStyle(() => ({

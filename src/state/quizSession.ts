@@ -159,6 +159,40 @@ export function isTried(s: QuizSessionV1 | null, position: number, optionIndex: 
 }
 
 /**
+ * Positional greyed-out flags for one question's options.
+ *
+ * ONE INVARIANT, and it is the reason this exists rather than each screen
+ * mapping isTried itself: **never returns all-true**.
+ *
+ * `tried` grows monotonically and nothing bounds it against the number of
+ * options. If the CORRECT option ever lands in it, a retry round can grey every
+ * option in turn until none is tappable — and that is not a cosmetic dead end,
+ * it is the whole feature bricked permanently: the phase stays `answering`,
+ * `advance` requires `locked`, `locked` requires a pick, there is no skip
+ * button, the ladder never moves so the daily cap never fills, and the session
+ * is persisted so it comes back identical after every relaunch. The home card
+ * would sit on that same dead question forever.
+ *
+ * The correct option gets into `tried` the moment a bank re-cut moves an
+ * `answerIndex` under a live session — the session survives, because
+ * sessionAlignsWith compares qids only. That has already happened once in this
+ * project's history (see the v2 note in constants/bibleQuiz.ts); the fix then
+ * was to delete the two questions, which left no guard behind. Today all seven
+ * language files agree on every answerIndex, so this is content luck. This is
+ * the guard that does not depend on content.
+ *
+ * Dropping ALL the flags rather than just the last one is deliberate: we cannot
+ * tell which entry is the bogus one, and a greyed option that is actually right
+ * is worse than a question that simply forgets what she already ruled out.
+ */
+export function triedFlags(
+  s: QuizSessionV1 | null, position: number, optionCount: number,
+): boolean[] {
+  const flags = Array.from({ length: Math.max(0, optionCount) }, (_, i) => isTried(s, position, i));
+  return flags.length > 0 && flags.every(Boolean) ? flags.map(() => false) : flags;
+}
+
+/**
  * The 5 segments, POSITIONAL.
  *
  * Deliberately NOT packed left, unlike packedRhythmFill in state/dailyRhythm.ts.

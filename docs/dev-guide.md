@@ -594,9 +594,21 @@ onboarding's paywall step in `OnboardingFlow`.
 `SetReminderTimeContext.tsx` + `SetReminderTimeHost.tsx`, `WidgetInstallHost.tsx`,
 `widgets/*`.
 
-- Permission is asked behind an **in-app rationale**, never cold. We cannot query
-  "would the OS grant this?" — only whether it already is granted, which is what
-  `permissionGranted` means.
+- The notification ask is **aggressive on purpose** (owner 2026-08-09, after showing a
+  competitor's flow — the polite version was "太 mild"). `SetReminderTimeHost` fires the
+  **real OS dialog with nothing of ours on screen first**; only a refusal gets an in-app
+  card, and that card leads to `PermissionCoachOverlay` → `openNotificationSettings()`.
+  We cannot query "would the OS grant this?" — only whether it already is granted, which
+  is what `permissionGranted` means.
+- **We do not draw over the Settings app**, however good the competitor's version looks.
+  That needs `SYSTEM_ALERT_WINDOW`, which is in `blockedPermissions` on purpose: our
+  reminders are notifications, not floating windows, so it is a dangerous permission we
+  would have to justify with no feature behind it. From Android 12 the Settings UI also
+  sets `SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS` and drops touches from untrusted
+  overlays, so such a card is inert there anyway. `PermissionCoachOverlay` lands
+  immediately **before** the jump instead, and `openNotificationSettings()` deep-links to
+  the app's notification page whose first row IS the master switch — no long list to hunt
+  through, so nothing needs highlighting.
 - Reminder re-ask: **daily** (see §4), not an escalating gap — but it stops for good
   once she picks a time. `SetReminderTimeContext.markConfigured()` is what stops it;
   it shipped unwired for months, so every prayer re-offered a time she had already

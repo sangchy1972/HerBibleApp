@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, BackHandler } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, BackHandler, AppState } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import TimePickerSheet from './TimePickerSheet';
+import PermissionCoachOverlay, { openNotificationSettings } from './PermissionCoachOverlay';
 import { useNotifications } from '../state/NotificationsContext';
 import { useOnboarding } from '../state/OnboardingContext';
 import { useSetReminderTime } from '../state/SetReminderTimeContext';
@@ -11,10 +12,36 @@ import { NUDGE_PRIORITY } from '../state/nudgePriority';
 import { useT } from '../i18n/useT';
 import { ROSE, TXT, TXTSUB, FONTS } from '../constants/theme';
 
-// Proactive "set your prayer reminders" nudge — a new entry point (beyond
-// onboarding) for users who finished onboarding WITHOUT enabling reminders.
-// Gated on `!permissionGranted` so it disappears the moment reminders are on.
-// Routed through the nudge coordinator (priority 30) so it never stacks.
+// The daily reminder ask, for users who finished onboarding WITHOUT reminders.
+// Coordinator-managed (priority 30) so it never stacks.
+//
+// AGGRESSIVE BY DESIGN (owner 2026-08-09, after showing a competitor's flow).
+// It used to open with a polite in-app card and only reach the OS dialog if she
+// tapped through — "太 mild". It now goes straight for the permission and
+// escalates on refusal, in four steps:
+//
+//   osAsk  renders NOTHING and fires the real OS dialog immediately. Granted →
+//          both reminders are on before she has tapped anything of ours, and we
+//          go on to let her choose the times.
+//   push   she declined — or Android 13+ has spent its two asks, so no dialog
+//          could even appear. Our own card says the reminder is OFF and offers
+//          one way forward.
+//   coach  PermissionCoachOverlay: our icon, our name, the switch she is about
+//          to hunt for, and a finger flipping it — THEN the hand-off to the
+//          notification settings page (not the app-info root).
+//   morning/evening  the time pickers, unchanged.
+//
+// What we deliberately do NOT copy from the competitor: their card is drawn ON
+// TOP of the Settings app, which needs SYSTEM_ALERT_WINDOW — a permission this
+// app has in `blockedPermissions` on purpose, does not need (our reminders are
+// notifications, not floating windows), and would have to justify in review.
+// From Android 12 the Settings UI also sets
+// SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS and drops touches from untrusted
+// overlays, so that card would be inert there anyway. Ours lands immediately
+// BEFORE the jump instead, and we deep-link to the app's notification page
+// whose FIRST row is the master switch — so there is no long list to hunt
+// through and nothing to highlight.
+export type ReminderAskStep = 'osAsk' | 'push' | 'coach' | 'morning' | 'evening';
 export default function SetReminderTimeHost() {
   const t = useT();
   const notif = useNotifications();
@@ -67,8 +94,51 @@ export default function SetReminderTimeHost() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
-  const [step, setStep] = useState<'rationale' | 'morning' | 'evening'>('rationale');
+  const [step, setStep] = useState<ReminderAskStep>('osAsk');
   const [mTime, setMTime] = useState({ hour: 8, minute: 0 });
+
+  // STEP 1 — the OS dialog, fired the moment the slot is granted, with nothing
+  // of ours on screen first. requestPermissionAndEnableDefaults also turns both
+  // daily reminders on when she allows, so "Allow" alone produces reminders
+  // rather than a granted permission with nothing scheduled.
+  //
+  // `dismissRef` rather than `dismiss`: hooks must sit above the early return,
+  // and the render that sets `active` assigns the real dismiss before any effect
+  // of that render runs (same pattern as the BackHandler above).
+  const askedForRef = useRef(false);
+  useEffect(() => {
+    if (!active) { askedForRef.current = false; return; }
+    if (step !== 'osAsk' || askedForRef.current) return;
+    askedForRef.current = true;
+    let cancelled = false;
+    (async () => {
+      let granted = false;
+      try { granted = await notif.requestPermissionAndEnableDefaults(); } catch { granted = false; }
+      if (cancelled) return;
+      // Granted: reminders are already live at the defaults, so the flag burns
+      // here too — she must never be asked to "set a reminder" again, whatever
+      // she does with the time pickers that follow.
+      if (granted) { srt.markConfigured(); setStep('morning'); } else setStep('push');
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, step]);
+
+  // Back from Settings. Only while the coach card is up — that is the one step
+  // that sends her out of the app — and only adopting defaults when permission
+  // was OFF before the trip (syncPermissionFromSystem's own contract), so this
+  // can never silently re-enable reminders she turned off herself.
+  useEffect(() => {
+    if (!active || step !== 'coach') return;
+    const sub = AppState.addEventListener('change', st => {
+      if (st !== 'active') return;
+      notif.syncPermissionFromSystem(true).then(granted => {
+        if (granted) { srt.markConfigured(); dismissRef.current(); }
+      }).catch(() => {});
+    });
+    return () => sub.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, step]);
 
   // Unmount MUST release. ReminderInterstitialContext re-derives its day/night
   // slot on every foreground, so a notifications-off user returning after 18:00
@@ -85,7 +155,7 @@ export default function SetReminderTimeHost() {
   const dismiss = () => {
     coord.notifyDismissed('setReminderTime');
     coord.releaseSlot('setReminderTime');
-    setStep('rationale');
+    setStep('osAsk');
   };
   dismissRef.current = dismiss;
 
@@ -94,6 +164,23 @@ export default function SetReminderTimeHost() {
     srt.markConfigured();
     dismiss();
   };
+
+  if (step === 'osAsk') return null;
+
+  if (step === 'coach') {
+    return (
+      <PermissionCoachOverlay
+        visible
+        title={t('permCoach.notif.title')}
+        switchLabel={t('permCoach.notif.switch')}
+        onOpenSettings={openNotificationSettings}
+        // Dismissing the card is the same refusal as Cancel on the push card —
+        // she has now said no twice, and the daily cadence brings this back
+        // tomorrow. Nagging inside one visit is what the cadence exists to avoid.
+        onDismiss={dismiss}
+      />
+    );
+  }
 
   if (step === 'morning') {
     return (
@@ -125,11 +212,13 @@ export default function SetReminderTimeHost() {
     <View style={styles.overlay} pointerEvents="box-none">
       <TouchableOpacity style={[StyleSheet.absoluteFill, styles.backdrop]} activeOpacity={1} onPress={dismiss} />
       <Animated.View entering={FadeIn.duration(200)} style={styles.card}>
-        <View style={styles.icon}><Feather name="bell" size={26} color={ROSE} /></View>
-        <Text style={styles.title}>{t('nudge.setReminder.title')}</Text>
-        <Text style={styles.body}>{t('nudge.setReminder.body')}</Text>
-        <TouchableOpacity style={styles.cta} activeOpacity={0.9} onPress={() => setStep('morning')}>
-          <Text style={styles.ctaText}>{t('nudge.setReminder.cta')}</Text>
+        {/* bell-off, not bell: this card exists because the reminder is OFF, and
+            the icon should say so before the title does. */}
+        <View style={styles.icon}><Feather name="bell-off" size={26} color={ROSE} /></View>
+        <Text style={styles.title}>{t('nudge.notifOff.title')}</Text>
+        <Text style={styles.body}>{t('nudge.notifOff.body')}</Text>
+        <TouchableOpacity style={styles.cta} activeOpacity={0.9} onPress={() => setStep('coach')}>
+          <Text style={styles.ctaText}>{t('nudge.notifOff.cta')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.later} onPress={dismiss} hitSlop={8}>
           <Text style={styles.laterText}>{t('nudge.setReminder.later')}</Text>

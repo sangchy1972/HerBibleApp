@@ -410,6 +410,12 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'nudge.setReminder.body':        { en: 'Pick a morning and evening time and we\'ll gently remind you to pray.', context: 'Body of the set-reminders popup.' },
   'nudge.setReminder.cta':         { en: 'Set times', context: 'Primary button — opens the time pickers.' },
   'nudge.setReminder.later':       { en: 'Maybe later', context: 'Dismiss button on the set-reminders popup.' },
+
+  // The escalation card, shown only after she declines the OS dialog (or Android
+  // has already spent its two asks). It names the CONSEQUENCE, not the permission.
+  'nudge.notifOff.title':          { en: 'Prayer reminder is off', context: 'Title of the card shown after the user declines the OS notification permission. States the consequence — her reminder will not arrive — rather than naming the permission.' },
+  'nudge.notifOff.body':           { en: "Notifications are off, so your daily prayer reminder can't reach you.", context: 'Body of that card. Plain cause and effect, no guilt.' },
+  'nudge.notifOff.cta':            { en: 'Turn on reminders', context: 'Primary button on that card. Leads to a coach card and then the phone notification settings. Says what she gets, not "open settings".' },
   'nudge.setReminder.morningTitle':{ en: 'Morning reminder', context: 'Title of the morning time picker in the set-reminders flow.' },
   'nudge.setReminder.eveningTitle':{ en: 'Evening reminder', context: 'Title of the evening time picker in the set-reminders flow.' },
   // Daily Rhythm bar (permanent home tracker: prayers / Gospel & Psalm / plan)

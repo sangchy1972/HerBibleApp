@@ -7,7 +7,7 @@ import Animated, {
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { ROSE, TXT, TXTSUB, BTN_RADIUS, FONTS, ROSE_WASH } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
-import QuizSegmentBar from './QuizSegmentBar';
+import QuizSegmentRing from './QuizSegmentRing';
 import PuzzleBoard from './PuzzleBoard';
 import MysteryRewardBar from './MysteryRewardBar';
 import { rewardPreview, MYSTERY_EVERY, TILES_PER_PAINTING } from '../../state/quizProgress';
@@ -48,6 +48,12 @@ const T_FILL     = T_MYSTERY + 260;   // ...then fills
 // long enough that she looks at the painting instead of straight past it.
 const T_CTA      = T_BOARD + 2000;
 const T_FOOTNOTE = T_CTA - 220;   // before the CTA: the button is the last thing to land
+// The retry shape has its own, much shorter CTA beat. T_CTA's 2 s exists to hold
+// her on the PAINTING; the retry screen has no painting, so reusing it would
+// leave "Try those again" unpainted for 2.5 s on the one screen she most wants
+// to leave — every retry round, and stacked on top of the interstitial's own
+// deliberate 400 ms. It lands just after the mystery bar instead.
+const T_RETRY_CTA = T_MYSTERY + 420;
 
 export default function QuizReviewView({
   segments, correct, total, wrong, firstPassPerfect, completedSets,
@@ -99,6 +105,11 @@ export default function QuizReviewView({
   // the horizontal so the pill squishes wider/narrower rather than puffing).
   // Copied deliberately rather than approximated: two CTAs that breathe at
   // almost-but-not-quite the same rate read as a bug in one of them.
+  //
+  // REWARD SHAPE ONLY. The retry CTA deliberately does not breathe: nothing was
+  // earned, so the button should not be asking for attention. (Removing that
+  // guard was scope creep in an earlier pass — it is not part of the ring/bar
+  // request and it reverts a deliberate tweak.)
   const pulse = useSharedValue(1);
   useEffect(() => {
     if (!done || reduceMotion) { pulse.value = 1; return; }
@@ -127,30 +138,47 @@ export default function QuizReviewView({
   const earnsCard = drawEarnedAt(completedSets + 1, MYSTERY_EVERY);
 
   if (!done) {
+    // Same staggered arrival as the reward shape, and the same mystery bar at
+    // the bottom. A missed set still moved her toward the card — the old screen
+    // said "3 left to get right" and then nothing, so a retry read as pure loss
+    // when it is actually a pause. The ring replaces the refresh icon AND the
+    // score line: it says both, in the place the eye already goes.
     return (
       <View style={styles.root}>
         <ScrollView contentContainerStyle={styles.retryContent} showsVerticalScrollIndicator={false}>
-          <View style={styles.ring}>
-            <MaterialCommunityIcons name="refresh" size={42} color={ROSE} />
-          </View>
-          <Text style={styles.headline} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+          <Animated.View entering={step(T_HEADLINE)}>
+            {/* The glyphs read as "two slash five" and the per-question state is
+                colour-only, so the ring speaks the sentence the old score line
+                used to say. That is also what keeps quiz.review.score alive. */}
+            <QuizSegmentRing segments={segments} label={t('quiz.review.score', { n: correct, total })} />
+          </Animated.View>
+          <Animated.Text entering={step(T_LABEL)} style={styles.retryHeadline} numberOfLines={2} maxFontSizeMultiplier={1.3}>
             {t('quiz.review.almost')}
-          </Text>
-          <Text style={styles.score} maxFontSizeMultiplier={1.3}>
-            {t('quiz.review.score', { n: correct, total })}
-          </Text>
-          <QuizSegmentBar segments={segments} height={8} style={styles.bar} />
-          <Text style={styles.sub} maxFontSizeMultiplier={1.3}>
+          </Animated.Text>
+          <Animated.Text entering={step(T_BOARD)} style={styles.sub} maxFontSizeMultiplier={1.3}>
             {t('quiz.review.retryHint', { n: wrong })}
-          </Text>
+          </Animated.Text>
+
+          <Animated.View entering={step(T_MYSTERY)} style={styles.retryMystery}>
+            {/* completedSets, NOT +1: this set has not been earned yet. The bar
+                shows where she stands, static — there is no step to animate to
+                until she gets them right. */}
+            <MysteryRewardBar completedSets={completedSets} />
+          </Animated.View>
         </ScrollView>
-        <View style={styles.footer}>
-          <TouchableOpacity style={styles.retryCta} activeOpacity={0.85} onPress={onRetry} accessibilityRole="button">
-            <Text style={styles.retryCtaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
-              {t('quiz.action.retry')}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {/* The WHOLE footer enters as one. Animating only the pill and the label
+            left a fully tappable but invisible button sitting in the footer
+            until the CTA beat landed. */}
+        <Animated.View entering={step(T_RETRY_CTA)} style={styles.footer}>
+          <View style={styles.ctaWrap}>
+            <View pointerEvents="none" style={styles.ctaPulseBg} />
+            <TouchableOpacity style={styles.ctaHit} activeOpacity={0.85} onPress={onRetry} accessibilityRole="button">
+              <Text style={styles.retryCtaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+                {t('quiz.action.retry')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
       </View>
     );
   }
@@ -243,22 +271,17 @@ const styles = StyleSheet.create({
   // the top of the screen is just two lines of text over the board (per user).
   content: { paddingHorizontal: 15, paddingTop: 6, paddingBottom: 24, alignItems: 'center' },
   retryContent: { paddingHorizontal: 24, paddingTop: 28, paddingBottom: 24, alignItems: 'center' },
-  // Tinted disc, no shadow — the app's badge treatment (retry shape only).
-  ring: {
-    width: 84, height: 84, borderRadius: 42,
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: ROSE_WASH,
-    marginBottom: 20,
+  // The retry headline sits UNDER the ring, so it needs its own top margin —
+  // the reward shape's headline is the first thing on screen and has none.
+  retryHeadline: {
+    fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 24,
+    color: TXT, textAlign: 'center', letterSpacing: 0.3, marginTop: 22,
   },
+  retryMystery: { marginTop: 40, width: '100%' },
   headline: {
     fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 24,
     color: TXT, textAlign: 'center', letterSpacing: 0.3,
   },
-  score: {
-    fontFamily: FONTS.merriweather, fontSize: 17.3,
-    color: TXTSUB, textAlign: 'center', marginTop: 10,
-  },
-  bar: { marginTop: 22 },
   rewardLabel: {
     fontFamily: FONTS.latoBold, fontSize: 14.9, color: TXTSUB,    // 13.5 → 14.9 (+10 % per user)
     letterSpacing: 0.5, textAlign: 'center', marginTop: 12, marginBottom: 14,
@@ -278,15 +301,9 @@ const styles = StyleSheet.create({
   },
   ctaPulseBg: { ...StyleSheet.absoluteFillObject, borderRadius: BTN_RADIUS, backgroundColor: ROSE },
   ctaHit: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  // The retry shape reuses the label but not the pulse: nothing was earned, so
-  // the button should not be asking for attention.
-  retryCta: {
-    height: 54, borderRadius: BTN_RADIUS, backgroundColor: ROSE,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  // Unchanged from before this pass. Only the reward screen's CTA was asked to
-  // match the home button; sharing one style would have silently restyled a
-  // screen nobody was reviewing.
+  // Kept separate from ctaText even though both buttons now pulse: only the
+  // reward CTA was asked to match the home button's type, and sharing one style
+  // would restyle this screen every time that one is tuned.
   retryCtaText: {
     fontFamily: FONTS.latoBold, fontSize: 16.5, color: '#FFFFFF', letterSpacing: 0.4,
   },

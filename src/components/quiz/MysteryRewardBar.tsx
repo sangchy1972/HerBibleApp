@@ -48,9 +48,12 @@ export default function MysteryRewardBar({
   const reduceMotion = useReducedMotion();
   const { current, remaining } = mysteryView(completedSets);
   const pct = Math.max(0, Math.min(1, current / MYSTERY_EVERY));
-  // Where the bar stood BEFORE this set. current is 1..MYSTERY_EVERY-1 here (a
-  // full bar is the earnsCard branch upstream), so the previous step is simply
-  // one less — and 0 on the first set of a cycle, which is the empty bar.
+  // Where the bar stood BEFORE this set. current is 0..MYSTERY_EVERY-1 (a full
+  // bar is the earnsCard branch upstream), so the previous step is one less.
+  // Zero IS reachable — the retry screen passes completedSets un-incremented, so
+  // a miss on the first set of a cycle asks for step -1. The clamp is what makes
+  // that an empty bar instead of a negative width, and it is load-bearing, not
+  // belt-and-braces.
   const prevPct = Math.max(0, Math.min(1, (current - 1) / MYSTERY_EVERY));
 
   // 0 → 1 drives the fill's width between prevPct and pct. Starting at 1 when

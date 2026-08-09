@@ -4,6 +4,12 @@ Standing guidance for working on **HerBibleApp** (Everland Apps). Read `README.m
 project map; this file is the durable "how we work" rulebook. It captures the owner's
 requirements — follow them by default without re-asking.
 
+**Before touching any subsystem, read the matching section of `docs/dev-guide.md`** —
+the module-by-module rulebook (UI style, prompt/nudge coordinator, ads, quiz, guides,
+prayer flow, paywall, notifications, content pipeline) plus the ledger of mistakes not to
+repeat. Keep it current: when a rule or a number changes, edit that file in the same
+commit.
+
 ## Communication
 
 - Reply in **Chinese** unless asked otherwise.

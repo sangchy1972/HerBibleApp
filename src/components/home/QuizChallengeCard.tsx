@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Feather from '@expo/vector-icons/Feather';
 import { ROSE, TXT, TXTSUB, BTN_RADIUS, FONTS, P } from '../../constants/theme';
@@ -153,22 +153,44 @@ export default function QuizChallengeCard({
   if (!question || inSummary || cappedOut) {
     return (
       <View style={styles.outer}>
-        <TouchableOpacity
-          style={styles.card}
-          activeOpacity={0.85}
+        {/* Pressable, NOT TouchableOpacity, and the button is its own target.
+            Owner report: "See results" did nothing — no navigation at all.
+            TouchableOpacity animates its press opacity through the LEGACY
+            Animated API, i.e. it is itself an Animated.View. Here that animated
+            view IS the whole card, and it sits inside TabSection's REANIMATED
+            view. Two animation owners nested around one big touch target is the
+            documented Android/Fabric hazard in useTabFocusEntrance's own header
+            comment: native hit regions stay pinned to the layout that existed
+            when the animation attached — and this card's layout changes size
+            drastically (tall question card → compact teaser) while she is away
+            in the full-screen quiz, so the region it re-attaches with is the
+            wrong one. It also explains why the same `onPress` works in the
+            answering branch below, where the touchable is only the small header
+            row rather than the entire card.
+            Pressable uses a plain View + Pressability, so it removes one owner
+            from that nesting; and the CTA below is now a real button, giving the
+            tap a second, independent path instead of relying on one big
+            surface. */}
+        <Pressable
+          style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
           onPress={onPress}
           accessibilityRole="button"
           accessibilityLabel={t('quiz.card.title')}
         >
           {header}
           {inSummary ? (
-            <View style={[styles.cta, styles.ctaSpaced]}>
+            <Pressable
+              onPress={onPress}
+              style={({ pressed }) => [styles.cta, styles.ctaSpaced, pressed && styles.cardPressed]}
+              accessibilityRole="button"
+              accessibilityLabel={t('quiz.action.seeResults')}
+            >
               <Text style={styles.ctaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
                 {t('quiz.action.seeResults')}
               </Text>
-            </View>
+            </Pressable>
           ) : null}
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   }
@@ -279,6 +301,8 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   ctaSpaced: { marginTop: 16 },
+  // Pressable has no built-in activeOpacity; this is TouchableOpacity's 0.85.
+  cardPressed: { opacity: 0.85 },
   ctaText: {
     fontFamily: FONTS.latoBold, fontSize: 16.5, color: '#FFFFFF', letterSpacing: 0.4,
   },

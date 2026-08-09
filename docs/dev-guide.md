@@ -600,15 +600,38 @@ onboarding's paywall step in `OnboardingFlow`.
   card, and that card leads to `PermissionCoachOverlay` → `openNotificationSettings()`.
   We cannot query "would the OS grant this?" — only whether it already is granted, which
   is what `permissionGranted` means.
-- **We do not draw over the Settings app**, however good the competitor's version looks.
-  That needs `SYSTEM_ALERT_WINDOW`, which is in `blockedPermissions` on purpose: our
-  reminders are notifications, not floating windows, so it is a dangerous permission we
-  would have to justify with no feature behind it. From Android 12 the Settings UI also
-  sets `SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS` and drops touches from untrusted
-  overlays, so such a card is inert there anyway. `PermissionCoachOverlay` lands
-  immediately **before** the jump instead, and `openNotificationSettings()` deep-links to
-  the app's notification page whose first row IS the master switch — no long list to hunt
-  through, so nothing needs highlighting.
+- **We DO draw over the Settings app now** — `modules/expo-settings-coach`, an Expo
+  module that adds a `TYPE_APPLICATION_OVERLAY` window with our icon, our name and the
+  switch label. This reverses what this section said until 2026-08-09 (owner asked for it
+  twice; the earlier text argued against it). What is worth keeping from that argument:
+  - It needs `SYSTEM_ALERT_WINDOW`, which is why that permission moved out of
+    `blockedPermissions` into `permissions`. **A permission must be in exactly one of
+    those two lists** — `withBlockedPermissions` runs first and strips matches out of
+    `permissions`, so leaving it in both silently drops it from the manifest.
+  - It is an **enhancement, never the path**. Without the permission the flow is the
+    in-app card + deep link, which works on every device and every OS version. The CTA
+    never diverts to asking for the overlay permission.
+  - **It may simply not appear.** From Android 12 an app can call
+    `Window#setHideOverlayWindows(true)`, and Settings does that on some permission
+    screens to block overlay tapjacking. Where it does, the OS hides our card. That is
+    not a bug to chase.
+  - The card is **NOT_FOCUSABLE and NOT_TOUCHABLE**: pure decoration. With only
+    NOT_FOCUSABLE, taps inside its rect were delivered to our window and dropped by
+    non-clickable views — a dead strip at the bottom of Settings, and the exact shape
+    the tapjacking mitigations exist to stop. Never add a tappable control to it.
+  - A window that outlives our Activity needs three ways down: the native 25 s timer,
+    `hide()` on our own foreground, and `hide()` on the host's **unmount** (the tab tree
+    really does get swapped out mid-session here). And never clear the view reference
+    before a removal that succeeded — a failed removal with no reference left is a
+    window nothing in the process can take down.
+  - `openNotificationSettings()` still deep-links to the app's notification page, whose
+    first row IS the master switch — so there is no long list to hunt through, which is
+    why we never needed the competitor's flashing-row trick (that highlight is Android's
+    own, from the package extra; no app can touch another app's UI).
+  - **Unresolved and the owner's call, not a code question:** whether Play treats
+    `SYSTEM_ALERT_WINDOW` as needing a declaration form. Nothing in this repo documents
+    it either way, and an audit could not verify it. Do not assert it in either
+    direction from memory.
 - Reminder re-ask: **daily** (see §4), not an escalating gap — but it stops for good
   once she picks a time. `SetReminderTimeContext.markConfigured()` is what stops it;
   it shipped unwired for months, so every prayer re-offered a time she had already

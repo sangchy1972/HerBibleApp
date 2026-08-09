@@ -19,12 +19,15 @@ const APP_ICON = require('../../assets/icon.png');
 // that fix that — it names the exact switch, and it SHOWS the gesture — and
 // only then opens the deepest settings screen the platform will accept.
 //
-// WHAT IT IS NOT. This renders INSIDE our app, over our own screen, before the
-// hand-off. It is not drawn over the Settings app: that needs SYSTEM_ALERT_WINDOW
-// (which is the very permission such a flow would be asking for), and from
-// Android 12 the Settings UI sets SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS
-// and drops touches from untrusted overlays anyway. So the card has to land
-// before the jump, not during it.
+// WHERE IT RENDERS. Inside our app, over our own screen, immediately BEFORE the
+// hand-off — and that is the path that works on every device and every OS
+// version, so it stays the primary one.
+//
+// Since 2026-08-09 there is ALSO a floating version drawn on top of the Settings
+// app itself (modules/expo-settings-coach), which needs SYSTEM_ALERT_WINDOW. It is
+// an enhancement layered on this card, not a replacement: from Android 12 the
+// Settings UI can call Window#setHideOverlayWindows(true) on permission screens
+// and the OS hides it, so this card must always be able to carry the job alone.
 //
 // The mock switch is deliberately NOT interactive. It animates, it does not
 // respond — a switch that looks live but changes nothing would read as broken,

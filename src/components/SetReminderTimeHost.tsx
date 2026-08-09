@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, BackHandler, AppState } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, BackHandler, AppState, Platform, Linking } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import TimePickerSheet from './TimePickerSheet';
@@ -184,6 +184,12 @@ export default function SetReminderTimeHost() {
   // meant to protect.
   const releaseOnUnmount = coord.releaseSlot;
   useEffect(() => () => releaseOnUnmount('setReminderTime'), [releaseOnUnmount]);
+  // The floating window lives OUTSIDE our React tree, so unmounting this host does
+  // not take it down. And unmounting is a real path here, not a hypothetical: this
+  // file's own header records that ReminderInterstitialContext swaps the whole tab
+  // tree out on a foreground. The AppState listener that hides it is torn down by
+  // that same unmount, so without this the card is left to its 25 s timer.
+  useEffect(() => () => hideSettingsCoach(), []);
 
   if (!active) return null;
 
@@ -226,8 +232,18 @@ export default function SetReminderTimeHost() {
         // Secondary, and secondary on purpose (see the note at the top of this
         // file): offered only when we do not already have it, never in place of
         // the CTA.
-        secondaryLabel={canFloatOverSettings() ? undefined : t('permCoach.float.enable')}
-        onSecondary={openOverlaySettings}
+        //
+        // `Platform.OS === 'android'` is the load-bearing half. Without it the
+        // line showed on iOS — where `canFloatOverSettings()` is false BY
+        // DEFINITION (there is no such permission) — offering "show me these
+        // steps on top of Settings" to every iPhone user and doing nothing at all
+        // when tapped. Same on any Android binary compiled before the native
+        // module existed.
+        secondaryLabel={Platform.OS === 'android' && !canFloatOverSettings()
+          ? t('permCoach.float.enable') : undefined}
+        // And a floor: openOverlaySettings returns false on OEMs with no per-app
+        // page, which would otherwise be a tap that does nothing.
+        onSecondary={() => { if (!openOverlaySettings()) Linking.openSettings().catch(() => {}); }}
         // Dismissing the card is the same refusal as Cancel on the push card —
         // she has now said no twice, and the daily cadence brings this back
         // tomorrow. Nagging inside one visit is what the cadence exists to avoid.

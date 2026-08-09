@@ -40,9 +40,15 @@ import expo.modules.kotlin.modules.ModuleDefinition
 //     tapjacking. Where it does, this card is hidden and there is nothing we can
 //     do about it. It still shows on the screens that don't set the flag, which
 //     is what the competitor's own screenshots show on One UI.
-//   • The card is deliberately NOT focusable (FLAG_NOT_FOCUSABLE), so it can
-//     never take keyboard focus or swallow input meant for Settings. It stays
-//     touchable, but only its own close button does anything.
+//   • The card is PURE DECORATION: NOT_FOCUSABLE so it can never take keyboard
+//     focus, and NOT_TOUCHABLE so every touch inside its rect passes straight
+//     through to Settings. Both matter. An earlier version had only
+//     NOT_FOCUSABLE, and since none of the views below is clickable, taps landing
+//     on the card were delivered to our window and silently dropped — a
+//     full-width dead strip at the bottom of the Settings screen for up to 25 s,
+//     which is also the exact shape Android's tapjacking mitigations exist to
+//     stop. There is no close button and there must not be one: it cannot be
+//     tapped, so the auto-hide and the JS hide() are the only ways it goes away.
 //
 // SELF-DESTRUCT. This window lives outside our Activity's lifecycle, so nothing
 // that normally tears our UI down applies to it. It gets a hard timeout AND an
@@ -52,9 +58,26 @@ class ExpoSettingsCoachModule : Module() {
   private var overlay: View? = null
   private val main = Handler(Looper.getMainLooper())
   private var autoHide: Runnable? = null
+  private var knobAnim: ObjectAnimator? = null
+
+  // The WindowManager we ADDED with, held strongly for as long as a window is up.
+  //
+  // Not a convenience. `appContext` and `reactContext` are both weak references
+  // (RuntimeContext holds a WeakReference<ReactApplicationContext>, and appContext
+  // itself throws once collected), so resolving the service again at REMOVE time
+  // can fail exactly when we most need it to work — during teardown, which is one
+  // of the paths that removes the window. A window we cannot remove has no
+  // reference and no timer left anywhere in the process, i.e. it sits over the
+  // user's phone until the process dies. It comes from the application context,
+  // so holding it costs no leak.
+  private var addedWith: WindowManager? = null
 
   private val wm: WindowManager?
-    get() = appContext.reactContext?.getSystemService(Context.WINDOW_SERVICE) as? WindowManager
+    get() = try {
+      appContext.reactContext?.getSystemService(Context.WINDOW_SERVICE) as? WindowManager
+    } catch (e: Throwable) {
+      null
+    }
 
   override fun definition() = ModuleDefinition {
     Name("ExpoSettingsCoach")
@@ -90,12 +113,25 @@ class ExpoSettingsCoachModule : Module() {
 
     // Show the card. Every string comes from JS so the copy stays translated by
     // the app's own i18n — this module owns no text.
+    // Returns whether we are ALLOWED to show, decided here on the JS thread.
+    //
+    // It used to declare a `var ok`, assign it inside the posted block and return
+    // it — which is always false, because a sync Function body runs on the JS
+    // thread and Handler.post always enqueues rather than running inline. A return
+    // value that is structurally always false is worse than none: the first
+    // `if (showSettingsCoach(...))` anyone writes silently takes the failure path.
+    // The permission is the only thing the caller can act on anyway.
     Function("show") { title: String, body: String, switchLabel: String, timeoutMs: Int ->
       val ctx = appContext.reactContext ?: return@Function false
-      var ok = false
+      val allowed = try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) Settings.canDrawOverlays(ctx) else true
+      } catch (e: Throwable) {
+        false
+      }
+      if (!allowed) return@Function false
+      // addView and Animator.start MUST be on the UI thread.
       main.post {
         try {
-          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(ctx)) return@post
           removeOverlay()
           val view = buildCard(ctx, title, body, switchLabel)
           val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -108,26 +144,35 @@ class ExpoSettingsCoachModule : Module() {
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             type,
-            // NOT_FOCUSABLE keeps Settings fully usable behind us; without
-            // LAYOUT_IN_SCREEN the card can be pushed around by the status bar.
+            // NOT_FOCUSABLE: never takes keyboard focus. NOT_TOUCHABLE: every
+            // touch inside our rect passes through to Settings, so the card
+            // cannot eat her taps (see the header). No LAYOUT_IN_SCREEN — with
+            // bottom gravity that lays the window out against the PHYSICAL screen
+            // edge, i.e. behind the navigation bar; the default respects the
+            // decorations, which is what a bottom-anchored card wants.
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-              WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+              WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
             android.graphics.PixelFormat.TRANSLUCENT,
           )
           lp.gravity = Gravity.BOTTOM
-          wm?.addView(view, lp)
+          val manager = wm ?: return@post
+          manager.addView(view, lp)
+          addedWith = manager
           overlay = view
           armAutoHide(timeoutMs)
-          ok = true
         } catch (e: Throwable) {
           overlay = null
+          addedWith = null
         }
       }
-      ok
+      true
     }
 
+    // Explicit Unit — Handler.post returns a Boolean, and letting that be the
+    // function's value would tell JS something meaningless.
     Function("hide") {
       main.post { removeOverlay() }
+      Unit
     }
 
     // The window outlives our Activity, so tearing the module down must take it
@@ -143,12 +188,29 @@ class ExpoSettingsCoachModule : Module() {
     main.postDelayed(r, ms)
   }
 
+  // Order matters. The view reference and the manager are cleared ONLY after a
+  // removal that did not throw — clearing first (which is what this did) means a
+  // failed removal leaves a window nobody holds a reference to and no armed timer:
+  // unremovable for the life of the process. On failure we keep both and leave the
+  // timer armed so the auto-hide gets another attempt.
   private fun removeOverlay() {
+    val v = overlay ?: run {
+      autoHide?.let { main.removeCallbacks(it) }
+      autoHide = null
+      return
+    }
+    val manager = addedWith ?: wm
+    try {
+      manager?.removeViewImmediate(v)
+    } catch (e: Throwable) {
+      return   // keep overlay + timer: something still has to take this window down
+    }
+    knobAnim?.cancel()
+    knobAnim = null
+    overlay = null
+    addedWith = null
     autoHide?.let { main.removeCallbacks(it) }
     autoHide = null
-    val v = overlay ?: return
-    overlay = null
-    try { wm?.removeViewImmediate(v) } catch (e: Throwable) { /* already gone */ }
   }
 
   private fun dp(ctx: Context, v: Float): Int =
@@ -255,7 +317,11 @@ class ExpoSettingsCoachModule : Module() {
     // it; an animator left running on a removed view is harmless but the window
     // is gone with it either way.
     val travel = dp(ctx, 18f).toFloat()
-    ObjectAnimator.ofFloat(knob, "translationX", 0f, travel).apply {
+    // Held in a field so removeOverlay() can cancel it. ObjectAnimator keeps its
+    // target weakly and self-cancels once the view is collected, so this is
+    // hygiene rather than a leak — but until then it keeps asking for frames.
+    knobAnim?.cancel()
+    knobAnim = ObjectAnimator.ofFloat(knob, "translationX", 0f, travel).apply {
       duration = 620
       startDelay = 400
       repeatCount = ValueAnimator.INFINITE

@@ -29,7 +29,10 @@ export interface PlanRecordLike {   // structural subset of PlanCompletionContex
 // Values are REAL `secondary` tags from featuredPlansSummary.ts; adding a value
 // that isn't a real tag makes it a no-op. All 12 topics below route to plans
 // that actually exist in the catalog (none are orphaned).
-const TOPIC_TAGS: Record<string, string[]> = {
+// Exported for services/planSearch.ts, which inverts it: a plan carrying one of
+// these tags is indexed under that topic's LOCALIZED label, so a search for a
+// word the catalog never literally uses ("sleep") still finds the right plans.
+export const TOPIC_TAGS: Record<string, string[]> = {
   anxiety:   ['anxiety', 'anxiety-fear', 'fear'],
   hope:      ['grief-disappointment', 'long-wait', 'threshold-seasons'],
   gratitude: ['joy', 'joy-gratitude'],

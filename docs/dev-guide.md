@@ -323,6 +323,74 @@ UMP runs in parallel. The US floor ladder is gated `region === 'US' && !__DEV__`
 
 ---
 
+## 6b. Explore search (Plan tab)
+
+**Files** — `src/services/planSearch.ts` (pure, unit-tested),
+`src/components/plan/PlanSearchField.tsx`, `src/components/plan/PlanSearchResults.tsx`,
+wired in `src/screens/PlanScreen.tsx`. Tests: `__tests__/planSearch.test.ts`.
+
+### Shape (owner 2026-08-09)
+A **persistent field** at the top of the Explore segment — not a magnifier, not an
+overlay. Field unfocused and empty → the normal browse layout. **Focused and empty** →
+the 12 suggestion chips + all 5 categories. **Query** → results. The field scrolls with
+the page, because this screen pins nothing (restructuring it would move the plan guide's
+spotlight anchors).
+
+### What it is for, and what it refuses
+Search serves two jobs: finding a plan by name, and finding a topic. The mood row covers
+9 emotions (31 plans); **the other 82 have no keyword entry point at all** — that is the
+feature's real value. It deliberately has **no duration or length filter**: 107 of 113
+plans are 3–7 days and `minutes` is only ever 7 or 8, so a length filter returns either
+almost everything or the 6 outliers. That is a content-shape fact, not a UI gap.
+
+### Matching
+Five weighted fields: `title 6`, `topic 4` (the app's own localized section + sub-tab
+label), `chip 3` (the localized onboarding topics a plan answers to, via the inverted
+`TOPIC_TAGS`), `desc 2`, `slug 1`. Score desc, ties by the personalized curation order.
+- `foldText` = NFD + strip combining marks + lowercase. `oracion` ≡ `oración`.
+- **CJK is not tokenized** — substring, and `minQueryLen` is **1** for CJK/Kana/Hangul.
+  `bibleService.ts`'s blanket `q.length < 2` is the bug not to repeat.
+- **Latin queries of ≤ 3 chars must match at a word start.** German "Ehe" (marriage) as a
+  raw substring matched 37 of 113 plans (it hides inside *geschehen*, *verstehen*,
+  *Beziehungen*) — our own chip was promising a topic and delivering spelling accidents.
+  At 4+ chars mid-word matching is an asset (it is how "Angst" finds *Zukunftsangst*).
+- The `chip` field is why a word the catalog never uses still works: nothing says
+  "sleep", but `TOPIC_TAGS.sleep` points at anxiety-fear / weariness-burnout / soul-care.
+- `isSearchable()` is the ONE predicate the view and the analytics both use, so a single
+  Latin letter neither flashes "no results" nor logs a failed search.
+- Deliberately **not** indexed: `primaryLabel` / `secondaryLabel` (drifted CDN strings —
+  17 distinct primary labels for 5 sections), `id`, `duration`, `minutes`.
+- No fuzzy matching in v1. Measured: the real failure mode is *vocabulary*, not spelling,
+  and the chip field fixes that properly. `plan_search_no_results` will say whether typos
+  matter before we spend anything on them.
+
+### Two screen-specific hazards (both handled — do not undo)
+1. **`plan` IS in `TAB_ROUTES`** (`promptSurface.ts`), so a nudge can paint over a live
+   search field with the keyboard up. PlanScreen holds `useSheetSurface(searchActive)`.
+2. **The plan guide burns its once-ever flag on display**, and its step-3 anchor is the
+   mood row — which results would unmount. While `guide.stage !== 'idle'` the field is
+   disabled and any query is cleared.
+Also: the page `ScrollView` needs `keyboardShouldPersistTaps="handled"`, or the first tap
+on a chip is swallowed as a keyboard dismissal and the blur unmounts what she was
+reaching for.
+
+### Behaviour details
+180 ms debounce (not for the main thread — 113 bundled objects is sub-millisecond — but
+to stop the list flickering mid-word). Results capped at 30 rows + "show all N", because
+each row mounts a `PlanCover` that hits the CDN. The query **survives a re-focus** on
+purpose: search → open a plan → back should not lose it. A result tap dismisses the
+keyboard and warms `loadPlan(slug)` so the detail screen renders from cache.
+No-results shows the chips and categories, so a dead end becomes a way to browse.
+
+### Analytics (owner chose full funnel with the search term)
+`plan_search_open` · `search` (`search_term` truncated to 100, `content_type`, `lang`,
+`result_count`) · **`plan_search_no_results`** — the only channel through which "she keeps
+looking for X and we don't have it" reaches us · `select_item` (with `rank`, so clustered
+low ranks mean the weights are wrong) · `plan_search_suggestion_tap`. One event per
+*settled* query, deduped — never per keystroke.
+
+---
+
 ## 7. Guides & spotlight tours
 
 **Files** — `src/components/shared/SpotlightCoach.tsx` (the shared overlay),

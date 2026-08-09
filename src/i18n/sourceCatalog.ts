@@ -1001,6 +1001,15 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'planCategory.allPill':          { en: 'All',            context: 'First sub-tab pill — shows all plans in the section without filtering.' },
   'planCategory.empty':            { en: 'No plans here yet.', context: 'Empty state when a sub-category has no plans.' },
 
+  // ─── Explore search (Plan tab) ───────────────────────────────────────────
+  'planSearch.placeholder':        { en: 'Search plans',   context: 'Placeholder in the search field at the top of the Plan tab\'s Explore segment. Short — the field is ~60% of the screen width.' },
+  'planSearch.clear':              { en: 'Clear search',   context: 'Accessibility label on the x-circle button that empties the search field.' },
+  'planSearch.suggested':          { en: 'Suggested topics', context: 'Uppercase eyebrow above the 12 topic chips shown when the search field is focused but empty. Rendered uppercase by the style — translate in normal case.' },
+  'planSearch.categories':         { en: 'All categories', context: 'Uppercase eyebrow above the list of the 5 plan categories in the empty search state. Rendered uppercase by the style — translate in normal case.' },
+  'planSearch.empty.title':        { en: 'No plans for "{query}"', context: 'Title of the no-results state. {query} = what she typed, quoted.' },
+  'planSearch.empty.desc':         { en: 'Try one of these topics, or browse a category below.', context: 'Line under the no-results title — the suggestion chips and category list follow it, so a dead end becomes a way to browse.' },
+  'planSearch.showAll':            { en: 'Show all {n}',   context: 'Link at the end of a long result list (only the first 30 render). {n} = total number of matching plans.' },
+
   // ─── Plan section titles (Plan tab + PlanCategory header) ────────────────
   'plansMeta.section.emotions':    { en: 'How Are You Feeling Today?', context: 'Plan section title. Title-cased on the Plan tab as a question prompt.' },
   'plansMeta.section.walking':     { en: 'Walking with God', context: 'Plan section title.' },

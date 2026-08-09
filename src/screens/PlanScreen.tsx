@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, LayoutChangeEvent } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, LayoutChangeEvent, Keyboard, type TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import Animated, {
@@ -23,6 +23,11 @@ import { useOnboarding } from '../state/OnboardingContext';
 import { scorePlan, recommendPlans } from '../services/planRecommendations';
 import { usePlanGuide } from '../state/PlanGuideContext';
 import PlanGuideSelfTrigger from '../components/PlanGuideSelfTrigger';
+import { useSheetSurface } from '../state/promptSurface';
+import { buildPlanSearchIndex, searchPlanIndex, isSearchable } from '../services/planSearch';
+import PlanSearchField from '../components/plan/PlanSearchField';
+import PlanSearchResults from '../components/plan/PlanSearchResults';
+import { logEvent } from '../services/firebase';
 
 const TABS = ['current', 'explore', 'completed'] as const;
 type TabId = typeof TABS[number];
@@ -236,6 +241,89 @@ export default function PlanScreen() {
     slugs.forEach(slug => { loadPlan(slug).catch(() => {}); });
   }, [summary, featuredPlans, inProgressPlanRows, loadPlan]);
 
+  // ── Explore search ────────────────────────────────────────────────────────
+  // The field is always visible at the top of Explore; the query decides what
+  // the page shows below it (browse → chips+categories → results).
+  const [query, setQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [showAllHits, setShowAllHits] = useState(false);
+  const searchRef = useRef<TextInput>(null);
+  const trimmed = query.trim();
+  const searchActive = searchFocused || trimmed !== '';
+  // A guide is running. Its spotlight anchors are the Explore pill and the mood
+  // row, and it BURNS its once-ever flag the moment it shows — so if results
+  // replaced the browse content and unmounted moodSectionRef, the tutorial would
+  // be spent having taught nothing (the overlay would show a scrim with no hole
+  // until its 30s watchdog fired). Disable the field and drop any live query.
+  const guideBusy = guide.stage !== 'idle';
+  useEffect(() => {
+    if (!guideBusy) return;
+    setQuery('');
+    setSearchFocused(false);
+    Keyboard.dismiss();
+  }, [guideBusy]);
+  // While she is searching, hold the prompt surface: `plan` IS in TAB_ROUTES, so
+  // without this the mood sheet (1.8s after mount), login, widget or rate prompt
+  // can paint over a live search field with the keyboard up.
+  useSheetSurface(searchActive);
+  // 180ms — the catalog is 113 bundled objects, so this is not protecting the
+  // main thread (a full pass is sub-millisecond), it stops the list flickering
+  // mid-word. Tighter than the Bible reader's 250ms because there is no network.
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedQuery(trimmed), 180);
+    return () => clearTimeout(id);
+  }, [trimmed]);
+  // Fold the catalog once per (catalog, language); keystrokes then only run
+  // `includes` over the folded haystacks. Built from `personalizedSummary`, so
+  // equal-scoring results are tie-broken by onboarding fit — the same ordering
+  // the rest of this tab already uses (and plain curation order when onboarding
+  // gave us nothing).
+  const searchIndex = useMemo(() => buildPlanSearchIndex(personalizedSummary, lang), [personalizedSummary, lang]);
+  const hits = useMemo(() => searchPlanIndex(searchIndex, debouncedQuery), [searchIndex, debouncedQuery]);
+  useEffect(() => { setShowAllHits(false); }, [debouncedQuery]);
+
+  // Analytics — one event per SETTLED query, never per keystroke, deduped so a
+  // re-render can't double-log. `plan_search_no_results` is the one that earns
+  // its keep: it is the only channel through which "she keeps looking for X and
+  // we don't have it" reaches us.
+  const loggedQueryRef = useRef('');
+  useEffect(() => {
+    if (!isSearchable(debouncedQuery) || debouncedQuery === loggedQueryRef.current) return;
+    loggedQueryRef.current = debouncedQuery;
+    const term = debouncedQuery.slice(0, 100);                                   // Firebase caps string params at 100
+    logEvent('search', { search_term: term, content_type: 'plan', lang, result_count: hits.length });
+    if (hits.length === 0) logEvent('plan_search_no_results', { search_term: term, query_len: debouncedQuery.length, lang });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQuery, hits.length]);
+
+  const openedSearchRef = useRef(false);
+  const onSearchFocus = () => {
+    setSearchFocused(true);
+    if (!openedSearchRef.current) {
+      openedSearchRef.current = true;
+      logEvent('plan_search_open', { entry: 'explore' });
+    }
+  };
+  const cancelSearch = () => {
+    setQuery('');
+    setSearchFocused(false);
+    searchRef.current?.blur();
+    Keyboard.dismiss();
+  };
+  // A result tap leaves the keyboard behind and warms the plan body, so the
+  // detail screen renders from cache instead of a spinner (same prefetch the
+  // Featured carousel gets on mount).
+  const openSearchHit = (slug: string, rank: number) => {
+    logEvent('select_item', {
+      item_list_name: 'plan_search', item_id: slug,
+      search_term: debouncedQuery.slice(0, 100), rank, result_count: hits.length,
+    });
+    Keyboard.dismiss();
+    loadPlan(slug).catch(() => {});
+    openCorpusPlan(slug);
+  };
+
   const tabIdx = TABS.indexOf(tab);
   const progress = useSharedValue(tabIdx);
   const tabsWidth = useSharedValue(0);
@@ -252,6 +340,9 @@ export default function PlanScreen() {
   useFocusEffect(
     useCallback(() => {
       setFadeKey(k => k + 1);
+      // The search query deliberately SURVIVES a re-focus: she searches, opens a
+      // plan, comes back — and her results are still there. (The guide's mood
+      // anchor is protected by the guideBusy effect above, not by clearing here.)
       // Always land at the very top of the page on every (re)focus, per user —
       // switching to the Plans tab must not preserve the previous scroll
       // position. The ScrollView itself isn't remounted by fadeKey, so its
@@ -298,6 +389,11 @@ export default function PlanScreen() {
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
+        // The search chips and result rows live in this scroll with the keyboard
+        // up. Without "handled", the first tap on one of them is swallowed as a
+        // keyboard dismissal — and the blur that follows would unmount the very
+        // chip she was reaching for.
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 8 }]}
         onScroll={e => { scrollYRef.current = e.nativeEvent.contentOffset.y; }}
         scrollEventThrottle={32}
@@ -406,6 +502,42 @@ export default function PlanScreen() {
 
           {tab === 'explore' && (
             <View>
+              {/* Search — persistent at the top of Explore (owner 2026-08-09).
+                  Focused-and-empty shows the suggestion chips + every category;
+                  a query shows results; otherwise the browse layout below. */}
+              <PlanSearchField
+                inputRef={searchRef}
+                value={query}
+                onChangeText={setQuery}
+                onFocus={onSearchFocus}
+                onBlur={() => setSearchFocused(false)}
+                active={searchActive}
+                onCancel={cancelSearch}
+                disabled={guideBusy}
+              />
+
+              {searchActive ? (
+                <PlanSearchResults
+                  query={debouncedQuery}
+                  hits={hits}
+                  showAll={showAllHits}
+                  onShowAll={() => setShowAllHits(true)}
+                  // Rendered here so the row component and its styles stay in
+                  // one place — the in-progress and completed lists use them too.
+                  renderPlanRow={(plan, rank) => (
+                    <CorpusPlanRow plan={plan} onPress={() => openSearchHit(plan.slug, rank)} />
+                  )}
+                  onPickTopic={(topic, label) => {
+                    logEvent('plan_search_suggestion_tap', { topic });
+                    setQuery(label);
+                  }}
+                  onOpenCategory={(section, title) => {
+                    Keyboard.dismiss();
+                    navigation.navigate('PlanCategory', { primary: section, title });
+                  }}
+                />
+              ) : (
+                <>
               {/* FEATURED — top 5 picks from the bundled summary. Each card
                   shows the real cover image (CDN-served webp) with a gradient
                   fallback during load. Card 281×173 — same size as the May 14
@@ -485,6 +617,8 @@ export default function PlanScreen() {
                   />
                 );
               })}
+                </>
+              )}
             </View>
           )}
 

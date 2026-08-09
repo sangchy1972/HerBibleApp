@@ -99,19 +99,21 @@ describe('the content budget', () => {
   });
 
   it('names the bank size that leaves nothing stranded', () => {
-    // 24 paintings x 4 sets = 96 sets; 40 cards x 3 sets = 120 sets. The cards
-    // are the binding constraint, so 120 sets x 5 = 600 questions.
+    // 32 paintings x 4 sets = 128 sets; 40 cards x 3 sets = 120 sets. Adding
+    // eight paintings flipped which collection binds: it used to be the cards
+    // at 120 sets, it is now the paintings at 128, so 128 x 5 = 640 questions.
     const need = bankSizeToCollectEverything(QUIZ_ART_COUNT, MYSTERY_CARD_COUNT);
-    expect(need).toBe(600);
+    expect(need).toBe(640);
     const r = reachableRewards(need);
-    expect(r.sets).toBe(120);
-    // >= not ===: the cards bind at 120 sets, and by then she has earned enough
-    // sets for 30 paintings against a pool of 24. The slack is fine — it means
-    // the LAST thing she collects is a card, and the paintings finished 24 sets
-    // earlier. Reversing that order would end the whole feature on a card.
+    expect(r.sets).toBe(128);
+    // >= not ===: the paintings now bind at 128 sets, and by then she has
+    // earned enough for 42 cards against a pool of 40. The order of the last two
+    // rewards therefore FLIPPED with this batch — the cards finish 8 sets early
+    // and the collection ends on a painting. That is the better ending of the
+    // two, and it is a consequence rather than a decision, so it is pinned here.
     expect(r.cards).toBeGreaterThanOrEqual(MYSTERY_CARD_COUNT);
     expect(r.paintings).toBeGreaterThanOrEqual(QUIZ_ART_COUNT);
-    expect(r.paintings).toBe(30);
+    expect(r.cards).toBe(42);
   });
 
   it('has closed the gap, with headroom left over', () => {
@@ -123,12 +125,14 @@ describe('the content budget', () => {
     // 650 questions can unlock, re-strands them exactly as before.
     const need = bankSizeToCollectEverything(QUIZ_ART_COUNT, MYSTERY_CARD_COUNT);
     expect(need).toBeLessThanOrEqual(BANK);
-    expect(BANK - need).toBe(50);                          // 10 sets' worth of slack
+    expect(BANK - need).toBe(10);                          // 2 sets' worth of slack
 
-    // Room to grow the collections without touching the bank. Spend it and
-    // this number drops; spend more than it and `need` overtakes BANK above.
+    // The v2 art batch spent most of the headroom: 50 questions of slack became
+    // 10, and the paintings are now full at 32 of a reachable 32. Adding a 33rd
+    // painting REQUIRES growing the bank first, which is what the assertion
+    // above will catch.
     const r = reachableRewards(BANK);
-    expect(r.paintings - QUIZ_ART_COUNT).toBe(8);          // 24 -> up to 32
+    expect(r.paintings - QUIZ_ART_COUNT).toBe(0);          // no room left
     expect(r.cards - MYSTERY_CARD_COUNT).toBe(3);          // 40 -> up to 43
   });
 

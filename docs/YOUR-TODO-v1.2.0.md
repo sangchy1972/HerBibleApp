@@ -157,37 +157,96 @@ Console 用最下面那段带 `<lang>` 标签的粘贴版）。
 
 ---
 
-## D. Firebase 登录邮件 —— 7 语种主题（旧账，不挡发版）
+## D. Firebase 登录邮件 —— 只有一件事，不是七件
 
-上次做到一半：自定义域名点了、发件人名改成 Her Bible 了，剩下语言那部分。
+**我写错了，这是同一个错误第二次。** `docs/email-signin-templates.md` 里早就写着
+「语言选择器很可能是全局的，不是分语种的」，我写这份清单时没回去看，又把
+「切七次语言分别保存」写了一遍。你在控制台里看到的才是对的：**换语言就是换全部，
+没有分语种保存这回事。**
+
+原因：Firebase 只对**自带模板**做本地化。模板一旦被你改过，就按写死的内容原样发给
+所有人，客户端送的语言码不再起作用。`setEmailLanguage()` 留着没坏处（它还管
+reCAPTCHA 和 OAuth 弹窗的语言），但它选不了邮件模板。
+
+### 所以你要做的就一步
 
 1. Firebase Console → **Authentication** → **Templates** → **电子邮件地址登录**
-2. 模板卡片右上角有个**语言下拉**（默认 English）
-3. 选一个语言 → 点 ✏️ → 改 **Subject** → Save
-4. 换下一个语言，重复
+2. 语言选 **English**
+3. **Subject** 填：
 
-七条主题在 `docs/email-signin-templates.md` 的「Path A」那一节，直接复制。
+```
+Sign in to Her Bible
+```
 
-> 语言下拉是**每次只作用于当前选中的那个语言**，所以要切七次。这不是 bug。
-> 用户收到哪一版由 `setLanguageCode` 决定，App 已经按界面语言设好了。
+4. Save。**结束。**
+
+正文是只读的，改不了；主题是唯一能改的一行；而 "Her Bible" 在七种语言里都是英文。
+七种主题要真做，得走 Path B（自建后端发信），为一行字不值得。
+
+文档里那七条翻译主题**不是任务**，只是万一以后做 Path B 时的素材。
 
 ---
 
-## E. Cloudflare DMARC 记录（旧账，不挡发版）
+## E. Cloudflare DMARC 记录 —— 分两步，顺序不能反
 
-作用是让登录邮件不进垃圾箱。做法在 `docs/email-signin-templates.md` 第 220 行起，
-有完整的四条记录说明。
+作用：告诉 Gmail 这个域名有发信策略。没有 DMARC 记录的域名 = 没有表态的域名，
+而新域名恰恰是最没有信誉可依靠的。一条 DNS 记录的事。
 
-一句话版：Cloudflare → `everlandapps.com` → **DNS** → **Add record**
+> 前提：`docs/email-signin-templates.md` 的第 2 步（Customize domain）给你的是
+> SPF 和 DKIM。**DMARC 没有那两个是不起作用的**，所以先确认那一步做完了。
 
-| 字段 | 值 |
+### E1. 先建收报告的邮箱地址
+
+**为什么要先做这个**：`rua=mailto:sangchy1972@gmail.com` **不管用**。DMARC 要求
+接收方域名先发布一条授权记录（`everlandapps.com._report._dmarc.gmail.com`），
+而 gmail.com 的 DNS 不是你的。Google 自己的报告器会强制检查这一条，所以报告永远
+不会寄到，而那条记录看起来完全正常。
+
+必须用 `everlandapps.com` 下的地址，再转发到你的 Gmail。Email Routing 这个域名
+已经开着了（SPF 里那条 `_spf.mx.cloudflare.net` 就是它）：
+
+1. Cloudflare → 选 **`everlandapps.com`** → 左侧 **Email** → **Email Routing**
+2. **Routing rules** 标签 → **Create address**
+3. Custom address 填 **`dmarc`**（前面那一截，@ 后面自动是 everlandapps.com）
+4. Action 选 **Send to an email** → 填 `sangchy1972@gmail.com`
+5. Save
+6. **去 Gmail 收一封验证邮件并点确认** —— 不点这一步，转发不生效
+
+### E2. 再加 DNS 记录
+
+Cloudflare → `everlandapps.com` → **DNS** → **Records** → **Add record**
+
+| 字段 | 填什么 |
 | --- | --- |
 | Type | `TXT` |
 | Name | `_dmarc` |
-| Content | `v=DMARC1; p=none; rua=mailto:dmarc@everlandapps.com` |
+| Content | `v=DMARC1; p=none; rua=mailto:dmarc@everlandapps.com; fo=1` |
+| TTL | Auto |
 
-> ⚠️ 文档里特别标了：**不要**把 Firebase 给的 SPF 那行当成新记录加进去，
-> 以及 `rua` 的邮箱**必须是你自己域名下的**。先读那一节再动手。
+⚠️ Name 就填 **`_dmarc`**，**不要**写成 `_dmarc.everlandapps.com`。Cloudflare 用
+相对名，写全了会变成 `_dmarc.everlandapps.com.everlandapps.com`。DKIM 那几条
+CNAME 也是同一个坑。
+
+⚠️ **不要**把 Firebase 给的那行 SPF 当成新记录加进去 —— 一个域名只能有一条 SPF，
+要合并进现有那条。详见 `email-signin-templates.md` 第 119 行。
+
+`p=none` 是「只监控，不拒收」，不改变任何一封邮件的实际投递，只是让接收方知道你
+存在并给你发报告。**不要一上来就 `p=reject`** —— 记录没对齐的话，你自己手发的邮件
+都会被扔掉。跑几周，等报告显示 SPF 和 DKIM 全过了，再收紧到 `p=quarantine`。
+
+### E3. 验证
+
+不要凭一个收件箱猜。给自己发一封登录邮件，在**网页版 Gmail** 打开，
+⋮ → **显示原始邮件**，看最上面三行：
+
+```
+SPF:   PASS with domain everlandapps.com
+DKIM:  PASS with domain everlandapps.com
+DMARC: PASS
+```
+
+三个 PASS，而且域名都是**你的**（不是 `firebaseapp.com`）才算过。如果 DKIM 显示
+`firebaseapp.com` 而 SPF 显示 `everlandapps.com`，是第 2 步的 DNS 还没生效，等一小时。
 
 ---
 

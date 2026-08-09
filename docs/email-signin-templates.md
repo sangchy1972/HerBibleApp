@@ -181,19 +181,21 @@ So the Sender name and Subject edited here apply to emails **this app's users
 never receive**: sign-in is email-link only. Whether the magic-link mail picks up
 the project-level Sender name at all is not answerable from the console.
 
-🔴 **The Template language selector is probably global, not per-locale.** The
-docs say `setLanguageCode` propagates to email templates, but there are
-long-standing unfixed reports (firebase-js-sdk#5846, angularfire#3296) that a
-**customised** template is served in the console-selected language to everyone,
-and Firebase's own note says customised templates do not get localised. So the
-"switch language, paste, repeat ×7" workflow this file used to describe is very
-likely wrong.
+🔴 **CONFIRMED 2026-08-09: the Template language selector is GLOBAL, not
+per-locale.** The owner opened the console and switched languages: changing it
+changes the template for everyone, and there is no per-language save. So the
+"switch language, paste, repeat ×7" workflow this file used to describe does not
+exist, and it was wrong twice — once here, and once again in a hand-off
+checklist written after this very paragraph had already flagged it as doubtful.
 
-Treat the subjects below as aspirational until a real email proves otherwise. If
-the selector is global, pick `English` and use `Sign in to Her Bible`: the body
-is read-only anyway, so the subject was the only localisable line, and the brand
-name is English in every locale. Seven languages needs Path B, which needs a
+**Do this instead, and consider the language question closed:** select
+`English`, set the subject to `Sign in to Her Bible`, save, and stop. The body is
+read-only, so the subject was the only localisable line; the brand name is
+English in every locale anyway. Seven subjects would need Path B, which needs a
 backend — not worth it for one line.
+
+The seven translated subjects further down are kept only as source material if
+Path B is ever built. They are NOT a task.
 
 **Settle it empirically.** Send a real sign-in mail and check three things: does
 the sender read `Her Bible` or `noreply`; what is the subject; and — long-press
@@ -292,21 +294,19 @@ domain, so passing there usually means the others are fine.
 - Sending more mail to "warm up". Warming matters at thousands per day; at this
   volume you are just sending unwanted mail.
 
-Note: `setEmailLanguage()` in `services/firebaseAuth.ts` is what makes the
-per-language subject actually get picked — Firebase auto-localises only its stock
-templates, and the moment you edit one it is served verbatim unless the request
-carries a language code.
-
 ## How localisation works here
 
-⚠️ **Superseded — see the two red flags in step 4.** This section describes the
-intent; the console appears not to honour it. `setEmailLanguage` in
-`services/firebaseAuth.ts` is still correct and harmless to keep (it also drives
-reCAPTCHA and OAuth popup locale), but do not assume it selects an email template
-until a real message proves it does.
+⚠️ **SUPERSEDED — the console does not work this way.** Confirmed by the owner
+2026-08-09: the language selector is global. A customised template is served as
+written to everyone regardless of the language code the client sends.
 
-The intent was: Firebase auto-localises only its **stock** templates, a customised
-template is sent as written, so the app sends a language code
+`setEmailLanguage()` in `services/firebaseAuth.ts` stays — it is harmless and it
+does drive the reCAPTCHA and OAuth popup locale — but it does NOT select an email
+template. Do not re-derive the table below into a task list; that has now
+happened twice.
+
+The intent WAS: Firebase auto-localises only its **stock** templates, a
+customised template is sent as written, so the app sends a language code
 (`auth().languageCode`) and Firebase looks up the template stored for that locale.
 Locales the app sends:
 
@@ -320,7 +320,8 @@ Locales the app sends:
 | Deutsch | `de` |
 | Français | `fr` |
 
-Any locale you don't fill in falls back to `en`, so English is the one to do first.
+Any locale you don't fill in falls back to `en` — which, since the selector turns
+out to be global, means English is the only one that matters.
 
 ## Notes on the markup
 

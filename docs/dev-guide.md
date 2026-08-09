@@ -320,6 +320,27 @@ floor, no-floor last.
 `ensureAttRequested().finally(initAds)` in `App.tsx`. ATT before ads init — keep it.
 UMP runs in parallel. The US floor ladder is gated `region === 'US' && !__DEV__`.
 
+### Nothing heavy and native runs during the cold start
+Play ANR on 1.2.0 (realme Note 70 / Android 15, *Input dispatching timed out — no
+focused window*): `initIap()` at launch made **expo-iap build its native
+OpenIapModule synchronously on the MAIN THREAD** (`SynchronizedLazyImpl.getValue` →
+`OpenIapModule.<init>` under `Handler.handleCallback`), standing up the Play
+BillingClient and binding to the Play Store service. On a slow device that blew the
+5 s input-dispatch budget before the first frame had focus.
+
+- **`InteractionManager.runAfterInteractions` is not protection.** It waits for JS
+  interaction handles; a native module that hops to the main thread afterwards is
+  entirely outside it. Everything in that block at startup — ads, IAP, anything
+  new — has to be judged on what it does natively, not on where it sits in JS.
+- IAP now initializes **10 s after the launch overlay dismisses**, which also clears
+  the onboarding questionnaire (a first-run user is tapping through it right after
+  the overlay, and a Billing bind under her finger is the same ANR with focus).
+- The launch pass could not simply be deleted: it drains purchases completed while
+  the app was dead and `finishTransaction()`s them, and **Play refunds an
+  unacknowledged purchase after 3 days**. It also re-grants the entitlement when
+  AsyncStorage was cleared. Nothing at startup needs it — the ad-free flag comes
+  from AsyncStorage, and both paywalls call the idempotent `initIap()` themselves.
+
 ---
 
 ## 6. Quiz

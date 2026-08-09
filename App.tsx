@@ -110,7 +110,7 @@ export default function App() {
       // the human is asked early and unconditionally.
       ensureAttRequested().finally(() => { initAds(); });
       initAdFrequency();
-      initIap();
+      // initIap() is NOT here any more — see the deferred effect below.
     });
     return () => task.cancel();
   }, []);
@@ -166,6 +166,49 @@ export default function App() {
   // The launch overlay is pointerEvents="none", so a prompt granted underneath it
   // is invisible-but-live. Report its state to the prompt-surface gate.
   React.useEffect(() => { setLaunchOverlayUp(!loadingDone); }, [loadingDone]);
+
+  // IAP is initialized AFTER the launch overlay is gone — never during the cold
+  // start. Play ANR (v1.2.0, realme Note 70 / Android 15, "Input dispatching
+  // timed out (No focused window)"):
+  //
+  //   OpenIapModule.<init>            (OpenIapModule.kt:110)
+  //   SynchronizedLazyImpl.getValue   (LazyJVM.kt:86)
+  //   ExpoIapModule.getOpenIap        (ExpoIapModule.kt:62)
+  //   Handler.handleCallback -> Looper.loop -> ActivityThread.main
+  //
+  // expo-iap builds its native OpenIapModule LAZILY AND SYNCHRONOUSLY ON THE
+  // MAIN THREAD (that Handler frame is the main Looper), and constructing it
+  // stands up the Play BillingClient and binds to the Play Store service. On a
+  // low-end device that blocks past the 5s input-dispatch budget, and "no focused
+  // window" says it happened before the first frame had focus — i.e. a startup
+  // ANR. `InteractionManager.runAfterInteractions` did NOT protect us: it only
+  // waits for JS interaction handles, and the block happens natively afterwards.
+  //
+  // The launch pass still has to happen, so it moves rather than disappears: it
+  // drains purchases that completed while the app was dead and finishTransaction()s
+  // them — **Play refunds an unacknowledged purchase after 3 days** — and re-grants
+  // the entitlement when AsyncStorage was cleared but the store account still owns
+  // it. Run here, the same native work costs a few slow frames on a screen that
+  // already has focus instead of an ANR.
+  //
+  // Nothing at startup depends on it: the ad-free flag is read from AsyncStorage
+  // by initAds, and both paywalls (RemoveAdsScreen, OnboardingFlow) call initIap()
+  // themselves behind a spinner — it is idempotent, so whoever gets there first wins.
+  React.useEffect(() => {
+    if (!loadingDone) return;
+    // 10s, not 4: the overlay's fade and the home screen's staggered entrances
+    // are only the first thing this has to clear. A FIRST-RUN user is on the
+    // onboarding questionnaire right after the overlay, tapping through options —
+    // dropping a main-thread Billing bind under her finger there is the same bug
+    // with a focused window instead of none. Ten seconds puts it past both, and
+    // nothing is lost: the drain exists for purchases made days ago (Play's
+    // acknowledgement window is 3 DAYS), and anyone who reaches a paywall sooner
+    // triggers initIap() from the screen itself.
+    const tm = setTimeout(() => {
+      InteractionManager.runAfterInteractions(() => { initIap(); });
+    }, 10_000);
+    return () => clearTimeout(tm);
+  }, [loadingDone]);
 
   const [fontsLoaded] = useFonts({
     // Preload the @expo/vector-icons fonts we use up front. Without this they

@@ -1,4 +1,4 @@
-# Release Notes — v1.2.0（7 语种 · 每条 ≤500 字符）
+# Release Notes — v1.3.0（7 语种 · 每条 ≤500 字符）
 
 > 面向用户、商店「新功能/更新说明」字段用。App Store 与 Google Play 通用。
 > 不提广告/ATT/追踪等技术项——只说用户看得见的改进。
@@ -6,112 +6,114 @@
 > **Google Play 用最下面「Play Console 粘贴版」那一段**，它已经带好 `<lang>` 标签。
 > App Store Connect 按语言分栏填，直接用本段正文。
 >
-> ⚠️ **v1.1.0 已上线**，所以本版**不再重复宣传圣经问答本身**——用户已经见过它了。
-> 只写这一版新增的改动。1.1.0 的文案在 git 历史里（`6bc6ee5`）。
+> ⚠️ **v1.2.0 已上线**，问答本身和它的结果页在那一版已经宣传过了，本版不重复。
+> 这一版的主角是**搜索**、**题库翻倍**和**祷告之后的那一屏**。1.2.0 的文案在 git 历史里（`296d21c`）。
+>
+> 语气沿用前两版：第二人称、温和、不用营销词。中文用「妳」。
 
 ---
 
 ## 🇺🇸 English (U.S.)
 ```
-Small changes, made with care.
+Now you can just search for it.
 
-• Quiz: answer straight from the home card — no extra taps
-• Quiz: the answer stays hidden until you choose, so there's no rush
-• Quiz: a redesigned results screen shows the painting you're building
-• Your mood check-in and new badges now unfold gently, a line at a time
-• Clearer help when you turn on your daily reminders
+• Search any reading plan — by name, or by what you're carrying today
+• After you pray: step straight into today's Gospel & Psalm, or take a quick quiz
+• Quiz: 650 questions — twice as many — each in your own translation
+• Quiz: 33 paintings and 43 mystery cards to collect
+• A gentle hand for your first days — your streak, and where the plans live
 
-Fixed: shared verse images keep their rounded corners, and the app now follows your phone's language.
+Also: a smoother start, fewer interruptions, and taps that always land.
 
 Thank you for walking with Her Bible.
 ```
 
 ## 🇨🇳 简体中文
 ```
-一些小小的改动，都是用心做的。
+现在，直接搜就好了。
 
-• 问答：直接在首页卡片上作答，不用多点几下
-• 问答：答案在你选择之前不会出现，可以慢慢想
-• 问答：结果页重新做过，能看到自己正在拼的那幅画
-• 心情记录和新徽章现在会一行一行慢慢展开
-• 开启每日提醒时，指引更清楚了
+• 搜索任何一个读经计划——按名字，或者按妳今天心里装着的事
+• 祷告之后：一步进入今天的福音与诗篇，或者做一组问答
+• 问答：650 道题，是原来的两倍，每种语言用自己的圣经译本
+• 问答：33 幅画作和 43 张神秘卡片等妳收集
+• 头几天有人轻轻扶妳一把——连续天数怎么算，计划在哪里找
 
-修复：分享的经文图片不再丢失圆角；应用现在会跟随手机的语言列表。
+另外：启动更顺、打扰更少，并修复了有时点了没反应的问题。
 
-感谢你与 Her Bible 同行。
+感谢妳与 Her Bible 同行。
 ```
 
 ## 🇭🇰 繁體中文
 ```
-一些小小的改動，都是用心做的。
+現在，直接搜就好了。
 
-• 問答：直接在首頁卡片上作答，不用多點幾下
-• 問答：答案在妳選擇之前不會出現，可以慢慢想
-• 問答：結果頁重新做過，能看到自己正在拼的那幅畫
-• 心情記錄和新徽章現在會一行一行慢慢展開
-• 開啟每日提醒時，指引更清楚了
+• 搜尋任何一個讀經計畫——按名字，或者按妳今天心裡裝著的事
+• 禱告之後：一步進入今天的福音與詩篇，或者做一組問答
+• 問答：650 道題，是原來的兩倍，每種語言用自己的聖經譯本
+• 問答：33 幅畫作和 43 張神秘卡片等妳收集
+• 頭幾天有人輕輕扶妳一把——連續天數怎麼算、計畫在哪裡找
 
-修復：分享的經文圖片不再遺失圓角；應用現在會跟隨手機的語言清單。
+另外：啟動更順、打擾更少，並修復了有時點了沒反應的問題。
 
 感謝妳與 Her Bible 同行。
 ```
 
 ## 🇪🇸 Español (España)
 ```
-Pequeños cambios, hechos con cuidado.
+Ahora solo tienes que buscarlo.
 
-• Reto: responde desde la tarjeta de inicio, sin toques de más
-• Reto: la respuesta no aparece hasta que eliges, así que sin prisa
-• Reto: nueva pantalla de resultados con el cuadro que vas armando
-• Tu registro de ánimo y las nuevas insignias se revelan poco a poco
-• Ayuda más clara al activar tus recordatorios diarios
+• Busca cualquier plan de lectura: por su nombre o por lo que llevas hoy
+• Después de orar: entra directa al Evangelio y Salmo de hoy, o haz un reto
+• Reto: 650 preguntas, el doble, cada idioma con su propia Biblia
+• Reto: 33 cuadros y 43 cartas misteriosas para coleccionar
+• Una mano suave en tus primeros días: tu racha y dónde están los planes
 
-Corregido: las imágenes compartidas conservan sus esquinas redondeadas.
+Además: inicio más fluido, menos interrupciones y toques que sí responden.
 
 Gracias por caminar con Her Bible.
 ```
 
 ## 🇧🇷 Português (Brasil)
 ```
-Pequenas mudanças, feitas com carinho.
+Agora basta buscar.
 
-• Desafio: responda direto pelo cartão inicial, sem toques extras
-• Desafio: a resposta só aparece depois da sua escolha, sem pressa
-• Desafio: nova tela de resultados com a pintura que você monta
-• Seu registro de humor e as novas medalhas surgem aos poucos
-• Ajuda mais clara ao ativar seus lembretes diários
+• Busque qualquer plano de leitura: pelo nome ou pelo que você carrega hoje
+• Depois de orar: entre direto no Evangelho e Salmo de hoje, ou faça um desafio
+• Desafio: 650 perguntas, o dobro, cada idioma com sua própria Bíblia
+• Desafio: 33 pinturas e 43 cartas misteriosas para colecionar
+• Uma mão gentil nos primeiros dias: sua sequência e onde ficam os planos
 
-Corrigido: as imagens compartilhadas mantêm os cantos arredondados.
+Também: início mais leve, menos interrupções e toques que respondem.
 
 Obrigada por caminhar com Her Bible.
 ```
 
 ## 🇫🇷 Français
 ```
-De petits changements, faits avec soin.
+Maintenant, tu peux simplement chercher.
 
-• Défi : réponds depuis la carte d'accueil, sans détour
-• Défi : la réponse reste cachée jusqu'à ton choix, rien ne presse
-• Défi : un écran de résultats repensé montre ton tableau en cours
-• Ton humeur du jour et tes nouveaux badges se dévoilent peu à peu
-• Une aide plus claire pour activer tes rappels quotidiens
+• Cherche un plan de lecture : par son nom, ou par ce que tu portes
+• Après la prière : l'Évangile et le Psaume du jour, ou un défi rapide
+• Défi : 650 questions, deux fois plus, chaque langue avec sa propre Bible
+• Défi : 33 tableaux et 43 cartes mystère à collectionner
+• Une main douce les premiers jours : ta série, et où trouver les plans
 
-Corrigé : les images partagées gardent leurs coins arrondis.
+Aussi : démarrage plus fluide, moins d'interruptions, touches qui répondent.
 
 Merci de cheminer avec Her Bible.
 ```
 
 ## 🇩🇪 Deutsch
 ```
-Kleine Änderungen, mit Sorgfalt gemacht.
+Jetzt kannst du einfach suchen.
 
-• Quiz: Antworte direkt auf der Startkarte, ohne Umwege
-• Quiz: Die Lösung bleibt verborgen, bis du wählst — lass dir Zeit
-• Quiz: Neue Ergebnisseite zeigt das Bild, das du zusammensetzt
-• Stimmung und neue Abzeichen erscheinen nun Zeile für Zeile
-• Klarere Hilfe beim Einschalten deiner täglichen Erinnerungen
+• Suche jeden Leseplan — nach Namen oder nach dem, was dich beschäftigt
+• Nach dem Gebet: direkt ins Evangelium und den Psalm des Tages, oder ein Quiz
+• Quiz: 650 Fragen, doppelt so viele, jede Sprache mit ihrer eigenen Bibel
+• Quiz: 33 Gemälde und 43 Geheimniskarten zum Sammeln
+• Eine sanfte Hand für die ersten Tage: deine Serie, und wo die Pläne wohnen
 
-Behoben: Geteilte Versbilder behalten ihre runden Ecken.
+Außerdem: leichterer Start, weniger Unterbrechungen, Tippen kommt an.
 
 Danke, dass du mit Her Bible gehst.
 ```
@@ -124,37 +126,37 @@ Play 的 Release notes 框要带语言标签。**只填商店列表里实际启�
 
 ```
 <en-US>
-Small changes, made with care.
+Now you can just search for it.
 
-• Quiz: answer straight from the home card — no extra taps
-• Quiz: the answer stays hidden until you choose, so there's no rush
-• Quiz: a redesigned results screen shows the painting you're piecing together
-• Your mood check-in and new badges now unfold gently, a line at a time
-• Clearer help when you turn on your daily reminders
+• Search any reading plan — by name, or by what you're carrying today
+• After you pray: step straight into today's Gospel & Psalm, or take a quick quiz
+• Quiz: 650 questions — twice as many — each in your own translation
+• Quiz: 33 paintings and 43 mystery cards to collect
+• A gentle hand for your first days — your streak, and where the plans live
 
-Fixed: shared verse images keep their rounded corners, and the app now follows your phone's language list.
+Also: a smoother start, fewer interruptions, and taps that always land.
 </en-US>
 <es-ES>
-Pequeños cambios, hechos con cuidado.
+Ahora solo tienes que buscarlo.
 
-• Reto: responde desde la tarjeta de inicio, sin toques de más
-• Reto: la respuesta no aparece hasta que eliges, así que sin prisa
-• Reto: nueva pantalla de resultados con el cuadro que vas armando
-• Tu registro de ánimo y las nuevas insignias se revelan poco a poco
-• Ayuda más clara al activar tus recordatorios diarios
+• Busca cualquier plan de lectura: por su nombre o por lo que llevas hoy
+• Después de orar: entra directa al Evangelio y Salmo de hoy, o haz un reto
+• Reto: 650 preguntas, el doble, cada idioma con su propia Biblia
+• Reto: 33 cuadros y 43 cartas misteriosas para coleccionar
+• Una mano suave en tus primeros días: tu racha y dónde están los planes
 
-Corregido: las imágenes compartidas conservan sus esquinas redondeadas.
+Además: inicio más fluido, menos interrupciones y toques que sí responden.
 </es-ES>
 <pt-BR>
-Pequenas mudanças, feitas com carinho.
+Agora basta buscar.
 
-• Desafio: responda direto pelo cartão inicial, sem toques extras
-• Desafio: a resposta só aparece depois da sua escolha, sem pressa
-• Desafio: nova tela de resultados com a pintura que você monta
-• Seu registro de humor e as novas medalhas surgem aos poucos
-• Ajuda mais clara ao ativar seus lembretes diários
+• Busque qualquer plano de leitura: pelo nome ou pelo que você carrega hoje
+• Depois de orar: entre direto no Evangelho e Salmo de hoje, ou faça um desafio
+• Desafio: 650 perguntas, o dobro, cada idioma com sua própria Bíblia
+• Desafio: 33 pinturas e 43 cartas misteriosas para colecionar
+• Uma mão gentil nos primeiros dias: sua sequência e onde ficam os planos
 
-Corrigido: as imagens compartilhadas mantêm os cantos arredondados.
+Também: início mais leve, menos interrupções e toques que respondem.
 </pt-BR>
 ```
 
@@ -166,27 +168,43 @@ Corrigido: as imagens compartilhadas mantêm os cantos arredondados.
 
 **商店里说了的：**
 
-- **问答首页卡片可直接作答** —— 卡片本身就是题目，不用先进入问答页
-- **答案不再提前泄露** —— 去掉 Next 按钮，改为按住揭示；选择之前看不到正确答案
-- **问答结果页重做** —— 画作为主视觉、礼物条、单一 CTA
-- **心情记录与徽章解锁改为分段揭示** —— 经文逐字打出、2s 分段、徽章解锁放慢一半
-- **通知权限引导** —— 拒绝后弹引导卡（含演示手指）+ 直达通知设置页，回前台自动复检
-- **分享图圆角不再导出成黑色**
-- **跟随手机的语言列表**（而不是单一语言）—— 英文手机不会再拿到别的语言
+- **Explore 搜索**（新功能）—— 常驻输入框，五字段加权匹配（标题 6 / 分类标签 4 /
+  主题标签 3 / 简介 2 / slug 1）。情绪行只覆盖 9 种情绪共 31 个计划，另外 **82 个计划
+  此前完全没有关键词入口**，这是这个功能真正的价值。折叠变音符（`oracion` ≡ `oración`）、
+  中文不分词且单字可搜、短拉丁词只在词首匹配。见 `docs/dev-guide.md` §6b。
+- **祷告结束页改版** —— NEXT 卡片（200pt、强制点 Continue）换成 100pt 的
+  Gospel & Psalm 横幅，整条可点；下方插入问答卡；星期格子改正方形加粗。
+- **题库 v3：327 → 650 题**，每个语种用自己的圣经译本。
+- **奖励 24 → 33 幅画、43 张卡**，并且**每一组都花得掉** —— 1.2.0 的内部记录里那条
+  ⚠️「收藏会永远停在 16/24 和 22/40」**已解决**，现在恰好落在第 130 组。
+- **两个新手引导** —— 连续天数引导（只在"半亮"那一刻、只对从未点满一天的用户）、
+  计划发现引导（一次性，两条入口 3 步 / 2 步）。
+- **修复：界面偶尔点不动** —— 见下。
+- **修复：启动卡顿/无响应**（Play ANR）—— 见下。
 
 **商店里没说、但确实做了的：**
 
-- **Android 广告请求引擎整体重写**（spec v1.0）—— 三条地区阶梯、按用户价值选层、
-  熔断与退避。见 `docs/ad-routing.md` §7。**iOS 未动**，仍是旧的 26 层状态机。
-- 首次运行的 coach mark 全部文字 +8%，并**修正了连击天数的规则说明** ——
-  原文写「每天完成一次祷告」，而实际规则是**早晚都要完成**。这是一句会教错人的错误文案，
-  出现在唯一一个专门用来解释规则的地方。
-- 一批排版统一：按钮文本字号合并到 17.5、计划行与 Gospel 行逐值对齐、
-  周报页间距 / 卡片圆角 / 星期格子改圆角矩形
-- 评分弹窗的商店跳转不再可能卡住用户，也不会占死一个 nudge 槽位
-- 已授权通知的用户不再看到「为什么需要通知」的说明弹窗
-- 修复：从系统设置返回时，不会再把用户在 Profile 里手动关掉的提醒重新打开
+- **一整类"隐形挡板"清理**（发版前审计）—— 本 App 几乎每个浮层的根 View 都是
+  无色不透明全屏且默认 `pointerEvents`，暗色遮罩画在动画子节点上；入场动画一掉就是
+  一层看不见的全屏挡板。`ShareVerseSheet` 是最严重的（Modal 里用 `entering=`，掉了只能重启）；
+  两个 spotlight 挡板在遮罩还透明时就已经拦触摸（**这一条最符合线上"有时点不动、过一会自己好"**）；
+  `AchievementUnlockSheet` 掉动画是一整块白屏。共 13 处，规则写进 `dev-guide.md` §2。
+- **启动期不再构造 Play BillingClient** —— expo-iap 的原生模块是主线程同步 `by lazy`，
+  低端机上超过 5 秒输入派发预算 → 启动期 ANR。改为加载页消失后 10 秒。
+  `InteractionManager.runAfterInteractions` 对这类原生阻塞**完全无效**。
+- **弹窗协调器** —— 每波前台 3 个上限 / 推销类 2 个 / 间隔 30s / 安静 10s 开新一波；
+  新增 surface 门（不在 tab 页、有插页、有 sheet、启动遮罩未消失时一律不授权）。
+- **Android 广告请求引擎**、插页全局间隔 60s → 30s、热启动插页覆盖全部用户、
+  第二个活跃日的主动去广告礼包。**iOS 广告未动。**
+- 修复：心情日历月份标题会显示错误的月份（Hermes 的 `toLocaleDateString` 在 UTC 渲染
+  本地午夜的 Date）；加载页背景图可能是半截 JPEG；评分弹窗 YES 在 Play 静默 no-op 时也
+  一定会有反馈；Profile 改名浮层被键盘完全挡住（Save 摸不到）。
 
-⚠️ **仍未处理，下一版必须做**：题库只有 327 题 = 66 组，而集齐 24 幅画需要 96 组、
-40 张卡需要 120 组。收藏会永远停在 **16/24** 和 **22/40**。题库需扩到 **600 题**才能全部可达。
-见 `__tests__/quizLifecycle.test.ts` 的 "records the gap the bank still has to close"。
+⚠️ **仍未处理**：
+
+- **Play 上还有 10 次 ANR 没有堆栈** —— 12 次里只有 2 次进了 issue cluster。
+  已修的是其中唯一被证明的原因。剩下的要看 Firebase Crashlytics（API 30+ 自动上报 ANR）。
+- **`android.os.Bundle.<init>` 那个 ANR 未归因** —— 通用帧，等 Crashlytics 的完整堆栈。
+- **大屏横屏**：Android 16 起大屏设备会忽略 `screenOrientation="PORTRAIT"`，
+  我们的布局必须在横向下不崩。是产品项目，不是勾选项。见 `dev-guide.md` §12。
+- **R8 full mode / AGP 9**：反射类库有被裁风险，须单独一轮真机验证。

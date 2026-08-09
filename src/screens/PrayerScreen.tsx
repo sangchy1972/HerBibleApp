@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withRepeat, withDelay, withSequence,
-  interpolateColor, runOnJS, Easing, FadeIn, FadeOut,
+  interpolateColor, runOnJS, Easing,
 } from 'react-native-reanimated';
 import FireFlame from '../components/shared/FireFlame';
 import StreakBorderAnim from '../components/shared/StreakBorderAnim';
@@ -33,6 +33,7 @@ import { dailyLabels } from '../constants/dailyVersesLabels';
 import { localizeBookName, englishBookName, chaptersInBook } from '../constants/bibleBookNames';
 import { parseReference, localizeReference } from '../services/parseReference';
 import { useT } from '../i18n/useT';
+import { useSheetSurface } from '../state/promptSurface';
 import ShareVerseSheet from '../components/ShareVerseSheet';
 import CommentsSheet from '../components/CommentsSheet';
 import { dailyCount, type VerseSlot } from '../state/verseCommentsFeed';
@@ -132,13 +133,24 @@ function MoreMenu({ anchor, onClose, onSeePastDays, onReadFullChapter }: {
   // Caret centred on the More icon, pointing down at it.
   const caretRight = Math.max(8, screenW - (anchor.x + anchor.w / 2) - CARET_SIZE);
   const caretBottom = Math.max(8, screenH - anchor.y + GAP);
+  // Shared value + watchdog, not `entering=`: this renders inside a
+  // <Modal transparent>, where layout animations are unreliable on the new
+  // architecture. A dropped FadeIn left an invisible menu inside a native window
+  // that covers the whole app — one tap went nowhere with no visual clue why.
+  const fade = useSharedValue(0);
+  useEffect(() => {
+    fade.value = withTiming(1, { duration: 160 });
+    const wd = setTimeout(() => { fade.value = 1; }, 600);
+    return () => clearTimeout(wd);
+  }, [fade]);
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: fade.value }));
   return (
-    <View style={moreStyles.overlay}>
+    // box-none: the root itself must never capture. The full-screen dismiss
+    // target below is a real child and stays live regardless of the animation.
+    <View style={moreStyles.overlay} pointerEvents="box-none">
       <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={onClose} />
       <Animated.View
-        entering={FadeIn.duration(160)}
-        exiting={FadeOut.duration(120)}
-        style={[moreStyles.popover, { right: popoverRight, bottom: popoverBottom }]}
+        style={[moreStyles.popover, { right: popoverRight, bottom: popoverBottom }, fadeStyle]}
       >
         <TouchableOpacity onPress={onReadFullChapter} activeOpacity={0.85} style={moreStyles.row}>
           <Feather name="book-open" size={18} color={TXT} />
@@ -154,9 +166,7 @@ function MoreMenu({ anchor, onClose, onSeePastDays, onReadFullChapter }: {
           Sits between the popover and the More icon so the connection is
           obvious. */}
       <Animated.View
-        entering={FadeIn.duration(160)}
-        exiting={FadeOut.duration(120)}
-        style={[moreStyles.caret, { right: caretRight, bottom: caretBottom }]}
+        style={[moreStyles.caret, { right: caretRight, bottom: caretBottom }, fadeStyle]}
       />
     </View>
   );
@@ -326,6 +336,14 @@ function VerseHeroCard({ cardRef, morning, ymd, canStart, canReplay, readyToSwit
   // Tapping anywhere in the wait state (gray button OR the verse area when
   // the flow is locked) pops a friendly hint that auto-fades after ~3 s.
   const [hint, setHint] = useState<string | null>(null);
+  // A presented RN Modal is a native window. While one is up the coordinator must
+  // not grant a nudge — RatePromptSheet / QuizPromoHost would then call
+  // presentViewController: on a controller that is ALREADY presenting, and RN
+  // marks the second modal as presented regardless of whether UIKit accepted it
+  // (RCTModalHostViewComponentView.mm sets _isPresented before it knows the
+  // outcome), after which its dismiss targets the wrong window. So every
+  // transient Modal on this screen claims the surface, just as the real sheets do.
+  useSheetSurface(!!hint);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (hintTimer.current) clearTimeout(hintTimer.current); }, []);
   const popHint = () => {
@@ -563,6 +581,9 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   // re-roll the thread under the user.
   const [commentsCtx, setCommentsCtx] = useState<{ ymd: string; slot: VerseSlot; count: number } | null>(null);
   const [moreAnchor, setMoreAnchor] = useState<MoreAnchor | null>(null);
+  // These two are Modals as well — same reason as VerseHeroCard's hint above.
+  // (share and comments already claim the surface from inside their own sheets.)
+  useSheetSurface(showPastPrompt || moreAnchor != null);
   // Warm the persisted comment-likes cache long before the first tap.
   useEffect(() => { hydrateCommentLikes(); }, []);
   const labels = dailyLabels(translation.code);
@@ -1273,6 +1294,13 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
         statusBarTranslucent
         onRequestClose={() => setShowShare(false)}
       >
+        {/* CONDITIONAL, not just the Modal's `visible`. On iOS a Modal keeps its
+            children mounted while `state.isRendered` is true, and that flag is
+            cleared only by the native onDismiss — which never fires if `visible`
+            flips false before the presentation completed. The child holds
+            useSheetSurface(true), so a stranded mount would leave sheetDepth at 1
+            and silence every blocking prompt in the app for the session. */}
+        {showShare && (
         <ShareVerseSheet
           reference={liveVerseRef}
           text={liveVerseText}
@@ -1281,6 +1309,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           // verse card the user just tapped — no more pink/lav placeholder.
           bgSource={prayerBg.imageFor(morning ? 'morning' : 'evening')}
         />
+        )}
       </Modal>
 
       {/* Verse comment sheet — decorative community reactions (canned), but

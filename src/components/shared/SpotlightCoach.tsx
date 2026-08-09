@@ -285,8 +285,19 @@ export default function SpotlightCoach({
     // touch shield below only exists alongside a VISIBLE scrim — this app has
     // been burned by invisible full-screen layers before; never again.
     <View style={styles.root} ref={rootRef} collapsable={false} pointerEvents="box-none">
+      {/* `tipH === 0` is load-bearing, not defensive. The scrim's darkness comes
+          from the sibling SVG, whose opacity only starts animating once the tip
+          has laid out — so between mount and that first layout this shield was a
+          FULLY TRANSPARENT full-screen touch blocker, and if a step's bubble
+          happened to lay out to the same height as the previous one, RN never
+          fires onLayout again and it stayed that way until the 30 s watchdog.
+          Invisible-and-dead is exactly "the screen sometimes stops responding,
+          then recovers on its own". */}
       {target != null && (
-        <View style={StyleSheet.absoluteFillObject} pointerEvents={isLeaving ? 'none' : 'auto'} />
+        <View
+          style={StyleSheet.absoluteFillObject}
+          pointerEvents={isLeaving || tipH === 0 ? 'none' : 'auto'}
+        />
       )}
       {target != null && (
         <Svg width={W} height={H} style={StyleSheet.absoluteFillObject} pointerEvents="none">

@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform, Pressable, Activity
 import Svg, { Path, G } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import Animated, { FadeIn, SlideInDown, Easing, useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
+import Animated, { FadeIn, Easing, useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
 import { ROSE, BTN_RADIUS, TXT, TXTSUB, P } from '../constants/theme';
 import { isConfigured } from '../constants/oauth';
 import { useAuth } from '../state/AuthContext';
@@ -87,6 +87,24 @@ export default function SignInSheet({ onClose, onError }: Props) {
     return () => { onShow.remove(); onHide.remove(); };
   }, []);
 
+  // Shared-value entrance + watchdog, NOT `entering=`.
+  //
+  // This is mounted at APP ROOT (LoginPromptHost), and its root view is a
+  // colourless alpha-1 absolute-fill: if a dropped layout animation left the
+  // backdrop at opacity 0, the whole app was invisibly untappable with the
+  // dismiss target inside an opacity-0 subtree. box-none below makes the root
+  // itself harmless; this makes the sheet actually arrive.
+  const backdropO = useSharedValue(0);
+  const enterY = useSharedValue(SHEET_TRAVEL);
+  useEffect(() => {
+    backdropO.value = withTiming(1, { duration: 300 });
+    enterY.value = withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) });
+    const wd = setTimeout(() => { backdropO.value = 1; enterY.value = 0; }, 1000);
+    return () => clearTimeout(wd);
+  }, [backdropO, enterY]);
+  const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropO.value }));
+  const enterStyle = useAnimatedStyle(() => ({ transform: [{ translateY: enterY.value }] }));
+
   // Android hardware BACK. Without this the press goes to the navigator, which
   // pops the screen (or exits to the launcher from the home tab) while this
   // scrim stays up over whatever is now underneath.
@@ -96,18 +114,13 @@ export default function SignInSheet({ onClose, onError }: Props) {
   }, [onClose]);
 
   return (
-    <View style={[styles.overlay, kbHeight ? { paddingBottom: kbHeight } : null]}>
+    <View style={[styles.overlay, kbHeight ? { paddingBottom: kbHeight } : null]} pointerEvents="box-none">
       <Animated.View
-        entering={FadeIn.duration(300)}
-        style={[StyleSheet.absoluteFillObject, styles.backdrop]}
+        style={[StyleSheet.absoluteFillObject, styles.backdrop, backdropStyle]}
       >
         <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={onClose} />
       </Animated.View>
-      {/* Inline (fresh) SlideInDown builder per render — NOT a shared
-          module-level instance. A reused builder fails to replay on
-          remount, leaving the sheet off-screen under the backdrop on
-          alternate opens (the bug fixed in ProfileScreen). */}
-      <Animated.View entering={SlideInDown.duration(500).delay(100).easing(Easing.out(Easing.cubic))} style={styles.sheet}>
+      <Animated.View style={[styles.sheet, enterStyle]}>
         <View style={styles.handle} />
 
         {signedInHere ? (
@@ -273,6 +286,8 @@ export default function SignInSheet({ onClose, onError }: Props) {
 //   • `disabled` greys nothing while THIS row is busy (the spinner is the
 //     signal) but dims the other rows so only one flow runs at a time.
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+// Entrance travel for the sheet. Generous: it only has to start off-screen.
+const SHEET_TRAVEL = 900;
 
 /**
  * The confirmation the sheet never had.

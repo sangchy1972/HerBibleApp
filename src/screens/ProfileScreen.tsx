@@ -4,7 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { areAdsRemoved } from '../services/ads';
 import { useTabFocusScrollReset } from '../components/shared/useTabFocusEntrance';
 import TabSection from '../components/shared/TabSection';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, Modal, Share, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, Modal, Share, Platform, Keyboard } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -494,6 +494,21 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
   }, [dlPending]);
 
   // Swipe-down-to-dismiss for the Bible-versions sheet.
+  // Keyboard lift for the ONE sheet on this screen with a text field. The app
+  // runs edge-to-edge on Android, so the window does not resize for the IME and a
+  // bottom-anchored sheet stays put: with autoFocus on, the field she is typing
+  // in AND the rose Save button were both behind the keyboard, so she typed blind
+  // into a sheet whose primary action she could not reach. Same listener
+  // SignInSheet uses for the identical, user-reported bug.
+  const [kbHeight, setKbHeight] = useState(0);
+  useEffect(() => {
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const onShow = Keyboard.addListener(showEvt, (e) => setKbHeight(e.endCoordinates?.height ?? 0));
+    const onHide = Keyboard.addListener(hideEvt, () => setKbHeight(0));
+    return () => { onShow.remove(); onHide.remove(); };
+  }, []);
+
   const transPan = useSheetPan(() => setShowTranslationPicker(false), showTranslationPicker);
   // Same for the Saved-verses sheet.
   const savedPan = useSheetPan(() => setShowSavedSheet(false), showSavedSheet);
@@ -885,7 +900,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
     )}
 
       {showEditNameSheet && (
-        <View style={styles.pickerOverlay}>
+        <View style={[styles.pickerOverlay, kbHeight ? { paddingBottom: kbHeight } : null]}>
           <SheetBackdrop onClose={() => setShowEditNameSheet(false)} />
           <GestureDetector gesture={editNamePan.gesture}>
           <Animated.View style={[styles.pickerSheet, editNamePan.sheetStyle]}>

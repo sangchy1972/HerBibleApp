@@ -54,6 +54,7 @@ export default function PlanSearchField({
           maxLength={64}
           // We draw our own clear button so it looks the same on both platforms.
           clearButtonMode="never"
+          maxFontSizeMultiplier={1.4}
           accessibilityLabel={t('planSearch.placeholder')}
         />
         {value.length > 0 && (
@@ -69,7 +70,9 @@ export default function PlanSearchField({
       </View>
       {active && (
         <TouchableOpacity onPress={onCancel} hitSlop={8} style={styles.cancelBtn}>
-          <Text style={styles.cancelText}>{t('common.cancel')}</Text>
+          {/* Capped: German "Abbrechen" at max Dynamic Type would squeeze the
+              flex:1 pill beside it down to a sliver. */}
+          <Text style={styles.cancelText} numberOfLines={1} maxFontSizeMultiplier={1.3}>{t('common.cancel')}</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -84,7 +87,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 9,
-    height: 44,
+    minHeight: 44,                 // minHeight, not height: at max Dynamic Type a
+    paddingVertical: 6,            // fixed 44 clips the input against the pill
     paddingHorizontal: 13,
     borderRadius: 12,
     backgroundColor: 'rgba(30,27,46,0.05)',

@@ -117,6 +117,49 @@ Related: `measureInWindow`'s window origin differs by device (Samsung/OneUI excl
 status bar). Measure the target **and** the overlay root in the same pass and subtract —
 never assume the window origin is the screen origin.
 
+### The seven rules for anything that floats (pre-release audit, 2026-08-09)
+A colourless, full-opacity, full-screen `View` with default `pointerEvents`
+**swallows** touches — it does not pass them through (`LoadingOverlay` proved this).
+Almost every overlay in this app is exactly that shape, with the dim colour on an
+*animated child*. So:
+
+1. **`pointerEvents="box-none"` on every overlay root.** Then the root itself can never
+   capture; only the backdrop (a deliberate dismiss target) and the sheet do. If an
+   entrance drops, the app stays usable instead of dead.
+2. **Never `entering=` / `exiting=` inside an RN `<Modal>`** — and every shared-value
+   entrance gets a **watchdog** that snaps it into place. `ShareVerseSheet` shipped for
+   months as `entering={SlideInDown}` inside a Modal: one dropped animation was a
+   screen-wide invisible shield in its own native window with no way out but relaunching.
+3. **The dismiss target must not live inside the animated wrapper.** On iOS a view with
+   `alpha <= 0.01` and its whole subtree are not hit-testable, so a backdrop stuck at
+   opacity 0 takes its own close button with it.
+4. **Every transient `<Modal>` must claim `useSheetSurface(open)`** — including the little
+   hint/menu/confirm ones. Presenting a second native window over one that is already
+   presenting is unrecoverable: RN sets `_isPresented = YES` before it knows UIKit
+   accepted, and its later dismiss then targets the wrong window.
+5. **Render a Modal's children conditionally, not just its `visible`.** On iOS
+   `_shouldShowModal()` is `visible || state.isRendered`, and `isRendered` clears only on
+   the native `onDismiss` — which never fires if `visible` flipped false before the
+   presentation finished. A stranded child that holds `useSheetSurface` leaves
+   `sheetDepth` at 1 and silences every prompt for the session.
+6. **A `pointerEvents` blocker must be gated on the thing that makes it VISIBLE**, not on
+   its own mount. Both spotlight shields were live while the scrim's opacity was still 0
+   — invisible-and-dead, exactly "the screen sometimes ignores me, then recovers".
+7. **Never arm a `BackHandler` on state that outlives the screen.** `BackHandler` runs
+   subscriptions last-registered-first, ahead of the navigator's, so a handler left armed
+   eats the first back press on every other screen in the app.
+
+### Keyboard
+`edgeToEdgeEnabled: true` means the Android window does **not** resize for the IME, and an
+absolutely-positioned overlay never moves on iOS either. Any bottom-anchored sheet with a
+`TextInput` therefore needs the live keyboard-height listener and `paddingBottom: kbHeight`
+— copy `SignInSheet`, which is the reference fix for exactly this (it was a reported P0,
+and `ProfileScreen`'s edit-name sheet then shipped with the same bug). `KeyboardAvoidingView`
+is not used in this repo; it was unreliable across Androids. Any scroll containing tappables
+while a keyboard is up needs `keyboardShouldPersistTaps="handled"`, or the first tap is
+swallowed as a dismissal. `Keyboard.dismiss()` alone leaves the input focused on Android —
+always `blur()` first if any state mirrors "the keyboard is up".
+
 ---
 
 ## 3. React / RN traps that have actually bitten us

@@ -15,8 +15,11 @@ import RNShare, { Social } from 'react-native-share';
 // only run it in builds that include OUR plist + queries (dev clients, EAS,
 // store builds), which is where it'll actually be correct.
 const IS_EXPO_GO = Constants.executionEnvironment === 'storeClient';
+// Entrance/exit travel. 800 is what the swipe-dismiss already animates to, so
+// one number covers both directions on every screen size.
+const SHEET_TRAVEL = 800;
 import ViewShot, { captureRef } from 'react-native-view-shot';
-import Animated, { FadeIn, SlideInDown, Easing } from 'react-native-reanimated';
+import Animated, { FadeIn, Easing } from 'react-native-reanimated';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
 import VerseCardArt, { VERSE_FORMATS, type VerseFormat } from './VerseCardArt';
@@ -98,8 +101,28 @@ export default function ShareVerseSheet({ reference, text, onClose, bgSource }: 
     square: null, portrait: null, story: null,
   });
 
-  // Swipe-down dismiss.
-  const dragY = useSharedValue(0);
+  // ONE shared value drives the entrance AND the swipe-down dismiss.
+  //
+  // This used to be `entering={SlideInDown}` on the sheet plus
+  // `entering={FadeIn}` on the backdrop — inside an RN <Modal>, which is the
+  // pattern this repo has banned twice (dev-guide §3): layout animations do not
+  // reliably run in a Modal on the new architecture. When one dropped, the root
+  // below was an alpha-1 colourless absolute-fill with the sheet 800px off-screen
+  // and the dismiss target inside an opacity-0 subtree — i.e. a screen-wide
+  // INVISIBLE touch shield in its own native window, with no way out but
+  // relaunching. CommentsSheet was converted for exactly this reason; this sheet
+  // was missed.
+  const dragY = useSharedValue(SHEET_TRAVEL);
+  const backdropO = useSharedValue(0);
+  useEffect(() => {
+    backdropO.value = withTiming(1, { duration: 180 });
+    dragY.value = withTiming(0, { duration: 360, easing: Easing.out(Easing.cubic) });
+    // Watchdog: a dropped timing on a saturated UI thread snaps into place
+    // instead of leaving the sheet off-screen (RatePromptSheet's pattern).
+    const wd = setTimeout(() => { backdropO.value = 1; dragY.value = 0; }, 900);
+    return () => clearTimeout(wd);
+  }, [backdropO, dragY]);
+  const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropO.value }));
   const pan = Gesture.Pan()
     .activeOffsetY(12)
     .onUpdate(e => { 'worklet'; if (e.translationY > 0) dragY.value = e.translationY; })
@@ -267,17 +290,19 @@ export default function ShareVerseSheet({ reference, text, onClose, bgSource }: 
   };
 
   return (
-    <View style={styles.overlay}>
+    // box-none, so the ROOT can never swallow a touch on its own — only the
+    // backdrop (a deliberate dismiss target) and the sheet capture. Without it a
+    // colourless full-screen View with default pointerEvents eats every touch
+    // instead of passing it through (proven in LoadingOverlay's own comment).
+    <View style={styles.overlay} pointerEvents="box-none">
       <Animated.View
-        entering={FadeIn.duration(180)}
-        style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.45)' }]}
+        style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.45)' }, backdropStyle]}
       >
         <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={onClose} />
       </Animated.View>
 
       <GestureDetector gesture={pan}>
         <Animated.View
-          entering={SlideInDown.duration(360).easing(Easing.out(Easing.cubic))}
           style={[styles.sheet, sheetStyle, { paddingBottom: insets.bottom + 8 }]}
         >{/* +22 → +8 — chops ~14 px of empty space below the button row (user said ~30 px total below is plenty) */}
           <View style={styles.handle} />
@@ -356,6 +381,9 @@ export default function ShareVerseSheet({ reference, text, onClose, bgSource }: 
             })}
           </View>
 
+          {/* The one `entering=` left in this file, and deliberately: it is a
+              transient confirmation INSIDE the sheet, so if the Modal drops it
+              the cost is an unseen toast — never a touch shield. */}
           {toast && (
             <Animated.View entering={FadeIn.duration(160)} style={styles.toast}>
               <Text style={styles.toastText}>{toast}</Text>

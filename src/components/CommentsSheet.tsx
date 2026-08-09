@@ -54,6 +54,12 @@ export default function CommentsSheet({ ymd, slot, count, onClose }: {
   useEffect(() => {
     backdropO.value = withTiming(1, { duration: 220 });
     sheetTY.value = withTiming(0, { duration: 420, easing: Easing.out(Easing.cubic) });
+    // Watchdog. Shared values are far more reliable than `entering=` in a Modal,
+    // but a cancelled timing would still leave an invisible backdrop over a
+    // sheet that is off-screen — inside a native window, so the whole app would
+    // be untappable with the dismiss target in an opacity-0 subtree.
+    const wd = setTimeout(() => { backdropO.value = 1; sheetTY.value = 0; }, 900);
+    return () => clearTimeout(wd);
   }, [backdropO, sheetTY]);
   const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropO.value }));
   const sheetAnim = useAnimatedStyle(() => ({ transform: [{ translateY: sheetTY.value }] }));

@@ -140,6 +140,13 @@ export default function AchievementUnlockSheet() {
     rise.value = withTiming(1, { duration: RISE_MS, easing: Easing.out(Easing.cubic) });
     badge.value = withDelay(RISE_MS, withTiming(1, { duration: BADGE_MS, easing: Easing.out(Easing.quad) }));
     rays.value = withDelay(RAYS_DELAY, withTiming(1, { duration: RAYS_MS, easing: Easing.inOut(Easing.quad) }));
+    // Watchdog — the only Modal-hosted entrance in the app that lacked one, and
+    // the worst one to lack it: this Modal is NOT `transparent`, so RN gives it a
+    // white container. A dropped `rise` therefore means a WHITE screen with
+    // opacity 0 content — nothing visible, nothing hit-testable, and iOS does not
+    // call onRequestClose for it. Force it into place instead.
+    const wd = setTimeout(() => { rise.value = 1; badge.value = 1; rays.value = 1; }, RAYS_DELAY + RAYS_MS + 400);
+    return () => clearTimeout(wd);
   }, [show, rise, badge, rays]);
 
   const riseStyle = useAnimatedStyle(() => ({

@@ -246,6 +246,13 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
     opacity.value = withTiming(0, { duration: 700, easing: Easing.in(Easing.quad) }, (fin) => {
       if (fin) runOnJS(onHide)();
     });
+    // Belt to the animation's braces. `hidingRef` makes this function single-shot,
+    // which also NEUTERS the MAX_VISIBLE_MS cap below once the fade has started —
+    // so if the completion callback is ever dropped, nothing else calls onHide,
+    // `loadingDone` stays false, setLaunchOverlayUp(true) is never cleared and
+    // promptSurfaceSafe() refuses every blocking prompt for the whole session.
+    // onHide is an idempotent setState, so calling it twice is free.
+    setTimeout(onHide, 900);
   }, [opacity, onHide]);
 
   // Stage 2 → app: play the verse for at least CONTENT_HOLD_MS, then leave — but

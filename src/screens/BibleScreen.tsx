@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
-  StyleSheet, ActivityIndicator, AppState, useWindowDimensions, PanResponder, Platform, Modal,
+  StyleSheet, ActivityIndicator, AppState, useWindowDimensions, PanResponder, Platform, Modal, BackHandler,
   type NativeSyntheticEvent, type NativeScrollEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -283,6 +283,16 @@ function SearchOverlay({
   const [progress, setProgress] = useState<SearchProgress | null>(null);
   const [done, setDone] = useState(false);
   const inputRef = useRef<TextInput>(null);
+
+  // Android hardware back closes SEARCH, not the screen. Without it back #1 was
+  // eaten by the IME and back #2 went to the navigator — leaving the tab (or
+  // exiting the app from a fresh stack) with this overlay still mounted over
+  // whatever was underneath. Same fix the Explore search carries; this overlay
+  // only exists while open, so the handler can never outlive it.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => { onClose(); return true; });
+    return () => sub.remove();
+  }, [onClose]);
 
   const bookResults = q ? books.filter(b => b.name.toLowerCase().includes(q.toLowerCase())) : null;
   const bookBySlug = (slug: string) => books.find(b => b.slug === slug);

@@ -256,6 +256,9 @@ export default function PlanScreen() {
   // be spent having taught nothing (the overlay would show a scrim with no hole
   // until its 30s watchdog fired). Disable the field and drop any live query.
   const guideBusy = guide.stage !== 'idle';
+  // Declared here, above every effect that reads it — a const referenced by an
+  // effect defined earlier in the file is a TDZ crash (dev-guide §3).
+  const tabFocused = useIsFocused();
   const blurSearch = useCallback(() => {
     setSearchFocused(false);
     searchRef.current?.blur();     // BEFORE dismiss: on Android the input keeps
@@ -271,8 +274,8 @@ export default function PlanScreen() {
   // `searchFocused` stays true for a field that no longer exists — and the
   // global sheetDepth stays held. Her query survives; only the focus does not.
   useEffect(() => {
-    if (tab !== 'explore') blurSearch();
-  }, [tab, blurSearch]);
+    if (tab !== 'explore' || !tabFocused) blurSearch();
+  }, [tab, tabFocused, blurSearch]);
   // Hold the prompt surface while the FIELD IS FOCUSED on a focused tab. `plan` IS
   // in TAB_ROUTES, so without this a nudge can paint over a live search field
   // with the keyboard up — and QuizPromoHost is a real RN <Modal>, i.e. a native
@@ -288,7 +291,6 @@ export default function PlanScreen() {
   //     leaks the count and silences EVERY blocking prompt in the app (mood,
   //     login, widget, rate, both guides, badge unlocks) for the rest of the
   //     session. Same failure the Follow-Him gate caused in 2026-08-08.
-  const tabFocused = useIsFocused();
   useSheetSurface(searchFocused && tabFocused);
   // 180ms — the catalog is 113 bundled objects, so this is not protecting the
   // main thread (a full pass is sub-millisecond), it stops the list flickering
@@ -328,14 +330,22 @@ export default function PlanScreen() {
   // results still on screen. The guide clears the query before it shows, so this
   // and SpotlightCoach's own handler are never armed at the same time.
   useEffect(() => {
-    if (!searchActive) return;
+    // `tabFocused && tab === 'explore'` is the whole point. Gating on
+    // `searchActive` alone was a real bug: PlanScreen never unmounts and the query
+    // deliberately survives navigation, so a word left in the field kept this
+    // handler registered while she was on a plan detail, a category, or another
+    // tab entirely — and BackHandler runs subscriptions LAST-REGISTERED-FIRST,
+    // ahead of the navigator's own. Every one of those screens lost its first
+    // back press, and that press silently wiped her query. Same lesson as the
+    // sheetDepth hold two effects up: never gate on "there is text".
+    if (!searchActive || !tabFocused || tab !== 'explore') return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       setQuery('');
       blurSearch();
       return true;
     });
     return () => sub.remove();
-  }, [searchActive, blurSearch]);
+  }, [searchActive, tabFocused, tab, blurSearch]);
 
   const openedSearchRef = useRef(false);
   const onSearchFocus = () => {

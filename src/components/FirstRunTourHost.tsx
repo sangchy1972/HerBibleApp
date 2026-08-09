@@ -439,7 +439,18 @@ export default function FirstRunTourHost() {
           Once we're leaving it stops intercepting: if anything ever strands the
           exit, a stuck scrim is then cosmetic rather than a frozen app, which is
           the guarantee this file's header promises. */}
-      <View style={StyleSheet.absoluteFillObject} pointerEvents={isLeaving ? 'none' : 'auto'} />
+      {/* `tipH === 0` is load-bearing, not defensive. The scrim's darkness comes
+          from the sibling SVG, whose opacity only starts animating once the tip
+          has laid out — so between mount and that first layout this shield was a
+          FULLY TRANSPARENT full-screen touch blocker, and if a step's bubble
+          happened to lay out to the same height as the previous one, RN never
+          fires onLayout again and it stayed that way until the 30s watchdog.
+          Invisible-and-dead is the exact symptom of "the home screen sometimes
+          stops responding, then recovers". */}
+      <View
+        style={StyleSheet.absoluteFillObject}
+        pointerEvents={isLeaving || tipH === 0 ? 'none' : 'auto'}
+      />
       <Svg
         width={W}
         height={H}

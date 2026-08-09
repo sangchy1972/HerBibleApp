@@ -8,6 +8,7 @@ import Animated, {
 import Feather from '@expo/vector-icons/Feather';
 import { useIsFocused } from '@react-navigation/native';
 import { ROSE, BTN_RADIUS, TXT, TXTSUB, FONTS } from '../../constants/theme';
+import { useSheetSurface } from '../../state/promptSurface';
 import { useT } from '../../i18n/useT';
 import { RHYTHM_STEPS, isRhythmStepDone, packedRhythmFill, type RhythmDotState } from '../../state/dailyRhythm';
 
@@ -353,6 +354,17 @@ export default function DailyRhythmBar({
       withTiming(1, { duration: 120, easing: Easing.out(Easing.quad) }),
     );
   }, [celebOpen, celebScale]);
+  // The Modal is rendered as `{celebrate && <Modal visible={celebOpen}>}`, and
+  // `celebrate` disappears the moment the rhythm leaves waitEvening (18:00
+  // arrives, the evening prayer completes, the clock ticks). That unmounts the
+  // Modal but left `celebOpen` true on a screen that never unmounts — so the
+  // dialog presented itself unprompted the next time waitEvening came round, with
+  // no pop-in animation (the effect above is keyed on a value that never changed).
+  useEffect(() => { if (!celebrate) setCelebOpen(false); }, [celebrate]);
+  // Both of this component's Modals claim the prompt surface while presented. A
+  // nudge granted on top would present a second native window over one that is
+  // already presenting — see the note in PrayerScreen.
+  useSheetSurface(!!hint || celebOpen);
   const celebStyle = useAnimatedStyle(() => ({ transform: [{ scale: celebScale.value }] }));
 
   const handlePress = () => {

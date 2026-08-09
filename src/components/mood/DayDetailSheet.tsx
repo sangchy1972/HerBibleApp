@@ -49,18 +49,29 @@ export default function DayDetailSheet({ dateKey, onClose }: { dateKey: string; 
 
   const backdropO = useSharedValue(0);
   const sheetTY = useSharedValue(SCREEN_H);
+  const [closing, setClosing] = useState(false);
   useEffect(() => {
     backdropO.value = withTiming(1, { duration: 200 });
     sheetTY.value = withTiming(0, { duration: 380, easing: Easing.out(Easing.cubic) });
+    const wd = setTimeout(() => { backdropO.value = 1; sheetTY.value = 0; }, 800);
+    return () => clearTimeout(wd);
   }, [backdropO, sheetTY]);
   const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropO.value }));
   const sheetAnim = useAnimatedStyle(() => ({ transform: [{ translateY: sheetTY.value }] }));
 
   const dismiss = () => {
+    if (closing) return;
+    setClosing(true);
     backdropO.value = withTiming(0, { duration: 180 });
     sheetTY.value = withTiming(SCREEN_H, { duration: 240, easing: Easing.in(Easing.cubic) }, (fin) => {
       if (fin) runOnJS(onClose)();
     });
+    // Exit watchdog. Without it a dropped callback left the sheet off-screen with
+    // an opacity-0 backdrop that STILL captured touches (a zero-opacity view is
+    // hit-testable on Android), so the next tap anywhere was eaten — and
+    // useSheetSurface(true) kept holding the prompt surface the whole time.
+    // MoodCheckInSheet, its sibling, has had both this and the `closing` gate.
+    setTimeout(onClose, 700);
   };
 
   const [y, m, d] = dateKey.split('-').map(Number);
@@ -77,8 +88,11 @@ export default function DayDetailSheet({ dateKey, onClose }: { dateKey: string; 
   };
 
   return (
-    <View style={styles.overlay}>
-      <Animated.View style={[StyleSheet.absoluteFillObject, styles.backdrop, backdropStyle]}>
+    <View style={styles.overlay} pointerEvents="box-none">
+      <Animated.View
+        style={[StyleSheet.absoluteFillObject, styles.backdrop, backdropStyle]}
+        pointerEvents={closing ? 'none' : 'auto'}
+      >
         <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={dismiss} />
       </Animated.View>
 

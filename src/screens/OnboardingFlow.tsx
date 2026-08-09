@@ -479,7 +479,14 @@ export default function OnboardingFlow({ onDone }: { onDone: () => void }) {
       )}
 
       <Animated.View key={step} entering={FadeInDown.duration(300)} style={styles.content}>
-        <ScrollView ref={langScrollRef} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        {/* "handled" — the e-mail step has a text field, and with the default
+            ('never') her first tap on Send is swallowed as a keyboard dismissal. */}
+        <ScrollView
+          ref={langScrollRef}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scroll}
+        >
 
           {stepName === 'language' && (
             <>

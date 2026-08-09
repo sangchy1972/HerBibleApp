@@ -644,6 +644,25 @@ Full procedure in `docs/release-build-runbook.md`. The parts that get forgotten:
   (notifee maven, KGP pin, fbsdk placeholders — the app crashes without those).
 - `play-service-account.json` is only needed for `eas submit -p android`.
 
+### Play's "recommended actions" — what we deliberately do NOT do
+Checked 2026-08-09 against v1.2.0. Three of the four are noise or product decisions;
+re-deriving this costs an hour, so it is written down.
+
+| Play says | Verdict |
+|---|---|
+| **Deprecated edge-to-edge APIs** (`Window.get/setStatusBarColor`, `setNavigationBarColor`) | **Nothing of ours to change.** Every named call site is inside React Native — `StatusBarModule$b.runGuarded`, `StatusBarModule.getTypedExportedConstants`, `WindowUtilKt.enableEdgeToEdge`. Verified: `app.json` sets no `androidStatusBar` / `androidNavigationBar`, and the app's only StatusBar usage is `<StatusBar style="dark" />` (content style, not a colour). Deprecated ≠ broken: under edge-to-edge on Android 15 those setters are already no-ops, which is *why* RN calls `enableEdgeToEdge`. Goes away when RN does. |
+| **Remove orientation/resizability restrictions for large screens** | Real, but a **product decision**, not a checkbox. `orientation: "portrait"` + `ios.supportsTablet: false` is the design, and every layout rule here assumes portrait phone widths. From Android 16 large screens ignore the restriction, so the consequence is that our layouts must merely *survive* landscape on a tablet/foldable — phones still honour portrait. Making the app genuinely landscape-capable is a project; do not start it inside a release. |
+| **Bitmap image optimization** | **Already satisfied.** The puzzle collection grid uses the 420 px `thumb/` variant (`artThumbSource`); the 1200 px `full/` is only the detail view, the board and the share card. Glide *and* Fresco both appear because RN uses Fresco and a native dependency (widget / notifee) bundles Glide. Generic advice. |
+| **R8 optimization** | "Optimization isn't enabled" means R8 **full mode** (Expo's default is compat); we already set `enableProguardInReleaseBuilds` + `enableShrinkResourcesInReleaseBuilds`. Full mode can strip what reflection-based libs need (Firebase, Reanimated, Notifee, Play Billing) and is only provable by building and exercising the app on a device. AGP 9.0 is not available on Expo SDK 54 either. **Never inside a release window** — its own build + test pass, or not at all. |
+
+### Reading ANRs
+Play's issue clusters only cover the ANRs it could collect a trace for. On v1.2.0 the
+CSV export (Android vitals → the metric's ⋮ → Download CSV) showed **12** user-perceived
+ANRs while the issue list showed **2**. Always export the CSV for the real volume, and go
+to **Firebase Crashlytics** for the traces — it captures Android ANRs automatically via
+`ApplicationExitInfo` on API 30+, and `@react-native-firebase/crashlytics` is already
+wired with collection enabled.
+
 ---
 
 ## 13. Mistakes ledger

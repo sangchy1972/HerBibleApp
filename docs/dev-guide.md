@@ -597,7 +597,16 @@ onboarding's paywall step in `OnboardingFlow`.
 - Permission is asked behind an **in-app rationale**, never cold. We cannot query
   "would the OS grant this?" — only whether it already is granted, which is what
   `permissionGranted` means.
-- Reminder re-ask: **daily** (see §4), not an escalating gap.
+- Reminder re-ask: **daily** (see §4), not an escalating gap — but it stops for good
+  once she picks a time. `SetReminderTimeContext.markConfigured()` is what stops it;
+  it shipped unwired for months, so every prayer re-offered a time she had already
+  set. Anything that lets her choose a schedule must call it.
+- **"Has she scheduled a reminder" and "did the OS grant permission" are two
+  different questions.** Gate the *set a time* ask on the schedule only; a denied
+  permission must not make the app ask her to set a time she already set. When
+  `enableReminderAt` returns false, escalate to the notification rationale — that is
+  the screen that knows how to handle both a fresh OS dialog and a permanently
+  denied one (system Settings), and it preserves the time she picked.
 - Follow-Him is a **pre-tab full-screen gate** for notifications-off users, re-derived
   on every foreground. It replaces the tab tree, which unmounts every home-hosted
   trigger — hence the coordinator's safety valve. It must not silence the coordinator

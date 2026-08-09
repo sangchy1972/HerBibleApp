@@ -124,8 +124,14 @@ export default function WeeklyProgressView({
   // Reminders already active? (OS permission granted AND a daily slot enabled.)
   // If so, we hide the "Open Daily Verse Reminder" CTA entirely — no point
   // nudging a user who's already set up.
-  const { permissionGranted, settings } = useNotifications();
-  const remindersOn = permissionGranted && (settings.morning.enabled || settings.night.enabled);
+  // Gated on "is a reminder SCHEDULED", not on "is permission granted" (owner
+  // 2026-08-09). With the permission in it, a user who picked a time but whose OS
+  // permission was denied was offered "Set a Daily Prayer Reminder" again after
+  // every single prayer — for a time she had already chosen. The missing piece in
+  // that state is permission, and PrayerFlow now escalates to the notification
+  // rationale at the moment it fails, which is where that ask belongs.
+  const { settings } = useNotifications();
+  const remindersOn = settings.morning.enabled || settings.night.enabled;
 
   // Day completion is what drives the hero + today's calendar glyph — NOT which
   // slot was just prayed. Per user: the FIRST prayer of the day (morning OR

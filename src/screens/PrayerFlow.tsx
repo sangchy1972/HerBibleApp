@@ -26,6 +26,7 @@ import { usePrayer } from '../state/PrayerContext';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useNotes } from '../state/NotesContext';
 import { useNotifications } from '../state/NotificationsContext';
+import { useSetReminderTime } from '../state/SetReminderTimeContext';
 import { useActivity } from '../state/ActivityContext';
 import { useDailyVerses } from '../state/DailyVersesContext';
 import { useTranslation } from '../state/TranslationsContext';
@@ -300,6 +301,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const { markToday } = useActivity();
   const { notifRationaleShown, markNotifRationaleShown } = useOnboarding();
   const { enableReminderAt, permissionGranted } = useNotifications();
+  const { markConfigured: markReminderConfigured } = useSetReminderTime();
   const { kind } = route.params;
   const morning = kind === 'morning';
   // Past-day replay: when a specific `day` is passed (from See Past Days), we
@@ -939,10 +941,36 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
 
   // Set the daily reminder to the chosen time + request permission, then close
   // the sheet back to the weekly screen.
+  // Arm the slot matching the prayer she just finished (morning vs night).
+  //
+  // Two bugs lived in the four lines this replaces, both reported by the owner:
+  //
+  //  1. The `granted` result was thrown away. enableReminderAt DOES ask the OS,
+  //     but when she declines — or when canAskAgain is already false, so no
+  //     dialog can even appear — it persists `enabled: true` and returns false,
+  //     and we closed the sheet as if it had worked. She picked 21:30 and got a
+  //     reminder that will never fire, with nothing anywhere saying so. Now a
+  //     false result escalates to the in-app rationale, which is the screen that
+  //     knows how to handle both cases (fresh OS dialog, or straight to system
+  //     Settings when the OS won't show one). It preserves the time she picked —
+  //     requestPermissionAndEnableDefaults spreads the existing settings and only
+  //     flips `enabled`.
+  //
+  //  2. Nothing ever called markConfigured(), even though SetReminderTimeContext
+  //     has carried that flag — and a header comment promising "once configured
+  //     we never nag again" — since it was written. So every later prayer asked
+  //     her to set a time she had already set. She has done her part the moment
+  //     she picks a time; what may still be missing is PERMISSION, which is a
+  //     different question and gets its own ask. Burn the flag either way.
   const handleHabitConfirm = async (hour: number, minute: number) => {
-    // Arm the slot matching the prayer the user just finished (morning vs night).
-    try { await enableReminderAt(morning ? 'morning' : 'night', hour, minute); } catch { /* API may throw on unsupported runtimes */ }
+    let granted = false;
+    try { granted = await enableReminderAt(morning ? 'morning' : 'night', hour, minute); } catch { granted = false; }
+    markReminderConfigured();
     handleSheetClose();
+    // After the sheet's own close animation, never during it: the rationale is a
+    // full-screen absolute-fill sibling, and stacking it on a closing overlay is
+    // how this repo has swallowed screens before.
+    if (!granted) setTimeout(() => setShowNotifRationale(true), 300);
   };
 
   const handleWeeklyBack = () => {

@@ -145,7 +145,16 @@ Almost every overlay in this app is exactly that shape, with the dim colour on a
 6. **A `pointerEvents` blocker must be gated on the thing that makes it VISIBLE**, not on
    its own mount. Both spotlight shields were live while the scrim's opacity was still 0
    — invisible-and-dead, exactly "the screen sometimes ignores me, then recovers".
-7. **Never arm a `BackHandler` on state that outlives the screen.** `BackHandler` runs
+7. **Never put a translucent `backgroundColor` on a view that also has
+   `elevation`.** Android's elevation shadow takes its outline from the view's
+   background drawable, so a full-screen dim with `elevation: 60` casts a 60dp-scale
+   shadow whose penumbra bleeds *inside* its own left and right edges — and at 45 %
+   opacity you see it through itself: symmetric dark vertical bands over the content,
+   lighter in the middle (owner photographed it on the widget dialog, 2026-08-09).
+   Put the dim on the backdrop child; a background-less view has an empty outline and
+   casts nothing, while still taking part in elevation ordering. Rule 1 already asks
+   for that shape, which is why only the two hosts that predated it were affected.
+8. **Never arm a `BackHandler` on state that outlives the screen.** `BackHandler` runs
    subscriptions last-registered-first, ahead of the navigator's, so a handler left armed
    eats the first back press on every other screen in the app.
 

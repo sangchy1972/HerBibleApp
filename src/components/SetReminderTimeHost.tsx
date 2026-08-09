@@ -122,8 +122,8 @@ export default function SetReminderTimeHost() {
 
 
   return (
-    <View style={styles.overlay}>
-      <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={dismiss} />
+    <View style={styles.overlay} pointerEvents="box-none">
+      <TouchableOpacity style={[StyleSheet.absoluteFill, styles.backdrop]} activeOpacity={1} onPress={dismiss} />
       <Animated.View entering={FadeIn.duration(200)} style={styles.card}>
         <View style={styles.icon}><Feather name="bell" size={26} color={ROSE} /></View>
         <Text style={styles.title}>{t('nudge.setReminder.title')}</Text>
@@ -140,7 +140,24 @@ export default function SetReminderTimeHost() {
 }
 
 const styles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, zIndex: 60, elevation: 60, backgroundColor: 'rgba(20,12,24,0.45)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
+  // The dim lives on the BACKDROP CHILD, never on this elevated root — and that
+  // is not a style preference, it is the fix for a real artifact the owner
+  // photographed. On Android `elevation` draws an ambient + spot shadow whose
+  // outline comes from the view's BACKGROUND DRAWABLE. Give one full-screen view
+  // both a background and elevation: 60 and Android renders a 60dp-scale shadow
+  // whose penumbra bleeds INSIDE the left and right edges of that outline — and
+  // because the view is only 45 % opaque you see it through itself: symmetric
+  // dark vertical bands hugging both edges, lighter in the middle, over whatever
+  // is behind. A background-less view has an empty outline and casts no shadow,
+  // while still taking part in elevation-based draw ordering, so the ordering
+  // this overlay needs is unaffected. This is the shape the other five overlays
+  // in the app already use (MoodCheckInSheet, SignInSheet, AudioMiniHost,
+  // FirstRunTourHost, SpotlightCoach) — these two were the only exceptions.
+  //
+  // box-none for the reason in dev-guide §2: the root must never capture on its
+  // own. The backdrop below is the deliberate dismiss target.
+  overlay: { ...StyleSheet.absoluteFillObject, zIndex: 60, elevation: 60, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
+  backdrop: { backgroundColor: 'rgba(20,12,24,0.45)' },
   card: { width: '100%', backgroundColor: '#FFFFFF', borderRadius: 20, paddingTop: 24, paddingBottom: 16, paddingHorizontal: 22, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 24, elevation: 8 },   // 22 → 28.6 (+30 % card radius per user)
   icon: { width: 56, height: 56, borderRadius: 28, backgroundColor: `${ROSE}16`, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
   title: { fontSize: 20, fontWeight: '600', fontFamily: FONTS.loraBold, color: TXT, textAlign: 'center', marginBottom: 8 },

@@ -26,7 +26,7 @@ import { shareCard, saveCard } from '../../services/cardShare';
 // TIMING IS DELIBERATELY SLOW (~7s tap-to-readable), after two rounds of the
 // owner asking for slower. A draw costs three completed sets, so the ceremony
 // is proportionate to what it took. It is still fully skippable, because the
-// same person sees it about once a day, and 22 times in total before the quiz
+// same person sees it about once a day, and 43 times in total before the quiz
 // retires against today's bank.
 //
 // Phases:
@@ -140,7 +140,7 @@ export default function MysteryDrawOverlay({
   }, [drawCard, resolveDrawPick]);
 
   // Any tap during reveal or typing jumps to the end state. She will see this
-  // ~22 times in all; an animation with no way out becomes the thing she dreads about
+  // 43 times in all; an animation with no way out becomes the thing she dreads about
   // finishing a set. The tap target is the whole screen, not just a button —
   // wherever her thumb lands should work.
   const skip = useCallback(() => {

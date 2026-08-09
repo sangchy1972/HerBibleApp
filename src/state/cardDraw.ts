@@ -11,7 +11,7 @@
 // come up as candidates again.
 //
 // Consuming all four would look tidier and is wrong: it burns the pool at 4x
-// and caps the feature at 10 draws instead of 40.
+// and caps the feature at 10 draws instead of 43.
 //
 // WHY CANDIDATES ARE DETERMINISTIC
 // ================================

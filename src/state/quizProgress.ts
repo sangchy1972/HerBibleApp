@@ -66,6 +66,32 @@ export function paintingFinishedBy(
   return tileInPainting + 1 >= tilesOfPainting(paintingIndex, art, last) ? paintingIndex : null;
 }
 
+/**
+ * Where tile `i` sits, as FRACTIONS of the board — every field is 0..1 and
+ * every caller multiplies by w or h.
+ *
+ * TWO layouts, because the last painting is a DIPTYCH. Four tiles are the usual
+ * 2x2 quarters; two are LEFT and RIGHT halves, full height — a diptych split
+ * horizontally is what the form actually is, and stacking them would read as a
+ * 2x2 board with half of it missing.
+ *
+ * The first cut returned tile INDICES here (fx = i % 2, i.e. 0 or 1) while the
+ * callers went on multiplying by the full width. Every offset came out 2x too
+ * large, the board's overflow:hidden swallowed tiles 1-3, and the result was
+ * that on ALL 33 paintings only the top-left quarter was ever washed or locked
+ * — the other three showed at full colour, unearned — while the fresh-tile ring
+ * and reveal animation played off-canvas for three sets in every four. tsc
+ * cannot see it (everything is `number`).
+ *
+ * It lives HERE rather than in PuzzleBoard for the reason everything else in
+ * this file does: node-environment jest cannot render the component, so
+ * geometry left inside it is geometry nothing can check.
+ */
+export function tileRect(i: number, count: number) {
+  if (count === 2) return { fx: i / 2, fy: 0, fw: 1 / 2, fh: 1 };
+  return { fx: (i % 2) / 2, fy: Math.floor(i / 2) / 2, fw: 1 / 2, fh: 1 / 2 };
+}
+
 /** Painting and tile-within-it for a 0-based tile ordinal. */
 function locate(tileOrdinal: number, artCount: number, lastTiles: number) {
   const art = Math.max(1, Math.floor(artCount) || 1);

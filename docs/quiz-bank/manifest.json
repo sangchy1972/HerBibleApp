@@ -1,48 +1,48 @@
 {
- "v": 1,
- "bankVersion": 2,
- "languages": {
-  "de": {
-   "file": "quiz-de.json",
-   "count": 327,
-   "bytes": 59576,
-   "sha256": "d777ba92d90a71be"
-  },
-  "en": {
-   "file": "quiz-en.json",
-   "count": 327,
-   "bytes": 63154,
-   "sha256": "59c9071930e69b91"
-  },
-  "es": {
-   "file": "quiz-es.json",
-   "count": 327,
-   "bytes": 62406,
-   "sha256": "a1a98033eeb32b8b"
-  },
-  "fr": {
-   "file": "quiz-fr.json",
-   "count": 327,
-   "bytes": 62276,
-   "sha256": "57cd16ece2823516"
-  },
-  "pt": {
-   "file": "quiz-pt.json",
-   "count": 327,
-   "bytes": 60878,
-   "sha256": "0f902da3cc384582"
-  },
-  "zh-Hans": {
-   "file": "quiz-zh-Hans.json",
-   "count": 327,
-   "bytes": 58419,
-   "sha256": "dc38db99605c573c"
-  },
-  "zh-Hant": {
-   "file": "quiz-zh-Hant.json",
-   "count": 327,
-   "bytes": 58416,
-   "sha256": "16be1d41d9213a34"
+  "v": 1,
+  "bankVersion": 3,
+  "languages": {
+    "de": {
+      "file": "quiz-de.json",
+      "count": 650,
+      "bytes": 100556,
+      "sha256": "3c4438eed9a3d7d8"
+    },
+    "en": {
+      "file": "quiz-en.json",
+      "count": 650,
+      "bytes": 94522,
+      "sha256": "ce602ef48b5eec02"
+    },
+    "es": {
+      "file": "quiz-es.json",
+      "count": 650,
+      "bytes": 101496,
+      "sha256": "00306ea031470ede"
+    },
+    "fr": {
+      "file": "quiz-fr.json",
+      "count": 650,
+      "bytes": 103044,
+      "sha256": "696e7d04d747a7c5"
+    },
+    "pt": {
+      "file": "quiz-pt.json",
+      "count": 650,
+      "bytes": 97746,
+      "sha256": "389489c6889b8710"
+    },
+    "zh-Hans": {
+      "file": "quiz-zh-Hans.json",
+      "count": 650,
+      "bytes": 93005,
+      "sha256": "691ac7bef807faac"
+    },
+    "zh-Hant": {
+      "file": "quiz-zh-Hant.json",
+      "count": 650,
+      "bytes": 93005,
+      "sha256": "8e2080aba0167122"
+    }
   }
- }
 }

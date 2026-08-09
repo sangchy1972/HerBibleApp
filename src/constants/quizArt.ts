@@ -15,11 +15,12 @@ import type { LanguageCode } from '../state/TranslationsContext';
 // puzzleView unlocks these by index, so she walks scripture in sequence as she
 // plays - worth more than any arrangement by artist or by date.
 //
-// HOW MANY. 650 questions = 130 sets per bank cycle, 4 sets per painting. 24
-// paintings = 96 sets, so the art outlasts a full pass through every question
-// with room over. 74 would have been four and a half cycles of art nobody
-// reaches, at
-// four times the translation cost.
+// HOW MANY. 650 questions = 130 sets. Thirty-two four-tile boards absorb 128,
+// so the 33rd and last is a two-tile DIPTYCH and the totals meet exactly -- see
+// LAST_ART_TILES below. Nothing is left over in either direction, which is the
+// point and also why adding a 34th requires growing the bank first. The source
+// set held 74; the rest were art nobody would reach, at four times the
+// translation cost.
 //
 // PUBLIC DOMAIN. Every artist died before 1900, and all 33 photographs come
 // from Wikimedia Commons rather than from museum sites - several museums

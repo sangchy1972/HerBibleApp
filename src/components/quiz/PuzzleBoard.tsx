@@ -6,20 +6,7 @@ import Animated, {
 import Svg, { Line, Rect, Path } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
 import { ROSE, INK_06, TXT, TXTSUB, FONTS } from '../../constants/theme';
-import { TILES_PER_PAINTING } from '../../state/quizProgress';
-
-/**
- * Where tile `i` sits, as fractions of the board.
- *
- * TWO layouts, because the last painting is a DIPTYCH. Four tiles are the usual
- * 2x2 quarters; two are LEFT and RIGHT halves, full height — a diptych split
- * horizontally is what the form actually is, and stacking them would read as a
- * 2x2 board with half of it missing.
- */
-function tileRect(i: number, count: number) {
-  if (count === 2) return { fx: i, fy: 0, fw: 1 / 2, fh: 1 };
-  return { fx: i % 2, fy: Math.floor(i / 2), fw: 1 / 2, fh: 1 / 2 };
-}
+import { TILES_PER_PAINTING, tileRect } from '../../state/quizProgress';
 import { artworkAt, artSource, artTitle, artArtist } from '../../constants/quizArt';
 import { useUILanguage } from '../../state/UILanguageContext';
 

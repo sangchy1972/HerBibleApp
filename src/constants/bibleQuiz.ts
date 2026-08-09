@@ -1,7 +1,7 @@
 // Bible quiz — types + CDN location. The APK ships NO questions.
 //
-// The bank is 327 questions in 7 languages (~60 KB each). Bundling all seven
-// would put ~420 KB of dead weight in every binary; bundling only English would
+// The bank is 650 questions in 7 languages (~95 KB each). Bundling all seven
+// would put ~665 KB of dead weight in every binary; bundling only English would
 // mean a Spanish user downloads a bank she can't read. So the client fetches
 // exactly the one language it needs, once, and caches it — the same shape as
 // the badge art and the plan corpus.
@@ -86,9 +86,10 @@ export const QUIZ_BANK_VERSION = 3;
  * breaks is the budget arithmetic — which is exactly the thing that must not
  * drift quietly, hence the test.
  *
- * At 650 the collections are finally all reachable: 130 sets unlock 32 paintings
- * (24 exist) and 43 cards (40 exist). The old 327 stranded them at 16/24 and
- * 22/40 — a ceiling a daily player hit in about three weeks.
+ * At 650 the collections are exactly reachable: 130 sets unlock 33 paintings
+ * (33 exist) and 43 cards (43 exist), with the last of each landing on set 130.
+ * The old 327 stranded them at 16/24 and 22/40 — a ceiling a daily player hit
+ * in about three weeks. There is now no slack in either direction.
  */
 export const QUIZ_BANK_SIZE = 650;
 

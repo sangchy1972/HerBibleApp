@@ -61,9 +61,14 @@ done
 
 # Guard against pointing this at _processed by habit. 74 uploads would cost
 # nothing but would leave the bucket disagreeing with the app.
+#
+# Keep EXPECTED in step with QUIZ_ART_COUNT. It has now been stale twice — the
+# prose above it was updated 24 -> 32 -> 33 while this line was not, and a stale
+# guard does not warn, it refuses to upload anything at all.
+EXPECTED=33
 n_full="$(find "$SRC/full" -name '*.jpg' | wc -l | tr -d ' ')"
-if [ "$n_full" != "24" ]; then
-  echo "expected 24 paintings in $SRC/full, found ${n_full}."
+if [ "$n_full" != "$EXPECTED" ]; then
+  echo "expected ${EXPECTED} paintings in $SRC/full, found ${n_full}."
   echo "The curated set lives in _upload-to-r2/v1/art; _processed is the raw 74."
   exit 1
 fi

@@ -10,7 +10,7 @@ import { useT } from '../../i18n/useT';
 import QuizSegmentRing from './QuizSegmentRing';
 import PuzzleBoard from './PuzzleBoard';
 import MysteryRewardBar from './MysteryRewardBar';
-import { rewardPreview, MYSTERY_EVERY, TILES_PER_PAINTING } from '../../state/quizProgress';
+import { rewardPreview, MYSTERY_EVERY } from '../../state/quizProgress';
 import { drawEarnedAt } from '../../state/cardDraw';
 import { DAILY_SET_LIMIT } from '../../state/quizHistory';
 import { QUIZ_ART_COUNT, LAST_ART_TILES } from '../../constants/quizArt';

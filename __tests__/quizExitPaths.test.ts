@@ -19,10 +19,15 @@
 // which is why the old 1500 ms safety net is gone.
 
 import { drawEarnedAt } from '../src/state/cardDraw';
-import { MYSTERY_EVERY, TILES_PER_PAINTING } from '../src/state/quizProgress';
-import { QUIZ_ART_COUNT } from '../src/constants/quizArt';
+import {
+  MYSTERY_EVERY, TILES_PER_PAINTING, totalTiles, paintingFinishedBy,
+} from '../src/state/quizProgress';
+import { QUIZ_ART_COUNT, LAST_ART_TILES } from '../src/constants/quizArt';
 import { quizLifecycle, reachableSets } from '../src/state/quizLifecycle';
 import { QUIZ_BANK_SIZE } from '../src/constants/bibleQuiz';
+
+/** Sets the shipping bank yields. The reward tail is measured from it. */
+const TOTAL_SETS = reachableSets(QUIZ_BANK_SIZE);
 
 /** The base layer after a commit — mirrors open()'s refusals. */
 type Base = 'nextSet' | 'dailyCap' | 'done';
@@ -32,15 +37,21 @@ function baseAfterCommit(committed: number, setsUsedToday: number, dailyLimit = 
   return 'nextSet';
 }
 
-/** Celebrations the commit stacks on top. Mirrors onNextLevel + the grant effect. */
+/**
+ * Celebrations the commit stacks on top. Mirrors onNextLevel + the grant effect.
+ *
+ * Calls the SAME functions the screen calls. It used to re-implement them
+ * (`committed % TILES_PER_PAINTING === 0`), which meant that when the screen
+ * moved to paintingFinishedBy for the diptych, this file went on pinning a rule
+ * nothing implemented any more — a guard that passes and guards nothing.
+ */
 function celebrationsAfterCommit(committedBefore: number) {
   const committed = committedBefore + 1;
-  const pIdx = committed / TILES_PER_PAINTING - 1;
   return {
-    painting: committed % TILES_PER_PAINTING === 0 && pIdx < QUIZ_ART_COUNT,
+    painting: paintingFinishedBy(committed, QUIZ_ART_COUNT, LAST_ART_TILES) != null,
     // The grant CLEARS the dismissed latch (prevPending effect in the screen),
     // so an earned draw always opens — earlier dismissal notwithstanding.
-    draw: drawEarnedAt(committed, MYSTERY_EVERY),
+    draw: drawEarnedAt(committed, MYSTERY_EVERY, TOTAL_SETS),
   };
 }
 
@@ -80,8 +91,18 @@ describe('celebrations stack, never own', () => {
   });
 
   it('past the last painting, no phantom celebration replays', () => {
-    const beyond = QUIZ_ART_COUNT * TILES_PER_PAINTING;      // first commit past the art
-    expect(celebrationsAfterCommit(beyond + TILES_PER_PAINTING - 1).painting).toBe(false);
+    const beyond = totalTiles(QUIZ_ART_COUNT, LAST_ART_TILES);   // 130: the art is spent
+    expect(celebrationsAfterCommit(beyond).painting).toBe(false);
+    expect(celebrationsAfterCommit(beyond + TILES_PER_PAINTING).painting).toBe(false);
+  });
+
+  it('celebrates each painting exactly once, including the diptych', () => {
+    const fired: number[] = [];
+    for (let before = 0; before < TOTAL_SETS + 20; before += 1) {
+      const p = paintingFinishedBy(before + 1, QUIZ_ART_COUNT, LAST_ART_TILES);
+      if (p != null) fired.push(p);
+    }
+    expect(fired).toEqual(Array.from({ length: QUIZ_ART_COUNT }, (_, i) => i));
   });
 });
 
@@ -93,22 +114,31 @@ describe('the last set of the bank', () => {
     expect(quizLifecycle(LAST, QUIZ_BANK_SIZE).retired).toBe(true);
   });
 
-  it('keeps the overlay reachable on whichever set retires the quiz', () => {
-    // Whether the retiring set ALSO earns a card depends on the bank size, and
-    // it just changed: at 327 questions LAST was 66 and 66 % 3 === 0, so the
-    // two collided; at 650 it is 130 and 130 % 3 === 1, so they do not. The
-    // collision is what nearly shipped the last card unredeemable, and the next
-    // re-cut can bring it back — so assert the property, not the arithmetic of
-    // one bank size.
-    const retiringSetAlsoDraws = drawEarnedAt(LAST, MYSTERY_EVERY);
-    expect(retiringSetAlsoDraws).toBe(LAST % MYSTERY_EVERY === 0);
+  it('keeps the overlay reachable on the set that retires the quiz', () => {
+    // THE COLLISION IS NOW DELIBERATE. At 327 questions LAST was 66 and 66 % 3
+    // === 0, so the retiring set also drew a card, and that collision nearly
+    // shipped the last card unredeemable. At 650 the plain rule would have
+    // separated them — but the tail rule slides the 43rd draw ONTO set 130 on
+    // purpose, so the collision is back by design. This test therefore has to
+    // assert that the collision is HANDLED, not that it is absent.
+    //
+    // It also has to call the 3-arg form. The 2-arg form still answers "false"
+    // here, which is what let this guard go blind to the very thing it exists
+    // for.
+    expect(drawEarnedAt(LAST, MYSTERY_EVERY, TOTAL_SETS)).toBe(true);
+    expect(celebrationsAfterCommit(LAST - 1)).toEqual({ painting: true, draw: true });
 
-    // The last draw of the bank, wherever it falls, must still land somewhere
-    // the user can reach: the overlay opens over QuizDoneView, and the home
-    // card keeps a door open while `pendingDraw` is true.
-    const lastDrawSet = LAST - (LAST % MYSTERY_EVERY);
-    expect(drawEarnedAt(lastDrawSet, MYSTERY_EVERY)).toBe(true);
-    expect(celebrationsAfterCommit(lastDrawSet - 1).draw).toBe(true);
+    // Both celebrations AND retirement on one commit. The overlay opens over
+    // QuizDoneView (blocked by the painting until she collects it), and the
+    // home card keeps a door open while `pendingDraw` is true.
     expect(baseAfterCommit(LAST, 1)).toBe('done');
+  });
+
+  it('does not pay a card out on the set before the last', () => {
+    // 129 % 3 === 0, so the plain rule WOULD have. The tail rule holds it back
+    // to 130 — if this ever flips, the final cycle is silently three sets again
+    // and the 43rd card is unreachable.
+    expect(drawEarnedAt(LAST - 1, MYSTERY_EVERY, TOTAL_SETS)).toBe(false);
+    expect(drawEarnedAt(LAST - 4, MYSTERY_EVERY, TOTAL_SETS)).toBe(true);
   });
 });

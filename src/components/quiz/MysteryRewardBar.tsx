@@ -6,12 +6,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ROSE, TXT, FONTS, INK_06 } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
-import { mysteryView, MYSTERY_EVERY } from '../../state/quizProgress';
+import { mysteryView } from '../../state/quizProgress';
 
 // "Finish N more sets to open the mystery box", with the gift waiting at the
 // end of the bar — the reference design's shape.
 //
-// The counter behind the mystery card draw. MYSTERY_EVERY is load-bearing:
+// The counter behind the mystery card draw. The cadence is load-bearing:
 // hitting zero grants a real draw (see cardDraw.ts / MysteryDrawOverlay), so
 // changing it changes the reward economy, not just a label.
 //
@@ -53,8 +53,9 @@ export default function MysteryRewardBar({
   const reduceMotion = useReducedMotion();
   const { current, remaining, target } = mysteryView(completedSets, totalSets);
   const pct = Math.max(0, Math.min(1, current / target));
-  // Where the bar stood BEFORE this set. current is 0..MYSTERY_EVERY-1 (a full
-  // bar is the earnsCard branch upstream), so the previous step is one less.
+  // Where the bar stood BEFORE this set. current is 0..target-1 (a full bar is
+  // the earnsCard branch upstream), so the previous step is one less. `target`
+  // is 3 for every cycle but the LAST, which is 4 — see mysteryView.
   // Zero IS reachable — the retry screen passes completedSets un-incremented, so
   // a miss on the first set of a cycle asks for step -1. The clamp is what makes
   // that an empty bar instead of a negative width, and it is load-bearing, not

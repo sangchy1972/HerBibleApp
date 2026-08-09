@@ -4,7 +4,7 @@ The reward behind the "mystery reward" counter in the Quiz Challenge. Every
 `MYSTERY_EVERY` (3) completed sets, the user draws one card from a face-down
 2×2 spread. The card flips and speaks to her.
 
-Status: copy **final** and shipped in `src/constants/mysteryCards.ts` (40 cards, all 7
+Status: copy **final** and shipped in `src/constants/mysteryCards.ts` (43 cards, all 7
 languages). Draw logic **built** (`src/state/cardDraw.ts`). UI **not built**.
 
 ---
@@ -108,20 +108,26 @@ user's collection. **Append only.** Same rule as `QUIZ_ART`.
 
 ## 2. Draw mechanics
 
-### Pool size: 40
+### Pool size: 43
 
 | | |
 |---|---|
-| Draw every | 3 sets (`MYSTERY_EVERY`) |
-| Sets per bank cycle | 65 (327 questions ÷ 5) |
-| Draws before the quiz retires | 22 (`reachableRewards(327)`) |
-| Draws to exhaust a 40-card pool | 40 → **120 sets** |
+| Draw every | 3 sets (`MYSTERY_EVERY`), except the LAST, which costs 4 |
+| Sets in the bank | 130 (650 questions ÷ 5) |
+| Draws before the quiz retires | 43 — at sets 3, 6, … 126, then **130** |
+| Cards in the pool | 43 |
 
-Neither repeats: the quiz retires at 66 sets, before the bank recycles or the 40-card pool empties. (Was: she meets a repeated *question* long before a repeated *card* — which is the
-right way round, since the card is the reward.
+The pool size and the draw count are the SAME NUMBER on purpose. 130 does not
+divide by 3, so the final cycle absorbs the leftover set; without that the 130th
+set would earn nothing. And `resolveDraw` hands her a card she does not have
+whenever one is on the table, so 43 draws yield 43 distinct cards rather than
+the ~39.5 that random tapping over a topped-up spread actually produced.
 
-40 × 7 languages = 280 strings. Deliberately not 100: every card has to be
-good, and this is content nobody can skim past.
+Nothing repeats before retirement: the collection completes on the same set that
+retires the quiz.
+
+43 × 7 languages = 301 strings. Deliberately not 100: every card has to be good,
+and this is content nobody can skim past.
 
 ### The choice is real
 
@@ -299,7 +305,7 @@ Book names in `ref` are localized separately from a book-name table; the stored
 
 ## 8. Build order
 
-1. `constants/mysteryCards.ts` — 40 cards + themes, English strings inline
+1. `constants/mysteryCards.ts` — 43 cards + themes, English strings inline
 2. `state/cardDraw.ts` — pure: candidate selection, pool reset, collection view
 3. tests for step 2 — determinism, no duplicate candidates, exhaustion, reset
 4. `state/QuizContext` — `pendingDraw`, `drawCard()`, persistence, merge entry

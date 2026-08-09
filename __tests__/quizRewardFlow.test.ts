@@ -194,7 +194,7 @@ describe('the loop', () => {
     expect(seen.size).toBe(30 * SET_SIZE);
   });
 
-  it('walks the whole card pool in exactly 40 draws, 120 sets', () => {
+  it('walks the whole card pool in one draw per card, no duplicates', () => {
     let w = fresh();
     let sets = 0;
     while (w.cards.collected.length < MYSTERY_CARD_COUNT && sets < 400) {
@@ -203,8 +203,11 @@ describe('the loop', () => {
       if (w.cards.pendingDraw) w = draw(w);
     }
     expect(w.cards.collected).toHaveLength(MYSTERY_CARD_COUNT);
+    // One draw per card. This harness picks candidates[0], which is always
+    // uncollected — the guarantee resolveDraw now extends to ANY tap. See
+    // cardDraw.test.ts for the worst-case-tap version of the same claim.
     expect(w.cards.drawsTaken).toBe(MYSTERY_CARD_COUNT);
-    expect(sets).toBe(MYSTERY_CARD_COUNT * MYSTERY_EVERY);
+    expect(new Set(w.cards.collected).size).toBe(MYSTERY_CARD_COUNT);
   });
 
   it('keeps drawing after the pool is exhausted instead of dead-ending', () => {

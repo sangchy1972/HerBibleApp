@@ -626,10 +626,10 @@ export const MYSTERY_CARDS: readonly MysteryCard[] = [
   },
 ] as const;
 
-/** 43 draws x ~3 sets = 120 completed sets before a card can repeat, against 65
- *  = every set of a 130-set bank, so the collection completes exactly as the
- *  quiz retires and no card ever repeats within a bank. See the tail note in
- *  state/quizProgress.ts for why the last cycle is four sets, not three. */
+/** 43 cards against exactly 43 draws: 42 cycles of three sets plus a final one
+ *  of four = all 130 sets a 650-question bank yields. The collection therefore
+ *  completes on the same set that retires the quiz, and no card can repeat
+ *  before then. See the tail note in state/quizProgress.ts. */
 export const MYSTERY_CARD_COUNT = MYSTERY_CARDS.length;
 
 const byId = new Map(MYSTERY_CARDS.map(c => [c.id, c]));

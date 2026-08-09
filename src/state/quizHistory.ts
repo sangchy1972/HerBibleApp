@@ -80,35 +80,33 @@ export function recordSet(
  *
  * Three completed sets a day, and then she is done until tomorrow.
  *
- * This is a CONTENT constraint, not an engagement one. The bank is 327
- * questions: 65 fresh sets, and a 66th that straddles the shuffle seam. Unthrottled, a motivated user empties it in a weekend and
- * every set after that is a question she has already answered, dressed up as
- * progress.
+ * This is a CONTENT constraint, not an engagement one. The bank is 650
+ * questions = 130 sets. Unthrottled, a motivated user empties it in a few days
+ * and every set after that is a question she has already answered, dressed up
+ * as progress.
  *
  * THE ARITHMETIC, because an earlier version of this comment got it wrong by a
  * factor of seven and the wrong number is easier to repeat than to check:
  *
- *     cap   bank recycles*   all 24 paintings   all 40 cards   cards/day
- *   (* 65 fresh sets; the 66th straddles the seam and is where the quiz retires)
- *      7        9.3 d            13.7 d            17.1 d       2.33
- *      5       13.0 d            19.2 d            24.0 d       1.67
- *      3       21.7 d            32.0 d            40.0 d       1.00
+ *     cap   bank exhausted   cards/day
+ *      7        18.6 d          2.33
+ *      5        26.0 d          1.67
+ *      3        43.3 d          1.00
  *
  * Seven moved the day the repeats start from day 2 to day 10, which is not
- * really solving it. Three gives three weeks of fresh questions, and lands
- * exactly on MYSTERY_EVERY -- so the rhythm is ONE CARD A DAY, which is a thing
- * a person can notice and come back for. Seven gave 2.33 cards a day, a
- * sawtooth nobody can feel.
+ * really solving it. Three lands exactly on MYSTERY_EVERY -- so the rhythm is
+ * ONE CARD A DAY, which is a thing a person can notice and come back for. Seven
+ * gave 2.33 cards a day, a sawtooth nobody can feel.
  *
- * At three, day 22 is where everything stops AT ONCE. The bank is exhausted
- * after 66 sets and state/quizLifecycle.ts retires the quiz, at which point she
- * holds 16 of 24 paintings and 22 of 40 cards. The remaining 8 paintings and 18
- * cards are unreachable until the bank grows -- the 24th painting needs 96 sets
- * and the 40th card 120, both well past retirement.
+ * At three, day 44 is where everything stops AT ONCE, and everything is
+ * COMPLETE when it does: set 130 lays the last half of the 33rd painting, hands
+ * her the 43rd card and retires the quiz in one move. The v3 re-cut to 650 plus
+ * the two tail rules (a two-tile final painting, a four-set final draw cycle)
+ * are what closed a gap that used to strand her at 16 of 24 paintings and 22 of
+ * 40 cards in about three weeks.
  *
- * That is a content gap, not a fault in the cap, and it is pinned in
- * __tests__/quizLifecycle.test.ts: the bank needs 600 questions (273 more) for
- * both collections to be finishable.
+ * The exactness is pinned in __tests__/quizLifecycle.test.ts. There is now NO
+ * slack: one more painting or one more card without more questions strands it.
  *
  * NOT tunable per user, and deliberately not remote-config: the number is part
  * of what the app IS, and a cap that moves is a cap she cannot build a habit

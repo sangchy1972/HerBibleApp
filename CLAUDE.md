@@ -40,6 +40,12 @@ requirements — follow them by default without re-asking.
 
 ## Shipping a release
 
+📖 **Full runbook: `docs/release-build-runbook.md`** — CDN asset upload order, the
+Cloudflare purge that a same-name overwrite silently needs, the tsc exit-code
+trap, and the two content-asset constraints (paintings append-only; which
+collection binds the question budget). The rules below are the short list; the
+runbook says WHY, which is the part that stops the mistake recurring.
+
 - **ALWAYS build BOTH platforms.** Every release goes to the App Store and Play
   together. `npm run build:all`. Never hand over an Android-only command.
 - `eas-cli` is installed nowhere — not globally, not as a dependency. Every EAS

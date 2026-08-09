@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing,
+} from 'react-native-reanimated';
 import Svg, { Line, Rect, Path } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
 import { ROSE, INK_06, TXT, TXTSUB, FONTS } from '../../constants/theme';
@@ -36,6 +39,7 @@ function LockBadge({ size }: { size: number }) {
 
 export default function PuzzleBoard({
   paintingIndex, tilesUnlocked, size, newTile, showCaption = false,
+  revealNewTile = false, revealDelayMs = 0,
 }: {
   paintingIndex: number;
   tilesUnlocked: number;
@@ -44,6 +48,14 @@ export default function PuzzleBoard({
   /** Piece just unlocked, or null. Ringed so the reward is legible. */
   newTile?: number | null;
   showCaption?: boolean;
+  /** Play the reward beat: the fresh quarter starts washed like the locked
+   *  ones and then lights up to full colour. Off everywhere except the results
+   *  screen, where earning it is the point. */
+  revealNewTile?: boolean;
+  /** When the light-up starts, in ms FROM MOUNT. The caller passes an absolute
+   *  point on its own timeline, because an `entering` animation on a parent does
+   *  not defer this component's mount or effects. */
+  revealDelayMs?: number;
 }) {
   // UI language, NOT the Bible edition -- the two are chosen separately.
   const { lang } = useUILanguage();
@@ -66,6 +78,25 @@ export default function PuzzleBoard({
 
   const showArt = loaded && !failed;
   const lockSize = Math.max(30, Math.min(46, w * 0.115));
+
+  // 1 = the fresh quarter is still washed over like a locked one; 0 = full
+  // colour. Driven separately from the entrance fade so the board can arrive
+  // first and the piece light up afterwards, which is the order the reward
+  // reads in: "here is the painting" then "and this part is now yours".
+  const washOnNew = useSharedValue(revealNewTile ? 1 : 0);
+  useEffect(() => {
+    if (!revealNewTile) { washOnNew.value = 0; return; }
+    // Only start once the art is actually on screen — lighting up a quarter of
+    // a grey box is not a reward, and on a cold CDN fetch that is exactly what
+    // the fixed delay alone would animate. While waiting, hold the wash ON, so
+    // the quarter reads as not-yet-earned rather than flashing in unlit.
+    if (!showArt) { washOnNew.value = 1; return; }
+    washOnNew.value = 1;
+    washOnNew.value = withDelay(revealDelayMs, withTiming(0, {
+      duration: 620, easing: Easing.out(Easing.cubic),
+    }));
+  }, [revealNewTile, revealDelayMs, showArt, washOnNew, art.id]);
+  const newTileWashStyle = useAnimatedStyle(() => ({ opacity: washOnNew.value }));
 
   return (
     <View style={{ width: w }}>
@@ -106,6 +137,21 @@ export default function PuzzleBoard({
             />
           )
         ))}
+
+        {/* The fresh quarter's own wash, on top of the art and under the
+            dashes. It fades out to reveal full colour. Rendered only in reveal
+            mode so the static board keeps exactly its old layer stack. */}
+        {revealNewTile && newTile != null && newTile >= 0 && newTile < TILES_PER_PAINTING ? (
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.wash, newTileWashStyle, {
+              left: (newTile % 2) * (w / 2),
+              top: Math.floor(newTile / 2) * (h / 2),
+              width: w / 2,
+              height: h / 2,
+            }]}
+          />
+        ) : null}
 
         {/* Dashed cross dividing the quarters, plus the fresh piece's ring. */}
         <Svg width={w} height={h} style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -182,11 +228,11 @@ const styles = StyleSheet.create({
   offline: { position: 'absolute', right: 8, top: 8, opacity: 0.8 },
   caption: { marginTop: 12, alignItems: 'center' },
   title: {
-    fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 16.5,
+    fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 18.2,   // 16.5 → 18.2 (+10 % per user)
     color: TXT, textAlign: 'center', letterSpacing: 0.2,
   },
   artist: {
-    fontFamily: FONTS.lato, fontSize: 12.5, color: TXTSUB,
+    fontFamily: FONTS.lato, fontSize: 13.8, color: TXTSUB,           // 12.5 → 13.8 (+10 % per user)
     textAlign: 'center', marginTop: 3, letterSpacing: 0.2,
   },
 });

@@ -147,11 +147,10 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
   const [ready, setReady] = useState(false);
   const [bank, setBank] = useState<QuizQuestion[] | null>(null);
   const [bankStatus, setBankStatus] = useState<BankStatus>('loading');
-  /** Which language the bank in state was fetched for. A ref as well as state
-   *  because the fetch callback closes over a stale render otherwise. */
-  const [bankLang, setBankLangState] = useState<string | null>(null);
+  /** Which language the bank in state was fetched for. A REF, not state:
+   *  nothing renders from it, and as state it re-rendered the whole provider on
+   *  every successful load for no visible difference. */
   const bankLangRef = useRef<string | null>(null);
-  const setBankLang = useCallback((l: string) => { bankLangRef.current = l; setBankLangState(l); }, []);
   const [retryTick, setRetryTick] = useState(0);
   const retryBank = useCallback(() => setRetryTick(t => t + 1), []);
   const [progress, setProgress] = useState<QuizProgressV1>(INITIAL_PROGRESS);
@@ -231,17 +230,23 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
   // Re-runs on language change: a user who switches to Spanish should get the
   // Spanish bank, not keep answering English questions.
   //
-  // The OLD bank deliberately stays on screen while the new one loads. Clearing
-  // it first would blank the question she is currently reading, and — because
-  // the screen treats "no bank" as "no quiz" — bounce her back to the home
-  // screen mid-answer.
+  // The OLD bank stays on screen while the new one LOADS. Clearing it first
+  // would blank the question she is currently reading and bounce her home
+  // mid-answer.
+  //
+  // But it does NOT survive a load that FAILS for a different language. Keeping
+  // it there meant a user who switched to Spanish and lost the fetch went on
+  // reading English questions under a Spanish UI, which is worse than showing
+  // nothing — see the header of services/quizBank.ts. Being ejected to the home
+  // screen is the accepted cost, and it is only paid when the language actually
+  // changed; a same-language refresh that fails still keeps what she has.
   useEffect(() => {
     let alive = true;
     setBankStatus('loading');
     loadBank(language)
       .then(b => {
         if (!alive) return;
-        if (b) { setBank(b); setBankLang(language); }
+        if (b) { setBank(b); bankLangRef.current = language; }
         // A DIFFERENT language failing must clear the bank. Keeping it meant a
         // user who switched to Spanish and hit a failed fetch kept reading
         // ENGLISH questions under a Spanish UI — worse than showing nothing,
@@ -251,7 +256,15 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
         setBankStatus(b ? 'ready' : 'unavailable');
         if (b) reconcileSession(b);
       })
-      .catch(() => { if (alive) setBankStatus('unavailable'); });
+      .catch(() => {
+        if (!alive) return;
+        // fetchBank documents that it never throws, so this is belt and braces
+        // — but it must clear the bank on a language change for the same reason
+        // the success path does, or the guarantee silently depends on which
+        // path failed.
+        if (bankLangRef.current !== null && bankLangRef.current !== language) setBank(null);
+        setBankStatus('unavailable');
+      });
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language, retryTick]);

@@ -43,7 +43,7 @@ export default function CardCollectionScreen({ navigation }: RootStackScreenProp
   const t = useT();
   const { lang } = useUILanguage();
   const insets = useSafeAreaInsets();
-  const { collectedCards, cardIsLiked, logCardOpen, canStart, daily, lifecycle } = useQuiz();
+  const { collectedCards, cardIsLiked, logCardOpen, bank, canStart, daily, lifecycle } = useQuiz();
   const [likedOnly, setLikedOnly] = useState(false);
   const [detail, setDetail] = useState<MysteryCard | null>(null);
 
@@ -112,11 +112,15 @@ export default function CardCollectionScreen({ navigation }: RootStackScreenProp
                   otherwise walk her into the cap wall AND drop the screen she
                   came from, so Close would land two pages back. */}
               <Text style={styles.goPlayText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
-                {canStart
-                  ? t('quiz.cards.goPlay')
-                  : lifecycle.retired
-                    ? t('quiz.done.cardSub')
-                    : t('quiz.daily.capCard', { total: daily.limit })}
+                {/* !bank FIRST — see the note on the same button in
+                    PuzzleCollectionScreen. */}
+                {!bank
+                  ? t('quiz.error.title')
+                  : canStart
+                    ? t('quiz.cards.goPlay')
+                    : lifecycle.retired
+                      ? t('quiz.done.cardSub')
+                      : t('quiz.daily.capCard', { total: daily.limit })}
               </Text>
             </TouchableOpacity>
           </>

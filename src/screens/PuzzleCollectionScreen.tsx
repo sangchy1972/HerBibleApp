@@ -35,7 +35,7 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
   const { lang } = useUILanguage();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { progress, canStart, daily, lifecycle } = useQuiz();
+  const { progress, bank, canStart, daily, lifecycle } = useQuiz();
   const [detail, setDetail] = useState<QuizArtwork | null>(null);
 
   const view = puzzleView(progress.completedSets, QUIZ_ART_COUNT);
@@ -118,11 +118,16 @@ export default function PuzzleCollectionScreen({ navigation }: RootStackScreenPr
                   otherwise walk her into the cap wall AND drop the screen she
                   came from, so Close would land two pages back. */}
               <Text style={styles.goPlayText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
-                {canStart
-                  ? t('quiz.cards.goPlay')
-                  : lifecycle.retired
-                    ? t('quiz.done.cardSub')
-                    : t('quiz.daily.capCard', { total: daily.limit })}
+                {/* !bank FIRST. canStart requires a bank, so without this the
+                    offline user read "Today's 3 sets are done" on a day she had
+                    not answered a single question. */}
+                {!bank
+                  ? t('quiz.error.title')
+                  : canStart
+                    ? t('quiz.cards.goPlay')
+                    : lifecycle.retired
+                      ? t('quiz.done.cardSub')
+                      : t('quiz.daily.capCard', { total: daily.limit })}
               </Text>
             </TouchableOpacity>
           </>

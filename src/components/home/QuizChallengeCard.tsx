@@ -72,6 +72,12 @@ export default function QuizChallengeCard({
         if (answer.picked === i) return answer.correct ? 'correct' : 'wrong';
         // The right answer is NOT surfaced after a miss (per user): tinting it
         // green handed her the answer before the retry round could ask again.
+        // No 'tried' either, because QuizOptionButton disables that state from
+        // the INSIDE: a card stranded in `locked` would still have some options
+        // dead, and `locked` on this card is ALWAYS the stranded case — the
+        // reveal timer only runs on the full screen. Every option has to be
+        // able to hand off.
+        return 'idle';
       }
       if (tried[i]) return 'tried';
       return 'idle';

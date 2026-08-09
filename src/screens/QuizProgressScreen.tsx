@@ -214,13 +214,17 @@ export default function QuizProgressScreen({ navigation }: RootStackScreenProps<
           accessibilityRole="button"
         >
           <Text style={styles.playText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+            {/* pendingDraw still wins — an unspent draw is collectable with no
+                bank at all. Otherwise !bank must not masquerade as the cap. */}
             {pendingDraw && !canStart
               ? t('quiz.mystery.unlocked')
-              : canStart
-                ? t('quiz.cards.goPlay')
-                : lifecycle.retired
-                  ? t('quiz.done.cardSub')
-                  : t('quiz.daily.capCard', { total: daily.limit })}
+              : !bank
+                ? t('quiz.error.title')
+                : canStart
+                  ? t('quiz.cards.goPlay')
+                  : lifecycle.retired
+                    ? t('quiz.done.cardSub')
+                    : t('quiz.daily.capCard', { total: daily.limit })}
           </Text>
         </TouchableOpacity>
 

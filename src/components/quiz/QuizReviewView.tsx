@@ -60,7 +60,7 @@ const RISE_MS = 420;
 /** It rises this far while fading in. */
 const RISE_FROM = 22;
 /** Margin after the last element before we declare the screen settled and hand
- *  the whole tree back to plain Views. Covers a dropped frame. */
+ *  the screen settled. Covers a dropped frame. */
 const SETTLE_PAD = 300;
 
 // One element's arrival.
@@ -74,33 +74,55 @@ const SETTLE_PAD = 300;
 // no recovery. The watchdog below is what makes a dropped timing merely ugly
 // instead of fatal.
 //
-// pointerEvents none while moving, then HAND BACK to a plain View: a
-// Reanimated-owned view can freeze its native touch region at the position it
-// was attached in, on Android/Fabric.
+// It stays an Animated.View FOREVER; `settled` only releases pointerEvents.
+//
+// QuizOptionsEntrance hands back to a plain View at rest and that is right
+// THERE, because it wraps stateless buttons. Copying it here was a bug: React
+// compares by element TYPE, so Animated.View → View at the same position
+// unmounts the subtree and mounts a fresh one. At 3.24 s, on every perfect set,
+// PuzzleBoard's `loaded` would reset to false — the painting vanishing back to
+// a grey box until the CDN image re-decodes, and the new quarter re-washing and
+// re-lighting — while MysteryRewardBar's `grow` reset to 0 and the bar snapped
+// back to the previous step to re-fill a second time. Nothing tappable is
+// inside a Rise (the CTA's touchable is a plain sibling gated by `disabled`),
+// so the handback bought nothing and cost a guaranteed full replay.
 function Rise({
-  at, settled, style, children,
+  at, settled, style, children, pointerEvents,
 }: {
   /** Ms from mount. */
   at: number;
-  /** Once true, this is a plain View at rest — no Reanimated, no transform. */
+  /** Landed. Releases touches; does NOT change what is rendered. */
   settled: boolean;
   style?: StyleProp<ViewStyle>;
   /** Optional: the retry CTA's fill is a bare coloured layer with nothing in it. */
   children?: React.ReactNode;
+  /** Force-none for decorative layers that must never take a touch, settled or
+   *  not — the CTA fill sits over the whole button box. */
+  pointerEvents?: 'none';
 }) {
-  const p = useSharedValue(0);
+  const p = useSharedValue(settled ? 1 : 0);
   useEffect(() => {
+    // Reduce-motion mounts already settled: no animation to schedule, no
+    // watchdog to leave pending for 3 s.
+    if (settled) { p.value = 1; return; }
     p.value = 0;
     p.value = withDelay(at, withTiming(1, { duration: RISE_MS, easing: Easing.out(Easing.cubic) }));
     const wd = setTimeout(() => { p.value = 1; }, at + RISE_MS + SETTLE_PAD);
     return () => clearTimeout(wd);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [at, p]);
   const st = useAnimatedStyle(() => ({
     opacity: p.value,
     transform: [{ translateY: (1 - p.value) * RISE_FROM }],
   }));
-  if (settled) return <View style={style}>{children}</View>;
-  return <Animated.View style={[style, st]} pointerEvents="none">{children}</Animated.View>;
+  return (
+    <Animated.View
+      style={[style, st]}
+      pointerEvents={pointerEvents ?? (settled ? 'auto' : 'none')}
+    >
+      {children}
+    </Animated.View>
+  );
 }
 
 export default function QuizReviewView({
@@ -244,16 +266,18 @@ export default function QuizReviewView({
             box; the arrival rides a decorative layer, and `disabled` — not
             opacity — is what keeps it untappable until it is visible. */}
         <View style={styles.footer}>
-          <View style={styles.ctaWrap}>
-            <Rise at={T_RETRY_CTA} settled={settled} style={styles.ctaPulseBg} />
+          <View
+            style={styles.ctaWrap}
+            accessibilityElementsHidden={!ctaLive}
+            importantForAccessibility={ctaLive ? 'auto' : 'no-hide-descendants'}
+          >
+            <Rise at={T_RETRY_CTA} settled={settled} style={styles.ctaPulseBg} pointerEvents="none" />
             <TouchableOpacity
               style={styles.ctaHit}
               activeOpacity={0.85}
               onPress={onRetry}
               disabled={!ctaLive}
               accessibilityRole="button"
-              accessibilityElementsHidden={!ctaLive}
-              importantForAccessibility={ctaLive ? 'yes' : 'no-hide-descendants'}
             >
               <Rise at={T_RETRY_CTA} settled={settled}>
                 <Text style={styles.retryCtaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
@@ -324,12 +348,20 @@ export default function QuizReviewView({
             Reanimated-owned wrapper can freeze the native hit region at its
             attach-time position. The arrival rides the decorative fill and the
             label; `disabled` is what gates the touch. */}
-        <View style={styles.ctaWrap}>
+        {/* The a11y flags live HERE, not on the touchable:
+            accessibilityElementsHidden hides an element's DESCENDANTS, so on the
+            button itself VoiceOver could still stop on it and announce a dimmed
+            control with no label. */}
+        <View
+          style={styles.ctaWrap}
+          accessibilityElementsHidden={!ctaLive}
+          importantForAccessibility={ctaLive ? 'auto' : 'no-hide-descendants'}
+        >
           {/* Two layers on purpose: Rise owns the ARRIVAL (opacity + lift) and
               hands back at settle, the inner Animated.View owns the BREATH,
               which has to keep running long after everything has settled. */}
-          <Rise at={T_CTA} settled={settled} style={styles.ctaPulseLayer}>
-            <Animated.View pointerEvents="none" style={[styles.ctaPulseBg, pulseStyle]} />
+          <Rise at={T_CTA} settled={settled} style={styles.ctaPulseLayer} pointerEvents="none">
+            <Animated.View style={[styles.ctaPulseBg, pulseStyle]} />
           </Rise>
           <TouchableOpacity
             style={styles.ctaHit}
@@ -337,8 +369,6 @@ export default function QuizReviewView({
             onPress={onNextLevel}
             disabled={!ctaLive}
             accessibilityRole="button"
-            accessibilityElementsHidden={!ctaLive}
-            importantForAccessibility={ctaLive ? 'yes' : 'no-hide-descendants'}
           >
             <Rise at={T_CTA} settled={settled}>
               <Text style={styles.ctaText} numberOfLines={1} maxFontSizeMultiplier={1.3}>

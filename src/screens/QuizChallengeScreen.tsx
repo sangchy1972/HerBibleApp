@@ -56,23 +56,25 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   }, [pendingDraw]);
   // Two taps in one frame dispatch two GO_BACKs; the second pops the parent and
   // she lands two screens away from where she meant to be.
+  const navLock = useRef(false);
+  // Reset on FOCUS, never on blur. A fullScreenModal takes ~320 ms to slide
+  // away and stays mounted throughout, so unlocking on blur hands the lock back
+  // exactly during the window it exists to cover — a second tap on X would
+  // dispatch another GO_BACK and pop the parent. Re-entering the route is the
+  // safe moment.
+  useEffect(() => navigation.addListener('focus', () => { navLock.current = false; }), [navigation]);
   const retryAdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (retryAdTimer.current) clearTimeout(retryAdTimer.current); }, []);
-  const navLock = useRef(false);
-  // Reset when this route stops being focused. The lock is there to swallow a
-  // SECOND tap in the same frame, not to be a one-way latch for the life of the
-  // screen — and it was the latter: goHome() also fires from the
-  // bank-unavailable effect with no user action at all, so the lock could be
-  // spent before she ever touched anything.
-  useEffect(() => navigation.addListener('blur', () => { navLock.current = false; }), [navigation]);
+
   const goHome = () => {
     if (navLock.current) return;
-    // A goBack() with nowhere to go is a silent no-op that still burns the lock,
-    // and the hardware-back handler below swallows the event — X and back both
-    // dead, forever. Android can restore straight onto this route.
-    if (!navigation.canGoBack()) return;
     navLock.current = true;
-    navigation.goBack();
+    // A goBack() with nowhere to go is a silent no-op, and X would be dead
+    // forever. Android can restore straight onto this route with an empty
+    // stack, so fall back to REBUILDING one rooted at the tabs — "do nothing"
+    // is the dead end, not the fix for it.
+    if (navigation.canGoBack()) navigation.goBack();
+    else navigation.reset({ index: 0, routes: [{ name: 'Tabs' }] });
   };
   // Takes the lock too. It only READ it before, so "collection" followed
   // quickly by "close" replaced this route and then dispatched GO_BACK with a
@@ -122,9 +124,9 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
   // Android hardware back = the close button, not a silent no-op.
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      // Hand the event back to the OS when there is nowhere to go, rather than
-      // swallowing it and leaving her on a screen with no way out.
-      if (!navigation.canGoBack()) return false;
+      // Always handled: goHome() now rebuilds a stack when there is nothing to
+      // pop, so back can no longer leave her stranded — and returning false
+      // here would quit the app out of a quiz.
       goHome();
       return true;
     });
@@ -297,7 +299,7 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
           <Feather name="x" size={24} color={TXT} />
         </TouchableOpacity>
         <View style={styles.headerCopy}>
-          {!inSummary ? (
+          {!inSummary && !bankLoading && !bankFailed ? (
             <Text style={styles.level} numberOfLines={1} maxFontSizeMultiplier={1.3}>
               {t('quiz.header.level', { n: levelFor(progress.completedSets) })}
             </Text>
@@ -307,7 +309,7 @@ export default function QuizChallengeScreen({ navigation }: RootStackScreenProps
         <View style={styles.close} />
       </View>
 
-      {!inSummary ? (
+      {!inSummary && !bankLoading && !bankFailed ? (
         <>
           <QuizSegmentBar segments={segments} height={9} style={styles.bar} />
           {session ? (

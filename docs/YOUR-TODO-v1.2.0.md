@@ -40,11 +40,32 @@ curl -sI https://quiz.everlandapps.com/v1/art/thumb/085.jpg | head -3
 
 ---
 
-## B. 清题库的边缘缓存 ⬅️ 必做，英语和西班牙语用户现在没有 quiz
+## B. 清题库的边缘缓存 ⬅️ 必做
 
-线上文件是对的（origin 已经是 v3/650），但 Cloudflare 边缘还在发旧的。
+线上文件已经是对的（origin 是 v3 / 650 题），边缘还在发旧的。
 
-**先查清楚哪几个语言坏了**，一条命令：
+### 先读这一段：影响面跟直觉相反
+
+线上 App 是 **1.1.0**，它的 `QUIZ_BANK_VERSION = 2`。新传的题库是 `bankVersion 3`，
+而 `parseBankFile` 会**拒绝**版本不符的文件。所以：
+
+- 边缘还发旧 v2 的语言（en、es…）→ 1.1.0 用户**正常**，恰恰因为没清干净
+- 边缘已经翻成 v3 的语言（fr 实测已翻）→ 1.1.0 用户**拿不到题库**
+
+清完缓存，所有语言都变成第二种。**这是有代价的，你已经决定接受。**
+
+代价有多大：`loadBank` 是 cache-first。已经成功拉过一次题库的用户读的是本地
+`quiz:bank:v2:<lang>`，后台刷新失败**不会**清掉它。所以受影响的只有——
+
+> 仍在 1.1.0、**且在当前语言下从没成功拉取过题库**的用户：新安装、清过数据、
+> 刚切换语言的。他们的首页答题卡会消失，直到更新到 1.2.0。没有任何报错，
+> 他们也不会知道更新能修好。
+
+老用户不受影响。
+
+### 步骤
+
+**1. 先记录现状**（清完好对照）：
 
 ```bash
 for L in en es fr de pt zh-Hans zh-Hant; do
@@ -54,31 +75,47 @@ for L in en es fr de pt zh-Hans zh-Hant; do
 done
 ```
 
-每行都必须出现 `"bankVersion":3`。我这边实测过的：
+**2. 清缓存**
 
-| 语言 | 状态 |
-| --- | --- |
-| `en` | ❌ 边缘发的是 bankVersion 2 / 327 题 |
-| `es` | ❌ 同上 |
-| `fr` | ✅ 已经是 3 / 650 |
-| 其余 4 个 | 未测，用上面的命令查 |
-
-**清缓存**：Cloudflare → 选 `everlandapps.com` → **Caching** → **Configuration** →
-**Purge Cache** → **Custom Purge** → 选 URL，把坏掉的那几条**完整 URL** 逐条贴进去：
+Cloudflare Dashboard → 选 **`everlandapps.com`**（是域名，不是 R2）
+→ 左侧 **Caching** → **Configuration** → 找到 **Purge Cache** 那一块
+→ **Custom Purge** → 类型选 **URL** → 把下面七条**完整**粘进去：
 
 ```
 https://quiz.everlandapps.com/v1/quiz-en.json
 https://quiz.everlandapps.com/v1/quiz-es.json
+https://quiz.everlandapps.com/v1/quiz-fr.json
+https://quiz.everlandapps.com/v1/quiz-de.json
+https://quiz.everlandapps.com/v1/quiz-pt.json
+https://quiz.everlandapps.com/v1/quiz-zh-Hans.json
+https://quiz.everlandapps.com/v1/quiz-zh-Hant.json
 ```
 
-清完等 30 秒，把上面那条 `for` 命令再跑一遍确认。
+→ **Purge**
 
-> **为什么这件事等不得**：`parseBankFile` 会拒绝 `bankVersion` 不符的文件并返回
-> null，所以边缘发旧 body 给新客户端 **不是"看到旧题"，是首页答题卡片整个消失**，
-> 而且每次前台重试都命中同一份缓存，永远不会自愈。没有任何报错。
->
-> 如果 purge 反复不生效，就按 `bibleQuiz.ts` 自己注释说的办法：把 `QUIZ_CDN_BASE`
-> 从 `/v1` 改成 `/v2`，用 `scripts/upload_quiz_r2.sh` 重传一份。告诉我，我来改。
+> 七条一次全清，不要只清报错的那两个。上一次就是漏了几条，才出现现在这种
+> 一半新一半旧的状态。
+
+**3. 等 30 秒，再跑一遍第 1 步的命令**
+
+七行**全部**要出现 `"bankVersion":3` 和 `"count":650`。少一条都算没做完。
+
+**4. 顺手**（可选，不影响用户）
+
+`docs/quiz-bank/manifest.json` 我已经重新生成过了（之前整份还写着 bankVersion 2 /
+327 题）。如果 R2 的 `/v1/manifest.json` 也要同步，把它一起拖上去再 purge 一条
+`https://quiz.everlandapps.com/v1/manifest.json`。App 不读它，纯粹是让仓库和线上
+不再自相矛盾。
+
+### 如果 purge 反复不生效
+
+按 `bibleQuiz.ts` 注释说的走路径版本：`QUIZ_CDN_BASE` 从 `/v1` 改成 `/v2`，题库
+重传一份到 `v2/`。告诉我，代码我改。备好的两套文件在这里：
+
+```
+~/Library/.../outputs/quiz-cdn/v1/    ← 327 题的旧版（bankVersion 2）
+~/Library/.../outputs/quiz-cdn/v2/    ← 650 题的新版（bankVersion 3）
+```
 
 ---
 

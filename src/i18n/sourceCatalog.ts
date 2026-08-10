@@ -323,6 +323,23 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'planGuide.mood.body':           { en: "Not sure where to begin? Pick **how you're feeling today** and we'll match a plan to it.", context: 'Body for the mood-row step. The bolded phrase echoes plan.tab.howFeelingToday.' },
   'planGuide.start':               { en: 'Start Exploring', context: 'Final CTA of the plan guide — closes it, leaving the user on the Explore tab.' },
 
+  // ── Bible-reader guide (once-ever, 5 steps, on her FIRST visit to the Bible
+  // tab — which may be day 0 or day 30). Same InlineBold **markers**.
+  // EVERY bolded span names a real control, and the translation MUST reuse that
+  // control's own label in the same language, character for character. A guide
+  // that calls a button something the button doesn't say is worse than no guide.
+  'bibleGuide.tools.title':        { en: 'Three tools in this corner', context: 'Coach-mark title over the three icons at the TOP-RIGHT of the Bible reader: magnifier, bookmark, and a capital "T".' },
+  'bibleGuide.tools.body':         { en: '**Search** any book or verse, tap the **bookmark** to keep your place in this chapter, and tap **T** to set the text size and look.', context: 'Body for the header-tools step. Three bolded spans, one per icon: the search action, the bookmark (it saves the CHAPTER, not a verse), and the literal letter **T** — keep "T" as the Latin letter in every language, because that is what is printed on the button. "text size and look" covers the sheet it opens (size, spacing, font, theme) — see bibleReader.reader.fontSize.' },
+  'bibleGuide.books.title':        { en: 'Switch books anytime', context: 'Coach-mark title over the menu (hamburger) button at the TOP-LEFT, which opens the books drawer.' },
+  'bibleGuide.books.body':         { en: 'Tap here to open every book and jump to any chapter. Go ahead and try it now — the guide will wait for you.', context: 'Body for the books step. THIS step lets her really tap the button: if she opens the drawer the guide hides, lets her switch books, and resumes when she closes it. So the promise in the last clause is literal — translate it as a real promise, not a figure of speech.' },
+  'bibleGuide.audio.title':        { en: 'Rather listen than read?', context: 'Coach-mark title over the round floating headphones button at the bottom-right of the Bible reader.' },
+  'bibleGuide.audio.body':         { en: 'Tap here to have this chapter read aloud to you — play, pause, or close it whenever you like.', context: 'Body for the narration step. The button opens a full player with play/pause and a scrubber; it never toggles playback by itself. Audience is women.' },
+  'bibleGuide.verse.title':        { en: 'Tap any verse', context: 'Coach-mark title over the verse action bar, which the guide has opened on verse 1 so she can see it.' },
+  'bibleGuide.verse.body':         { en: 'One tap opens this bar: **Save** it, **Copy** it, keep **Notes**, **Share** it, or **Explore** what it means.', context: 'Body for the verse-toolbar step. The five bolded words are the bar\'s five buttons — each MUST be the exact label used in this language: verseToolbar.save / .copy / .notes / .share / .explore.' },
+  'bibleGuide.complete.title':     { en: "Mark it when you're done", context: 'Coach-mark title over the rose "Mark as Complete" button at the very bottom of the chapter; the guide scrolls her down to it.' },
+  'bibleGuide.complete.body':      { en: 'Read to the end, then tap **Mark as Complete** — Her Bible keeps a record of every chapter you finish on your way through all 66 books.', context: 'Final step body. The bolded span MUST be the exact label from bibleReader.markComplete in this language. 66 is the number of books in the Bible this app ships — keep it.' },
+  'bibleGuide.start':              { en: 'Start reading', context: 'Final CTA of the Bible-reader guide — closes it and leaves her in the chapter.' },
+
   'audioMini.playing':             { en: 'Now playing', context: 'Floating pill shown when Bible narration keeps playing after the user leaves the Bible tab. Above it is the chapter, e.g. "John 3". Keep very short.' },
 
   'prayer.startMorning':           { en: 'Start Morning Prayer →', context: 'Primary CTA button when morning slot is active. Arrow is decorative — preserve in target language if possible.' },

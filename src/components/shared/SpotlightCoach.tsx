@@ -78,6 +78,18 @@ export interface SpotlightCoachProps {
    *  label left a hitSlop-12 invisible touch target sitting to the left of the
    *  CTA, which is exactly the hazard dev-guide §2 is about. */
   skipLabel?: string;
+  /**
+   * Let touches through the spotlight HOLE so she can actually use the control
+   * being highlighted; everything outside it is still blocked. Use it whenever a
+   * step invites her to try the thing — highlighting a button that then ignores
+   * her tap is the dead-tap failure this app has shipped before.
+   *
+   * The step that turns this on owns what happens next: the control it exposes
+   * usually opens something (a drawer, a sheet) that will paint OVER this
+   * overlay, so the guide must hide itself while that is up and pick the step
+   * back up when it closes.
+   */
+  interactiveHole?: boolean;
   /** Both fire AFTER the exit animation, exactly once. */
   onPrimary: () => void;
   onSkip: () => void;
@@ -87,7 +99,7 @@ export interface SpotlightCoachProps {
 
 export default function SpotlightCoach({
   focused, measure, pad, radius, counter, title, body, primaryLabel, skipLabel,
-  onPrimary, onSkip, onUnmeasurable,
+  interactiveHole, onPrimary, onSkip, onUnmeasurable,
 }: SpotlightCoachProps) {
   const insets = useSafeAreaInsets();
   const { width: W, height: H } = useWindowDimensions();
@@ -298,12 +310,36 @@ export default function SpotlightCoach({
           fires onLayout again and it stayed that way until the 30 s watchdog.
           Invisible-and-dead is exactly "the screen sometimes stops responding,
           then recovers on its own". */}
-      {target != null && (
+      {target != null && !interactiveHole && (
         <View
           style={StyleSheet.absoluteFillObject}
           pointerEvents={isLeaving || tipH === 0 ? 'none' : 'auto'}
         />
       )}
+      {/* interactiveHole: the same shield as four bands AROUND the hole, so the
+          highlighted control stays tappable and nothing else is. Strictly less
+          blocking than the full-screen version, so it cannot introduce a new
+          dead zone — and the bands come from the SETTLED `target`, not the
+          animated shared values, which during the close-in makes the touch hole
+          SMALLER than the visible one. Erring that way is deliberate: a tap that
+          lands early is blocked rather than passed to a control the scrim has not
+          finished framing. */}
+      {target != null && interactiveHole && (() => {
+        const off = isLeaving || tipH === 0;
+        const band = (s: object, key: string) => (
+          <View key={key} style={[styles.band, s]} pointerEvents={off ? 'none' : 'auto'} />
+        );
+        const bx = Math.max(0, target.x);
+        const bw = Math.max(0, target.w);
+        const by = Math.max(0, target.y);
+        const bh = Math.max(0, target.h);
+        return [
+          band({ left: 0, right: 0, top: 0, height: by }, 'top'),
+          band({ left: 0, right: 0, top: by + bh, bottom: 0 }, 'bottom'),
+          band({ left: 0, top: by, width: bx, height: bh }, 'left'),
+          band({ left: bx + bw, right: 0, top: by, height: bh }, 'right'),
+        ];
+      })()}
       {target != null && (
         <Svg width={W} height={H} style={StyleSheet.absoluteFillObject} pointerEvents="none">
           <AnimatedPath animatedProps={pathProps} fill={TXT} fillRule="evenodd" stroke={ROSE} strokeWidth={2} />
@@ -348,6 +384,10 @@ const styles = StyleSheet.create({
   // Same layer band as FirstRunTourHost — the coordinator guarantees at most
   // one guide is up at a time.
   root: { ...StyleSheet.absoluteFillObject, zIndex: 90, elevation: 90 },
+  // One of the four touch bands that fence off an interactive hole. NO
+  // background: these must stay invisible, and they only ever exist alongside a
+  // visible scrim (same rule as the full-screen shield above).
+  band: { position: 'absolute' },
   tipWrap: { position: 'absolute' },
   card: {
     backgroundColor: '#FFFFFF', borderRadius: 20,

@@ -224,7 +224,7 @@ when it goes ineligible.
 
 ### Priorities (lower = first)
 `firstRunTour 5` · `achievementUnlock 10` · `followHimOptin 20` · `setReminderTime 30` ·
-`streakGuide 35` · `planGuide 38` · `moodCheckIn 40` · `login 50` · `widgetInstall 60` ·
+`streakGuide 35` · `planGuide 38` · `bibleGuide 39` · `moodCheckIn 40` · `login 50` · `widgetInstall 60` ·
 `quizPromo 65` · `streakCongrats 70` · `rate 80` · `adInterstitial 90`.
 
 ### Caps (owner 2026-08-08)
@@ -522,7 +522,8 @@ low ranks mean the weights are wrong) · `plan_search_suggestion_tap`. One event
 `src/state/FirstRunTourContext.tsx` (+ `measureRefInWindow`),
 `streakGuide.ts` / `StreakGuideContext.tsx` / `StreakGuideHost.tsx` / `…Trigger.tsx`,
 `planGuide.ts` / `PlanGuideContext.tsx` / `PlanGuideHost.tsx` / `…Trigger.tsx` /
-`PlanGuideSelfTrigger.tsx`.
+`PlanGuideSelfTrigger.tsx`,
+`bibleGuide.ts` / `BibleGuideContext.tsx` / `BibleGuideHost.tsx` / `BibleGuideTrigger.tsx`.
 
 ### SpotlightCoach — the pattern every guide uses
 No `Modal`. Shared values, not `entering`. Own-root normalisation for the measure
@@ -553,6 +554,49 @@ start that prayer.
 - Each step renders only over its own focused screen. Four parties are wired together
   (PrayerScreen, TabBar, PlanScreen, host) — see the header comment in
   `PlanGuideContext.tsx` before changing any of them.
+
+### Bible-reader guide (once ever, 5 steps) — owner 2026-08-09
+Fires on her **first ever visit to the Bible tab**, whenever that is: day 0 or day 30.
+Deliberately **no day or engagement gate** — a woman who finds the reader on day 3 needs
+it more, not less. Gated only on the once-flag and on the chapter having verses, because
+four of the five anchors live in or below the verse list and step 5's CTA is not rendered
+at all without them; starting against a spinner would bail out through `onUnmeasurable`
+and burn the once-flag on a tour she never saw.
+
+Steps, in screen order: header tools (search / bookmark / **T**) → book menu → narration
+FAB → the real verse toolbar → Mark-as-Complete.
+
+Three things here are new machinery, not just new copy:
+
+- **`interactiveHole` on SpotlightCoach.** The books step invites her to tap the button
+  it highlights, so the single full-screen shield becomes **four bands around the hole**.
+  Highlighting a control that then swallows her tap is the dead-tap failure in §2, and it
+  is worse inside a tutorial. The bands come from the settled `target`, not the animated
+  shared values, so during the close-in the touch hole is *smaller* than the visible one —
+  erring that way is deliberate. Any step that turns this on **must** own what the exposed
+  control opens: it will paint over the overlay.
+- **The drawer closing IS the books step succeeding.** She used the control; re-explaining
+  it would be insulting. `bibleGuideAfterDrawer()` returns the next step for `books` and
+  `null` for every other stage — the audio player's queue button opens the same drawer, and
+  she can open it before the tour ever starts. The transition runs **outside** the
+  `setState` updater against a ref mirror; inside it, a double-invoked updater would log
+  twice and re-enter the step.
+- **Two screen effects the guide drives.** Step 4 opens the *real* toolbar on verse 1
+  rather than describing it — `openVerseToolbar()` was split out of `handleVerseTap` for
+  this, because tapping an already-selected verse would *close* it. It scrolls to the top
+  first and selects only after that settles: `onReaderScroll` clears the selection on any
+  scroll, so selecting first would wipe the toolbar in the same beat. Step 5 rides the
+  chapter down with `scrollToEnd`. Both wait (≤1.2 s) for verses first, since step 2 may
+  have left the reader re-fetching a book she just switched to.
+
+Step 5's hole is **not** interactive on purpose: its anchor marks the chapter read, and a
+tour that teaches a button must not press it for her.
+
+Copy rule: **every bolded span names a real control, and each language must reuse that
+control's own label character for character** (`verseToolbar.*`, `bibleReader.markComplete`),
+with **T** kept as the Latin letter everywhere — it is what is printed on the button. The
+translator notes in `sourceCatalog.ts` say so; a guide that calls a button something the
+button doesn't say is worse than no guide.
 
 Spotlight alignment is the thing the owner checks first. Measure the anchor, not a
 guess; re-measure after any scroll or segment switch the guide itself triggers.

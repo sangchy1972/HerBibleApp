@@ -15,6 +15,7 @@ export type NudgeId =
   | 'setReminderTime'
   | 'streakGuide'
   | 'planGuide'
+  | 'bibleGuide'
   | 'moodCheckIn'
   | 'login'
   | 'widgetInstall'
@@ -39,6 +40,11 @@ export const NUDGE_PRIORITY: Record<NudgeId, number> = {
   // fresher, time-sensitive moment) so on a day both fire, streak teaches
   // first and this one takes the next opening.
   planGuide:         38,
+  // The reader tutorial, on her first ever visit to the Bible tab. Just below
+  // plan discovery so a day where both come due teaches plans first — but in
+  // practice they can't collide: this one only ever asks from the Bible tab, and
+  // both of the plan guide's paths only ask from Home or the Plan tab.
+  bibleGuide:        39,
   moodCheckIn:       40,
   login:             50,
   widgetInstall:     60,

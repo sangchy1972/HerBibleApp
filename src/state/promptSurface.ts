@@ -24,6 +24,12 @@ import { isInterstitialVisible, onInterstitialVisibility } from '../services/int
 // exactly the ambush the owner named first ("a sheet over the chapter she is
 // reading"). 'plan' stays: that tab is a browse surface; plan READING happens in
 // pushed routes (PlanDayWalk / PlanVerseRead), which are already excluded.
+//
+// A prompt whose whole SUBJECT is an excluded screen can opt into that one route
+// via `alsoOn` below — today only the Bible-reader guide, on 'bible'. That is not
+// a loophole in the rule above, it is the rule's complement: teaching the reader
+// is not an ambush ON the reader, and it is the one thing that cannot be shown
+// anywhere else. Widen `alsoOn` per request, NEVER this set.
 const TAB_ROUTES = new Set(['prayer', 'plan', 'profile']);
 
 let route: string | null = null;
@@ -69,12 +75,29 @@ export function nudgeActive(): boolean { return nudgeUp; }
 export function pushSheet(): void { sheetDepth += 1; notify(); }
 export function popSheet(): void { sheetDepth = Math.max(0, sheetDepth - 1); notify(); }
 
-export function promptSurfaceSafe(): boolean {
-  return route != null
-    && TAB_ROUTES.has(route)
-    && !isInterstitialVisible()
-    && sheetDepth === 0
-    && !launchUp;
+/**
+ * The half that applies to EVERY prompt on EVERY screen: no fullscreen ad, no
+ * in-screen sheet, no launch overlay. Nothing may opt out of these — each one is
+ * a case of a prompt being invisible or orphaning something already on screen.
+ */
+export function promptSurfaceQuiet(): boolean {
+  return !isInterstitialVisible() && sheetDepth === 0 && !launchUp;
+}
+
+/**
+ * Is the CURRENT route one this prompt may be granted on?
+ *
+ * Split out of promptSurfaceSafe so the coordinator can apply it PER REQUEST:
+ * one prompt being about an excluded screen must not open that screen up to
+ * every other prompt. `alsoOn` widens the route check and nothing else.
+ */
+export function promptRouteAllowed(alsoOn?: readonly string[]): boolean {
+  if (route == null) return false;
+  return TAB_ROUTES.has(route) || !!alsoOn?.includes(route);
+}
+
+export function promptSurfaceSafe(alsoOn?: readonly string[]): boolean {
+  return promptRouteAllowed(alsoOn) && promptSurfaceQuiet();
 }
 
 export function __resetPromptSurfaceForTest(): void {
@@ -91,15 +114,24 @@ export function useSheetSurface(open: boolean): void {
   }, [open]);
 }
 
-/** Re-renders on route changes and on interstitial show/hide. */
-export function usePromptSurfaceSafe(): boolean {
-  const [safe, setSafe] = useState(promptSurfaceSafe);
+/**
+ * A counter that changes on ANY surface change — route, sheet depth, launch
+ * overlay, interstitial.
+ *
+ * The coordinator needs the change itself, not a verdict: now that the route
+ * check is per-request, walking from 'bible' to 'prayer' must re-arbitrate even
+ * though the global half of the gate never moved. A hook returning a boolean
+ * would not re-render on that, and a request queued behind a route would sit
+ * there until the next unrelated event.
+ */
+export function usePromptSurfaceEpoch(): number {
+  const [epoch, setEpoch] = useState(0);
   useEffect(() => {
-    const sync = () => setSafe(promptSurfaceSafe());
+    const sync = () => setEpoch(v => v + 1);
     subs.add(sync);
     const offAd = onInterstitialVisibility(sync);
     sync();
     return () => { subs.delete(sync); offAd(); };
   }, []);
-  return safe;
+  return epoch;
 }

@@ -69,6 +69,8 @@ import { StreakGuideProvider } from './src/state/StreakGuideContext';
 import StreakGuideHost from './src/components/StreakGuideHost';
 import { PlanGuideProvider } from './src/state/PlanGuideContext';
 import PlanGuideHost from './src/components/PlanGuideHost';
+import { BibleGuideProvider } from './src/state/BibleGuideContext';
+import BibleGuideHost from './src/components/BibleGuideHost';
 import { AudioMiniProvider } from './src/state/AudioMiniContext';
 import { SetReminderTimeProvider } from './src/state/SetReminderTimeContext';
 import { QuizPromoProvider } from './src/state/QuizPromoContext';
@@ -271,6 +273,7 @@ export default function App() {
                                 <FirstRunTourProvider>
                                 <StreakGuideProvider>
                                 <PlanGuideProvider>
+                                <BibleGuideProvider>
                                 <AudioMiniProvider>
                                   <RatePromptProvider>
                                     <MoodCheckInProvider>
@@ -333,6 +336,11 @@ export default function App() {
                                               cover the tab bar. */}
                                           <StreakGuideHost />
                                           <PlanGuideHost />
+                                          {/* 5-step Bible-reader guide, on her
+                                              first ever visit to that tab.
+                                              Root-mounted for the same reason:
+                                              the scrim must cover the tab bar. */}
+                                          <BibleGuideHost />
                                           {/* Mirrors today's verse + the card's
                                               background image to the home-screen
                                               widget. Null render; needs DailyVerses
@@ -362,6 +370,7 @@ export default function App() {
                                     </MoodCheckInProvider>
                                   </RatePromptProvider>
                                 </AudioMiniProvider>
+                                </BibleGuideProvider>
                                 </PlanGuideProvider>
                                 </StreakGuideProvider>
                                 </FirstRunTourProvider>

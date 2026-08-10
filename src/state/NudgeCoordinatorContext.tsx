@@ -8,7 +8,9 @@ import {
 } from './nudgePriority';
 import { useReminderInterstitial } from './ReminderInterstitialContext';
 import { useFirstRunTour } from './FirstRunTourContext';
-import { usePromptSurfaceSafe, setNudgeActive } from './promptSurface';
+import {
+  usePromptSurfaceEpoch, promptSurfaceQuiet, promptRouteAllowed, setNudgeActive,
+} from './promptSurface';
 
 const LAST_BUDGETED_KEY = 'nudge:lastBudgetedAt:v1';
 
@@ -32,6 +34,18 @@ interface NudgeRequest {
    *  only if it is still that owner's — otherwise the host going ineligible
    *  silently deletes the OTHER host's live request and the nudge is lost. */
   owner?: string;
+  /**
+   * Extra routes THIS request may be granted on, beyond the tab surfaces
+   * (`promptSurface.TAB_ROUTES`). For a prompt whose whole subject is an
+   * otherwise-excluded screen — today only `bibleGuide` on 'bible', because a
+   * tutorial for the reader cannot be shown anywhere but the reader.
+   *
+   * It widens the ROUTE check for one request and nothing else: the ad / sheet /
+   * launch-overlay conditions still apply to everyone. Do not reach for this to
+   * make an ordinary nudge reach further — the excluded screens are excluded
+   * because a prompt landing on them ambushes something she chose to be in.
+   */
+  surfaceRoutes?: readonly string[];
 }
 
 interface NudgeCoordinatorState {
@@ -80,7 +94,12 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
   // the coordinator covers every blocking prompt at once — and can't be
   // forgotten by whoever adds the next host. NEW GRANTS only: a prompt already
   // holding the slot keeps it, and a queued request just waits for a tab.
-  const surfaceSafe = usePromptSurfaceSafe();
+  //
+  // The gate is applied in two halves: the ad / sheet / launch-overlay conditions
+  // globally below, and the ROUTE check per request (a request may name extra
+  // routes via `surfaceRoutes`). We take the epoch rather than a verdict so a
+  // route change re-arbitrates even when the global half didn't move.
+  const surfaceEpoch = usePromptSurfaceEpoch();
 
   useEffect(() => {
     AsyncStorage.getItem(LAST_BUDGETED_KEY).then(v => { if (v) lastBudgetedAt.current = Number(v) || 0; }).catch(() => {});
@@ -144,7 +163,7 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
     if (activeId !== null) return;
     if (reminderGateUp) return;   // pre-tab Follow-Him gate up → suppress everything
     if (tourGateUp) return;       // first-run tour owed or running → suppress everything
-    if (!surfaceSafe) return;     // she's mid-flow / mid-ad → don't ambush her
+    if (!promptSurfaceQuiet()) return;   // an ad / sheet / the launch overlay owns the screen
     const now = Date.now();
     // A new WAVE: the queue is up to seven deep on day one, and the 2-cap must
     // not hold the rest hostage until she happens to background the app. Ten
@@ -158,7 +177,13 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
     const budgetRemaining = withinFloor ? 0 : (MAX_BUDGETED_PER_OPEN - budgetUsed.current);
     const blockingRemaining = MAX_BLOCKING_PER_OPEN - shownThisOpen.current;
     const reqs: ArbiterReq[] = [...requests.current.values()].map(r => ({
-      id: r.id, priority: r.priority, eligible: r.canShow(), ignoresBudget: r.ignoresBudget,
+      id: r.id,
+      priority: r.priority,
+      // The route half of the surface gate, per request: she's mid-flow for THIS
+      // prompt unless it named the route it's about. A request that fails here is
+      // not dropped — it stays queued and is re-checked on the next epoch.
+      eligible: r.canShow() && promptRouteAllowed(r.surfaceRoutes),
+      ignoresBudget: r.ignoresBudget,
     }));
     const pick = pickActiveNudge(reqs, budgetRemaining, blockingRemaining);
     if (pick) {
@@ -189,7 +214,7 @@ export function NudgeCoordinatorProvider({ children }: { children: React.ReactNo
         return () => clearTimeout(tm);
       }
     }
-  }, [version, activeId, reminderGateUp, tourGateUp, surfaceSafe, bump]);
+  }, [version, activeId, reminderGateUp, tourGateUp, surfaceEpoch, bump]);
 
   // Publish "a prompt is up" for non-coordinator surfaces — today the proactive
   // paywall, which navigates to a full-screen route and would otherwise land on

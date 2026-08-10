@@ -37,6 +37,8 @@ import { loadTimestamps, verseAtTime, type ChapterTimestamps } from '../services
 import BibleAudioPlayer from '../components/BibleAudioPlayer';
 import { useAudioMini } from '../state/AudioMiniContext';
 import { logEvent } from '../services/firebase';
+import { useBibleGuide } from '../state/BibleGuideContext';
+import BibleGuideTrigger from '../components/BibleGuideTrigger';
 import { adjustFocus } from '../constants/versification';
 import { HL_COLORS, getHighlightColor } from '../constants/highlightColors';
 import type { BibleFocus, TabParamList } from '../navigation/types';
@@ -1108,11 +1110,14 @@ export default function BibleScreen() {
   const TOOLBAR_HEIGHT = 140;
   const TOOLBAR_GAP = 15;
 
-  const handleVerseTap = (idx: number) => {
-    if (selVerse === idx) {
-      setSelVerse(null);
-      return;
-    }
+  // Position + open the toolbar for a verse. Split out of handleVerseTap so the
+  // reader guide can open it without going through the tap TOGGLE — calling
+  // handleVerseTap on an already-selected verse would close it instead.
+  const openVerseToolbar = (idx: number) => {
+    // Never select an index the chapter doesn't have: the toolbar reads
+    // verses[selVerse] for every action, and a selection pointing past the end
+    // renders a bar whose buttons all act on nothing.
+    if (!verses[idx]) return;
     const ref = verseRefs.current[idx];
     if (!ref) {
       setSelVerse(idx);
@@ -1124,6 +1129,14 @@ export default function BibleScreen() {
       setToolbarTop(aboveTop >= minTop ? aboveTop : pageY + h + TOOLBAR_GAP);
       setSelVerse(idx);
     });
+  };
+
+  const handleVerseTap = (idx: number) => {
+    if (selVerse === idx) {
+      setSelVerse(null);
+      return;
+    }
+    openVerseToolbar(idx);
   };
 
   const toggleHighlight = (color: string) => {
@@ -1428,6 +1441,84 @@ export default function BibleScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookSlug, chapter]);
 
+  // ── First-visit reader guide ──────────────────────────────────────────────
+  // This screen owns the five anchors and the two effects the tour needs from
+  // it; the trigger, stage machine and copy live in BibleGuideTrigger /
+  // BibleGuideContext / BibleGuideHost.
+  const guide = useBibleGuide();
+  const guideToolsRef = useRef<View>(null);
+  const guideBooksRef = useRef<View>(null);
+  const guideAudioRef = useRef<View>(null);
+  const guideVerseBarRef = useRef<View>(null);
+  const guideCompleteRef = useRef<View>(null);
+  useEffect(() => {
+    guide.registerToolsMeasurer(guideToolsRef);
+    guide.registerBooksMeasurer(guideBooksRef);
+    guide.registerAudioMeasurer(guideAudioRef);
+    guide.registerVerseBarMeasurer(guideVerseBarRef);
+    guide.registerCompleteMeasurer(guideCompleteRef);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Every anchor from step 2 on lives in or below the verse list, and step 5's
+  // CTA is not even rendered without verses. Starting against a spinner would
+  // spotlight nothing, bail out through onUnmeasurable, and burn the once-ever
+  // flag on a tour she never saw.
+  const setChapterReady = guide.setChapterReady;
+  useEffect(() => { setChapterReady(verses.length > 0); }, [verses.length, setChapterReady]);
+
+  // The drawer paints over the overlay, so the guide hides while it is open —
+  // and its CLOSE is what advances the 'books' step (she used the control we
+  // highlighted). BibleGuideContext owns that rule.
+  const setGuideDrawerOpen = guide.setDrawerOpen;
+  useEffect(() => { setGuideDrawerOpen(drawer); }, [drawer, setGuideDrawerOpen]);
+
+  const openVerseToolbarRef = useRef(openVerseToolbar);
+  openVerseToolbarRef.current = openVerseToolbar;
+  // Steps 4 and 5 both need verses on screen, and step 2 can leave the reader
+  // re-fetching: she is invited to switch books there, so the guide may resume
+  // into a chapter that is still loading. Wait briefly rather than anchoring to
+  // a spinner. Capped well inside the overlay's own ~2.8s measure-retry budget —
+  // if the chapter never arrives, the coach bails out and ends the tour, which is
+  // the right failure: no step, rather than a step pointing at nothing.
+  const versesLenRef = useRef(0);
+  versesLenRef.current = verses.length;
+  const waitForVerses = async () => {
+    for (let i = 0; i < 6; i += 1) {
+      if (versesLenRef.current > 0) return true;
+      await new Promise<void>(r => setTimeout(r, 200));
+    }
+    return versesLenRef.current > 0;
+  };
+  const waitForVersesRef = useRef(waitForVerses);
+  waitForVersesRef.current = waitForVerses;
+
+  const setRevealVerseBar = guide.setRevealVerseBarHandler;
+  const setHideVerseBar = guide.setHideVerseBarHandler;
+  const setScrollToComplete = guide.setScrollToCompleteHandler;
+  useEffect(() => {
+    // Step 4 shows her the REAL toolbar rather than describing it. Scroll to the
+    // top first (she may have read on before the tour reached this step), and
+    // open it only once that settles: onReaderScroll clears the selection on any
+    // scroll, so selecting first would have the toolbar wiped in the same beat
+    // and step 4 would spotlight nothing.
+    setRevealVerseBar(async () => {
+      if (!await waitForVersesRef.current()) return;
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+      await new Promise<void>(r => setTimeout(r, 450));
+      openVerseToolbarRef.current(0);
+    });
+    setHideVerseBar(() => setSelVerse(null));
+    // Step 5 is the one step whose anchor is off screen: ride the chapter down
+    // to the CTA. The overlay's measure-retry loop tolerates the travel; the
+    // wait just means its FIRST attempt usually lands.
+    setScrollToComplete(async () => {
+      if (!await waitForVersesRef.current()) return;
+      scrollRef.current?.scrollToEnd({ animated: true });
+      await new Promise<void>(r => setTimeout(r, 600));
+    });
+  }, [setRevealVerseBar, setHideVerseBar, setScrollToComplete]);
+
   return (
     <View style={[styles.container, { backgroundColor: TH.bg === 'transparent' ? '#FBF7F6' : TH.bg }]}>
       {dlNotice && (
@@ -1443,19 +1534,26 @@ export default function BibleScreen() {
         borderBottomColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(30,27,46,0.05)',
         backgroundColor: TH.bg === 'transparent' ? '#FBF7F6' : TH.bg,
       }]}>
-        <TouchableOpacity onPress={() => setDrawer(true)} style={styles.headerBtn} hitSlop={8}>
+        <TouchableOpacity ref={guideBooksRef} onPress={() => setDrawer(true)} style={styles.headerBtn} hitSlop={8}>
           <Feather name="menu" size={22} color={TH.txt} />
         </TouchableOpacity>
         <Text style={[styles.bookTitle, { color: TH.txt }]}>{bookTitle} {chapter}</Text>
-        <TouchableOpacity onPress={() => setSearchOpen(true)} style={styles.headerBtn} hitSlop={8}>
-          <Feather name="search" size={22} color={TH.txt} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={onBookmark} style={styles.headerBtn} hitSlop={8}>
-          <Feather name="bookmark" size={22} color={bookmarked ? ROSE : TH.txt} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setFontMenu(v => !v)} style={styles.headerBtn} hitSlop={8}>
-          <Text style={[styles.headerT, { color: TH.txt }]}>T</Text>
-        </TouchableOpacity>
+        {/* The three right-hand tools are grouped so the reader guide can frame
+            them as one. Layout is unchanged: the group takes ONE of the header's
+            14pt gaps and reproduces the other two inside itself. collapsable
+            false because a plain wrapper View gets flattened away on Android,
+            and a flattened view has no window rect to measure. */}
+        <View ref={guideToolsRef} collapsable={false} style={styles.headerTools}>
+          <TouchableOpacity onPress={() => setSearchOpen(true)} style={styles.headerBtn} hitSlop={8}>
+            <Feather name="search" size={22} color={TH.txt} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onBookmark} style={styles.headerBtn} hitSlop={8}>
+            <Feather name="bookmark" size={22} color={bookmarked ? ROSE : TH.txt} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setFontMenu(v => !v)} style={styles.headerBtn} hitSlop={8}>
+            <Text style={[styles.headerT, { color: TH.txt }]}>T</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       </TabSection>
 
@@ -1624,6 +1722,7 @@ export default function BibleScreen() {
           };
           return (
             <TouchableOpacity
+              ref={guideCompleteRef}
               onPress={onMark}
               activeOpacity={0.85}
               style={[styles.markCompleteBtn, completed && styles.markCompleteBtnDone]}
@@ -1665,6 +1764,7 @@ export default function BibleScreen() {
       {/* Verse toolbar */}
       {selVerse !== null && (
         <Animated.View
+          ref={guideVerseBarRef}
           entering={FadeIn.duration(180)}
           exiting={FadeOut.duration(220)}
           style={[styles.verseToolbar, { top: toolbarTop }]}
@@ -1804,6 +1904,7 @@ export default function BibleScreen() {
             • playing       → a slowly SPINNING music note, so "live" is
               obvious and the tap still leads to the full transport. */}
       <TouchableOpacity
+        ref={guideAudioRef}
         onPress={openPlayer}
         style={styles.audioBtn}
         activeOpacity={0.85}
@@ -1834,6 +1935,10 @@ export default function BibleScreen() {
         onNextChapter={playerNextChapter}
         onQueue={() => { setShowPlayer(false); setDrawer(true); }}
       />
+
+      {/* Takes the coordinator slot and starts the first-visit reader guide.
+          Null render; the overlay itself is root-mounted (BibleGuideHost). */}
+      <BibleGuideTrigger />
 
       {/* Drawers/overlays */}
       {drawer && (
@@ -1943,6 +2048,13 @@ const styles = StyleSheet.create({
     height: 32,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Groups search / bookmark / text-size. `gap` matches bibleHeader's so the
+  // spacing is identical to when the three were direct children of the row.
+  headerTools: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
   },
   headerT: {
     fontSize: 21,

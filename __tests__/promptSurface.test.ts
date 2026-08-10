@@ -3,7 +3,8 @@
 // reads it before granting), so a hole here is a sheet over the Bible reader.
 
 import {
-  setPromptRoute, promptSurfaceSafe, setLaunchOverlayUp, pushSheet, popSheet,
+  setPromptRoute, promptSurfaceSafe, promptSurfaceQuiet, promptRouteAllowed,
+  setLaunchOverlayUp, pushSheet, popSheet,
   setNudgeActive, nudgeActive, __resetPromptSurfaceForTest,
 } from '../src/state/promptSurface';
 import { setInterstitialVisible } from '../src/services/interstitialVisibility';
@@ -46,6 +47,53 @@ describe('promptSurfaceSafe', () => {
   it('blocks before the first navigation event lands', () => {
     setLaunchOverlayUp(false);
     expect(promptSurfaceSafe()).toBe(false);
+  });
+});
+
+// The narrow escape hatch for a prompt whose whole subject is an excluded screen
+// (today only the Bible-reader guide, on 'bible'). The coordinator applies this
+// per REQUEST — so the danger to pin down is one prompt's exception leaking into
+// the default, or into the conditions nothing may opt out of.
+describe('alsoOn — the per-request route exception', () => {
+  it('lets a request that names its screen be granted there', () => {
+    onTab('bible');
+    expect(promptSurfaceSafe(['bible'])).toBe(true);
+  });
+
+  it('does NOT change the default — every other prompt is still blocked on bible', () => {
+    onTab('bible');
+    expect(promptSurfaceSafe()).toBe(false);
+    expect(promptSurfaceSafe([])).toBe(false);
+    expect(promptSurfaceSafe(['plan'])).toBe(false);   // naming an unrelated route grants nothing
+  });
+
+  it('widens the ROUTE only — an ad, a sheet or the launch overlay still block it', () => {
+    onTab('bible');
+    setInterstitialVisible(true);
+    expect(promptSurfaceSafe(['bible'])).toBe(false);
+    setInterstitialVisible(false);
+    pushSheet();
+    expect(promptSurfaceSafe(['bible'])).toBe(false);
+    popSheet();
+    setLaunchOverlayUp(true);
+    expect(promptSurfaceSafe(['bible'])).toBe(false);
+  });
+
+  it('cannot unlock a flow screen she chose to be in', () => {
+    // The exception is per-route, not "trust this prompt anywhere". A guide that
+    // named PrayerFlow would still be refused there — nothing interrupts a flow.
+    onTab('PrayerFlow');
+    expect(promptSurfaceSafe(['bible'])).toBe(false);
+  });
+
+  it('splits cleanly: the two halves recombine into the whole gate', () => {
+    onTab('bible');
+    expect(promptRouteAllowed()).toBe(false);
+    expect(promptRouteAllowed(['bible'])).toBe(true);
+    expect(promptSurfaceQuiet()).toBe(true);          // nothing else owns the screen
+    setInterstitialVisible(true);
+    expect(promptSurfaceQuiet()).toBe(false);
+    expect(promptRouteAllowed(['bible'])).toBe(true); // the route half is unaffected by the ad
   });
 
   it('blocks under the launch overlay — it is pointerEvents:none, so a prompt there is invisible but live', () => {

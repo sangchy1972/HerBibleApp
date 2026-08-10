@@ -67,12 +67,17 @@ export interface SpotlightCoachProps {
   /** Spotlight padding around the anchor and the hole's corner radius. */
   pad: number;
   radius: number;
-  counter: string;
+  /** Omit on a SINGLE-step guide. Rendered only when non-empty — an empty string
+   *  would still lay out a text row. */
+  counter?: string;
   title: string;
   /** Supports **bold** spans (InlineBold). */
   body: string;
   primaryLabel: string;
-  skipLabel: string;
+  /** Omit when the guide has ONE button. Rendered only when non-empty: an empty
+   *  label left a hitSlop-12 invisible touch target sitting to the left of the
+   *  CTA, which is exactly the hazard dev-guide §2 is about. */
+  skipLabel?: string;
   /** Both fire AFTER the exit animation, exactly once. */
   onPrimary: () => void;
   onSkip: () => void;
@@ -319,13 +324,15 @@ export default function SpotlightCoach({
         {!below && <View style={[styles.caretDown, { left: caretLeft }]} />}
         {below && <View style={[styles.caretUp, { left: caretLeft }]} />}
         <View style={styles.card}>
-          <Text style={styles.counter}>{counter}</Text>
+          {counter ? <Text style={styles.counter}>{counter}</Text> : null}
           <Text style={styles.title}>{title}</Text>
           <InlineBold text={body} style={styles.body} boldStyle={styles.bodyBold} />
-          <View style={styles.row}>
-            <TouchableOpacity onPress={handleSkip} hitSlop={12} activeOpacity={0.7}>
-              <Text style={styles.skip}>{skipLabel}</Text>
-            </TouchableOpacity>
+          <View style={[styles.row, !skipLabel && styles.rowSingle]}>
+            {skipLabel ? (
+              <TouchableOpacity onPress={handleSkip} hitSlop={12} activeOpacity={0.7}>
+                <Text style={styles.skip}>{skipLabel}</Text>
+              </TouchableOpacity>
+            ) : null}
             <TouchableOpacity onPress={handlePrimary} hitSlop={10} activeOpacity={0.9} style={styles.cta}>
               <Text style={styles.ctaText}>{primaryLabel}</Text>
             </TouchableOpacity>
@@ -366,6 +373,8 @@ const styles = StyleSheet.create({
   body: { fontFamily: FONTS.lato, letterSpacing: 0.4, fontSize: ts(14.5), lineHeight: ts(21), color: TXTSUB },
   bodyBold: { fontFamily: FONTS.latoBold, fontWeight: '700', color: TXT },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 },
+  // One button → it owns the row, right-aligned like the CTA always is.
+  rowSingle: { justifyContent: 'flex-end' },
   skip: { fontFamily: FONTS.lato, letterSpacing: 0.4, fontSize: ts(14), color: TXTSUB },
   cta: { backgroundColor: ROSE, borderRadius: BTN_RADIUS, paddingHorizontal: 20, paddingVertical: 9 },
   ctaText: { fontFamily: FONTS.latoBold, fontWeight: '700', fontSize: ts(15), color: '#FFFFFF', letterSpacing: 0.2 },

@@ -189,17 +189,6 @@ function pruneImagesNotIn(slot: Slot, keep: string[]): void {
   } catch {}
 }
 
-// FNV-1a 32-bit string hash — deterministic, no deps. Good enough for
-// daily-image picking (we just need stable distribution across the list).
-function fnv1a(str: string): number {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
-  }
-  return h >>> 0;
-}
-
 // Local YYYY-MM-DD `offset` days from today (0 = today, 1 = tomorrow).
 function ymdForOffset(offset: number): string {
   const d = new Date();
@@ -207,16 +196,10 @@ function ymdForOffset(offset: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-// Deterministic daily pick for a specific date string — same input → same photo,
-// morning vs evening differ via the salt.
-function pickForYmd(list: string[], salt: string, ymdStr: string): string | null {
-  if (!list.length) return null;
-  return list[fnv1a(ymdStr + ':' + salt) % list.length];
-}
-
-function pickByDate(list: string[], salt: string): string | null {
-  return pickForYmd(list, salt, ymdForOffset(0));
-}
+// NOTE: the hash-based pickers (FNV-1a of ymd + salt) were deleted on 2026-08-09,
+// hash function and all. Images and audio now rotate SEQUENTIALLY — the hash's
+// jump-around repeated some files before others were ever seen, which matters most
+// on a short list like the audio one. Do not reintroduce it for picking.
 
 // Absolute day count for a local YYYY-MM-DD (UTC-based math → DST-immune), used
 // for SEQUENTIAL rotation: each item is shown in list ORDER, one per calendar
@@ -291,11 +274,11 @@ export function PrayerBackgroundsProvider({ children }: { children: React.ReactN
   // ~1–1.5 MB m4a's at any time. Yesterday's file is only deleted AFTER the
   // new download succeeds, so an offline tomorrow keeps the user covered.
   // `todayYmd` is a dep so this re-runs on day-rollover — today's filename
-  // changes (different fnv1a hash), the new file gets downloaded, and
+  // changes, the new file gets downloaded, and
   // yesterday's leftover is cleaned up.
   useEffect(() => {
     if (!manifest) return;
-    // Prefetch EVERY track for each slot (not just today's pickByDate choice)
+    // Prefetch EVERY track for each slot (not just today's sequential choice)
     // so the daily pick is ALWAYS already cached and audioFor rotates the music
     // reliably day-to-day. BUG FIX: previously only today's pick was downloaded,
     // so on a fresh day that track wasn't ready when PrayerFlow mounted and
@@ -405,7 +388,13 @@ export function PrayerBackgroundsProvider({ children }: { children: React.ReactN
       //   4. Bundled DEFAULT_AUDIO — guaranteed to exist from APK install,
       //      so first-launch playback is instant for every user.
       if (manifest) {
-        const fn = pickByDate(manifest.audio[slot], `audio:${slot}`);
+        // SEQUENTIAL, not the hash (owner 2026-08-09, who is adding more tracks).
+        // `pickByDate` hashes the date, which jumps around: with a short list it
+        // repeats some tracks several times before others are heard at all — the
+        // exact complaint that moved the IMAGES to pickSequential. One track per
+        // calendar day, in list order, wrapping at the end, so every file added to
+        // the manifest gets its turn.
+        const fn = pickSequential(manifest.audio[slot], ymdForOffset(0));
         if (fn) {
           const cached = audioCacheFile(slot, fn);
           if (cached && cached.exists) return { uri: cached.uri };

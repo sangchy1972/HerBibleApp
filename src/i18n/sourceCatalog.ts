@@ -1366,6 +1366,13 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   // Coach card shown after the OS permission prompt was refused — see
   // PermissionCoachOverlay. It mimics the Settings row she is about to hunt for.
   'permCoach.notif.title':         { en: 'Allow Her Bible to send you Daily Verses', context: 'Headline on the card that hands the user to system Settings after she declined the notification prompt. Names the OUTCOME (daily verses), not the permission. "Her Bible" is the app name — do not translate.' },
+  // ─── Narration coach mark (the "Listen" button in the prayer flow) ───────
+  // One spotlight, one button. Narration stopped auto-playing on 2026-08-09, so
+  // this is how she learns the button is there. See state/listenGuide.ts.
+  'listenGuide.title':             { en: 'Would you like it read aloud?', context: 'Title of the coach mark spotlighting the Listen button during a prayer. A question, not an instruction — narration is optional and the tone should not imply she is missing something.' },
+  'listenGuide.body':              { en: 'Tap here and a voice will read the prayer with you. The music keeps playing underneath.', context: 'Body of that coach mark. Two facts: the button starts a spoken reading, and it does not replace the background music. Supports **bold** spans.' },
+  'listenGuide.cta':               { en: 'Got it', context: 'The single button on that coach mark; dismisses it. MUST stay short — it is a small pill in the corner of a bubble. Two words at most, ideally one. Not "OK" (too curt) and not a full sentence.' },
+
   // ─── Full-screen reminder flow, straight after a prayer ──────────────────
   // ReminderTimeScreen (cream ground, rose CTA) then, only if she declines the
   // OS dialog, RemindersOffScreen.

@@ -21,12 +21,19 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ROSE, BTN_RADIUS, LAV, TXT, TXTSUB, FONTS } from '../constants/theme';
 import { maybeShowInterstitial } from '../services/ads';
-import { logEvent } from '../services/firebase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logEvent, setUserProps } from '../services/firebase';
 import { usePrayer } from '../state/PrayerContext';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useNotes } from '../state/NotesContext';
 import { useNotifications } from '../state/NotificationsContext';
 import { useSetReminderTime } from '../state/SetReminderTimeContext';
+import SpotlightCoach from '../components/shared/SpotlightCoach';
+import { measureRefInWindow } from '../state/FirstRunTourContext';
+import {
+  listenGuideReason, noteListenGuideShown, noteListened, noteFlowComplete,
+  LISTEN_GUIDE_DEFAULT, type ListenGuidePersisted, type ListenGuideReason,
+} from '../state/listenGuide';
 import ReminderTimeScreen from '../components/ReminderTimeScreen';
 import RemindersOffScreen from '../components/RemindersOffScreen';
 import { useActivity } from '../state/ActivityContext';
@@ -58,6 +65,31 @@ import type { RootStackScreenProps } from '../navigation/types';
 
 const { width, height } = Dimensions.get('window');
 const SECTIONS = ['verse', 'meditation', 'action', 'prayer'];
+
+// Narration coach-mark state. Module-level helpers rather than a context: only
+// this screen reads it, and a provider for three integers would be ceremony.
+const LISTEN_GUIDE_KEY = 'listenGuide:v1';
+async function loadListenGuide(): Promise<ListenGuidePersisted> {
+  try {
+    const raw = await AsyncStorage.getItem(LISTEN_GUIDE_KEY);
+    if (!raw) return LISTEN_GUIDE_DEFAULT;
+    const p = JSON.parse(raw) as Partial<ListenGuidePersisted>;
+    // Field-by-field, with the defaults as the floor: a truncated or older
+    // snapshot must never make `shownCount` NaN and defeat the lifetime cap.
+    return {
+      shownCount: Number.isFinite(p.shownCount) ? Number(p.shownCount) : 0,
+      flowsSinceListen: Number.isFinite(p.flowsSinceListen) ? Number(p.flowsSinceListen) : 0,
+      everListened: p.everListened === true,
+    };
+  } catch {
+    // Storage unreadable → behave as if she has seen it, never as if she is new.
+    // A guide that re-shows on every launch is worse than one that never shows.
+    return { ...LISTEN_GUIDE_DEFAULT, shownCount: 99 };
+  }
+}
+function persistListenGuide(s: ListenGuidePersisted): void {
+  AsyncStorage.setItem(LISTEN_GUIDE_KEY, JSON.stringify(s)).catch(() => {});
+}
 
 // Top padding for the deep pages (Reflection / Today's Practice / Closing
 // Prayer), measured BELOW the safe-area inset. Scales with screen height so
@@ -497,6 +529,19 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // below (`listenOk`) once today's verseId is known.
   const audioLang = resolveDailyVerseAudioLang(uiLang);
   const [listenOn, setListenOn] = useState(false);
+
+  // ── Narration coach mark ─────────────────────────────────────────────────
+  // Rules in state/listenGuide.ts (pure + unit-tested): her first-ever flow, or
+  // four completed flows in a row without narration, capped at two shows for life.
+  // Kept in a REF, not state, because every reader is an event handler or an
+  // effect — a re-render on each write would restart the flow's animations.
+  const listenGuideRef = useRef<ListenGuidePersisted>(LISTEN_GUIDE_DEFAULT);
+  const [listenGuideUp, setListenGuideUp] = useState(false);
+  const listenGuideReasonRef = useRef<ListenGuideReason | null>(null);
+  // The Listen button's own view, so the spotlight frames the real hit area
+  // rather than a guessed rectangle.
+  const listenBtnRef = useRef<View>(null);
+  const measureListenBtn = useCallback(() => measureRefInWindow(listenBtnRef), []);
   // Audio cursor — the page whose clip the narrator is on. Converges to the
   // settled page (never drives an animated scroll except on auto-advance).
   const [listenStep, setListenStep] = useState(0);
@@ -640,16 +685,79 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     } catch {}
   }, [listenOn, listenStep, readUris, readPlayer]);
 
-  // Auto-start narration 1s after the clips are ready — no tap needed (per
-  // user). Fires once; the bg music already auto-plays via musicOn. If the
-  // narration isn't available (non-EN UI, fetch failed) this simply no-ops.
-  const autoStartedRef = useRef(false);
+  // Narration NO LONGER auto-starts (owner 2026-08-09). Entering a prayer gives
+  // her the background music and nothing else; the voice is hers to ask for. The
+  // Listen button in the top chrome is the only way in, which is why the coach
+  // mark below exists — a button nobody notices is a feature nobody has.
+  //
+  // (What was here: a 1 s timer that flipped listenOn as soon as the clips
+  // resolved. `musicOn` still auto-plays; that is the part she asked to keep.)
+
+  // ── Narration analytics ───────────────────────────────────────────────────
+  // There was NO event for this before — `bible_audio_play` covers the Bible
+  // reader only, so the prayer narration was invisible in Firebase. Two signals,
+  // because they answer different questions:
+  //   prayer_audio_play  — volume: how often it is used, and from where.
+  //   prayer_audio_user  — a USER PROPERTY, so "how many users ever listen" is a
+  //                        segment rather than a distinct-count on an event.
+  const listenLoggedRef = useRef(false);
+  const usedListenRef = useRef(false);
+  // Decide ONCE per flow, on mount, and only raise the spotlight when the button
+  // is actually on screen: `listenOk` gates whether it renders at all (narration
+  // exists for this language and verse), and `readUris` gates whether it is
+  // enabled. Spotlighting a button that is absent or disabled would frame empty
+  // chrome and teach her to tap something that does nothing.
+  //
+  // `isFirstEverFlow` is captured from `everPrayed` at mount, before markDone can
+  // flip it — the same reason isFirstEverRef exists a few lines up. Works
+  // identically whether her first flow is the morning or the evening one: this
+  // screen is the same component for both and the button is in the same place.
+  const listenGuideDecidedRef = useRef(false);
+  const firstEverFlowRef = useRef(!everPrayed);
   useEffect(() => {
-    if (!readUris || autoStartedRef.current) return;
-    autoStartedRef.current = true;
-    const t = setTimeout(() => setListenOn(true), 1000);
-    return () => clearTimeout(t);
-  }, [readUris]);
+    if (listenGuideDecidedRef.current) return;
+    if (!listenOk || !readUris) return;      // button absent or still disabled
+    listenGuideDecidedRef.current = true;
+    let live = true;
+    (async () => {
+      const st = await loadListenGuide();
+      if (!live) return;
+      listenGuideRef.current = st;
+      const reason = listenGuideReason(st, firstEverFlowRef.current);
+      if (!reason) return;
+      listenGuideReasonRef.current = reason;
+      // Burn the show on DISPLAY, not on acknowledgement: a force-quit mid-guide
+      // must not hand her the same lifetime show again.
+      listenGuideRef.current = noteListenGuideShown(st);
+      persistListenGuide(listenGuideRef.current);
+      logEvent('listen_guide_shown', { reason, slot: morning ? 'morning' : 'evening' });
+      setListenGuideUp(true);
+    })();
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listenOk, readUris]);
+
+  const noteListenStarted = useCallback(() => {
+    usedListenRef.current = true;
+    if (listenLoggedRef.current) return;   // once per flow, not once per resume
+    listenLoggedRef.current = true;
+    logEvent('prayer_audio_play', {
+      slot: morning ? 'morning' : 'evening',
+      lang: audioLang ?? 'none',
+      step: listenStepRef.current,
+      // The button is the only way in today (narration no longer auto-plays).
+      // Kept in the schema so adding e.g. a "play now" on the coach mark does not
+      // require a new event.
+      source: 'button',
+    });
+    setUserProps({ prayer_audio_user: 'yes' });
+    listenGuideRef.current = noteListened(listenGuideRef.current);
+    persistListenGuide(listenGuideRef.current);
+    // Kill a coach mark that is on screen the moment she does the thing it asks
+    // for — otherwise it sits over a narration that is already playing.
+    setListenGuideUp(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [morning, audioLang]);
 
   // Auto-advance: a finished clip scrolls to + plays the next step. Stops
   // (without auto-Amen) after the closing prayer.
@@ -701,6 +809,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
         pagerRef.current?.setPage(page);
       }
       setListenOn(true);             // the play effect picks it up
+      noteListenStarted();
     }
   };
 
@@ -918,6 +1027,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
       // redos (which still count an ad per product decision). markDone/streak
       // are unaffected — they key on calendar day, not session.
       logEvent('prayer_complete', { slot: morning ? 'morning' : 'evening', is_redo: isRedoRef.current });
+      // Counting COMPLETED flows, not opens: opening and backing straight out says
+      // nothing about whether she wanted narration (see state/listenGuide.ts).
+      listenGuideRef.current = noteFlowComplete(listenGuideRef.current, usedListenRef.current);
+      persistListenGuide(listenGuideRef.current);
       // Interstitial at this natural break — the congrats scene renders beneath
       // it, so closing the ad returns the user straight to it. Frequency-capped +
       // remove-ads-aware inside the service.
@@ -1189,6 +1302,12 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                 Disabled until today's audio has resolved. */}
             {listenOk && (
               <TouchableOpacity
+                // The spotlight measures THIS view, so the hole frames the real
+                // hit area. (No collapsable={false}: TouchableOpacity does not
+                // accept it, and it does not need it — a touch responder is never
+                // view-flattened on Android, which is exactly why the measurer
+                // goes on the button itself rather than a wrapper View.)
+                ref={listenBtnRef}
                 onPress={toggleListen}
                 style={[styles.chromeBtn, styles.chromeBtnWhite, !readUris && { opacity: 0.5 }]}
                 disabled={!readUris}
@@ -1490,6 +1609,43 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
           on top of it — siblings, so source order is the z-order — and the weekly
           celebration stays mounted underneath, which is what "Not now" returns
           to. Both own their own safe-area padding and their own hardware back. */}
+      {/* Narration coach mark. Rendered LAST among the in-flow layers so it sits
+          on top of the pager, and only while the flow itself is on screen —
+          `!amened` keeps it off the congrats scene, where the Listen button is
+          already hidden and the hole would frame nothing.
+          `focused` is hardcoded true: PrayerFlow is a fullScreenModal the user is
+          looking at, not a tab screen that can lose focus behind another. */}
+      {listenGuideUp && !amened && (
+        <SpotlightCoach
+          focused
+          measure={measureListenBtn}
+          // A generous ring — the owner said a slightly larger highlight is fine,
+          // and the button is a 40pt circle in the top chrome where a tight hole
+          // reads as a smudge.
+          pad={14}
+          radius={30}
+          title={t('listenGuide.title')}
+          body={t('listenGuide.body')}
+          primaryLabel={t('listenGuide.cta')}
+          // ONE button, so no skip label and no counter — SpotlightCoach renders
+          // neither when they are omitted (an empty string used to leave an
+          // invisible hitSlop-12 target beside the CTA).
+          onPrimary={() => {
+            setListenGuideUp(false);
+            logEvent('listen_guide_ack', {
+              reason: listenGuideReasonRef.current ?? 'unknown',
+              slot: morning ? 'morning' : 'evening',
+            });
+          }}
+          onSkip={() => setListenGuideUp(false)}
+          // The button vanished mid-measure (she swiped to a verse with no
+          // narration, the fetch failed). Drop the guide rather than strand a
+          // scrim — and do NOT refund the show: it was already burned, and the
+          // alternative is a retry loop on a button that is not there.
+          onUnmeasurable={() => setListenGuideUp(false)}
+        />
+      )}
+
       {showReminderTime && (
         <ReminderTimeScreen
           slot={morning ? 'morning' : 'night'}

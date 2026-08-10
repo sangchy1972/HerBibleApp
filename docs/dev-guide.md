@@ -581,6 +581,56 @@ guess; re-measure after any scroll or segment switch the guide itself triggers.
 
 ---
 
+## 8b. Prayer audio — background music and the narration
+
+**Files** — `src/state/PrayerBackgroundsContext.tsx` (music), `src/screens/PrayerFlow.tsx`
+(both players + the coach mark), `src/state/listenGuide.ts` (pure guide rules),
+`__tests__/listenGuide.test.ts`.
+
+Two players run at once and always have: background music at volume 0.8 and the
+narration on top. The audio session is configured app-wide to MIX, not duck.
+
+### Background music
+- CDN: `https://covers.everlandapps.com/backgrounds/manifest.json`, files at
+  `…/backgrounds/audio/<morning|evening>/<file>.m4a`. Adding a track means adding a
+  filename to that manifest — **no app change**.
+- **Rotation is SEQUENTIAL**, one track per calendar day in list order, wrapping
+  (`pickSequential`). The hash pickers were deleted on 2026-08-09: a hash on a
+  3–5 item list repeats some tracks before others are ever heard, and `audioFor`
+  was hashing while the prefetch was already sequential, so the pick usually
+  missed its own cache and fell back to "any leftover file".
+- `audioFor` NEVER returns a remote URL — cached file, then any cached file for the
+  slot, then the other slot's, then the bundled asset. Silence is not an option;
+  the prefetch pulls today's and tomorrow's pick in the background.
+- Any new `.m4a` must be `ffmpeg -movflags +faststart` or expo-audio fails silently.
+
+### Narration ("Listen")
+- **It does not auto-play** (owner 2026-08-09). Entering a prayer gives her music
+  and nothing else; the top-chrome Listen button is the only way in. Do not
+  reintroduce an auto-start — the coach mark below exists *because* of this choice.
+- Shown only where narration exists for the UI language and that verse
+  (`isDailyVerseAudioAvailable`), and disabled until the clips resolve.
+- **Coach mark**: one `SpotlightCoach` step on the button, one "Got it" button (no
+  counter, no skip — `SpotlightCoach` renders neither when omitted). Offered on her
+  **first-ever flow**, or after **four completed flows** with no narration, **twice
+  in a lifetime**, and retired for good the moment she plays it. The show is burned
+  on DISPLAY so a force-quit cannot hand out the same one twice. It only raises once
+  `listenOk && readUris` — spotlighting an absent or disabled button would frame
+  empty chrome. The measurer sits on the button itself (a touch responder is never
+  view-flattened on Android, which a wrapper View would be).
+- Counting **completed** flows, not opens: backing out immediately says nothing
+  about whether she wanted narration.
+
+### Analytics
+| Signal | Meaning |
+|---|---|
+| `prayer_audio_play` | narration actually started. Once per flow, not per resume. Params `slot`, `lang`, `step`, `source`. |
+| **user property `prayer_audio_user = 'yes'`** | she has listened at least once, ever. This is how "how many users use narration" is answered — a segment, not a distinct-count on an event. |
+| `listen_guide_shown` / `listen_guide_ack` | the coach mark, with `reason` (`first_flow` / `four_flows`) and `slot`. The pair measures whether the guide converts. |
+`bible_audio_play` is the Bible reader's own, unrelated event — do not conflate them.
+
+---
+
 ## 9. Paywall / IAP / remove-ads
 
 **Files** — `src/services/iap.ts`, `src/screens/RemoveAdsScreen.tsx`,

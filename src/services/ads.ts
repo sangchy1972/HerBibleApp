@@ -52,11 +52,11 @@ import { ensureAttRequested } from './att';
 import { startUsController, stopUsController, usOnShowOpportunity, isUsControllerActive } from './usInterstitial';
 import { startAdEngine, stopAdEngine, isAdEngineActive, engineOnShowOpportunity } from './adEngine';
 import { hydrateAdValueStore } from './adValueStore';
-import { setInterstitialVisible } from './interstitialVisibility';
+import { setInterstitialVisible, noteInterstitialShown } from './interstitialVisibility';
 import { deviceRegion } from './deviceRegion';
 import { initAdRevenue, onAdPaid } from './adRevenue';
 import { hydrateAdRevenueConfig, refreshAdRevenueConfig, isFirstRun } from './adRevenueConfig';
-import { MIN_AD_INTERVAL_MS } from '../constants/adPacing';
+import { MIN_AD_INTERVAL_MS, type AdPlacement } from '../constants/adPacing';
 
 let mobileAdsFn: any = null;
 let InterstitialAdCls: any = null;
@@ -436,6 +436,7 @@ export function maybeShowOnboardingInterstitial(): boolean {
     if (!engineOnShowOpportunity('onboarding_first', true)) return false;
     onboardingShown = true;
     lastShownAt = Date.now();
+    noteInterstitialShown();
     return true;
   }
   if (!onboardingInterstitial || !onboardingLoaded) return false;
@@ -445,6 +446,7 @@ export function maybeShowOnboardingInterstitial(): boolean {
     setInterstitialVisible(true);
     onboardingShown = true;
     lastShownAt = Date.now();
+    noteInterstitialShown();
     logEvent('ad_impression_custom', { format: 'interstitial', placement: 'onboarding_first' });
     return true;
   } catch { return false; }
@@ -453,7 +455,7 @@ export function maybeShowOnboardingInterstitial(): boolean {
 // Show an interstitial at a natural break (e.g. after Amen, after finishing a
 // plan day). Respects the remove-ads flag and the frequency cap, and silently
 // no-ops if no ad is loaded yet (a fresh one is always preloading for next time).
-export function maybeShowInterstitial(placement: 'prayer_end' | 'gospel_end' | 'plan_end' | 'quiz_retry' | 'nav' | 'app_open' | 'unknown' = 'unknown'): void {
+export function maybeShowInterstitial(placement: AdPlacement = 'unknown'): void {
   if (adsRemoved || !initialized) return;
   // ANDROID: the spec engine (own cache, shared interval floor, paid-side impression
   // logging). Returns silently if nothing is cached yet.
@@ -470,6 +472,7 @@ export function maybeShowInterstitial(placement: 'prayer_end' | 'gospel_end' | '
     interstitial.show();
     setInterstitialVisible(true);
     lastShownAt = now;
+    noteInterstitialShown();
     // NOT `ad_impression` — that's a Firebase auto-collected reserved event
     // (AdMob link). `placement` distinguishes the two call sites.
     logEvent('ad_impression_custom', { format: 'interstitial', placement });

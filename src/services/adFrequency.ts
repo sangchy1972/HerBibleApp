@@ -1,25 +1,35 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Engagement-based interstitial triggers (US monetization).
 //
-// Two EXTRA show triggers layered on top of the baseline (prayer_end / plan_end,
+// Three EXTRA show triggers layered on top of the baseline (prayer_end / plan_end,
 // which fire for everyone):
 //   • Navigation: every 3rd qualifying screen transition. AGGRESSIVE, and
 //     therefore still gated to established users — day 0–2 gentle, day ≥ 3 on.
+//   • Churn (owner 2026-08-09): MORE than 5 screen switches AND ≥60s since the
+//     last ad. Counts EVERY switch — the tab-run collapse below is exactly what
+//     left pure tab-hopping (prayer→bible→plan→profile→…) unmonetized, since a
+//     whole run collapses to +1 and never reaches the every-3rd threshold. No day
+//     gate: the owner specified two conditions and only two.
 //   • Hot start: returning to the foreground after ≥15s in the background.
 //     EVERY USER from day 0 (owner decision 2026-08-08 — previously day ≥ 3).
 //     It rides the same global floor (constants/adPacing) + foreground check as every other
 //     placement, and the store-review excursion is still exempt, so the widening
 //     is a reach change, not a frequency change.
 //
-// Counting rules (per product decision):
-//   • A run of CONSECUTIVE tab↔tab switches (prayer/bible/plan/profile) counts as
-//     +1 total, no matter how many tabs are tapped, until a non-tab screen breaks
-//     the run.
-//   • Any transition touching a non-tab "browse" screen (Streak/Achievement/…)
-//     counts +1 normally.
-//   • Transitions into/out of flow & utility screens never count and never trigger
-//     (prayer/reading/plan flows already show an ad at their end; never interrupt
-//     the remove-ads / settings / help screens).
+// Counting rules (per product decision). The two nav counters SHARE the exclusion
+// rule and nothing else — see reduceNavigation, which is pure and tested:
+//   • Transitions into/out of flow & utility screens never count and never trigger,
+//     for EITHER counter (prayer/reading/plan flows already show an ad at their end;
+//     never interrupt the remove-ads / settings / help screens). This is the one
+//     place Play's Disruptive Ads exposure is actually bounded — do not widen it.
+//   • `nav` counter: a run of CONSECUTIVE tab↔tab switches counts +1 TOTAL no matter
+//     how many tabs are tapped, until a non-tab screen breaks the run. Any transition
+//     touching a non-tab "browse" screen (Streak/Achievement/…) counts +1 normally.
+//     Only advances for day ≥ 3 users.
+//   • `churn` counter: +1 for EVERY switch, no collapsing, every day. This is the
+//     whole point of it — see the trigger list above.
+// When both are due on the same transition only ONE ad is asked for, and both
+// counters reset.
 //
 // The actual show + frequency floor + foreground check live in ads.ts /
 // usInterstitial.ts; this module only decides WHEN to call maybeShowInterstitial.
@@ -28,11 +38,24 @@
 import { AppState, type AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { maybeShowInterstitial } from './ads';
+import { msSinceLastInterstitial } from './interstitialVisibility';
+import type { AdPlacement } from '../constants/adPacing';
 
 const INSTALL_KEY = 'ads:firstLaunchYmd';
 const AGGRESSIVE_FROM_DAY = 3;     // NAV only: day0..day2 gentle; day>=3 aggressive
 const NAV_EVERY = 3;               // show on every 3rd qualifying transition
 const HOTSTART_MIN_BG_MS = 15_000; // must be backgrounded ≥15s to count as a hot start
+
+// ── Churn rule (owner 2026-08-09) ───────────────────────────────────────────
+// "MORE than 5" — written as a `>` comparison so the constant reads exactly like
+// the requirement instead of as an off-by-one waiting to happen. Fires on the 6th.
+const CHURN_MIN_SWITCHES = 5;
+// Its own quiet period, deliberately NOT derived from MIN_AD_INTERVAL_MS: this is
+// a product number the owner set (1 min), while the global floor is a pacing
+// number we tune. Deriving one from the other means halving the floor silently
+// halves this too. It is >= the global floor, so this rule can never sneak an ad
+// past it — it is strictly the stricter of the two.
+const CHURN_MIN_SINCE_AD_MS = 60_000;
 
 // Bottom tabs — consecutive switches among these collapse to a single count.
 const TABS = new Set(['prayer', 'bible', 'plan', 'profile']);
@@ -48,9 +71,13 @@ const EXCLUDED = new Set([
 ]);
 
 let installYmd = '';
-let navCount = 0;
 let lastRoute: string | null = null;
-let lastWasTabSwitch = false;
+// In-memory and per-process on purpose — NOT persisted. Persisting churnCount
+// would mean 5 switches today plus one tomorrow earns an ad on the first tap of a
+// fresh launch, which is the interruption pattern we most want to avoid. It does
+// survive backgrounding (the process is still alive), which is intended: the
+// hot-start ad restarts the 60s clock anyway.
+let counters: NavCounters = { navCount: 0, churnCount: 0, lastWasTabSwitch: false };
 let bgAt: number | null = null;
 let appStateSub: { remove: () => void } | null = null;
 
@@ -84,23 +111,67 @@ export async function initAdFrequency(): Promise<void> {
   if (appStateSub == null) appStateSub = AppState.addEventListener('change', onAppState);
 }
 
+export type NavCounters = { navCount: number; churnCount: number; lastWasTabSwitch: boolean };
+
+/**
+ * PURE: what one A→B transition does to both nav counters, and which ad (if any)
+ * it earns. Exported for tests — two counters with different counting rules,
+ * different thresholds and different floors racing on the same event is exactly
+ * the kind of interaction that cannot be verified by reading it.
+ *
+ * `msSinceAd` is time since the last interstitial ACTUALLY presented (shared
+ * clock in interstitialVisibility), not since the last time we asked for one.
+ */
+export function reduceNavigation(
+  s: NavCounters,
+  from: string | null,
+  to: string,
+  opts: { aggressive: boolean; msSinceAd: number },
+): { next: NavCounters; show: Extract<AdPlacement, 'nav' | 'nav_churn'> | null } {
+  if (from == null || from === to) return { next: s, show: null };   // first route / no real change
+  // Flows & utility screens: never count, never interrupt. Breaking the tab run
+  // here is what makes "consecutive" mean consecutive.
+  if (EXCLUDED.has(from) || EXCLUDED.has(to)) {
+    return { next: { ...s, lastWasTabSwitch: false }, show: null };
+  }
+
+  const isTabSwitch = TABS.has(from) && TABS.has(to);
+  const collapsed = isTabSwitch && s.lastWasTabSwitch;   // a consecutive tab run → +1 total
+  const next: NavCounters = { ...s, lastWasTabSwitch: isTabSwitch };
+
+  // CHURN counts every switch. The legacy counter keeps its own rules untouched:
+  // collapsed runs and gentle-tier users still don't advance it.
+  next.churnCount = s.churnCount + 1;
+  if (opts.aggressive && !collapsed) next.navCount = s.navCount + 1;
+
+  const churnDue = next.churnCount > CHURN_MIN_SWITCHES && opts.msSinceAd >= CHURN_MIN_SINCE_AD_MS;
+  const navDue = next.navCount >= NAV_EVERY;
+
+  // One ad per transition. Churn wins a tie because it is the stricter rule (60s
+  // quiet vs the 30s global floor), so honouring it never shows an ad the legacy
+  // rule would have blocked. When both are due, BOTH counters reset — leaving
+  // navCount at ≥ NAV_EVERY would make every later transition re-fire.
+  if (churnDue) {
+    return { next: { ...next, churnCount: 0, navCount: navDue ? 0 : next.navCount }, show: 'nav_churn' };
+  }
+  if (navDue) return { next: { ...next, navCount: 0 }, show: 'nav' };
+  // Threshold met but still inside the quiet minute: the count deliberately STAYS
+  // armed and climbing, so the first switch after the minute clears fires. Resetting
+  // here would mean a fast tab-hopper who trips the floor once has to earn all 6 again.
+  return { next, show: null };
+}
+
 /** Call on every navigation state change with the deepest active route name. */
 export function noteNavigation(routeName: string): void {
   const from = lastRoute;
   lastRoute = routeName;
-  if (from == null || from === routeName) return;   // first route / no real change
-  if (!isAggressive()) return;                       // gentle tier → nav never triggers
-  if (EXCLUDED.has(from) || EXCLUDED.has(routeName)) { lastWasTabSwitch = false; return; }
-
-  const isTabSwitch = TABS.has(from) && TABS.has(routeName);
-  if (isTabSwitch && lastWasTabSwitch) return;       // collapse a consecutive tab run → +1 total
-  lastWasTabSwitch = isTabSwitch;
-
-  navCount += 1;
-  if (navCount >= NAV_EVERY) {
-    navCount = 0;
-    maybeShowInterstitial('nav');                    // ads layer enforces the interval floor + foreground
-  }
+  const { next, show } = reduceNavigation(counters, from, routeName, {
+    aggressive: isAggressive(),
+    msSinceAd: msSinceLastInterstitial(),
+  });
+  counters = next;
+  // ads layer still enforces the global floor, the foreground check and remove-ads.
+  if (show) maybeShowInterstitial(show);
 }
 
 /**

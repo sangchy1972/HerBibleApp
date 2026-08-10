@@ -42,10 +42,10 @@
 import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent } from './firebase';
-import { setInterstitialVisible } from './interstitialVisibility';
+import { setInterstitialVisible, noteInterstitialShown } from './interstitialVisibility';
 import { onAdPaid, normalizeValue } from './adRevenue';
 import { deviceRegion } from './deviceRegion';
-import { MIN_AD_INTERVAL_MS } from '../constants/adPacing';
+import { MIN_AD_INTERVAL_MS, type AdPlacement } from '../constants/adPacing';
 import {
   classifyRegion, planLayers, priorityOf, NEWBIE_UNIT, type AdUnit, type Region,
 } from './adLadders';
@@ -68,7 +68,8 @@ const EXPIRY_MS = 50 * 60 * 1000;  // evict before AdMob's ~1h expiry
 const MIN_INTERVAL_MS = MIN_AD_INTERVAL_MS;
 const BREAKER_KEY = 'adEngine:day:v1';
 
-type Placement = 'prayer_end' | 'gospel_end' | 'plan_end' | 'quiz_retry' | 'nav' | 'app_open' | 'onboarding_first' | 'unknown';
+// Callers' placements (constants/adPacing) + the engine's own onboarding one.
+type Placement = AdPlacement | 'onboarding_first';
 
 interface Deps {
   Interstitial: any;
@@ -417,7 +418,7 @@ export function engineOnShowOpportunity(placement: Placement, bypassInterval = f
   };
   try {
     offOpened = slot.ad.addAdEventListener(deps!.AdEventType.OPENED, () => {
-      try { lastShownAt = Date.now(); } catch {}
+      try { lastShownAt = Date.now(); noteInterstitialShown(); } catch {}
     });
     offClosed = slot.ad.addAdEventListener(deps!.AdEventType.CLOSED, () => {
       try {
@@ -431,6 +432,11 @@ export function engineOnShowOpportunity(placement: Placement, bypassInterval = f
     });
     showing = true;
     setInterstitialVisible(true);
+    // Stamped here AND in OPENED. OPENED is the accurate moment, but if the SDK
+    // ever drops it the shared clock would believe no ad had shown and every
+    // trigger gated on it (adFrequency's churn rule) would fire again immediately.
+    // The OPENED stamp lands microseconds later and simply wins.
+    noteInterstitialShown();
     const r = slot.ad.show();
     if (r && typeof r.then === 'function') {
       r.then(() => {}).catch(() => {

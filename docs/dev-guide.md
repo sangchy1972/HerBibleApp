@@ -298,8 +298,25 @@ ladder), `adEngine.ts` / `adLadders.ts` / `adValueStore.ts` (the Android engine)
 |---|---|
 | `prayer_end`, `plan_end` | baseline, every user |
 | `nav` | every 3rd qualifying transition, **day ≥ 3 only**. A run of consecutive tab↔tab switches collapses to +1. Flow/utility screens never count and never trigger (`EXCLUDED` in `adFrequency.ts`) |
+| `nav_churn` | **more than 5** screen switches **and** ≥ 60 s since an ad actually presented (owner 2026-08-09). Counts **every** switch — no tab-run collapsing, **no day gate**. Fires on the transition that crosses the threshold |
 | `app_open` | hot start after ≥ 15 s backgrounded, **every user from day 0** (owner 2026-08-08). `suppressNextHotStart()` exempts the store-review excursion for 10 min |
 | `quiz_retry` | every tap of "Try those again", **uncapped** by design, 400 ms delay |
+
+Why two nav rules and not one tuned rule: `nav`'s tab-run collapse means pure
+tab-hopping (`prayer→bible→plan→profile→…`) scores **+1 for the whole run** and
+essentially never reaches its threshold — the most common idle-browsing pattern in the
+app was unmonetized. `nav_churn` counts raw switches to catch exactly that, and pays for
+the extra reach with a 60 s quiet period (2× the global floor) instead of a day gate.
+The two counters are independent; when both come due on one transition only **one** ad is
+requested and **both** counters reset. All of it lives in the pure, tested
+`reduceNavigation()` — 16 cases in `__tests__/adFrequencyNav.test.ts`. Change the rule
+there, not inline.
+
+`nav_churn` reads `msSinceLastInterstitial()` from `interstitialVisibility.ts`, the one
+shared clock stamped by all three show paths at the moment an ad **really presents**. The
+paths' own `lastShownAt` variables stay private — **if you add a fourth show path, call
+`noteInterstitialShown()` there too**, or every trigger gated on the clock will believe no
+ad has ever shown and fire on the spot.
 
 ### Settled — do not re-open
 - The `app_open` hot-start interstitial **stays**. Audits will keep flagging it under

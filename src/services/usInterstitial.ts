@@ -29,9 +29,9 @@
 import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent } from './firebase';
-import { setInterstitialVisible } from './interstitialVisibility';
+import { setInterstitialVisible, noteInterstitialShown } from './interstitialVisibility';
 import { onAdPaid, normalizeValue } from './adRevenue';
-import { MIN_AD_INTERVAL_MS } from '../constants/adPacing';
+import { MIN_AD_INTERVAL_MS, type AdPlacement } from '../constants/adPacing';
 
 // ── Constants (spec §0) ──────────────────────────────────────────────────────
 const PUB = 'ca-app-pub-4656643588243987';
@@ -585,7 +585,7 @@ export function isUsControllerActive(): boolean {
  * brand-new user — or, if PAID never fires, bootstrapping on close), then refill.
  * Returns true if a show was initiated.
  */
-export function usOnShowOpportunity(placement: 'prayer_end' | 'gospel_end' | 'plan_end' | 'quiz_retry' | 'nav' | 'app_open' | 'unknown' = 'unknown'): boolean {
+export function usOnShowOpportunity(placement: AdPlacement = 'unknown'): boolean {
   if (adsOff()) return false;
   ensureDay();
   if (showing) return false;
@@ -610,6 +610,7 @@ export function usOnShowOpportunity(placement: 'prayer_end' | 'gospel_end' | 'pl
     offOpened = slot.ad.addAdEventListener(deps!.AdEventType.OPENED, () => {
       try {
         lastShownAt = Date.now();                        // real present → start the cap clock
+        noteInterstitialShown();                         // …and the shared one triggers read
         logEvent('ad_impression_custom', { format: 'interstitial', placement, unit_idx: slot.idx, floor: floorOf(slot.idx) });
       } catch { /* never throw out of an ad callback */ }
     });

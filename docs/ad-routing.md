@@ -100,16 +100,32 @@ AdMob 封号风险。所以 `!__DEV__` 是硬闸门。
 | `gospel_end` | Gospel & Psalm 读完 | 全部 | `GospelPsalmReader.tsx` |
 | `quiz_retry` | 点「Try those again」（延时 400ms） | 全部 | `QuizChallengeScreen.tsx` |
 | `nav` | 每 3 次合格跳转 | **仅 day ≥ 3** | `adFrequency.ts` |
+| `nav_churn` | 跳转 **> 5 次** 且距上次广告 **≥ 60s** | **全部用户(day 0 起)** | `adFrequency.ts` |
 | `app_open` | 退后台 ≥15s 回前台 | **全部用户(day 0 起)** | `adFrequency.ts` |
 
 - 天数 = 距首次启动的自然日（安装当天 = day0），常量 `AGGRESSIVE_FROM_DAY = 3`
-  —— **现在只管 `nav` 一个触发**；`app_open` 自 2026-08-08 起对所有用户开放（业主决定）。
+  —— **现在只管 `nav` 一个触发**；`app_open` 自 2026-08-08 起对所有用户开放（业主决定），
+  `nav_churn` 同样不看天数（业主 2026-08-09 只提了两个条件）。
 - `NAV_EVERY = 3`。「一次跳转」的计数细则见 `ad-waterfall-US.md` §8.5。
+- **`nav_churn`（业主 2026-08-09）为什么要单独一条，而不是把 `nav` 调激进**：
+  `nav` 会把「连续 tab↔tab 切换」整段折叠成 +1，所以纯 tab 来回点
+  （prayer→bible→plan→profile→…）几乎永远到不了阈值 —— 应用里最常见的闲逛行为一直没变现。
+  `nav_churn` 数**每一次**切换、不折叠、不看天数，代价是自己带一个 **60s 静默期**
+  （= 全局间隔的 2 倍，`CHURN_MIN_SWITCHES = 5` / `CHURN_MIN_SINCE_AD_MS = 60_000`）。
+  两个计数器独立；同一次跳转同时到期时**只请求一个广告**、**两个计数器都清零**。
+  阈值到了但还在静默期内，计数**不清零、继续累加**，静默期一过下一次切换立刻触发。
+  规则全在纯函数 `reduceNavigation()` 里，`__tests__/adFrequencyNav.test.ts` 16 个用例锁住 —— 改规则改那里。
+- `EXCLUDED`（流程页 + 工具页）对**两个计数器同时生效**，这是 Play Disruptive Ads
+  暴露面唯一的实际边界：不要往里加可跳过的页，也不要放宽它。
+- `nav_churn` 的「距上次广告多久」读的是 `interstitialVisibility.ts` 的
+  `msSinceLastInterstitial()` —— 三条展示路径在广告**真正呈现**的那一刻共同盖章的唯一时钟
+  （各自私有的 `lastShownAt` 保留不动）。**再加第四条展示路径，必须也调
+  `noteInterstitialShown()`**，否则所有依赖这个时钟的触发都会以为"从没展示过广告"而立刻开火。
 - `quiz_retry` **无每日/每次上限**，且这是**既定决策**（CLAUDE.md → Settled decisions），
   审查会反复标记它，不要再加 cap。那 400ms 延时不是频控，是防双击落到创意上（无效流量风险）。
 - `app_open` 热启动插屏同样是**既定决策**，Play 的 Disruptive Ads 风险已知并接受。
   2026-08-08 起覆盖**全部用户**（原为 day ≥ 3）——触达面变了，频次约束没变：
-  60s 全局间隔、前台判断、去广告开关、商店评价回程豁免全部照旧。
+  全局间隔（§4，现为 30s）、前台判断、去广告开关、商店评价回程豁免全部照旧。
 
 `maybeShowInterstitial()` 内部再分流（`ads.ts:432`）：
 美国走 `usOnShowOpportunity(placement)`，非美走本地 `interstitial.show()`。

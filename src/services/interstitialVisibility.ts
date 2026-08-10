@@ -28,6 +28,29 @@ export function isInterstitialVisible(): boolean {
   return visible;
 }
 
+// ── "How long since an interstitial actually appeared?" ──────────────────────
+// The three show paths (ads.ts non-US / adEngine Android / usInterstitial iOS-US)
+// each keep a PRIVATE lastShownAt for the global floor. This is the one value a
+// TRIGGER can read without knowing which path is live on this device —
+// adFrequency's churn rule needs "≥60s since the last ad", and asking the live
+// path directly would put a platform+region branch inside a trigger.
+//
+// Stamped where the ad REALLY presents (the OPENED event where one exists), not
+// where show() is called — a show() that throws must not start the clock. Every
+// present site calls this right next to its own `lastShownAt = Date.now()`.
+// IF YOU ADD A FOURTH SHOW PATH, STAMP HERE TOO, or every trigger gated on this
+// will believe no ad has ever shown.
+let lastShownAt = 0;
+
+export function noteInterstitialShown(): void {
+  lastShownAt = Date.now();
+}
+
+/** ms since the last interstitial presented; huge (never-shown) before the first. */
+export function msSinceLastInterstitial(): number {
+  return lastShownAt === 0 ? Number.MAX_SAFE_INTEGER : Date.now() - lastShownAt;
+}
+
 /** Subscribe to visibility flips. Returns the unsubscribe function. */
 export function onInterstitialVisibility(fn: (v: boolean) => void): () => void {
   subs.add(fn);

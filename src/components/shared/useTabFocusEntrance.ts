@@ -10,6 +10,7 @@ import {
   runOnJS,
   Easing,
 } from 'react-native-reanimated';
+import { entranceMustSettle } from './entranceSettle';
 
 // Per-section slide-up + fade for the bottom-tab screens. Each section calls
 // this with its own `delay` so the screen lifts into place in waves.
@@ -115,10 +116,13 @@ export function useTabFocusEntrance(delay = 0) {
   useFocusEffect(useCallback(() => {
     const d = delay * STAGGER_SCALE;
     // Re-arm: hand the view back to Reanimated for this focus's play-through.
-    // The layout baseline resets too — frame changes that happened while the
-    // tab was away are already reflected in the attach-time layout and must
-    // not count as "shifted mid-animation" (that would kill the ceremony).
-    lastFrame.current = null;
+    //
+    // The layout baseline deliberately SURVIVES. It used to be cleared here, and
+    // that single line is why the "cards eat taps" bug outlived two rounds of
+    // overlay auditing: the first real shift of every later focus was consumed as
+    // a fresh baseline instead of firing the early detach, and there is usually no
+    // second layout pass behind it. See entranceSettle.ts for the full argument
+    // and __tests__/entranceSettle.test.ts, which demonstrates the miss.
     if (glideTimer.current) { clearTimeout(glideTimer.current); glideTimer.current = null; }
     settledRef.current = false;
     setSettled(false);
@@ -177,18 +181,18 @@ export function useTabFocusEntrance(delay = 0) {
   // short only in the exact scenario that would otherwise break taps; the
   // common (no-growth) case still plays the full ceremony.
   // ─────────────────────────────────────────────────────────────────────────
-  // Track y AND height: a y-shift means a sibling ABOVE grew; a height change
-  // means content INSIDE this section hydrated (e.g. the My Reading Plans card
-  // renders its rows once plan summaries land) — in BOTH cases the subtree's
-  // frozen hit regions no longer match the drawn layout, so detach now. The
-  // y-only version of this check left the card's lower rows (suggested plans,
-  // More Plans) untappable for the whole entrance window on every focus.
+  // y-shift = a sibling ABOVE grew; height change = content INSIDE this section
+  // hydrated (My Reading Plans rendering its rows once plan summaries land). In
+  // both cases the subtree's frozen hit regions no longer match what is drawn.
+  // The rule — and the reason the baseline is never reset — lives in
+  // entranceSettle.ts, next to the tests that pin it.
   const lastFrame = useRef<{ y: number; h: number } | null>(null);
   const onLayout = useCallback((e: LayoutChangeEvent) => {
     const { y, height } = e.nativeEvent.layout;
-    const prev = lastFrame.current;
-    lastFrame.current = { y, h: height };
-    if (prev !== null && (Math.abs(y - prev.y) > 0.5 || Math.abs(height - prev.h) > 0.5)) settle();
+    const next = { y, h: height };
+    const mustSettle = entranceMustSettle(lastFrame.current, next);
+    lastFrame.current = next;
+    if (mustSettle) settle();
   }, [settle]);
 
   return { style: settled ? RESTING_STYLE : animStyle, onLayout };

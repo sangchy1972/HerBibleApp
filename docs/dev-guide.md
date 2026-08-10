@@ -98,6 +98,27 @@ face and the reminder-toggle coach finger. Don't "fix" those.
 
 ## 2. Overlay & touch hazards
 
+**Before you audit overlays for a "taps do nothing" report, decide which half of the
+problem you have** — the two look identical and need opposite fixes:
+
+- the touch never arrives (something is over the target, or its native hit region is
+  stale), or
+- the touch arrives and `navigate` does nothing.
+
+Nothing in a screenshot or an overlay sweep distinguishes them, and guessing has now cost
+two rounds on the same bug. Two ways to tell them apart:
+- **On device:** does the row show its press feedback (`activeOpacity` dim)? Dim = the
+  touch arrived. No dim = it never got there.
+- **From the field:** every home-screen navigation logs `home_nav_tap` (PrayerScreen's
+  `navTap`), and `logScreenView` already fires on every navigation-state change. In
+  DebugView, `home_nav_tap` with no `screen_view` behind it means the tap landed and the
+  navigation was dropped; no `home_nav_tap` at all means the touch never reached the row.
+  Keep both — one event per deliberate tap is what makes this decidable at all.
+
+**Class 4 is not an overlay at all: a Reanimated-owned subtree with stale hit regions.**
+See §3 and `entranceSettle.ts`. It is the one that produces "the whole home screen
+sometimes eats taps", because every `TabSection` re-arms together on focus.
+
 Three classes of bug have each made the app dead to touch. Check all three whenever you
 add anything that floats.
 
@@ -180,6 +201,25 @@ always `blur()` first if any state mirrors "the keyboard is up".
 - **Reanimated-owned views can freeze native touch regions on Android/Fabric.** Wrap
   tappables in an animated view only for the entrance, then hand back to a plain `View`
   once it settles (`QuizOptionsEntrance` is the reference implementation).
+  This is the mechanism behind "the home-screen cards render but eat taps", and it is
+  worth knowing in detail because it keeps coming back:
+  - While a view carries an animated style, Reanimated pushes props straight to the
+    native view and the subtree's hit regions stay pinned to the **attach-time** layout.
+    Anything that moves afterwards is drawn in the new place and tappable in the old one.
+  - `useTabFocusEntrance` bounds the window two ways: the animation's own completion
+    callback, and an **early detach on any layout shift** (`entranceMustSettle`).
+    `onLayout` comes from the shadow tree, so it still fires when the UI thread is busy
+    decoding images — which is exactly when the entrance runs long and the window is
+    widest. **The early-detach path is the reliable one; treat it as load-bearing.**
+  - **The layout baseline must never be reset on re-focus.** It was, and that one line
+    meant the first real shift of every later focus was consumed as a fresh baseline
+    instead of triggering the detach — with usually no second layout pass behind it, so
+    the section stayed Reanimated-owned for the rest of the entrance.
+    `__tests__/entranceSettle.test.ts` demonstrates the miss; don't "tidy" it away.
+  - Every `TabSection` on a screen re-arms **together** on focus, which is why the
+    symptom is "the whole screen sometimes", not "one card".
+  - The detach itself needs a React commit, so a blocked UI thread also delays the
+    recovery. Shortening what the entrance owns beats lengthening the watchdog.
 - **No hook below an early return.** A conditional hook throws the moment the condition
   flips. Also: a `const` referenced by an effect declared *above* it is a **TDZ crash** —
   declare the const first.

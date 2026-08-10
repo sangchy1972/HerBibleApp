@@ -45,6 +45,7 @@ import StreakGuideTrigger from '../components/StreakGuideTrigger';
 import PlanGuideTrigger from '../components/PlanGuideTrigger';
 import QuizPromoHost from '../components/QuizPromoHost';
 import { buildReadingPlansCard } from '../services/planRecommendations';
+import { logEvent } from '../services/firebase';
 import { useOnboarding } from '../state/OnboardingContext';
 import TabSection from '../components/shared/TabSection';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
@@ -1041,6 +1042,25 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   // ref tap, the More → Read full chapter action, and any future entry point
   // all funnel through here so the reader gets a consistent dim-and-highlight
   // focus on this exact verse range.
+  // ── Tap instrument for the "nothing happens when I tap a card" report ──────
+  //
+  // The reported symptom has TWO possible causes and they need opposite fixes:
+  // the touch never reaches us (something is over the card, or its native hit
+  // region is stale), or the touch arrives and `navigate` does nothing. Auditing
+  // overlays cannot tell them apart, and neither can a screenshot.
+  //
+  // So every home-screen navigation logs its intent. `logScreenView` already
+  // fires on every navigation-state change (App.tsx), so in Firebase DebugView:
+  //   home_nav_tap  then  screen_view  → the tap and the navigation both worked
+  //   home_nav_tap  and NO screen_view → the touch landed, navigation was dropped
+  //   no home_nav_tap at all           → the touch never reached the row
+  // Keep this. It costs one event per deliberate tap and it is the only thing
+  // that turns "sometimes it does nothing" into a decidable question.
+  const navTap = (target: string, run: () => void) => {
+    logEvent('home_nav_tap', { target });
+    run();
+  };
+
   const openVerseInBible = () => {
     const ref = dailyVerse?.reference.full_reference;
     const focus = ref ? parseReference(ref) : null;
@@ -1211,7 +1231,9 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           per block keeps each animated subtree small and self-contained. */}
       <TabSection delay={45}>
       <View style={[styles.section, { paddingTop: 18 }]}>
-        <GospelPsalmCards onOpen={(slot) => navigation.navigate('GospelPsalm', { slot })} />
+        <GospelPsalmCards
+          onOpen={(slot) => navTap(`gospel_${slot}`, () => navigation.navigate('GospelPsalm', { slot }))}
+        />
       </View>
       </TabSection>
 
@@ -1224,8 +1246,8 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
       <View style={[styles.section, { paddingTop: 24 }]}>
         <MyReadingPlansCard
           model={readingPlansModel}
-          onOpenPlan={(slug) => navigation.navigate('FeaturedPlanDetail', { slug })}
-          onExplore={() => navigation.navigate('Tabs', { screen: 'plan', params: { tab: 'explore', reset: Date.now() } })}
+          onOpenPlan={(slug) => navTap('plan_row', () => navigation.navigate('FeaturedPlanDetail', { slug }))}
+          onExplore={() => navTap('more_plans', () => navigation.navigate('Tabs', { screen: 'plan', params: { tab: 'explore', reset: Date.now() } }))}
         />
       </View>
       </TabSection>
@@ -1257,7 +1279,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
       <View style={[styles.section, { paddingTop: 25 }]}>
         <Text style={styles.sectionTitle}>{t('prayer.section.bibleProgress')}</Text>
         <TouchableOpacity
-          onPress={() => navigation.navigate('Tabs', { screen: 'bible' })}
+          onPress={() => navTap('continue_reading', () => navigation.navigate('Tabs', { screen: 'bible' }))}
           activeOpacity={0.85}
           style={styles.continueRow}
         >

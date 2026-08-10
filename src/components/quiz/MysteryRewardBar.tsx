@@ -28,6 +28,18 @@ const GIFT_W = GIFT_H * (160 / 180);
 /** Track height, +20% per user (20 → 24 → 28.8). */
 const TRACK_H = 28.8;
 
+// A REAL outline on the count, not a glow (owner 2026-08-10). RN has no
+// text-stroke property, and `textShadow` is a blur however small the radius —
+// at 4 it was the halo he asked to remove, and at 1 it just muddies the glyph
+// edge instead of tracing it. So the label is drawn eight times in ROSE, one
+// pixel around the glyphs, with the white text on top: that IS a stroke.
+const STROKE = 1;
+const STROKE_OFFSETS: readonly (readonly [number, number])[] = [
+  [-STROKE, -STROKE], [0, -STROKE], [STROKE, -STROKE],
+  [-STROKE, 0],                     [STROKE, 0],
+  [-STROKE, STROKE],  [0, STROKE],  [STROKE, STROKE],
+];
+
 export default function MysteryRewardBar({
   completedSets, totalSets = 0, animate = false, fillDelayMs = 0,
 }: {
@@ -125,13 +137,30 @@ export default function MysteryRewardBar({
           {/* The count sits in the CENTRE OF THE TRACK, not inside the fill
               (per user). Inside the fill it moved as the bar grew and vanished
               below 1/3; centred it is always in the same place and always
-              legible. The rose stroke is what makes white text survive the
-              stretch of track the fill has not reached yet — see textShadow
-              note in the styles. */}
+              legible. The rose STROKE is what makes white text survive the
+              stretch of track the fill has not reached yet — one treatment for
+              both halves instead of switching colour at some threshold. */}
           <View style={styles.countLayer} pointerEvents="none">
-            <Text style={styles.count} numberOfLines={1} maxFontSizeMultiplier={1.2}>
-              {current}/{target}
-            </Text>
+            {/* Sized by the white label below; the stroke copies are absolute
+                against this box, so [0,0] would land exactly on it and each
+                offset traces one pixel out. Every copy must carry the SAME
+                numberOfLines / maxFontSizeMultiplier or the outline desyncs
+                from the glyphs it is tracing. */}
+            <View>
+              {STROKE_OFFSETS.map(([dx, dy]) => (
+                <Text
+                  key={`${dx},${dy}`}
+                  style={[styles.count, styles.countStroke, { left: dx, top: dy }]}
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={1.2}
+                >
+                  {current}/{target}
+                </Text>
+              ))}
+              <Text style={styles.count} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+                {current}/{target}
+              </Text>
+            </View>
           </View>
         </View>
         {/* The gift sits over the end of the track — what the bar is filling
@@ -146,8 +175,13 @@ export default function MysteryRewardBar({
 
 const styles = StyleSheet.create({
   root: { width: '100%' },
+  // Same TYPEFACE as the retry screen's "N left to get right" (QuizReviewView's
+  // `sub`, FONTS.lato) per user — the bold cut, because this is still the heading
+  // over the bar and the two lines are told apart by weight + colour now that
+  // they no longer differ by family. Colour deliberately unchanged (TXT).
   headline: {
-    fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 17,
+    fontFamily: FONTS.latoBold, fontWeight: '700',
+    fontSize: 17.85,                               // 17 → +5 % per user
     color: TXT, textAlign: 'center', letterSpacing: 0.2, marginBottom: 12,
   },
   row: { flexDirection: 'row', alignItems: 'center' },
@@ -165,15 +199,12 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.latoBold, fontWeight: '700',
     fontSize: 15.5,                                    // 13.5 → 15.5 (+15 % per user)
     color: '#FFFFFF', letterSpacing: 0.4,
-    // Rose halo. The count is centred over the WHOLE track, so on a 1/3 bar it
-    // sits on the pale grey remainder where white alone is unreadable. A stroke
-    // in the fill's own colour keeps one treatment for both halves instead of
-    // switching the text colour at some threshold — which is what the old
-    // fill-only version did, and why it disappeared below 1/3.
-    textShadowColor: ROSE,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 4,
+    // No textShadow. It used to carry a ROSE halo at radius 4; the owner asked
+    // for a stroke instead, which RN cannot express as a style — see
+    // STROKE_OFFSETS at the top of the file for how it is drawn.
   },
+  // One of the eight ROSE copies traced around the white label.
+  countStroke: { position: 'absolute', color: ROSE },
   // Slight tuck over the track's end.
   gift: { width: GIFT_W, height: GIFT_H, marginLeft: -14 },
 });

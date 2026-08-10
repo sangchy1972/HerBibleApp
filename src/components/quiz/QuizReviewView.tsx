@@ -407,8 +407,10 @@ const styles = StyleSheet.create({
   // The retry headline sits UNDER the ring, so it needs its own top margin —
   // the reward shape's headline is the first thing on screen and has none.
   retryHeadline: {
-    fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 24,
-    color: TXT, textAlign: 'center', letterSpacing: 0.3, marginTop: 22,
+    fontFamily: FONTS.loraBold, fontWeight: '600',
+    fontSize: 27,                                  // 24 → 27 (+3 per user)
+    color: TXT, textAlign: 'center', letterSpacing: 0.3,
+    marginTop: 32,                                 // 22 → 32 (+10 leading per user)
   },
   retryMystery: { marginTop: 40, width: '100%' },
   headline: {
@@ -422,10 +424,15 @@ const styles = StyleSheet.create({
   },
   mystery: { marginTop: 24, width: '100%', paddingHorizontal: 9 },
   sub: {
-    fontFamily: FONTS.lato, fontSize: 14.5, color: TXTSUB,
-    textAlign: 'center', marginTop: 18, lineHeight: 21,
+    fontFamily: FONTS.lato,
+    fontSize: 16.7, lineHeight: 24.2,              // 14.5 / 21 → +15 % per user, leading scaled with it
+    color: TXTSUB, textAlign: 'center', marginTop: 18,
   },
-  footer: { paddingHorizontal: 20, paddingTop: 6, paddingBottom: 10 },
+  // paddingBottom 10 → 40 (+30 per user): the CTA was almost unreachable above
+  // the Android nav bar. This sits ON TOP of the screen root's insets.bottom
+  // (QuizChallengeScreen), so it is 30 px of real clearance, not a substitute
+  // for the inset — the same mistake the prayer screen's "Maybe later" made.
+  footer: { paddingHorizontal: 20, paddingTop: 6, paddingBottom: 40 },
   // Split in three so the touch target is never Reanimated-owned — same shape
   // as PrayerScreen's ctaWrap / ctaPulseBg / ctaHit. `cta` (a single view that
   // was both geometry and fill) is gone; the geometry is identical.
@@ -441,7 +448,10 @@ const styles = StyleSheet.create({
   // reward CTA was asked to match the home button's type, and sharing one style
   // would restyle this screen every time that one is tuned.
   retryCtaText: {
-    fontFamily: FONTS.latoBold, fontSize: 16.5, color: '#FFFFFF', letterSpacing: 0.4,
+    fontFamily: FONTS.latoBold,
+    fontWeight: '700',                             // stated, not inherited from the family name
+    fontSize: 18.15,                               // 16.5 → +10 % per user
+    color: '#FFFFFF', letterSpacing: 0.4,
   },
   // Matched to PrayerScreen's startBtnText EXACTLY (per user): system face at
   // 18 / '700' / 0.3 tracking. It was FONTS.latoBold at 16.5 / 0.4, which read

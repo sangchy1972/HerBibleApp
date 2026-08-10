@@ -1056,8 +1056,12 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   //   no home_nav_tap at all           → the touch never reached the row
   // Keep this. It costs one event per deliberate tap and it is the only thing
   // that turns "sometimes it does nothing" into a decidable question.
+  // The log goes FIRST so the DebugView sequence reads tap → screen_view, and it
+  // is wrapped because a diagnostic must never become the thing that eats the
+  // tap. `logEvent` is async and already swallows its own errors, so this cannot
+  // fire today — it is here so that stays true if it is ever made synchronous.
   const navTap = (target: string, run: () => void) => {
-    logEvent('home_nav_tap', { target });
+    try { logEvent('home_nav_tap', { target }); } catch { /* never block the navigation */ }
     run();
   };
 

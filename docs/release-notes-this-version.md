@@ -1,4 +1,4 @@
-# Release Notes — v1.3.0（7 语种 · 每条 ≤500 字符）
+# Release Notes — v1.4.0（7 语种 · 每条 ≤500 字符）
 
 > 面向用户、商店「新功能/更新说明」字段用。App Store 与 Google Play 通用。
 > 不提广告/ATT/追踪等技术项——只说用户看得见的改进。
@@ -6,161 +6,147 @@
 > **Google Play 用最下面「Play Console 粘贴版」那一段**，它已经带好 `<lang>` 标签。
 > App Store Connect 按语言分栏填，直接用本段正文。
 >
-> ⚠️ **v1.2.0 已上线**，问答本身和它的结果页在那一版已经宣传过了，本版不重复。
-> 这一版的主角是**搜索**、**题库翻倍**和**祷告之后的那一屏**。1.2.0 的文案在 git 历史里（`296d21c`）。
+> ⚠️ **v1.3.0 已上线**，搜索、题库翻倍、祷告结束页在那一版已经宣传过，本版不重复。
+> 这一版的主角是**圣经页的首访引导**、**人声朗读改为按需**、**祷告后的提醒时间选择**。
+> 1.3.0 的文案在 git 历史里（`9742790`）。
 >
-> 语气沿用前两版：第二人称、温和、不用营销词。中文用「妳」。
+> 语气沿用前几版：第二人称、温和、不用营销词。中文用「妳」。
+>
+> **点名按钮时必须用该语言界面上真实的标签**（「查看结果」= `quiz.action.seeResults`）。
+> 朗读按钮是**纯图标、没有文字标签**，所以各语言都只能描述它，不能加引号当标签引用。
 
 ---
 
 ## 🇺🇸 English (U.S.)
 ```
-Now you can just search for it.
+The Bible tab now shows you around.
 
-• Search any reading plan — by name, or by what you're carrying today
-• After you pray: step straight into today's Gospel & Psalm, or take a quick quiz
-• Quiz: 650 questions — twice as many — each in your own translation
-• Quiz: 33 paintings and 43 mystery cards to collect
-• A gentle hand for your first days — your streak, and where the plans live
-
-Also: a smoother start, fewer interruptions, and taps that always land.
+• Your first time in the Bible: a walk through search, bookmarks, text size, switching books, listening, and marking a chapter read
+• Narration now waits for you — tap the read-aloud button when you want a voice, and the music keeps playing underneath
+• Set your reminder time right after you pray, on one full screen
+• Fixed: home-screen cards that sometimes didn't answer a tap
+• Fixed: "See results" on the quiz card
 
 Thank you for walking with Her Bible.
 ```
 
 ## 🇨🇳 简体中文
 ```
-现在，直接搜就好了。
+圣经页会带妳走一遍。
 
-• 搜索任何一个读经计划——按名字，或者按妳今天心里装着的事
-• 祷告之后：一步进入今天的福音与诗篇，或者做一组问答
-• 问答：650 道题，是原来的两倍，每种语言用自己的圣经译本
-• 问答：33 幅画作和 43 张神秘卡片等妳收集
-• 头几天有人轻轻扶妳一把——连续天数怎么算，计划在哪里找
-
-另外：启动更顺、打扰更少，并修复了有时点了没反应的问题。
+• 第一次打开圣经：五步认识搜索、书签、字号、切换书卷、朗读，以及读完怎么标记
+• 人声朗读不再自动开始——想听的时候点朗读按钮，背景音乐照旧陪着妳
+• 祷告之后，在一整屏上直接选好妳的提醒时间
+• 修复：主界面的卡片有时点了没有反应
+• 修复：问答卡片上的「查看结果」点不动
 
 感谢妳与 Her Bible 同行。
 ```
 
 ## 🇭🇰 繁體中文
 ```
-現在，直接搜就好了。
+聖經頁會帶妳走一遍。
 
-• 搜尋任何一個讀經計畫——按名字，或者按妳今天心裡裝著的事
-• 禱告之後：一步進入今天的福音與詩篇，或者做一組問答
-• 問答：650 道題，是原來的兩倍，每種語言用自己的聖經譯本
-• 問答：33 幅畫作和 43 張神秘卡片等妳收集
-• 頭幾天有人輕輕扶妳一把——連續天數怎麼算、計畫在哪裡找
-
-另外：啟動更順、打擾更少，並修復了有時點了沒反應的問題。
+• 第一次打開聖經：五步認識搜尋、書籤、字級、切換書卷、朗讀，以及讀完怎麼標記
+• 人聲朗讀不再自動開始——想聽的時候點朗讀按鈕，背景音樂照舊陪著妳
+• 禱告之後，在一整屏上直接選好妳的提醒時間
+• 修復：主介面的卡片有時點了沒有反應
+• 修復：問答卡片上的「查看結果」點不動
 
 感謝妳與 Her Bible 同行。
 ```
 
-## 🇪🇸 Español (España)
+## 🇩🇪 Deutsch
 ```
-Ahora solo tienes que buscarlo.
+Der Bibel-Tab führt dich jetzt herum.
 
-• Busca cualquier plan de lectura: por su nombre o por lo que llevas hoy
-• Después de orar: entra directa al Evangelio y Salmo de hoy, o haz un reto
-• Reto: 650 preguntas, el doble, cada idioma con su propia Biblia
-• Reto: 33 cuadros y 43 cartas misteriosas para coleccionar
-• Una mano suave en tus primeros días: tu racha y dónde están los planes
+• Beim ersten Öffnen der Bibel: ein Weg durch Suche, Lesezeichen, Schriftgröße, Buchwechsel, Vorlesen und „als gelesen markieren“
+• Das Vorlesen wartet jetzt auf dich — tippe die Taste, wenn du eine Stimme möchtest; die Musik läuft weiter
+• Erinnerungszeit direkt nach dem Gebet, auf ganzem Bildschirm
+• Behoben: Karten auf dem Startbildschirm, die manchmal nicht reagierten
+• Behoben: „Ergebnis ansehen“ auf der Quiz-Karte
 
-Además: inicio más fluido, menos interrupciones y toques que sí responden.
+Danke, dass du mit Her Bible gehst.
+```
+
+## 🇫🇷 Français
+```
+L'onglet Bible te fait visiter.
+
+• À ta première ouverture de la Bible : recherche, marque-pages, taille du texte, changement de livre, lecture à voix haute et « marquer comme lu »
+• La lecture à voix haute t'attend — touche le bouton quand tu veux une voix, la musique continue
+• Choisis l'heure de ton rappel juste après la prière, en plein écran
+• Corrigé : des cartes de l'accueil qui ne répondaient pas
+• Corrigé : « Voir les résultats » sur la carte du quiz
+
+Merci de marcher avec Her Bible.
+```
+
+## 🇪🇸 Español
+```
+La pestaña Biblia ahora te da un recorrido.
+
+• La primera vez que la abres: búsqueda, marcadores, tamaño del texto, cambiar de libro, escuchar y marcar como leído
+• La lectura en voz alta ahora te espera: tócala cuando quieras una voz; la música sigue debajo
+• Elige la hora de tu recordatorio justo después de orar, a pantalla completa
+• Corregido: tarjetas del inicio que a veces no respondían
+• Corregido: «Ver resultados» en la tarjeta del desafío
 
 Gracias por caminar con Her Bible.
 ```
 
 ## 🇧🇷 Português (Brasil)
 ```
-Agora basta buscar.
+A aba Bíblia agora te mostra tudo.
 
-• Busque qualquer plano de leitura: pelo nome ou pelo que você carrega hoje
-• Depois de orar: entre direto no Evangelho e Salmo de hoje, ou faça um desafio
-• Desafio: 650 perguntas, o dobro, cada idioma com sua própria Bíblia
-• Desafio: 33 pinturas e 43 cartas misteriosas para colecionar
-• Uma mão gentil nos primeiros dias: sua sequência e onde ficam os planos
+• Na primeira vez que você abre: um passeio pela busca, marcadores, tamanho do texto, troca de livro, narração e marcar como lido
+• A narração agora espera por você: toque quando quiser uma voz; a música continua embaixo
+• Escolha o horário do seu lembrete logo depois de orar, em tela cheia
+• Corrigido: cartões da tela inicial que às vezes não respondiam
+• Corrigido: "Ver resultados" no cartão do desafio
 
-Também: início mais leve, menos interrupções e toques que respondem.
-
-Obrigada por caminhar com Her Bible.
-```
-
-## 🇫🇷 Français
-```
-Maintenant, tu peux simplement chercher.
-
-• Cherche un plan de lecture : par son nom, ou par ce que tu portes
-• Après la prière : l'Évangile et le Psaume du jour, ou un défi rapide
-• Défi : 650 questions, deux fois plus, chaque langue avec sa propre Bible
-• Défi : 33 tableaux et 43 cartes mystère à collectionner
-• Une main douce les premiers jours : ta série, et où trouver les plans
-
-Aussi : démarrage plus fluide, moins d'interruptions, touches qui répondent.
-
-Merci de cheminer avec Her Bible.
-```
-
-## 🇩🇪 Deutsch
-```
-Jetzt kannst du einfach suchen.
-
-• Suche jeden Leseplan — nach Namen oder nach dem, was dich beschäftigt
-• Nach dem Gebet: direkt ins Evangelium und den Psalm des Tages, oder ein Quiz
-• Quiz: 650 Fragen, doppelt so viele, jede Sprache mit ihrer eigenen Bibel
-• Quiz: 33 Gemälde und 43 Geheimniskarten zum Sammeln
-• Eine sanfte Hand für die ersten Tage: deine Serie, und wo die Pläne wohnen
-
-Außerdem: leichterer Start, weniger Unterbrechungen, Tippen kommt an.
-
-Danke, dass du mit Her Bible gehst.
+Obrigada por caminhar com a Her Bible.
 ```
 
 ---
 
 ## Play Console 粘贴版
 
-Play 的 Release notes 框要带语言标签。**只填商店列表里实际启用的语言** —— 填了没启用的标签会报错。
+Play 的「新功能」字段一次只收**该发布所选语言**的标签块。界面里显示的是哪几个标签
+就用哪几个，标签必须**逐字一致**，正文从上面对应语种直接复制。
 
 ```
 <en-US>
-Now you can just search for it.
+The Bible tab now shows you around.
 
-• Search any reading plan — by name, or by what you're carrying today
-• After you pray: step straight into today's Gospel & Psalm, or take a quick quiz
-• Quiz: 650 questions — twice as many — each in your own translation
-• Quiz: 33 paintings and 43 mystery cards to collect
-• A gentle hand for your first days — your streak, and where the plans live
-
-Also: a smoother start, fewer interruptions, and taps that always land.
+• Your first time in the Bible: a walk through search, bookmarks, text size, switching books, listening, and marking a chapter read
+• Narration now waits for you — tap the read-aloud button when you want a voice, and the music keeps playing underneath
+• Set your reminder time right after you pray, on one full screen
+• Fixed: home-screen cards that sometimes didn't answer a tap
+• Fixed: "See results" on the quiz card
 </en-US>
-<es-ES>
-Ahora solo tienes que buscarlo.
+<zh-CN>
+圣经页会带妳走一遍。
 
-• Busca cualquier plan de lectura: por su nombre o por lo que llevas hoy
-• Después de orar: entra directa al Evangelio y Salmo de hoy, o haz un reto
-• Reto: 650 preguntas, el doble, cada idioma con su propia Biblia
-• Reto: 33 cuadros y 43 cartas misteriosas para coleccionar
-• Una mano suave en tus primeros días: tu racha y dónde están los planes
-
-Además: inicio más fluido, menos interrupciones y toques que sí responden.
-</es-ES>
+• 第一次打开圣经：五步认识搜索、书签、字号、切换书卷、朗读，以及读完怎么标记
+• 人声朗读不再自动开始——想听的时候点朗读按钮，背景音乐照旧陪着妳
+• 祷告之后，在一整屏上直接选好妳的提醒时间
+• 修复：主界面的卡片有时点了没有反应
+• 修复：问答卡片上的「查看结果」点不动
+</zh-CN>
 <pt-BR>
-Agora basta buscar.
+A aba Bíblia agora te mostra tudo.
 
-• Busque qualquer plano de leitura: pelo nome ou pelo que você carrega hoje
-• Depois de orar: entre direto no Evangelho e Salmo de hoje, ou faça um desafio
-• Desafio: 650 perguntas, o dobro, cada idioma com sua própria Bíblia
-• Desafio: 33 pinturas e 43 cartas misteriosas para colecionar
-• Uma mão gentil nos primeiros dias: sua sequência e onde ficam os planos
-
-Também: início mais leve, menos interrupções e toques que respondem.
+• Na primeira vez que você abre: um passeio pela busca, marcadores, tamanho do texto, troca de livro, narração e marcar como lido
+• A narração agora espera por você: toque quando quiser uma voz; a música continua embaixo
+• Escolha o horário do seu lembrete logo depois de orar, em tela cheia
+• Corrigido: cartões da tela inicial que às vezes não respondiam
+• Corrigido: "Ver resultados" no cartão do desafio
 </pt-BR>
 ```
 
-> **第三种语言未必是 pt-BR。** Play 界面里显示的是哪三个标签就用哪三个（可能是 `<zh-CN>`、`<zh-TW>`、`<fr-FR>`、`<de-DE>`）。正文从上面对应语种直接复制，标签必须逐字一致。
+> **第三种语言未必是 pt-BR。** Play 界面里显示的是哪三个标签就用哪三个（可能是
+> `<zh-TW>`、`<fr-FR>`、`<de-DE>`、`<es-ES>`）。标签必须逐字一致。
 
 ---
 
@@ -168,43 +154,44 @@ Também: início mais leve, menos interrupções e toques que respondem.
 
 **商店里说了的：**
 
-- **Explore 搜索**（新功能）—— 常驻输入框，五字段加权匹配（标题 6 / 分类标签 4 /
-  主题标签 3 / 简介 2 / slug 1）。情绪行只覆盖 9 种情绪共 31 个计划，另外 **82 个计划
-  此前完全没有关键词入口**，这是这个功能真正的价值。折叠变音符（`oracion` ≡ `oración`）、
-  中文不分词且单字可搜、短拉丁词只在词首匹配。见 `docs/dev-guide.md` §6b。
-- **祷告结束页改版** —— NEXT 卡片（200pt、强制点 Continue）换成 100pt 的
-  Gospel & Psalm 横幅，整条可点；下方插入问答卡；星期格子改正方形加粗。
-- **题库 v3：327 → 650 题**，每个语种用自己的圣经译本。
-- **奖励 24 → 33 幅画、43 张卡**，并且**每一组都花得掉** —— 1.2.0 的内部记录里那条
-  ⚠️「收藏会永远停在 16/24 和 22/40」**已解决**，现在恰好落在第 130 组。
-- **两个新手引导** —— 连续天数引导（只在"半亮"那一刻、只对从未点满一天的用户）、
-  计划发现引导（一次性，两条入口 3 步 / 2 步）。
-- **修复：界面偶尔点不动** —— 见下。
-- **修复：启动卡顿/无响应**（Play ANR）—— 见下。
+- **圣经阅读器首访引导**（新功能）—— 一生一次，在她**第一次进入 Bible 页**时触发，
+  不管那是第 0 天还是第 30 天（无天数门槛，业主明确要求）。5 步：右上三工具 →
+  左上书卷菜单 → 朗读悬浮键 → 真实的经文操作条（在第 1 节上替她打开）→
+  滚到底的 Mark as Complete。第 2 步的**高亮洞可点**，她可以真的开抽屉换书，
+  关掉抽屉就是这一步完成、直接进第 3 步。见 `dev-guide.md` §7。
+- **人声朗读改为按需** —— 进入祷告只有背景音乐；朗读要她自己点。配一个一生两次的
+  引导（首次流程 / 连续 4 次没用过），播过一次就永久退休。
+- **祷告后的全屏提醒时间选择器** —— 三滚轮 + 早晚各自的时段窗口，设完**一定**去要
+  通知权限；她拒绝就进第二层劝说页（带我们自己的 logo 和一个动画开关）。
+- **修复：主界面卡片有时点不动** —— 见下，且**未证明已彻底解决**。
+- **修复：问答卡片「查看结果」点不动**、**「Add widget」不拉起系统弹窗**、
+  **祷告结束页「Maybe later」摸不到**、问答重试页排版。
 
 **商店里没说、但确实做了的：**
 
-- **一整类"隐形挡板"清理**（发版前审计）—— 本 App 几乎每个浮层的根 View 都是
-  无色不透明全屏且默认 `pointerEvents`，暗色遮罩画在动画子节点上；入场动画一掉就是
-  一层看不见的全屏挡板。`ShareVerseSheet` 是最严重的（Modal 里用 `entering=`，掉了只能重启）；
-  两个 spotlight 挡板在遮罩还透明时就已经拦触摸（**这一条最符合线上"有时点不动、过一会自己好"**）；
-  `AchievementUnlockSheet` 掉动画是一整块白屏。共 13 处，规则写进 `dev-guide.md` §2。
-- **启动期不再构造 Play BillingClient** —— expo-iap 的原生模块是主线程同步 `by lazy`，
-  低端机上超过 5 秒输入派发预算 → 启动期 ANR。改为加载页消失后 10 秒。
-  `InteractionManager.runAfterInteractions` 对这类原生阻塞**完全无效**。
-- **弹窗协调器** —— 每波前台 3 个上限 / 推销类 2 个 / 间隔 30s / 安静 10s 开新一波；
-  新增 surface 门（不在 tab 页、有插页、有 sheet、启动遮罩未消失时一律不授权）。
-- **Android 广告请求引擎**、插页全局间隔 60s → 30s、热启动插页覆盖全部用户、
-  第二个活跃日的主动去广告礼包。**iOS 广告未动。**
-- 修复：心情日历月份标题会显示错误的月份（Hermes 的 `toLocaleDateString` 在 UTC 渲染
-  本地午夜的 Date）；加载页背景图可能是半截 JPEG；评分弹窗 YES 在 Play 静默 no-op 时也
-  一定会有反馈；Profile 改名浮层被键盘完全挡住（Save 摸不到）。
+- **`nav_churn` 插页触发**（业主 2026-08-09）—— 切换页面 >5 次且距上次广告 ≥60s。
+  `nav` 会把连续 tab 切换整段折叠成 +1，所以纯 tab 闲逛一直没变现，这一条补的是那个口子。
+  规则在纯函数 `reduceNavigation()` 里，16 个用例。
+- **`interstitialVisibility` 新增共享的「上次广告真正呈现时间」** —— 三条展示路径共同盖章。
+  **再加第四条展示路径必须也调 `noteInterstitialShown()`**，否则依赖它的触发会以为从没展示过。
+- **placement 联合类型收进 `constants/adPacing.ts`** —— 原本在三个文件各抄一份。
+- **协调器的路由门改为按请求生效**（`surfaceRoutes`）—— `'bible'` 依然对所有其他弹窗
+  关闭（不许埋伏正在读经的用户），只有圣经引导声明了它。否则整个引导拿不到 slot、
+  是死代码，而 tsc 和 jest 都是绿的。
+- **`SpotlightCoach` 新增 `interactiveHole`** —— 全屏盾换成围着洞的四条带。
+- **`useTabFocusEntrance` 的布局基线不再在 re-focus 时清空** —— 见下。
+- 背景音乐从 hash 选曲改为按日顺序轮换（hash 在短列表上会重复播某几首）。
 
-⚠️ **仍未处理**：
+⚠️ **仍未处理 / 未证明：**
 
-- **Play 上还有 10 次 ANR 没有堆栈** —— 12 次里只有 2 次进了 issue cluster。
-  已修的是其中唯一被证明的原因。剩下的要看 Firebase Crashlytics（API 30+ 自动上报 ANR）。
-- **`android.os.Bundle.<init>` 那个 ANR 未归因** —— 通用帧，等 Crashlytics 的完整堆栈。
-- **大屏横屏**：Android 16 起大屏设备会忽略 `screenOrientation="PORTRAIT"`，
-  我们的布局必须在横向下不崩。是产品项目，不是勾选项。见 `dev-guide.md` §12。
-- **R8 full mode / AGP 9**：反射类库有被裁风险，须单独一轮真机验证。
+- **主界面点不动没有结案。** 这一版修掉了一个**可证的**缺陷：入场动画每次 re-focus 都把
+  布局基线清空，导致"内容位移→提前脱手"这条唯一可靠的补救在第一次之后永久失效
+  （`entranceSettle.ts` + 8 个用例，其中一个复现了这次漏掉）。**但无法证明它是全部原因。**
+  为此这一版带了 `home_nav_tap` 埋点：DebugView 里有 `home_nav_tap` 没有 `screen_view`
+  = 触摸到了但导航被丢；完全没有 `home_nav_tap` = 触摸没到达。**上线后先看这个。**
+- **Play 上仍有 10 次 ANR 没有堆栈**，以及 `android.os.Bundle.<init>` 未归因 —— 要 Crashlytics。
+- **SYSTEM_ALERT_WINDOW 是否需要 Play 声明表**，我无法核实，需要人工确认。
+- **只有真机能验的三件事**：`interactiveHole` 四条带的边界、分组后表头工具的高亮框对齐、
+  引导里 450ms/600ms 的滚动沉降在慢机上够不够。
+- **大屏横屏**（Android 16 起忽略 `screenOrientation="PORTRAIT"`）、**R8 full mode / AGP 9**
+  —— 两项都还是产品级项目，不是勾选项。见 `dev-guide.md` §12。

@@ -1313,20 +1313,23 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           ScrollView under a flex:1 wrapper, which broke ScrollView's "fill
           the screen" sizing — the screen rendered without its scrollable
           viewport and started to swallow taps in the lower half. */}
+      {/* The MODAL ITSELF is conditionally mounted — one step beyond the earlier
+          conditional-child fix, which protected the child (and sheetDepth) but
+          not the WINDOW. On iOS `_shouldShowModal()` is `visible || isRendered`,
+          and isRendered clears only on the native onDismiss; sharing switches
+          apps (WhatsApp/Instagram) at exactly the moment that callback gets
+          dropped, so a kept-mounted Modal with visible=false could strand a
+          TRANSPARENT native window whose onStartShouldSetResponder eats every
+          touch — "I shared, came back, and the home screen was dead". Unmounting
+          the element tears the native window down regardless of isRendered. */}
+      {showShare && !!liveVerseRef && !!liveVerseText && (
       <Modal
-        visible={showShare && !!liveVerseRef && !!liveVerseText}
+        visible
         transparent
         animationType="none"
         statusBarTranslucent
         onRequestClose={() => setShowShare(false)}
       >
-        {/* CONDITIONAL, not just the Modal's `visible`. On iOS a Modal keeps its
-            children mounted while `state.isRendered` is true, and that flag is
-            cleared only by the native onDismiss — which never fires if `visible`
-            flips false before the presentation completed. The child holds
-            useSheetSurface(true), so a stranded mount would leave sheetDepth at 1
-            and silence every blocking prompt in the app for the session. */}
-        {showShare && (
         <ShareVerseSheet
           reference={liveVerseRef}
           text={liveVerseText}
@@ -1335,17 +1338,20 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           // verse card the user just tapped — no more pink/lav placeholder.
           bgSource={prayerBg.imageFor(morning ? 'morning' : 'evening')}
         />
-        )}
       </Modal>
+      )}
 
       {/* Verse comment sheet — decorative community reactions (canned), but
           DETERMINISTIC per (ymd, slot): the same thread every open, with the
           user's likes persisted for the day. `count` uses the SAME per-day
           formula + salt as the hero card's badge, so the sheet renders exactly
           the number the card advertised. */}
-      <Modal visible={!!commentsCtx} transparent animationType="none" statusBarTranslucent onRequestClose={() => setCommentsCtx(null)}>
-        {commentsCtx && <CommentsSheet {...commentsCtx} onClose={() => setCommentsCtx(null)} />}
-      </Modal>
+      {/* Same conditional-mount rule as the share Modal above. */}
+      {commentsCtx && (
+        <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={() => setCommentsCtx(null)}>
+          <CommentsSheet {...commentsCtx} onClose={() => setCommentsCtx(null)} />
+        </Modal>
+      )}
 
       {/* "See past days" prompt — shown when the verse card is tapped during
           the 00:00–06:00 dead zone (morning not open, evening closed). Gives

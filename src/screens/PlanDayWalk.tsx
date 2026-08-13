@@ -449,8 +449,15 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
 
       {/* Note + Share sheets — same components the Bible reader uses, so
           the UX matches verbatim. */}
-      <Modal visible={!!noteVerse} animationType="slide" transparent onRequestClose={() => setNoteVerse(null)}>
-        {noteVerse && (
+      {/* Both Modals are conditionally MOUNTED, not toggled via `visible` — on
+          iOS a kept-mounted Modal can strand its transparent native window when
+          the dismiss callback is dropped (isRendered latch), and that window
+          eats every touch in the app. Sharing switches apps at exactly that
+          moment. Same rule as PrayerScreen / PrayerFlow — dev-guide §2. Both
+          sheets animate their own entrance/exit, so losing the Modal's
+          animationType changes nothing visible. */}
+      {noteVerse && (
+        <Modal visible transparent onRequestClose={() => setNoteVerse(null)}>
           <VerseNoteSheet
             verseRef={noteVerse.ref}
             verseText={noteVerse.text}
@@ -462,17 +469,17 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
               showToast(t('common.saved'));
             }}
           />
-        )}
-      </Modal>
-      <Modal visible={!!shareVerse} animationType="fade" transparent onRequestClose={() => setShareVerse(null)}>
-        {shareVerse && (
+        </Modal>
+      )}
+      {shareVerse && (
+        <Modal visible transparent onRequestClose={() => setShareVerse(null)}>
           <ShareVerseSheet
             reference={shareVerse.ref}
             text={shareVerse.text}
             onClose={() => setShareVerse(null)}
           />
-        )}
-      </Modal>
+        </Modal>
+      )}
 
       {toast && (
         <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(220)} style={[styles.toast, { bottom: insets.bottom + 150 }]}>

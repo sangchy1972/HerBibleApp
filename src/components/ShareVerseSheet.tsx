@@ -181,11 +181,21 @@ export default function ShareVerseSheet({ reference, text, onClose, bgSource }: 
     return uri.startsWith('file://') ? uri : `file://${uri}`;
   };
 
-  // Per-app share via react-native-share's `shareSingle`. This invokes the
-  // platform-specific intent that opens THAT app with the image attached
-  // (Android: ACTION_SEND with explicit package; iOS: app-specific URL
-  // scheme + image data). Falls back to the install prompt when the app
-  // isn't on the device.
+  // Per-app share. On ANDROID react-native-share's `shareSingle` genuinely
+  // attaches the image (ACTION_SEND + content:// stream + explicit package) and
+  // both apps receive it — verified in its Java sources. On iOS its native code
+  // is a minefield, and both shipped bugs came from it (versions cited: 12.3.1):
+  //   • WhatsAppShare.m bails out with a bare `return` — no resolve, NO REJECT —
+  //     when `message` is missing. Our await never settled, `busy` stayed true
+  //     forever, and the whole sheet froze: the reported "WhatsApp hangs".
+  //   • RNShare.mm's isImageMimeType() only recognises `data:image` URLs, so a
+  //     file:// capture skips the save-to-Photos path entirely and lands in
+  //     InstagramShare.m's shareSingle, which pastes the FILE PATH into
+  //     instagram://library?LocalIdentifier=<...>. Instagram matches nothing and
+  //     opens the camera roll's LATEST photo — the reported wrong-image bug —
+  //     while the promise resolves(true), so we even logged it as a success.
+  // Hence the platform forks below, and the timeout guard around every
+  // shareSingle call: its job is the guarantee that `busy` ALWAYS clears.
   // Narrow the Social type to the non-Story variants — Facebook/Instagram
   // Stories require an `appId` in their options shape, which we don't
   // pass; pinning to the base trio lets TS pick `BaseShareSingleOptions`.
@@ -195,6 +205,25 @@ export default function ShareVerseSheet({ reference, text, onClose, bgSource }: 
     whatsapp:  Social.Whatsapp,
     instagram: Social.Instagram,
   };
+
+  // A timed-out share is treated exactly like a cancel — no alert, no
+  // auto-fallback — because the target app may genuinely have opened and a
+  // system sheet popping up when she returns would read as a glitch.
+  const shareSingleGuarded = async (opts: Parameters<typeof RNShare.shareSingle>[0]): Promise<boolean> => {
+    let tm: ReturnType<typeof setTimeout> | null = null;
+    try {
+      const single = RNShare.shareSingle(opts);
+      // The race can move on at the deadline; the loser must never surface as
+      // an unhandled rejection minutes later.
+      single.catch(() => {});
+      const result = await Promise.race([
+        single,
+        new Promise<'timeout'>(res => { tm = setTimeout(() => res('timeout'), 12_000); }),
+      ]);
+      return result !== 'timeout';
+    } finally { if (tm) clearTimeout(tm); }
+  };
+
   const shareSelected = async (app: AppKey) => {
     if (busy) return;
     const cfg = APP_CONFIG[app];
@@ -212,11 +241,31 @@ export default function ShareVerseSheet({ reference, text, onClose, bgSource }: 
     setBusy(true);
     try {
       const url = await captureCard();
-      await RNShare.shareSingle({
-        url,
-        type: CAPTURE_MIME,
-        social: SOCIAL_MAP[app],
-      });
+      if (Platform.OS === 'ios' && app === 'instagram') {
+        // The flow Instagram's library deep link actually supports: the photo
+        // must ALREADY be in the camera roll. Save the card first — the same
+        // add-only, Play-policy-safe call downloadCard uses (iOS prompts with
+        // NSPhotoLibraryAddUsageDescription) — then open the library composer,
+        // where newest-first now means the card she just made. A denied
+        // permission or a failed openURL throws into the catch below and falls
+        // back to the system share sheet.
+        await MediaLibrary.saveToLibraryAsync(url);
+        await Linking.openURL('instagram://library');
+      } else {
+        const done = await shareSingleGuarded({
+          url,
+          type: CAPTURE_MIME,
+          social: SOCIAL_MAP[app],
+          // iOS WhatsApp only: an empty message satisfies WhatsAppShare.m's
+          // silent `message` gate (see the block comment above) and routes it
+          // to the image path — UIDocumentInteractionController with UTI
+          // net.whatsapp.image, which presents the "Open in WhatsApp" hand-off
+          // with the CARD attached. Not sent on Android, where a message would
+          // ride along as a pointless empty caption extra.
+          ...(Platform.OS === 'ios' && app === 'whatsapp' ? { message: '' } : null),
+        });
+        if (!done) return;                     // timed out — treat as a cancel
+      }
       recordShare();
       logEvent('share', { content_type: 'verse', item_id: reference, method: app });
     } catch (e) {

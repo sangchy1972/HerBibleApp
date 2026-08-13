@@ -1685,31 +1685,31 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
           the first FlowPage. Receives the current prayer-bg image as the
           card backdrop so every preview / capture uses the live photo
           instead of the pink/lav gradient placeholder. */}
-      <Modal
-        visible={showVerseShare && !!verseRef && !!verseText}
-        transparent
-        animationType="none"
-        statusBarTranslucent
-        onRequestClose={() => setShowVerseShare(false)}
-      >
-        {/* CONDITIONAL, not just the Modal's `visible` — the twin of this was
-            fixed on PrayerScreen today and this one was missed, which is the
-            ledger's own lesson about re-checking every consumer. On iOS
-            `_shouldShowModal()` is `visible || state.isRendered`, and isRendered
-            clears only on the native onDismiss — which never fires if `visible`
-            flips false before the presentation completed. ShareVerseSheet holds
-            useSheetSurface(true), so a stranded mount pins the GLOBAL sheetDepth
-            at 1 and the coordinator then refuses every blocking prompt in the app
-            for the rest of the session. */}
-        {showVerseShare && !!verseRef && !!verseText && (
+      {/* The MODAL ITSELF is conditionally mounted, not just its child. The
+          conditional child (the earlier fix here) protects sheetDepth, but on
+          iOS a kept-mounted Modal with visible=false can still hold its
+          TRANSPARENT native window while `isRendered` is latched — onDismiss
+          never fired — and that window's onStartShouldSetResponder eats every
+          touch in the app. Sharing switches apps at exactly the moment the
+          dismiss callback gets dropped. Unmounting the element tears the window
+          down regardless of isRendered. Same change on PrayerScreen and
+          PlanDayWalk — dev-guide §2. */}
+      {showVerseShare && !!verseRef && !!verseText && (
+        <Modal
+          visible
+          transparent
+          animationType="none"
+          statusBarTranslucent
+          onRequestClose={() => setShowVerseShare(false)}
+        >
           <ShareVerseSheet
             reference={verseRef}
             text={verseText}
             bgSource={bgImage}
             onClose={() => setShowVerseShare(false)}
           />
-        )}
-      </Modal>
+        </Modal>
+      )}
 
       {/* Verse-note sheet — separate from the in-flow reflection sheet
           (`showNoteSheet` above) because it captures a thought tied to

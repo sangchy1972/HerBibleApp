@@ -125,6 +125,17 @@ add anything that floats.
 1. **RN `<Modal>` is its own native window** and swallows every app touch while
    mounted — even fully transparent, even zero-opacity. Twice the cause of
    "the screen stopped responding". Prefer a root-mounted absolute-fill view.
+   When a Modal is unavoidable, **conditionally mount the element itself**
+   (`{open && <Modal visible …>}`) — never toggle `visible` on a kept-mounted
+   Modal. On iOS `_shouldShowModal()` is `visible || isRendered`, and
+   `isRendered` clears only on the native onDismiss; if that callback is dropped
+   (an app switch mid-dismiss — **sharing to WhatsApp/Instagram is exactly this**)
+   the transparent window stays up forever with `onStartShouldSetResponder →
+   true`. The conditional-CHILD fix protects sheetDepth but NOT the window;
+   unmounting the element tears the window down regardless of `isRendered`.
+   Applied to PrayerScreen (share + comments), PrayerFlow (share), PlanDayWalk
+   (note + share) on 2026-08-13, after "I shared, came back, and the home screen
+   was dead".
 2. **An invisible touch shield**: a scrim that animates out but never unmounts, or one
    whose `pointerEvents` isn't released on the exit path. Every overlay needs an
    exactly-once exit and a watchdog (30 s) that force-clears it even if the animation
@@ -234,6 +245,19 @@ always `blur()` first if any state mirrors "the keyboard is up".
   broken forever.
 - **Guarded `require` for native modules** so older dev clients degrade to no-ops
   instead of crashing (pattern in `src/services/*`).
+- **react-native-share's iOS `shareSingle` is a minefield (v12.3.1, sources read
+  2026-08-13).** Three traps, all shipped as bugs once: WhatsAppShare.m returns
+  **without resolving or rejecting** when `message` is absent (the await never
+  settles → any `busy` flag guarding it freezes forever — pass `message: ''` on
+  iOS and wrap every call in a timeout race); RNShare.mm's `isImageMimeType`
+  only recognises `data:image` URLs, so a `file://` capture routed Instagram to
+  a deep link with the file path pasted in as a Photos LocalIdentifier —
+  Instagram opened on the camera roll's latest photo and the promise
+  **resolved(true)**, logging a success (iOS Instagram now saves to Photos
+  first, then opens `instagram://library`); and a resolved promise generally
+  means "a URL was opened", not "the user shared". Android's implementation is
+  a real `ACTION_SEND` with a `content://` stream and is fine — the forks in
+  `ShareVerseSheet.shareSelected` are iOS-only on purpose.
 - Never assume a context is loaded before its render gate passes. Defensive null checks
   at every boundary. Crash-free is non-negotiable.
 

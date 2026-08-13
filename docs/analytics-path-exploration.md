@@ -121,6 +121,16 @@ BigQuery 免费额度是**每月 1TB 查询 + 10GB 存储**。你现在月活 20
 WHERE _TABLE_SUFFIX BETWEEN '20260701' AND '20260812'
 ```
 
+### 3.2a ⚠️ 列别名必须是 ASCII
+
+BigQuery **不接受非 ASCII 的标识符**（除非整个用反引号包起来）。写 `AS 完成率` 会得到：
+
+```
+Syntax error: Illegal input character "\347" at [17:28]
+```
+
+`\347` 是那个中文字的第一个字节。本文档里的别名一律用 ASCII —— 这条踩过。
+
 ### 3.3 表结构要知道的三件事
 
 1. **一行一个事件**，`event_name` 是事件名
@@ -182,7 +192,7 @@ WITH ordered AS (
 SELECT
   step,
   event_name AS from_event,
-  IFNULL(next_event, '(会话结束)') AS to_event,
+  IFNULL(next_event, '(session_end)') AS to_event,
   COUNT(*) AS sessions
 FROM ordered
 WHERE step <= 6                      -- 只看前 6 步，再深就没样本了
@@ -191,7 +201,7 @@ HAVING sessions >= 3                 -- 砍掉噪声；样本大了再调高
 ORDER BY step, sessions DESC;
 ```
 
-`to_event = '(会话结束)'` 那些行**就是流失点**。这一列排序下来，最上面的那个事件
+`to_event = '(session_end)'` 那些行**就是流失点**。这一列排序下来，最上面的那个事件
 就是最该看的地方。
 
 ### 4.3 漏斗：一步就能算的流失率
@@ -207,9 +217,9 @@ WITH s AS (
   GROUP BY 1, 2
 )
 SELECT
-  COUNTIF(started) AS 开始引导,
-  COUNTIF(started AND completed) AS 走完引导,
-  ROUND(SAFE_DIVIDE(COUNTIF(started AND completed), COUNTIF(started)) * 100, 1) AS 完成率
+  COUNTIF(started)               AS started,
+  COUNTIF(started AND completed) AS completed,
+  ROUND(SAFE_DIVIDE(COUNTIF(started AND completed), COUNTIF(started)) * 100, 1) AS completion_pct
 FROM s;
 ```
 

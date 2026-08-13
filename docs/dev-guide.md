@@ -379,6 +379,15 @@ floor, no-floor last.
 - Per-unit cadence + per-day breakers; **network errors never strike** a unit.
 - `ad_impression_custom` logs value only when the `paid` callback delivers it. The value
   arrives as a **number** on both platforms (Android `1e-6 * getValueMicros()`).
+- **First-ad value exclusion (owner 2026-08-13).** The install's first-ever SHOWN
+  interstitial fires `ad_impression_custom` **without** value/currency/precision
+  (`value_omitted: 'first_open_ad'` instead) — this is the buy-side event Google Ads
+  tracks, and day-0 first-ad revenue must contribute zero to value bidding. Only this
+  event is affected: the reserved `ad_impression`, `Total_Ads_Revenue_001`, the AdLTV
+  tiers and the ladder's own bookkeeping all still see the real money. The latch
+  (`adEngine:firstAd:v1`) burns at SHOW time so a lost PAID can never shift the
+  suppression onto a later ad. Full rationale at FIRST-AD VALUE EXCLUSION in
+  `adEngine.ts`.
 - Never parse a localised number string — decimal separators differ by region (pt-BR).
 - iOS is untouched by this engine.
 

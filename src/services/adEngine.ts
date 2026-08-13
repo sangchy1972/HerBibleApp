@@ -67,6 +67,9 @@ const EXPIRY_MS = 50 * 60 * 1000;  // evict before AdMob's ~1h expiry
 // docs/ad-routing.md §4 warned about.
 const MIN_INTERVAL_MS = MIN_AD_INTERVAL_MS;
 const BREAKER_KEY = 'adEngine:day:v1';
+// Once-ever-per-install latch: has this install ever SHOWN an interstitial?
+// Drives the buy-side value exclusion below — see FIRST-AD VALUE EXCLUSION.
+const FIRST_AD_KEY = 'adEngine:firstAd:v1';
 
 // Callers' placements (constants/adPacing) + the engine's own onboarding one.
 type Placement = AdPlacement | 'onboarding_first';
@@ -115,6 +118,41 @@ function ymd(d = new Date()): string {
 // lands (or on a genuinely fresh install, before adFrequency writes the key)
 // this reports day 0, which errs toward the NEW-user flow — the safe direction.
 let installYmd = '';
+
+// ── FIRST-AD VALUE EXCLUSION (owner 2026-08-13) ──────────────────────────────
+// `ad_impression_custom` is the BUY-SIDE event: Google Ads tracks it (by exact
+// name, with the value/currency params) for value bidding, Android first. The
+// owner wants the very FIRST impression of a fresh install to contribute NO
+// value to that event — day-0 first-ad revenue is noise for tROAS; the campaign
+// should optimize toward users who keep generating revenue, not one-and-done
+// installs.
+//
+// Scope decisions, all deliberate:
+//   • The event still FIRES for that impression — placement/unit/floor stay, so
+//     our own per-placement analysis keeps seeing it. Only value/currency/
+//     precision are omitted (a `value_omitted` param marks why, for DebugView).
+//     If the conversion COUNT should also exclude it one day, that is a
+//     one-line change in the PAID handler.
+//   • Everything else still sees the real money: the reserved `ad_impression`
+//     (native SDK, we couldn't intercept it anyway), Total_Ads_Revenue_001 and
+//     the AdLTV tiers (onAdPaid), and the ladder's own bookkeeping
+//     (recordPaidValue). GA4 revenue metrics stay truthful — ONLY the buy-side
+//     event excludes the first ad.
+//   • "First" = first interstitial this install ever PRESENTED, decided at SHOW
+//     time by tagging the ad object (`__firstOpenAd`), not at PAID time — PAID
+//     can arrive after dismiss and out of order, and the tag rides the exact ad
+//     it belongs to. The latch burns at show: if that show() throws, or its
+//     PAID never arrives, no later ad is suppressed — erring toward REPORTING a
+//     value, never toward suppressing a veteran's second ad.
+//   • A reinstall wipes AsyncStorage, so a reinstalled user counts as new. That
+//     matches the UA meaning of "new user".
+//
+// null = storage not read yet. A show that lands in that window (practically
+// impossible — hydration is ms, the first fill is seconds) is remembered and
+// burns the latch on hydration WITHOUT suppressing anything: same safe
+// direction as above.
+let firstAdShownEver: boolean | null = null;
+let showBeforeHydration = false;
 function dayIndexSync(): number {
   if (!installYmd) return 0;
   const a = new Date(installYmd + 'T00:00:00').getTime();
@@ -232,14 +270,21 @@ function attachPaid(ad: any, unit: AdUnit): void {
         recordPaidValue(v);
         // The buy-side event (owner: it must carry TRUE revenue, so it fires on
         // PAID, not on show — value arrives seconds after the impression).
+        // EXCEPT the install's first-ever shown ad (owner 2026-08-13): the event
+        // still fires, but with no value/currency — Google Ads must see zero
+        // value on day-0 first impressions. See FIRST-AD VALUE EXCLUSION above.
         logEvent('ad_impression_custom', {
           format: 'interstitial',
           placement: (ad.__placement as string) ?? 'pending',
           unit: unit.name,
           floor: unit.floor,
-          value: v,
-          currency: String(e?.currency ?? ''),
-          precision: String(e?.precision ?? ''),
+          ...(ad.__firstOpenAd
+            ? { value_omitted: 'first_open_ad' }
+            : {
+                value: v,
+                currency: String(e?.currency ?? ''),
+                precision: String(e?.precision ?? ''),
+              }),
         });
         // The shared ILAR funnel (Total_Ads_Revenue_001 / AdLTV tiers).
         onAdPaid({
@@ -356,11 +401,19 @@ export async function startAdEngine(injected: Deps): Promise<void> {
   started = true;
   deps = injected;
   try {
-    const [rawBreakers, rawInstall] = await Promise.all([
+    const [rawBreakers, rawInstall, rawFirstAd] = await Promise.all([
       AsyncStorage.getItem(BREAKER_KEY).catch(() => null),
       AsyncStorage.getItem('ads:firstLaunchYmd').catch(() => null),
+      AsyncStorage.getItem(FIRST_AD_KEY).catch(() => null),
     ]);
     if (rawInstall) installYmd = rawInstall;
+    firstAdShownEver = rawFirstAd === '1';
+    if (!firstAdShownEver && showBeforeHydration) {
+      // A show slipped through before this read finished: burn the latch WITHOUT
+      // having suppressed it (safe direction — see the block comment above).
+      firstAdShownEver = true;
+      AsyncStorage.setItem(FIRST_AD_KEY, '1').catch(() => {});
+    }
     const p = rawBreakers ? JSON.parse(rawBreakers) : null;
     if (p && p.day === ymd() && Array.isArray(p.tripped)) {
       day = p.day;
@@ -408,6 +461,16 @@ export function engineOnShowOpportunity(placement: Placement, bypassInterval = f
   cache.sort((a, b) => priorityOf(b.unit) - priorityOf(a.unit));
   const slot = cache.shift()!;
   slot.ad.__placement = placement;      // read back by the PAID handler
+  // FIRST-AD VALUE EXCLUSION: tag the install's first-ever shown ad; its PAID
+  // handler will omit value/currency from the buy-side event. Latch burns HERE,
+  // at show — see the block comment at the top of the file for why.
+  if (firstAdShownEver === false) {
+    slot.ad.__firstOpenAd = true;
+    firstAdShownEver = true;
+    AsyncStorage.setItem(FIRST_AD_KEY, '1').catch(() => {});
+  } else if (firstAdShownEver === null) {
+    showBeforeHydration = true;
+  }
   let offOpened = () => {};
   let offClosed = () => {};
   // PAID stays bound (attached at creation) — a post-dismiss PAID must land.

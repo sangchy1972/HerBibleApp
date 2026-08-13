@@ -166,12 +166,15 @@ tap → screen_view。
 | `ads_adapters` | `ready`, `total`, `detail` | 中介适配器就绪情况 |
 | `ad_request` / `us_ad_request` | `unit`, `kind`, `floor`（US 路径带 `unit_idx`, `established`, `win_lo/hi`） | 发起请求 |
 | `ad_breaker` | `unit`, `kind`, `strikes` | 某个单元连续无填充被熔断 |
-| `ad_impression_custom` | `format`, `placement`, `unit`, `floor`, `value`, `currency` | 展示 |
+| `ad_impression_custom` | `format`, `placement`, `unit`, `floor`, `value`, `currency`, `precision`；**安装首广告**改带 `value_omitted: 'first_open_ad'`、无 value | Android 在 paid 回调发（买量侧追踪点）；iOS 在展示时发、无 value |
 | `ad_paid` | `value`, `ecpm`, `currency`, `unit_idx`, `precision` | 付费回调 |
 | `ad_config_fetch` | `ok`, `v`, `ltv_currencies` 或 `reason` | 远程配置拉取 |
 
 `ad_impression_custom` 和保留名 `ad_impression` **是两个不同的东西**，不要混。
 量口径要用 `ad_impression_custom`＋`placement` 维度，不要数点击次数。
+**价值口径注意**（业主 2026-08-13）：每个安装首次展示的广告，`ad_impression_custom` 刻意
+**不带 value** —— 所以用这个事件求和的收入 ≈ 真实收入 − 全部新装机首广告。对账时保留
+事件 `ad_impression` / `Total_Ads_Revenue_001` 才是全量真钱。
 
 ### 7.2 收入回传（`src/services/adRevenue.ts`）
 

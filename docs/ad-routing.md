@@ -224,6 +224,13 @@ AdMob 行为政策禁止「通过发布商自建系统按实时价格信息程�
 
 - `ad_impression_custom` **改在 paid 回调发**，带真实 `value`(USD 原始值) + `unit` + `floor` +
   placement + currency + precision —— 买量侧直接用。iOS 仍在 show 时发、无 value。
+- **首广告价值剔除（业主 2026-08-13）**：每个安装**首次展示**的插页，其 `ad_impression_custom`
+  **不带 value/currency/precision**，改带 `value_omitted: 'first_open_ad'` —— 事件照发（placement
+  分析不缺样本），只是买量侧看到的 day-0 首广告价值为零。**只影响这一个事件**：保留事件
+  `ad_impression`（原生 SDK 发，我们拦不了）、`Total_Ads_Revenue_001`、AdLTV 各档、阶梯自身
+  记账（`recordPaidValue`）全部照记真钱，GA4 收入指标不受影响。闸在**展示时**烧
+  （`adEngine:firstAd:v1`），show 抛异常或 PAID 没到 → 宁可多报一笔，绝不错杀老用户第二条。
+  卸载重装 = 新用户，符合买量口径。要连转化**次数**也剔除的话是 PAID 处一行的事，业主说了算。
 - 新增 `ad_request`（仅探测/主/副层，慢节奏）、`ad_breaker`（熔断触发）。
 - `ads_route` 的 Android path 值 = `engine`。
 

@@ -108,30 +108,34 @@ export default function PlanScreen() {
   }, [setShowExplore]);
   const setRevealMood = guide.setRevealMoodHandler;
   useEffect(() => {
-    // Bring the mood row to ~130dp from the top of the window. Retries while
-    // the Explore content is still mounting (the guide switches the segment in
-    // the same breath); resolves once scrolled — the overlay's own confirming
-    // re-measure then locks the hole onto the settled position.
+    // Bring the mood row to ~130dp from the top of the window — and CONFIRM it
+    // got there. The old version issued ONE scroll and resolved on faith; any
+    // clamp, late mount or reflow (PT rows are taller, and the Explore search
+    // header moved every offset) left the row wherever the scroll stopped, and
+    // the overlay locked its hole onto the PRE-scroll position — the owner's
+    // 2026-08-14 screenshot: the hole a full band below the mood row, over two
+    // unrelated plan rows. Now each pass measures fresh reality, scrolls the
+    // remaining delta, waits for the animated scroll to land, and only returns
+    // once the row actually sits in the band. The overlay's settle sampler
+    // tracks the journey; the destination being RIGHT is this loop's job.
     setRevealMood(async () => {
       for (let i = 0; i < 8; i += 1) {
-        const scrolled = await new Promise<boolean>(res => {
+        const y = await new Promise<number | null>(res => {
           const node = moodSectionRef.current;
-          if (!node) { res(false); return; }
+          if (!node) { res(null); return; }
           let fired = false;
-          const cap = setTimeout(() => { if (!fired) res(false); }, 250);
-          node.measureInWindow((x, y, w, h) => {
+          const cap = setTimeout(() => { if (!fired) res(null); }, 250);
+          node.measureInWindow((_x, yy, _w, h) => {
             fired = true;
             clearTimeout(cap);
-            if (!(h > 0)) { res(false); return; }
-            const delta = y - 130;
-            if (Math.abs(delta) > 8) {
-              scrollRef.current?.scrollTo({ y: Math.max(0, scrollYRef.current + delta), animated: true });
-            }
-            res(true);
+            res(h > 0 ? yy : null);
           });
         });
-        if (scrolled) { await new Promise(r => setTimeout(r, 480)); return; }
-        await new Promise(r => setTimeout(r, 250));
+        if (y == null) { await new Promise(r => setTimeout(r, 250)); continue; }   // not mounted yet
+        const delta = y - 130;
+        if (Math.abs(delta) <= 8) return;                    // settled in the band — done
+        scrollRef.current?.scrollTo({ y: Math.max(0, scrollYRef.current + delta), animated: true });
+        await new Promise(r => setTimeout(r, 420));          // let the scroll land before re-checking
       }
     });
   }, [setRevealMood]);

@@ -693,6 +693,18 @@ button doesn't say is worse than no guide.
 
 Spotlight alignment is the thing the owner checks first. Measure the anchor, not a
 guess; re-measure after any scroll or segment switch the guide itself triggers.
+Two rules hard-won on 2026-08-14 (PT explore, the mood step's hole a full band below
+its anchor, bubble "jittering in place"):
+- **SpotlightCoach confirms by SETTLING, not by clock.** The old single 650 ms
+  confirming pass missed any anchor journey that finished later (hole stuck at the
+  pre-scroll position) and a pass landing mid-scroll snapped onto a moving target —
+  the jitter. The settle sampler re-measures every 300 ms and snaps once, only when
+  two consecutive samples agree, 10-sample cap keeping the last known position.
+- **A reveal that scrolls an anchor into place must VERIFY the arrival** (measure →
+  scroll the remaining delta → wait for the animated scroll to land → re-check, only
+  returning in-band), not fire one scroll and resolve on faith — clamps, late mounts
+  and language-length reflows all leave a single blind scroll short. `revealMood` in
+  PlanScreen is the reference implementation.
 
 ---
 

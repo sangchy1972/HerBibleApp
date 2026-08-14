@@ -175,12 +175,45 @@ export default function SpotlightCoach({
     ));
     // Watchdog: a dropped runOnJS must not leave the buttons Reanimated-owned.
     const wd = setTimeout(() => setTipSettled(true), TIP_IN_DELAY_MS + TIP_IN_MS + 400);
-    // CONFIRMING re-measure once everything should have settled. The first
-    // valid rect can be captured mid-scroll or mid-entrance (the mood row is
-    // scrolled into view while we measure) — one more pass after the dust
-    // settles catches any drift; the snap effect below repositions the hole.
-    const confirm = setTimeout(() => setMeasureEpoch(e => e + 1), 650);
-    return () => { clearTimeout(wd); clearTimeout(confirm); };
+    // SETTLE SAMPLER — replaces the old single 650ms confirming pass. The first
+    // valid rect is often captured mid-journey (the plan guide's mood step
+    // SCROLLS its anchor into place; the Bible guide rides a chapter to its
+    // end), and one fixed-time pass missed any journey that finished later:
+    // the hole stayed at the PRE-scroll position (owner screenshot 2026-08-14,
+    // PT explore — the hole a full band below the mood row), and a pass that
+    // happened to land MID-scroll snapped the hole onto a moving target, which
+    // is what read as the bubble "jittering in place". This samples every
+    // 300ms and snaps ONCE, only when two consecutive samples agree — never to
+    // a moving anchor — with a 10-sample cap that keeps the last known
+    // position (better than the pre-scroll one) if the anchor never settles.
+    let samplerLive = true;
+    let sampleTimer: ReturnType<typeof setTimeout> | null = null;
+    let prev: Rect | null = null;
+    let samples = 0;
+    const agree = (a: Rect, b: Rect) =>
+      Math.abs(a.x - b.x) <= 1 && Math.abs(a.y - b.y) <= 1 &&
+      Math.abs(a.w - b.w) <= 1 && Math.abs(a.h - b.h) <= 1;
+    const apply = (r: Rect) => setTarget(t => (t && agree(t, r) ? t : r));
+    const sample = async () => {
+      if (!samplerLive) return;
+      samples += 1;
+      const [origin, raw] = await Promise.all([measureRefInWindow(rootRef), measure()]);
+      if (!samplerLive) return;
+      if (raw && raw.w > 0 && raw.h > 0) {
+        const o = origin ?? { x: 0, y: 0, w: 0, h: 0 };
+        const r = inflate({ x: raw.x - o.x, y: raw.y - o.y, w: raw.w, h: raw.h }, pad);
+        if (prev && agree(prev, r)) { apply(r); return; }   // settled → one snap, stop
+        prev = r;
+        if (samples >= 10) { apply(r); return; }
+      } else if (samples >= 10) { return; }
+      sampleTimer = setTimeout(sample, 300);
+    };
+    sampleTimer = setTimeout(sample, 350);
+    return () => {
+      samplerLive = false;
+      if (sampleTimer) clearTimeout(sampleTimer);
+      clearTimeout(wd);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target, tipH]);
 

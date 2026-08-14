@@ -109,30 +109,60 @@ export default function SpotlightCoach({
   const [target, setTarget] = useState<Rect | null>(null);
   const [measureEpoch, setMeasureEpoch] = useState(0);
 
-  useEffect(() => {
-    if (!focused) return;
-    let live = true;
-    (async () => {
-      const [origin, raw] = await Promise.all([measureRefInWindow(rootRef), measure()]);
-      if (!live) return;
-      if (!raw || raw.w <= 0 || raw.h <= 0) return;      // retry effect below
-      const o = origin ?? { x: 0, y: 0, w: 0, h: 0 };
-      setTarget(inflate({ x: raw.x - o.x, y: raw.y - o.y, w: raw.w, h: raw.h }, pad));
-    })();
-    return () => { live = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focused, measureEpoch, measure]);
+  // Rects agree when every edge is within a pixel — the settle criterion used
+  // by both the acquisition below and the drift sampler further down.
+  const agree = useCallback((a: Rect, b: Rect) =>
+    Math.abs(a.x - b.x) <= 1 && Math.abs(a.y - b.y) <= 1 &&
+    Math.abs(a.w - b.w) <= 1 && Math.abs(a.h - b.h) <= 1, []);
+  // The anchor must actually be IN the viewport before anything arms. The
+  // Bible guide's final step measures a button that lives at the BOTTOM of a
+  // chapter mid-scrollToEnd: accepting its below-the-screen rect put the hole
+  // and the bubble off-screen while the scrim and the full-screen shield armed
+  // anyway — a black screen with no visible way out (owner screenshots,
+  // 2026-08-14). Off-viewport is treated exactly like unmeasurable: keep
+  // sampling, never arm.
+  const inViewport = useCallback((r: Rect) =>
+    r.y + r.h > insets.top + 12 && r.y < H - (insets.bottom + 64) - 12,
+  [insets.top, insets.bottom, H]);
 
-  // The anchor can be a beat late (screen mounting, entrance animations,
-  // a scroll-into-view still settling). Retry, then bail — never a trap.
-  const retries = useRef(0);
+  // ── ACQUISITION: settle first, arm second ─────────────────────────────────
+  // The old flow measured ONCE, played the entrance on whatever came back, and
+  // corrected later. Screens measure mid-motion constantly — the header rides
+  // a TabSection entrance, the plan guide scrolls its anchor into place, the
+  // Bible guide rides a chapter to its end — so the first frame was routinely
+  // wrong (a hole a status-bar height below the icons it framed). Now the hole
+  // does not EXIST until two consecutive samples agree within 1px AND the rect
+  // is actually on screen. Until then the root has no children and every touch
+  // goes to the ordinary app. ~14 samples ≈ 4s, then bail — never a trap.
   useEffect(() => {
     if (target || !focused) return;
-    if (retries.current >= 8) { onUnmeasurable(); return; }
-    const tm = setTimeout(() => { retries.current += 1; setMeasureEpoch(e => e + 1); }, 350);
-    return () => clearTimeout(tm);
+    let live = true;
+    let tm: ReturnType<typeof setTimeout> | null = null;
+    // Local to the run, NOT refs: a blur/foreground cycle restarts acquisition
+    // with a full budget instead of inheriting a half-spent counter and bailing
+    // out of a perfectly measurable step.
+    let samples = 0;
+    let prev: Rect | null = null;
+    const sample = async () => {
+      if (!live) return;
+      samples += 1;
+      const [origin, raw] = await Promise.all([measureRefInWindow(rootRef), measure()]);
+      if (!live) return;
+      if (raw && raw.w > 0 && raw.h > 0) {
+        const o = origin ?? { x: 0, y: 0, w: 0, h: 0 };
+        const r = inflate({ x: raw.x - o.x, y: raw.y - o.y, w: raw.w, h: raw.h }, pad);
+        if (prev && agree(prev, r) && inViewport(r)) { setTarget(r); return; }
+        prev = r;
+      } else {
+        prev = null;                    // gaps must not let two distant samples "agree"
+      }
+      if (samples >= 14) { onUnmeasurable(); return; }
+      tm = setTimeout(sample, 280);
+    };
+    sample();
+    return () => { live = false; if (tm) clearTimeout(tm); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target, focused, measureEpoch]);
+  }, [target, focused, measureEpoch, measure]);
 
   // ── Choreography ──────────────────────────────────────────────────────────
   const sx = useSharedValue(0);
@@ -175,47 +205,46 @@ export default function SpotlightCoach({
     ));
     // Watchdog: a dropped runOnJS must not leave the buttons Reanimated-owned.
     const wd = setTimeout(() => setTipSettled(true), TIP_IN_DELAY_MS + TIP_IN_MS + 400);
-    // SETTLE SAMPLER — replaces the old single 650ms confirming pass. The first
-    // valid rect is often captured mid-journey (the plan guide's mood step
-    // SCROLLS its anchor into place; the Bible guide rides a chapter to its
-    // end), and one fixed-time pass missed any journey that finished later:
-    // the hole stayed at the PRE-scroll position (owner screenshot 2026-08-14,
-    // PT explore — the hole a full band below the mood row), and a pass that
-    // happened to land MID-scroll snapped the hole onto a moving target, which
-    // is what read as the bubble "jittering in place". This samples every
-    // 300ms and snaps ONCE, only when two consecutive samples agree — never to
-    // a moving anchor — with a 10-sample cap that keeps the last known
-    // position (better than the pre-scroll one) if the anchor never settles.
-    let samplerLive = true;
-    let sampleTimer: ReturnType<typeof setTimeout> | null = null;
+    return () => clearTimeout(wd);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target, tipH]);
+
+  // ── DRIFT SAMPLER — the acquired anchor can still move LATER ──────────────
+  // Content reflows (covers land, translated rows re-wrap), and a foreground
+  // return (measureEpoch bump) can find the layout shifted. Re-measure every
+  // 300ms and snap ONCE, only when two consecutive samples agree AND the rect
+  // is still in the viewport — never onto a moving anchor, which is what read
+  // as the bubble "jittering in place". Intermediate samples touch no state;
+  // the one snap goes through the equality-guarded snap effect above.
+  useEffect(() => {
+    if (!target) return;
+    let live = true;
+    let tm: ReturnType<typeof setTimeout> | null = null;
     let prev: Rect | null = null;
     let samples = 0;
-    const agree = (a: Rect, b: Rect) =>
-      Math.abs(a.x - b.x) <= 1 && Math.abs(a.y - b.y) <= 1 &&
-      Math.abs(a.w - b.w) <= 1 && Math.abs(a.h - b.h) <= 1;
-    const apply = (r: Rect) => setTarget(t => (t && agree(t, r) ? t : r));
     const sample = async () => {
-      if (!samplerLive) return;
+      if (!live) return;
       samples += 1;
       const [origin, raw] = await Promise.all([measureRefInWindow(rootRef), measure()]);
-      if (!samplerLive) return;
+      if (!live) return;
       if (raw && raw.w > 0 && raw.h > 0) {
         const o = origin ?? { x: 0, y: 0, w: 0, h: 0 };
         const r = inflate({ x: raw.x - o.x, y: raw.y - o.y, w: raw.w, h: raw.h }, pad);
-        if (prev && agree(prev, r)) { apply(r); return; }   // settled → one snap, stop
+        if (prev && agree(prev, r) && inViewport(r)) {
+          setTarget(t => (t && agree(t, r) ? t : r));   // settled → one snap, stop
+          return;
+        }
         prev = r;
-        if (samples >= 10) { apply(r); return; }
-      } else if (samples >= 10) { return; }
-      sampleTimer = setTimeout(sample, 300);
+      } else {
+        prev = null;
+      }
+      if (samples >= 10) return;                        // quiet cap — keep what we have
+      tm = setTimeout(sample, 300);
     };
-    sampleTimer = setTimeout(sample, 350);
-    return () => {
-      samplerLive = false;
-      if (sampleTimer) clearTimeout(sampleTimer);
-      clearTimeout(wd);
-    };
+    tm = setTimeout(sample, 350);
+    return () => { live = false; if (tm) clearTimeout(tm); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target, tipH]);
+  }, [target != null, measureEpoch]);
 
   // A re-measure (the confirming pass, foregrounding) that MOVES the rect after
   // the entrance already played → snap the hole and bubble onto the fresh
@@ -291,12 +320,26 @@ export default function SpotlightCoach({
   // ── Layout ────────────────────────────────────────────────────────────────
   const tabBarish = insets.bottom + 64;
   const spaceBelow = target ? H - tabBarish - (target.y + target.h) - CARET - TIP_GAP : 0;
-  const below = !!target && tipH > 0 && tipH + 12 <= spaceBelow;
+  const spaceAbove = target ? target.y - CARET - TIP_GAP - (insets.top + 6) : 0;
+  // Pick the side that FITS; when neither does, the roomier one. The old rule
+  // only ever asked "does below fit?" and sent everything else above with no
+  // clamp — a tall translated bubble over a high anchor rode straight off the
+  // top of the screen, status bar included (owner screenshot 2026-08-14).
+  const fitsBelow = tipH > 0 && tipH + 12 <= spaceBelow;
+  const fitsAbove = tipH > 0 && tipH <= spaceAbove;
+  const below = !!target && (fitsBelow || (!fitsAbove && spaceBelow >= spaceAbove));
   const tipW = Math.min(TIP_MAX_W, W - 2 * P);
   const centerX = target ? target.x + target.w / 2 : W / 2;
   const tipLeft = clamp(centerX - tipW / 2, P, Math.max(P, W - P - tipW));
-  const tipTop = target
+  // Clamped into the safe viewport WHATEVER the side says: Pular/Próximo must
+  // be reachable on every language length and every anchor position. A clamp
+  // may slide the bubble over part of the hole — reachable-but-overlapping
+  // beats perfectly-spaced-but-off-screen.
+  const tipTopRaw = target
     ? (below ? target.y + target.h + CARET + TIP_GAP : target.y - CARET - TIP_GAP - tipH)
+    : 0;
+  const tipTop = target
+    ? clamp(tipTopRaw, insets.top + 6, Math.max(insets.top + 6, H - tabBarish - tipH - 6))
     : 0;
   const caretLeft = clamp(centerX - tipLeft - CARET, 16, Math.max(16, tipW - 16 - 2 * CARET));
 

@@ -693,18 +693,31 @@ button doesn't say is worse than no guide.
 
 Spotlight alignment is the thing the owner checks first. Measure the anchor, not a
 guess; re-measure after any scroll or segment switch the guide itself triggers.
-Two rules hard-won on 2026-08-14 (PT explore, the mood step's hole a full band below
-its anchor, bubble "jittering in place"):
-- **SpotlightCoach confirms by SETTLING, not by clock.** The old single 650 ms
-  confirming pass missed any anchor journey that finished later (hole stuck at the
-  pre-scroll position) and a pass landing mid-scroll snapped onto a moving target —
-  the jitter. The settle sampler re-measures every 300 ms and snaps once, only when
-  two consecutive samples agree, 10-sample cap keeping the last known position.
-- **A reveal that scrolls an anchor into place must VERIFY the arrival** (measure →
-  scroll the remaining delta → wait for the animated scroll to land → re-check, only
-  returning in-band), not fire one scroll and resolve on faith — clamps, late mounts
-  and language-length reflows all leave a single blind scroll short. `revealMood` in
-  PlanScreen is the reference implementation.
+Four rules hard-won on 2026-08-14 (PT screenshots: a hole a status-bar height below
+the header icons; a bubble ridden off the top of the screen; and the worst — a fully
+armed scrim with hole AND bubble both off-screen, an unescapable black screen):
+- **SpotlightCoach settles FIRST, arms SECOND.** The hole does not exist until two
+  consecutive samples (280 ms apart) agree within 1 px — screens measure mid-motion
+  constantly (TabSection entrances, guide-driven scrolls). Until then the root has no
+  children and every touch goes to the ordinary app. ~14 samples, then
+  `onUnmeasurable` — never a trap.
+- **An off-viewport anchor is treated exactly like an unmeasurable one.** The Bible
+  guide's final step measures a button mid-`scrollToEnd`; accepting its
+  below-the-screen rect armed the shield with nothing visible to tap. In-viewport is
+  part of the acceptance test, in acquisition AND in the drift sampler.
+- **After arming, drift is corrected by settling, not by clock** (covers reflows and
+  foreground returns): re-measure every 300 ms, snap once when two samples agree,
+  10-sample quiet cap. Never snap onto a moving anchor — that is the "bubble jitters
+  in place" bug.
+- **The bubble picks the side that FITS and is clamped into the safe viewport** —
+  `Pular`/skip must be reachable on every language length and every anchor position.
+  Reachable-but-overlapping beats perfectly-spaced-but-off-screen.
+
+**A reveal that scrolls an anchor into place must VERIFY the arrival** (measure →
+scroll the remaining delta → wait for the animated scroll to land → re-check, only
+returning in-band), not fire one scroll and resolve on faith — clamps, late mounts
+and language-length reflows all leave a single blind scroll short. `revealMood` in
+PlanScreen is the reference implementation.
 
 ---
 

@@ -92,7 +92,10 @@ export default function MysteryDrawOverlay({
   const actions = useSharedValue(0);
 
   useEffect(() => {
-    scrim.value = withTiming(0.82, { duration: 640, easing: Easing.out(Easing.quad) });
+    // 0.82 → 0.93 (owner 2026-08-14): the review screen's own copy was reading
+    // straight through the dimmer between the cards, which made the whole
+    // overlay look broken rather than layered.
+    scrim.value = withTiming(0.93, { duration: 640, easing: Easing.out(Easing.quad) });
     prompt.value = withDelay(PROMPT_AT, withTiming(1, { duration: 400 }));
   }, [scrim, prompt]);
 
@@ -392,12 +395,19 @@ function DrawCard({
     ],
   }));
 
-  // Two faces, each hidden when turned away. Rotating one container and
-  // swapping children at 90deg is the alternative and it tears on Android.
+  // Two faces, each hidden when turned away — but NOT by backfaceVisibility
+  // alone. On new-architecture Android that flag is unreliable (shipped bug,
+  // 2026-08-14: the face-down spread showed the FRONT's text, mirrored, on
+  // every card — the rotated front simply painted over the satin back). The
+  // opacity flip below is the guarantee: each face exists only on its own half
+  // of the rotation, swapping at 90° where the card is edge-on and the cut is
+  // invisible. backfaceVisibility stays for clean edges where it does work.
   const backStyle = useAnimatedStyle(() => ({
+    opacity: flip.value < 0.5 ? 1 : 0,
     transform: [{ perspective: 1100 }, { rotateY: `${interpolate(flip.value, [0, 1], [0, 180])}deg` }],
   }));
   const frontStyle = useAnimatedStyle(() => ({
+    opacity: flip.value < 0.5 ? 0 : 1,
     transform: [{ perspective: 1100 }, { rotateY: `${interpolate(flip.value, [0, 1], [180, 360])}deg` }],
   }));
 
@@ -421,10 +431,14 @@ function DrawCard({
 
 const styles = StyleSheet.create({
   scrim: { backgroundColor: '#000000' },
+  // "CHOOSE ONE" — doubled from 13 and painted ROSE (owner 2026-08-14: it was
+  // unreadably small and anonymous white). Letterspacing eased down with the
+  // size: 1.6 at 26pt reads gappy in the all-caps languages.
   prompt: {
-    position: 'absolute', top: '17%', left: 0, right: 0,
-    textAlign: 'center', color: 'rgba(255,255,255,0.8)',
-    fontFamily: FONTS.latoBold, fontSize: 13, letterSpacing: 1.6,
+    position: 'absolute', top: '15%', left: 0, right: 0,
+    textAlign: 'center', color: ROSE,
+    fontFamily: FONTS.latoBold, fontWeight: '700', fontSize: 26, letterSpacing: 1.1,
+    paddingHorizontal: 24,
   },
   card: { position: 'absolute', borderRadius: CARD_RADIUS },
   actions: { position: 'absolute', left: 22, right: 22 },

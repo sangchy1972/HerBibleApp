@@ -10,6 +10,7 @@ import { useT } from '../../i18n/useT';
 import QuizSegmentRing from './QuizSegmentRing';
 import PuzzleBoard from './PuzzleBoard';
 import MysteryRewardBar from './MysteryRewardBar';
+import MysteryGiftBurst from './MysteryGiftBurst';
 import { rewardPreview, MYSTERY_EVERY } from '../../state/quizProgress';
 import { drawEarnedAt } from '../../state/cardDraw';
 import { DAILY_SET_LIMIT } from '../../state/quizHistory';
@@ -231,6 +232,23 @@ export default function QuizReviewView({
   // empty bar — she watched that counter for three sets and never saw it land.
   const earnsCard = drawEarnedAt(completedSets + 1, MYSTERY_EVERY, totalSets);
 
+  // The earn CEREMONY (owner 2026-08-14). The third set used to jump straight
+  // to the "unlocked" pill — no fill, no anticipation, the reward just
+  // asserted itself. Now the earning set walks the same arc the first two
+  // did, and finishes it:
+  //   fill    the bar animates its last step and ARRIVES at the gift (~0.9s)
+  //   burst   the gift goes still, a centre-screen copy swells to half the
+  //           screen and burns out in gold (~1.5s — MysteryGiftBurst)
+  //   done    the pill takes the bar's place; her Continue then meets the
+  //           four cards exactly as before
+  // ≈3s felt total, and never blocking: the burst layer is pointerEvents:none,
+  // so tapping Continue mid-ceremony still works — she has seen this before.
+  // Reduce-motion collapses the whole thing to the pill, which is the old
+  // behaviour.
+  const [mysteryPhase, setMysteryPhase] = useState<'fill' | 'burst' | 'done'>(
+    () => (earnsCard && !reduceMotion ? 'fill' : 'done'),
+  );
+
   if (!done) {
     // Same staggered arrival as the reward shape, and the same mystery bar at
     // the bottom. A missed set still moved her toward the card — the old screen
@@ -326,12 +344,26 @@ export default function QuizReviewView({
 
         <Rise at={T_MYSTERY} settled={settled} style={styles.mystery}>
           {earnsCard ? (
-            <View style={styles.unlocked}>
-              <MaterialCommunityIcons name="gift-outline" size={19} color={ROSE} />
-              <Text style={styles.unlockedText} numberOfLines={2} maxFontSizeMultiplier={1.3}>
-                {t('quiz.mystery.unlocked')}
-              </Text>
-            </View>
+            mysteryPhase === 'done' ? (
+              <View style={styles.unlocked}>
+                <MaterialCommunityIcons name="gift-outline" size={19} color={ROSE} />
+                <Text style={styles.unlockedText} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+                  {t('quiz.mystery.unlocked')}
+                </Text>
+              </View>
+            ) : (
+              // UN-incremented count + justEarned: the bar shows the cycle's
+              // last step (2/3) and fills to FULL — see the ceremony note above.
+              <MysteryRewardBar
+                completedSets={completedSets}
+                totalSets={totalSets}
+                animate
+                fillDelayMs={T_FILL}
+                justEarned
+                hideGift={mysteryPhase === 'burst'}
+                onFillDone={() => setMysteryPhase('burst')}
+              />
+            )
           ) : (
             <MysteryRewardBar
               completedSets={completedSets + 1}
@@ -342,6 +374,12 @@ export default function QuizReviewView({
           )}
         </Rise>
       </ScrollView>
+
+      {/* The gift's send-off — centre-screen, gold, pointerEvents:none (the
+          footer CTA stays live beneath it). See the ceremony note above. */}
+      {mysteryPhase === 'burst' && (
+        <MysteryGiftBurst onDone={() => setMysteryPhase('done')} />
+      )}
 
       <View style={styles.footer}>
         {/* The pulse lives on a DECORATIVE layer behind the button, never on the

@@ -209,6 +209,12 @@ always `blur()` first if any state mirrors "the keyboard is up".
   new architecture.** Use shared values + `useAnimatedStyle`. Give every entrance a
   watchdog so a dropped timing ends visible and tappable rather than stranded
   off-screen.
+- **`backfaceVisibility: 'hidden'` is unreliable on new-architecture Android.** Shipped
+  bug (2026-08-14): the mystery-card spread showed every card's FRONT text, mirrored —
+  the rotated front simply painted over the satin back. Any two-face flip must ALSO
+  swap face opacity in the rotation worklet (`opacity: flip < 0.5 ? 1 : 0` per face);
+  the swap lands at 90° where the card is edge-on, so it is invisible. Keep
+  backfaceVisibility for clean edges where it does work — but never rely on it.
 - **Reanimated-owned views can freeze native touch regions on Android/Fabric.** Wrap
   tappables in an animated view only for the entrance, then hand back to a plain `View`
   once it settles (`QuizOptionsEntrance` is the reference implementation).
@@ -471,6 +477,19 @@ BillingClient and binding to the Play Store service. On a slow device that blew 
   served — except while a mystery draw is owed, since the full screen is the only route
   to that overlay.
 - The card owns its own outer spacing, so "hidden" really means zero height.
+
+### The mystery-earn ceremony (owner 2026-08-14)
+The set that fills the bar no longer jumps to the "unlocked" pill. Sequence, ≈3 s felt:
+the bar animates its LAST step (2/3 → full, the same 0.9 s fill the other sets show;
+`justEarned` + un-incremented `completedSets` on `MysteryRewardBar`) → the fill's
+completion edge stops the gift's shake (`onFillDone`, reanimated callback +
+watchdog) → `MysteryGiftBurst` swells a centre-screen copy to **half the screen
+width** with a 12-wedge GOLD ray burst and burns out (~1.5 s) → the pill lands in the
+bar's place. The burst layer is `pointerEvents: none` — Continue stays tappable the
+whole time, so the ceremony is skippable by simply moving on. Reduce-motion collapses
+to the old instant pill. The four cards still arrive after Continue (the draw grant
+lands in `finish()`; opening the spread before the commit would break pendingDraw's
+force-quit recovery).
 
 ### Current styling
 - Question **19 / lineHeight 30** on the full screen, **17.1 / 27** on the card (owner

@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence,
-  withDelay, Easing, interpolate, useReducedMotion,
+  withDelay, Easing, interpolate, useReducedMotion, cancelAnimation, runOnJS,
 } from 'react-native-reanimated';
 import { ROSE, TXT, FONTS, INK_06 } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
@@ -42,6 +42,7 @@ const STROKE_OFFSETS: readonly (readonly [number, number])[] = [
 
 export default function MysteryRewardBar({
   completedSets, totalSets = 0, animate = false, fillDelayMs = 0,
+  justEarned = false, hideGift = false, onFillDone,
 }: {
   completedSets: number;
   /** Sets the bank allows in total. The FINAL cycle is longer than the rest —
@@ -57,13 +58,34 @@ export default function MysteryRewardBar({
    *  expressed relative to the entrance runs early and finishes unseen. The
    *  caller passes an absolute point on its own timeline. */
   fillDelayMs?: number;
+  /**
+   * The set that FILLS the bar (owner 2026-08-14: the third set used to jump
+   * straight to the "unlocked" pill with no fill — no anticipation). Pass the
+   * UN-incremented completedSets with this flag: the bar shows that cycle's
+   * last step (e.g. 2/3), fills to FULL, and stops the gift's shake the moment
+   * the fill lands. The caller then takes over with the burst celebration.
+   */
+  justEarned?: boolean;
+  /** Blank the inline gift while the caller's blown-up copy owns the screen. */
+  hideGift?: boolean;
+  /** The fill's completion edge (fires once, watchdogged — a dropped
+   *  reanimated callback must not strand the celebration mid-sequence). */
+  onFillDone?: () => void;
 }) {
   const t = useT();
   // Synchronous, unlike AccessibilityInfo's promise: an async read lands after
   // mount, and by then the entering configs are already captured — the first
   // playthrough would animate anyway, which is the run that matters.
   const reduceMotion = useReducedMotion();
-  const { current, remaining, target } = mysteryView(completedSets, totalSets);
+  const view = mysteryView(completedSets, totalSets);
+  const { target } = view;
+  // justEarned: the caller passed the UN-incremented count, so `view` is the
+  // cycle's LAST step (e.g. 2/3) — the bar starts there and fills to FULL.
+  const current = justEarned ? target : view.current;
+  // Headline stays "1 more to open" THROUGH the earn-fill — it is the sentence
+  // the fill is completing; flipping it early would spoil the moment the caller
+  // is building. (With the un-incremented count, view.remaining is that 1.)
+  const remaining = view.remaining;
   const pct = Math.max(0, Math.min(1, current / target));
   // Where the bar stood BEFORE this set. current is 0..target-1 (a full bar is
   // the earnsCard branch upstream), so the previous step is one less. `target`
@@ -72,22 +94,53 @@ export default function MysteryRewardBar({
   // a miss on the first set of a cycle asks for step -1. The clamp is what makes
   // that an empty bar instead of a negative width, and it is load-bearing, not
   // belt-and-braces.
-  const prevPct = Math.max(0, Math.min(1, (current - 1) / target));
+  const prevPct = justEarned
+    ? Math.max(0, Math.min(1, view.current / target))
+    : Math.max(0, Math.min(1, (current - 1) / target));
 
   // 0 → 1 drives the fill's width between prevPct and pct. Starting at 1 when
   // not animating means the static callers paint the final width on frame one
   // with no layout pass, exactly as before.
   const shouldAnimate = animate && !reduceMotion;
   const grow = useSharedValue(shouldAnimate ? 0 : 1);
+  // Declared HERE, above handleFillDone which captures it — the wobble that
+  // drives it lives further down. Keeping the declaration above every reference
+  // is ledger rule (the TDZ class), even where a closure would get away with it.
+  const shake = useSharedValue(0);
+  // Fill-completion edge, exactly once. The reanimated callback is the accurate
+  // moment; the watchdog exists because a dropped runOnJS would otherwise
+  // strand the earn celebration between "bar full" and "gift bursts" forever.
+  const fillDoneRef = useRef(false);
+  const handleFillDone = useCallback(() => {
+    if (fillDoneRef.current) return;
+    fillDoneRef.current = true;
+    // The gift's twitch is anticipation; the bar has now ARRIVED. It must be
+    // still before the caller's blown-up copy takes over (owner spec).
+    cancelAnimation(shake);
+    shake.value = withTiming(0, { duration: 120 });
+    onFillDone?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onFillDone]);
   useEffect(() => {
-    if (!shouldAnimate) { grow.value = 1; return; }
+    if (!shouldAnimate) {
+      grow.value = 1;
+      // Reduce-motion still owes the caller its edge, or the celebration —
+      // and the pill after it — would never arrive.
+      if (justEarned) handleFillDone();
+      return;
+    }
     grow.value = 0;
     grow.value = withDelay(fillDelayMs, withTiming(1, {
       duration: 900,
       // Decelerating: the bar arrives at the new step and settles rather than
       // stopping dead, which is what makes it read as progress being credited.
       easing: Easing.out(Easing.cubic),
-    }));
+    }, (fin) => { if (fin && justEarned) runOnJS(handleFillDone)(); }));
+    if (justEarned) {
+      const wd = setTimeout(handleFillDone, fillDelayMs + 900 + 300);
+      return () => clearTimeout(wd);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldAnimate, fillDelayMs, grow, current, target]);
 
   const fillStyle = useAnimatedStyle(() => ({
@@ -104,7 +157,6 @@ export default function MysteryRewardBar({
   // finished arriving. It DOES stop for reduce-motion — a perpetual wobble is
   // exactly what that setting exists to switch off, and this bar also renders
   // on the progress screen, where nothing else moves at all.
-  const shake = useSharedValue(0);
   useEffect(() => {
     if (reduceMotion) { shake.value = 0; return; }
     const wobble = (deg: number, ms: number) =>
@@ -164,8 +216,10 @@ export default function MysteryRewardBar({
           </View>
         </View>
         {/* The gift sits over the end of the track — what the bar is filling
-            toward, not a fourth segment of it. */}
-        <Animated.View style={giftStyle}>
+            toward, not a fourth segment of it. hideGift keeps the LAYOUT (the
+            track must not stretch when the blown-up copy takes over) and blanks
+            only the pixels. */}
+        <Animated.View style={[giftStyle, hideGift && styles.giftHidden]}>
           <Image source={GIFT} style={styles.gift} accessibilityIgnoresInvertColors />
         </Animated.View>
       </View>
@@ -207,4 +261,5 @@ const styles = StyleSheet.create({
   countStroke: { position: 'absolute', color: ROSE },
   // Slight tuck over the track's end.
   gift: { width: GIFT_W, height: GIFT_H, marginLeft: -14 },
+  giftHidden: { opacity: 0 },
 });

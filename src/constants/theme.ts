@@ -20,6 +20,9 @@ export const BG = '#FBF7F6';
 // name; the quiz's correct-answer state is the sixth consumer and the reason it
 // finally got one. CLAUDE.md: never hardcode colors.
 export const GREEN_DONE = '#7DB87D';
+// Celebration gold — the mystery-box burst (quiz reward). Warm enough to read
+// as light on the cream quiz background without tipping into orange.
+export const GOLD = '#F0B640';
 // Canonical app screen background. Pinned to React Navigation v7's default
 // scene colour (rgb(242,242,242)) — the exact neutral grey the Prayer / Plan /
 // Profile tabs already render — and fed into both the NavigationContainer theme

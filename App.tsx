@@ -86,7 +86,7 @@ import PrefetchManager from './src/components/PrefetchManager';
 import WidgetSync from './src/components/WidgetSync';
 import LoadingOverlay from './src/components/LoadingOverlay';
 import { setAudioModeAsync } from 'expo-audio';
-import { initFirebase, logScreenView } from './src/services/firebase';
+import { initFirebase, logScreenView, setCrashScreen } from './src/services/firebase';
 import { setAppRemountHandler, initCloudBackup } from './src/services/cloudBackup';
 import { initAds } from './src/services/ads';
 import { ensureAttRequested } from './src/services/att';
@@ -148,7 +148,7 @@ export default function App() {
     // Also feeds the prompt-surface gate: blocking prompts may only be granted
     // while she is on one of the four tabs (state/promptSurface).
     setPromptRoute(name ?? null);
-    if (name) { logScreenView(name); noteNavigation(name); }
+    if (name) { logScreenView(name); noteNavigation(name); setCrashScreen(name); }
   }, [navRef]);
 
   // Custom launch loading page. Shown over the app until the navigator is ready

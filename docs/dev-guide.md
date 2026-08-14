@@ -917,6 +917,26 @@ to **Firebase Crashlytics** for the traces — it captures Android ANRs automati
 `ApplicationExitInfo` on API 30+, and `@react-native-firebase/crashlytics` is already
 wired with collection enabled.
 
+### Crash triage ledger (Crashlytics batch 2026-08-13, 6 issues / 17 events)
+Verdicts recorded so the next report starts here instead of from scratch. Method for
+"can a dependency patch fix it": **download the patch tarball and diff the exact class
+in the stack** — RN 0.81.6 and worklets 0.5.2 were both checked this way and neither
+touches the crashing classes, so no upgrade theater.
+
+| Issue | Verdict |
+|---|---|
+| `SurfaceMountingManager.getViewState` — "Unable to find viewState for tag" (7 users, 1.3.0–1.4.0) | **RN Fabric internal race**, zero app frames in the stack. Unchanged in 0.81.6. Every crash now carries a `last_screen` key (below) — attribute first, then hunt. Classic trigger is view-tree churn during unmount; the conditional-mount Modal change (d95b828) shifts those paths but is NOT claimed as a fix |
+| `MainApplication.onCreate` — SoLoader "couldn't find DSO: libreactnative.so" (2 users, 6 events, 1.4.0) | **Install integrity, not code.** The ABI split is missing → sideload / backup-restore of the base APK alone. Play's installer-check protection is already ON; the old `play:core` MissingSplits reinstall dialog has no equivalent in the modern Play libraries (verified in the local gradle cache). JS never runs, so nothing in this repo can catch it. Watch whether it spreads past sideloaders |
+| `AndroidUIScheduler.triggerUI` (worklets) → RetryableMountingLayerException (1 event) | Same Fabric race surfaced through a worklet callback. worklets 0.5.2 doesn't touch the class. Monitor |
+| `HsdpShimActivity` — targetPackageName null (1 event, **1.2.0 only**) | Play-services internal, absent since 1.3.0. Close it in the dashboard |
+| `NativeAnimatedNodesManager.connectAnimatedNodes` (1 event, 1.4.0) | RN core Animated node connected after teardown — library-internal (we use Reanimated). Unchanged in 0.81.6. Monitor with `last_screen` |
+| `Preconditions.checkState` (Fresco, 1 event, 1.3.0) | Image-pipeline teardown race, library-internal. Monitor |
+
+**`last_screen`**: every navigation stamps a Crashlytics attribute + breadcrumb
+(`setCrashScreen` in services/firebase.ts, fed from App.tsx's nav hook). RN-internal
+crashes carry no app frames — this key is the only attribution the next occurrence
+will have. Filter by it in Crashlytics before theorizing.
+
 ---
 
 ## 13. Mistakes ledger

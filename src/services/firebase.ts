@@ -64,3 +64,18 @@ export function recordError(err: unknown, context?: string): void {
     crashlyticsMod().recordError(err instanceof Error ? err : new Error(String(err)));
   } catch {}
 }
+
+// Stamp the CURRENT SCREEN onto every future crash report (custom key +
+// breadcrumb log). Added for the 2026-08-13 Crashlytics batch: the two Fabric
+// races there (SurfaceMountingManager viewState / NativeAnimated
+// connectAnimatedNodes) are RN-internal and their stacks contain not one app
+// frame, so "which screen was she on" is the only attribution we can give the
+// NEXT occurrence. Cheap (one native call per real navigation), and fed from
+// the same App.tsx hook that already logs screen_view.
+export function setCrashScreen(screen: string): void {
+  try {
+    if (!crashlyticsMod) return;
+    crashlyticsMod().setAttribute('last_screen', screen);
+    crashlyticsMod().log(`screen: ${screen}`);
+  } catch {}
+}

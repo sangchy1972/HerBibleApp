@@ -458,8 +458,11 @@ BillingClient and binding to the Play Store service. On a slow device that blew 
 `src/services/quizSets.ts`. Bank: `quiz.everlandapps.com/v1/quiz-<lang>.json`.
 
 ### Rules
-- `SET_SIZE = 5` questions per set, `DAILY_SET_LIMIT = 3` sets per day. A live session
-  always beats the cap — refusing it would strand her on a half-answered screen.
+- `SET_SIZE = 5` questions per set, `DAILY_SET_LIMIT = 10` sets per day (owner
+  2026-08-14, was 3: play volume outranks pacing — a maxed-out user now burns the
+  130-set bank in 13 days instead of 43 and earns up to 3⅓ card draws a day; the
+  trade-off table lives at the constant's declaration). A live session always beats
+  the cap — refusing it would strand her on a half-answered screen.
 - `TILES_PER_PAINTING = 4`; a mystery card every `MYSTERY_EVERY = 3` sets.
 - **Never reveal the correct answer after a wrong pick** (owner). Tinting it green
   handed her the answer before the retry round could ask again. Only the picked option

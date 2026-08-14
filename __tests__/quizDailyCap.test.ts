@@ -32,16 +32,16 @@ describe('dailyGate', () => {
   it('is three, and three is not an arbitrary three', () => {
     // Pinned because the number is load-bearing in two directions at once.
     //
-    // Downward: 65 sets of questions / 3 = 22 days before anything repeats. At
-    // 7 it was 9 days, which is barely better than the 2 days the cap was added
-    // to fix.
-    //
-    // Upward: 3 === MYSTERY_EVERY, so a full day earns EXACTLY one mystery
-    // card. That is the rhythm the whole reward economy is tuned to, and any
-    // other cap turns it into a sawtooth she cannot feel. If someone changes
-    // this to 4, the cards stop landing daily and nothing else fails.
-    expect(DAILY_SET_LIMIT).toBe(3);
-    expect(DAILY_SET_LIMIT).toBe(MYSTERY_EVERY);
+    // 10 is the owner's 2026-08-14 decision: play volume outranks pacing. It
+    // deliberately BREAKS the old one-card-a-day rhythm (the cap no longer
+    // equals MYSTERY_EVERY; a maxed day earns 3⅓ draws) and burns the 650-set
+    // bank in 13 days for a maxed-out user instead of 43 — the trade is
+    // recorded at DAILY_SET_LIMIT's declaration. What this pin still protects:
+    // nobody "tunes" the cap in passing, because changing it re-prices the
+    // whole reward economy, not just a number.
+    expect(DAILY_SET_LIMIT).toBe(10);
+    expect(DAILY_SET_LIMIT % 1).toBe(0);
+    expect(DAILY_SET_LIMIT).toBeGreaterThanOrEqual(MYSTERY_EVERY);
   });
 
   it('counts down as sets complete, and stops at the last one', () => {

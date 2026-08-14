@@ -78,51 +78,36 @@ export function recordSet(
 /**
  * THE DAILY CAP.
  *
- * Three completed sets a day, and then she is done until tomorrow.
+ * Ten completed sets a day (owner 2026-08-14: "not just 3 — she should have
+ * plenty to answer"; the old cap read as running out of game, and play volume
+ * now outranks pacing). It was 3 from the v3 re-cut until then.
  *
- * This is a CONTENT constraint, not an engagement one. The bank is 650
- * questions = 130 sets. Unthrottled, a motivated user empties it in a few days
- * and every set after that is a question she has already answered, dressed up
- * as progress.
+ * WHAT RAISING IT SPENDS — decided with eyes open, not discovered later:
  *
- * THE ARITHMETIC, because an earlier version of this comment got it wrong by a
- * factor of seven and the wrong number is easier to repeat than to check:
+ *     cap   bank exhausted    cards/day (max)
+ *      3        43.3 d            1.00
+ *     10        13.0 d            3.33
  *
- *     cap   bank exhausted   cards/day
- *      7        18.6 d          2.33
- *      5        26.0 d          1.67
- *      3        43.3 d          1.00
- *
- * Seven moved the day the repeats start from day 2 to day 10, which is not
- * really solving it. Three lands exactly on MYSTERY_EVERY -- so the rhythm is
- * ONE CARD A DAY, which is a thing a person can notice and come back for. Seven
- * gave 2.33 cards a day, a sawtooth nobody can feel.
- *
- * At three, day 44 is where everything stops AT ONCE, and everything is
- * COMPLETE when it does: set 130 lays the last half of the 33rd painting, hands
- * her the 43rd card and retires the quiz in one move. The v3 re-cut to 650 plus
- * the two tail rules (a two-tile final painting, a four-set final draw cycle)
- * are what closed a gap that used to strand her at 16 of 24 paintings and 22 of
- * 40 cards in about three weeks.
- *
- * The exactness is pinned in __tests__/quizLifecycle.test.ts. There is now NO
- * slack: one more painting or one more card without more questions strands it.
+ * The bank is 650 questions = 130 sets. A maxed-out user now retires the quiz
+ * in 13 days instead of 43, collects the 33rd painting and the 43rd card in
+ * those same 13 days, and the one-card-a-day rhythm (3 === MYSTERY_EVERY, a
+ * beat a person could feel and come back for) is gone — a full day earns 3⅓
+ * cards. The owner chose reach over runway; when the bank grows, the runway
+ * grows back. Every OTHER lifecycle exactness is untouched: set 130 still lays
+ * the last half of the 33rd painting, hands her the 43rd card and retires the
+ * quiz in one move (pinned in __tests__/quizLifecycle.test.ts) — the cap only
+ * changes how many days that takes.
  *
  * NOT tunable per user, and deliberately not remote-config: the number is part
  * of what the app IS, and a cap that moves is a cap she cannot build a habit
  * around.
- *
- * puzzleView's outOfArt cliff at 96 sets -- where every results screen would
- * show the same finished painting forever -- is therefore not even reachable
- * against this bank; retirement gets there 30 sets earlier. The clamping stays,
- * because the bank is meant to grow.
  *
  * COUNTED FROM COMPLETED SETS, not from starts. A set she abandoned halfway
  * costs her nothing, and — more importantly — a set already in flight can always
  * be finished. Blocking someone mid-question because the clock rolled over is
  * the sort of thing that reads as a crash.
  */
-export const DAILY_SET_LIMIT = 3;
+export const DAILY_SET_LIMIT = 10;
 
 export interface DailyGate {
   limit: number;

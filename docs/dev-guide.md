@@ -685,6 +685,21 @@ guess; re-measure after any scroll or segment switch the guide itself triggers.
   *inside* it (`showWeekly`), not a route. So: no `entering`-only animations you can't
   fall back from, and anything that navigates away must decide between `navigate` and
   `replace` deliberately.
+- **A programmatic pager flip can steal an in-flight tap** (shipped incident,
+  2026-08-14): narration auto-advance flips page 2 → 3 with no user input, pages 2/3
+  share one skeleton (caption → body → one terminal button), so a finger descending on
+  "Write reflection" landed on **Amen** — which synchronously fires the `prayer_end`
+  interstitial and whose effect marks the day done. Exactly the user's report: tap
+  reflection → instant ad → settlement. Rules now in `PrayerFlow`:
+  `advanceNarration()` is the ONE place the pager moves programmatically and it arms
+  `autoFlipAtRef`; `handleAmen` ignores presses within `AUTO_FLIP_TAP_GUARD_MS` (700 ms)
+  of it — Amen is the flow's only irreversible tap, so only Amen is guarded. A clip
+  finishing while the reflection sheet is open **parks** the advance
+  (`pendingAdvanceRef`) and flushes it on sheet close (still narrating only; toggling
+  Listen off cancels it) — otherwise the next clip narrates over her typing and the
+  flush recreates the same tap-steal against the sheet's bottom buttons. If you add
+  another programmatic `setPage`, route it through `advanceNarration` or arm the guard
+  yourself.
 - Morning vs evening drives everything: palette, hero Lottie (first prayer of the day =
   growing sapling, both done = looping streak fire — the fire's end frame is empty, so
   it must loop or it looks like it vanished), headline tier, banner photo.

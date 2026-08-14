@@ -65,6 +65,11 @@ import type { RootStackScreenProps } from '../navigation/types';
 
 const { width, height } = Dimensions.get('window');
 const SECTIONS = ['verse', 'meditation', 'action', 'prayer'];
+// How long Amen ignores presses after a PROGRAMMATIC pager flip (narration
+// auto-advance). Long enough to swallow a tap that was already descending when
+// the page moved (flip animation ~300ms + dispatch), short enough that no
+// deliberate Amen — which requires seeing the closing prayer first — can hit it.
+const AUTO_FLIP_TAP_GUARD_MS = 700;
 
 // Narration coach-mark state. Module-level helpers rather than a context: only
 // this screen reads it, and a provider for three integers would be ceremony.
@@ -553,6 +558,24 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // doesn't need listenStep as a dependency (see the advance effect below).
   const listenStepRef = useRef(0);
   useEffect(() => { listenStepRef.current = listenStep; }, [listenStep]);
+  // ── The tap-steal guard (owner bug report 2026-08-14) ──────────────────────
+  // A narration clip finishing flips the pager PROGRAMMATICALLY. Pages 2 and 3
+  // share one skeleton — caption, body, one terminal button — so a finger
+  // already descending on page 2's "Write reflection" lands, one frame later,
+  // exactly on page 3's Amen. Amen is the flow's ONLY irreversible tap: it
+  // fires the prayer_end interstitial synchronously and the amened effect marks
+  // the day done. That was the shipped incident: tap reflection → instant ad →
+  // settlement, prayer never read, Amen never (intentionally) pressed.
+  // Whenever WE move the pager (never for user swipes), this timestamp arms and
+  // handleAmen ignores presses for AUTO_FLIP_TAP_GUARD_MS. Nobody can read the
+  // closing prayer in under 0.7s, so a real Amen is never eaten.
+  const autoFlipAtRef = useRef(0);
+  // A clip that ends while the reflection sheet is open must NOT flip the page
+  // behind her (the next clip would narrate over her typing, and the flip
+  // re-creates the same tap-steal against the sheet's own bottom buttons at
+  // close time). Park the advance; the sheet-close effect below flushes it.
+  const pendingAdvanceRef = useRef(false);
+  const showNoteSheetRef = useRef(false);
 
   // One-time audio session setup: play through the iOS silent switch and
   // mix (so our two players — bg music + narration — coexist instead of
@@ -769,19 +792,38 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // it would advance AGAIN, skipping the next clip (that's why Reflection,
   // the step right after the first finish, was getting silently skipped).
   // With the ref, this only fires on a real didJustFinish transition.
+  // The one place a page flip happens WITHOUT a user gesture — so the one place
+  // that arms the tap-steal guard (see autoFlipAtRef above).
+  const advanceNarration = useCallback((from: number) => {
+    const next = from + 1;
+    autoFlipAtRef.current = Date.now();
+    setListenStep(next);
+    setPage(next);
+    pagerRef.current?.setPage(next);
+  }, []);
+
   const handleNarrationFinish = useCallback(() => {
     const cur = listenStepRef.current;
     if (advancedFromRef.current === cur) return;
     advancedFromRef.current = cur;
     if (cur < SECTIONS.length - 1) {
-      const next = cur + 1;
-      setListenStep(next);
-      setPage(next);
-      pagerRef.current?.setPage(next);
+      // Writing a reflection? Hold the flip — flushed on sheet close.
+      if (showNoteSheetRef.current) { pendingAdvanceRef.current = true; return; }
+      advanceNarration(cur);
     } else {
       setListenOn(false);            // finished the closing prayer — stop
     }
-  }, []);
+  }, [advanceNarration]);
+
+  // Flush a parked advance when the reflection sheet closes (either close path
+  // funnels through showNoteSheet=false). Only if she is still narrating — the
+  // OFF branch of toggleListen cancels the parked flip instead.
+  useEffect(() => {
+    showNoteSheetRef.current = showNoteSheet;
+    if (showNoteSheet || !pendingAdvanceRef.current) return;
+    pendingAdvanceRef.current = false;
+    if (listenOn) advanceNarration(listenStepRef.current);
+  }, [showNoteSheet, listenOn, advanceNarration]);
 
   // Tapping Amen ends the flow — make sure narration stops before the
   // congrats scene (the topbar Listen button is already hidden by !amened).
@@ -798,6 +840,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const toggleListen = () => {
     if (!readUris) return;
     if (listenOn) {
+      pendingAdvanceRef.current = false; // she stopped narrating — a parked flip on sheet close would be a surprise
       setListenOn(false);            // effect pauses; position kept for resume
     } else {
       // Start/resume from the page the user is on. If they swiped while
@@ -1011,6 +1054,13 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const buttonStyle = useAnimatedStyle(() => ({ opacity: buttonOpacity.value }));
 
   const handleAmen = () => {
+    // Tap-steal guard: if WE flipped the pager onto this page within the last
+    // beat, this press was aimed at whatever sat at these coordinates on the
+    // PREVIOUS page (the shipped incident: "Write reflection" → Amen). Ignore
+    // it — a deliberate Amen after an auto-flip takes far longer than 700ms,
+    // because she has to at least see the closing prayer first.
+    if (Date.now() - autoFlipAtRef.current < AUTO_FLIP_TAP_GUARD_MS) return;
+    pendingAdvanceRef.current = false;   // flow is ending — nothing left to flush
     setAmened(true);
     setMusicOn(false);
     setListenOn(false);

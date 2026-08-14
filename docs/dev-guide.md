@@ -353,9 +353,10 @@ ladder), `adEngine.ts` / `adLadders.ts` / `adValueStore.ts` (the Android engine)
 
 ### Format & pacing
 - The app renders **interstitials only**. No banners, no rewarded, no native.
-- `MIN_AD_INTERVAL_MS = 30 * 1000` in `constants/adPacing.ts` is the **single global
-  floor** (owner 2026-08-08, was 60 s). It used to be re-typed in three files — never
-  reintroduce a local copy.
+- `MIN_AD_INTERVAL_MS = 60 * 1000` in `constants/adPacing.ts` is the **single global
+  floor** (owner 2026-08-14: density felt too high; the 2026-08-08 spell at 30 s is also
+  what made the ad-close hot-start chain reachable). It used to be re-typed in three
+  files — never reintroduce a local copy.
 
 ### Triggers
 | Placement | Rule |
@@ -370,7 +371,7 @@ Why two nav rules and not one tuned rule: `nav`'s tab-run collapse means pure
 tab-hopping (`prayer→bible→plan→profile→…`) scores **+1 for the whole run** and
 essentially never reaches its threshold — the most common idle-browsing pattern in the
 app was unmonetized. `nav_churn` counts raw switches to catch exactly that, and pays for
-the extra reach with a 60 s quiet period (2× the global floor) instead of a day gate.
+the extra reach with a 60 s quiet period (matching the global floor) instead of a day gate.
 The two counters are independent; when both come due on one transition only **one** ad is
 requested and **both** counters reset. All of it lives in the pure, tested
 `reduceNavigation()` — 16 cases in `__tests__/adFrequencyNav.test.ts`. Change the rule

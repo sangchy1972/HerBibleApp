@@ -53,8 +53,8 @@ const CHURN_MIN_SWITCHES = 5;
 // Its own quiet period, deliberately NOT derived from MIN_AD_INTERVAL_MS: this is
 // a product number the owner set (1 min), while the global floor is a pacing
 // number we tune. Deriving one from the other means halving the floor silently
-// halves this too. It is >= the global floor, so this rule can never sneak an ad
-// past it — it is strictly the stricter of the two.
+// halves this too. It is >= the global floor (equal, since the floor went back
+// to 60s on 2026-08-14), so this rule can never sneak an ad past it.
 const CHURN_MIN_SINCE_AD_MS = 60_000;
 
 // Bottom tabs — consecutive switches among these collapse to a single count.
@@ -147,8 +147,8 @@ export function reduceNavigation(
   const churnDue = next.churnCount > CHURN_MIN_SWITCHES && opts.msSinceAd >= CHURN_MIN_SINCE_AD_MS;
   const navDue = next.navCount >= NAV_EVERY;
 
-  // One ad per transition. Churn wins a tie because it is the stricter rule (60s
-  // quiet vs the 30s global floor), so honouring it never shows an ad the legacy
+  // One ad per transition. Churn wins a tie because its 60s quiet is never
+  // looser than the global floor, so honouring it never shows an ad the legacy
   // rule would have blocked. When both are due, BOTH counters reset — leaving
   // navCount at ≥ NAV_EVERY would make every later transition re-fire.
   if (churnDue) {

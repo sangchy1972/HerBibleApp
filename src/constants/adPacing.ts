@@ -6,10 +6,13 @@
 // two at the old value while the person editing believed they had moved the
 // global floor. It lives here now so there is exactly one number to change.
 //
-// 60s → 30s on 2026-08-08 (owner). Every show path still enforces it, and it is
-// the ONLY thing standing between e.g. a prayer_end ad and the hot-start ad that
-// could otherwise follow it seconds later — do not remove it, only tune it.
-export const MIN_AD_INTERVAL_MS = 30 * 1000;
+// 60s → 30s on 2026-08-08 (owner); 30s → 60s on 2026-08-14 (owner: ad density
+// felt too high). The 30s spell is also what made the ad-close hot-start chain
+// reachable (see adFrequency's bgCausedByAd) — that fix stays regardless of
+// this number. Every show path still enforces it, and it is the ONLY thing
+// standing between e.g. a prayer_end ad and the hot-start ad that could
+// otherwise follow it seconds later — do not remove it, only tune it.
+export const MIN_AD_INTERVAL_MS = 60 * 1000;
 
 /**
  * Every placement a CALLER may ask for.

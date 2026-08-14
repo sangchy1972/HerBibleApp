@@ -38,7 +38,7 @@
 import { AppState, type AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { maybeShowInterstitial } from './ads';
-import { msSinceLastInterstitial } from './interstitialVisibility';
+import { msSinceLastInterstitial, isInterstitialVisible } from './interstitialVisibility';
 import type { AdPlacement } from '../constants/adPacing';
 
 const INSTALL_KEY = 'ads:firstLaunchYmd';
@@ -194,16 +194,53 @@ export function suppressNextHotStart(): void {
   hotStartSuppressedUntil = Date.now() + HOTSTART_SUPPRESS_WINDOW_MS;
 }
 
+// ── "Was this background episode caused by our own ad?" ─────────────────────
+// On ANDROID an interstitial is its own activity, so SHOWING an ad backgrounds
+// the app and CLOSING it foregrounds it again. Without this flag that round
+// trip satisfied the hot-start rule whenever the creative ran ≥ the global
+// floor: Amen → prayer_end ad (30s creative) → close → 'active' → app_open →
+// another 30s creative → close → app_open… — the owner's "three ads in a row
+// after night prayer" report (2026-08-14). The chain became reachable when the
+// floor dropped 60s → 30s: long night-inventory creatives now outlast it.
+//
+// The cause is stamped at the START of the episode ('background' arrives while
+// the ad is still up), because by the time 'active' fires the CLOSED handler
+// has already cleared the visibility flag — checking then would always say no.
+// One flag per episode, consumed on 'active'. A user who genuinely leaves
+// DURING an ad (home button mid-creative) is also skipped once — the safe
+// direction. This does NOT touch the settled decision: a real backgrounding
+// (≥15s away, then returning) still monetizes; an ad covering the app is not
+// the user leaving.
+let bgCausedByAd = false;
+
+/** PURE: may this foreground-return fire the hot-start interstitial? */
+export function shouldFireHotStart(opts: {
+  bgAt: number | null;
+  now: number;
+  suppressedUntil: number;   // store-review excursion window
+  adCausedBg: boolean;       // the episode began under our own interstitial
+}): boolean {
+  if (opts.adCausedBg) return false;
+  if (opts.suppressedUntil > opts.now) return false;
+  return opts.bgAt != null && opts.now - opts.bgAt >= HOTSTART_MIN_BG_MS;
+}
+
 function onAppState(next: AppStateStatus): void {
-  if (next === 'background' || next === 'inactive') { bgAt = Date.now(); return; }
+  if (next === 'background' || next === 'inactive') {
+    if (isInterstitialVisible()) bgCausedByAd = true;
+    bgAt = Date.now();
+    return;
+  }
   if (next === 'active') {
-    const suppressed = hotStartSuppressedUntil > Date.now();
+    const adCaused = bgCausedByAd;
+    bgCausedByAd = false;                            // consumed either way
+    const suppressedUntil = hotStartSuppressedUntil;
     hotStartSuppressedUntil = 0;                     // consumed either way
     // NO day gate (owner 2026-08-08): a hot start monetizes from day 0. The
     // interval floor, the foreground check and the remove-ads flag all still apply
     // inside maybeShowInterstitial, and a first-open session can't reach here
     // at all — bgAt is only set once the app has actually been backgrounded.
-    if (!suppressed && bgAt != null && Date.now() - bgAt >= HOTSTART_MIN_BG_MS) {
+    if (shouldFireHotStart({ bgAt, now: Date.now(), suppressedUntil, adCausedBg: adCaused })) {
       maybeShowInterstitial('app_open');
     }
     bgAt = null;

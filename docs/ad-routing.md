@@ -126,6 +126,15 @@ AdMob 封号风险。所以 `!__DEV__` 是硬闸门。
 - `app_open` 热启动插屏同样是**既定决策**，Play 的 Disruptive Ads 风险已知并接受。
   2026-08-08 起覆盖**全部用户**（原为 day ≥ 3）——触达面变了，频次约束没变：
   全局间隔（§4，现为 30s）、前台判断、去广告开关、商店评价回程豁免全部照旧。
+- **自家广告造成的退后台不算热启动**（修复 2026-08-14）。Android 上插页是独立
+  Activity：**展示广告本身就触发 AppState 'background'，关掉就是 'active'** ——
+  只要素材时长 ≥ 全局间隔（30s），关广告的那一刻同时满足热启动 15s 门槛和间隔，
+  `app_open` 秒弹下一个，再关再弹 —— 就是业主报的「夜祷 Amen 后连看三个广告」。
+  60s→30s 降间隔之后这条链才够得着（长素材看得完 30s，看不完 60s）。现在退后台
+  瞬间盖章 `bgCausedByAd = isInterstitialVisible()`（**必须在 'background' 时判，
+  'active' 时 CLOSED 已把可见位清掉**），广告造成的整个来回不触发 `app_open`。
+  纯函数 `shouldFireHotStart()`，5 个用例锁死。**既定决策未动**：真实的退后台
+  ≥15s 回来照旧出广告；广告盖住 app 不是用户离开。
 
 `maybeShowInterstitial()` 内部再分流（`ads.ts:432`）：
 美国走 `usOnShowOpportunity(placement)`，非美走本地 `interstitial.show()`。

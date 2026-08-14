@@ -363,7 +363,7 @@ ladder), `adEngine.ts` / `adLadders.ts` / `adValueStore.ts` (the Android engine)
 | `prayer_end`, `plan_end` | baseline, every user |
 | `nav` | every 3rd qualifying transition, **day ≥ 3 only**. A run of consecutive tab↔tab switches collapses to +1. Flow/utility screens never count and never trigger (`EXCLUDED` in `adFrequency.ts`) |
 | `nav_churn` | **more than 5** screen switches **and** ≥ 60 s since an ad actually presented (owner 2026-08-09). Counts **every** switch — no tab-run collapsing, **no day gate**. Fires on the transition that crosses the threshold |
-| `app_open` | hot start after ≥ 15 s backgrounded, **every user from day 0** (owner 2026-08-08). `suppressNextHotStart()` exempts the store-review excursion for 10 min |
+| `app_open` | hot start after ≥ 15 s backgrounded, **every user from day 0** (owner 2026-08-08). `suppressNextHotStart()` exempts the store-review excursion for 10 min. **A backgrounding caused by our own interstitial never counts** (fix 2026-08-14): on Android showing an ad backgrounds the app and closing it foregrounds it, so a ≥30s creative chained `app_open` off every ad close — "three ads in a row after night prayer". The cause is stamped at 'background' time (`bgCausedByAd`), because at 'active' time CLOSED has already cleared the visibility flag. Rule is the pure `shouldFireHotStart()`, 5 tests |
 | `quiz_retry` | every tap of "Try those again", **uncapped** by design, 400 ms delay |
 
 Why two nav rules and not one tuned rule: `nav`'s tab-run collapse means pure

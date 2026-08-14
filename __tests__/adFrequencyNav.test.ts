@@ -11,9 +11,12 @@
 jest.mock('react-native', () => ({ AppState: { addEventListener: () => ({ remove: () => {} }), currentState: 'active' } }));
 jest.mock('@react-native-async-storage/async-storage', () => ({ getItem: async () => null, setItem: async () => {} }));
 jest.mock('../src/services/ads', () => ({ maybeShowInterstitial: jest.fn() }));
-jest.mock('../src/services/interstitialVisibility', () => ({ msSinceLastInterstitial: () => 0 }));
+jest.mock('../src/services/interstitialVisibility', () => ({
+  msSinceLastInterstitial: () => 0,
+  isInterstitialVisible: () => false,
+}));
 
-import { reduceNavigation, type NavCounters } from '../src/services/adFrequency';
+import { reduceNavigation, shouldFireHotStart, type NavCounters } from '../src/services/adFrequency';
 
 const FRESH: NavCounters = { navCount: 0, churnCount: 0, lastWasTabSwitch: false };
 const QUIET = 999_999;   // well past the 60s churn floor
@@ -164,5 +167,38 @@ describe('when both rules are due on one transition', () => {
     const { state } = walk(routes, { aggressive: true, msSinceAd: QUIET });
     expect(state.navCount).toBeLessThan(3);
     expect(state.churnCount).toBeLessThanOrEqual(5);
+  });
+});
+
+describe('hot start: when a foreground-return may show app_open', () => {
+  // The 2026-08-14 report: night prayer → Amen → THREE ads. On Android an
+  // interstitial is its own activity, so showing one backgrounds the app and
+  // closing it foregrounds it — and a ≥30s creative satisfied both the 15s
+  // hot-start threshold and the 30s global floor, chaining app_open off every
+  // ad close. The adCausedBg veto is what breaks that chain.
+  const T = 1_000_000;
+
+  it('never fires when the backgrounding was our own ad — however long the creative ran', () => {
+    expect(shouldFireHotStart({ bgAt: T, now: T + 35_000, suppressedUntil: 0, adCausedBg: true })).toBe(false);
+    expect(shouldFireHotStart({ bgAt: T, now: T + 600_000, suppressedUntil: 0, adCausedBg: true })).toBe(false);
+  });
+
+  it('fires on a genuine backgrounding of ≥15s', () => {
+    expect(shouldFireHotStart({ bgAt: T, now: T + 15_000, suppressedUntil: 0, adCausedBg: false })).toBe(true);
+    expect(shouldFireHotStart({ bgAt: T, now: T + 120_000, suppressedUntil: 0, adCausedBg: false })).toBe(true);
+  });
+
+  it('stays quiet under 15s — a quick app switch is not a hot start', () => {
+    expect(shouldFireHotStart({ bgAt: T, now: T + 14_999, suppressedUntil: 0, adCausedBg: false })).toBe(false);
+  });
+
+  it('honours the store-review excursion window', () => {
+    expect(shouldFireHotStart({ bgAt: T, now: T + 60_000, suppressedUntil: T + 61_000, adCausedBg: false })).toBe(false);
+    // …and an expired window no longer vetoes.
+    expect(shouldFireHotStart({ bgAt: T, now: T + 60_000, suppressedUntil: T + 1_000, adCausedBg: false })).toBe(true);
+  });
+
+  it('never fires without a background episode at all', () => {
+    expect(shouldFireHotStart({ bgAt: null, now: T, suppressedUntil: 0, adCausedBg: false })).toBe(false);
   });
 });

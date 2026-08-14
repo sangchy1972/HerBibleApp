@@ -995,22 +995,16 @@ touches the crashing classes, so no upgrade theater.
 | `NativeAnimatedNodesManager.connectAnimatedNodes` — "child [1114] does not exist" (1 event, 1.4.0) | **Full trace read** (owner export `bb42a75e…`, 2026-08-13). The connect flushes in `didDispatchMountItems` against an already-dropped child node — a native-DRIVER RN Animated op racing an unmount. Investigation, recorded because the first two steps were wrong turns: (1) "we only use Reanimated" was FALSE — `WideSwitch` imports RN core Animated; (2) but WideSwitch is `useNativeDriver: false` (JS driver never enqueues connect ops), so it is CLEARED; (3) the ubiquitous native-driver producer is **RN's own TouchableOpacity press feedback** (`TouchableOpacity.js:242`, `useNativeDriver: true`) — a tap whose press animation races the navigation-unmount it triggers, reachable from any screen. RN-internal; the only app lever is a wholesale Pressable migration, unjustified at n=1. Monitor with `last_screen` |
 | `Preconditions.checkState` (Fresco, 1 event, 1.3.0, Android 11) | **Full trace read** (owner export `ed6a19cf…`): fatal is pure Fresco — `PipelineDraweeController.getImageInfo` checkState on a closed image ref during `reportSuccess`, i.e. the result arrived after the drawee was torn down. Zero app frames in 1,730 lines; the only our-side activity was an expo-file-system download coroutine (prefetch). Fresco is RN's Android `<Image>` backend — library-internal. Monitor |
 
-### ANR batch 2026-08-14 (Play console, 1.4.0 (26)) — LIST-VIEW ONLY, traces requested
-Four issues, each 1 event / 1 user — 4 ANRs total. The threshold breach is
-small-denominator arithmetic (≤100 installs; one ANR day = several × 0.47%), but the
-classes are real and scale with users. All four are `Input dispatching timed out (No
-focused window)` — the same family as the 1.2.0 initIap ANR: the main thread stalled
-while no window had focus (startup, or an activity transition — **our interstitials
-are activities**, so ad open/close moments count). Verified in code meanwhile: the
-cold-start path gained NO native work in 1.4.0 (initIap still deferred to
-loadingDone+10s), and worklets 0.5.2 is native-identical to 0.5.1 (tarball-diffed), so
-an upgrade cannot address the libworklets row. Per-row, pending full traces:
-| Wait site (cluster title) | Class / candidate lever |
+### ANR batch 2026-08-14 (Play console, 1.4.0 (26)) — all four traces read
+Four issues, 4 events, 4 users; threshold breach is small-denominator arithmetic, but
+one class had a real app-side trigger and it is now FIXED. All four are `Input
+dispatching timed out (No focused window)`. Verdicts, each from its exported trace:
+| Wait site | Trace verdict |
 |---|---|
-| `ForwardingCookieHandler.getCookies` (lock contention) | Known RN bucket: first-touch WebView CookieManager init takes a process lock; UMP + ad creatives also init WebView. We have NO pre-warm (verified). Lever if trace confirms holder: pre-warm `CookieManager.getInstance()` off-main at startup via a MainApplication plugin |
-| `libhwui ThreadBase::waitForWork` (unresponsive GPU) | Render-lock wait, likely low-end GPU + heavy render moment (Lottie/loading zoom). Need device model from trace |
-| `libart ConditionVariable::WaitHoldingLocks` (unresponsive GPU) | ART runtime lock wait, same device-class question |
-| `libworklets facebook::jsi::WithRuntime` | UI thread waiting on the worklet runtime lock — reanimated-internal; no upgrade fix exists (verified) |
+| `ForwardingCookieHandler.getCookies` (Android 11) | **CONFIRMED + FIXED (`plugins/withCookieWarmup.js`).** Holder identified: our own ad-config fetch thread (`OkHttp everlandapps.com`) doing FIRST-TOUCH WebView init through RN's cookie jar — `CookieManager.getInstance → WebViewFactory → createApplicationContext → DisplayManagerGlobal.getDisplayInfo` (takes the process-wide DMG lock) → a binder `IDisplayManager.getDisplayInfo` that hung >5s. Main thread blocked on the same lock in ReactRootView's layout-time orientation check. The plugin pre-warms `CookieManager.getInstance()` on a background thread in `Application.onCreate`, so the first touch happens before React's layout listener exists and never again on a request path. Residual: a >5s system_server stall can still hurt anything display-locked; our standing trigger is gone |
+| `libhwui setStopped` (Redmi Note 12, Android 15) | Main thread waits in `HardwareRenderer.nSetStopped` (window STOPPING — activity transition) for the render thread, which is itself blocked calling BACK into Java (`setFrameCompleteCallback` JNI). System/RN-internal suspension tangle; no app frames, no lever. Watch with `last_screen` |
+| `libart WaitHoldingLocks` (OnePlus N100, Android 11) | Same `nSetStopped` wait — but the RenderThread was IDLE (`waitForWork`): the stop request was lost/never picked up. hwui/driver bug on that device class; no lever |
+| `libworklets jsi::WithRuntime` (Galaxy A10s, armv7) | Main thread >5s inside `SerializableWorklet::toJSValue` + Hermes on a weak 32-bit device — reanimated serializing worklets on the UI thread. worklets 0.5.2 is native-identical (verified), no upgrade fix. If it recurs with `last_screen`, the lever is reducing simultaneous worklet mounts on that screen |
 
 **`last_screen`**: every navigation stamps a Crashlytics attribute + breadcrumb
 (`setCrashScreen` in services/firebase.ts, fed from App.tsx's nav hook). RN-internal

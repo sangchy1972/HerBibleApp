@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { areAdsRemoved } from '../services/ads';
 import { useTabFocusScrollReset } from '../components/shared/useTabFocusEntrance';
 import TabSection from '../components/shared/TabSection';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, Modal, Share, Platform, Keyboard } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, Modal, Share, Platform, Keyboard, AppState } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -51,6 +51,15 @@ import BadgeIcon from '../components/BadgeIcon';
 import { ACHIEVEMENTS } from '../constants/achievements';
 import SignInSheet from '../components/SignInSheet';
 import VerseNoteSheet from '../components/VerseNoteSheet';
+import WideSwitch from '../components/WideSwitch';
+import { useSheetSurface } from '../state/promptSurface';
+import {
+  overlayCardsSupported, canDrawOverlays, openOverlaySettings,
+  isMiuiDevice, openMiuiPermissionEditor, miuiBackgroundPopupAllowed,
+} from '../../modules/expo-overlay-cards';
+import {
+  getOverlayCardsEnabled, hydrateOverlayCardsEnabled, setOverlayCardsEnabled, subscribeOverlayCardsEnabled,
+} from '../state/overlayCardsPrefs';
 import { NotesTile } from '../components/ProfileTiles';
 import { getDownloadState, type DownloadState } from '../services/bibleService';
 import type { TabScreenProps } from '../navigation/types';
@@ -275,6 +284,68 @@ function CalendarSheet({ activityDates, onClose }: { activityDates: Set<string>;
   );
 }
 
+// The overlay-cards mini settings sheet (owner 2026-08-16): a permanent entry
+// whose PRIMARY job is reminding users who never enabled the daily screen cards
+// to turn them on — and, once on, giving them the manual off switch. Two
+// permission steps render as status rows: "Appear on top" for everyone, plus
+// Xiaomi's own "background pop-up" gate on MIUI devices only.
+function OverlayCardsSheet({ onClose }: { onClose: () => void }) {
+  const t = useT();
+  const pan = useSheetPan(onClose, true);
+  // Register with the prompt-surface gate so a nudge can't ambush the sheet.
+  useSheetSurface(true);
+  const enabled = useSyncExternalStore(subscribeOverlayCardsEnabled, getOverlayCardsEnabled);
+  const [granted, setGranted] = useState(() => canDrawOverlays());
+  const [miuiOk, setMiuiOk] = useState<boolean | null>(() => (isMiuiDevice() ? miuiBackgroundPopupAllowed() : true));
+  // Both grants happen in system settings — the return foreground is the only
+  // moment we can learn the outcome and flip the status rows.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', s => {
+      if (s === 'active') {
+        setGranted(canDrawOverlays());
+        if (isMiuiDevice()) setMiuiOk(miuiBackgroundPopupAllowed());
+      }
+    });
+    return () => sub.remove();
+  }, []);
+
+  const stepRow = (label: string, done: boolean, onPress: () => void, last: boolean) => (
+    <TouchableOpacity
+      style={[styles.overlayStepRow, !last && styles.settingBorder]}
+      activeOpacity={done ? 1 : 0.7}
+      onPress={() => { if (!done) onPress(); }}
+    >
+      <Text style={styles.overlayStepLabel}>{label}</Text>
+      <Text style={[styles.overlayStepState, !done && { color: ROSE }]}>
+        {t(done ? 'overlayCards.on' : 'overlayCards.off')}
+      </Text>
+      {!done && <Feather name="chevron-right" size={18} color={TXTSUB} />}
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.pickerOverlay}>
+      <SheetBackdrop onClose={onClose} />
+      <GestureDetector gesture={pan.gesture}>
+        <Animated.View style={[styles.pickerSheet, pan.sheetStyle]}>
+          <View style={styles.sheetHandle} />
+          <Text style={styles.pickerTitle}>{t('overlayCards.row')}</Text>
+          <Text style={styles.overlayDesc}>{t('nudge.overlay.body')}</Text>
+          <View style={[styles.overlayStepRow, styles.settingBorder]}>
+            <Text style={styles.overlayStepLabel}>{t('overlayCards.master')}</Text>
+            <WideSwitch value={enabled} onValueChange={setOverlayCardsEnabled} />
+          </View>
+          {stepRow(t('overlayCards.stepSaw'), granted, () => { openOverlaySettings(); }, !isMiuiDevice())}
+          {/* miuiOk === null (unknowable) deliberately renders as not-done: the
+              worst outcome of that guess is one redundant trip to a page where
+              everything is already on. */}
+          {isMiuiDevice() && stepRow(t('overlayCards.stepMiui'), miuiOk === true, () => { openMiuiPermissionEditor(); }, true)}
+        </Animated.View>
+      </GestureDetector>
+    </View>
+  );
+}
+
 export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>) {
   const insets = useSafeAreaInsets();
   // Re-read on every focus rather than once on mount: the flag is flipped by a
@@ -305,6 +376,14 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
   const { lang: uiLang, meta: uiMeta, setLang: setUILang } = useUILanguage();
   const t = useT();
   const [showTranslationPicker, setShowTranslationPicker] = useState(false);
+  // Overlay-cards row status. Granted lives in system settings, so it is
+  // re-read on focus and on the foreground that follows a settings trip; the
+  // master switch comes straight from its store.
+  const [showOverlaySheet, setShowOverlaySheet] = useState(false);
+  const overlayEnabled = useSyncExternalStore(subscribeOverlayCardsEnabled, getOverlayCardsEnabled);
+  const [overlayGranted, setOverlayGranted] = useState(() => canDrawOverlays());
+  useEffect(() => { void hydrateOverlayCardsEnabled(); }, []);
+  useFocusEffect(React.useCallback(() => { setOverlayGranted(canDrawOverlays()); }, []));
   const [langExpanded, setLangExpanded] = useState(true);
   const [showSignInSheet, setShowSignInSheet] = useState(false);
   const [showEditNameSheet, setShowEditNameSheet] = useState(false);
@@ -846,6 +925,25 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
           <Feather name="chevron-right" size={18} color={TXTSUB} />
         </TouchableOpacity>
         <SettingRow icon="bell"          label={t('profile.account.notifications')} onPress={() => navigation.navigate('Notifications')} />
+        {/* Daily overlay cards — the permanent entry whose main job is
+            reminding users who never enabled them (owner 2026-08-16). Status
+            text goes ROSE while off, so the row itself does the inviting. */}
+        {overlayCardsSupported() && (
+          <TouchableOpacity
+            style={[styles.settingRow, styles.settingBorder]}
+            activeOpacity={0.7}
+            onPress={() => setShowOverlaySheet(true)}
+          >
+            <View style={styles.settingIcon}>
+              <Feather name="layers" size={18} color={TXT} />
+            </View>
+            <Text style={styles.settingLabel}>{t('overlayCards.row')}</Text>
+            <Text style={[styles.settingValue, !(overlayGranted && overlayEnabled) && { color: ROSE }]}>
+              {t(overlayGranted && overlayEnabled ? 'overlayCards.on' : 'overlayCards.off')}
+            </Text>
+            <Feather name="chevron-right" size={18} color={TXTSUB} />
+          </TouchableOpacity>
+        )}
         <SettingRow icon="settings"      label={t('profile.account.settings')}     onPress={() => showToast(t('toast.comingSoon', { feature: t('profile.account.settings') }))} />
         <SettingRow icon="message-circle" label={t('profile.account.helpCenter')} onPress={() => navigation.navigate('HelpCenter')} />
         <SettingRow icon="info"          label={t('profile.account.aboutUs')}     isLast onPress={() => navigation.navigate('AboutUs')} />
@@ -1137,6 +1235,12 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
         <CalendarSheet
           activityDates={activityDates}
           onClose={() => setShowCalendarSheet(false)}
+        />
+      )}
+
+      {showOverlaySheet && (
+        <OverlayCardsSheet
+          onClose={() => { setShowOverlaySheet(false); setOverlayGranted(canDrawOverlays()); }}
         />
       )}
 
@@ -1637,6 +1741,11 @@ const styles = StyleSheet.create({
   },
   settingLabel: { flex: 1, fontSize: 16.26, fontWeight: '500', color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4 },                                 // 17.12 → 16.26 (-5 % per user)
   settingValue: { fontSize: 14, color: TXTSUB, marginRight: 6, maxWidth: 120 },
+  // ── Overlay-cards sheet ──
+  overlayDesc: { fontSize: 14, lineHeight: 20.5, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.3, marginBottom: 10 },
+  overlayStepRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, gap: 8 },
+  overlayStepLabel: { flex: 1, fontSize: 15.5, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.3 },
+  overlayStepState: { fontSize: 14, color: TXTSUB, fontWeight: '600' },
   pickerOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'transparent',

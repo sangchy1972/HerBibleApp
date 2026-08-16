@@ -336,7 +336,7 @@ tree out mid-session.
 | `login` | one-time triggers (`first_highlight`, `day1`) + a global 1-per-3-days cap; arms 3 s after boot |
 | `setReminderTime` | first ask ~20 h after becoming eligible, then **once per local calendar day** (owner: the old escalating gap was too long); disappears when permission is granted |
 | `widgetInstall` | from day 1, needs **≥ 1** core feature used (`FEATURES_REQUIRED = 0`, strictly greater); repeats daily; after 3 unacted asks backs off to every 3 days; silent once `WIDGET_PRESENT_KEY` exists |
-| `overlayCards` | Android only; same ≥ 1-feature signal as the widget; asks every 4 days, after 3 unacted asks every 7; silent forever once "Appear on top" is granted (re-checked live on every foreground) |
+| `overlayCards` | Android only; same ≥ 1-feature signal as the widget; asks every 4 days, after 3 unacted asks every 7; silent forever once "Appear on top" is granted (re-checked live on every foreground). On MIUI, ONE follow-up card after the grant points at Xiaomi's own "background pop-up" permission (flag written at show time — never loops). Respects the Profile master switch: flipped off → never nudges |
 | `quizPromo` | gap grows `1 + promptCount` days, capped at 14; **terminal** once she has played |
 | `rate` | "No" → 30 days. Dismissed → escalating 3, 4, 5, 6, 7 … capped at 15 days |
 | `removeAds` | see §9 |
@@ -962,10 +962,24 @@ The physics, because every piece follows from them:
 - Taps open `herbible://verse-of-day` / `herbible://quiz` (+`&opt=N` on a quiz
   answer) — plain VIEW intents; SAW grants the background-activity-launch
   exemption. `DeepLinkHandler.routeForUrl` owns the mapping.
-- OEM notes: MIUI additionally needs "后台弹出界面" for reliable display;
-  Samsung needs only the standard toggle. Android 12+ lets individual apps
-  block overlays over their own windows (`setHideOverlayWindows`) — over the
+- OEM notes: MIUI additionally needs "后台弹出界面" for reliable display
+  (owner 2026-08-16: ask for it) — `openMiuiPermissionEditor()` opens MIUI's
+  per-app editor (two known activity names, app-details fallback) and
+  `miuiBackgroundPopupAllowed()` best-effort reads AppOps op 10021 by
+  reflection (1/0/-1; -1 = unknowable → treat as "show the step"). Samsung
+  needs only the standard toggle. Android 12+ lets individual apps block
+  overlays over their own windows (`setHideOverlayWindows`) — over the
   launcher, which is the normal case, this doesn't apply.
+- Surfaces: the nudge (62) sells + jumps; on MIUI it shows ONE follow-up card
+  after the grant. The Profile row ("Cards on your screen", rose "Not on yet"
+  while off — its main job is inviting users who never enabled it, owner
+  2026-08-16) opens a sheet with the master switch + per-step status rows
+  (SAW for everyone, MIUI row on Xiaomi only), statuses re-read on every
+  foreground. The master switch lives in `state/overlayCardsPrefs.ts`
+  (module store, default ON); OFF → OverlayCardsSync tears the alarms down
+  via cancelOverlayCards() and the nudge goes silent. Notification + popup
+  double-fire at the same slot time is ACCEPTED (owner 2026-08-16) — do not
+  add suppression.
 - Kotlin traps already paid for: `const val` rejects `.toInt()` (use `val`);
   the card's width must live on the WINDOW LayoutParams and the verse body's
   height on the `addView` lp — `addView(lp)` silently replaces whatever the

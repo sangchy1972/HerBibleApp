@@ -565,6 +565,15 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'onboarding.login.b2': { en: 'Save every highlight you make', context: 'Benefit of signing in, shown on the final onboarding screen.' },
   'onboarding.login.b3': { en: 'Never lose your streak or reading history', context: 'Benefit of signing in, shown on the final onboarding screen.' },
   'onboarding.login.cta': { en: 'Sign in', context: 'Button on the final onboarding screen that opens the sign-in sheet.' },
+  'nudge.overlay.miuiTitle':       { en: 'One more step on Xiaomi', context: 'MIUI-only follow-up card after "Appear on top" is granted: Xiaomi keeps a second, MIUI-private gate.' },
+  'nudge.overlay.miuiBody':        { en: 'Xiaomi phones also need "Display pop-up windows while running in the background" turned on for the cards to appear reliably.', context: 'Body of the MIUI follow-up. The quoted permission name mirrors MIUI\'s own wording.' },
+  'nudge.overlay.miuiCta':         { en: 'Open permission page', context: 'CTA of the MIUI follow-up — opens MIUI\'s per-app permission editor.' },
+  'overlayCards.row':              { en: 'Cards on your screen', context: 'Profile row + sheet title for the daily overlay cards. Its main job is inviting users who never enabled them (owner 2026-08-16).' },
+  'overlayCards.on':               { en: 'On', context: 'Status text — feature/permission active.' },
+  'overlayCards.off':              { en: 'Not on yet', context: 'Status text while off — rendered in rose so the row itself invites enabling.' },
+  'overlayCards.master':           { en: 'Show daily cards', context: 'Master switch label inside the overlay-cards sheet.' },
+  'overlayCards.stepSaw':          { en: 'Display over other apps', context: 'Step row: the Android "Appear on top" permission. Mirror the OS toggle wording.' },
+  'overlayCards.stepMiui':         { en: 'Background pop-up (Xiaomi)', context: 'Step row shown only on MIUI devices: their extra background pop-up permission.' },
 
   // ─── Streak screen ───────────────────────────────────────────────────────
   'streak.daysPrayed':             { en: 'Days Prayed',    context: 'Title of the Streak detail screen. Also used as the two-line caption next to the big numeral.' },

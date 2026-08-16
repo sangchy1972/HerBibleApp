@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, BackHandler, AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -9,9 +9,13 @@ import { useReadChapters } from '../state/ReadChaptersContext';
 import { usePlanCompletion } from '../state/PlanCompletionContext';
 import { useNudgeCoordinator } from '../state/NudgeCoordinatorContext';
 import { NUDGE_PRIORITY } from '../state/nudgePriority';
+import { getOverlayCardsEnabled, hydrateOverlayCardsEnabled, subscribeOverlayCardsEnabled } from '../state/overlayCardsPrefs';
 import { useT } from '../i18n/useT';
 import { logEvent } from '../services/firebase';
-import { overlayCardsSupported, canDrawOverlays, openOverlaySettings } from '../../modules/expo-overlay-cards';
+import {
+  overlayCardsSupported, canDrawOverlays, openOverlaySettings,
+  isMiuiDevice, openMiuiPermissionEditor, miuiBackgroundPopupAllowed,
+} from '../../modules/expo-overlay-cards';
 import { ROSE, TXT, TXTSUB, FONTS } from '../constants/theme';
 
 // The "Appear on top" ask for the daily overlay cards (verse + quiz popups over
@@ -26,6 +30,9 @@ import { ROSE, TXT, TXTSUB, FONTS } from '../constants/theme';
 // silent for good the moment the permission exists.
 const ASK_COUNT_KEY = 'nudge:overlayCards:asks:v1';
 const LAST_ASK_YMD_KEY = 'nudge:overlayCards:lastYmd:v1';
+// The one-time MIUI follow-up (owner 2026-08-16: Xiaomi may be asked). Written
+// the moment the card SHOWS — it is a single reminder, never a loop.
+const MIUI_STEP_KEY = 'nudge:overlayCards:miuiStep:v1';
 const ASK_GAP_DAYS = 4;
 const ASKS_BEFORE_BACKOFF = 3;
 const BACKOFF_DAYS = 7;
@@ -61,21 +68,29 @@ export default function OverlayCardsPromptHost() {
   const { chaptersRead } = useReadChapters();
   const { totalDayCompletions } = usePlanCompletion();
   const coord = useNudgeCoordinator();
-  const [gate, setGate] = useState<{ asks: number; lastYmd: string } | null>(null);
+  const [gate, setGate] = useState<{ asks: number; lastYmd: string; miuiStepShown: boolean } | null>(null);
   // The grant lives in system settings; re-read it on every foreground so an
   // already-granted user is never asked (and a fresh grant retires this host).
   const [granted, setGranted] = useState(() => canDrawOverlays());
+  // MIUI's own "background pop-up" gate — null means unknowable, i.e. show it.
+  const [miuiOk, setMiuiOk] = useState<boolean | null>(() => (isMiuiDevice() ? miuiBackgroundPopupAllowed() : true));
+  // She flipped the feature off in Profile → never nudge for its permission.
+  const enabled = useSyncExternalStore(subscribeOverlayCardsEnabled, getOverlayCardsEnabled);
 
   useEffect(() => {
+    void hydrateOverlayCardsEnabled();
     (async () => {
       try {
-        const [asks, lastYmd] = await AsyncStorage.multiGet([ASK_COUNT_KEY, LAST_ASK_YMD_KEY])
+        const [asks, lastYmd, miuiShown] = await AsyncStorage.multiGet([ASK_COUNT_KEY, LAST_ASK_YMD_KEY, MIUI_STEP_KEY])
           .then(rows => rows.map(([, v]) => v));
-        setGate({ asks: Number(asks) || 0, lastYmd: lastYmd ?? '' });
-      } catch { setGate({ asks: 0, lastYmd: '' }); }
+        setGate({ asks: Number(asks) || 0, lastYmd: lastYmd ?? '', miuiStepShown: miuiShown === '1' });
+      } catch { setGate({ asks: 0, lastYmd: '', miuiStepShown: false }); }
     })();
     const sub = AppState.addEventListener('change', s => {
-      if (s === 'active') setGranted(canDrawOverlays());
+      if (s === 'active') {
+        setGranted(canDrawOverlays());
+        if (isMiuiDevice()) setMiuiOk(miuiBackgroundPopupAllowed());
+      }
     });
     return () => sub.remove();
   }, []);
@@ -97,12 +112,20 @@ export default function OverlayCardsPromptHost() {
       : daysBetweenYmd(gate.lastYmd, today)
           >= (gate.asks >= ASKS_BEFORE_BACKOFF ? BACKOFF_DAYS : ASK_GAP_DAYS);
 
+  // Two cards share this host (and the one nudge slot):
+  //  'ask'  — she has no "Appear on top" yet: the sell + jump to settings.
+  //  'miui' — granted, but on a Xiaomi whose extra "background pop-up" gate is
+  //           not confirmed open: ONE follow-up, then never again (flag written
+  //           at show time). The Profile sheet keeps a permanent entry for it.
+  const mode: 'ask' | 'miui' | null = gate === null ? null
+    : !granted
+      ? (featuresUsed >= 1 && cadenceOk ? 'ask' : null)
+      : (isMiuiDevice() && !gate.miuiStepShown && miuiOk !== true ? 'miui' : null);
+
   const eligible = Platform.OS === 'android'
     && overlayCardsSupported()
-    && !granted
-    && gate !== null
-    && featuresUsed >= 1
-    && cadenceOk;
+    && enabled
+    && mode !== null;
 
   const eligibleRef = useRef(eligible);
   eligibleRef.current = eligible;
@@ -130,13 +153,25 @@ export default function OverlayCardsPromptHost() {
   const release = coord.releaseSlot;
   useEffect(() => () => release('overlayCards'), [release]);
 
+  // The mode the visible card was OPENED with. The 'miui' flag is written at
+  // show time, which flips `mode` back to null on the very next render — the
+  // card on screen must keep rendering what it opened as.
+  const shownModeRef = useRef<'ask' | 'miui'>('ask');
   const markedRef = useRef(false);
   useEffect(() => {
     if (active && !markedRef.current) {
       markedRef.current = true;
-      logEvent('overlay_prompt_shown');
-      setGate(g => (g ? { asks: g.asks + 1, lastYmd: today } : g));
-      AsyncStorage.multiSet([[ASK_COUNT_KEY, String((gate?.asks ?? 0) + 1)], [LAST_ASK_YMD_KEY, today]]).catch(() => {});
+      const m = mode ?? shownModeRef.current;
+      shownModeRef.current = m;
+      if (m === 'miui') {
+        logEvent('overlay_prompt_miui_shown');
+        setGate(g => (g ? { ...g, miuiStepShown: true } : g));
+        AsyncStorage.setItem(MIUI_STEP_KEY, '1').catch(() => {});
+      } else {
+        logEvent('overlay_prompt_shown');
+        setGate(g => (g ? { ...g, asks: g.asks + 1, lastYmd: today } : g));
+        AsyncStorage.multiSet([[ASK_COUNT_KEY, String((gate?.asks ?? 0) + 1)], [LAST_ASK_YMD_KEY, today]]).catch(() => {});
+      }
     }
     if (!active) markedRef.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -144,10 +179,17 @@ export default function OverlayCardsPromptHost() {
 
   if (!active) return null;
 
+  const shownMode = mode ?? shownModeRef.current;
   const dismiss = () => { coord.notifyDismissed('overlayCards'); coord.releaseSlot('overlayCards'); };
   dismissRef.current = dismiss;
 
   const onTurnOn = () => {
+    if (shownMode === 'miui') {
+      logEvent('overlay_prompt_miui_cta');
+      dismiss();
+      openMiuiPermissionEditor();
+      return;
+    }
     logEvent('overlay_prompt_cta');
     dismiss();
     // Hand off to the system's "Appear on top" page (scoped to our row).
@@ -162,10 +204,10 @@ export default function OverlayCardsPromptHost() {
       <TouchableOpacity style={[StyleSheet.absoluteFill, styles.backdrop]} activeOpacity={1} onPress={dismiss} />
       <Animated.View entering={FadeIn.duration(200)} style={styles.card}>
         <View style={styles.art}><MiniPopupArt /></View>
-        <Text style={styles.title}>{t('nudge.overlay.title')}</Text>
-        <Text style={styles.body}>{t('nudge.overlay.body')}</Text>
+        <Text style={styles.title}>{t(shownMode === 'miui' ? 'nudge.overlay.miuiTitle' : 'nudge.overlay.title')}</Text>
+        <Text style={styles.body}>{t(shownMode === 'miui' ? 'nudge.overlay.miuiBody' : 'nudge.overlay.body')}</Text>
         <TouchableOpacity style={styles.cta} activeOpacity={0.9} onPress={onTurnOn}>
-          <Text style={styles.ctaText}>{t('nudge.overlay.cta')}</Text>
+          <Text style={styles.ctaText}>{t(shownMode === 'miui' ? 'nudge.overlay.miuiCta' : 'nudge.overlay.cta')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.later} onPress={dismiss} hitSlop={8}>
           <Text style={styles.laterText}>{t('nudge.overlay.later')}</Text>

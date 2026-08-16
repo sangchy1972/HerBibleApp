@@ -67,3 +67,26 @@ export function drainOverlayEvents(): Array<{ n: string; t: number; p: Record<st
 export function previewOverlayCard(slot: 'morning' | 'night'): boolean {
   try { return Native?.preview?.(slot) ?? false; } catch { return false; }
 }
+
+// ── MIUI extras ──────────────────────────────────────────────────────────────
+// Xiaomi/Redmi/POCO additionally gate background-shown overlays behind their
+// own "Display pop-up windows while running in the background" permission.
+
+export function isMiuiDevice(): boolean {
+  if (Platform.OS !== 'android') return false;
+  const c = Platform.constants as { Manufacturer?: string; Brand?: string };
+  return /xiaomi|redmi|poco/i.test(`${c?.Manufacturer ?? ''} ${c?.Brand ?? ''}`);
+}
+
+/** MIUI's per-app permission editor (falls back to app details). */
+export function openMiuiPermissionEditor(): boolean {
+  try { return Native?.openMiuiPermissionEditor?.() ?? false; } catch { return false; }
+}
+
+/** true / false, or null when unknowable — treat null as "show the step". */
+export function miuiBackgroundPopupAllowed(): boolean | null {
+  try {
+    const v = Native?.miuiBackgroundPopupAllowed?.() ?? -1;
+    return v === -1 ? null : v === 1;
+  } catch { return null; }
+}

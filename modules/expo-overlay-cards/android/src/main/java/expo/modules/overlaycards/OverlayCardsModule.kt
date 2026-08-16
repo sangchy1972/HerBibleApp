@@ -50,6 +50,62 @@ class OverlayCardsModule : Module() {
       try { OverlayCardStore.clearConfig(c); OverlayCardWindowController.dismiss(); true } catch (e: Throwable) { false }
     }
 
+    // ── MIUI extras ──────────────────────────────────────────────────────────
+    // Xiaomi/Redmi/POCO additionally gate overlays shown from the background
+    // behind their own "Display pop-up windows while running in the background"
+    // permission (MIUI permission editor, not an Android one). Owner 2026-08-16:
+    // ask for it. The JS side decides WHEN (device check + funnel); these two
+    // just open the page and best-effort read the state.
+
+    // MIUI's per-app permission editor. Two known activity names across MIUI
+    // versions; falls back to the app-details page rather than failing.
+    Function("openMiuiPermissionEditor") {
+      val c = ctx ?: return@Function false
+      val attempts = listOf(
+        "com.miui.securitycenter" to "com.miui.permcenter.permissions.PermissionsEditorActivity",
+        "com.miui.securitycenter" to "com.miui.permcenter.permissions.AppPermissionsEditorActivity",
+      )
+      var opened = false
+      for ((pkg, cls) in attempts) {
+        if (opened) break
+        try {
+          c.startActivity(
+            Intent("miui.intent.action.APP_PERM_EDITOR")
+              .setClassName(pkg, cls)
+              .putExtra("extra_pkgname", c.packageName)
+              .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+          )
+          opened = true
+        } catch (e: Throwable) { /* try the next known activity */ }
+      }
+      if (!opened) {
+        try {
+          c.startActivity(
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${c.packageName}"))
+              .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+          )
+          opened = true
+        } catch (e: Throwable) { }
+      }
+      opened
+    }
+
+    // MIUI "background pop-up" state via AppOps op 10021 (MIUI-private), read
+    // reflectively. 1 = allowed, 0 = denied, -1 = unknown (non-MIUI, blocked
+    // reflection, anything) — callers must treat -1 as "show the step".
+    Function("miuiBackgroundPopupAllowed") {
+      val c = ctx ?: return@Function -1
+      try {
+        val ops = c.getSystemService(Context.APP_OPS_SERVICE) ?: return@Function -1
+        val m = ops.javaClass.getMethod(
+          "checkOpNoThrow",
+          Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, String::class.java,
+        )
+        val mode = m.invoke(ops, 10021, android.os.Process.myUid(), c.packageName) as Int
+        if (mode == 0) 1 else 0     // AppOpsManager.MODE_ALLOWED == 0
+      } catch (e: Throwable) { -1 }
+    }
+
     // Analytics queued by the cold receiver path, JSON array — the app drains
     // this on foreground and feeds logEvent().
     Function("drainEvents") {

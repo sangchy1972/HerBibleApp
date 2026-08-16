@@ -1,15 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDailyVerses } from '../state/DailyVersesContext';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useQuiz } from '../state/QuizContext';
 import { useNotifications } from '../state/NotificationsContext';
+import {
+  getOverlayCardsEnabled, hydrateOverlayCardsEnabled, subscribeOverlayCardsEnabled,
+} from '../state/overlayCardsPrefs';
 import { useT } from '../i18n/useT';
 import { logEvent } from '../services/firebase';
 import {
-  overlayCardsSupported, canDrawOverlays, configureOverlayCards, drainOverlayEvents,
-  type OverlayCardPayload,
+  overlayCardsSupported, canDrawOverlays, configureOverlayCards, cancelOverlayCards,
+  drainOverlayEvents, type OverlayCardPayload,
 } from '../../modules/expo-overlay-cards';
 
 // Mirrors today's content into the native overlay-card store, the same way
@@ -35,6 +38,10 @@ export default function OverlayCardsSync() {
   // Re-evaluate permission on every foreground — the grant happens in system
   // settings, OUTSIDE the app, so this is the only way we ever learn of it.
   const [fgTick, setFgTick] = useState(0);
+  // The Profile sheet's master switch. Flipping OFF must tear the alarms down,
+  // not just stop refreshing content.
+  const enabled = useSyncExternalStore(subscribeOverlayCardsEnabled, getOverlayCardsEnabled);
+  useEffect(() => { void hydrateOverlayCardsEnabled(); }, []);
 
   useEffect(() => {
     if (!overlayCardsSupported()) return;
@@ -52,6 +59,13 @@ export default function OverlayCardsSync() {
 
   useEffect(() => {
     if (!overlayCardsSupported()) return;
+    if (!enabled) {
+      // Master switch off — tear down schedule + content, and forget the last
+      // payload so re-enabling always re-configures.
+      cancelOverlayCards();
+      last.current = '';
+      return;
+    }
     if (!canDrawOverlays()) return;   // not granted (yet) — nothing to schedule
 
     // Log the grant exactly once, however it happened (our nudge or the user
@@ -106,7 +120,7 @@ export default function OverlayCardsSync() {
     last.current = ser;
     configureOverlayCards('Her Bible', cards);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getVerse, todayDay, imageFor, loaded, quiz.ready, quiz.bank, quiz.questions, settings, t, fgTick]);
+  }, [getVerse, todayDay, imageFor, loaded, quiz.ready, quiz.bank, quiz.questions, settings, t, fgTick, enabled]);
 
   return null;
 }

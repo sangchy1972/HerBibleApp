@@ -6,9 +6,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import * as StoreReview from 'expo-store-review';
 import Animated, { Easing, useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
-import { TXT, TXTSUB, ROSE, INK_06, BTN_RADIUS, FONTS } from '../constants/theme';
+import Svg, { Path, Ellipse } from 'react-native-svg';
+import { TXT, TXTSUB, ROSE, GOLD, INK_06, BTN_RADIUS, FONTS } from '../constants/theme';
 import { suppressNextHotStart } from '../services/adFrequency';
 import { useRatePrompt } from '../state/RatePromptContext';
+import { logEvent } from '../services/firebase';
 import { useT } from '../i18n/useT';
 
 // Bottom-sheet rate prompt (slides up from the bottom). Shown on the HOME
@@ -100,6 +102,57 @@ async function openStoreReviewPage(): Promise<boolean> {
   return false;
 }
 
+// ── Stage-2 artwork ─────────────────────────────────────────────────────────
+// Five gold stars, all lit — this screen thanks, it does not grade. Sizes were
+// chosen against the SE: 5×48 slots + 4×6 gaps = 264 ≤ 272 of content width,
+// so nothing wraps or scales down on the smallest phone.
+const STAR_SLOT = 48;
+const STAR = 36;
+
+// Plump 5-point star (outer r10 / inner r4.8 on a 24-grid, computed not traced).
+const STAR_PATH =
+  'M12 2 L14.82 8.12 L21.51 8.91 L16.57 13.48 L17.88 20.09 L12 16.8 ' +
+  'L6.12 20.09 L7.43 13.48 L2.49 8.91 L9.18 8.12 Z';
+
+function StarIcon() {
+  return (
+    <Svg width={STAR} height={STAR} viewBox="0 0 24 24">
+      <Path d={STAR_PATH} fill={GOLD} />
+    </Svg>
+  );
+}
+
+// The ring around the fifth star: an ellipse left deliberately OPEN (dash a bit
+// short of the ~129 circumference, round caps) and tilted, so it reads as a
+// pen circle someone drew around the star, not a geometric border.
+function FifthStarRing() {
+  return (
+    <Svg
+      width={STAR_SLOT} height={STAR_SLOT} viewBox="0 0 48 48"
+      style={[StyleSheet.absoluteFillObject, { transform: [{ rotate: '-8deg' }] }]}
+      pointerEvents="none"
+    >
+      <Ellipse
+        cx={24} cy={24} rx={22} ry={19}
+        stroke={ROSE} strokeWidth={2.4} fill="none"
+        strokeLinecap="round" strokeDasharray="120 12"
+      />
+    </Svg>
+  );
+}
+
+// Short pen-stroke arrow dropping from the accent note toward the circled star.
+function AccentArrow() {
+  return (
+    <Svg width={24} height={30} viewBox="0 0 24 30" style={{ marginTop: 8, marginLeft: 2 }}>
+      <Path
+        d="M5 2 C13 5 17 12 14.5 26 M14.5 26 L9.8 23 M14.5 26 L17.6 21"
+        stroke={ROSE} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 export default function RatePromptSheet({ onClose }: { onClose: () => void }) {
   const { markYes, markNo, markRated } = useRatePrompt();
   const t = useT();
@@ -138,9 +191,26 @@ export default function RatePromptSheet({ onClose }: { onClose: () => void }) {
     onClose();
   }, [onClose]);
 
+  // ── Stage 2 (owner 2026-08-16): Yes no longer hands off directly. It reveals
+  // an appreciation screen first — five lit stars, the FIFTH circled with a
+  // small arrow from the accent line — and only its CTA starts the store
+  // handoff. Owner's call, recorded in the catalog too: no reward is offered,
+  // so this is appreciation, not solicitation.
+  const [stage, setStage] = useState<'ask' | 'appreciate'>('ask');
+
   const onYes = () => {
+    // NOT busyRef — that latch still means "one store handoff per prompt, ever"
+    // and belongs to the CTA below. A double-tap here is two idempotent stage
+    // writes, nothing more.
+    if (stage !== 'ask') return;
+    setStage('appreciate');
+    logEvent('rate_appreciate_shown');
+  };
+
+  const onRate = () => {
     if (busyRef.current) return;
     busyRef.current = true;
+    logEvent('rate_appreciate_cta');
     // markYes() deliberately does NOT fire here. `choice: 'yes'` silences the
     // prompt forever, so recording it up front meant one offline tap — no
     // network for the Apple lookup, no Play on the device — permanently retired
@@ -302,18 +372,49 @@ export default function RatePromptSheet({ onClose }: { onClose: () => void }) {
             <Feather name="x" size={20} color="rgba(30,27,46,0.45)" />
           </TouchableOpacity>
 
-          <Text style={styles.title}>{t('rate.title')}</Text>
-          <Text style={styles.body}>{t('rate.body')}</Text>
+          {stage === 'ask' ? (
+            <>
+              <Text style={styles.title}>{t('rate.title')}</Text>
+              <Text style={styles.body}>{t('rate.body')}</Text>
 
-          {/* Yes is the primary (rose, uppercase); "Not really" is deliberately
-              de-emphasised — a light ink wash with muted, regular-weight text —
-              so the two never read as equal-weight choices. */}
-          <TouchableOpacity onPress={onYes} activeOpacity={0.9} style={[styles.btn, styles.btnYes]}>
-            <Text style={styles.btnTextYes}>{t('rate.yes')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={onNo} activeOpacity={0.7} style={[styles.btn, styles.btnNo]}>
-            <Text style={styles.btnTextNo}>{t('rate.no')}</Text>
-          </TouchableOpacity>
+              {/* Yes is the primary (rose, uppercase); "Not really" is deliberately
+                  de-emphasised — a light ink wash with muted, regular-weight text —
+                  so the two never read as equal-weight choices. */}
+              <TouchableOpacity onPress={onYes} activeOpacity={0.9} style={[styles.btn, styles.btnYes]}>
+                <Text style={styles.btnTextYes}>{t('rate.yes')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={onNo} activeOpacity={0.7} style={[styles.btn, styles.btnNo]}>
+                <Text style={styles.btnTextNo}>{t('rate.no')}</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            // Stage 2 — instant swap, NO animated wrapper on purpose: an
+            // opacity-owning Reanimated view around a touchable is the §3
+            // frozen-hit-region class, and this CTA is the one tap that matters.
+            // The sheet is already up; the content change carries itself.
+            <>
+              <Text style={styles.title}>{t('rate.appreciate.title')}</Text>
+
+              <View style={styles.accentRow}>
+                <Text style={styles.accentText} maxFontSizeMultiplier={1.2}>{t('rate.appreciate.accent')}</Text>
+                <AccentArrow />
+              </View>
+              <View style={styles.starsRow}>
+                {[0, 1, 2, 3, 4].map(i => (
+                  <View key={i} style={styles.starSlot}>
+                    <StarIcon />
+                    {i === 4 ? <FifthStarRing /> : null}
+                  </View>
+                ))}
+              </View>
+
+              <TouchableOpacity onPress={onRate} activeOpacity={0.9} style={[styles.btn, styles.btnYes]}>
+                <Text style={styles.btnTextRate} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+                  {Platform.OS === 'ios' ? t('rate.appreciate.ctaIos') : t('rate.appreciate.ctaAndroid')}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
         </Animated.View>
       </View>
     </Modal>
@@ -370,4 +471,24 @@ const styles = StyleSheet.create({
   // Muted + regular weight, and NOT uppercased: the decline reads as the quiet
   // option next to YES!.
   btnTextNo: { color: TXTSUB, fontFamily: FONTS.sans, fontSize: 17, letterSpacing: 0.3 },
+
+  // ── Stage 2 ──
+  // Right-aligned so the note and its arrow sit over the fifth (circled) star.
+  accentRow: {
+    flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-start',
+    paddingRight: 2, marginTop: 2,
+  },
+  // Italic serif = the handwritten-note register, distinct from the Lato UI text.
+  accentText: { fontFamily: FONTS.serifItalic, fontSize: 16, color: ROSE, lineHeight: 22 },
+  starsRow: {
+    flexDirection: 'row', justifyContent: 'center', columnGap: 6,
+    marginTop: -2, marginBottom: 26,
+  },
+  starSlot: { width: STAR_SLOT, height: STAR_SLOT, alignItems: 'center', justifyContent: 'center' },
+  // Same weight/size family as btnTextYes but NO uppercase: "Rate on Google
+  // Play" is owner-specified verbatim, and store names are brand names.
+  btnTextRate: {
+    color: '#FFFFFF', fontFamily: FONTS.sansBold, fontWeight: '700', fontSize: 17,
+    letterSpacing: 0.4,
+  },
 });

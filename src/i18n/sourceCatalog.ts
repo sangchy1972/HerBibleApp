@@ -1216,6 +1216,15 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'rate.no':                       { en: 'Not really',     context: 'Decline button on rate prompt.' },
   'rate.yes':                      { en: 'Yes!',           context: 'Accept button — triggers store review API. Rendered UPPERCASE by the button style, so keep the exclamation mark but do not pre-uppercase.' },
 
+  // ── Rate prompt, stage 2 (owner 2026-08-16): shown AFTER she taps Yes, before
+  // the store handoff. Five lit stars with the FIFTH circled and a small arrow
+  // pointing at it from the accent line. Owner's call, recorded: no reward is
+  // offered, so this is appreciation, not solicitation.
+  'rate.appreciate.title':         { en: 'We really appreciate you taking the time to rate us.', context: 'Stage-2 headline under the smiley badge. Warm thanks — not an instruction.' },
+  'rate.appreciate.accent':        { en: 'The best we can get', context: 'Small accent line sitting above the star row, right-aligned, with a hand-drawn arrow pointing down at the circled FIFTH star. Owner-specified EN text — keep it short in every language; it labels the circled star, it does not command.' },
+  'rate.appreciate.ctaAndroid':    { en: 'Rate on Google Play', context: 'Stage-2 CTA on ANDROID. Owner-specified exact string. "Google Play" is a brand name — NEVER translated. Rendered in normal case (no uppercase transform).' },
+  'rate.appreciate.ctaIos':        { en: 'Rate on the App Store', context: 'Stage-2 CTA on IOS. "App Store" is a brand name — NEVER translated. Naming Google Play on iOS would be wrong on its face, hence the platform split.' },
+
   // ─── Sign-in sheet — additional ──────────────────────────────────────────
   'signIn.desc':                   { en: 'Sync your highlights, notes, saved verses, and reading streak across devices.', context: 'Description under sign-in sheet title.' },
   'signIn.apple.continue':         { en: 'Continue with Apple',    context: 'Apple sign-in button label.' },

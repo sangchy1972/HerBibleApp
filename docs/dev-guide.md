@@ -339,6 +339,17 @@ tree out mid-session.
 | `rate` | "No" → 30 days. Dismissed → escalating 3, 4, 5, 6, 7 … capped at 15 days |
 | `removeAds` | see §9 |
 
+**Rate prompt is two stages** (owner 2026-08-16). "Yes" no longer talks to the store —
+it swaps the sheet's content to an appreciation screen (five lit gold stars, the fifth
+circled in rose with a hand-drawn arrow from "The best we can get"), and only that
+screen's CTA ("Rate on Google Play" / "Rate on the App Store" — brand names, never
+translated, never uppercased) starts the handoff machinery. The `busyRef` one-handoff
+latch lives on the CTA, not on Yes; backdrop/X on either stage still record *dismissed*
+(escalating cadence), so bailing at stage 2 costs nothing permanent. The stage swap is
+deliberately **unanimated** — an opacity-owning Reanimated wrapper around the CTA is
+the §3 frozen-hit-region class. Owner decision, recorded: no reward is offered for the
+rating, so the screen is appreciation, not solicitation.
+
 ### Adding a prompt — checklist
 1. Add the id to `NudgeId` + a priority in `NUDGE_PRIORITY`.
 2. Host at app root, gated on `isActive(id)`; no screen gating of its own needed.

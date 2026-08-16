@@ -371,7 +371,19 @@ ladder), `adEngine.ts` / `adLadders.ts` / `adValueStore.ts` (the Android engine)
 **Reference docs** — `docs/ad-routing.md`, `docs/ad-unit-ids.md`,
 `docs/ad-waterfall-US.md`, `docs/ad-mediation-map.html`.
 
-### Format & pacing
+### SDK layer — GMA "Next-Gen" status (checked 2026-08-16, owner-sanctioned)
+Google's Next-Gen Android SDK (`com.google.android.libraries.ads.mobile.sdk`,
+announced 2026-07) **cannot be adopted yet**: we ride
+`react-native-google-mobile-ads`, `16.4.0` is the LATEST release, and its
+entire Android layer wraps the CLASSIC SDK (`play-services-ads:25.4.0`, every
+import `com.google.android.gms.ads.*`). Upstream's open placeholder —
+invertase/react-native-google-mobile-ads **#864** — says the maintainers are
+"thinking through internally"; no timeline. Migrating today would mean forking
+the native ads bridge that carries all revenue, plus an unresolved Meta-bidding
+adapter question. Decision (owner asked, judge ruled, ruflo memory
+`gma-next-gen-sdk-verdict-2026-08`): stay on classic — Google still ships it —
+watch #864, and migrate the moment the wrapper does. Until then, "upgrade to
+Next-Gen" emails are marketing aimed at native Android apps, not at us.
 - The app renders **interstitials only**. No banners, no rewarded, no native.
 - `MIN_AD_INTERVAL_MS = 60 * 1000` in `constants/adPacing.ts` is the **single global
   floor** (owner 2026-08-14: density felt too high; the 2026-08-08 spell at 30 s is also

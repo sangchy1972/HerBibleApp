@@ -11,6 +11,7 @@
 export type NudgeId =
   | 'firstRunTour'
   | 'achievementUnlock'
+  | 'streakDaily'
   | 'followHimOptin'
   | 'setReminderTime'
   | 'streakGuide'
@@ -31,6 +32,10 @@ export const NUDGE_PRIORITY: Record<NudgeId, number> = {
   // very first open after the questionnaire, and nothing may sit on top of it.
   firstRunTour:       5,
   achievementUnlock: 10,
+  // The once-a-day full-screen streak ritual (first open of each local day,
+  // streak ≥ 1). Right after achievement unlocks: a reward she just earned
+  // still lands first; the reminder not to break the chain beats every ask.
+  streakDaily:       12,
   followHimOptin:    20,
   setReminderTime:   30,
   // The rookie streak guide: a day-1 teaching moment right after a prayer

@@ -46,23 +46,9 @@ function formatStreakStart(iso: string | null, lang: UILanguageCode): string {
   });
 }
 
-function streakLevel(d: number) {
-  if (d >= 14) return 5;
-  if (d >= 7) return 4;
-  if (d >= 5) return 3;
-  if (d >= 3) return 2;
-  return 1;
-}
-
-// Level name resolved via t() at render time; `nameKey` keys into the catalog
-// so the badge name follows the user's UI language.
-const LEVEL_INFO: Record<number, { nameKey: string; next: number }> = {
-  1: { nameKey: 'streak.level.spark',   next: 3 },
-  2: { nameKey: 'streak.level.small',   next: 5 },
-  3: { nameKey: 'streak.level.medium',  next: 7 },
-  4: { nameKey: 'streak.level.big',     next: 14 },
-  5: { nameKey: 'streak.level.blazing', next: 30 },
-};
+// Levels + names live in constants/streakLevels — shared with StreakDailyHost
+// (which keys them off currentStreak rather than this screen's totalComplete).
+import { streakLevel, LEVEL_INFO } from '../constants/streakLevels';
 
 function flameSizeForLevel(level: number) {
   // Floor raised (0.55→0.78, 0.72→0.86) so the low-streak flame isn't dwarfed

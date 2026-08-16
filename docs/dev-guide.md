@@ -293,7 +293,7 @@ when it goes ineligible.
 - Arbitration **never preempts** a visible prompt; the next one is chosen on dismiss.
 
 ### Priorities (lower = first)
-`firstRunTour 5` · `achievementUnlock 10` · `followHimOptin 20` · `setReminderTime 30` ·
+`firstRunTour 5` · `achievementUnlock 10` · `streakDaily 12` · `followHimOptin 20` · `setReminderTime 30` ·
 `streakGuide 35` · `planGuide 38` · `bibleGuide 39` · `moodCheckIn 40` · `login 50` · `widgetInstall 60` ·
 `overlayCards 62` ·
 `quizPromo 65` · `streakCongrats 70` · `rate 80` · `adInterstitial 90`.
@@ -333,6 +333,7 @@ tree out mid-session.
 | Prompt | Rule |
 |---|---|
 | `moodCheckIn` | daily, 8 h re-ask window, opens 1.8 s after mount |
+| `streakDaily` | full-screen ritual, FIRST open of each local day, only while `currentStreak ≥ 1` (day-1 users → streak guide owns that moment; broken-streak users are spared the big "0"); `ignoresBudget`; back key = Continue. Keys everything off the CONSECUTIVE streak — StreakScreen keys off lifetime `totalComplete`; the two share the level ladder (`constants/streakLevels`) on purpose and must NOT be "unified" |
 | `login` | one-time triggers (`first_highlight`, `day1`) + a global 1-per-3-days cap; arms 3 s after boot |
 | `setReminderTime` | first ask ~20 h after becoming eligible, then **once per local calendar day** (owner: the old escalating gap was too long); disappears when permission is granted |
 | `widgetInstall` | from day 1, needs **≥ 1** core feature used (`FEATURES_REQUIRED = 0`, strictly greater); repeats daily; after 3 unacted asks backs off to every 3 days; silent once `WIDGET_PRESENT_KEY` exists |

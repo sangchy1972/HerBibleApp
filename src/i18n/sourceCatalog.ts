@@ -596,6 +596,15 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'streak.footer.title':           { en: 'A slow burn toward a stronger soul', context: 'Footer line — devotional motto.' },
   'streak.footer.body':            { en: 'Every prayer is a step closer to His heart, weaving a bond that never breaks.', context: 'Footer body copy under the motto.' },
 
+  // ── Daily streak ritual (owner 2026-08-16): full-screen on the first open of
+  // each local day while streak ≥ 1 — flame + day count + what today's prayer
+  // adds. Keys off the CONSECUTIVE streak, not lifetime totals.
+  'streakDaily.caption':           { en: 'day streak', context: 'Caption directly under the big consecutive-day numeral, competitor-style lowercase. Reads as "[7] day streak".' },
+  'streakDaily.alive':             { en: 'Your flame is still burning — one prayer today lights day {n}.', context: 'Standing state line while the chain is alive and today is not prayed yet. {n} = streak + 1, the day today would become.' },
+  'streakDaily.eve':               { en: 'Stay faithful today — the {level} flame is one prayer away.', context: 'Shown when today would complete the next level (streak+1 hits 3/5/7/14/30). {level} = localized level name (Spark/Small/…).' },
+  'streakDaily.done':              { en: 'Day {n} is lit. Beautifully done.', context: 'Rare state: today is already fully prayed when the ritual shows. Pure celebration.' },
+  'streakDaily.next':              { en: '{n} more days to {level}', context: 'Sub-line under the level progress bar. {level} is the NEXT level name, localized.' },
+
   // ─── Achievements screen + sign-in bar ───────────────────────────────────
   'achievement.signInBar':         { en: 'Sign in to save your Bible data permanently', context: 'Banner across the top of Achievement screen for signed-out users.' },
   'achievement.signInBtn':         { en: 'Sign In',        context: 'CTA on the sign-in bar.' },

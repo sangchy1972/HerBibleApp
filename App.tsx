@@ -80,6 +80,7 @@ import SetReminderTimeHost from './src/components/SetReminderTimeHost';
 import WidgetInstallHost from './src/components/WidgetInstallHost';
 import OverlayCardsPromptHost from './src/components/OverlayCardsPromptHost';
 import OverlayCardsSync from './src/components/OverlayCardsSync';
+import StreakDailyHost from './src/components/StreakDailyHost';
 import RemoveAdsPromptHost from './src/components/RemoveAdsPromptHost';
 import FirstRunTourHost from './src/components/FirstRunTourHost';
 import AudioMiniHost from './src/components/AudioMiniHost';
@@ -315,6 +316,11 @@ export default function App() {
                                               without enabling reminders (coordinator-
                                               managed, gated on notifications-off). */}
                                           <SetReminderTimeHost />
+                                          {/* Once-a-day full-screen streak
+                                              ritual: first open of each local
+                                              day, streak ≥ 1. Priority 12,
+                                              daily-ritual class. */}
+                                          <StreakDailyHost />
                                           {/* One-time widget-install nudge
                                               (engaged users, day 3+). */}
                                           <WidgetInstallHost />

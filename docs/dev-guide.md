@@ -295,6 +295,7 @@ when it goes ineligible.
 ### Priorities (lower = first)
 `firstRunTour 5` · `achievementUnlock 10` · `followHimOptin 20` · `setReminderTime 30` ·
 `streakGuide 35` · `planGuide 38` · `bibleGuide 39` · `moodCheckIn 40` · `login 50` · `widgetInstall 60` ·
+`overlayCards 62` ·
 `quizPromo 65` · `streakCongrats 70` · `rate 80` · `adInterstitial 90`.
 
 ### Caps (owner 2026-08-08)
@@ -335,6 +336,7 @@ tree out mid-session.
 | `login` | one-time triggers (`first_highlight`, `day1`) + a global 1-per-3-days cap; arms 3 s after boot |
 | `setReminderTime` | first ask ~20 h after becoming eligible, then **once per local calendar day** (owner: the old escalating gap was too long); disappears when permission is granted |
 | `widgetInstall` | from day 1, needs **≥ 1** core feature used (`FEATURES_REQUIRED = 0`, strictly greater); repeats daily; after 3 unacted asks backs off to every 3 days; silent once `WIDGET_PRESENT_KEY` exists |
+| `overlayCards` | Android only; same ≥ 1-feature signal as the widget; asks every 4 days, after 3 unacted asks every 7; silent forever once "Appear on top" is granted (re-checked live on every foreground) |
 | `quizPromo` | gap grows `1 + promptCount` days, capped at 14; **terminal** once she has played |
 | `rate` | "No" → 30 days. Dismissed → escalating 3, 4, 5, 6, 7 … capped at 15 days |
 | `removeAds` | see §9 |
@@ -925,6 +927,49 @@ onboarding's paywall step in `OnboardingFlow`.
   ~1 MB RemoteViews limit; locked 4×2. `WIDGET_PRESENT_KEY` is written by the task
   handler when a host actually renders an instance — that is the only reliable
   "she has one" signal.
+
+### Overlay cards (Android) — `modules/expo-overlay-cards`
+Daily popups drawn OVER the launcher / other apps, styled after the competitor
+screenshots the owner supplied (owner verified the policy question himself,
+2026-08-16 — do not re-open it). Two cards, fired at HER reminder times:
+morning reminder → the verse card (morning verse over the morning art, Amen
+pill), night reminder → the quiz card (✦ badge, question, 2 options stacked /
+4 in a 2×2 grid — the bank has both shapes, never assume one).
+
+The physics, because every piece follows from them:
+- **The process may be dead at fire time.** AlarmManager → BroadcastReceiver →
+  pure-native window. Nothing on that path may touch React/expo machinery;
+  content (pre-localized strings, verse, question, a LOCAL image path) is
+  mirrored ahead of time by `OverlayCardsSync` — WidgetSync's twin — into
+  SharedPreferences. `imageFor('morning')` is only useful when it returns the
+  disk-cache `file://`; the CDN fallback URL is worthless to a cold process,
+  so no cache yet → native gradient.
+- **Permission is a settings TOGGLE** (`SYSTEM_ALERT_WINDOW`, "Appear on top"),
+  not a runtime dialog. `OverlayCardsPromptHost` (nudge 62) explains and jumps;
+  the grant is detected on the next foreground by `OverlayCardsSync`, which
+  also drains the receiver's queued analytics (`overlay_card_shown/tap/dismiss`
+  — logged natively into prefs because the cold path has no Firebase JS).
+- **Receiver guard order**: re-arm tomorrow FIRST (a crash may not kill the
+  schedule); then permission / configured / not-shown-today; screen off or
+  keyguard up or our own app foreground → retry +8 min, max 5 — that retry loop
+  is what makes the card meet her at pickup instead of firing into a pocket.
+- The window survives only as long as the process (a visible overlay bumps us
+  to perceptible priority — usually enough, not guaranteed; the failure mode is
+  a vanished card, which is fine). 30-min self-destruct, settings-coach removal
+  discipline (clear refs only after a removeView that didn't throw).
+- `FLAG_NOT_FOCUSABLE` only — the card IS touchable (unlike the settings
+  coach), and back-key can't dismiss it: the X is the only way out, per spec.
+- Taps open `herbible://verse-of-day` / `herbible://quiz` (+`&opt=N` on a quiz
+  answer) — plain VIEW intents; SAW grants the background-activity-launch
+  exemption. `DeepLinkHandler.routeForUrl` owns the mapping.
+- OEM notes: MIUI additionally needs "后台弹出界面" for reliable display;
+  Samsung needs only the standard toggle. Android 12+ lets individual apps
+  block overlays over their own windows (`setHideOverlayWindows`) — over the
+  launcher, which is the normal case, this doesn't apply.
+- Kotlin traps already paid for: `const val` rejects `.toInt()` (use `val`);
+  the card's width must live on the WINDOW LayoutParams and the verse body's
+  height on the `addView` lp — `addView(lp)` silently replaces whatever the
+  child set on itself.
 
 ---
 

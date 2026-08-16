@@ -474,6 +474,15 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'nudge.widget.body':             { en: 'Keep today\'s verse and your next prayer on your home screen.', context: 'Body of the widget-install nudge.' },
   'nudge.widget.cta':              { en: 'Add widget', context: 'CTA — opens the widget setup screen.' },
   'nudge.widget.later':            { en: 'Not now', context: 'Dismiss button on the widget-install nudge.' },
+
+  // ── Overlay cards (Android): daily verse + quiz popups drawn over the
+  // launcher at her reminder times (modules/expo-overlay-cards). The nudge asks
+  // for the "Display over other apps" toggle; the badge titles the quiz card.
+  'nudge.overlay.title':           { en: 'Your daily verse, right on your screen', context: 'Title of the overlay-cards permission nudge. Sells the benefit, not the mechanism.' },
+  'nudge.overlay.body':            { en: 'At your reminder times, the day\'s verse and a little Bible quiz can appear as cards on your screen — even when the app is closed. Just allow "Display over other apps".', context: 'Body of the overlay-cards nudge. The quoted switch name mirrors the Android settings toggle wording so she recognizes it on the next page.' },
+  'nudge.overlay.cta':             { en: 'Turn it on', context: 'CTA — opens the system "Appear on top" settings page for this app.' },
+  'nudge.overlay.later':           { en: 'Not now', context: 'Decline; the nudge re-asks days later.' },
+  'overlayCards.quizBadge':        { en: 'Daily Bible Quiz', context: 'Badge title on the native quiz overlay card, rendered between two ✦ glyphs. Keep short — one line on a phone-width card.' },
   'weekly.back':                   { en: 'Back',           context: 'Back button below weekly card — returns to PrayerScreen.' },
   'onboarding.welcome.title': { en: 'Welcome to Her Bible', context: 'First onboarding screen — warm greeting above the language picker. "Her Bible" is the brand, keep it.' },
   'onboarding.welcome.sub': { en: 'A gentle space for your walk with God. First, choose your language.', context: 'Sub-line on the welcome/language step. Rendered in the DETECTED system language before the user picks.' },

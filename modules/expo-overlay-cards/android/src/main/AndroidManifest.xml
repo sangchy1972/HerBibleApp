@@ -1,0 +1,21 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- Reschedule the daily card alarms after a reboot — AlarmManager forgets
+       everything on power-off, and the app may not be opened for days. -->
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+  <application>
+    <!-- exported=false on both: the alarm receiver is only ever targeted by our
+         own PendingIntents, and protected system broadcasts (BOOT_COMPLETED)
+         are delivered by the system regardless of exported. -->
+    <receiver
+      android:name="expo.modules.overlaycards.OverlayCardAlarmReceiver"
+      android:exported="false" />
+    <receiver
+      android:name="expo.modules.overlaycards.OverlayCardBootReceiver"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+      </intent-filter>
+    </receiver>
+  </application>
+</manifest>

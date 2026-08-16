@@ -89,6 +89,12 @@ function routeForUrl(url: string): { screen: keyof RootStackParamList; params?: 
       // No slot in the URL → pick by time of day (PrayerFlow needs a kind).
       return { screen: 'PrayerFlow', params: { kind: kindByTime() } };
     }
+    if (path === 'quiz') {
+      // The overlay quiz card (expo-overlay-cards). The tapped option rides in
+      // `?opt=N` for analytics only — the native side already queued the event;
+      // the screen runs the real set from its own state.
+      return { screen: 'Quiz' };
+    }
     if (path.startsWith('plan')) {
       return { screen: 'Tabs' };
     }

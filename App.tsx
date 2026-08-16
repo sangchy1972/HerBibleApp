@@ -78,6 +78,8 @@ import LoginPromptHost from './src/components/LoginPromptHost';
 import MoodCheckInSheet from './src/components/MoodCheckInSheet';
 import SetReminderTimeHost from './src/components/SetReminderTimeHost';
 import WidgetInstallHost from './src/components/WidgetInstallHost';
+import OverlayCardsPromptHost from './src/components/OverlayCardsPromptHost';
+import OverlayCardsSync from './src/components/OverlayCardsSync';
 import RemoveAdsPromptHost from './src/components/RemoveAdsPromptHost';
 import FirstRunTourHost from './src/components/FirstRunTourHost';
 import AudioMiniHost from './src/components/AudioMiniHost';
@@ -316,6 +318,11 @@ export default function App() {
                                           {/* One-time widget-install nudge
                                               (engaged users, day 3+). */}
                                           <WidgetInstallHost />
+                                          {/* "Appear on top" ask for the daily
+                                              overlay cards (verse + quiz popups
+                                              over the launcher). Android only;
+                                              silent once granted. */}
+                                          <OverlayCardsPromptHost />
                                           {/* Proactive remove-ads pitch: opens
                                               the paywall after the first ad of
                                               a qualifying day (2nd active day,
@@ -346,6 +353,12 @@ export default function App() {
                                               widget. Null render; needs DailyVerses
                                               + PrayerBackgrounds (both above). */}
                                           <WidgetSync />
+                                          {/* Mirrors today's verse + quiz teaser
+                                              into the native overlay-card store
+                                              (popups shown over the launcher at
+                                              her reminder times). Null render;
+                                              Android + permission-gated inside. */}
+                                          <OverlayCardsSync />
                                           {/* Quietly pre-warms prayer-flow
                                               narration + plan covers/details
                                               after launch settles (phases 3-4).

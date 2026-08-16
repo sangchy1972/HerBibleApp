@@ -19,6 +19,7 @@ export type NudgeId =
   | 'moodCheckIn'
   | 'login'
   | 'widgetInstall'
+  | 'overlayCards'
   | 'quizPromo'
   | 'streakCongrats'
   | 'rate'
@@ -48,6 +49,11 @@ export const NUDGE_PRIORITY: Record<NudgeId, number> = {
   moodCheckIn:       40,
   login:             50,
   widgetInstall:     60,
+  // The "Appear on top" ask for the daily overlay cards (verse + quiz popups
+  // over the launcher). Just below the widget: both are retention hardware,
+  // but the widget is the cheaper grant (one launcher dialog vs a trip into
+  // system settings), so on a day both are due the easier yes goes first.
+  overlayCards:      62,
   // Between the widget ask and the rate prompt. It yields to everything that is
   // either a reward she earned or an ask that unlocks real functionality, and
   // outranks only the rate prompt — which can always wait another day. It is

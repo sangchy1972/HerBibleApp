@@ -153,6 +153,25 @@ npm run submit:ios
 - **应用图标**：Play Console 要 512×512 PNG。
 - 商店文案里**不写广告 / ATT / 追踪**，只写用户看得见的改进。
 
+### SYSTEM_ALERT_WINDOW 审核答辩词（备用，Play 人工审核问起时直接贴）
+
+> Her Bible uses SYSTEM_ALERT_WINDOW ("Display over other apps") for a single
+> user-facing feature: optional daily devotional cards (the day's Bible verse,
+> and a short Bible quiz) shown at the user's own reminder times. The feature
+> is strictly opt-in — the user enables the permission herself on the system
+> settings page after an in-app explanation, exactly the flow the Permissions
+> policy prescribes for special permissions. It can be turned off at any time
+> via an in-app switch (Profile → Cards on your screen) or by revoking the
+> permission. The overlay cards contain only app content — no ads, no
+> promotions, no third-party material — are clearly branded with the app icon
+> and name, dismissible with one tap, never shown on the lock screen, and
+> capped at two per day.
+
+政策核对记录(2026-08-16,原文见 dev-guide §10):SAW 属 special permission,
+官方指定的申请方式就是跳系统设置页;广告政策封杀的是**广告**出现在应用外
+(明确点名 overlays)——所以悬浮卡里**永远不能**出现广告/促销/paywall 入口,
+这条红线写在 dev-guide §10。
+
 ---
 
 ## 6. 上架后

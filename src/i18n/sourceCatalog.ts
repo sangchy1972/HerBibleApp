@@ -1213,6 +1213,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'profile.sheet.noMatches':       { en: 'No matches for "{query}"', context: 'Empty-state when a search query yields no results inside any of the four content sheets. {query} is the user\'s search term.' },
   'profile.widget.eyebrow':        { en: 'Home screen widget', context: 'Gray sub-line under the widget banner title (was an uppercase eyebrow).' },
   'profile.widget.title':          { en: 'Daily verse, one tap away', context: 'Widget banner title.' },
+  'profile.widget.sectionTitle':   { en: 'Add Widget to Homepage', context: 'Section title above the live widget demo on the Profile tab. Owner-specified exact EN string (2026-08-16). The demo below IS the tap target into AddWidget.' },
   'profile.widget.sub':            { en: 'Pick a size and add it in seconds.', context: 'Widget banner sub-title.' },
   'profile.signOut.row':           { en: 'Sign out',       context: 'Settings row label in the danger zone — opens the sign-out confirm.' },
   'profile.signOut.confirmCancel': { en: 'Cancel',         context: 'Cancel button in sign-out confirmation alert.' },

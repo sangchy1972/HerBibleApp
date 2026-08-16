@@ -120,6 +120,20 @@ object OverlayCardStore {
     return n <= max
   }
 
+  // ── Overlay-entry stamp ───────────────────────────────────────────────────
+  // Written the instant a card is tapped, BEFORE the app is opened. The ad
+  // layer reads it synchronously at hot-start-decision time, so "she tapped a
+  // devotional card and got an interstitial first" can never race an event —
+  // the stamp is already on disk when our Activity resumes.
+  fun stampTap(ctx: Context) {
+    prefs(ctx).edit().putLong("lastTapAt", System.currentTimeMillis()).apply()
+  }
+
+  fun msSinceTap(ctx: Context): Double {
+    val t = prefs(ctx).getLong("lastTapAt", 0L)
+    return if (t <= 0L) -1.0 else (System.currentTimeMillis() - t).toDouble()
+  }
+
   // ── Analytics hand-off ────────────────────────────────────────────────────
   // The receiver runs without Firebase JS, so events queue in prefs and the app
   // drains them into logEvent() on its next open. Capped so an app never opened

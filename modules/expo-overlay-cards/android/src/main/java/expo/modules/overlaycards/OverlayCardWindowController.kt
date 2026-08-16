@@ -134,6 +134,9 @@ object OverlayCardWindowController {
 
   private fun tap(ctx: Context, card: OverlayCard, link: String, extra: Map<String, String>) {
     OverlayCardStore.queueEvent(ctx, "overlay_card_tap", mapOf("slot" to card.slot, "kind" to card.kind) + extra)
+    // Stamp BEFORE opening: adFrequency reads this synchronously on the
+    // foreground return and skips the hot-start interstitial for this entry.
+    OverlayCardStore.stampTap(ctx)
     openApp(ctx, link)
     remove()
   }

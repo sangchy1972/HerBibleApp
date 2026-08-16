@@ -4,7 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { areAdsRemoved } from '../services/ads';
 import { useTabFocusScrollReset } from '../components/shared/useTabFocusEntrance';
 import TabSection from '../components/shared/TabSection';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, Modal, Share, Platform, Keyboard, AppState } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, Modal, Share, Platform, Keyboard, AppState, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -52,6 +52,9 @@ import { ACHIEVEMENTS } from '../constants/achievements';
 import SignInSheet from '../components/SignInSheet';
 import VerseNoteSheet from '../components/VerseNoteSheet';
 import WideSwitch from '../components/WideSwitch';
+import WidgetPreview from '../components/WidgetPreview';
+import { useDailyVerses } from '../state/DailyVersesContext';
+import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useSheetSurface } from '../state/promptSurface';
 import {
   overlayCardsSupported, canDrawOverlays, openOverlaySettings,
@@ -384,6 +387,14 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
   const [overlayGranted, setOverlayGranted] = useState(() => canDrawOverlays());
   useEffect(() => { void hydrateOverlayCardsEnabled(); }, []);
   useFocusEffect(React.useCallback(() => { setOverlayGranted(canDrawOverlays()); }, []));
+  // The widget section shows the REAL widget (owner 2026-08-16) — the same live
+  // 4×2 preview AddWidgetScreen renders: same clock→segment rule, same verse,
+  // same card art. A promo card sold the idea; the thing itself sells better.
+  const { getVerse: getDailyVerse, todayDay: dailyToday } = useDailyVerses();
+  const prayerBg = usePrayerBackgrounds();
+  const widgetDemoSegment: 'morning' | 'evening' =
+    new Date().getHours() >= 18 || new Date().getHours() < 4 ? 'evening' : 'morning';
+  const widgetDemoVerse = getDailyVerse(dailyToday, widgetDemoSegment);
   const [langExpanded, setLangExpanded] = useState(true);
   const [showSignInSheet, setShowSignInSheet] = useState(false);
   const [showEditNameSheet, setShowEditNameSheet] = useState(false);
@@ -877,32 +888,31 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
       </View>
       </TabSection>
 
-      {/* Widget banner — ANDROID ONLY. iOS provides no API to programmatically
+      {/* Widget section — ANDROID ONLY. iOS provides no API to programmatically
           add a home-screen widget, and the app ships no iOS WidgetKit widget, so
           on iOS this leads nowhere. Hidden on iOS until a real widget is built.
-          Mirrors the Remove Ads banner: "+" thumbnail, pink title + one gray line. */}
+          The old pink promo card is gone (owner 2026-08-16): a section title +
+          the REAL live widget demo, tappable as one unit into AddWidget. */}
       {Platform.OS === 'android' && (
       <TabSection delay={150}>{/* 450 → 150 */}
+      <Text style={[styles.sectionTitle, { marginTop: 28, marginBottom: 14 }]}>{t('profile.widget.sectionTitle')}</Text>
       <TouchableOpacity
         onPress={() => navigation.navigate('AddWidget')}
         activeOpacity={0.85}
-        style={[styles.widgetBanner, { marginTop: 28, marginBottom: 0 }]}
+        style={styles.widgetDemoWrap}
       >
-        <LinearGradient
-          colors={[`${ROSE}1A`, `${LAV}1A`]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.widgetBannerInner}
-        >
-          <View style={styles.widgetBannerThumb}>
-            <Feather name="plus" size={42} color={ROSE} strokeWidth={3} />
-          </View>
-          <View style={styles.widgetBannerCopy}>
-            <Text style={[styles.widgetBannerTitle, styles.bannerTitleRose]} numberOfLines={1} ellipsizeMode="tail">{t('profile.widget.title')}</Text>
-            <Text style={styles.widgetBannerSub} numberOfLines={2} ellipsizeMode="tail">{t('profile.widget.eyebrow')}</Text>
-          </View>
-          <Feather name="chevron-right" size={20} color={TXTSUB} />
-        </LinearGradient>
+        {/* pointerEvents none: the preview is one big tap target — nothing
+            inside it (the Amen pill included) may swallow the touch. */}
+        <View pointerEvents="none">
+          <WidgetPreview
+            size="4x2"
+            width={Math.min(Dimensions.get('window').width - 48, 360)}
+            body={widgetDemoVerse?.modernText}
+            reference={widgetDemoVerse?.reference.full_reference}
+            segment={widgetDemoSegment}
+            bgSource={prayerBg.imageFor(widgetDemoSegment)}
+          />
+        </View>
       </TouchableOpacity>
       </TabSection>
       )}
@@ -1522,56 +1532,9 @@ const styles = StyleSheet.create({
   statBottomRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 4 },
   statNum: { flex: 1, fontSize: 22, fontWeight: '700', color: TXT, fontFamily: FONTS.latoBold, letterSpacing: 0.4, textAlign: 'right' },
   statLabel: { flex: 3, fontSize: 12.14, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.4, textAlign: 'center', lineHeight: 15.18 },
-  widgetBanner: {
-    // Matches notesTile (My Notes cards) 1:1 per user — same radius/height/
-    // shadow AND 
-    // shadow props alone render flat on Android — Android shadows need elevation).
-    marginBottom: 25,
-    height: 92,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-  },
-  widgetBannerInner: {
-    flex: 1,                                                                     // fills the outer banner's locked 92 px height — the gradient now matches the card outline exactly
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,                                                         // 14 → 10 so a 72 px icon + 2×10 padding == 92 (the locked card height) without clipping
-    paddingHorizontal: 14,
-    gap: 14,
-    // Round the gradient fill itself, since the outer wrapper no longer uses
-    // overflow:hidden (which would clash with shadow on Android).
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  // Was a 72-px frame wrapping the mini WidgetPreview; now wraps a bold
-  // "+" icon (language-agnostic — doesn't need to render localized sample
-  // text inside a small thumbnail). Soft ROSE-tinted fill + rounded corners
-  // match the surrounding pill aesthetic.
-  widgetBannerThumb: {
-    width: 72,
-    height: 72,
-    borderRadius: 14,
-    backgroundColor: `${ROSE}14`,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  widgetBannerCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  widgetBannerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: TXT,
-    marginBottom: 2,
-    fontFamily: FONTS.latoBold, letterSpacing: 0.5,
-  },
-  widgetBannerSub: {
-    fontSize: 13,
-    color: TXTSUB,
-    lineHeight: 18,
-    fontFamily: FONTS.lato, letterSpacing: 0.4,
-  },
+  // The widget section is now the REAL 4×2 preview under a section title
+  // (owner 2026-08-16) — the old pink promo-banner styles went with the card.
+  widgetDemoWrap: { alignItems: 'center' },
   achievementPreview: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1707,11 +1670,6 @@ const styles = StyleSheet.create({
     height: 118,
     flexShrink: 0,
   },
-  // Rose banner-title override on top of widgetBannerTitle — Lato 600 per user
-  // (reverted from Lora 600). Used by the WIDGET banner; it was named
-  // removeAdsTitle back when the Remove Ads card shared this style, which it no
-  // longer does.
-  bannerTitleRose: { fontSize: 17.64, fontWeight: '600', fontFamily: FONTS.latoBold, letterSpacing: 0.5, color: ROSE },                     // ROSE matches "See all" link color per user; 16 → 16.8 → 17.64 (cumulative +10 %)
   settingsCard: {
     overflow: 'hidden',
     padding: 0,

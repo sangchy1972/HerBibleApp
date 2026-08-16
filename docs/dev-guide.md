@@ -984,6 +984,17 @@ The physics, because every piece follows from them:
   the card's width must live on the WINDOW LayoutParams and the verse body's
   height on the `addView` lp — `addView(lp)` silently replaces whatever the
   child set on itself.
+- **RED LINE — no ads in overlay windows, ever.** Play's Ads policy (checked
+  against the live text, 2026-08-16): *"Ads may only be displayed inside of
+  the app serving them… This includes overlays."* The cards are compliant
+  precisely BECAUSE they carry only content (verse, quiz) — the moment any ad,
+  paywall promo, or third-party anything rides in an overlay, this feature
+  becomes the thing that clause bans. Relatedly: a tap-through entry suppresses
+  the hot-start interstitial (`overlayEntry` veto in `shouldFireHotStart`, fed
+  by a native tap stamp written before the app opens) — she tapped a devotional
+  card; the ad on arrival would be the Better-Ads "unexpected, user chose
+  something else" shape. This is an entry-path veto only; the settled `app_open`
+  decision is untouched.
 
 ---
 

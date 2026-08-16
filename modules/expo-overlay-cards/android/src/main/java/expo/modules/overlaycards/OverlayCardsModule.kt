@@ -106,6 +106,14 @@ class OverlayCardsModule : Module() {
       } catch (e: Throwable) { -1 }
     }
 
+    // Milliseconds since a card was last tapped, -1 if never. Read by the ad
+    // layer at hot-start-decision time — an entry that BEGAN on a devotional
+    // card must not open with an interstitial.
+    Function("msSinceLastOverlayTap") {
+      val c = ctx ?: return@Function -1.0
+      try { OverlayCardStore.msSinceTap(c) } catch (e: Throwable) { -1.0 }
+    }
+
     // Analytics queued by the cold receiver path, JSON array — the app drains
     // this on foreground and feeds logEvent().
     Function("drainEvents") {

@@ -188,6 +188,12 @@ describe('hot start: when a foreground-return may show app_open', () => {
     expect(shouldFireHotStart({ bgAt: T, now: T + 120_000, suppressedUntil: 0, adCausedBg: false })).toBe(true);
   });
 
+  it('never fires when the return began on an overlay-card tap — the devotional entry must not open with an ad', () => {
+    expect(shouldFireHotStart({ bgAt: T, now: T + 120_000, suppressedUntil: 0, adCausedBg: false, overlayEntry: true })).toBe(false);
+    // …and the flag only vetoes; absent/false leaves the decision untouched.
+    expect(shouldFireHotStart({ bgAt: T, now: T + 120_000, suppressedUntil: 0, adCausedBg: false, overlayEntry: false })).toBe(true);
+  });
+
   it('stays quiet under 15s — a quick app switch is not a hot start', () => {
     expect(shouldFireHotStart({ bgAt: T, now: T + 14_999, suppressedUntil: 0, adCausedBg: false })).toBe(false);
   });

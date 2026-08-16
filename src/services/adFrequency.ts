@@ -213,14 +213,35 @@ export function suppressNextHotStart(): void {
 // the user leaving.
 let bgCausedByAd = false;
 
+// A return that BEGAN on an overlay card (she tapped the daily verse/quiz
+// popup on her launcher) must not open with an interstitial — "tapped a
+// devotional card, got an ad first" is exactly the Better-Ads "unexpectedly,
+// when the user has chosen to do something else" shape, and it would poison
+// the one entry path we just asked her to enable. The native side stamps the
+// tap to disk BEFORE opening the app, so this check can never race an event.
+const OVERLAY_ENTRY_GRACE_MS = 15_000;
+
+// Lazy + guarded, NOT a top-level import: keeps expo-modules-core out of the
+// jest import graph (this file's pure functions are unit-tested) and degrades
+// to "no overlay tap" on binaries without the native module.
+function msSinceOverlayTap(): number {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const mod = require('../../modules/expo-overlay-cards') as { msSinceLastOverlayTap?: () => number };
+    return mod.msSinceLastOverlayTap?.() ?? Infinity;
+  } catch { return Infinity; }
+}
+
 /** PURE: may this foreground-return fire the hot-start interstitial? */
 export function shouldFireHotStart(opts: {
   bgAt: number | null;
   now: number;
   suppressedUntil: number;   // store-review excursion window
   adCausedBg: boolean;       // the episode began under our own interstitial
+  overlayEntry?: boolean;    // the return began on an overlay-card tap
 }): boolean {
   if (opts.adCausedBg) return false;
+  if (opts.overlayEntry) return false;
   if (opts.suppressedUntil > opts.now) return false;
   return opts.bgAt != null && opts.now - opts.bgAt >= HOTSTART_MIN_BG_MS;
 }
@@ -240,7 +261,10 @@ function onAppState(next: AppStateStatus): void {
     // interval floor, the foreground check and the remove-ads flag all still apply
     // inside maybeShowInterstitial, and a first-open session can't reach here
     // at all — bgAt is only set once the app has actually been backgrounded.
-    if (shouldFireHotStart({ bgAt, now: Date.now(), suppressedUntil, adCausedBg: adCaused })) {
+    if (shouldFireHotStart({
+      bgAt, now: Date.now(), suppressedUntil, adCausedBg: adCaused,
+      overlayEntry: msSinceOverlayTap() < OVERLAY_ENTRY_GRACE_MS,
+    })) {
       maybeShowInterstitial('app_open');
     }
     bgAt = null;

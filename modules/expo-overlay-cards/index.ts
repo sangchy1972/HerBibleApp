@@ -68,6 +68,14 @@ export function previewOverlayCard(slot: 'morning' | 'night'): boolean {
   try { return Native?.preview?.(slot) ?? false; } catch { return false; }
 }
 
+/** Milliseconds since a card was last tapped; Infinity if never/unavailable. */
+export function msSinceLastOverlayTap(): number {
+  try {
+    const v = Native?.msSinceLastOverlayTap?.() ?? -1;
+    return typeof v === 'number' && v >= 0 ? v : Infinity;
+  } catch { return Infinity; }
+}
+
 // ── MIUI extras ──────────────────────────────────────────────────────────────
 // Xiaomi/Redmi/POCO additionally gate background-shown overlays behind their
 // own "Display pop-up windows while running in the background" permission.

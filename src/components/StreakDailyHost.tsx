@@ -3,7 +3,10 @@ import { View, Text, TouchableOpacity, StyleSheet, BackHandler } from 'react-nat
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LottieView from 'lottie-react-native';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, {
+  FadeIn, FadeInDown, FadeInUp, ZoomIn,
+  useSharedValue, useAnimatedStyle, withDelay, withTiming, Easing,
+} from 'react-native-reanimated';
 import { usePrayer } from '../state/PrayerContext';
 import { useNudgeCoordinator } from '../state/NudgeCoordinatorContext';
 import { NUDGE_PRIORITY } from '../state/nudgePriority';
@@ -103,13 +106,27 @@ export default function StreakDailyHost() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
-  if (!active) return null;
-
   const level = streakLevel(currentStreak);
   const next = LEVEL_INFO[level].next;
   const levelName = t(LEVEL_INFO[level].nameKey);
   const remaining = Math.max(0, next - currentStreak);
   const todayDone = mDone && eDone;
+
+  // The progress bar joins the sequence LAST: it holds at zero through the
+  // card entrances, then sweeps to today's position once the eye is already
+  // on it. Reset to 0 on every activation (ledger rule: shared values reset at
+  // OPEN, or a second showing replays from yesterday's end state) — and this
+  // hook block sits ABOVE the early return below, per the checklist.
+  const pct = Math.min(100, (currentStreak / next) * 100);
+  const fillW = useSharedValue(0);
+  useEffect(() => {
+    if (!active) { fillW.value = 0; return; }
+    fillW.value = 0;
+    fillW.value = withDelay(950, withTiming(pct, { duration: 650, easing: Easing.out(Easing.cubic) }));
+  }, [active, pct, fillW]);
+  const fillStyle = useAnimatedStyle(() => ({ width: `${fillW.value}%` }));
+
+  if (!active) return null;
 
   // Three voices, most specific first: today already lit (rare — the ymd guard
   // means she usually sees this before any prayer) → celebration; today's
@@ -140,15 +157,29 @@ export default function StreakDailyHost() {
   };
   continueRef.current = onContinue;
 
+  // ── Entrance choreography (owner 2026-08-16: everything enters in order) ──
+  // Flame → number → caption → state line → milestone card → week row → CTA,
+  // ~90 ms apart, the button deliberately last: the exit appears only after
+  // the story is told. Same `entering=` stagger StreakScreen ships (this host
+  // is NOT inside an RN Modal, so layout animations are on safe ground — the
+  // sheet rule about shared values applies to Modal trees only).
+  const SLOT = 90;
+
   return (
     <Animated.View entering={FadeIn.duration(220)} style={styles.root}>
       <View style={[styles.content, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 20 }]}>
         <View style={styles.hero}>
           {/* 500×690 comp — width = height × 0.725 keeps its aspect (StreakScreen). */}
-          <LottieView source={LOTTIE_FIRE} autoPlay loop style={styles.flame} />
-          <Text style={styles.big}>{currentStreak}</Text>
-          <Text style={styles.caption}>{t('streakDaily.caption')}</Text>
-          <Animated.Text entering={FadeInDown.duration(400).delay(150)} style={styles.stateLine}>
+          <Animated.View entering={ZoomIn.duration(420)}>
+            <LottieView source={LOTTIE_FIRE} autoPlay loop style={styles.flame} />
+          </Animated.View>
+          <Animated.Text entering={ZoomIn.duration(380).delay(SLOT * 1)} style={styles.big}>
+            {currentStreak}
+          </Animated.Text>
+          <Animated.Text entering={FadeInDown.duration(400).delay(SLOT * 2)} style={styles.caption}>
+            {t('streakDaily.caption')}
+          </Animated.Text>
+          <Animated.Text entering={FadeInDown.duration(400).delay(SLOT * 3)} style={styles.stateLine}>
             {stateLine}
           </Animated.Text>
         </View>
@@ -156,33 +187,35 @@ export default function StreakDailyHost() {
         <View style={styles.lower}>
           {/* Next-level progress — the reward hook, from the ladder the app
               already owns (Spark → … → Blazing). */}
-          <View style={styles.milestone}>
+          <Animated.View entering={FadeInUp.duration(400).delay(SLOT * 4)} style={styles.milestone}>
             <View style={styles.milestoneLabels}>
               <Text style={styles.milestoneNow}>{levelName} · {currentStreak}</Text>
               <Text style={styles.milestoneNext}>{t(LEVEL_INFO[Math.min(level + 1, 5)].nameKey)} · {next}</Text>
             </View>
             <View style={styles.track}>
-              <View style={[styles.fill, { width: `${Math.min(100, (currentStreak / next) * 100)}%` }]} />
+              <Animated.View style={[styles.fill, fillStyle]} />
             </View>
             {remaining > 0 && (
               <Text style={styles.milestoneSub}>
                 {t('streakDaily.next', { n: remaining, level: t(LEVEL_INFO[Math.min(level + 1, 5)].nameKey) })}
               </Text>
             )}
-          </View>
+          </Animated.View>
 
-          <View style={styles.weekCard}>
+          <Animated.View entering={FadeInUp.duration(400).delay(SLOT * 5)} style={styles.weekCard}>
             {DAYS.map((d, i) => {
               const isToday = i === TODAY_IDX;
               const done = wasCompleteOn(weekKeys[i]);
               const half = isToday && (mDone || eDone) && !(mDone && eDone);
               return <DayCircle key={d} label={d} done={done} half={half} isToday={isToday} morning={true} />;
             })}
-          </View>
+          </Animated.View>
 
-          <TouchableOpacity onPress={onContinue} activeOpacity={0.9} style={styles.cta}>
-            <Text style={styles.ctaText}>{t('common.continue')}</Text>
-          </TouchableOpacity>
+          <Animated.View entering={FadeInUp.duration(400).delay(SLOT * 6)}>
+            <TouchableOpacity onPress={onContinue} activeOpacity={0.9} style={styles.cta}>
+              <Text style={styles.ctaText}>{t('common.continue')}</Text>
+            </TouchableOpacity>
+          </Animated.View>
         </View>
       </View>
     </Animated.View>

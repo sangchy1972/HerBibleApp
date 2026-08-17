@@ -40,6 +40,7 @@ export type RootStackParamList = {
   AddWidget: undefined;
   AboutUs: undefined;
   Policy: { id: 'terms' | 'privacy' | 'content' | 'acknowledgments' };
+  Settings: undefined;
   Notifications: undefined;
   OtherNotifications: undefined;
   Achievement: undefined;

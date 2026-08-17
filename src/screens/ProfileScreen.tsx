@@ -934,7 +934,8 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
           <Text style={styles.settingValue}>{currentTranslation.nativeName}</Text>
           <Feather name="chevron-right" size={18} color={TXTSUB} />
         </TouchableOpacity>
-        <SettingRow icon="bell"          label={t('profile.account.notifications')} onPress={() => navigation.navigate('Notifications')} />
+        {/* Notifications moved INTO Settings (owner 2026-08-16) — no longer a
+            standalone Account row. The Settings row below is now a real screen. */}
         {/* Daily overlay cards — the permanent entry whose main job is
             reminding users who never enabled them (owner 2026-08-16). Status
             text goes ROSE while off, so the row itself does the inviting. */}
@@ -954,7 +955,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
             <Feather name="chevron-right" size={18} color={TXTSUB} />
           </TouchableOpacity>
         )}
-        <SettingRow icon="settings"      label={t('profile.account.settings')}     onPress={() => showToast(t('toast.comingSoon', { feature: t('profile.account.settings') }))} />
+        <SettingRow icon="settings"      label={t('profile.account.settings')}     onPress={() => navigation.navigate('Settings')} />
         <SettingRow icon="message-circle" label={t('profile.account.helpCenter')} onPress={() => navigation.navigate('HelpCenter')} />
         <SettingRow icon="info"          label={t('profile.account.aboutUs')}     isLast onPress={() => navigation.navigate('AboutUs')} />
       </Glass>

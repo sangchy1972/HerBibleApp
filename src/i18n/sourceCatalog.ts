@@ -1471,6 +1471,12 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'shareVerse.alert.shareUnavail.title': { en: 'Sharing unavailable',                             context: 'Alert title when the device has no share-sheet capability.' },
   'shareVerse.alert.shareUnavail.body':  { en: 'This device cannot open the share sheet.',        context: 'Alert body for shareVerse.alert.shareUnavail.title.' },
   'shareVerse.appShare.dialogTitle': { en: 'Share to {app}',                                       context: 'Dialog title when sharing to a specific app (Facebook/Instagram/WhatsApp). {app} is the destination app name.' },
+  // ── Instagram second step (owner 2026-08-17): Feed or Story picker shown
+  // after the Instagram button. Labels follow Instagram's OWN localized product
+  // terms per language. No Reels — the official channel is video-only.
+  'shareVerse.ig.title':           { en: 'Share to Instagram', context: 'Title of the small Feed/Story picker overlay.' },
+  'shareVerse.ig.feed':            { en: 'Feed', context: 'Option label — share as a regular Instagram post. Use Instagram\'s own localized term.' },
+  'shareVerse.ig.story':           { en: 'Story', context: 'Option label — share into the Instagram story composer. Use Instagram\'s own localized term.' },
   'shareVerse.share.dialogTitle':  { en: 'Share verse',                                            context: 'Dialog title for the generic system share-sheet.' },
 
   // RemoveAdsScreen alerts (placeholders pre-IAP wire-up)

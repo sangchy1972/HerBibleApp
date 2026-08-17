@@ -224,6 +224,77 @@ export default function ShareVerseSheet({ reference, text, onClose, bgSource }: 
     } finally { if (tm) clearTimeout(tm); }
   };
 
+  // Instagram gets a second step (owner 2026-08-17, after the competitor's
+  // share sheet): Feed or Story. The competitor gets that bubble for free from
+  // Samsung's SYSTEM share sheet (Instagram declares several receiving
+  // activities and the system disambiguates); our sheet targets the package
+  // directly, so we present the choice ourselves. No Reels option on purpose:
+  // the official ADD_TO_REEL channel is video-only — a static verse card would
+  // land in an empty Reels camera, which reads as a broken button.
+  const [igPicker, setIgPicker] = useState(false);
+
+  const openInstagramPicker = async () => {
+    if (busy) return;
+    if (!IS_EXPO_GO) {
+      let installed = false;
+      try { installed = await Linking.canOpenURL(APP_CONFIG.instagram.scheme); } catch { installed = false; }
+      if (!installed) { promptInstall('instagram'); return; }
+    }
+    setIgPicker(true);
+  };
+
+  // Meta App ID (docs/ad-unit-ids.md) — Instagram Stories' share channel wants
+  // it as `source_application` attribution on both platforms. Already public in
+  // the shipped binary via the Audience Network placements, so no new exposure.
+  const META_APP_ID = '1020655230368479';
+
+  const shareInstagram = async (target: 'feed' | 'stories') => {
+    setIgPicker(false);
+    if (busy) return;
+    setBusy(true);
+    try {
+      const url = await captureCard();
+      if (target === 'stories') {
+        // Official story composer channel (ADD_TO_STORY on Android, the
+        // pasteboard + instagram-stories:// flow on iOS — the scheme is already
+        // in LSApplicationQueriesSchemes). Full-bleed card as the background.
+        const done = await shareSingleGuarded({
+          social: Social.InstagramStories,
+          appId: META_APP_ID,
+          backgroundImage: url,
+        });
+        if (!done) return;                     // timed out — treat as a cancel
+      } else if (Platform.OS === 'ios') {
+        // Feed on iOS: the library deep link needs the photo ALREADY in the
+        // camera roll (see shareSelected's block comment for the 12.3.1 trap).
+        await MediaLibrary.saveToLibraryAsync(url);
+        await Linking.openURL('instagram://library');
+      } else {
+        const done = await shareSingleGuarded({ url, type: CAPTURE_MIME, social: SOCIAL_MAP.instagram });
+        if (!done) return;
+      }
+      recordShare();
+      logEvent('share', {
+        content_type: 'verse', item_id: reference,
+        method: target === 'stories' ? 'instagram_stories' : 'instagram',
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (/cancel|dismiss|did not share/i.test(msg)) return;
+      // Same last resort as shareSelected: the system sheet still gets her there.
+      try {
+        const url = await captureCard();
+        await Sharing.shareAsync(url, { mimeType: CAPTURE_MIME, dialogTitle: t('shareVerse.appShare.dialogTitle', { app: APP_CONFIG.instagram.label }) });
+        recordShare();
+        logEvent('share', { content_type: 'verse', item_id: reference, method: 'instagram' });
+      } catch {
+        Alert.alert(t('error.couldNotShare'), msg);
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const shareSelected = async (app: AppKey) => {
     if (busy) return;
     const cfg = APP_CONFIG[app];
@@ -401,7 +472,7 @@ export default function ShareVerseSheet({ reference, text, onClose, bgSource }: 
               <>
                 <AppButton label="Facebook"  brand="#1877F2" onPress={() => shareSelected('facebook')}  glyph={<FacebookGlyph />} />
                 <AppButton label="WhatsApp"  brand="#25D366" onPress={() => shareSelected('whatsapp')}  glyph={<WhatsAppGlyph />} />
-                <AppButton label="Instagram" brand="#E1306C" onPress={() => shareSelected('instagram')} glyph={<InstagramGlyph />} />
+                <AppButton label="Instagram" brand="#E1306C" onPress={openInstagramPicker} glyph={<InstagramGlyph />} />
                 <AppButton label="Download"  brand="rgba(30,27,46,0.85)" onPress={downloadCard} glyph={<Feather name="download" size={20} color="#fff" />} />
                 <AppButton label="Share"     brand={ROSE} onPress={shareMore} glyph={<Feather name="share" size={20} color="#fff" />} />
               </>
@@ -440,7 +511,54 @@ export default function ShareVerseSheet({ reference, text, onClose, bgSource }: 
           )}
         </Animated.View>
       </GestureDetector>
+
+      {/* Instagram Feed/Story picker — an IN-VIEW overlay, not a second Modal:
+          we are already inside one, and a nested Modal is a separate Android
+          window with all of §2's traps. Backdrop tap cancels. */}
+      {igPicker && (
+        <View style={styles.igOverlay}>
+          <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={() => setIgPicker(false)} />
+          <View style={styles.igCard}>
+            <Text style={styles.igTitle}>{t('shareVerse.ig.title')}</Text>
+            <View style={styles.igRow}>
+              <TouchableOpacity style={styles.igOption} activeOpacity={0.85} onPress={() => shareInstagram('feed')}>
+                <View style={styles.igDisc}><IgFeedGlyph /></View>
+                <Text style={styles.igLabel}>{t('shareVerse.ig.feed')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.igOption} activeOpacity={0.85} onPress={() => shareInstagram('stories')}>
+                <View style={styles.igDisc}><IgStoryGlyph /></View>
+                <Text style={styles.igLabel}>{t('shareVerse.ig.story')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
+  );
+}
+
+// Feed: the classic grid. Story: the broken story ring with a plus — both
+// drawn, monochrome white, matching the house vectors-over-emoji rule.
+function IgFeedGlyph() {
+  return (
+    <Svg width={22} height={22} viewBox="0 0 24 24">
+      <Path
+        d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"
+        stroke="#FFFFFF" strokeWidth={1.8} strokeLinejoin="round" fill="none"
+      />
+    </Svg>
+  );
+}
+function IgStoryGlyph() {
+  return (
+    <Svg width={22} height={22} viewBox="0 0 24 24">
+      {/* dashed story ring */}
+      <Path
+        d="M12 3 A9 9 0 0 1 21 12 A9 9 0 0 1 12 21 A9 9 0 0 1 3 12"
+        stroke="#FFFFFF" strokeWidth={1.8} strokeLinecap="round" fill="none" strokeDasharray="4.7 3"
+      />
+      <Path d="M12 8.5v7M8.5 12h7" stroke="#FFFFFF" strokeWidth={1.8} strokeLinecap="round" />
+    </Svg>
   );
 }
 
@@ -563,4 +681,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18, paddingVertical: 10,
   },
   toastText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+
+  // ── Instagram Feed/Story picker ──
+  igOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(20,12,24,0.45)',
+    alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 44,
+  },
+  igCard: {
+    alignSelf: 'stretch',
+    backgroundColor: '#FFFFFF', borderRadius: 20,
+    paddingTop: 20, paddingBottom: 18, paddingHorizontal: 18,
+  },
+  igTitle: { fontSize: 17, fontWeight: '700', color: TXT, textAlign: 'center', marginBottom: 16 },
+  igRow: { flexDirection: 'row', justifyContent: 'center', gap: 26 },
+  igOption: { alignItems: 'center', width: 84 },
+  igDisc: {
+    width: 54, height: 54, borderRadius: 27,
+    backgroundColor: '#E1306C',
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 8,
+  },
+  igLabel: { fontSize: 13.5, fontWeight: '600', color: TXT },
 });

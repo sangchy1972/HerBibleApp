@@ -1089,22 +1089,43 @@ the fleet, never overnight. Families, each with its receipt:
   fetch's `ForwardingCookieHandler → CookieManager.getInstance`), GMA
   `MobileAds.initialize` (Blocked on DisplayManagerGlobal, on mqt_native), UMP's
   `WebSettings.getDefaultUserAgent` (Blocked on WebViewFactory), and main's own
-  layout `getDisplayInfo` → 5s input budget gone. **Receipt that these are
-  pre-1.4.1 sessions**: getInstance sits on an OkHttp request thread — the
-  1.4.1 warmup thread doesn't exist in the trace. Fixes: withCookieWarmup
-  (1.4.1) takes the provider load off the request path and to t≈0; 1.4.2 defers
-  Android ads init (GMA + UMP) 6s past interactions-settled
-  (`ADS_INIT_COLD_START_DELAY_MS`, App.tsx), removing two more convoy parties.
-  iOS untouched.
+  layout `getDisplayInfo` → 5s input budget gone. The traces show pre-1.4.1
+  sessions (getInstance on an OkHttp request thread; no warmup thread) — but
+  **that proves only their age, NOT that 1.4.1 works** (owner correction
+  2026-08-17: Play vitals lag ~3 days and 1.4.1 had just shipped, so old
+  sessions are all the data COULD contain; fix efficacy stays unproven until
+  per-version vitals land). Hence 1.4.2 stops betting on timing and removes the
+  trigger class outright, three layers:
+  1. `CookieJar.NO_COOKIES` OkHttp factory injected into MainApplication
+     (withCookieWarmup.js layer 1) — RN's fetch path never touches
+     CookieManager again, on any device, at any time. Audited safe: no
+     cookie use anywhere (CDN public, CF Access is header-based, Firebase is
+     native networking, no WebSockets/clearCookies), and RN 0.81's
+     NetworkingModule type-CHECKS the jar (`is CookieJarContainer`) so a
+     plain jar cleanly skips the wiring.
+  2. The warmup thread stays for the remaining WebView consumers (UMP's
+     consent form is a WebView).
+  3. Android ads init (GMA + UMP) deferred 6s past interactions-settled
+     (`ADS_INIT_COLD_START_DELAY_MS`, App.tsx). iOS untouched.
+  **Verification plan, not assumption**: Play Console → Android vitals → ANR
+  rate split BY APP VERSION, first readable ~3 days after 1.4.1/1.4.2 reach
+  users. Judge each version's own rate; never read the blended 28-day number
+  as a fix signal.
 - **A — worklets serialization burst on main (trace 2; the Play-titled issue).**
   Main runs a deep recursive `SerializableWorklet/SerializableObject::toJSValue`
   chain (each worklet evaluated onto the UI runtime, hermes memset = source
   copy) on an armeabi-v7a device while mqt_v_js is also Runnable — a big
-  worklet tree being installed on a weak 32-bit phone. We ship worklets 0.5.1 +
-  reanimated ~4.1.1; latest worklets is 0.11.x but requires a newer reanimated —
-  a real migration, allowed ONLY with the house method: tarball-diff the exact
-  implicated classes (`SerializableWorklet::toJSValue` et al.) for perf changes
-  first. Until then this family has no honest quick fix.
+  worklet tree being installed on a weak 32-bit phone, through the
+  mutex-guarded `RetainingSerializable` (the AroundLock/ReentrancyCheck frames).
+  **Upstream receipt (checked 2026-08-17)**: reanimated PR #10264 is a complete
+  rewrite of exactly this class — lock-free per-runtime cache for
+  `RetainingSerializable`, "major performance gains where 2+ runtimes use the
+  serializable" — merged 2026-08-14 into a FEATURE BRANCH, in no release yet
+  (worklets latest 0.11.4 predates it). Watch for the release that carries it;
+  upgrading before then is the exact upgrade-theater this ledger bans. If B's
+  elimination alone doesn't pull the rate under 0.47%, the interim lever is
+  reducing first-paint worklet volume — profile on a real armeabi-v7a device
+  first.
 - **C — HardwareRenderer.setStopped future-wait while backgrounding (traces 3,
   5).** Main waits for the render thread during window stop; trace 3's RT is
   mid-draw calling the Java frame-complete callback and stalled in an art

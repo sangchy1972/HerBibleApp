@@ -1,6 +1,6 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Text, TextInput, InteractionManager } from 'react-native';
+import { Text, TextInput, InteractionManager, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer, DefaultTheme, useNavigationContainerRef } from '@react-navigation/native';
@@ -107,17 +107,37 @@ export default function App() {
   React.useEffect(() => {
     initFirebase();
     initCloudBackup();
+    // ANDROID: ads init leaves the cold-start window entirely (ANR batch
+    // 2026-08-17, Play traces 1/4). At launch, four parties convoy on the
+    // WebView/Display global locks on slow devices: the WebView provider load
+    // (seconds on old hardware), MobileAds.initialize (blocked on
+    // DisplayManagerGlobal, on mqt_native), UMP's getDefaultUserAgent (blocked
+    // on WebViewFactory), and main's own layout getDisplayInfo — main blows the
+    // 5s input budget. Pushing GMA+UMP 6s past interactions-settled removes two
+    // of the four from the window. Costs nothing: the engine still preloads
+    // minutes before the first real opportunity (prayer_end ≈ minutes in,
+    // hot-start needs a ≥15s excursion first).
+    const ADS_INIT_COLD_START_DELAY_MS = 6000;
+    let adsTimer: ReturnType<typeof setTimeout> | null = null;
     const task = InteractionManager.runAfterInteractions(() => {
       // ATT FIRST, on its own — Apple requires the tracking prompt to appear
       // before tracking begins, and burying it inside initAds got the app
       // rejected (5.1.2(i)). initAds awaits the same one-shot internally, so the
       // GMA SDK still initializes with the resolved status; this only guarantees
       // the human is asked early and unconditionally.
-      ensureAttRequested().finally(() => { initAds(); });
+      ensureAttRequested().finally(() => {
+        if (Platform.OS === 'android') {
+          adsTimer = setTimeout(() => { initAds(); }, ADS_INIT_COLD_START_DELAY_MS);
+        } else {
+          // iOS: untouched — its convoy isn't implicated, and the ATT→init
+          // ordering guarantees stay exactly as reviewed by Apple.
+          initAds();
+        }
+      });
       initAdFrequency();
       // initIap() is NOT here any more — see the deferred effect below.
     });
-    return () => task.cancel();
+    return () => { task.cancel(); if (adsTimer) clearTimeout(adsTimer); };
   }, []);
 
   // Configure the iOS audio session ONCE, globally, at launch — play through the

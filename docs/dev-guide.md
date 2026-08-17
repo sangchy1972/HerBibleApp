@@ -1080,7 +1080,38 @@ Verdicts recorded so the next report starts here instead of from scratch. Method
 in the stack** — RN 0.81.6 and worklets 0.5.2 were both checked this way and neither
 touches the crashing classes, so no upgrade theater.
 
-### soloader "couldn't find DSO: libreactnative.so" (issue 266d1822…, verdict 2026-08-16)
+### ANR batch 2026-08-17 (Play rate ~1%, threshold 0.47% — 5 traces, 3 families)
+The rate is a **28-day trailing window**: it falls only as fixed builds take over
+the fleet, never overnight. Families, each with its receipt:
+- **B — cold-start lock convoy (traces 1, 4; the bulk).** Four parties convoy on
+  the WebView/Display global locks at launch on slow devices: the WebView
+  provider load (held for SECONDS on old hardware, entered via the first
+  fetch's `ForwardingCookieHandler → CookieManager.getInstance`), GMA
+  `MobileAds.initialize` (Blocked on DisplayManagerGlobal, on mqt_native), UMP's
+  `WebSettings.getDefaultUserAgent` (Blocked on WebViewFactory), and main's own
+  layout `getDisplayInfo` → 5s input budget gone. **Receipt that these are
+  pre-1.4.1 sessions**: getInstance sits on an OkHttp request thread — the
+  1.4.1 warmup thread doesn't exist in the trace. Fixes: withCookieWarmup
+  (1.4.1) takes the provider load off the request path and to t≈0; 1.4.2 defers
+  Android ads init (GMA + UMP) 6s past interactions-settled
+  (`ADS_INIT_COLD_START_DELAY_MS`, App.tsx), removing two more convoy parties.
+  iOS untouched.
+- **A — worklets serialization burst on main (trace 2; the Play-titled issue).**
+  Main runs a deep recursive `SerializableWorklet/SerializableObject::toJSValue`
+  chain (each worklet evaluated onto the UI runtime, hermes memset = source
+  copy) on an armeabi-v7a device while mqt_v_js is also Runnable — a big
+  worklet tree being installed on a weak 32-bit phone. We ship worklets 0.5.1 +
+  reanimated ~4.1.1; latest worklets is 0.11.x but requires a newer reanimated —
+  a real migration, allowed ONLY with the house method: tarball-diff the exact
+  implicated classes (`SerializableWorklet::toJSValue` et al.) for perf changes
+  first. Until then this family has no honest quick fix.
+- **C — HardwareRenderer.setStopped future-wait while backgrounding (traces 3,
+  5).** Main waits for the render thread during window stop; trace 3's RT is
+  mid-draw calling the Java frame-complete callback and stalled in an art
+  transition; trace 5's RT is already idle (snapshot after the fact). AOSP
+  stop-handshake stall on loaded devices — no app-side lock of ours in any
+  frame; expected to shrink as A and B shrink the load spikes. Watch, don't
+  chase.
 **Emulator-farm / analysis-sandbox noise. ZERO real users. No code change — and none
 possible.** Read the four receipts before ever re-panicking over this bucket:
 1. **Every trace runs as x86_64 while claiming to be "OnePlus8Pro"** (`Native lib dir:

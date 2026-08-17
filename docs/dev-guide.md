@@ -1080,6 +1080,35 @@ Verdicts recorded so the next report starts here instead of from scratch. Method
 in the stack** — RN 0.81.6 and worklets 0.5.2 were both checked this way and neither
 touches the crashing classes, so no upgrade theater.
 
+### soloader "couldn't find DSO: libreactnative.so" (issue 266d1822…, verdict 2026-08-16)
+**Emulator-farm / analysis-sandbox noise. ZERO real users. No code change — and none
+possible.** Read the four receipts before ever re-panicking over this bucket:
+1. **Every trace runs as x86_64 while claiming to be "OnePlus8Pro"** (`Native lib dir:
+   …/lib/x86_64`). A real OnePlus 8 Pro is a Snapdragon 865 — arm64 — and physically
+   cannot run an x86_64 process. Device mix on the issue: 78% "OnePlus", 19% "Google"
+   (the stock AVD reports as a Pixel), and **3% literally "Qemu"**. 97% proximity-on,
+   3% rooted, 50% background — all emulator defaults.
+2. **Our AAB ships the library they can't find.** Verified in the 1.4.0 artifact:
+   `base/lib/x86_64/libreactnative.so` present (all 4 ABIs). Any install SERVED BY
+   PLAY has working libs on any ABI — a Chromebook user does not crash. The crashing
+   installs' SO-source lists lack the libs entirely (arm-only sideloads/repacks on x86
+   images; one trace even hunts `x86_64` INSIDE `split_config.arm64_v8a.apk`).
+3. **`com.mojito.*` / `org.mojitoaspectj` frames woven into system classes**
+   (MessageDigest, Locale, SharedPreferences, getPackageInfo) and an
+   `InMemoryDexClassLoader` hook that DUMPS Meta's in-memory ads DEX to disk. That is
+   an AspectJ instrumentation sandbox — analysis/repack tooling, present on no real
+   user's phone.
+4. **Cadence is a machine's**: 15 of 17 exported traces landed 06:19–06:31 on one day,
+   with TWO different install hashes inside those 12 minutes (uninstall→reinstall
+   loop), and the crash exists identically on 1.3.0 / 1.4.0 / 1.4.1 → not a
+   regression from anything we shipped. Absolute volume: ~32 events over 6 days
+   against the whole live install base; 1.4.1 shows exactly 1.
+**Standing rule**: this bucket is only worth reopening if a trace shows an arm64
+`Native lib dir` + real Play split paths for arm64 + a device model whose hardware
+matches its ABI. Otherwise it is farm traffic scanning the APK. Do not "fix" it by
+catching the SoLoader throw in onCreate — an app without its native library has
+nothing to fall back to, and the only population served would be sandboxes.
+
 | Issue | Verdict |
 |---|---|
 | `SurfaceMountingManager.getViewState` — "Unable to find viewState for tag" (7 users, 1.3.0–1.4.0) | **RN Fabric internal race — verified against the FULL trace** (owner exported issue `4f8a216f…`, session `6A7DA281…`, read 2026-08-13; the first verdict predated the export and said so). Hard facts from it: the fatal op is `addViewAt` → **parent** tag's viewState already gone, `Surface stopped: false`; the throw escalates because `dispatchMountItems` only soft-logs `ReactIgnorableMountingException` and RETHROWS everything else (MountItemDispatcher.kt:238); **all 179 threads carry zero app frames** and `mqt_v_js` was idle-polling at crash time, so the batch was not a JS-side commit; device was MIUI, session had live audio streams + AdWorkers + a WebView. Unchanged in 0.81.6 (tarball diffed). Two in-app suspects CATALOGUED, not accused: `PlanCategoryScreen`'s FlatList runs `removeClippedSubviews` (clip-culling is the classic parent-gone-mid-batch source), and 6 `exiting=` layout animations (BibleScreen ×3, PlanDayWalk ×2, ProfileScreen ×1 — exit animations delay removal on Fabric). **Decision rule:** when `last_screen` data arrives, if crashes cluster on one of those screens → drop `removeClippedSubviews` / convert that screen's `exiting=` to shared-value fades. No blind mutation before attribution |

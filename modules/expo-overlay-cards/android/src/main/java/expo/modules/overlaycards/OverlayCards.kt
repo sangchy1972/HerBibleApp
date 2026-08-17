@@ -63,8 +63,10 @@ object OverlayCardStore {
     return try { ctx.packageManager.getApplicationLabel(ctx.applicationInfo).toString() } catch (e: Throwable) { "" }
   }
 
-  fun readCards(ctx: Context): List<OverlayCard> =
-    parseCards(prefs(ctx).getString(KEY_CONFIG, null) ?: return emptyList()) ?: emptyList()
+  fun readCards(ctx: Context): List<OverlayCard> {
+    val json = prefs(ctx).getString(KEY_CONFIG, null) ?: return emptyList()
+    return parseCards(json) ?: emptyList()
+  }
 
   fun cardForSlot(ctx: Context, slot: String): OverlayCard? =
     readCards(ctx).firstOrNull { it.slot == slot }

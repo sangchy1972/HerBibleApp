@@ -77,3 +77,6 @@ play-service-account.json
 
 # Quiz bank translation workspace — inputs/outputs are regenerated, not edited
 .quiz-i18n/
+
+# Hand-off reference copies for the next app — local only, never built or uploaded
+handoff-next-app/

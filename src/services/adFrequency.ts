@@ -246,27 +246,48 @@ export function shouldFireHotStart(opts: {
   return opts.bgAt != null && opts.now - opts.bgAt >= HOTSTART_MIN_BG_MS;
 }
 
+// The hot-start decision runs ONE BEAT after 'active', not synchronously in
+// it (owner 2026-08-17). Reason: a notification tap that routes into the
+// prayer flow must suppress this ad, but on a warm return 'active' fires
+// BEFORE the notification listeners deliver the tap — a synchronous decision
+// would always beat the suppression. 600ms covers the listener delivery (and
+// the AsyncStorage drain of the background PRAY action) while staying
+// imperceptible; maybeShowInterstitial re-checks foreground at fire time, and
+// a re-backgrounding cancels the timer outright. The suppress flag is
+// consumed HERE, at decision time, so a suppression that arrives inside the
+// beat still counts. This delays every hot-start ad by 600ms and changes
+// nothing else about the settled app_open decision.
+const HOTSTART_DECISION_DELAY_MS = 600;
+let hotStartDecisionTimer: ReturnType<typeof setTimeout> | null = null;
+
 function onAppState(next: AppStateStatus): void {
   if (next === 'background' || next === 'inactive') {
     if (isInterstitialVisible()) bgCausedByAd = true;
     bgAt = Date.now();
+    // No longer foreground — a pending decision must not fire into this.
+    if (hotStartDecisionTimer) { clearTimeout(hotStartDecisionTimer); hotStartDecisionTimer = null; }
     return;
   }
   if (next === 'active') {
     const adCaused = bgCausedByAd;
     bgCausedByAd = false;                            // consumed either way
-    const suppressedUntil = hotStartSuppressedUntil;
-    hotStartSuppressedUntil = 0;                     // consumed either way
-    // NO day gate (owner 2026-08-08): a hot start monetizes from day 0. The
-    // interval floor, the foreground check and the remove-ads flag all still apply
-    // inside maybeShowInterstitial, and a first-open session can't reach here
-    // at all — bgAt is only set once the app has actually been backgrounded.
-    if (shouldFireHotStart({
-      bgAt, now: Date.now(), suppressedUntil, adCausedBg: adCaused,
-      overlayEntry: msSinceOverlayTap() < OVERLAY_ENTRY_GRACE_MS,
-    })) {
-      maybeShowInterstitial('app_open');
-    }
+    const bgAtSnap = bgAt;
     bgAt = null;
+    if (hotStartDecisionTimer) clearTimeout(hotStartDecisionTimer);
+    hotStartDecisionTimer = setTimeout(() => {
+      hotStartDecisionTimer = null;
+      const suppressedUntil = hotStartSuppressedUntil;
+      hotStartSuppressedUntil = 0;                   // consumed at decision time
+      // NO day gate (owner 2026-08-08): a hot start monetizes from day 0. The
+      // interval floor, the foreground check and the remove-ads flag all still
+      // apply inside maybeShowInterstitial, and a first-open session can't reach
+      // here at all — bgAt is only set once the app has actually backgrounded.
+      if (shouldFireHotStart({
+        bgAt: bgAtSnap, now: Date.now(), suppressedUntil, adCausedBg: adCaused,
+        overlayEntry: msSinceOverlayTap() < OVERLAY_ENTRY_GRACE_MS,
+      })) {
+        maybeShowInterstitial('app_open');
+      }
+    }, HOTSTART_DECISION_DELAY_MS);
   }
 }

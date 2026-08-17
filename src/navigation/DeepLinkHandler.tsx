@@ -8,6 +8,18 @@ import type { NavigationProp } from '@react-navigation/native';
 import type { RootStackParamList } from './types';
 import { useAuth } from '../state/AuthContext';
 import { logEvent } from '../services/firebase';
+import { suppressNextHotStart } from '../services/adFrequency';
+
+// A notification tap that lands her IN the prayer flow must not open with the
+// hot-start interstitial (owner 2026-08-17): she answered our own reminder to
+// pray — the ad waits for prayer_end, which PrayerFlow already fires on
+// completion. Suppress-only-for-PrayerFlow: taps that land on Tabs (plan slot,
+// unknown slots) keep the normal hot-start behaviour. Works for the warm path
+// because the app_open decision now waits a beat (adFrequency); on cold starts
+// there is no hot-start at all, so the call is a harmless no-op.
+function suppressHotStartIfPrayer(dest: { screen: keyof RootStackParamList } | null): void {
+  if (dest?.screen === 'PrayerFlow') suppressNextHotStart();
+}
 
 // `herbible://finishSignIn?<query>` (bounced from everlandapps.com/finishSignIn
 // .html, the email magic-link redirect page) → the original https sign-in link
@@ -167,6 +179,7 @@ export default function DeepLinkHandler() {
       // with prayer_complete/gospel_psalm_complete in BigQuery.
       logEvent('notification_tap', { slot: slot === 'night' ? 'evening' : String(slot ?? 'unknown') });
       const dest = routeForSlot(slot);
+      suppressHotStartIfPrayer(dest);
       if (dest) resetTo(navigation, dest.screen, dest.params);
     };
 
@@ -194,6 +207,7 @@ export default function DeepLinkHandler() {
       if (!mounted) return;
       const dest = routeForSlot(slot);
       if (!dest) return;
+      suppressHotStartIfPrayer(dest);
       logEvent('notification_tap', { slot: slot === 'night' ? 'evening' : String(slot ?? 'unknown'), src });
       resetTo(navigation, dest.screen, dest.params);
     };
@@ -253,6 +267,9 @@ export default function DeepLinkHandler() {
       const emailLink = emailLinkFromDeepLink(url);
       if (emailLink) { completeEmailLink(emailLink).catch(() => {}); return; }
       const dest = routeForUrl(url);
+      // Same rule for the widget's herbible://prayer link — an entry WE invited
+      // into the prayer flow doesn't open with an ad either.
+      suppressHotStartIfPrayer(dest);
       if (dest) resetTo(navigation, dest.screen, dest.params);
     };
 

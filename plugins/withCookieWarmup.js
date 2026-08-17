@@ -42,16 +42,34 @@ const ANCHOR = 'super.onCreate()';
 // Injected AFTER super.onCreate(): the app context must exist, and the factory
 // must be installed before React creates its NetworkingModule (which happens
 // at JS load, long after onCreate).
-const MARKER_JAR = 'withCookieWarmup#nojar';
+// NOT okhttp3.CookieJar.NO_COOKIES — that was a guaranteed cold-start crash
+// (caught by the 2026-08-17 swarm review before it ever shipped): the factory
+// client feeds EVERY OkHttpClientProvider consumer, and two of them cast the
+// jar UNCHECKED — FrescoModule.kt:161 `client.cookieJar() as CookieJarContainer`
+// (needsEagerInit, runs during React startup) and ExpoFetchModule.kt:31/47
+// (every Expo app registers it; OnCreate forces the lazy). Only
+// NetworkingModule type-checks. So the jar must IMPLEMENT CookieJarContainer:
+// the casts succeed, setCookieJar() silently discards the WebView-backed
+// JavaNetCookieJar all three try to wire in, and loadForRequest returns empty
+// without ever touching ForwardingCookieHandler → the WebView cookie hop is
+// gone from RN fetch AND Fresco image requests alike.
+const MARKER_JAR = 'withCookieWarmup#inertjar';
 const SNIPPET_JAR = `
     // ${MARKER_JAR}: RN fetches carry no cookies in this app — hand React a
-    // client without the WebView-backed jar so the first fetch can never do
-    // first-touch WebView init on an OkHttp thread (Play ANR batch 2026-08-17,
-    // see plugins/withCookieWarmup.js for the full lock chain).
+    // cookie-inert client so the first fetch can never do first-touch WebView
+    // init on an OkHttp thread (Play ANR batch 2026-08-17). The jar implements
+    // CookieJarContainer because FrescoModule and ExpoFetchModule cast it
+    // UNCHECKED at startup; setCookieJar discards the WebView-backed jar they
+    // try to install. See plugins/withCookieWarmup.js for the full chain.
     com.facebook.react.modules.network.OkHttpClientProvider.setOkHttpClientFactory {
       com.facebook.react.modules.network.OkHttpClientProvider
         .createClientBuilder(applicationContext)
-        .cookieJar(okhttp3.CookieJar.NO_COOKIES)
+        .cookieJar(object : com.facebook.react.modules.network.CookieJarContainer {
+          override fun loadForRequest(url: okhttp3.HttpUrl): List<okhttp3.Cookie> = emptyList()
+          override fun saveFromResponse(url: okhttp3.HttpUrl, cookies: List<okhttp3.Cookie>) = Unit
+          override fun setCookieJar(cookieJar: okhttp3.CookieJar) = Unit
+          override fun removeCookieJar() = Unit
+        })
         .build()
     }`;
 

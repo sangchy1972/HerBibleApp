@@ -10,6 +10,8 @@ import { registerWidgetTaskHandler } from 'react-native-android-widget';
 import notifee, { EventType } from '@notifee/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { PENDING_ROUTE_KEY } from './src/services/pendingNotifRoute';
+
 import App from './App';
 import { widgetTaskHandler } from './widgets/widget-task-handler';
 
@@ -40,7 +42,7 @@ notifee.onBackgroundEvent(async ({ type, detail }) => {
     if (type === EventType.PRESS || type === EventType.ACTION_PRESS) {
       const slot = detail.notification?.data?.slot;
       if (slot === 'morning' || slot === 'night') {
-        await AsyncStorage.setItem('notif:pendingRoute', JSON.stringify({ slot }));
+        await AsyncStorage.setItem(PENDING_ROUTE_KEY, JSON.stringify({ slot }));
       }
       const id = detail.notification?.id;
       if (id) await notifee.cancelNotification(id).catch(() => {});

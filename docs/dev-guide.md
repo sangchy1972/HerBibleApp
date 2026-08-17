@@ -1096,17 +1096,40 @@ the fleet, never overnight. Families, each with its receipt:
   sessions are all the data COULD contain; fix efficacy stays unproven until
   per-version vitals land). Hence 1.4.2 stops betting on timing and removes the
   trigger class outright, three layers:
-  1. `CookieJar.NO_COOKIES` OkHttp factory injected into MainApplication
-     (withCookieWarmup.js layer 1) — RN's fetch path never touches
-     CookieManager again, on any device, at any time. Audited safe: no
-     cookie use anywhere (CDN public, CF Access is header-based, Firebase is
-     native networking, no WebSockets/clearCookies), and RN 0.81's
-     NetworkingModule type-CHECKS the jar (`is CookieJarContainer`) so a
-     plain jar cleanly skips the wiring.
+  1. A **cookie-inert jar that implements `CookieJarContainer`** injected as
+     the OkHttp factory in MainApplication (withCookieWarmup.js layer 1) —
+     `loadForRequest` returns empty without ever touching
+     `ForwardingCookieHandler`, and `setCookieJar` discards the WebView-backed
+     jar every consumer tries to wire in. So the CookieManager hop is gone
+     from RN fetch AND Fresco image requests, on any device, at any time.
+     ⚠️ **NOT `CookieJar.NO_COOKIES`** — the first cut used that, and it was
+     a guaranteed cold-start ClassCastException caught by the 2026-08-17
+     swarm review before any build carried it: the factory client feeds EVERY
+     `OkHttpClientProvider` consumer, and two of them cast the jar UNCHECKED
+     at startup (`FrescoModule.kt:161`, eager-init; `ExpoFetchModule.kt:31/47`,
+     registered by every Expo app). Only NetworkingModule type-checks. The
+     "NetworkingModule is safe" audit was true and insufficient — a safety
+     argument must close over ALL consumers of a shared provider. Audited
+     cookie-free: CDN public, CF Access header-based, Firebase native
+     networking, no WebSockets, no clearCookies callers.
   2. The warmup thread stays for the remaining WebView consumers (UMP's
      consent form is a WebView).
   3. Android ads init (GMA + UMP) deferred 6s past interactions-settled
-     (`ADS_INIT_COLD_START_DELAY_MS`, App.tsx). iOS untouched.
+     (`ADS_INIT_COLD_START_DELAY_MS`, App.tsx). **Install day is exempt**
+     (swarm finding): onboarding_first must land before onboarding ends, and
+     the fresh install is the slowest init path; the ANR cohort is existing
+     users' daily cold starts. A hot-start return whose excursion fits inside
+     the init window is dropped — known, rare, fail-safe. iOS untouched.
+  **Swarm-review hardening of the hot-start beat (same batch)**: the suppress
+  flag is consumed only when it actually decided the outcome (an iOS
+  control-center flap during the ~4s TestFlight fallback fetch was burning
+  the store-review protection); and the decision no longer bets on the
+  PRAY-action drain landing inside 600 ms — it reads the pending-route stash
+  itself (`peekPendingRoute`; `src/services/pendingNotifRoute.ts` owns the
+  key for index.ts + DeepLinkHandler + adFrequency). Overlay-cards module:
+  verse art now decodes off-main before the window posts, and `remove()`
+  clears refs on "already detached" instead of pinning a bitmap-sized tree in
+  a cached process.
   **Verification plan, not assumption**: Play Console → Android vitals → ANR
   rate split BY APP VERSION, first readable ~3 days after 1.4.1/1.4.2 reach
   users. Judge each version's own rate; never read the blended 28-day number

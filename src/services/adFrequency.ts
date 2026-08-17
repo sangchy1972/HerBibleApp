@@ -39,6 +39,7 @@ import { AppState, type AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { maybeShowInterstitial } from './ads';
 import { msSinceLastInterstitial, isInterstitialVisible } from './interstitialVisibility';
+import { peekPendingRoute } from './pendingNotifRoute';
 import type { AdPlacement } from '../constants/adPacing';
 
 const INSTALL_KEY = 'ads:firstLaunchYmd';
@@ -95,6 +96,22 @@ function daysBetween(a: string, b: string): number {
 export function installDayIndex(): number {
   if (!installYmd) return 0;
   return daysBetween(installYmd, ymd());
+}
+
+/**
+ * True only on the very first calendar day. Used by App.tsx to exempt fresh
+ * installs from the Android ads-init deferral: onboarding_first MUST land
+ * before onboarding ends, and a fresh install is simultaneously the slowest
+ * init path and the only session with onboarding — adding 6s there loses the
+ * impression permanently, while the ANR cohort (existing users' daily cold
+ * starts) keeps the deferral. Reads storage directly so it does not depend on
+ * initAdFrequency having run; unknown → false, the deferral-keeping direction.
+ */
+export async function isInstallDay(): Promise<boolean> {
+  try {
+    const v = await AsyncStorage.getItem(INSTALL_KEY);
+    return !v || v === ymd();
+  } catch { return false; }
 }
 /** The NAV trigger is only for established (day ≥ 3) users. The hot-start
  *  trigger deliberately does NOT consult this — it fires for everyone. */
@@ -250,15 +267,49 @@ export function shouldFireHotStart(opts: {
 // it (owner 2026-08-17). Reason: a notification tap that routes into the
 // prayer flow must suppress this ad, but on a warm return 'active' fires
 // BEFORE the notification listeners deliver the tap — a synchronous decision
-// would always beat the suppression. 600ms covers the listener delivery (and
-// the AsyncStorage drain of the background PRAY action) while staying
-// imperceptible; maybeShowInterstitial re-checks foreground at fire time, and
-// a re-backgrounding cancels the timer outright. The suppress flag is
-// consumed HERE, at decision time, so a suppression that arrives inside the
-// beat still counts. This delays every hot-start ad by 600ms and changes
-// nothing else about the settled app_open decision.
+// would always beat the suppression. 600ms covers the in-memory listener
+// delivery; the SLOW path — the AsyncStorage drain of a background PRAY
+// action — is not bet on at all: the decision reads the stash itself (below).
+// maybeShowInterstitial re-checks foreground at fire time, and a
+// re-backgrounding cancels the timer outright. This delays every hot-start ad
+// by 600ms and changes nothing else about the settled app_open decision.
 const HOTSTART_DECISION_DELAY_MS = 600;
 let hotStartDecisionTimer: ReturnType<typeof setTimeout> | null = null;
+
+async function decideHotStart(bgAtSnap: number | null, adCaused: boolean): Promise<void> {
+  // A stashed notification route means this 'active' is a transition INTO the
+  // prayer flow. The drain that will route + arm the suppress flag races this
+  // decision on the same AsyncStorage queue, so don't bet on it landing inside
+  // the beat (swarm review 2026-08-17) — ask the stash directly. Queue order
+  // makes this airtight: either this read still sees the stash (drain slower
+  // than us), or the drain already removed it AND armed the flag in the same
+  // microtask (routeSlot is synchronous after its removeItem) — which the flag
+  // read below then sees. Skipped when no episode exists: nothing could fire.
+  if (bgAtSnap != null && (await peekPendingRoute()) != null) return;
+
+  const suppressedUntil = hotStartSuppressedUntil;
+  // NO day gate (owner 2026-08-08): a hot start monetizes from day 0. The
+  // interval floor, the foreground check and the remove-ads flag all still
+  // apply inside maybeShowInterstitial, and a first-open session can't reach
+  // here at all — bgAt is only set once the app has actually backgrounded.
+  const base = {
+    bgAt: bgAtSnap, now: Date.now(), adCausedBg: adCaused,
+    overlayEntry: msSinceOverlayTap() < OVERLAY_ENTRY_GRACE_MS,
+  };
+  const fire = shouldFireHotStart({ ...base, suppressedUntil });
+  // Consume the suppress flag ONLY when it decided the outcome: the decision
+  // fired (flag absent/expired — clearing is a no-op) or the flag was the one
+  // veto. A decision that dies on its own merits — short flap, ad-caused
+  // episode, overlay entry, no episode at all — must NOT burn a flag armed
+  // for an excursion still in flight: an iOS control-center flap during the
+  // ~4s TestFlight fallback URL fetch was eating the store-review protection
+  // (swarm review 2026-08-17). A flag left armed by a handoff that never
+  // leaves still expires on its own (HOTSTART_SUPPRESS_WINDOW_MS).
+  if (fire || shouldFireHotStart({ ...base, suppressedUntil: 0 })) {
+    hotStartSuppressedUntil = 0;
+  }
+  if (fire) maybeShowInterstitial('app_open');
+}
 
 function onAppState(next: AppStateStatus): void {
   if (next === 'background' || next === 'inactive') {
@@ -276,18 +327,10 @@ function onAppState(next: AppStateStatus): void {
     if (hotStartDecisionTimer) clearTimeout(hotStartDecisionTimer);
     hotStartDecisionTimer = setTimeout(() => {
       hotStartDecisionTimer = null;
-      const suppressedUntil = hotStartSuppressedUntil;
-      hotStartSuppressedUntil = 0;                   // consumed at decision time
-      // NO day gate (owner 2026-08-08): a hot start monetizes from day 0. The
-      // interval floor, the foreground check and the remove-ads flag all still
-      // apply inside maybeShowInterstitial, and a first-open session can't reach
-      // here at all — bgAt is only set once the app has actually backgrounded.
-      if (shouldFireHotStart({
-        bgAt: bgAtSnap, now: Date.now(), suppressedUntil, adCausedBg: adCaused,
-        overlayEntry: msSinceOverlayTap() < OVERLAY_ENTRY_GRACE_MS,
-      })) {
-        maybeShowInterstitial('app_open');
-      }
+      // If the app re-backgrounds during the awaits inside, the foreground
+      // check in maybeShowInterstitial is the backstop; snapshots keep the
+      // decision pinned to ITS episode either way.
+      void decideHotStart(bgAtSnap, adCaused);
     }, HOTSTART_DECISION_DELAY_MS);
   }
 }

@@ -93,7 +93,7 @@ import { initFirebase, logScreenView, setCrashScreen } from './src/services/fire
 import { setAppRemountHandler, initCloudBackup } from './src/services/cloudBackup';
 import { initAds } from './src/services/ads';
 import { ensureAttRequested } from './src/services/att';
-import { initAdFrequency, noteNavigation } from './src/services/adFrequency';
+import { initAdFrequency, isInstallDay, noteNavigation } from './src/services/adFrequency';
 import { setPromptRoute, setLaunchOverlayUp } from './src/state/promptSurface';
 import { initIap } from './src/services/iap';
 
@@ -114,9 +114,16 @@ export default function App() {
     // DisplayManagerGlobal, on mqt_native), UMP's getDefaultUserAgent (blocked
     // on WebViewFactory), and main's own layout getDisplayInfo — main blows the
     // 5s input budget. Pushing GMA+UMP 6s past interactions-settled removes two
-    // of the four from the window. Costs nothing: the engine still preloads
-    // minutes before the first real opportunity (prayer_end ≈ minutes in,
-    // hot-start needs a ≥15s excursion first).
+    // of the four from the window.
+    //
+    // Known costs, stated (swarm review 2026-08-17): a hot-start return whose
+    // excursion fits inside the init window is silently dropped (rare — needs
+    // backgrounding within the first seconds AND ≥15s away), and every second
+    // of deferral eats into onboarding_first's once-only window on fresh
+    // installs — which is why install day is EXEMPT below. The ANR cohort is
+    // existing users' daily cold starts; a day-0 device cold-starts in that
+    // state once ever, and keeps the other two layers (cookie-inert client +
+    // WebView warmup).
     const ADS_INIT_COLD_START_DELAY_MS = 6000;
     let adsTimer: ReturnType<typeof setTimeout> | null = null;
     const task = InteractionManager.runAfterInteractions(() => {
@@ -128,6 +135,13 @@ export default function App() {
       ensureAttRequested().finally(() => {
         if (Platform.OS === 'android') {
           adsTimer = setTimeout(() => { initAds(); }, ADS_INIT_COLD_START_DELAY_MS);
+          isInstallDay().then((day0) => {
+            if (day0 && adsTimer) {
+              clearTimeout(adsTimer);
+              adsTimer = null;
+              initAds();
+            }
+          }).catch(() => { /* keep the deferral */ });
         } else {
           // iOS: untouched — its convoy isn't implicated, and the ATT→init
           // ordering guarantees stay exactly as reviewed by Apple.

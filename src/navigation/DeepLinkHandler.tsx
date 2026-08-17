@@ -9,6 +9,7 @@ import type { RootStackParamList } from './types';
 import { useAuth } from '../state/AuthContext';
 import { logEvent } from '../services/firebase';
 import { suppressNextHotStart } from '../services/adFrequency';
+import { PENDING_ROUTE_KEY } from '../services/pendingNotifRoute';
 
 // A notification tap that lands her IN the prayer flow must not open with the
 // hot-start interstitial (owner 2026-08-17): she answered our own reminder to
@@ -129,7 +130,7 @@ let lastHandledNotifKey: string | null = null;
 // One-shot guard so the Notifee cold-start replay (getInitialNotification +
 // pending route) routes at most once per process, even across remounts.
 let notifeeColdStartHandled = false;
-const PENDING_ROUTE_KEY = 'notif:pendingRoute';
+
 
 function notifResponseKey(response: Notifications.NotificationResponse): string {
   const req = response.notification.request;

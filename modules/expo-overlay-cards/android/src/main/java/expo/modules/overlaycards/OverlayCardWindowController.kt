@@ -50,18 +50,37 @@ object OverlayCardWindowController {
   private val PARCH_INK = 0xFF241F1A.toInt()
   private val PARCH_SUB = 0xFF43372B.toInt()
   private val PILL_TAN = 0xFFB79B76.toInt()
+  // NOTE: postDelayed runs on the UPTIME clock, which pauses in deep sleep —
+  // a card shown at 20:00 on a phone that dozes all night can still be there
+  // at the morning unlock, until the next slot's fire replaces it. Accepted
+  // (swarm review 2026-08-17): the content is the day's own verse/quiz, taps
+  // behave normally, and closing the gap would need an unlock listener or an
+  // alarm — heavier than the staleness it prevents.
   private const val SELF_DESTRUCT_MS = 30 * 60 * 1000L
 
   fun show(context: Context, card: OverlayCard) {
     val ctx = context.applicationContext
+    // Decode the verse art OFF main before anything else (swarm review
+    // 2026-08-17): the cached file is a Cloudflare variant at screen-width
+    // pixels, so decodeSampled's halving loop never actually downsamples —
+    // every show was a full 0.6-1.6MP decode ON MAIN, 20-100ms (tail ~200ms)
+    // at the exact unlock moment. View building and addView stay on main, as
+    // the window manager requires; only the bitmap work moves.
+    Thread {
+      val cardW = ctx.resources.displayMetrics.widthPixels - dp(ctx, 28f)
+      val bmp = if (card.kind == "verse") decodeSampled(card.imagePath, cardW - dp(ctx, 24f)) else null
+      showWithBitmap(ctx, card, cardW, bmp)
+    }.start()
+  }
+
+  private fun showWithBitmap(ctx: Context, card: OverlayCard, cardW: Int, bmp: Bitmap?) {
     main.post {
       try {
         remove()
         // The card's width lives on the WINDOW params — addView overwrites the
         // root view's own layoutParams with these, so putting a width anywhere
         // else silently degrades to wrap-content.
-        val cardW = ctx.resources.displayMetrics.widthPixels - dp(ctx, 28f)
-        val view = buildCard(ctx, card, cardW)
+        val view = buildCard(ctx, card, cardW, bmp)
         val lp = WindowManager.LayoutParams(
           cardW,
           WindowManager.LayoutParams.WRAP_CONTENT,
@@ -109,7 +128,15 @@ object OverlayCardWindowController {
       autoHide = null
       return
     }
-    try { addedWith?.removeViewImmediate(v) } catch (e: Throwable) { return }
+    try {
+      addedWith?.removeViewImmediate(v)
+    } catch (e: IllegalArgumentException) {
+      // "View not attached": the system already tore the window down (e.g.
+      // overlay permission revoked while up). Clearing is safe by definition —
+      // holding on pinned a bitmap-sized tree in a cached process (swarm
+      // review 2026-08-17). The conservative keep-refs path below stays for
+      // every OTHER throwable, where the window may genuinely still be up.
+    } catch (e: Throwable) { return }
     overlay = null
     addedWith = null
     autoHide?.let { main.removeCallbacks(it) }
@@ -161,7 +188,7 @@ object OverlayCardWindowController {
     v.clipToOutline = true
   }
 
-  private fun buildCard(ctx: Context, card: OverlayCard, cardW: Int): View {
+  private fun buildCard(ctx: Context, card: OverlayCard, cardW: Int, bmp: Bitmap?): View {
     val root = LinearLayout(ctx)
     root.orientation = LinearLayout.VERTICAL
     root.background = rounded(Color.WHITE, dp(ctx, 22f).toFloat())
@@ -201,7 +228,7 @@ object OverlayCardWindowController {
     val innerW = cardW - dp(ctx, 24f)
     val bodyH = if (card.kind == "quiz") ViewGroup.LayoutParams.WRAP_CONTENT else (innerW * 0.78f).toInt()
     root.addView(
-      if (card.kind == "quiz") buildQuizBody(ctx, card) else buildVerseBody(ctx, card, innerW),
+      if (card.kind == "quiz") buildQuizBody(ctx, card) else buildVerseBody(ctx, card, bmp),
       LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, bodyH).apply {
         leftMargin = dp(ctx, 12f); rightMargin = dp(ctx, 12f); bottomMargin = dp(ctx, 14f)
       },
@@ -211,13 +238,13 @@ object OverlayCardWindowController {
 
   // Verse card: today's verse composed over the day's background art, with the
   // Amen pill riding the bottom-right edge — the reference layout, our content.
-  private fun buildVerseBody(ctx: Context, card: OverlayCard, innerW: Int): View {
+  private fun buildVerseBody(ctx: Context, card: OverlayCard, bmp: Bitmap?): View {
     val frame = FrameLayout(ctx)
     clipRounded(frame, dp(ctx, 16f).toFloat())
 
     val img = ImageView(ctx)
     img.scaleType = ImageView.ScaleType.CENTER_CROP
-    val bmp = decodeSampled(card.imagePath, innerW)
+    // Decoded off-main in show(); null → gradient fallback below.
     if (bmp != null) {
       img.setImageBitmap(bmp)
     } else {

@@ -76,7 +76,11 @@ object OverlayCardWindowController {
   private fun showWithBitmap(ctx: Context, card: OverlayCard, cardW: Int, bmp: Bitmap?) {
     main.post {
       try {
-        remove()
+        // If the old window could not be removed AND may still be attached,
+        // adding a second one and overwriting the refs would orphan it on
+        // screen until process death (swarm r2). Skip this show instead —
+        // the old card is still up and self-destructing on its own timer.
+        if (!remove()) return@post
         // The card's width lives on the WINDOW params — addView overwrites the
         // root view's own layoutParams with these, so putting a width anywhere
         // else silently degrades to wrap-content.
@@ -122,11 +126,13 @@ object OverlayCardWindowController {
   }
 
   // Clear references only after a removeView that did not throw (see header).
-  private fun remove() {
+  // Returns false only on the keep-refs path: the window may still be attached
+  // and a caller about to add a new one must back off.
+  private fun remove(): Boolean {
     val v = overlay ?: run {
       autoHide?.let { main.removeCallbacks(it) }
       autoHide = null
-      return
+      return true
     }
     try {
       addedWith?.removeViewImmediate(v)
@@ -136,11 +142,12 @@ object OverlayCardWindowController {
       // holding on pinned a bitmap-sized tree in a cached process (swarm
       // review 2026-08-17). The conservative keep-refs path below stays for
       // every OTHER throwable, where the window may genuinely still be up.
-    } catch (e: Throwable) { return }
+    } catch (e: Throwable) { return false }
     overlay = null
     addedWith = null
     autoHide?.let { main.removeCallbacks(it) }
     autoHide = null
+    return true
   }
 
   private fun openApp(ctx: Context, deepLink: String) {

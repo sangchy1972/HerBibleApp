@@ -63,3 +63,13 @@ docs/
 .eas/
 .scratch/
 .quiz-i18n/
+
+# Gitignored junk that would otherwise upload to the EAS worker (a .easignore
+# replaces .gitignore entirely, so gitignored-only paths leak unless repeated
+# here — swarm r2 pipeline audit 2026-08-18): stale local gradle intermediates,
+# the never-built handoff folder, and agent-session data.
+modules/**/build/
+handoff-next-app/
+.swarm/
+.claude-flow/
+ruvector.db

@@ -126,7 +126,9 @@ object OverlayCardStore {
   // Written the instant a card is tapped, BEFORE the app is opened. The ad
   // layer reads it synchronously at hot-start-decision time, so "she tapped a
   // devotional card and got an interstitial first" can never race an event —
-  // the stamp is already on disk when our Activity resumes.
+  // apply() makes the stamp visible to every same-process reader immediately
+  // (disk write is async, which is fine: a killed process cold-starts with
+  // bgAt == null and cannot fire the hot-start ad at all).
   fun stampTap(ctx: Context) {
     prefs(ctx).edit().putLong("lastTapAt", System.currentTimeMillis()).apply()
   }

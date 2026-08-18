@@ -134,7 +134,11 @@ export default function App() {
       // the human is asked early and unconditionally.
       ensureAttRequested().finally(() => {
         if (Platform.OS === 'android') {
-          adsTimer = setTimeout(() => { initAds(); }, ADS_INIT_COLD_START_DELAY_MS);
+          // The callback MUST null the handle: the day-0 check below keys on
+          // it, and a stale handle after firing would run initAds a second
+          // time concurrently — initialized only latches after its awaits, so
+          // the guard alone doesn't stop overlap (swarm r2).
+          adsTimer = setTimeout(() => { adsTimer = null; initAds(); }, ADS_INIT_COLD_START_DELAY_MS);
           isInstallDay().then((day0) => {
             if (day0 && adsTimer) {
               clearTimeout(adsTimer);

@@ -60,18 +60,23 @@ const SNIPPET_JAR = `
     // init on an OkHttp thread (Play ANR batch 2026-08-17). The jar implements
     // CookieJarContainer because FrescoModule and ExpoFetchModule cast it
     // UNCHECKED at startup; setCookieJar discards the WebView-backed jar they
-    // try to install. See plugins/withCookieWarmup.js for the full chain.
-    com.facebook.react.modules.network.OkHttpClientProvider.setOkHttpClientFactory {
-      com.facebook.react.modules.network.OkHttpClientProvider
-        .createClientBuilder(applicationContext)
-        .cookieJar(object : com.facebook.react.modules.network.CookieJarContainer {
-          override fun loadForRequest(url: okhttp3.HttpUrl): List<okhttp3.Cookie> = emptyList()
-          override fun saveFromResponse(url: okhttp3.HttpUrl, cookies: List<okhttp3.Cookie>) = Unit
-          override fun setCookieJar(cookieJar: okhttp3.CookieJar) = Unit
-          override fun removeCookieJar() = Unit
-        })
-        .build()
-    }`;
+    // try to install. ONE client, built once: every OkHttpClientProvider
+    // consumer (NetworkingModule, Fresco images, ExpoFetch) shares it, so the
+    // 10MB disk cache exists exactly once — stock RN already ran two Cache
+    // instances over the same http-cache directory, and a fresh-per-call
+    // factory made it three (DiskLruCache journal contention; swarm r2).
+    // Consumers that need extras derive via newBuilder(), which shares the
+    // same Cache object — the supported pattern.
+    val cookieInertClient = com.facebook.react.modules.network.OkHttpClientProvider
+      .createClientBuilder(applicationContext)
+      .cookieJar(object : com.facebook.react.modules.network.CookieJarContainer {
+        override fun loadForRequest(url: okhttp3.HttpUrl): List<okhttp3.Cookie> = emptyList()
+        override fun saveFromResponse(url: okhttp3.HttpUrl, cookies: List<okhttp3.Cookie>) = Unit
+        override fun setCookieJar(cookieJar: okhttp3.CookieJar) = Unit
+        override fun removeCookieJar() = Unit
+      })
+      .build()
+    com.facebook.react.modules.network.OkHttpClientProvider.setOkHttpClientFactory { cookieInertClient }`;
 
 const MARKER_WARM = 'withCookieWarmup#warm';
 const SNIPPET_WARM = `

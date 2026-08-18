@@ -1101,10 +1101,23 @@ Receipts chain, so the next reader can re-verify in minutes:
   update" via `FabricUIManager.resolveView`), **#9660** (Jun 2026, don't resurrect
   cancelled animations — the final fix that closed #7493).
 - What we ship: **patches/react-native-reanimated+4.1.7.patch = a backport of
-  #8083** (8 files, all Android behavior `#ifdef ANDROID`-gated; positional
-  struct init orders verified against 4.1.7; `resolveView` exists in RN 0.81.5
-  FabricUIManager.java:1018; `jsInvoker_` inherited from TurboModule). Applied by
-  patch-package via the `postinstall` script — EAS runs it on `npm install`.
+  #8083 PLUS the #9649 guard** (8 files, all Android behavior `#ifdef
+  ANDROID`-gated; positional struct init orders verified against 4.1.7;
+  `resolveView` exists in RN 0.81.5 FabricUIManager.java:1018; `jsInvoker_`
+  inherited from TurboModule). Applied by patch-package via the `postinstall`
+  script — EAS runs it on `npm install`, and a non-applying patch FAILS the
+  EAS build loudly (patch-package's ci-info knows EAS_BUILD).
+  ⚠️ The #9649 guard is NOT optional: bare #8083's `preserveMountedTags`
+  crashes with `IllegalViewOperationException` when a tag is registered but
+  its view is mid-preallocation and a third-party ViewManager dispatches an
+  event synchronously from createView — **lottie-react-native does exactly
+  that**, and we ship it. Upstream issue #9636; the fix was emergency
+  cherry-picked into BOTH maintained stables (#9827/#9758). Caught by the
+  round-2 swarm review BEFORE any build carried the bare backport.
+  Inherited-and-accepted (upstream-identical, do NOT hand-fix): a JS-thread
+  pull skips updates but still cleans finished animations (upstream PR #8852,
+  open) — only bites duration-0 animations, which src/ has none of; and the
+  unmerged teardown guard PR #9449. Re-evaluate both when upstream merges.
   #9660 is NOT backportable: it targets the Legacy/Experimental proxy split that
   4.1.7 predates, ±300 lines of concurrency C++ — that's the fork-the-bridge risk
   class. Residual: the resurrection path #9660 fixes can still fire; expect

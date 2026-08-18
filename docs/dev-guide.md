@@ -1080,6 +1080,39 @@ Verdicts recorded so the next report starts here instead of from scratch. Method
 in the stack** — RN 0.81.6 and worklets 0.5.2 were both checked this way and neither
 touches the crashing classes, so no upgrade theater.
 
+### User-perceived crash 2026-08-18 (`RetryableMountingLayerException: Unable to find viewState for tag`)
+NOT the ANR problem — this is a hard crash: RN Fabric's `addViewAt` inserts into a
+parent whose viewState is gone, the exception is not in `ReactIgnorableMountingException`'s
+allowlist, and the process dies. `com.facebook.*` frames mean React Native itself
+(Meta authored RN — every RN app's stacks look like this), NOT the Meta ads SDK.
+Receipts chain, so the next reader can re-verify in minutes:
+- Two Play samples, one via React's own frame callback, one via
+  **reanimated's UI flush** (`worklets AnimationFrameQueue → NativeProxy.performOperations
+  → scheduleMountItem` draining the mount queue synchronously). Real low-end
+  devices (Redmi, moto g15), 1.3.0/1.4.0/1.4.1 all affected — NOT the emulator farm.
+- All three shipped releases pinned reanimated **4.1.7** (verified via
+  `git show <tag>:package-lock.json`), and 4.1.7's release notes carry none of the
+  upstream fixes for this family.
+- Upstream: software-mansion/react-native-reanimated#7493 is the canonical issue
+  (Android + Fabric + entering/exiting animations; the start lambda is scheduled
+  to the UI thread, the view can be deleted before it runs). Fix lineage:
+  #7798 (Jul 2025, merged before the 4.1 branch cut → presumed in 4.1.x),
+  **#8083** (Sep 2025, "check if view is mounted before each animation-frame
+  update" via `FabricUIManager.resolveView`), **#9660** (Jun 2026, don't resurrect
+  cancelled animations — the final fix that closed #7493).
+- What we ship: **patches/react-native-reanimated+4.1.7.patch = a backport of
+  #8083** (8 files, all Android behavior `#ifdef ANDROID`-gated; positional
+  struct init orders verified against 4.1.7; `resolveView` exists in RN 0.81.5
+  FabricUIManager.java:1018; `jsInvoker_` inherited from TurboModule). Applied by
+  patch-package via the `postinstall` script — EAS runs it on `npm install`.
+  #9660 is NOT backportable: it targets the Legacy/Experimental proxy split that
+  4.1.7 predates, ±300 lines of concurrency C++ — that's the fork-the-bridge risk
+  class. Residual: the resurrection path #9660 fixes can still fire; expect
+  reduced-not-zero. Watch the 4.1-stable branch for cherry-pick releases (4.1.8+)
+  and DROP our patch when one carries #8083/#9660.
+- reanimated 4.5.x requires RN 0.83–0.86 + worklets 0.10+ → a line upgrade is an
+  RN/SDK upgrade, not a crash fix. Do not "just bump".
+
 ### ANR batch 2026-08-17 (Play rate ~1%, threshold 0.47% — 5 traces, 3 families)
 The rate is a **28-day trailing window**: it falls only as fixed builds take over
 the fleet, never overnight. Families, each with its receipt:

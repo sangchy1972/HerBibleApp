@@ -26,7 +26,7 @@ const APP_ICON = require('../../assets/icon.png');
 // looks live and changes nothing reads as broken (same rule as
 // PermissionCoachOverlay).
 
-const CREAM = '#F5F0E6';
+export const CREAM = '#F5F0E6';   // shared with ResumeRitualHost's backing layer
 const YELLOW = '#EDB94D';
 const GREY = '#A79FA6';
 const SWITCH_ON = '#3FAE6A';   // matches PermissionCoachOverlay's switchTrackOn

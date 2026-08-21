@@ -249,6 +249,15 @@ function msSinceOverlayTap(): number {
   } catch { return Infinity; }
 }
 
+// Lazy + guarded for the same jest-import-graph reason as above.
+function isResumeSplashUpSafe(): boolean {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const mod = require('../state/promptSurface') as { isResumeSplashUp?: () => boolean };
+    return mod.isResumeSplashUp?.() ?? false;
+  } catch { return false; }
+}
+
 /** PURE: may this foreground-return fire the hot-start interstitial? */
 export function shouldFireHotStart(opts: {
   bgAt: number | null;
@@ -276,7 +285,21 @@ export function shouldFireHotStart(opts: {
 const HOTSTART_DECISION_DELAY_MS = 600;
 let hotStartDecisionTimer: ReturnType<typeof setTimeout> | null = null;
 
-async function decideHotStart(bgAtSnap: number | null, adCaused: boolean): Promise<void> {
+async function decideHotStart(bgAtSnap: number | null, adCaused: boolean, deferred = false): Promise<void> {
+  // The >3-min resume cover splash owns the first ~1.9s of a long-away return
+  // (swarm review 2026-08-21): firing app_open at +600ms cut the cover moment
+  // in half on Android and hid it entirely on iOS. Defer the decision ONE beat
+  // past the splash — through the same single-timer slot, so re-backgrounding
+  // still cancels it. One deferral only; the splash cannot outlive its
+  // watchdog. This delays the ad, never drops it — the settled app_open
+  // decision is untouched.
+  if (!deferred && isResumeSplashUpSafe()) {
+    hotStartDecisionTimer = setTimeout(() => {
+      hotStartDecisionTimer = null;
+      void decideHotStart(bgAtSnap, adCaused, true);
+    }, 1_600);
+    return;
+  }
   // A stashed notification route means this 'active' is a transition INTO the
   // prayer flow. The drain that will route + arm the suppress flag races this
   // decision on the same AsyncStorage queue, so don't bet on it landing inside

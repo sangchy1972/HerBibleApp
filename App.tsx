@@ -81,6 +81,7 @@ import WidgetInstallHost from './src/components/WidgetInstallHost';
 import OverlayCardsPromptHost from './src/components/OverlayCardsPromptHost';
 import OverlayCardsSync from './src/components/OverlayCardsSync';
 import StreakDailyHost from './src/components/StreakDailyHost';
+import ResumeRitualHost from './src/components/ResumeRitualHost';
 import RemoveAdsPromptHost from './src/components/RemoveAdsPromptHost';
 import FirstRunTourHost from './src/components/FirstRunTourHost';
 import AudioMiniHost from './src/components/AudioMiniHost';
@@ -359,6 +360,7 @@ export default function App() {
                                               day, streak ≥ 1. Priority 12,
                                               daily-ritual class. */}
                                           <StreakDailyHost />
+                                          <ResumeRitualHost />
                                           {/* One-time widget-install nudge
                                               (engaged users, day 3+). */}
                                           <WidgetInstallHost />

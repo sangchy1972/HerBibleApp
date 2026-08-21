@@ -12,6 +12,7 @@ export type NudgeId =
   | 'firstRunTour'
   | 'achievementUnlock'
   | 'streakDaily'
+  | 'resumeReminders'
   | 'followHimOptin'
   | 'setReminderTime'
   | 'streakGuide'
@@ -36,6 +37,10 @@ export const NUDGE_PRIORITY: Record<NudgeId, number> = {
   // streak ≥ 1). Right after achievement unlocks: a reward she just earned
   // still lands first; the reminder not to break the chain beats every ask.
   streakDaily:       12,
+  // The >3-min-away resume pitch for notification-less users (owner
+  // 2026-08-21): right after the streak ritual in rank — the daily flame
+  // still owns the first moment of a day, but this beats every other ask.
+  resumeReminders:   14,
   followHimOptin:    20,
   setReminderTime:   30,
   // The rookie streak guide: a day-1 teaching moment right after a prayer

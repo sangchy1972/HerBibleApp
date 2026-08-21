@@ -63,6 +63,18 @@ export function setLaunchOverlayUp(v: boolean): void {
   notify();
 }
 
+// The >3-min resume cover splash (ResumeCoverSplash). A dedicated flag, NOT
+// folded into promptSurfaceQuiet's sheetDepth alone, because adFrequency's
+// hot-start decision reads THIS to defer the app_open interstitial one beat —
+// widening that to every sheet would change the settled ad behaviour.
+let resumeSplashUp = false;
+export function setResumeSplashUp(v: boolean): void {
+  if (v === resumeSplashUp) return;
+  resumeSplashUp = v;
+  notify();
+}
+export function isResumeSplashUp(): boolean { return resumeSplashUp; }
+
 // Mirror of the coordinator's activeId, for NON-coordinator surfaces (the
 // proactive paywall) that must not land on top of a live prompt. A boolean, not
 // the id: nobody outside the coordinator has any business branching on WHICH

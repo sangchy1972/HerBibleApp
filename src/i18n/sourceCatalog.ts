@@ -1451,15 +1451,18 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'listenGuide.body':              { en: 'Tap here and a voice will read the prayer with you. The music keeps playing underneath.', context: 'Body of that coach mark. Two facts: the button starts a spoken reading, and it does not replace the background music. Supports **bold** spans.' },
   'listenGuide.cta':               { en: 'Got it', context: 'The single button on that coach mark; dismisses it. MUST stay short — it is a small pill in the corner of a bubble. Two words at most, ideally one. Not "OK" (too curt) and not a full sentence.' },
 
-  // ─── Full-screen reminder flow, straight after a prayer ──────────────────
-  // ReminderTimeScreen (cream ground, rose CTA) then, only if she declines the
-  // OS dialog, RemindersOffScreen.
+  // ─── Full-screen reminder flow ───────────────────────────────────────────
+  // ReminderTimeScreen (cream ground, rose CTA) then, if she declines the OS
+  // dialog, RemindersOffScreen. Since 2026-08-21 RemindersOffScreen ALSO
+  // appears standalone after a >3-minute-away resume for notification-less
+  // users (once per day) — the copy must read right cold, without a
+  // just-declined dialog in sight.
   'reminderTime.title.morning':    { en: 'When would you like to do this morning prayer?', context: 'Full-screen headline over the reminder time wheels, after a MORNING prayer. Asks about the prayer itself, not about "a notification" — the time she picks is when we will call her back to it.' },
   'reminderTime.title.night':      { en: 'When would you like to do this night prayer?', context: 'Same headline after an EVENING prayer. Keep the two parallel in your language.' },
   'reminderTime.save':             { en: 'Save', context: 'Primary button under the time wheels. One word.' },
   'reminderTime.skip':             { en: 'Not now', context: 'Quiet dismiss under the Save button. Deliberately lighter than Save.' },
 
-  'remindersOff.title':            { en: "It looks like reminders aren't on yet", context: 'Full-screen headline shown ONLY after she declines the OS notification dialog. Observational, not scolding — "it looks like", not "you did not".' },
+  'remindersOff.title':            { en: "It looks like reminders aren't on yet", context: 'Full-screen headline. Shown after declining the OS dialog in the prayer flow AND standalone on long-away resumes — must read right in both. Observational, not scolding — "it looks like", not "you did not".' },
   'remindersOff.without':          { en: 'Without a reminder', context: 'Label on the SHORT grey bar of the two-bar illustration.' },
   'remindersOff.withoutValue':     { en: 'Some days', context: 'Text inside the short grey bar. Short — it sits inside the bar. Deliberately NOT a percentage: we have no measurement of our own users to quote.' },
   'remindersOff.with':             { en: 'With a reminder', context: 'Label on the TALL yellow bar.' },
@@ -1467,7 +1470,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'remindersOff.claim':            { en: 'A reminder at the time you pick is what turns one prayer into a daily habit.', context: 'One line under the two bars. States what a reminder DOES; do not turn it into a statistic about our users.' },
   'remindersOff.allowLabel':       { en: 'Allow notifications', context: 'Sub-label under the app name on the mock permission row, matching the OS dialog she is about to see.' },
   'remindersOff.cta':              { en: 'Turn on notifications', context: 'Primary button. Re-opens the OS permission dialog (or the settings page once the OS refuses to show it again).' },
-  'remindersOff.skip':             { en: 'Not now', context: 'Quiet dismiss. She will be asked again tomorrow, so this must not feel final.' },
+  'remindersOff.skip':             { en: 'Not now', context: 'Quiet dismiss. The resume-path pitch is capped at once per app-day, so "again tomorrow" is literally true; must not feel final.' },
 
   // The FLOATING coach card (modules/expo-settings-coach) — the same guidance
   // drawn ON TOP of the system Settings app once "Appear on top" is granted.

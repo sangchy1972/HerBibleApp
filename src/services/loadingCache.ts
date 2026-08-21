@@ -19,6 +19,16 @@ const SCREEN_W = Dimensions.get('window').width;
 const ROT_KEY = 'loading:rot-index:v1';
 const CACHE_SUBDIR = 'loading-bg';
 
+// Read WITHOUT incrementing — the resume splash replays the SAME cover the
+// cold launch showed this session (advanceRotation stores n+1, so the value
+// used this launch is stored-1).
+export async function peekRotation(): Promise<number> {
+  try {
+    const stored = parseInt((await AsyncStorage.getItem(ROT_KEY)) ?? '1', 10) || 1;
+    return Math.max(0, stored - 1);
+  } catch { return 0; }
+}
+
 // Read + increment the rotation counter. Returns the index to use THIS launch.
 export async function advanceRotation(): Promise<number> {
   let n = 0;

@@ -34,7 +34,12 @@ export const P = 17; // horizontal padding
 // Canonical corner radius for solid-accent CTA buttons (matches the Prayer
 // home's "Start Morning Prayer" button). Every rose primary button uses this
 // so the app reads as one system; heights may still vary per context.
-export const BTN_RADIUS = 17;
+// ─── Corner-radius rule (owner 2026-08-21: all radii −30%) ─────────────────
+// Cards use CARD_RADIUS, buttons use BTN_RADIUS — nothing hardcodes its own
+// card/button radius. Inner elements (pills, badges, progress bars, circles)
+// keep their proportional values. History: buttons 17 → 12, cards 20 → 14.
+export const BTN_RADIUS = 12;
+export const CARD_RADIUS = 14;
 
 // `serif*` aliases all map to **Source Serif 4 Variable** — the same
 // TTF file is used for every weight, with the actual weight controlled

@@ -14,7 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import FireFlame from '../components/shared/FireFlame';
 import StreakBorderAnim from '../components/shared/StreakBorderAnim';
-import { ROSE, BTN_RADIUS, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
+import { ROSE, BTN_RADIUS, CARD_RADIUS, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { useAuth } from '../state/AuthContext';
 import { usePrayer } from '../state/PrayerContext';
 import { useActivity } from '../state/ActivityContext';
@@ -179,7 +179,7 @@ const moreStyles = StyleSheet.create({
     position: 'absolute',
     minWidth: 208,
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: CARD_RADIUS,
     paddingVertical: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
@@ -1599,7 +1599,7 @@ const styles = StyleSheet.create({
     paddingTop: 14,
   },
   heroCard: {
-    borderRadius: 20,
+    borderRadius: CARD_RADIUS,
     overflow: 'hidden',
     // Subtle drop shadow per user (-30 % vs a normal card shadow). iOS
     // accepts a shadow on the same node; no Android elevation because it
@@ -1620,7 +1620,7 @@ const styles = StyleSheet.create({
     // veil + content composite cleanly. Without this, RN draws the image at
     // its native rectangle and clips behind the rounded mask, which can
     // ghost a 1-px hairline on the corners during the tab transition.
-    borderRadius: 20,
+    borderRadius: CARD_RADIUS,
   },
   // All text-to-card-edge distances trimmed −3 px per user. The hero card
   // has three horizontal-padding gates: `heroTop` (label + ref), `heroBody`
@@ -1715,7 +1715,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 10,
     height: 48,
-    borderRadius: 16.8,                 // 24 → 16.8 (-30 % per user)
+    borderRadius: BTN_RADIUS,           // buttons follow the token (was a one-off 24→16.8)
     alignSelf: 'stretch',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1739,7 +1739,7 @@ const styles = StyleSheet.create({
   },
   hintCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: CARD_RADIUS,
     paddingHorizontal: 22,
     paddingVertical: 18,
     maxWidth: 320,
@@ -1803,7 +1803,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32,
   },
   pastPromptCard: {
-    width: '100%', backgroundColor: '#FFFFFF', borderRadius: 20,
+    width: '100%', backgroundColor: '#FFFFFF', borderRadius: CARD_RADIUS,
     paddingHorizontal: 22, paddingTop: 22, paddingBottom: 16,
     shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.18, shadowRadius: 18, elevation: 10,
@@ -1827,7 +1827,7 @@ const styles = StyleSheet.create({
   },
   psalmCard: {
     width: 164,
-    borderRadius: 20,
+    borderRadius: CARD_RADIUS,
     backgroundColor: 'rgba(255,255,255,0.72)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.92)',
@@ -1874,7 +1874,7 @@ const styles = StyleSheet.create({
   },
   continueCard: {
     marginTop: 13,
-    borderRadius: 20,
+    borderRadius: CARD_RADIUS,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.90)',
@@ -1897,7 +1897,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 14,
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: CARD_RADIUS,
     paddingVertical: 11.4,
     paddingHorizontal: 12,
     marginTop: 12,

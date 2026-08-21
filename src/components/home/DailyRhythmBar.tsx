@@ -7,7 +7,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { useIsFocused } from '@react-navigation/native';
-import { ROSE, BTN_RADIUS, TXT, TXTSUB, FONTS } from '../../constants/theme';
+import { ROSE, BTN_RADIUS, CARD_RADIUS, TXT, TXTSUB, FONTS } from '../../constants/theme';
 import { useSheetSurface } from '../../state/promptSurface';
 import { useT } from '../../i18n/useT';
 import { RHYTHM_STEPS, isRhythmStepDone, packedRhythmFill, type RhythmDotState } from '../../state/dailyRhythm';
@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
   // report), so the card is deliberately flat.
   wrap: { marginTop: 4, marginBottom: 2 },   // below-greeting +5 (was -1), below-card 2 (per user)
   bar: {
-    borderRadius: 20,
+    borderRadius: CARD_RADIUS,
     minHeight: 68,                       // 59 → 68 (+15 % per user)
     paddingTop: 13,                      // 15 → 13 (per user)
     paddingBottom: 0,                    // flush — the bar sits on the card's bottom edge (per user)
@@ -708,7 +708,7 @@ const styles = StyleSheet.create({
   },
   hintCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: CARD_RADIUS,
     paddingHorizontal: 22,
     paddingVertical: 18,
     maxWidth: 320,
@@ -731,7 +731,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 360,
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: CARD_RADIUS,
     paddingHorizontal: 24,
     paddingVertical: 26,
     alignItems: 'center',

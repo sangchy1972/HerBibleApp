@@ -56,8 +56,14 @@ same repo. Touch only the files you are changing. Commits auto-sync to GitHub; a
   the delta — it is the only record of why the number is odd.
 
 ### Cards, radii, shadows
-- `BTN_RADIUS = 17` with bold labels for primary buttons.
-- Content cards: flat, radius **20**, `#FFFFFF`, **no shadow**. Stacked cards must
+- **Corner-radius rule (owner 2026-08-21: everything −30%)**: buttons =
+  `BTN_RADIUS` (**12**, was 17), cards = `CARD_RADIUS` (**14**, was 20) — both
+  live in `theme.ts` and NOTHING hardcodes its own card/button radius. The
+  home screen is fully converted; convert other screens' hardcoded 20s to
+  `CARD_RADIUS` as you touch them. Inner elements (pills, badges, bars,
+  circles) keep their own proportional values.
+- `BTN_RADIUS` pairs with bold labels for primary buttons.
+- Content cards: flat, `CARD_RADIUS`, `#FFFFFF`, **no shadow**. Stacked cards must
   share their radius and their horizontal inset — a 1–4 px mismatch reads as
   "misaligned" even though nobody can name the cause. `P = 17` is the screen padding;
   screens that use 16 must reconcile (see `quizWrap` in `WeeklyProgressView`).

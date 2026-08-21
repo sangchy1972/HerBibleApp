@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Feather from '@expo/vector-icons/Feather';
-import { ROSE, TXT, TXTSUB, BTN_RADIUS, FONTS, P } from '../../constants/theme';
+import { ROSE, TXT, TXTSUB, BTN_RADIUS, CARD_RADIUS, FONTS, P } from '../../constants/theme';
 import { useT } from '../../i18n/useT';
 import { useQuiz } from '../../state/QuizContext';
 import { levelFor } from '../../state/quizProgress';
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   // MyReadingPlansCard directly above it, so the two read as siblings).
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: CARD_RADIUS,
     paddingHorizontal: 16,
     paddingTop: 25,                // 15 → 25 (+10 px above the title, per user)
     paddingBottom: 26,             // 16 → 26 (+10 px below the last option)

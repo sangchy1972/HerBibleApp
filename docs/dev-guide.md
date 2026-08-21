@@ -944,10 +944,17 @@ onboarding's paywall step in `OnboardingFlow`.
 ### Overlay cards (Android) — `modules/expo-overlay-cards`
 Daily popups drawn OVER the launcher / other apps, styled after the competitor
 screenshots the owner supplied (owner verified the policy question himself,
-2026-08-16 — do not re-open it). Two cards, fired at HER reminder times:
-morning reminder → the verse card (morning verse over the morning art, Amen
-pill), night reminder → the quiz card (✦ badge, question, 2 options stacked /
-4 in a 2×2 grid — the bank has both shapes, never assume one).
+2026-08-16 — do not re-open it). Three cards:
+- morning reminder time → the **verse card** (morning verse over the morning
+  art, Amen pill),
+- night reminder time → the **quiz card** (✦ badge, question, 2 options
+  stacked / 4 in a 2×2 grid — the bank has both shapes, never assume one),
+- **21:58 fixed → the sleep-reflection card** (owner 2026-08-21): night-sky
+  gradient, "Before You Sleep" serif title, one of five nightly examen
+  questions rotating by day, No/Yes pills — BOTH open the app (No → evening
+  prayer flow, Yes → today's verse; either way the overlay-entry ad veto
+  applies). Slot `sleep`, kind `reflect`, requestCode 1003; independent of
+  the reminder toggles — the master switch alone governs it.
 
 The physics, because every piece follows from them:
 - **The process may be dead at fire time.** AlarmManager → BroadcastReceiver →

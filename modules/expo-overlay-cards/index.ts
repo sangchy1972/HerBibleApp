@@ -13,10 +13,10 @@ const Native = requireOptionalNativeModule('ExpoOverlayCards');
 
 /** One scheduled overlay card. All strings arrive pre-localized. */
 export interface OverlayCardPayload {
-  slot: 'morning' | 'night';
+  slot: 'morning' | 'night' | 'sleep';
   hour: number;
   minute: number;
-  kind: 'verse' | 'quiz';
+  kind: 'verse' | 'quiz' | 'reflect';
   deepLink: string;
   // verse:
   verseText?: string;
@@ -24,10 +24,13 @@ export interface OverlayCardPayload {
   ctaLabel?: string;
   /** Absolute local file path (no file:// prefix). Empty → gradient fallback. */
   imagePath?: string;
-  // quiz:
+  // quiz + reflect (badge doubles as the reflect card's title):
   badge?: string;
   question?: string;
   options?: string[];
+  // reflect: destinations for the two answer pills (both open the app).
+  linkYes?: string;
+  linkNo?: string;
 }
 
 export function overlayCardsSupported(): boolean {

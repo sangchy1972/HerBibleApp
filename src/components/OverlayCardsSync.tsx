@@ -114,6 +114,27 @@ export default function OverlayCardsSync() {
       });
     }
 
+    // Before-You-Sleep reflection card — fixed 21:58 (owner 2026-08-21), no
+    // reminder pairing: the master switch alone governs. One of five nightly
+    // examen questions rotates by day; No routes into the evening prayer flow
+    // (she hasn't prayed — invite her now), Yes lands on today's verse.
+    const SLEEP_QS = [
+      'overlayCards.sleep.q1', 'overlayCards.sleep.q2', 'overlayCards.sleep.q3',
+      'overlayCards.sleep.q4', 'overlayCards.sleep.q5',
+    ] as const;
+    cards.push({
+      slot: 'sleep',
+      hour: 21,
+      minute: 58,
+      kind: 'reflect',
+      deepLink: 'herbible://verse-of-day?src=sleepcard',
+      badge: t('overlayCards.sleep.title'),
+      question: t(SLEEP_QS[((todayDay % SLEEP_QS.length) + SLEEP_QS.length) % SLEEP_QS.length]),
+      options: [t('overlayCards.sleep.no'), t('overlayCards.sleep.yes')],
+      linkYes: 'herbible://verse-of-day?src=sleepcard&ans=yes',
+      linkNo: 'herbible://prayer?src=sleepcard&ans=no',
+    });
+
     if (cards.length === 0) return;
     const ser = JSON.stringify(cards);
     if (ser === last.current) return;

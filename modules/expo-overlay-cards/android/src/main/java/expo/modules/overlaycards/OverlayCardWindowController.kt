@@ -50,6 +50,9 @@ object OverlayCardWindowController {
   private val PARCH_INK = 0xFF241F1A.toInt()
   private val PARCH_SUB = 0xFF43372B.toInt()
   private val PILL_TAN = 0xFFB79B76.toInt()
+  // Night sky for the sleep-reflection card — deep indigo, not pure black.
+  private val NIGHT_TOP = 0xFF3B3566.toInt()
+  private val NIGHT_BOTTOM = 0xFF1D1A38.toInt()
   // NOTE: postDelayed runs on the UPTIME clock, which pauses in deep sleep —
   // a card shown at 20:00 on a phone that dozes all night can still be there
   // at the morning unlock, until the next slot's fire replaces it. Accepted
@@ -241,9 +244,13 @@ object OverlayCardWindowController {
     // child set on itself, so the verse card's fixed image height must be
     // decided here. Quiz wraps its own content.
     val innerW = cardW - dp(ctx, 24f)
-    val bodyH = if (card.kind == "quiz") ViewGroup.LayoutParams.WRAP_CONTENT else (innerW * 0.78f).toInt()
+    val bodyH = if (card.kind == "verse") (innerW * 0.78f).toInt() else ViewGroup.LayoutParams.WRAP_CONTENT
     root.addView(
-      if (card.kind == "quiz") buildQuizBody(ctx, card) else buildVerseBody(ctx, card, bmp),
+      when (card.kind) {
+        "quiz" -> buildQuizBody(ctx, card)
+        "reflect" -> buildReflectBody(ctx, card)
+        else -> buildVerseBody(ctx, card, bmp)
+      },
       LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, bodyH).apply {
         leftMargin = dp(ctx, 12f); rightMargin = dp(ctx, 12f); bottomMargin = dp(ctx, 14f)
       },
@@ -405,6 +412,65 @@ object OverlayCardWindowController {
         panel.addView(rowLl, rowLp)
       }
     }
+    return panel
+  }
+
+  // Sleep-reflection card (the 21:58 "Before You Sleep" slot): night-sky
+  // gradient, serif title, one nightly examen question, and the No / Yes pills
+  // — the reference layout with our palette (rose, not the competitor's
+  // green). BOTH answers are real entries into the app: No routes into the
+  // evening prayer flow (she hasn't prayed — invite her now), Yes lands on
+  // today's verse; either way the overlay-entry stamp suppresses the arrival
+  // ad, same as every card tap.
+  private fun buildReflectBody(ctx: Context, card: OverlayCard): View {
+    val panel = LinearLayout(ctx)
+    panel.orientation = LinearLayout.VERTICAL
+    panel.background = GradientDrawable(
+      GradientDrawable.Orientation.TL_BR, intArrayOf(NIGHT_TOP, NIGHT_BOTTOM),
+    ).apply { cornerRadius = dp(ctx, 16f).toFloat() }
+    panel.setPadding(dp(ctx, 18f), dp(ctx, 20f), dp(ctx, 18f), dp(ctx, 16f))
+
+    val title = TextView(ctx)
+    title.text = card.badge
+    title.setTextColor(Color.WHITE)
+    title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 21f)
+    title.typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
+    title.gravity = Gravity.CENTER
+    panel.addView(title, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+
+    val q = TextView(ctx)
+    q.text = card.question
+    q.setTextColor(0xF2FFFFFF.toInt())
+    q.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
+    q.typeface = Typeface.SERIF
+    q.gravity = Gravity.CENTER
+    q.setLineSpacing(0f, 1.2f)
+    val qLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+    qLp.topMargin = dp(ctx, 12f)
+    panel.addView(q, qLp)
+
+    fun pill(label: String, link: String, answer: String): View {
+      val b = TextView(ctx)
+      b.text = label
+      b.setTextColor(Color.WHITE)
+      b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+      b.typeface = Typeface.DEFAULT_BOLD
+      b.gravity = Gravity.CENTER
+      b.background = rounded(ROSE, dp(ctx, 22f).toFloat())
+      b.setOnClickListener { tap(ctx, card, link, mapOf("answer" to answer)) }
+      return b
+    }
+    // No left, Yes right — the reference order.
+    val row = LinearLayout(ctx)
+    row.orientation = LinearLayout.HORIZONTAL
+    val noLp = LinearLayout.LayoutParams(0, dp(ctx, 44f), 1f)
+    val yesLp = LinearLayout.LayoutParams(0, dp(ctx, 44f), 1f)
+    yesLp.leftMargin = dp(ctx, 10f)
+    row.addView(pill(card.options.getOrNull(0) ?: "No", card.linkNo, "no"), noLp)
+    row.addView(pill(card.options.getOrNull(1) ?: "Yes", card.linkYes, "yes"), yesLp)
+    val rowLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+    rowLp.topMargin = dp(ctx, 16f)
+    panel.addView(row, rowLp)
     return panel
   }
 

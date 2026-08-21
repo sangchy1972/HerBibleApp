@@ -17,10 +17,10 @@ import java.util.Calendar
 
 /** One scheduled card. `slot` doubles as the alarm identity. */
 data class OverlayCard(
-  val slot: String,            // "morning" (verse card) | "night" (quiz card)
+  val slot: String,            // "morning" (verse) | "night" (quiz) | "sleep" (reflect, 21:58)
   val hour: Int,
   val minute: Int,
-  val kind: String,            // "verse" | "quiz"
+  val kind: String,            // "verse" | "quiz" | "reflect"
   val deepLink: String,        // herbible://… opened on tap
   // verse kind:
   val verseText: String,
@@ -31,6 +31,11 @@ data class OverlayCard(
   val badge: String,           // "Daily Bible Quiz" (localized; ✦ added at draw time)
   val question: String,
   val options: List<String>,   // 2 → stacked like the reference, 4 → 2×2 grid
+  // reflect kind (the 21:58 Before-You-Sleep card) — the two answer pills'
+  // destinations. Both return to the app: No routes into the evening prayer
+  // flow, Yes lands on today's verse.
+  val linkYes: String,
+  val linkNo: String,
 )
 
 object OverlayCardStore {
@@ -105,6 +110,8 @@ object OverlayCardStore {
           badge = c.optString("badge", ""),
           question = c.optString("question", ""),
           options = opts,
+          linkYes = c.optString("linkYes", ""),
+          linkNo = c.optString("linkNo", ""),
         ),
       )
     }
@@ -199,7 +206,11 @@ object OverlayCardStore {
 object OverlayCardScheduler {
   // Stable request codes per slot — reusing them is what makes re-scheduling
   // replace instead of accumulate.
-  private fun requestCode(slot: String) = if (slot == "morning") 1001 else 1002
+  private fun requestCode(slot: String) = when (slot) {
+    "morning" -> 1001
+    "night" -> 1002
+    else -> 1003          // "sleep" — the 21:58 reflection card
+  }
   const val RETRY_MAX = 5
   private const val RETRY_MS = 8 * 60 * 1000L
 
@@ -239,7 +250,7 @@ object OverlayCardScheduler {
   }
 
   fun rescheduleAll(ctx: Context, cards: List<OverlayCard>) {
-    for (slot in listOf("morning", "night")) {
+    for (slot in listOf("morning", "night", "sleep")) {
       val card = cards.firstOrNull { it.slot == slot }
       if (card == null) {
         try { alarmManager(ctx)?.cancel(pending(ctx, slot)) } catch (e: Throwable) { }
@@ -250,7 +261,7 @@ object OverlayCardScheduler {
   }
 
   fun cancelAll(ctx: Context) {
-    for (slot in listOf("morning", "night")) {
+    for (slot in listOf("morning", "night", "sleep")) {
       try { alarmManager(ctx)?.cancel(pending(ctx, slot)) } catch (e: Throwable) { }
     }
   }

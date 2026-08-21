@@ -528,7 +528,18 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   const mainScrollRef = useRef<ScrollView>(null);
   const resetScrollOnFocus = useRef(false);
   useEffect(() => {
-    const unsub = navigation.addListener('tabPress', () => { resetScrollOnFocus.current = true; });
+    const unsub = navigation.addListener('tabPress', () => {
+      // Tapping the tab we're ALREADY on scrolls home right away (owner
+      // 2026-08-21 — covers the double-tap too, since each press lands here).
+      // It must NOT arm the flag: no focus event follows when already
+      // focused, so the stale flag would sit until a later back-return from
+      // a pushed screen and wrongly eat her preserved offset there.
+      if (navigation.isFocused()) {
+        mainScrollRef.current?.scrollTo({ y: 0, animated: true });
+      } else {
+        resetScrollOnFocus.current = true;
+      }
+    });
     return unsub;
   }, [navigation]);
   useFocusEffect(useCallback(() => {

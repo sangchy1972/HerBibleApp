@@ -29,6 +29,7 @@ import ShareVerseSheet from '../components/ShareVerseSheet';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import VerseNoteSheet from '../components/VerseNoteSheet';
 import TabSection from '../components/shared/TabSection';
+import ChapterDoneCelebration from '../components/ChapterDoneCelebration';
 import { fetchTranslationIndex, fetchChapter, fetchCommentaryChapter, streamingSearchVerses, type BookSummary, type Verse, type VerseHit, type SearchProgress } from '../services/bibleService';
 import { CORPUS_CDN_ROOT } from '../constants/corpus';
 import { useAudioPlayer, useAudioPlayerStatus, type AudioPlayer } from 'expo-audio';
@@ -721,6 +722,9 @@ export default function BibleScreen() {
   // Confirm-dialog state for "mark as unread" (tapping an already-completed
   // chapter button). Holds the {bookSlug, chapter} to revert, or null.
   const [unreadConfirm, setUnreadConfirm] = useState<{ bookSlug: string; chapter: number } | null>(null);
+  // The Well Done celebration after the FIRST mark of a chapter (owner
+  // 2026-08-21). Re-taps on an already-completed chapter never re-open it.
+  const [wellDone, setWellDone] = useState(false);
   // Same prayer-bg context the home verse card consumes — used here to
   // pass the daily photo into ShareVerseSheet so its preview cards inherit
   // the live backdrop instead of falling back to the pink/lav gradient.
@@ -1718,7 +1722,9 @@ export default function BibleScreen() {
             }
             markRead(bookSlug, chapter);
             markToday();
-            showToast(t('bibleReader.toast.daysRead'), { icon: 'check', ms: 2000 });
+            // The Well Done screen replaces the old toast (owner 2026-08-21)
+            // — one celebration, not two layers of feedback.
+            setWellDone(true);
           };
           return (
             <TouchableOpacity
@@ -1736,6 +1742,8 @@ export default function BibleScreen() {
         })()}
       </ScrollView>
       </TabSection>
+
+      <ChapterDoneCelebration visible={wellDone} onClose={() => setWellDone(false)} />
 
       {/* Mark-as-unread confirmation — app-styled centered dialog (not the OS
           Alert) so the user can revert an accidentally-completed chapter. */}

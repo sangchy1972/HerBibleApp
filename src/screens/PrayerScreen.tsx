@@ -1660,8 +1660,8 @@ const styles = StyleSheet.create({
   },
   heroText: {
     fontFamily: FONTS.merriweather,                                            // Merriweather per user — matches the reader body face
-    fontSize: 19.16,                                                             // 20.60 × 0.93 (-7 % per user). Affects both Verse of the Day + Verse of the Night cards (same hero component)
-    lineHeight: 29.59,                                                           // 31.82 × 0.93 — line-height scales in step so wrapped verses keep their open rhythm
+    fontSize: 17.82,                                                             // 19.16 × 0.93 (second -7 % per user 2026-08-21). Affects both Verse of the Day + Verse of the Night cards (same hero component)
+    lineHeight: 25.15,                                                           // 29.59 × 0.85 (-15 % per user 2026-08-21) — ratio 1.41, still open enough for Merriweather
     color: 'rgba(255,255,255,0.96)',
   },
   heroActions: {

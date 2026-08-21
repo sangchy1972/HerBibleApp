@@ -29,7 +29,7 @@ export const GOLD = '#F0B640';
 // (App.tsx) and the Bible reader's "default" theme so every screen shares one
 // color code. (The reader previously used a warm #F0EEEB that read yellowish
 // next to these.)
-export const SCREEN_BG = '#F2F2F2';
+export const SCREEN_BG = '#F9F7F7';   // was #F2F2F2 — warmer near-white (owner 2026-08-21)
 export const P = 17; // horizontal padding
 // Canonical corner radius for solid-accent CTA buttons (matches the Prayer
 // home's "Start Morning Prayer" button). Every rose primary button uses this

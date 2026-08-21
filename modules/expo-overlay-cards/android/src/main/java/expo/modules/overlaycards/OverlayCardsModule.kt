@@ -42,12 +42,25 @@ class OverlayCardsModule : Module() {
     // config serving rather than half-applying.
     Function("configure") { json: String ->
       val c = ctx ?: return@Function false
-      try { OverlayCardStore.writeConfig(c, json); true } catch (e: Throwable) { false }
+      try {
+        OverlayCardStore.writeConfig(c, json)
+        // The unlock listener rides the config: ensure() self-checks cards +
+        // overlay permission, so calling it on every configure also picks up
+        // a permission granted after the switch was flipped (Sync re-runs on
+        // each foreground).
+        OverlayCardService.ensure(c)
+        true
+      } catch (e: Throwable) { false }
     }
 
     Function("cancelAll") {
       val c = ctx ?: return@Function false
-      try { OverlayCardStore.clearConfig(c); OverlayCardWindowController.dismiss(); true } catch (e: Throwable) { false }
+      try {
+        OverlayCardStore.clearConfig(c)
+        OverlayCardService.stop(c)
+        OverlayCardWindowController.dismiss()
+        true
+      } catch (e: Throwable) { false }
     }
 
     // ── MIUI extras ──────────────────────────────────────────────────────────

@@ -962,10 +962,36 @@ The physics, because every piece follows from them:
   the grant is detected on the next foreground by `OverlayCardsSync`, which
   also drains the receiver's queued analytics (`overlay_card_shown/tap/dismiss`
   — logged natively into prefs because the cold path has no Firebase JS).
-- **Receiver guard order**: re-arm tomorrow FIRST (a crash may not kill the
-  schedule); then permission / configured / not-shown-today; screen off or
-  keyguard up or our own app foreground → retry +8 min, max 5 — that retry loop
-  is what makes the card meet her at pickup instead of firing into a pocket.
+- **Unlock-driven since 2026-08-21 (owner Option A, costs accepted).** The
+  timed alarms alone were a lottery: locked at slot time + no pickup inside
+  the 40-min retry window = no card that day. `OverlayCardService` — a
+  foreground service whose ONLY job is holding a dynamic
+  `ACTION_USER_PRESENT`/`ACTION_SCREEN_ON` receiver (no polling, no wake
+  locks) — shows the day's due card at the unlock moment, exactly like the
+  competitor. **Semantics: the card RE-SHOWS on every unlock until she
+  ENGAGES it** (tap-through or X) — ignoring it (30-min self-destruct,
+  screen off) leaves it eligible, matching the reference screenshots (same
+  card at 12:31 and 12:46). Guardrails in `OverlayCardGate`, shared by BOTH
+  triggers so they can never disagree: engagement ends the slot's day
+  absolutely (the honoured X is load-bearing for review defense), cap 8
+  re-shows/slot/day, ≥3-min gap, never over a still-visible card, never over
+  our own foreground app. After 20:00 the night quiz outranks a
+  still-unengaged morning verse; one card per unlock.
+- **Service lifecycle**: started by `configure()` (Sync re-runs each
+  foreground, so a permission granted late is picked up), by boot, and
+  re-ensured on every alarm fire (daily heartbeat vs OEM kills;
+  START_STICKY). Stops itself when SAW is revoked or no cards are configured;
+  master switch OFF → `cancelAll()` stops it. Background-start legality on
+  12+: holding SYSTEM_ALERT_WINDOW is a documented FGS-from-background
+  exemption. The persistent notification (IMPORTANCE_MIN, localized copy fed
+  by JS via `serviceTitle`/`serviceText` in the configure payload) is the
+  OS-required anchor. **Play Console: the `specialUse` foregroundServiceType
+  requires a declaration at submission** — see the release runbook.
+- **Receiver guard order** (alarm path, unchanged in spirit): re-arm tomorrow
+  FIRST (a crash may not kill the schedule) + ensure the service; then
+  permission / `OverlayCardGate.mayShow`; screen off or keyguard up or our
+  own app foreground → retry +8 min, max 5 — now just the belt for the
+  window where the service was killed and its heartbeat hasn't landed.
 - The window survives only as long as the process (a visible overlay bumps us
   to perceptible priority — usually enough, not guaranteed; the failure mode is
   a vanished card, which is fine). 30-min self-destruct, settings-coach removal

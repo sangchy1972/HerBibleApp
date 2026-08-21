@@ -29,20 +29,26 @@ class OverlayCardAlarmReceiver : BroadcastReceiver() {
     val card = OverlayCardStore.cardForSlot(ctx, slot) ?: return
 
     OverlayCardScheduler.armNext(ctx, card)
+    // Daily heartbeat for the unlock listener — brings the service back after
+    // an OEM kill even if the app is never opened.
+    OverlayCardService.ensure(ctx)
 
     if (!canDrawOverlays(ctx)) return
-    if (OverlayCardStore.shownToday(ctx, slot)) return
+    if (!OverlayCardGate.mayShow(ctx, slot)) return
 
-    if (!screenUsable(ctx) || ownAppForeground(ctx)) {
+    if (!screenUsable(ctx) || OverlayCardGate.ownAppForeground(ctx)) {
+      // The unlock listener normally catches the next pickup; the short retry
+      // ladder stays as the belt for the window where the service was killed
+      // and its heartbeat hasn't landed yet.
       if (OverlayCardStore.bumpRetry(ctx, slot, OverlayCardScheduler.RETRY_MAX)) {
         OverlayCardScheduler.armRetry(ctx, slot)
       }
       return
     }
 
-    // markShown BEFORE the window goes up: if addView throws mid-way we'd
-    // rather lose one day's card than retry-loop a half-built window.
-    OverlayCardStore.markShown(ctx, slot)
+    // recordShow BEFORE the window goes up: if addView throws mid-way we'd
+    // rather count a phantom appearance than retry-loop a half-built window.
+    OverlayCardStore.recordShow(ctx, slot)
     OverlayCardWindowController.show(ctx, card)
   }
 
@@ -56,15 +62,6 @@ class OverlayCardAlarmReceiver : BroadcastReceiver() {
     (pm?.isInteractive == true) && (km?.isKeyguardLocked != true)
   } catch (e: Throwable) { false }
 
-  // Our OWN process importance needs no permission to read. FOREGROUND means an
-  // Activity of ours is on screen right now.
-  private fun ownAppForeground(ctx: Context): Boolean = try {
-    val am = ctx.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
-    val myPid = android.os.Process.myPid()
-    am?.runningAppProcesses?.any {
-      it.pid == myPid && it.importance <= ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
-    } == true
-  } catch (e: Throwable) { false }
 }
 
 // AlarmManager forgets everything on power-off. The app may not be opened for
@@ -74,6 +71,9 @@ class OverlayCardBootReceiver : BroadcastReceiver() {
     if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
     val ctx = context.applicationContext
     val cards = OverlayCardStore.readCards(ctx)
-    if (cards.isNotEmpty()) OverlayCardScheduler.rescheduleAll(ctx, cards)
+    if (cards.isNotEmpty()) {
+      OverlayCardScheduler.rescheduleAll(ctx, cards)
+      OverlayCardService.ensure(ctx)
+    }
   }
 }

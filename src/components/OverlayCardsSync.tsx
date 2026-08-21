@@ -118,7 +118,10 @@ export default function OverlayCardsSync() {
     const ser = JSON.stringify(cards);
     if (ser === last.current) return;
     last.current = ser;
-    configureOverlayCards('Her Bible', cards);
+    configureOverlayCards('Her Bible', cards, {
+      title: t('overlayCards.svcTitle'),
+      body: t('overlayCards.svcBody'),
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getVerse, todayDay, imageFor, loaded, quiz.ready, quiz.bank, quiz.questions, settings, t, fgTick, enabled]);
 

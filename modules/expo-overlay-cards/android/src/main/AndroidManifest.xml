@@ -2,6 +2,13 @@
   <!-- Reschedule the daily card alarms after a reboot — AlarmManager forgets
        everything on power-off, and the app may not be opened for days. -->
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+  <!-- The unlock listener (ACTION_USER_PRESENT is not delivered to dead
+       processes) — a foreground service whose only job is holding that
+       receiver. specialUse: Play Console requires a declaration for this type
+       at submission; the declared use is the user-enabled daily devotional
+       card shown over the home screen at unlock. -->
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
   <application>
     <!-- exported=false on both: the alarm receiver is only ever targeted by our
@@ -17,5 +24,13 @@
         <action android:name="android.intent.action.BOOT_COMPLETED" />
       </intent-filter>
     </receiver>
+    <service
+      android:name="expo.modules.overlaycards.OverlayCardService"
+      android:exported="false"
+      android:foregroundServiceType="specialUse">
+      <property
+        android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+        android:value="User-enabled daily devotional reminder card shown over the home screen when the user unlocks the phone; contains no ads; user can disable in-app at any time" />
+    </service>
   </application>
 </manifest>

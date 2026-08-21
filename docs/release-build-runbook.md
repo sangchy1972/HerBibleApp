@@ -157,20 +157,44 @@ npm run submit:ios
 
 > Her Bible uses SYSTEM_ALERT_WINDOW ("Display over other apps") for a single
 > user-facing feature: optional daily devotional cards (the day's Bible verse,
-> and a short Bible quiz) shown at the user's own reminder times. The feature
-> is strictly opt-in — the user enables the permission herself on the system
-> settings page after an in-app explanation, exactly the flow the Permissions
-> policy prescribes for special permissions. It can be turned off at any time
-> via an in-app switch (Profile → Cards on your screen) or by revoking the
-> permission. The overlay cards contain only app content — no ads, no
-> promotions, no third-party material — are clearly branded with the app icon
-> and name, dismissible with one tap, never shown on the lock screen, and
-> capped at two per day.
+> and a short Bible quiz). The feature is strictly opt-in — the user enables
+> the permission herself on the system settings page after an in-app
+> explanation, exactly the flow the Permissions policy prescribes for special
+> permissions. There are two daily cards, each tied to a reminder time the
+> user chose herself; a card appears when the user unlocks the phone and may
+> reappear on later unlocks that day ONLY while the user has not interacted
+> with it — a single tap (opening it, or the X) dismisses that card for the
+> day, and hard limits cap appearances regardless. Cards are never shown on
+> the lock screen, are clearly branded with the app icon and name, and
+> contain only app content — no ads, no promotions, no third-party material.
+> The feature can be turned off at any time via an in-app switch (Profile →
+> Cards on your screen) or by revoking the permission; while it is on, a
+> visible (low-priority) notification discloses that it is active.
 
 政策核对记录(2026-08-16,原文见 dev-guide §10):SAW 属 special permission,
 官方指定的申请方式就是跳系统设置页;广告政策封杀的是**广告**出现在应用外
 (明确点名 overlays)——所以悬浮卡里**永远不能**出现广告/促销/paywall 入口,
-这条红线写在 dev-guide §10。
+这条红线写在 dev-guide §10。2026-08-21 起改为解锁驱动(owner Option A):
+重现语义、护栏与上文答辩词一致,dev-guide §10 有完整机制。
+
+### 前台服务 specialUse 申报(1.5.0 起,每次提审 Play 会要求)
+
+悬浮卡的解锁监听跑在 `foregroundServiceType="specialUse"` 的前台服务里。
+**Play Console → App content → Foreground service permissions** 里为
+`FOREGROUND_SERVICE_SPECIAL_USE` 提交申报,用途栏直接贴:
+
+> The app offers an optional, user-enabled daily devotional card (Bible verse
+> / Bible quiz) drawn over the home screen when the user unlocks the phone.
+> Unlock events (ACTION_USER_PRESENT) cannot be received by a stopped app, so
+> a minimal foreground service holds the broadcast receiver. The service does
+> no polling and holds no wake locks; it exists solely to hear the unlock and
+> show the card the user asked for. It runs only while the user has enabled
+> the feature AND granted "Display over other apps", and stops itself
+> otherwise. No existing dedicated foreground service type covers
+> "show user-requested content at unlock".
+
+首次带此申报的提审可能被要求演示视频:录一段「开开关 → 授权 → 锁屏 →
+解锁 → 卡片出现 → 点 X 当天不再出现」即可。
 
 ---
 

@@ -118,6 +118,9 @@ object OverlayCardWindowController {
 
   fun dismiss() { main.post { remove() } }
 
+  /** True while a card window is up — the gate skips re-shows over it. */
+  fun isShowing(): Boolean = overlay != null
+
   private fun armSelfDestruct() {
     autoHide?.let { main.removeCallbacks(it) }
     val r = Runnable { remove() }
@@ -168,6 +171,8 @@ object OverlayCardWindowController {
 
   private fun tap(ctx: Context, card: OverlayCard, link: String, extra: Map<String, String>) {
     OverlayCardStore.queueEvent(ctx, "overlay_card_tap", mapOf("slot" to card.slot, "kind" to card.kind) + extra)
+    // Tapping through IS engagement — this slot is done for the day.
+    OverlayCardStore.markEngaged(ctx, card.slot)
     // Stamp BEFORE opening: adFrequency reads this synchronously on the
     // foreground return and skips the hot-start interstitial for this entry.
     OverlayCardStore.stampTap(ctx)
@@ -224,6 +229,9 @@ object OverlayCardWindowController {
     closeWrap.addView(close, FrameLayout.LayoutParams(dp(ctx, 14f), dp(ctx, 14f), Gravity.CENTER))
     closeWrap.setOnClickListener {
       OverlayCardStore.queueEvent(ctx, "overlay_card_dismiss", mapOf("slot" to card.slot, "kind" to card.kind))
+      // The X is an explicit "not today" — honoured absolutely: no re-shows
+      // for this slot until tomorrow. Load-bearing for the review defense.
+      OverlayCardStore.markEngaged(ctx, card.slot)
       remove()
     }
     header.addView(closeWrap, LinearLayout.LayoutParams(dp(ctx, 30f), dp(ctx, 30f)))

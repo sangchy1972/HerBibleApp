@@ -38,6 +38,8 @@ object OverlayCardStore {
   private const val KEY_CONFIG = "config"
   private const val KEY_EVENTS = "events"
   private const val KEY_APP_NAME = "app_name"
+  private const val KEY_SVC_TITLE = "svc_title"
+  private const val KEY_SVC_TEXT = "svc_text"
 
   fun prefs(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -45,12 +47,22 @@ object OverlayCardStore {
     // Parse-validate BEFORE persisting, so a malformed payload can never brick
     // the receiver path — the old config keeps serving.
     val parsed = parseCards(json) ?: return
+    val root = try { JSONObject(json) } catch (e: Throwable) { null }
     prefs(ctx).edit()
       .putString(KEY_CONFIG, json)
-      .putString(KEY_APP_NAME, JSONObject(json).optString("appName", ""))
+      .putString(KEY_APP_NAME, root?.optString("appName", "") ?: "")
+      .putString(KEY_SVC_TITLE, root?.optString("serviceTitle", "") ?: "")
+      .putString(KEY_SVC_TEXT, root?.optString("serviceText", "") ?: "")
       .apply()
     OverlayCardScheduler.rescheduleAll(ctx, parsed)
   }
+
+  // Localized by JS at configure time; the service has no i18n of its own.
+  fun serviceTitle(ctx: Context): String =
+    prefs(ctx).getString(KEY_SVC_TITLE, "")?.ifEmpty { "Daily cards are on" } ?: "Daily cards are on"
+  fun serviceText(ctx: Context): String =
+    prefs(ctx).getString(KEY_SVC_TEXT, "")?.ifEmpty { "Your verse and quiz cards appear when you unlock your phone." }
+      ?: "Your verse and quiz cards appear when you unlock your phone." 
 
   fun clearConfig(ctx: Context) {
     prefs(ctx).edit().remove(KEY_CONFIG).apply()
@@ -105,12 +117,36 @@ object OverlayCardStore {
     return "%04d-%02d-%02d".format(c.get(Calendar.YEAR), c.get(Calendar.MONTH) + 1, c.get(Calendar.DAY_OF_MONTH))
   }
 
-  fun shownToday(ctx: Context, slot: String): Boolean =
-    prefs(ctx).getString("shown:$slot", "") == todayYmd()
-
-  fun markShown(ctx: Context, slot: String) {
-    prefs(ctx).edit().putString("shown:$slot", todayYmd()).putInt("retry:$slot", 0).apply()
+  // Unlock-driven model (owner 2026-08-18): the day's card RE-SHOWS on every
+  // unlock until she ENGAGES it — taps through or closes with the X. Ignoring
+  // it (30-min self-destruct, screen off) leaves it eligible again, which is
+  // exactly the reference app's behaviour. recordShow counts appearances;
+  // markEngaged ends the day for that slot.
+  fun recordShow(ctx: Context, slot: String) {
+    prefs(ctx).edit()
+      .putString("showDay:$slot", todayYmd())
+      .putInt("shows:$slot", showsToday(ctx, slot) + 1)
+      .putLong("lastShowAt:$slot", System.currentTimeMillis())
+      .putInt("retry:$slot", 0)
+      .apply()
   }
+
+  fun showsToday(ctx: Context, slot: String): Int {
+    val p = prefs(ctx)
+    return if (p.getString("showDay:$slot", "") == todayYmd()) p.getInt("shows:$slot", 0) else 0
+  }
+
+  fun msSinceShow(ctx: Context, slot: String): Long {
+    val t = prefs(ctx).getLong("lastShowAt:$slot", 0L)
+    return if (t <= 0L) Long.MAX_VALUE else System.currentTimeMillis() - t
+  }
+
+  fun markEngaged(ctx: Context, slot: String) {
+    prefs(ctx).edit().putString("engaged:$slot", todayYmd()).apply()
+  }
+
+  fun engagedToday(ctx: Context, slot: String): Boolean =
+    prefs(ctx).getString("engaged:$slot", "") == todayYmd()
 
   /** Bump today's retry counter; true while another retry is allowed. */
   fun bumpRetry(ctx: Context, slot: String, max: Int): Boolean {
@@ -226,4 +262,41 @@ object OverlayCardScheduler {
   /** Short retry while the screen is off / locked / our app is foreground. */
   fun armRetry(ctx: Context, slot: String) =
     setAlarm(ctx, System.currentTimeMillis() + RETRY_MS, pending(ctx, slot))
+}
+
+// One rule set for BOTH triggers (the slot alarm and the unlock listener), so
+// the two paths can never disagree about whether a card may appear. Invisible
+// guardrails on the re-show model: a hard per-slot daily cap and a minimum gap
+// keep pocket-unlock flapping and pathological unlock counts bounded, and an
+// explicit engagement (tap or X) always ends the day — honouring her dismissal
+// is a load-bearing part of the Play review defense.
+object OverlayCardGate {
+  const val RESHOW_CAP = 8
+  private const val MIN_GAP_MS = 3 * 60 * 1000L
+
+  fun mayShow(ctx: Context, slot: String): Boolean =
+    !OverlayCardStore.engagedToday(ctx, slot) &&
+      OverlayCardStore.showsToday(ctx, slot) < RESHOW_CAP &&
+      OverlayCardStore.msSinceShow(ctx, slot) >= MIN_GAP_MS &&
+      !OverlayCardWindowController.isShowing()
+
+  /** Cards whose slot time has passed today, most recent slot first — after
+   *  20:00 the night quiz outranks a still-unengaged morning verse. */
+  fun dueCards(ctx: Context): List<OverlayCard> {
+    val now = Calendar.getInstance()
+    val minutesNow = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
+    return OverlayCardStore.readCards(ctx)
+      .filter { it.hour * 60 + it.minute <= minutesNow }
+      .sortedByDescending { it.hour * 60 + it.minute }
+  }
+
+  /** FOREGROUND importance = an Activity of ours is on screen right now; the
+   *  in-app nudge system owns that surface. Needs no permission for own uid. */
+  fun ownAppForeground(ctx: Context): Boolean = try {
+    val am = ctx.getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager
+    am?.runningAppProcesses?.any {
+      it.uid == android.os.Process.myUid() &&
+        it.importance <= android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
+    } == true
+  } catch (e: Throwable) { false }
 }

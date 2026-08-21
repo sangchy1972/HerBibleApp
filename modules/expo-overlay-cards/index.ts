@@ -45,8 +45,21 @@ export function openOverlaySettings(): boolean {
 }
 
 /** Persist content + (re)arm the daily alarms. Idempotent; call on every sync. */
-export function configureOverlayCards(appName: string, cards: OverlayCardPayload[]): boolean {
-  try { return Native?.configure?.(JSON.stringify({ appName, cards })) ?? false; } catch { return false; }
+export function configureOverlayCards(
+  appName: string,
+  cards: OverlayCardPayload[],
+  // Localized copy for the unlock-listener foreground service's persistent
+  // notification — the native side has no i18n of its own.
+  service?: { title: string; body: string },
+): boolean {
+  try {
+    return Native?.configure?.(JSON.stringify({
+      appName,
+      serviceTitle: service?.title ?? '',
+      serviceText: service?.body ?? '',
+      cards,
+    })) ?? false;
+  } catch { return false; }
 }
 
 /** Tear down schedule + content (feature toggled off). */

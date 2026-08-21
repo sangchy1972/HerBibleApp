@@ -167,7 +167,7 @@ export default function StreakDailyHost() {
 
   return (
     <Animated.View entering={FadeIn.duration(220)} style={styles.root}>
-      <View style={[styles.content, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 20 }]}>
+      <View style={[styles.content, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 30 }]}>
         <View style={styles.hero}>
           {/* 500×690 comp — width = height × 0.725 keeps its aspect (StreakScreen). */}
           <Animated.View entering={ZoomIn.duration(420)}>
@@ -183,6 +183,10 @@ export default function StreakDailyHost() {
             {stateLine}
           </Animated.Text>
         </View>
+
+        {/* 70/30 spacer split lifts the card pair 30% up the free space while
+            the CTA keeps the floor (owner 2026-08-21). */}
+        <View style={{ flex: 0.7 }} />
 
         <View style={styles.lower}>
           {/* Next-level progress — the reward hook, from the ladder the app
@@ -210,17 +214,22 @@ export default function StreakDailyHost() {
               return <DayCircle key={d} label={d} done={done} half={half} isToday={isToday} morning={true} />;
             })}
           </Animated.View>
-
-          <Animated.View entering={FadeInUp.duration(400).delay(SLOT * 6)}>
-            <TouchableOpacity onPress={onContinue} activeOpacity={0.9} style={styles.cta}>
-              <Text style={styles.ctaText}>{t('common.continue')}</Text>
-            </TouchableOpacity>
-          </Animated.View>
         </View>
+
+        <View style={{ flex: 0.3 }} />
+
+        <Animated.View entering={FadeInUp.duration(400).delay(SLOT * 6)}>
+          <TouchableOpacity onPress={onContinue} activeOpacity={0.9} style={styles.cta}>
+            <Text style={styles.ctaText}>{t('common.continue')}</Text>
+          </TouchableOpacity>
+        </Animated.View>
       </View>
     </Animated.View>
   );
 }
+
+// Unified card height: taller natural card ≈96 with the bumped type, +20%.
+const CARD_H = 116;
 
 const styles = StyleSheet.create({
   // Full-bleed forced screen — sits over EVERYTHING (same layer discipline as
@@ -231,7 +240,7 @@ const styles = StyleSheet.create({
     zIndex: 70, elevation: 70,
     backgroundColor: '#FFFBF7',
   },
-  content: { flex: 1, paddingHorizontal: P + 4, justifyContent: 'space-between' },
+  content: { flex: 1, paddingHorizontal: P + 4 },
   hero: { alignItems: 'center' },
   flame: { width: Math.round(150 * 0.725), height: 150 },
   big: {
@@ -250,22 +259,25 @@ const styles = StyleSheet.create({
     marginTop: 18, paddingHorizontal: 12,
   },
   lower: { gap: 16 },
+  // Both white cards share ONE explicit height (owner 2026-08-21: unified,
+  // then +20% over the taller one's natural ≈96) with content centered.
   milestone: {
-    backgroundColor: '#FFFFFF', borderRadius: 20, padding: 16,
+    backgroundColor: '#FFFFFF', borderRadius: 20,
+    height: CARD_H, paddingHorizontal: 16, justifyContent: 'center',
   },
   milestoneLabels: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  milestoneNow: { fontSize: 13, color: TXTSUB, fontFamily: FONTS.latoBold, fontWeight: '700', letterSpacing: 0.4 },
-  milestoneNext: { fontSize: 13, color: GOLD, fontFamily: FONTS.latoBold, fontWeight: '700', letterSpacing: 0.4 },
+  milestoneNow: { fontSize: 15, color: TXTSUB, fontFamily: FONTS.latoBold, fontWeight: '700', letterSpacing: 0.4 },
+  milestoneNext: { fontSize: 15, color: GOLD, fontFamily: FONTS.latoBold, fontWeight: '700', letterSpacing: 0.4 },
   track: { height: 8, borderRadius: 4, backgroundColor: 'rgba(30,27,46,0.07)', overflow: 'hidden' },
   fill: { height: '100%', borderRadius: 4, backgroundColor: GOLD },
   milestoneSub: {
-    fontSize: 12.5, color: TXTSUB, textAlign: 'center', marginTop: 8,
+    fontSize: 16, color: TXTSUB, textAlign: 'center', marginTop: 8,
     fontFamily: FONTS.lato, letterSpacing: 0.3,
   },
   weekCard: {
     backgroundColor: '#FFFFFF', borderRadius: 20,
-    paddingVertical: 14, paddingHorizontal: 10,
-    flexDirection: 'row', justifyContent: 'space-between',
+    height: CARD_H, paddingHorizontal: 10,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
   cta: {
     height: 54, borderRadius: BTN_RADIUS, backgroundColor: ROSE,

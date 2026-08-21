@@ -1074,6 +1074,71 @@ to **Firebase Crashlytics** for the traces — it captures Android ANRs automati
 `ApplicationExitInfo` on API 30+, and `@react-native-firebase/crashlytics` is already
 wired with collection enabled.
 
+### Stability playbook — why our crashes & ANRs happened, and the rules for every new feature
+Written 2026-08-18 at the owner's direction after the ANR (~1% vs 0.47% cap) and
+user-perceived-crash (cap 1.09%) crises. Both metrics gate Google Ads delivery
+and Play ranking. **Read this before building ANY new feature.** The ledgers
+below record what happened; this section is why, and what to do instead.
+
+**Why they actually happened — three mechanisms, all receipted below:**
+1. **Main-thread lock convoys at cold start (the ANRs).** Heavy SDK inits
+   (GMA, UMP) plus an *invisible* dependency chain — RN wires a WebView-backed
+   cookie jar into every `fetch`, so the first network call did first-touch
+   WebView init on an OkHttp thread while holding process-wide locks
+   (DisplayManagerGlobal) that main needs for layout. Nobody "added a bug";
+   four legitimate initializations convoyed on hidden global locks, and slow
+   devices stretched the window past the 5s input budget.
+2. **Async animation vs. tree ownership races (the crashes).** reanimated
+   layout animations schedule native mutations across threads; on a stalled
+   UI thread the view can be deleted before the scheduled work runs, and the
+   zombie work then mutates a dead tree (`Unable to find viewState`). Any
+   library that touches native views asynchronously can lose this race, and
+   low-end devices widen every window.
+3. **Hidden library contracts (the near-misses that reviews caught).** A
+   shared provider's swap crashed because *other* consumers cast unchecked
+   (Pattern S); a faithful backport carried the upstream bug its own
+   follow-up had to fix (Pattern T). Compile success proves nothing about
+   runtime casts, JNI name lookups, or ProGuard survival.
+
+**The rules — apply to every feature, no exceptions:**
+- **Main-thread budget is ~zero.** No disk I/O (SharedPreferences first
+  load, file reads), no bitmap decode, no synchronous binder-heavy calls on
+  main or in BroadcastReceivers. Anything that can take >1ms goes to a
+  background thread; only view building and `addView` stay on main. (The
+  overlay-cards module violated this on day one — decode at the unlock
+  moment — and was caught by review, not by testing.)
+- **Nothing new in the cold-start window.** No SDK init, warmup, or fetch
+  added to `Application.onCreate` / first frames without explicit deferral
+  reasoning written down. The 6s Android ads deferral and the cookie-inert
+  client exist to EMPTY that window — do not refill it.
+- **New dependency = check its Android vitals record first.** Before adopting
+  any native-code library: search its issue tracker for "ANR", "viewState",
+  "deadlock"; read how it initializes; know which threads it touches. Pin
+  exact versions via the lockfile. Upgrades only with receipts — tarball-diff
+  the classes in your crash stacks (never upgrade-theater).
+- **Layout animations (`entering`/`exiting`) are the #1 crash source on
+  low-end Android.** Keep them off unbounded lists; prefer shared values for
+  sheets (already the design rule); when the reanimated patch or version
+  changes, re-walk its upstream fix history (Pattern T).
+- **Shared providers/factories/registries: close the safety argument over
+  ALL consumers** — grep node_modules, not just the file you read (Pattern S).
+- **Runtime claims need runtime receipts.** JNI by-name lookups, ProGuard/R8
+  survival (check consumer rules AND the shipped AAR's proguard.txt),
+  unchecked casts, feature flags — verify each against source; a green local
+  compile is table stakes, not proof.
+- **Native/plugin changes verify locally before EAS**: node-simulate config
+  plugins against the real generated files; `compileDebugKotlin` /
+  NDK-compile the touched module; both platforms build together.
+- **After every release**: read Play vitals **split by app version** ~3 days
+  post-rollout (never the blended 28-day number), export the CSV for real
+  volumes, and sweep Crashlytics for new issue signatures. A regression
+  caught in week one is a patch; caught in week four it is a 28-day-window
+  penalty.
+- **When a crash/ANR batch lands**: traces first, families second, receipts
+  third — no fix without a named mechanism, and every claimed fix states how
+  it will be verified (which metric, which version, which date). Record the
+  verdicts in the ledgers below so the next batch starts warm.
+
 ### Crash triage ledger (Crashlytics batch 2026-08-13, 6 issues / 17 events)
 Verdicts recorded so the next report starts here instead of from scratch. Method for
 "can a dependency patch fix it": **download the patch tarball and diff the exact class

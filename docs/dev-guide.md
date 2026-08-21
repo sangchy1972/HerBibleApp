@@ -36,7 +36,7 @@ same repo. Touch only the files you are changing. Commits auto-sync to GitHub; a
 ### Colour
 - **Never hardcode a colour.** Import from `src/constants/theme.ts`:
   `ROSE #E63F69`, `LAV #866BC0`, `TXT #1E1B2E`, `TXTSUB rgba(30,27,46,0.50)`,
-  `BG #FBF7F6`, `SCREEN_BG #F2F2F2`, `INK_06/10/28`, `GREEN_DONE #7DB87D`.
+  `BG #FBF7F6`, `SCREEN_BG #F9F7F7` (was #F2F2F2, owner 2026-08-21), `INK_06/10/28`, `GREEN_DONE #7DB87D`.
 - Morning = `ROSE`, evening/night = `LAV`. Anything slot-aware takes an `accent` and
   passes it down; do not re-derive the pair locally.
 - Backgrounds lean **white / grey-white**. Rose is an accent, never a wash. The one
@@ -1006,8 +1006,8 @@ The physics, because every piece follows from them:
   triggers so they can never disagree: engagement ends the slot's day
   absolutely (the honoured X is load-bearing for review defense), cap 8
   re-shows/slot/day, ≥3-min gap, never over a still-visible card, never over
-  our own foreground app. After 20:00 the night quiz outranks a
-  still-unengaged morning verse; one card per unlock.
+  our own foreground app. The rotation (least-shown eligible card) decides
+  what shows; one card per unlock.
 - **Service lifecycle**: started by `configure()` (Sync re-runs each
   foreground, so a permission granted late is picked up), by boot, and
   re-ensured on every alarm fire (daily heartbeat vs OEM kills;

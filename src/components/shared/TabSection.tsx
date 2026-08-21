@@ -18,6 +18,18 @@ export default function TabSection({
   style?: StyleProp<ViewStyle>;
   children: React.ReactNode;
 }) {
-  const { style: animStyle, onLayout } = useTabFocusEntrance(delay);
-  return <Animated.View style={[style, animStyle]} onLayout={onLayout}>{children}</Animated.View>;
+  const { style: animStyle, onLayout, animating } = useTabFocusEntrance(delay);
+  // Hardware-texture the subtree ONLY while the entrance plays: child
+  // elevation shadows then fade with the content instead of flashing at full
+  // strength behind a half-transparent card. Dropped at settle — no standing
+  // GPU cost. No-op on iOS. See the note in useTabFocusEntrance.
+  return (
+    <Animated.View
+      style={[style, animStyle]}
+      onLayout={onLayout}
+      renderToHardwareTextureAndroid={animating}
+    >
+      {children}
+    </Animated.View>
+  );
 }

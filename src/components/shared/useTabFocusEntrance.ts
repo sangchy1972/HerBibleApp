@@ -195,7 +195,15 @@ export function useTabFocusEntrance(delay = 0) {
     if (mustSettle) settle();
   }, [settle]);
 
-  return { style: settled ? RESTING_STYLE : animStyle, onLayout };
+  // `animating` drives renderToHardwareTextureAndroid in TabSection: while the
+  // entrance fades, Android does NOT multiply ancestor alpha into child
+  // elevation shadows, so a 30%-alpha card sits on a full-strength shadow —
+  // the "black plate flash" on every tab switch (owner 2026-08-21). Rendering
+  // the subtree to a hardware texture for the ~500 ms of the entrance makes
+  // the alpha apply to the flattened result, shadows included; settling drops
+  // the texture. iOS ignores the prop (CALayer group opacity already covers
+  // shadows there).
+  return { style: settled ? RESTING_STYLE : animStyle, onLayout, animating: !settled };
 }
 
 // Resets the given scroll ref to y=0 every time the screen is focused. Kept

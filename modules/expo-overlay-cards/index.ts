@@ -13,10 +13,10 @@ const Native = requireOptionalNativeModule('ExpoOverlayCards');
 
 /** One scheduled overlay card. All strings arrive pre-localized. */
 export interface OverlayCardPayload {
-  slot: 'morning' | 'night' | 'sleep';
+  slot: 'morning' | 'evening' | 'quiz' | 'sleep' | 'plan';
   hour: number;
   minute: number;
-  kind: 'verse' | 'quiz' | 'reflect';
+  kind: 'verse' | 'quiz' | 'reflect' | 'plan';
   deepLink: string;
   // verse:
   verseText?: string;
@@ -54,12 +54,17 @@ export function configureOverlayCards(
   // Localized copy for the unlock-listener foreground service's persistent
   // notification — the native side has no i18n of its own.
   service?: { title: string; body: string },
+  // Prayer-completion stamps (today's ymd when done): the rotation stops the
+  // morning/evening verse cards once that prayer is complete.
+  state?: { prayedAmYmd?: string; prayedPmYmd?: string },
 ): boolean {
   try {
     return Native?.configure?.(JSON.stringify({
       appName,
       serviceTitle: service?.title ?? '',
       serviceText: service?.body ?? '',
+      prayedAmYmd: state?.prayedAmYmd ?? '',
+      prayedPmYmd: state?.prayedPmYmd ?? '',
       cards,
     })) ?? false;
   } catch { return false; }

@@ -249,6 +249,7 @@ object OverlayCardWindowController {
       when (card.kind) {
         "quiz" -> buildQuizBody(ctx, card)
         "reflect" -> buildReflectBody(ctx, card)
+        "plan" -> buildPlanBody(ctx, card)
         else -> buildVerseBody(ctx, card, bmp)
       },
       LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, bodyH).apply {
@@ -412,6 +413,51 @@ object OverlayCardWindowController {
         panel.addView(rowLl, rowLp)
       }
     }
+    return panel
+  }
+
+  // Plan card (owner 2026-08-21): "Continue with Your Bible Plan" over the
+  // in-progress plan's title, one rose Continue pill into the Plans tab.
+  // Light panel — this is a daytime rotation card, not a bedtime one.
+  private fun buildPlanBody(ctx: Context, card: OverlayCard): View {
+    val panel = LinearLayout(ctx)
+    panel.orientation = LinearLayout.VERTICAL
+    panel.background = rounded(PARCH_BG, dp(ctx, 16f).toFloat(), dp(ctx, 1.5f), PARCH_LINE)
+    panel.setPadding(dp(ctx, 18f), dp(ctx, 18f), dp(ctx, 18f), dp(ctx, 16f))
+
+    val title = TextView(ctx)
+    title.text = card.badge
+    title.setTextColor(PARCH_INK)
+    title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 19f)
+    title.typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
+    title.gravity = Gravity.CENTER
+    panel.addView(title, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+
+    val planTitle = TextView(ctx)
+    planTitle.text = card.question          // the in-progress plan's title
+    planTitle.setTextColor(PARCH_SUB)
+    planTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+    planTitle.typeface = Typeface.SERIF
+    planTitle.gravity = Gravity.CENTER
+    planTitle.maxLines = 2
+    planTitle.ellipsize = android.text.TextUtils.TruncateAt.END
+    val ptLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+    ptLp.topMargin = dp(ctx, 10f)
+    panel.addView(planTitle, ptLp)
+
+    val cta = TextView(ctx)
+    cta.text = "${card.ctaLabel}  ›"
+    cta.setTextColor(Color.WHITE)
+    cta.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+    cta.typeface = Typeface.DEFAULT_BOLD
+    cta.gravity = Gravity.CENTER
+    cta.background = rounded(ROSE, dp(ctx, 22f).toFloat())
+    cta.setOnClickListener { tap(ctx, card, card.deepLink, emptyMap()) }
+    val ctaLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(ctx, 44f))
+    ctaLp.topMargin = dp(ctx, 14f)
+    panel.addView(cta, ctaLp)
+
+    panel.setOnClickListener { tap(ctx, card, card.deepLink, emptyMap()) }
     return panel
   }
 

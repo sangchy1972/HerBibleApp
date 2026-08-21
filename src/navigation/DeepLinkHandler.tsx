@@ -109,7 +109,8 @@ function routeForUrl(url: string): { screen: keyof RootStackParamList; params?: 
       return { screen: 'Quiz' };
     }
     if (path.startsWith('plan')) {
-      return { screen: 'Tabs' };
+      // The overlay plan card lands directly on the Plans tab.
+      return { screen: 'Tabs', params: { screen: 'plan' } };
     }
   } catch {
     return null;

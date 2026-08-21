@@ -944,17 +944,34 @@ onboarding's paywall step in `OnboardingFlow`.
 ### Overlay cards (Android) — `modules/expo-overlay-cards`
 Daily popups drawn OVER the launcher / other apps, styled after the competitor
 screenshots the owner supplied (owner verified the policy question himself,
-2026-08-16 — do not re-open it). Three cards:
-- morning reminder time → the **verse card** (morning verse over the morning
-  art, Amen pill),
-- night reminder time → the **quiz card** (✦ badge, question, 2 options
-  stacked / 4 in a 2×2 grid — the bank has both shapes, never assume one),
-- **21:58 fixed → the sleep-reflection card** (owner 2026-08-21): night-sky
-  gradient, "Before You Sleep" serif title, one of five nightly examen
-  questions rotating by day, No/Yes pills — BOTH open the app (No → evening
-  prayer flow, Yes → today's verse; either way the overlay-entry ad veto
-  applies). Slot `sleep`, kind `reflect`, requestCode 1003; independent of
-  the reminder toggles — the master switch alone governs it.
+2026-08-16 — do not re-open it). **Five cards under a budget + rotation
+engine** (owner 2026-08-21):
+- `morning` — **morning verse card** (verse over the morning art, Amen pill).
+  Eligible 00:00–16:00 and **silenced the moment the morning prayer is done**
+  (JS stamps `prayedAmYmd` into the payload on completion).
+- `evening` — **evening verse card** (evening verse + evening art). Eligible
+  16:00–24:00, silenced by the evening prayer. Both verse cards keep their
+  reminder-toggle pairing and their alarm anchors at her reminder times.
+- `quiz` — ✦ badge, question, 2 stacked / 4 in a 2×2 grid (the bank has both
+  shapes, never assume one). **Roams the whole day, max 2 successful shows a
+  day**, rotation-only (no alarm of its own).
+- `sleep` — 21:58 fixed reflect card ("Before You Sleep", five rotating examen
+  questions, No→evening prayer / Yes→today's verse). Own lane: **exempt from
+  the period budgets** so a busy evening can't starve the ritual.
+- `plan` — "Continue with Your Bible Plan" over the most recently started
+  in-progress plan's title (parchment panel, rose Continue pill →
+  `herbible://plan` → the Plans tab). Rotation-only; exists only while an
+  in-progress plan exists.
+**Budgets & rotation**: successful shows are capped per half-day — 00:00–16:00
+and 16:00–24:00, `PERIOD_CAP_AM`/`PERIOD_CAP_PM` = 3/3. ⚠️ The owner's message
+gave 3 for the night period; the MORNING number was garbled in transit and is
+mirrored at 3 until he corrects it. Each attempt (alarm anchor or unlock)
+picks the **least-shown eligible card** (oldest-shown breaks ties) — the
+owner's "even out the chances". A 3-min global gap sits between any two
+shows; per-card engagement (tap or X) still ends that card's day absolutely,
+and the 8/slot sanity cap survives underneath. Alarm anchors: morning
+reminder (1001), night reminder → `evening` (1002, cleanly replacing the
+pre-rotation night-quiz alarm), 21:58 (1003).
 
 The physics, because every piece follows from them:
 - **The process may be dead at fire time.** AlarmManager → BroadcastReceiver →

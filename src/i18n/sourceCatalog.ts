@@ -493,6 +493,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'overlayCards.sleep.q5':         { en: 'Did you make room for a quiet moment with God today?', context: 'Nightly examen question 5 of 5.' },
   'overlayCards.sleep.yes':        { en: 'Yes', context: 'Right pill on the sleep card. Opens today’s verse.' },
   'overlayCards.sleep.no':         { en: 'No', context: 'Left pill on the sleep card. Opens the evening prayer flow.' },
+  'overlayCards.plan.title':       { en: 'Continue with Your Bible Plan', context: 'Serif title of the plan overlay card; the in-progress plan’s own title renders beneath it.' },
   'weekly.back':                   { en: 'Back',           context: 'Back button below weekly card — returns to PrayerScreen.' },
   'onboarding.welcome.title': { en: 'Welcome to Her Bible', context: 'First onboarding screen — warm greeting above the language picker. "Her Bible" is the brand, keep it.' },
   'onboarding.welcome.sub': { en: 'A gentle space for your walk with God. First, choose your language.', context: 'Sub-line on the welcome/language step. Rendered in the DETECTED system language before the user picks.' },

@@ -17,7 +17,7 @@ import java.util.Calendar
 
 /** One scheduled card. `slot` doubles as the alarm identity. */
 data class OverlayCard(
-  val slot: String,            // "morning" (verse) | "night" (quiz) | "sleep" (reflect, 21:58)
+  val slot: String,            // "morning"/"evening" (verse, half-day each) | "quiz" (roams all day) | "sleep" (reflect, 21:58) | "plan"
   val hour: Int,
   val minute: Int,
   val kind: String,            // "verse" | "quiz" | "reflect"
@@ -45,6 +45,8 @@ object OverlayCardStore {
   private const val KEY_APP_NAME = "app_name"
   private const val KEY_SVC_TITLE = "svc_title"
   private const val KEY_SVC_TEXT = "svc_text"
+  private const val KEY_PRAYED_AM = "prayed_am_ymd"
+  private const val KEY_PRAYED_PM = "prayed_pm_ymd"
 
   fun prefs(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -58,6 +60,13 @@ object OverlayCardStore {
       .putString(KEY_APP_NAME, root?.optString("appName", "") ?: "")
       .putString(KEY_SVC_TITLE, root?.optString("serviceTitle", "") ?: "")
       .putString(KEY_SVC_TEXT, root?.optString("serviceText", "") ?: "")
+      // Prayer-completion stamps (owner 2026-08-21): once she has done the
+      // morning prayer there is no reason to keep popping the morning verse
+      // card at her — same for the evening. JS writes today's ymd on
+      // completion; a stale ymd (app not opened today) correctly reads as
+      // "not prayed".
+      .putString(KEY_PRAYED_AM, root?.optString("prayedAmYmd", "") ?: "")
+      .putString(KEY_PRAYED_PM, root?.optString("prayedPmYmd", "") ?: "")
       .apply()
     OverlayCardScheduler.rescheduleAll(ctx, parsed)
   }
@@ -130,13 +139,41 @@ object OverlayCardStore {
   // exactly the reference app's behaviour. recordShow counts appearances;
   // markEngaged ends the day for that slot.
   fun recordShow(ctx: Context, slot: String) {
-    prefs(ctx).edit()
+    val am = Calendar.getInstance().get(Calendar.HOUR_OF_DAY) < 16
+    val sameDay = prefs(ctx).getString("periodDay", "") == todayYmd()
+    val e = prefs(ctx).edit()
       .putString("showDay:$slot", todayYmd())
       .putInt("shows:$slot", showsToday(ctx, slot) + 1)
       .putLong("lastShowAt:$slot", System.currentTimeMillis())
+      .putLong("lastAnyShowAt", System.currentTimeMillis())
       .putInt("retry:$slot", 0)
-      .apply()
+    // Period budget (owner 2026-08-21): successful shows are counted per
+    // half-day. The sleep card is its OWN lane — counting it here could let a
+    // busy evening starve the 21:58 ritual out of its budget.
+    if (slot != "sleep") {
+      e.putString("periodDay", todayYmd())
+      e.putInt(periodKey(am), (if (sameDay) periodShowsToday(ctx, am) else 0) + 1)
+      if (!sameDay) e.putInt(periodKey(!am), 0)
+    }
+    e.apply()
   }
+
+  private fun periodKey(am: Boolean) = if (am) "showsAM" else "showsPM"
+
+  fun periodShowsToday(ctx: Context, am: Boolean): Int {
+    val p = prefs(ctx)
+    return if (p.getString("periodDay", "") == todayYmd()) p.getInt(periodKey(am), 0) else 0
+  }
+
+  fun msSinceAnyShow(ctx: Context): Long {
+    val t = prefs(ctx).getLong("lastAnyShowAt", 0L)
+    return if (t <= 0L) Long.MAX_VALUE else System.currentTimeMillis() - t
+  }
+
+  fun lastShowAtRaw(ctx: Context, slot: String): Long = prefs(ctx).getLong("lastShowAt:$slot", 0L)
+
+  fun prayedAmToday(ctx: Context): Boolean = prefs(ctx).getString(KEY_PRAYED_AM, "") == todayYmd()
+  fun prayedPmToday(ctx: Context): Boolean = prefs(ctx).getString(KEY_PRAYED_PM, "") == todayYmd()
 
   fun showsToday(ctx: Context, slot: String): Int {
     val p = prefs(ctx)
@@ -208,7 +245,7 @@ object OverlayCardScheduler {
   // replace instead of accumulate.
   private fun requestCode(slot: String) = when (slot) {
     "morning" -> 1001
-    "night" -> 1002
+    "evening" -> 1002   // was the night quiz alarm pre-2026-08-21; same code = clean replace
     else -> 1003          // "sleep" — the 21:58 reflection card
   }
   const val RETRY_MAX = 5
@@ -250,7 +287,7 @@ object OverlayCardScheduler {
   }
 
   fun rescheduleAll(ctx: Context, cards: List<OverlayCard>) {
-    for (slot in listOf("morning", "night", "sleep")) {
+    for (slot in listOf("morning", "evening", "sleep")) {
       val card = cards.firstOrNull { it.slot == slot }
       if (card == null) {
         try { alarmManager(ctx)?.cancel(pending(ctx, slot)) } catch (e: Throwable) { }
@@ -261,7 +298,7 @@ object OverlayCardScheduler {
   }
 
   fun cancelAll(ctx: Context) {
-    for (slot in listOf("morning", "night", "sleep")) {
+    for (slot in listOf("morning", "evening", "sleep")) {
       try { alarmManager(ctx)?.cancel(pending(ctx, slot)) } catch (e: Throwable) { }
     }
   }
@@ -283,22 +320,64 @@ object OverlayCardScheduler {
 // is a load-bearing part of the Play review defense.
 object OverlayCardGate {
   const val RESHOW_CAP = 8
+  // Owner 2026-08-21: quiz shows at most twice a day, anywhere in the day.
+  const val QUIZ_DAILY_CAP = 2
+  // Successful forced-popup shows per half-day (00:00–16:00 / 16:00–24:00).
+  // The owner's message gave 3 for the night period; the morning number was
+  // garbled in transit — mirrored at 3 until corrected.
+  const val PERIOD_CAP_AM = 3
+  const val PERIOD_CAP_PM = 3
   private const val MIN_GAP_MS = 3 * 60 * 1000L
 
-  fun mayShow(ctx: Context, slot: String): Boolean =
-    !OverlayCardStore.engagedToday(ctx, slot) &&
-      OverlayCardStore.showsToday(ctx, slot) < RESHOW_CAP &&
-      OverlayCardStore.msSinceShow(ctx, slot) >= MIN_GAP_MS &&
-      !OverlayCardWindowController.isShowing()
+  /** Slot-specific rules on top of the generic ones (owner 2026-08-21):
+   *  morning verse lives in 00:00–16:00 and stops once she has prayed the
+   *  morning prayer; evening verse mirrors that after 16:00; the quiz roams
+   *  the whole day under its own daily cap; sleep waits for 21:58; the plan
+   *  card just joins the rotation. */
+  fun eligible(ctx: Context, card: OverlayCard): Boolean {
+    val cal = Calendar.getInstance()
+    val hour = cal.get(Calendar.HOUR_OF_DAY)
+    val am = hour < 16
+    if (OverlayCardStore.engagedToday(ctx, card.slot)) return false
+    if (OverlayCardStore.showsToday(ctx, card.slot) >= RESHOW_CAP) return false
+    if (OverlayCardStore.msSinceShow(ctx, card.slot) < MIN_GAP_MS) return false
+    when (card.slot) {
+      "morning" -> if (!am || OverlayCardStore.prayedAmToday(ctx)) return false
+      "evening" -> if (am || OverlayCardStore.prayedPmToday(ctx)) return false
+      "quiz" -> if (OverlayCardStore.showsToday(ctx, card.slot) >= QUIZ_DAILY_CAP) return false
+      "sleep" -> {
+        val minutes = hour * 60 + cal.get(Calendar.MINUTE)
+        if (minutes < card.hour * 60 + card.minute) return false
+      }
+    }
+    // Period budget — the sleep card is exempt (its 21:58 lane must not be
+    // starved by a busy evening); everything else shares the half-day pool.
+    if (card.slot != "sleep") {
+      val cap = if (am) PERIOD_CAP_AM else PERIOD_CAP_PM
+      if (OverlayCardStore.periodShowsToday(ctx, am) >= cap) return false
+    }
+    return true
+  }
 
-  /** Cards whose slot time has passed today, most recent slot first — after
-   *  20:00 the night quiz outranks a still-unengaged morning verse. */
-  fun dueCards(ctx: Context): List<OverlayCard> {
-    val now = Calendar.getInstance()
-    val minutesNow = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
-    return OverlayCardStore.readCards(ctx)
-      .filter { it.hour * 60 + it.minute <= minutesNow }
-      .sortedByDescending { it.hour * 60 + it.minute }
+  /** One attempt: pick the LEAST-SHOWN eligible card (owner: even out the
+   *  chances between the cards), oldest-shown breaks ties, and show it.
+   *  Callers own the screen-state guards (interactive, unlocked, not our own
+   *  foreground). Returns true when a card went up. */
+  fun attemptShow(ctx: Context): Boolean {
+    if (OverlayCardWindowController.isShowing()) return false
+    if (OverlayCardStore.msSinceAnyShow(ctx) < MIN_GAP_MS) return false
+    val pick = OverlayCardStore.readCards(ctx)
+      .filter { eligible(ctx, it) }
+      .sortedWith(
+        compareBy(
+          { OverlayCardStore.showsToday(ctx, it.slot) },
+          { OverlayCardStore.lastShowAtRaw(ctx, it.slot) },
+        ),
+      )
+      .firstOrNull() ?: return false
+    OverlayCardStore.recordShow(ctx, pick.slot)
+    OverlayCardWindowController.show(ctx, pick)
+    return true
   }
 
   /** FOREGROUND importance = an Activity of ours is on screen right now; the

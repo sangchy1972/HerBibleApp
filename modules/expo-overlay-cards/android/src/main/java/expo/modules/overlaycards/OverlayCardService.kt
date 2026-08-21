@@ -85,13 +85,10 @@ class OverlayCardService : Service() {
       if (km?.isKeyguardLocked == true) return   // SCREEN_ON with the lock still up
       if (OverlayCardGate.ownAppForeground(ctx)) return
 
-      for (card in OverlayCardGate.dueCards(ctx)) {
-        if (OverlayCardGate.mayShow(ctx, card.slot)) {
-          OverlayCardStore.recordShow(ctx, card.slot)
-          OverlayCardWindowController.show(ctx, card)
-          break                                  // one card per unlock
-        }
-      }
+      // One attempt per unlock — the rotation picks the least-shown eligible
+      // card and enforces every cap (period budgets, quiz daily cap,
+      // prayer-done suppression, gaps, engagement).
+      OverlayCardGate.attemptShow(ctx)
     } catch (e: Throwable) { /* a bad unlock must never crash the service */ }
   }
 

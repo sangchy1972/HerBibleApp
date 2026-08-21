@@ -5,6 +5,9 @@ import { useDailyVerses } from '../state/DailyVersesContext';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useQuiz } from '../state/QuizContext';
 import { useNotifications } from '../state/NotificationsContext';
+import { usePrayer } from '../state/PrayerContext';
+import { usePlanCompletion } from '../state/PlanCompletionContext';
+import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import {
   getOverlayCardsEnabled, hydrateOverlayCardsEnabled, subscribeOverlayCardsEnabled,
 } from '../state/overlayCardsPrefs';
@@ -33,6 +36,9 @@ export default function OverlayCardsSync() {
   const { imageFor, loaded } = usePrayerBackgrounds();
   const quiz = useQuiz();
   const { settings } = useNotifications();
+  const { mDone, eDone } = usePrayer();
+  const { records: planRecords } = usePlanCompletion();
+  const { getSummary, summary: planSummaries } = useFeaturedPlans();
   const t = useT();
   const last = useRef('');
   // Re-evaluate permission on every foreground — the grant happens in system
@@ -98,19 +104,58 @@ export default function OverlayCardsSync() {
       });
     }
 
+    // Evening verse card (owner 2026-08-21): the 16:00–24:00 half-day gets its
+    // own verse card, anchored on the night reminder time and silenced once
+    // the evening prayer is done — the native gate owns both rules.
+    const ev = getVerse(todayDay, 'evening');
+    if (ev && settings.night.enabled) {
+      const eimg = imageFor('evening') as { uri?: string } | number;
+      const euri = typeof eimg === 'object' && typeof eimg?.uri === 'string' ? eimg.uri : '';
+      cards.push({
+        slot: 'evening',
+        hour: settings.night.hour,
+        minute: settings.night.minute,
+        kind: 'verse',
+        deepLink: 'herbible://verse-of-day?src=overlay',
+        verseText: ev.modernText,
+        verseRef: ev.reference.full_reference,
+        ctaLabel: t('widget.amen'),
+        imagePath: euri.startsWith('file://') ? euri.slice('file://'.length) : '',
+      });
+    }
+
+    // Quiz card — roams the WHOLE day now (owner 2026-08-21), capped at two
+    // successful shows natively; no alarm anchor, the rotation carries it.
     // The teaser question is the first of the set she would land in next —
     // resolved by QuizContext exactly the way the home card resolves it.
     const q = quiz.ready && quiz.bank ? quiz.questions[0] : undefined;
-    if (q && settings.night.enabled) {
+    if (q) {
       cards.push({
-        slot: 'night',
-        hour: settings.night.hour,
-        minute: settings.night.minute,
+        slot: 'quiz',
+        hour: 12, minute: 0,   // nominal — no alarm is armed for this slot
         kind: 'quiz',
         deepLink: 'herbible://quiz?src=overlay',
         badge: t('overlayCards.quizBadge'),
         question: q.question,
         options: [...q.options],
+      });
+    }
+
+    // Plan card — "Continue with Your Bible Plan" over the most recently
+    // started in-progress plan's title. Rotation-only, like the quiz.
+    const inProgress = Object.entries(planRecords)
+      .filter(([, r]) => r.completedDays.length > 0 && !r.finishedAt)
+      .sort(([, a], [, b]) => (b.firstStartedAt ?? 0) - (a.firstStartedAt ?? 0));
+    const planTitle = inProgress.length > 0 ? getSummary(inProgress[0][0])?.title : undefined;
+    if (planTitle) {
+      cards.push({
+        slot: 'plan',
+        hour: 12, minute: 0,   // nominal — no alarm is armed for this slot
+        kind: 'plan',
+        deepLink: 'herbible://plan?src=overlay',
+        badge: t('overlayCards.plan.title'),
+        question: planTitle,
+        ctaLabel: t('common.continue'),
       });
     }
 
@@ -136,15 +181,20 @@ export default function OverlayCardsSync() {
     });
 
     if (cards.length === 0) return;
-    const ser = JSON.stringify(cards);
+    // Prayer-done stamps ride the payload so completing a prayer mid-day
+    // re-configures and silences that half-day's verse card natively.
+    const now = new Date();
+    const ymd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const state = { prayedAmYmd: mDone ? ymd : '', prayedPmYmd: eDone ? ymd : '' };
+    const ser = JSON.stringify([cards, state]);
     if (ser === last.current) return;
     last.current = ser;
     configureOverlayCards('Her Bible', cards, {
       title: t('overlayCards.svcTitle'),
       body: t('overlayCards.svcBody'),
-    });
+    }, state);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getVerse, todayDay, imageFor, loaded, quiz.ready, quiz.bank, quiz.questions, settings, t, fgTick, enabled]);
+  }, [getVerse, todayDay, imageFor, loaded, quiz.ready, quiz.bank, quiz.questions, settings, t, fgTick, enabled, mDone, eDone, planRecords, planSummaries, getSummary]);
 
   return null;
 }

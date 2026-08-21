@@ -34,7 +34,6 @@ class OverlayCardAlarmReceiver : BroadcastReceiver() {
     OverlayCardService.ensure(ctx)
 
     if (!canDrawOverlays(ctx)) return
-    if (!OverlayCardGate.mayShow(ctx, slot)) return
 
     if (!screenUsable(ctx) || OverlayCardGate.ownAppForeground(ctx)) {
       // The unlock listener normally catches the next pickup; the short retry
@@ -46,10 +45,11 @@ class OverlayCardAlarmReceiver : BroadcastReceiver() {
       return
     }
 
-    // recordShow BEFORE the window goes up: if addView throws mid-way we'd
-    // rather count a phantom appearance than retry-loop a half-built window.
-    OverlayCardStore.recordShow(ctx, slot)
-    OverlayCardWindowController.show(ctx, card)
+    // The alarm is just an anchor moment — the rotation decides WHAT shows
+    // (least-shown eligible card; owner 2026-08-21). recordShow happens inside,
+    // BEFORE the window goes up, so a mid-addView throw costs a phantom count
+    // rather than a retry loop over a half-built window.
+    OverlayCardGate.attemptShow(ctx)
   }
 
   private fun canDrawOverlays(ctx: Context): Boolean = try {

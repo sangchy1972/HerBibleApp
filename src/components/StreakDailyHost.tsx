@@ -15,7 +15,7 @@ import DayCircle from './shared/DayCircle';
 import { DAYS } from '../constants/data';
 import { useT } from '../i18n/useT';
 import { logEvent } from '../services/firebase';
-import { ROSE, GOLD, TXT, TXTSUB, BTN_RADIUS, FONTS, P } from '../constants/theme';
+import { ROSE, GOLD, TXT, TXTSUB, BTN_RADIUS, CARD_RADIUS, FONTS, P } from '../constants/theme';
 
 // The once-a-day streak ritual (owner 2026-08-16, designed against the
 // competitor screenshot): the FIRST open of each local day greets her with a
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   // Both white cards share ONE explicit height (owner 2026-08-21: unified,
   // then +20% over the taller one's natural ≈96) with content centered.
   milestone: {
-    backgroundColor: '#FFFFFF', borderRadius: 20,
+    backgroundColor: '#FFFFFF', borderRadius: CARD_RADIUS,
     height: CARD_H, paddingHorizontal: 16, justifyContent: 'center',
   },
   milestoneLabels: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.lato, letterSpacing: 0.3,
   },
   weekCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 20,
+    backgroundColor: '#FFFFFF', borderRadius: CARD_RADIUS,
     height: CARD_H, paddingHorizontal: 10,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },

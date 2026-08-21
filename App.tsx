@@ -9,9 +9,9 @@ import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { SCREEN_BG } from './src/constants/theme';
 
-// Pin the navigator's scene background to our canonical SCREEN_BG (same value
-// as RN's implicit default, just made explicit) so the Prayer / Bible / Plan /
-// Profile tabs are guaranteed to share one exact background colour.
+// Pin the navigator's scene background to our canonical SCREEN_BG so the
+// Prayer / Bible / Plan / Profile tabs are guaranteed to share one exact
+// background colour (was RN's default #F2F2F2; #F9F7F7 since 2026-08-21).
 const NAV_THEME = { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: SCREEN_BG } };
 
 // Global default font: Lato 400 Regular. Many Text/TextInput styles in

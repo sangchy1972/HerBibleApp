@@ -45,11 +45,11 @@ class OverlayCardAlarmReceiver : BroadcastReceiver() {
       return
     }
 
-    // The alarm is just an anchor moment — the rotation decides WHAT shows
-    // (least-shown eligible card; owner 2026-08-21). recordShow happens inside,
-    // BEFORE the window goes up, so a mid-addView throw costs a phantom count
-    // rather than a retry loop over a half-built window.
-    OverlayCardGate.attemptShow(ctx)
+    // The alarm anchors ITS OWN card's moment (the 21:58 sleep ritual above
+    // all) — the rotation only takes over when that card is ineligible.
+    // recordShow happens inside, BEFORE the window goes up, so a mid-addView
+    // throw costs a phantom count rather than a retry loop.
+    OverlayCardGate.attemptShow(ctx, slot)
   }
 
   private fun canDrawOverlays(ctx: Context): Boolean = try {

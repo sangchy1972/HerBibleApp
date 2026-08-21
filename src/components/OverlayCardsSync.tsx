@@ -10,12 +10,13 @@ import { usePlanCompletion } from '../state/PlanCompletionContext';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import {
   getOverlayCardsEnabled, hydrateOverlayCardsEnabled, subscribeOverlayCardsEnabled,
+  isOverlayCardsHydrated,
 } from '../state/overlayCardsPrefs';
 import { useT } from '../i18n/useT';
 import { logEvent } from '../services/firebase';
 import {
   overlayCardsSupported, canDrawOverlays, configureOverlayCards, cancelOverlayCards,
-  drainOverlayEvents, type OverlayCardPayload,
+  drainOverlayEvents, dismissOverlayCard, type OverlayCardPayload,
 } from '../../modules/expo-overlay-cards';
 
 // Mirrors today's content into the native overlay-card store, the same way
@@ -58,13 +59,25 @@ export default function OverlayCardsSync() {
     };
     drain();
     const sub = AppState.addEventListener('change', s => {
-      if (s === 'active') { setFgTick(n => n + 1); drain(); }
+      if (s === 'active') {
+        // A card left standing on the launcher must never ride into OUR UI —
+        // take it down without engaging it (it re-shows on a later unlock).
+        dismissOverlayCard();
+        setFgTick(n => n + 1);
+        drain();
+      }
     });
     return () => sub.remove();
   }, []);
 
+  const hydrated = useSyncExternalStore(subscribeOverlayCardsEnabled, isOverlayCardsHydrated);
+
   useEffect(() => {
     if (!overlayCardsSupported()) return;
+    // Never act on the optimistic ON default: a switched-off user's cold
+    // start would configure → start the foreground service (notification
+    // flashes) → hydrate '0' → cancel. Wait for the real value.
+    if (!hydrated) return;
     if (!enabled) {
       // Master switch off — tear down schedule + content, and forget the last
       // payload so re-enabling always re-configures.
@@ -194,7 +207,7 @@ export default function OverlayCardsSync() {
       body: t('overlayCards.svcBody'),
     }, state);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getVerse, todayDay, imageFor, loaded, quiz.ready, quiz.bank, quiz.questions, settings, t, fgTick, enabled, mDone, eDone, planRecords, planSummaries, getSummary]);
+  }, [getVerse, todayDay, imageFor, loaded, quiz.ready, quiz.bank, quiz.questions, settings, t, fgTick, enabled, hydrated, mDone, eDone, planRecords, planSummaries, getSummary]);
 
   return null;
 }

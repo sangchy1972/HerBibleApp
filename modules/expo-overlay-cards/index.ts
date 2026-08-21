@@ -75,6 +75,12 @@ export function cancelOverlayCards(): boolean {
   try { return Native?.cancelAll?.() ?? false; } catch { return false; }
 }
 
+/** Take a visible card down without engaging it — called when our app comes
+ *  to the foreground so a system window never sits over our own UI. */
+export function dismissOverlayCard(): boolean {
+  try { return Native?.dismissCard?.() ?? false; } catch { return false; }
+}
+
 /** Events queued by the cold receiver path, for logEvent(). Drained = cleared. */
 export function drainOverlayEvents(): Array<{ n: string; t: number; p: Record<string, string> }> {
   try {
@@ -85,7 +91,7 @@ export function drainOverlayEvents(): Array<{ n: string; t: number; p: Record<st
 }
 
 /** Show one configured card right now (dev/demo; permission still required). */
-export function previewOverlayCard(slot: 'morning' | 'night'): boolean {
+export function previewOverlayCard(slot: 'morning' | 'evening' | 'quiz' | 'sleep' | 'plan'): boolean {
   try { return Native?.preview?.(slot) ?? false; } catch { return false; }
 }
 

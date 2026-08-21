@@ -75,6 +75,14 @@ export function setResumeSplashUp(v: boolean): void {
 }
 export function isResumeSplashUp(): boolean { return resumeSplashUp; }
 
+// Stamped by DeepLinkHandler the moment ANY notification/deep-link tap routes
+// — a destination she explicitly chose must not open under the resume splash.
+// The splash decision (ResumeRitualHost) waits one beat and re-checks this,
+// the same shape as adFrequency's 600ms hot-start beat.
+let splashSuppressedAt = 0;
+export function suppressResumeSplash(): void { splashSuppressedAt = Date.now(); }
+export function resumeSplashSuppressed(): boolean { return Date.now() - splashSuppressedAt < 10_000; }
+
 // Mirror of the coordinator's activeId, for NON-coordinator surfaces (the
 // proactive paywall) that must not land on top of a live prompt. A boolean, not
 // the id: nobody outside the coordinator has any business branching on WHICH
@@ -93,7 +101,10 @@ export function popSheet(): void { sheetDepth = Math.max(0, sheetDepth - 1); not
  * a case of a prompt being invisible or orphaning something already on screen.
  */
 export function promptSurfaceQuiet(): boolean {
-  return !isInterstitialVisible() && sheetDepth === 0 && !launchUp;
+  // resumeSplashUp is set SYNCHRONOUSLY in ResumeRitualHost's 'active'
+  // handler — before the coordinator's same-tick arbitration can grant
+  // streakDaily under a splash that hasn't mounted yet (swarm v1.5.0).
+  return !isInterstitialVisible() && sheetDepth === 0 && !launchUp && !resumeSplashUp;
 }
 
 /**

@@ -10,6 +10,7 @@ import { useAuth } from '../state/AuthContext';
 import { logEvent } from '../services/firebase';
 import { suppressNextHotStart } from '../services/adFrequency';
 import { PENDING_ROUTE_KEY } from '../services/pendingNotifRoute';
+import { suppressResumeSplash } from '../state/promptSurface';
 
 // A notification tap that lands her IN the prayer flow must not open with the
 // hot-start interstitial (owner 2026-08-17): she answered our own reminder to
@@ -153,6 +154,10 @@ function resetTo(
   screen: keyof RootStackParamList,
   params?: object,
 ): void {
+  // Every tap-entry (notification, widget, overlay card, deep link) routes
+  // through here — stamp it so the resume splash's one-beat re-check never
+  // covers a destination she explicitly chose (swarm v1.5.0).
+  suppressResumeSplash();
   const routes = screen === 'Tabs'
     ? [{ name: 'Tabs' as const, params }]
     : [{ name: 'Tabs' as const }, { name: screen, params }];

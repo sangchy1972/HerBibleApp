@@ -10,6 +10,7 @@ import { NUDGE_PRIORITY } from '../state/nudgePriority';
 import { useNotifications } from '../state/NotificationsContext';
 import { useReminderInterstitial } from '../state/ReminderInterstitialContext';
 import { isInterstitialVisible } from '../services/interstitialVisibility';
+import { setResumeSplashUp, resumeSplashSuppressed } from '../state/promptSurface';
 import { suppressNextHotStart } from '../services/adFrequency';
 import { peekPendingRoute } from '../services/pendingNotifRoute';
 import { logEvent } from '../services/firebase';
@@ -73,10 +74,14 @@ export default function ResumeRitualHost() {
   useEffect(() => {
     let bgAt: number | null = null;
     let adCaused = false;
+    let beat: ReturnType<typeof setTimeout> | null = null;
     const sub = AppState.addEventListener('change', (s) => {
       if (s === 'background' || s === 'inactive') {
         if (isInterstitialVisible()) adCaused = true;
         if (bgAt == null) bgAt = Date.now();
+        // A pending beat must not resolve into a backgrounded app.
+        if (beat) { clearTimeout(beat); beat = null; }
+        setResumeSplashUp(false);
         return;
       }
       if (s !== 'active') return;
@@ -87,16 +92,32 @@ export default function ResumeRitualHost() {
       if (wasAdCaused) return;
       if (away < AWAY_THRESHOLD_MS) return;
       if (msSinceOverlayTap() < OVERLAY_ENTRY_GRACE_MS) return;
-      // Notification-tap entries stash their route before the resume — she
-      // asked for the prayer flow, not a splash (swarm r2). The read costs a
-      // few ms; the splash starting that much later is imperceptible.
-      void (async () => {
-        try { if ((await peekPendingRoute()) != null) return; } catch { /* show */ }
-        logEvent('resume_ritual_splash', { away_s: String(Math.round(away / 1000)) });
-        setSplash(true);
-      })();
+      // Claim the surface SYNCHRONOUSLY: the coordinator's same-tick
+      // arbitration (streakDaily) and the ad's +600ms sample both read this
+      // flag, and the splash component itself mounts too late to win either
+      // race (swarm v1.5.0). Every bail-out below releases it.
+      setResumeSplashUp(true);
+      // One beat, same shape as adFrequency's: warm notification taps deliver
+      // through listeners AFTER 'active' and stamp suppressResumeSplash via
+      // resetTo — and background PRAY actions live in the stash. Re-check
+      // both signals when the beat lands.
+      if (beat) clearTimeout(beat);
+      beat = setTimeout(() => {
+        beat = null;
+        void (async () => {
+          let pending = false;
+          try { pending = (await peekPendingRoute()) != null; } catch { pending = false; }
+          if (pending || resumeSplashSuppressed()) { setResumeSplashUp(false); return; }
+          logEvent('resume_ritual_splash', { away_s: String(Math.round(away / 1000)) });
+          setSplash(true);
+        })();
+      }, 600);
     });
-    return () => sub.remove();
+    return () => {
+      sub.remove();
+      if (beat) clearTimeout(beat);
+      setResumeSplashUp(false);
+    };
   }, []);
 
   // Splash finished → for a notification-less user, queue the pitch through

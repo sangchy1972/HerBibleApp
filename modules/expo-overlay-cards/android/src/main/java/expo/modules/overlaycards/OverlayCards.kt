@@ -20,7 +20,7 @@ data class OverlayCard(
   val slot: String,            // "morning"/"evening" (verse, half-day each) | "quiz" (roams all day) | "sleep" (reflect, 21:58) | "plan"
   val hour: Int,
   val minute: Int,
-  val kind: String,            // "verse" | "quiz" | "reflect"
+  val kind: String,            // "verse" | "quiz" | "reflect" | "plan"
   val deepLink: String,        // herbible://… opened on tap
   // verse kind:
   val verseText: String,
@@ -75,8 +75,8 @@ object OverlayCardStore {
   fun serviceTitle(ctx: Context): String =
     prefs(ctx).getString(KEY_SVC_TITLE, "")?.ifEmpty { "Daily cards are on" } ?: "Daily cards are on"
   fun serviceText(ctx: Context): String =
-    prefs(ctx).getString(KEY_SVC_TEXT, "")?.ifEmpty { "Your verse and quiz cards appear when you unlock your phone." }
-      ?: "Your verse and quiz cards appear when you unlock your phone." 
+    prefs(ctx).getString(KEY_SVC_TEXT, "")?.ifEmpty { "Your verse and quiz appear when you unlock your phone." }
+      ?: "Your verse and quiz appear when you unlock your phone."
 
   fun clearConfig(ctx: Context) {
     prefs(ctx).edit().remove(KEY_CONFIG).apply()
@@ -363,10 +363,24 @@ object OverlayCardGate {
    *  chances between the cards), oldest-shown breaks ties, and show it.
    *  Callers own the screen-state guards (interactive, unlocked, not our own
    *  foreground). Returns true when a card went up. */
-  fun attemptShow(ctx: Context): Boolean {
+  fun attemptShow(ctx: Context, preferSlot: String? = null): Boolean {
     if (OverlayCardWindowController.isShowing()) return false
     if (OverlayCardStore.msSinceAnyShow(ctx) < MIN_GAP_MS) return false
-    val pick = OverlayCardStore.readCards(ctx)
+    val cards = OverlayCardStore.readCards(ctx)
+    // An alarm anchor exists to show ITS card at its moment — the 21:58 sleep
+    // alarm must not be out-rotated by a quiet evening's untouched verse card
+    // (swarm v1.5.0 coherence review: stable sort + push order buried sleep).
+    // The preferred slot still passes every eligibility gate; unlock attempts
+    // pass nothing and rotate as before.
+    preferSlot?.let { want ->
+      val preferred = cards.firstOrNull { it.slot == want && eligible(ctx, it) }
+      if (preferred != null) {
+        OverlayCardStore.recordShow(ctx, preferred.slot)
+        OverlayCardWindowController.show(ctx, preferred)
+        return true
+      }
+    }
+    val pick = cards
       .filter { eligible(ctx, it) }
       .sortedWith(
         compareBy(

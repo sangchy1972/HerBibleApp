@@ -127,6 +127,14 @@ class OverlayCardsModule : Module() {
       try { OverlayCardStore.msSinceTap(c) } catch (e: Throwable) { -1.0 }
     }
 
+    // Take the card down without engaging it — the app coming to the FOREGROUND
+    // calls this so a system window never sits over our own UI (it re-shows on
+    // a later unlock; engagement semantics untouched).
+    Function("dismissCard") {
+      OverlayCardWindowController.dismiss()
+      true
+    }
+
     // Analytics queued by the cold receiver path, JSON array — the app drains
     // this on foreground and feeds logEvent().
     Function("drainEvents") {

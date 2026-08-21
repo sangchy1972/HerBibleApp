@@ -6,7 +6,7 @@ import Animated, {
   FadeIn, Easing, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, interpolate,
 } from 'react-native-reanimated';
 import { useSheetSurface } from '../state/promptSurface';
-import { ROSE, TXT, BTN_RADIUS, FONTS } from '../constants/theme';
+import { ROSE, TXT, BTN_RADIUS, CARD_RADIUS, FONTS } from '../constants/theme';
 import { useT } from '../i18n/useT';
 
 const APP_ICON = require('../../assets/icon.png');
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   compareCard: {
     borderWidth: 1,
     borderColor: 'rgba(237,185,77,0.55)',
-    borderRadius: 20,
+    borderRadius: CARD_RADIUS,
     paddingTop: 14,
     paddingBottom: 16,
     paddingHorizontal: 16,

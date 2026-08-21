@@ -13,6 +13,12 @@ const KEY = 'overlayCards:enabled:v1';
 let value: boolean | null = null;                 // null until hydrated
 const subs = new Set<() => void>();
 
+/** True once the persisted value has been read (or a set() decided it).
+ *  OverlayCardsSync gates configure on this: acting on the optimistic ON
+ *  default flashed the foreground-service notification for switched-off
+ *  users on every cold start (swarm v1.5.0 review). */
+export function isOverlayCardsHydrated(): boolean { return value !== null; }
+
 export function getOverlayCardsEnabled(): boolean {
   return value !== false;                          // null (loading) reads as ON
 }

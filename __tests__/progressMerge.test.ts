@@ -156,4 +156,26 @@ describe('mergeSnapshots', () => {
       new Set(['prayer.first', 'note.count10', 'milestone.crown']),
     );
   });
+
+  test('journey: union by id across devices, newest first, one row per milestone', () => {
+    // The id encodes the milestone (badge×count / plan slug / puzzle ordinal),
+    // so the same milestone recorded on two devices collapses to one row.
+    const local = { 'journey:v1': j({ v: 1, entries: [
+      { id: 'plan:hope-7', kind: 'plan', at: 200, slug: 'hope-7' },
+      { id: 'badge:prayer.first:1', kind: 'badge', at: 100, badgeId: 'prayer.first', count: 1 },
+    ] }) };
+    const remote = { 'journey:v1': j({ v: 1, entries: [
+      { id: 'plan:hope-7', kind: 'plan', at: 200, slug: 'hope-7' },
+      { id: 'puzzle:3', kind: 'puzzle', at: 300, paintingIndex: 0, finishedPainting: false },
+    ] }) };
+    const out = JSON.parse(mergeSnapshots(local, remote).merged['journey:v1'] as string);
+    expect(out.entries.map((e: any) => e.id)).toEqual(['puzzle:3', 'plan:hope-7', 'badge:prayer.first:1']);
+  });
+
+  test('journey: a malformed side falls back to the healthy one', () => {
+    const healthy = { 'journey:v1': j({ v: 1, entries: [{ id: 'plan:a', kind: 'plan', at: 1, slug: 'a' }] }) };
+    const broken = { 'journey:v1': '{not json' };
+    expect(JSON.parse(mergeSnapshots(broken, healthy).merged['journey:v1'] as string).entries).toHaveLength(1);
+    expect(JSON.parse(mergeSnapshots(healthy, broken).merged['journey:v1'] as string).entries).toHaveLength(1);
+  });
 });

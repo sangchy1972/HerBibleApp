@@ -93,11 +93,16 @@ interface Props {
   isNew?: boolean;
   /** Localized ribbon text. Passed in so this component stays i18n-free. */
   newLabel?: string;
+  /** The metallic sheen loop. Off for historical/list renders (the journey
+   *  timeline can show up to 10 badges at once — ten standing UI-thread
+   *  animation loops on a screen that stays mounted is GPU budget spent on
+   *  a record, not a reward). */
+  shine?: boolean;
 }
 
 export default function BadgeIcon({
   id, iconKey, rarity, size = 88, locked = false, count = 1, label = null,
-  isNew = false, newLabel = 'NEW',
+  isNew = false, newLabel = 'NEW', shine = true,
 }: Props) {
   // Art source, in priority order: a bundled override (BADGE_IMAGES, normally
   // empty — the binary ships art-free) → the CDN-cached PNG on disk → none,
@@ -191,7 +196,7 @@ export default function BadgeIcon({
       {/* Metallic diagonal sheen — earned badges only (a shine on a dimmed,
           unearned badge reads as broken). Clipped to a rounded square for the
           PNG art, to a circle for the medallion placeholder. */}
-      {!locked && <BadgeShine size={size} radius={source ? size * 0.2 : size / 2} />}
+      {!locked && shine && <BadgeShine size={size} radius={source ? size * 0.2 : size / 2} />}
       {count > 1 ? (
         <View style={styles.countBadge}>
           <Text style={styles.countText}>×{count}</Text>

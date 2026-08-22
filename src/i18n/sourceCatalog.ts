@@ -1248,6 +1248,13 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'profile.version':               { en: 'Her Bible · v{version}', context: 'App version footer. {version} is the numeric version like "1.0.0".' },
   'profile.shareApp.message':      { en: 'Her Bible is your daily companion for staying close to God. Find rest for an anxious heart, comfort when you feel alone, and quiet strength in His Word — with daily verses, guided morning and evening prayers, and reading plans that meet you right where you are. Download Her Bible free on Google Play:\n\n{url}', context: 'Body of the system share-app message. Warm, invitational (~55 words, under 60). Must start with the brand name "Her Bible", speak to closeness with God / rest / comfort / companionship, and tell the recipient to download on Google Play. {url} is the Play Store URL on its own line so chat apps render a rich preview card.' },
 
+  // ─── Profile — activity journey ──────────────────────────────────────────
+  'profile.journey.title':        { en: 'Activity',        context: 'Section title above the milestone timeline on Profile (badges earned, plans started, puzzle pieces collected). Short.' },
+  'profile.journey.badge':        { en: 'New badge earned', context: 'Small label under a badge name in the activity timeline.' },
+  'profile.journey.plan':         { en: 'Started a new plan', context: 'Small label under a reading-plan title in the activity timeline.' },
+  'profile.journey.puzzle':       { en: 'New puzzle piece collected', context: 'Small label under a painting title after a quiz set unlocked one tile.' },
+  'profile.journey.paintingDone': { en: 'Painting completed', context: 'Small label when the unlocked tile finished the whole painting.' },
+
   // ─── Rate prompt sheet ───────────────────────────────────────────────────
   'rate.title':                    { en: 'Are you satisfied with Her Bible?', context: 'Rate-app prompt title.' },
   'rate.body':                     { en: 'Your feedback is valuable to us!', context: 'Rate prompt body.' },

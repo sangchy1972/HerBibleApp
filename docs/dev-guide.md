@@ -1086,6 +1086,49 @@ The physics, because every piece follows from them:
 
 ---
 
+## 10b. Profile — Activity journey
+
+**Files** — `src/state/journeyLog.ts` (module store, key `journey:v1`),
+`src/components/profile/JourneySection.tsx`, mounted in ProfileScreen directly
+above the Account block; merger in `services/progressMerge.ts`; tests
+`__tests__/journeyLog.test.ts` + journey cases in `progressMerge.test.ts`.
+
+- **Exactly three kinds** (owner 2026-08-22): badge earned/re-earned
+  (AchievementsContext, keyed off `newAwards` ONLY — never earned-diffing, the
+  cold-start hydration race would duplicate), plan started
+  (PlanCompletionContext — the record's birth in `markDayComplete`; there is no
+  explicit start-write in this app, the Start CTA only navigates), puzzle piece
+  collected (QuizContext drain effect via `rewardPreview`; `freshTile === null`
+  past the shipped art → nothing recorded). Daily devotions are deliberately
+  NOT recorded. Gospels & Psalms is not a "plan started" either.
+- **Ids encode the milestone** — `badge:<id>:<count>`, `plan:<slug>`,
+  `puzzle:<setOrdinal>` — so re-fired awards dedupe in the store and the backup
+  merger collapses the same milestone from two devices into one row.
+- **Entries store ids only** (badge id / plan slug / painting index); names and
+  art resolve at render through `localizedAchievementName`, `getSummary`,
+  `artworkAt`+`artThumbSource`. An id the build no longer ships drops its row
+  silently. Never store titles or URLs in the log.
+- **Store contract**: `hydrateJourney()` is a disk-UNION and deliberately
+  re-runnable (cloud restore writes disk + remounts → next Profile mount
+  absorbs it); records run on ONE serialized write chain, each re-reading disk
+  immediately before its write — an event fired before Profile ever mounted
+  can't clobber history, and the restore-vs-record race is a microtask-sized
+  window instead of a collectLocal round-trip (swarm F1). A no-change absorb
+  keeps the old snapshot reference and stays silent (useSyncExternalStore
+  contract). Cap 100, newest first. `journey:v1` is in MERGERS (union by id,
+  at-desc, cap; kind/at deliberately NOT validated there — a newer build's
+  rows must survive the merge).
+- **Record-forward**: pre-feature milestones have no trustworthy dates — never
+  backfill. Empty log (or all-stale ids) hides title and card together.
+- Row: 54pt fixed thumb box (BadgeIcon `shine={false}` — ten standing sheen
+  loops on an always-mounted tab is GPU spent on a record, not a reward /
+  PlanCover `noTransform` / painting thumb on `INK_06`), Lora 600 title, small
+  kind label, date top-right via
+  `toLocaleDateString(localeFor(lang), { month:'short', day:'numeric' })`.
+  Shows the 10 newest.
+
+---
+
 ## 11. Content & data pipeline
 
 - Static content (verses, plans, book lists) lives in `src/constants/`; shared

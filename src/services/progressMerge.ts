@@ -213,6 +213,25 @@ const mergeQuizHistory = jsonMerger<any>((l, r) => {
   return { v: 1, days: days.slice(-180) };   // HISTORY_DAYS
 });
 
+// journey:v1 — { v, entries: [{id, kind, at, …}] }. The Profile activity
+// timeline. Union by id (an id encodes the milestone itself — badge×count,
+// plan slug, puzzle ordinal — so the same milestone recorded on two devices
+// collapses to one row), newest `at` first, capped to what the store keeps.
+// Both sides are id-filtered symmetrically; `kind`/`at` are deliberately NOT
+// validated here — a newer app version may add kinds, and dropping them in the
+// merger would delete the newer device's rows. The store's isEntry() hides
+// anything the running build can't render.
+type JourneyItem = { id?: unknown; at?: unknown };
+const mergeJourney: Merger = jsonMerger<{ entries?: JourneyItem[] }>((l, r) => {
+  const ok = (x: JourneyItem | null | undefined) => !!x && typeof x.id === 'string';
+  const a = (Array.isArray(l?.entries) ? l.entries : []).filter(ok);
+  const b = (Array.isArray(r?.entries) ? r.entries : []).filter(ok);
+  const seen = new Set(a.map(x => x.id));
+  const merged = [...a, ...b.filter(x => !seen.has(x.id))];
+  merged.sort((x, y) => (typeof y?.at === 'number' ? y.at : 0) - (typeof x?.at === 'number' ? x.at : 0));
+  return { v: 1, entries: merged.slice(0, 100) };   // JOURNEY_CAP
+});
+
 // The full backup manifest: every key that goes to the cloud, with its merge
 // strategy. Caches, ad/nudge state, attest tokens etc. are deliberately absent.
 export const MERGERS: Record<string, Merger> = {
@@ -256,6 +275,7 @@ export const MERGERS: Record<string, Merger> = {
     ])).sort(),
   })),
   'quiz:dates:v1': mergeQuizHistory,
+  'journey:v1': mergeJourney,
   'mood:v2': mergeMood,
   'shares:count': maxNumeric,
   'daily-verses:first-launch-date': minYmd,

@@ -10,7 +10,7 @@ import {
   type QuizSessionV1, type SegmentState,
 } from './quizSession';
 import {
-  INITIAL_PROGRESS, applyCompletion, parseProgress, MYSTERY_EVERY, type QuizProgressV1,
+  INITIAL_PROGRESS, applyCompletion, parseProgress, rewardPreview, MYSTERY_EVERY, type QuizProgressV1,
 } from './quizProgress';
 import {
   INITIAL_CARD_PROGRESS, INITIAL_CARD_LIKES, parseCardProgress, parseCardLikes,
@@ -22,6 +22,8 @@ import {
   type QuizHistoryV1, type HistorySummary, type DailyGate,
 } from './quizHistory';
 import { quizLifecycle, reachableSets, type QuizLifecycle } from './quizLifecycle';
+import { QUIZ_ART_COUNT, LAST_ART_TILES } from '../constants/quizArt';
+import { recordJourneyEvent } from './journeyLog';
 import { MYSTERY_CARDS, cardById, type MysteryCard } from '../constants/mysteryCards';
 import { logEvent } from '../services/firebase';
 
@@ -508,6 +510,22 @@ export function QuizProvider({ children, language }: { children: React.ReactNode
       questions: done.answers.length,
       firstPassWrong: done.firstPassWrong,
     }));
+
+    // Activity journey — the tile this set unlocked. rewardPreview stays on
+    // the painting the tile belongs to (the roll-over happens on the NEXT
+    // set), and freshTile is null once progress has outrun the shipped art —
+    // nothing new unlocked, nothing recorded. `progress` is this render's
+    // pre-commit value: applyCompletion above is its only writer, and that
+    // setProgress re-renders before another drain can possibly fire, so the
+    // closure can never be a set behind.
+    const rp = rewardPreview(progress.completedSets, QUIZ_ART_COUNT, LAST_ART_TILES);
+    if (rp.freshTile != null) {
+      recordJourneyEvent({
+        id: `puzzle:${progress.completedSets + 1}`, kind: 'puzzle', at: Date.now(),
+        paintingIndex: rp.view.paintingIndex,
+        finishedPainting: rp.view.completedPaintings > rp.view.paintingIndex,
+      });
+    }
   }, [session]);
 
   /**

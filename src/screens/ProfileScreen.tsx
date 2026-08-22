@@ -50,6 +50,8 @@ import { useBadges } from '../state/BadgesContext';
 import BadgeIcon from '../components/BadgeIcon';
 import { ACHIEVEMENTS } from '../constants/achievements';
 import SignInSheet from '../components/SignInSheet';
+import JourneySection from '../components/profile/JourneySection';
+import { hydrateJourney, getJourneyEntries, subscribeJourney } from '../state/journeyLog';
 import VerseNoteSheet from '../components/VerseNoteSheet';
 import WideSwitch from '../components/WideSwitch';
 import WidgetPreview from '../components/WidgetPreview';
@@ -386,6 +388,11 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
   const overlayEnabled = useSyncExternalStore(subscribeOverlayCardsEnabled, getOverlayCardsEnabled);
   const [overlayGranted, setOverlayGranted] = useState(() => canDrawOverlays());
   useEffect(() => { void hydrateOverlayCardsEnabled(); }, []);
+  // Activity journey — module store, hydrated on mount. The hydrate is a
+  // disk-union and re-runs after a cloud-restore remount, absorbing the
+  // restored entries (see journeyLog.ts).
+  const journeyEntries = useSyncExternalStore(subscribeJourney, getJourneyEntries);
+  useEffect(() => { void hydrateJourney(); }, []);
   useFocusEffect(React.useCallback(() => { setOverlayGranted(canDrawOverlays()); }, []));
   // The widget section shows the REAL widget (owner 2026-08-16) — the same live
   // 4×2 preview AddWidgetScreen renders: same clock→segment rule, same verse,
@@ -914,6 +921,18 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
         </View>
       </TouchableOpacity>
       </TabSection>
+      )}
+
+      {/* Activity journey — badge earns, plan starts, puzzle pieces (owner
+          2026-08-22). Directly ABOVE the Account/settings block per spec.
+          Hidden until the log has at least one row — record-forward, so a
+          fresh install (and every user until their first milestone) sees no
+          empty shell. Section title lives inside JourneySection so a log
+          whose every id resolves stale hides title and card together. */}
+      {journeyEntries.length > 0 && (
+        <TabSection delay={165}>
+          <JourneySection entries={journeyEntries} />
+        </TabSection>
       )}
 
       {/* Account — settings-style list of horizontal rows. */}

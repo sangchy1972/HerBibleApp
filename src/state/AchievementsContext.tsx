@@ -11,6 +11,7 @@ import { useShare } from './ShareContext';
 import { usePlanCompletion } from './PlanCompletionContext';
 import { useFeaturedPlans } from './FeaturedPlansContext';
 import { useActivity } from './ActivityContext';
+import { recordJourneyEvent } from './journeyLog';
 
 // Per-badge record. `count` lets repeatable badges (streak resets, triple-day)
 // stack — the awarded gallery shows ×N alongside the badge for count > 1.
@@ -317,6 +318,15 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
       // branch — migration mode returned earlier, so a v1→v2 schema bump never
       // fires phantom unlocks for already-earned badges.
       newAwards.forEach(def => logEvent('unlock_achievement', { achievement_id: def.id, rarity: def.rarity, category: def.category }));
+      // Activity journey — keyed off newAwards ONLY (never earned-diffing: the
+      // cold-start "passing → not passing → passing" race would duplicate).
+      // The id carries the count, so a re-fired award for the same level
+      // dedupes inside the store. Migration mode returned above, so a schema
+      // bump can't backfill phantom rows.
+      newAwards.forEach(def => {
+        const count = next?.[def.id]?.count ?? 1;
+        recordJourneyEvent({ id: `badge:${def.id}:${count}`, kind: 'badge', at: Date.now(), badgeId: def.id, count });
+      });
       setAwardQueue(prev => [...prev, ...newAwards]);
     }
   }, [

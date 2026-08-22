@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent, setUserProps } from '../services/firebase';
+import { recordJourneyEvent } from './journeyLog';
 
 const STORAGE_KEY = 'plan-completion:v1';
 
@@ -80,6 +81,10 @@ export function PlanCompletionProvider({ children }: { children: React.ReactNode
     records,
     isDayComplete: (slug, day) => !!records[slug]?.completedDays.includes(day),
     markDayComplete: (slug, day, total) => {
+      // "Started a new plan" = the record's birth. There is no explicit
+      // start-write in this app — the Start CTA only navigates — so the first
+      // completed day IS the start, and the journey stamps it here.
+      const isNewPlan = !records[slug];
       const current = records[slug] || { completedDays: [], firstStartedAt: Date.now() };
       if (current.completedDays.includes(day)) return;
       const completedDays = [...current.completedDays, day].sort((a, b) => a - b);
@@ -95,6 +100,7 @@ export function PlanCompletionProvider({ children }: { children: React.ReactNode
         lastDayYmd: ymd,
       };
       persist({ ...records, [slug]: next });
+      if (isNewPlan) recordJourneyEvent({ id: `plan:${slug}`, kind: 'plan', at: Date.now(), slug });
       logEvent('plan_day_complete', { slug, day });
       if (justFinished) logEvent('plan_complete', { slug, total });
     },

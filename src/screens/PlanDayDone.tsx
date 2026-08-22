@@ -56,8 +56,8 @@ export default function PlanDayDone({ route, navigation }: RootStackScreenProps<
   };
 
   // Where leaving this screen lands (Continue AND the X — one rule):
-  //   • the day's FIRST plan completion → the home tab, so the rhythm bar's
-  //     plan segment sweep + completion ceremony plays in front of the user;
+  //   • the day's FIRST plan completion → the home tab, where the week strip
+  //     and streak surfaces reflect the day's progress;
   //   • otherwise → back to this plan's FeaturedPlanDetail (already underneath:
   //     [Tabs, FeaturedPlanDetail, PlanDayDone]) so she keeps her place.
   //

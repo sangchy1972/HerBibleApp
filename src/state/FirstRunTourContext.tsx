@@ -24,8 +24,8 @@ import { useOnboarding } from './OnboardingContext';
 
 const DONE_KEY = 'tour:home:done:v1';
 
-export type TourAnchorId = 'rhythm' | 'streak' | 'verse';
-export const TOUR_STEPS: TourAnchorId[] = ['rhythm', 'streak', 'verse'];
+export type TourAnchorId = 'streak' | 'verse';
+export const TOUR_STEPS: TourAnchorId[] = ['streak', 'verse'];
 
 export interface Rect { x: number; y: number; w: number; h: number }
 

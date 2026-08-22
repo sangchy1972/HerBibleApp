@@ -213,7 +213,7 @@ export default function PlanDayWalk({ route, navigation }: RootStackScreenProps<
       // lastDayYmd is already today). Must also be a genuinely new (slug, day)
       // — re-walking an already-done day is a no-op write and must not claim
       // the "first of today" celebration. PlanDayDone routes home on it so the
-      // rhythm bar's plan segment sweeps in front of the user.
+      // day's progress lands in front of the user.
       const d = new Date();
       const todayYmd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const firstOfDay = !records[slug]?.completedDays.includes(day)

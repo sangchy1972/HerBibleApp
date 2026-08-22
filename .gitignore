@@ -80,3 +80,8 @@ play-service-account.json
 
 # Hand-off reference copies for the next app — local only, never built or uploaded
 handoff-next-app/
+
+# ruflo agent-session data — local only
+.claude-flow/
+.swarm/
+ruvector.db

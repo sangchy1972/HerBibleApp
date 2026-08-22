@@ -16,8 +16,8 @@ import { entranceMustSettle } from './entranceSettle';
 // this with its own `delay` so the screen lifts into place in waves.
 //
 // TIMING (2026-07-19, per user): the entrance plays on EVERY focus — landing
-// on a tab (including programmatic jumps like the rhythm bar's "Discover a
-// reading plan" → Plans/Explore) always shows the sections arriving one by
+// on a tab (including programmatic jumps into Plans/Explore) always shows
+// the sections arriving one by
 // one — and the whole cascade takes ~0.8 s. A Jan-2026 perf audit had cut
 // this to a once-per-mount 220 ms flash; the user explicitly wants the
 // ceremony back, uniformly on every screen.
@@ -167,7 +167,7 @@ export function useTabFocusEntrance(delay = 0) {
   //
   // The settle above hands the view back to RN once the entrance FINISHES.
   // But there's a dead window BEFORE that: if a sibling ABOVE this section
-  // grows (async content landing — a verse hero, a rhythm bar, covers) while
+  // grows (async content landing — a verse hero, covers) while
   // Reanimated still owns this view, our native touch region stays pinned to
   // the pre-growth position. The card is drawn in its new spot but every tap
   // lands where it used to be → nothing happens. New users hit this constantly

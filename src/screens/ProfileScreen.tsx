@@ -730,8 +730,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
                 Android. pointerEvents="none" keeps it purely visual. */}
             <View style={styles.removeAdsBtn} pointerEvents="none">
               {/* de "Werbung entfernen" / fr "Sans publicités" overflow the pill
-                  on a 320 dp screen; same auto-fit the rhythm bar's Start pill
-                  uses rather than truncating a CTA. */}
+                  on a 320 dp screen; auto-fit rather than truncating a CTA. */}
               <Text
                 style={styles.removeAdsBtnText}
                 numberOfLines={1}

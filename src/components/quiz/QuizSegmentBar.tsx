@@ -6,13 +6,13 @@ import type { SegmentState } from '../../state/quizSession';
 // The 5-segment quiz progress bar. Shared by the home card and the in-quiz
 // header so the two can never drift.
 //
-// Geometry is carried over from DailyRhythmBar's track (height 6, radius 10,
+// Geometry carried over from the retired home rhythm bar's track (height 6,
 // 10% ink track, white full-height ticks at the 4 interior boundaries, fills with radius
 // 0 so interior edges sit flush against the ticks instead of notching dark
 // slivers beside every one).
 //
 // ⚠️ Segments are POSITIONAL and deliberately NOT packed left, unlike
-// packedRhythmFill in state/dailyRhythm.ts. That bar's steps are order-agnostic
+// its packed fill (now in backup/2026-08-22-daily-rhythm-bar/). Those steps were order-agnostic
 // so packing reads as progress; here segment k IS question k, and a wrong answer
 // at position 2 must show red at position 2 with position 3 still empty. Don't
 // "fix" this to match the other bar.

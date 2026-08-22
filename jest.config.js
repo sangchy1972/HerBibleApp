@@ -6,6 +6,7 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   testMatch: ['**/__tests__/**/*.test.ts'],
+  testPathIgnorePatterns: ['/backup/'],
   // RN injects __DEV__ at build time; services/ads.ts reads it at module scope to
   // pick test vs live ad units. Tests run outside the RN runtime, so define it.
   globals: { __DEV__: true },

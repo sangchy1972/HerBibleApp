@@ -80,7 +80,6 @@ const SCRIM_ALPHA = 0.72;
 
 // Per-anchor spotlight padding + corner radius (card radius + the padding).
 const SHAPE: Record<string, { pad: number; radius: number }> = {
-  rhythm: { pad: 8, radius: 26 },   // DailyRhythmBar card is r=20
   streak: { pad: 6, radius: 23 },   // streak chip is a 34px-tall pill
   verse:  { pad: 8, radius: 18 },   // hero card is r≈9.2 — keep it tight
 };

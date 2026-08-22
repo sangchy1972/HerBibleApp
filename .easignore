@@ -73,3 +73,4 @@ handoff-next-app/
 .swarm/
 .claude-flow/
 ruvector.db
+backup/

@@ -421,7 +421,7 @@ function PulseArrow({ color }: { color: string }) {
     ), -1, false);
     // PrayerFlow is a route that unmounts, and every prayer mounts this screen
     // again — an infinite repeat left running is a driver with no consumer. The
-    // repo convention (DayCircle, DailyRhythmBar, useTabFocusEntrance) is to
+    // repo convention (DayCircle, useTabFocusEntrance) is to
     // cancel; these two were the only infinite loops in the app that did not.
     return () => cancelAnimation(s);
   }, [s]);

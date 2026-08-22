@@ -9,8 +9,7 @@ import type { RootStackParamList } from '../navigation/types';
 // The plan-discovery guide's HOME trigger, hosted by PrayerScreen. Renders
 // nothing. Fires for users who have never opened the Plan tab, at the moment
 // the home screen has no louder ask: the prayer CTA has gone quiet (prayed,
-// or the slot is locked) — `ctaQuiet` comes from the screen, the same flag
-// that hands the breathing animation to the rhythm bar. Routed through the
+// or the slot is locked) — `ctaQuiet` comes from the screen. Routed through the
 // coordinator, so it can never stack on the tour, a badge, or the mood sheet.
 //
 // The SELF path (she opens the Plan tab on her own) triggers from PlanScreen —

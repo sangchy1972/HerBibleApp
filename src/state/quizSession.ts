@@ -3,7 +3,7 @@
 // PURE, and deliberately ZERO-IMPORT: it never touches the ~60 KB question bank,
 // AsyncStorage, or React. `pickOption` takes `isCorrect` as an argument rather
 // than looking the answer up itself, which is what keeps that true. Same split
-// as dailyRhythm.ts vs DailyRhythmBar.tsx — the logic is unit-testable in this
+// as a pure selector beside its component — the logic is unit-testable in this
 // repo's node-environment jest setup, the component is not.
 //
 // THE RETRY RULE
@@ -195,7 +195,8 @@ export function triedFlags(
 /**
  * The 5 segments, POSITIONAL.
  *
- * Deliberately NOT packed left, unlike packedRhythmFill in state/dailyRhythm.ts.
+ * Deliberately NOT packed left (the retired home rhythm bar packed; see
+ * backup/2026-08-22-daily-rhythm-bar/ for the contrast this preserves).
  * That bar's steps are order-agnostic so packing reads as progress; here
  * segment k IS question k, and a wrong answer at position 2 must show red at
  * position 2 with position 3 still empty. Don't "fix" this to match.

@@ -25,9 +25,7 @@ import { useReadChapters } from '../state/ReadChaptersContext';
 import { usePlanCompletion } from '../state/PlanCompletionContext';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import { useSavedVerses } from '../state/SavedVersesContext';
-import { useGospelsPsalms } from '../state/GospelsPsalmsContext';
-import DailyRhythmBar from '../components/home/DailyRhythmBar';
-import { computeRhythm } from '../state/dailyRhythm';
+import WeekFireStrip from '../components/home/WeekFireStrip';
 import GospelPsalmCards from '../components/GospelPsalmCards';
 import { dailyLabels } from '../constants/dailyVersesLabels';
 import { localizeBookName, englishBookName, chaptersInBook } from '../constants/bibleBookNames';
@@ -557,7 +555,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   // header has to read from the same source. Using `currentStreak` (the
   // active consecutive run) here was the cause of "header shows 0, tap
   // shows 4" — the user has 4 lifetime complete days but no active streak.
-  const { morning, setMorning, mDone, eDone, wasCompleteOn, totalComplete, everPrayed } = usePrayer();
+  const { morning, setMorning, mDone, eDone, wasCompleteOn, totalComplete } = usePrayer();
   // Warm the badge-art cache from the home screen — the earliest point in the
   // app, so the CDN images are on disk well before the first badge is awarded
   // (e.g. prayer.first on the first Amen). Idempotent + once-per-launch.
@@ -578,9 +576,8 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   // `records`; the "in progress" derivation is local: any plan with at
   // least one day completed but no `finishedAt` is active.
   const { records: planRecords } = usePlanCompletion();
-  const { getSummary, summary: planSummaries } = useFeaturedPlans();
+  const { summary: planSummaries } = useFeaturedPlans();
   const { answers: obAnswers } = useOnboarding();
-  const gp = useGospelsPsalms();
   // Share + More overlays live at the screen root so their absolute-fill
   // overlays are sized to the screen, not to the verse-card section. Render-
   // ing them inside VerseHeroCard sized them to the card and the share sheet
@@ -643,8 +640,8 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
 
   // The daily mood check-in is now a global bottom sheet that self-triggers from
   // MoodCheckInProvider (once/day). No per-screen navigation trigger needed.
-  // `pct` is INVISIBLE now (the old "Today's Progress" % readout merged into
-  // the rhythm bar's 5 segments) but stays as the streak-celebration trigger:
+  // `pct` is INVISIBLE (no on-screen readout) but stays as the
+  // streak-celebration trigger:
   // both prayers done ⇔ 100 ⇔ the streak day completes. Counting unchanged.
   const pct = (mDone ? 50 : 0) + (eDone ? 50 : 0);
 
@@ -659,7 +656,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   const { lang } = useUILanguage();
   const dateStr = today.toLocaleDateString(localeFor(lang), { weekday: 'long', month: 'short', day: 'numeric' });
 
-  // ── Daily Rhythm bar (permanent; replaces the dismissable nudge banner) ───
+  // ── Home models ───────────────────────────────────────────────────────────
   const todayYmdStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   // "My Reading Plans" card model — active plans (top-3 by progress) +
   // personalized suggestions from the onboarding answers. Pure + memoized;
@@ -668,69 +665,6 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
     () => buildReadingPlansCard({ records: planRecords, summaries: planSummaries, answers: obAnswers, todayYmd: todayYmdStr }),
     [planRecords, planSummaries, obAnswers, todayYmdStr],
   );
-  const rhythm = useMemo(() => computeRhythm({
-    hour: now.getHours(),
-    todayYmd: todayYmdStr,
-    mDone, eDone,
-    gospelReady: gp.ready,
-    gospelMorningDone: gp.morning.doneToday,
-    gospelEveningDone: gp.evening.doneToday,
-    gospelMorningComplete: gp.morning.complete,
-    gospelEveningComplete: gp.evening.complete,
-    planRecords,
-  }), [now, todayYmdStr, mDone, eDone, gp.ready, gp.morning, gp.evening, planRecords]);
-  // Resolve the bar's text/icon/action from the machine state. Step states
-  // navigate on tap; rest states pop a friendly hint instead (never a dead
-  // tap). The plan step falls back to the explore tab whenever the chosen
-  // slug can't resolve to a summary — never a dead detail screen.
-  const rhythmSpec = useMemo(() => {
-    const s = rhythm.state;
-    // `reset` is required: PlanScreen only applies the `tab` param when a fresh
-    // reset signal arrives (same contract as the home "More Plans" button) —
-    // without it the jump lands on whatever tab Plans last showed.
-    const exploreNav = () => navigation.navigate('Tabs', { screen: 'plan', params: { tab: 'explore', reset: Date.now() } });
-    if (s.kind === 'step') {
-      switch (s.step) {
-        case 'prayerMorning': return {
-          icon: 'sunrise' as const,
-          text: !everPrayed ? t('rhythm.prayer.first') : now.getHours() >= 18 ? t('rhythm.prayer.morningLate') : t('rhythm.prayer.morning'),
-          hint: null, onPress: () => navigation.navigate('PrayerFlow', { kind: 'morning' as const }),
-        };
-        case 'prayerEvening': return {
-          icon: 'moon' as const,
-          text: !everPrayed ? t('rhythm.prayer.first') : t('rhythm.prayer.evening'),
-          hint: null, onPress: () => navigation.navigate('PrayerFlow', { kind: 'evening' as const }),
-        };
-        case 'gospelMorning': return {
-          icon: 'book-open' as const, text: t('rhythm.gospel.morning'),
-          hint: null, onPress: () => navigation.navigate('GospelPsalm', { slot: 'morning' as const }),
-        };
-        case 'gospelEvening': return {
-          icon: 'book' as const, text: t('rhythm.gospel.evening'),
-          hint: null, onPress: () => navigation.navigate('GospelPsalm', { slot: 'evening' as const }),
-        };
-        case 'plan': {
-          const planTitle = rhythm.planSlug ? getSummary(rhythm.planSlug)?.title : undefined;
-          if (rhythm.planMode === 'ongoing' && rhythm.planSlug && planTitle) {
-            const slug = rhythm.planSlug;
-            return {
-              icon: 'map' as const, text: t('rhythm.plan.ongoing', { name: planTitle }),
-              hint: null, onPress: () => navigation.navigate('FeaturedPlanDetail', { slug }),
-            };
-          }
-          return { icon: 'compass' as const, text: t('rhythm.plan.explore'), hint: null, onPress: exploreNav };
-        }
-      }
-    }
-    if (s.kind === 'allDone') return { icon: 'heart' as const, text: t('rhythm.allDone'), hint: t('rhythm.hint.allDone'), onPress: null };
-    if (s.kind === 'deadZone') return { icon: 'moon' as const, text: t('rhythm.deadZone'), hint: t('rhythm.hint.deadZone'), onPress: null };
-    return { icon: 'clock' as const, text: t('rhythm.waitEvening'), hint: t('rhythm.hint.evening'), onPress: null };
-  }, [rhythm, everPrayed, now, t, navigation, getSummary]);
-  // Waiting for the evening window → tapping the bar celebrates ("all tasks
-  // done, see you at 6 pm") in a proper dialog instead of the toast hint.
-  const rhythmCelebrate = rhythm.state.kind === 'waitEvening'
-    ? { title: t('rhythm.celebrate.title'), body: t('rhythm.celebrate.body'), cta: t('rhythm.celebrate.cta') }
-    : null;
 
   // ── Slot rules ───────────────────────────────────────────────────────────
   // Morning window opens at 06:00, closes (effectively) when evening opens.
@@ -807,7 +741,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
 
   const prevPctRef = useRef(pct);
 
-  // Celebration choreography — fly a sparkle from the rhythm card to the
+  // Celebration choreography — fly a sparkle from the week strip to the
   // streak badge, then punch the streak number with a delayed +1. Each piece
   // has its own shared value so they can be sequenced precisely.
   const starOpacity = useSharedValue(0);
@@ -815,11 +749,10 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   const streakScale = useSharedValue(1);
   const [displayedStreak, setDisplayedStreak] = useState(totalComplete);
   // Window-space anchors captured when the celebration kicks off so the star
-  // flies from the rhythm card (which absorbed the old % readout) to the
-  // streak badge regardless of layout.
+  // flies from the week strip to the streak badge regardless of layout.
   const barAnchorRef = useRef({ x: 0, y: 0 });
   const streakAnchorRef = useRef({ x: 0, y: 0 });
-  const rhythmBarRef = useRef<View>(null);
+  const weekStripRef = useRef<View>(null);
   const streakRef = useRef<View>(null);
   const [starOverlayVisible, setStarOverlayVisible] = useState(false);
 
@@ -852,10 +785,6 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   // layout instead of a launch-time snapshot. Same P-gutter trim as below.
   const tourRegisterMeasurer = tour.registerAnchorMeasurer;
   useEffect(() => {
-    tourRegisterMeasurer('rhythm', async () => {
-      const r = await measureRefInWindow(rhythmBarRef);
-      return r ? { x: r.x + P, y: r.y, w: r.w - 2 * P, h: r.h } : null;
-    });
     tourRegisterMeasurer('streak', () => measureRefInWindow(streakChipRef));
     tourRegisterMeasurer('verse', () => measureRefInWindow(heroRef));
   }, [tourRegisterMeasurer]);
@@ -864,9 +793,9 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
     let cancelled = false;
     const timer = setTimeout(() => {
       if (cancelled) return;
-      const pending = { rhythm: true, streak: true, verse: true };
+      const pending = { streak: true, verse: true };
       let got = 0;
-      const land = (id: 'rhythm' | 'streak' | 'verse', r: { x: number; y: number; w: number; h: number } | null) => {
+      const land = (id: 'streak' | 'verse', r: { x: number; y: number; w: number; h: number } | null) => {
         if (cancelled || !pending[id]) return;
         pending[id] = false;
         if (r && r.w > 0 && r.h > 0) { tourSetAnchor(id, r); got += 1; }
@@ -875,9 +804,6 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
         if (cancelled) return;
         if (got > 0) tourStart(); else tourAbort();   // nothing measurable → retry next cold start
       };
-      // The rhythm bar's ref sits on a wrapper carrying the section gutter, so
-      // pull the rect back in by P on each side to frame the card itself.
-      rhythmBarRef.current?.measureInWindow((x, y, w, h) => land('rhythm', { x: x + P, y, w: w - 2 * P, h }));
       streakChipRef.current?.measureInWindow((x, y, w, h) => land('streak', { x, y, w, h }));
       heroRef.current?.measureInWindow((x, y, w, h) => land('verse', { x, y, w, h }));
       // measureInWindow's callback can silently never fire on a collapsed view,
@@ -928,8 +854,8 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   const playCelebration = useCallback(() => {
     // 1. Re-measure both anchors right before the star fires so we hand the
     //    interpolation accurate positions even if the screen has scrolled.
-    //    Origin = the rhythm card's center (it absorbed the old % readout).
-    rhythmBarRef.current?.measureInWindow((x, y, w, h) => {
+    //    Origin = the week strip's center.
+    weekStripRef.current?.measureInWindow((x, y, w, h) => {
       barAnchorRef.current = { x: x + w / 2, y: y + h / 2 };
     });
     streakRef.current?.measureInWindow((x, y, w, h) => {
@@ -956,9 +882,9 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   }, [starProgress, starOpacity, playStreakPunch, hideStarOverlay]);
 
   // Streak celebration trigger — fires once when pct crosses to 100 (both
-  // prayers done) while this tab is focused. The 1200ms delay lets the rhythm
-  // bar's returning segment sweep (~540ms) land before the star launches
-  // (same cadence role the old 800ms + 2700ms fill animation played). If the
+  // prayers done) while this tab is focused. The 1200ms delay is a settled
+  // beat before the star launches (tuned by feel; kept through the rhythm-bar
+  // removal 2026-08-22 — retune only if the owner asks). If the
   // user leaves the tab inside that window, the pending launch is cancelled
   // AND prevPctRef is rolled back so the next focus re-arms it — otherwise
   // the star (and the displayedStreak +1 punch it drives) would be lost.
@@ -1140,27 +1066,13 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
       </View>
       </TabSection>
 
-      {/* Daily Rhythm bar — permanent 5-step tracker (morning/evening prayer,
-          morning/evening Gospel & Psalm, reading plan). Text suggests the next
-          time-appropriate step; the built-in 5-segment progress bar (which
-          absorbed the old "Today's Progress" section) celebrates completions.
-          Never dismissed. The ref is the streak star's launch anchor. */}
+      {/* Week fire strip (owner 2026-08-22, replacing the Daily Rhythm bar):
+          the current week as date numbers — sapling final-frame for one
+          prayer, flame for both. Pure display. The wrapper ref is the
+          streak-star flight origin. */}
       <TabSection delay={15}>
-        <View style={{ paddingHorizontal: P }} ref={rhythmBarRef} collapsable={false}>
-          <DailyRhythmBar
-            todayYmd={todayYmdStr}
-            dots={rhythm.dots}
-            doneCount={rhythm.doneCount}
-            allDone={rhythm.state.kind === 'allDone'}
-            text={rhythmSpec.text}
-            hintText={rhythmSpec.hint}
-            celebrate={rhythmCelebrate}
-            onPress={rhythmSpec.onPress}
-            // ONE moving target at a time (per user): the pill breathes only
-            // while the big prayer CTA below has gone quiet. The bar itself
-            // adds the rest of the gates (not all-done, ceremony, motion).
-            pulseStart={!(canStart || readyToSwitch)}
-          />
+        <View style={{ paddingHorizontal: P }} ref={weekStripRef} collapsable={false}>
+          <WeekFireStrip />
         </View>
       </TabSection>
 
@@ -1435,8 +1347,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           streak screen). Coordinator-managed; renders nothing itself. */}
       <StreakGuideTrigger />
       {/* Plan-discovery nudge for users who have never opened the Plan tab —
-          fires only while the prayer CTA is quiet (same flag that hands the
-          breathing animation to the rhythm bar). */}
+          fires only while the prayer CTA is quiet. */}
       <PlanGuideTrigger ctaQuiet={!(canStart || readyToSwitch)} />
 
       {/* "Finish a set, earn a reward card." Only in the afternoon lull —
@@ -1444,7 +1355,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           and only after midday, which keeps it away from the morning open where
           the reminder ask, the login prompt and the mood ritual already
           compete for the coordinator's two slots. */}
-      <QuizPromoHost inGap={rhythm.state.kind === 'waitEvening' && now.getHours() >= 12} />
+      <QuizPromoHost inGap={mDone && !eDone && now.getHours() >= 12 && now.getHours() < 18} />
     </View>
   );
 }

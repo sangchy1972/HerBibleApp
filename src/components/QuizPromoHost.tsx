@@ -18,11 +18,11 @@ import type { RootStackParamList } from '../navigation/types';
 
 // "Finish a quiz set, earn a reward card" — feature discovery for the quiz.
 //
-// WHEN. Only in the afternoon gap: everything else for today is done and it is
-// not yet 18:00, so evening prayer has not opened. `rhythm.state.kind ===
-// 'waitEvening'` is the codebase's own name for exactly that state, and using
-// it rather than counting hours means this stays correct if the rhythm ever
-// gains a step. Plus `hour >= 12`, which keeps it away from the morning open —
+// WHEN. Only in the afternoon gap: morning prayer done, evening not yet open
+// (`mDone && !eDone && hour ∈ [12,18)` — computed by the home screen since the
+// rhythm bar's removal 2026-08-22; slightly WIDER than the old `waitEvening`,
+// which also required the readings done — this host's own cadence/coordinator
+// gates still bound it). The `hour >= 12` half keeps it away from the morning open —
 // that is where the reminder ask, the login prompt and the mood ritual all
 // cluster, and the coordinator only allows two blocking prompts per open.
 //
@@ -41,8 +41,8 @@ import type { RootStackParamList } from '../navigation/types';
 
 export default function QuizPromoHost({ inGap }: {
   /** True only in the afternoon lull — see the header. The home screen owns
-   *  this because it already computes the rhythm; recomputing it here would be
-   *  a second source of truth for "what is she doing today". */
+   *  this because it owns mDone/eDone; recomputing here would be a second
+   *  source of truth for "what is she doing today". */
   inGap: boolean;
 }) {
   const t = useT();

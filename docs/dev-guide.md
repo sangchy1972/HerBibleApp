@@ -805,9 +805,17 @@ PlanScreen is the reference implementation.
   `replace`, so backing out of the quiz returns her to the banner instead of dumping her
   home with the reading silently skipped. The Gospel & Psalm banner *does* `replace`,
   because the prayer flow is finished at that point.
-- Home screen: the prayer CTA breathes; when it goes quiet (prayed, or slot locked) the
-  animation hands off to the rhythm bar / the Start button, and stops entirely once all
-  5 progresses are done.
+- Home screen: the prayer CTA breathes while the slot is actionable and goes quiet
+  once prayed / locked. The Daily Rhythm bar was REMOVED 2026-08-22 (code in
+  `backup/2026-08-22-daily-rhythm-bar/`, never bundled); its slot is the
+  **week fire strip** (`components/home/WeekFireStrip.tsx`): the current
+  Sun–Sat week as date numbers — sapling final-frame (LottieView progress=1,
+  static, per owner) for one prayer, flame for both, rose dashed ring for an
+  untouched today. Pure display: no CTA, no progress animation, no tour step
+  (the first-run tour is 2 steps now: streak → verse). The wrapper ref in
+  PrayerScreen doubles as the streak-star flight origin; QuizPromoHost's
+  afternoon `inGap` is now `mDone && !eDone && hour ∈ [12,18)` — slightly
+  wider than the old waitEvening (readings no longer gate it).
 
 ---
 

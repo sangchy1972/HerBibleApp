@@ -138,6 +138,18 @@ export function gateSignalError(kind: 'nofill' | 'network'): void {
   graceTimer = setTimeout(() => { if (state === 'grace') finish(); }, GRACE_MS);
 }
 
+/** The network dialog's Try-again: nudge the loaders and re-attempt now.
+ *  The automatic retries keep running regardless — this only adds agency. */
+export function gateRetryNow(): void {
+  if (state !== 'network') return;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const ads = require('./ads') as { kickFirstOpenLoad?: () => void };
+    ads.kickFirstOpenLoad?.();
+  } catch { /* the poll keeps attempting either way */ }
+  attempt();
+}
+
 export function getFirstOpenGateState(): FirstOpenGateState { return state; }
 
 export function subscribeFirstOpenGate(f: () => void): () => void {

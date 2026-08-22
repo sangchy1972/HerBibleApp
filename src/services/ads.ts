@@ -438,6 +438,22 @@ function preloadOnboarding(): void {
   } catch { /* attempts simply no-op */ }
 }
 
+// Manual retry for the first-open loading gate's network dialog (owner
+// 2026-08-22): give the Try-again button something real to do. Android's
+// engine already self-paces its retries; on iOS re-kick the onboarding unit
+// unless one is already loaded or shown. Throttled so button-mashing can't
+// stack parallel loads.
+let lastKickAt = 0;
+export function kickFirstOpenLoad(): void {
+  if (adsRemoved || onboardingShown) return;
+  if (isAdEngineActive()) return;                 // engine retries on its own backoff
+  if (onboardingLoaded) return;                   // a fill is already waiting
+  const now = Date.now();
+  if (now - lastKickAt < 3_000) return;
+  lastKickAt = now;
+  preloadOnboarding();
+}
+
 // Show the dedicated first-open interstitial ONCE. Returns true if it showed.
 // Callers (the onboarding flow) attempt right after the welcome screen and
 // then on each later step transition until it succeeds — it can never fire

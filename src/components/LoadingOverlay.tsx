@@ -1,17 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { View, Text, ImageBackground, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, ImageBackground, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withDelay, runOnJS, Easing, interpolateColor,
 } from 'react-native-reanimated';
-import { FONTS, TXT, TXTSUB, ROSE } from '../constants/theme';
+import { FONTS, TXT, TXTSUB, ROSE, CARD_RADIUS, BTN_RADIUS } from '../constants/theme';
 import { useUILanguage } from '../state/UILanguageContext';
 import { useReminderInterstitial } from '../state/ReminderInterstitialContext';
 import { useOnboarding } from '../state/OnboardingContext';
 import { useDailyVerses } from '../state/DailyVersesContext';
 import { localeFor } from '../i18n/locale';
 import { useT } from '../i18n/useT';
-import { startFirstOpenAdGate, getFirstOpenGateState, subscribeFirstOpenGate } from '../services/firstOpenAdGate';
+import { startFirstOpenAdGate, getFirstOpenGateState, subscribeFirstOpenGate, gateRetryNow } from '../services/firstOpenAdGate';
 import { LOADING_LINES } from '../constants/loadingContent';
 import { LOADING_IMAGE_FILES } from '../constants/loadingImages';
 import {
@@ -330,11 +330,15 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   const onContent = phase === 'content';
 
   return (
-    // pointerEvents="none": nothing in here is interactive, but a full-screen
-    // 'auto' View with no responder SWALLOWS touches instead of passing them
-    // down — so taps during the 700 ms fade-out (overlay already invisible)
-    // used to die, and a stalled ready-flag could eat them far longer.
-    <Animated.View style={[StyleSheet.absoluteFillObject, styles.root, fade]} pointerEvents="none">
+    // pointerEvents: normally "none" — nothing here is interactive, and a
+    // full-screen 'auto' View with no responder SWALLOWS touches (taps during
+    // the 700ms fade-out used to die). "box-none" ONLY while the network
+    // dialog is up, so its Try-again button can receive the tap; the moment
+    // the gate leaves 'network' the overlay goes tap-transparent again.
+    <Animated.View
+      style={[StyleSheet.absoluteFillObject, styles.root, fade]}
+      pointerEvents={gateState === 'network' ? 'box-none' : 'none'}
+    >
       {/* BACKDROP — fades in under the rising brand and pushes in 100 % → 110 %. */}
       {onContent && (
         <Animated.View style={[StyleSheet.absoluteFillObject, bgFade]} pointerEvents="none">
@@ -385,15 +389,27 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
           <Text style={[styles.progressPct, onContent && onPhoto && { color: '#FFFFFF' }, onContent && onPhoto && styles.shadow]}>
             {Math.round(progress)}%
           </Text>
-          {gateState === 'network' ? (
-            <Text style={[styles.noNetwork, onContent && onPhoto && styles.shadow]}>
-              {t('loading.noNetwork')}
-            </Text>
-          ) : (
-            <Text style={[styles.adsNotice, onContent && onPhoto && { color: 'rgba(255,255,255,0.82)' }, onContent && onPhoto && styles.shadow]}>
-              {t('loading.adsNotice')}
-            </Text>
-          )}
+          <Text style={[styles.adsNotice, onContent && onPhoto && { color: 'rgba(255,255,255,0.82)' }, onContent && onPhoto && styles.shadow]}>
+            {t('loading.adsNotice')}
+          </Text>
+        </View>
+      )}
+
+      {/* NETWORK DIALOG — the house centered-card pattern (BibleScreen's
+          unread-confirm family): dim scrim, white card, bold title, rose
+          Try-again pill. Stays up while the gate holds in 'network'; a
+          restored connection exits the state and the dialog with it. The
+          automatic retries run regardless — the button adds agency (and an
+          immediate re-kick of the iOS onboarding unit). */}
+      {gateState === 'network' && (
+        <View style={styles.netScrim} pointerEvents="auto">
+          <View style={styles.netCard}>
+            <Text style={styles.netTitle}>{t('loading.noNetwork.title')}</Text>
+            <Text style={styles.netBody}>{t('loading.noNetwork.body')}</Text>
+            <TouchableOpacity style={styles.netBtn} activeOpacity={0.85} onPress={gateRetryNow}>
+              <Text style={styles.netBtnText}>{t('loading.noNetwork.retry')}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -496,10 +512,31 @@ const styles = StyleSheet.create({
     marginTop: 8, fontSize: 11.5, color: TXTSUB,
     fontFamily: FONTS.lato, letterSpacing: 0.3,
   },
-  noNetwork: {
-    marginTop: 8, fontSize: 12.5, color: ROSE,
-    fontFamily: FONTS.latoBold, fontWeight: '700', letterSpacing: 0.3,
-    textAlign: 'center', paddingHorizontal: 30,
+  netScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(10,8,24,0.45)',
+    alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 34,
+  },
+  netCard: {
+    width: '100%', backgroundColor: '#FFFFFF', borderRadius: CARD_RADIUS,
+    paddingHorizontal: 22, paddingTop: 22, paddingBottom: 18,
+  },
+  netTitle: {
+    fontSize: 19, fontWeight: '700', color: TXT, textAlign: 'center',
+    fontFamily: FONTS.latoBold, marginBottom: 10,
+  },
+  netBody: {
+    fontSize: 14.5, lineHeight: 21, color: TXTSUB, textAlign: 'center',
+    fontFamily: FONTS.lato, marginBottom: 18,
+  },
+  netBtn: {
+    height: 48, borderRadius: BTN_RADIUS, backgroundColor: ROSE,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  netBtnText: {
+    color: '#FFFFFF', fontSize: 16, fontFamily: FONTS.latoBold,
+    fontWeight: '700', letterSpacing: 0.4,
   },
   progressPct: {
     marginTop: 10, fontFamily: FONTS.merriweatherBold, fontSize: 13,

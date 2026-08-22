@@ -817,6 +817,15 @@ PlanScreen is the reference implementation.
   PrayerScreen doubles as the streak-star flight origin; QuizPromoHost's
   afternoon `inGap` is now `mDone && !eDone && hour ∈ [12,18)` — slightly
   wider than the old waitEvening (readings no longer gate it).
+- **Share promo card** (`components/home/SharePromoCard.tsx`, 2026-08-22): the
+  very last card of the home stack. One big square image (CDN
+  `v1/share-promo/ShareHerBible-<EN|ES|DE|FR|PT>.webp`, ~160KB each; zh → EN
+  per owner); tap anywhere → `Share.share` with the localized
+  `sharePromo.message` + store link (Android: Play URL inline in the message —
+  RN drops the `url` field on Android; iOS: numeric id resolved once via the
+  iTunes lookup, same as RatePromptSheet). Layout is constant by construction
+  (`aspectRatio: 1`, fallback gradient renders inside the same box) — that is
+  the defense against the frozen-touch-region bug; keep it if you restyle.
 
 ---
 

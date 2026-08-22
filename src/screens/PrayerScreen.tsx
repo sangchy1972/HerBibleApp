@@ -26,6 +26,7 @@ import { usePlanCompletion } from '../state/PlanCompletionContext';
 import { useFeaturedPlans } from '../state/FeaturedPlansContext';
 import { useSavedVerses } from '../state/SavedVersesContext';
 import WeekFireStrip from '../components/home/WeekFireStrip';
+import SharePromoCard from '../components/home/SharePromoCard';
 import GospelPsalmCards from '../components/GospelPsalmCards';
 import { dailyLabels } from '../constants/dailyVersesLabels';
 import { localizeBookName, englishBookName, chaptersInBook } from '../constants/bibleBookNames';
@@ -1227,6 +1228,19 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           <Feather name="chevron-right" size={22} color={TXTSUB} />
         </TouchableOpacity>
       </View>
+      </TabSection>
+
+      {/* Share-our-app promo — the very bottom of the home stack (owner
+          2026-08-22). Fixed square box: its height never changes after mount,
+          which is the whole defense against the frozen-touch-region bug. */}
+      <TabSection delay={82}>
+        {/* paddingTop 24 — this screen spaces sections via the NEXT section's
+            own top padding (base 14, headed sections 25); with no heading of
+            its own the card needs the gap explicitly or it sits flush against
+            the Continue Reading card above. */}
+        <View style={[styles.section, { paddingTop: 24 }]}>
+          <SharePromoCard />
+        </View>
       </TabSection>
 
       <View style={{ height: insets.bottom + 23 }} />

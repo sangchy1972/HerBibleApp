@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent, setUserProps } from '../services/firebase';
 import { recordJourneyEvent } from './journeyLog';
@@ -48,6 +48,12 @@ const Ctx = createContext<State | null>(null);
 export function PlanCompletionProvider({ children }: { children: React.ReactNode }) {
   const [records, setRecords] = useState<PlanRecords>({});
 
+  // Guards a write from landing before the read that should have preceded it —
+  // same failure this repo hit in adRevenue and guards against in QuizContext:
+  // an un-hydrated markDayComplete would persist a one-plan map over the whole
+  // store (and stamp a false plan-start into the journey log).
+  const hydrated = useRef(false);
+
   // Hydrate.
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY)
@@ -69,7 +75,8 @@ export function PlanCompletionProvider({ children }: { children: React.ReactNode
           setRecords(clean);
         } catch { /* unparseable → start empty rather than crash */ }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => { hydrated.current = true; });
   }, []);
 
   const persist = (next: PlanRecords) => {
@@ -81,6 +88,7 @@ export function PlanCompletionProvider({ children }: { children: React.ReactNode
     records,
     isDayComplete: (slug, day) => !!records[slug]?.completedDays.includes(day),
     markDayComplete: (slug, day, total) => {
+      if (!hydrated.current) return;
       // "Started a new plan" = the record's birth. There is no explicit
       // start-write in this app — the Start CTA only navigates — so the first
       // completed day IS the start, and the journey stamps it here.

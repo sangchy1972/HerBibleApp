@@ -94,7 +94,7 @@ import { initFirebase, logScreenView, setCrashScreen } from './src/services/fire
 import { setAppRemountHandler, initCloudBackup } from './src/services/cloudBackup';
 import { initAds } from './src/services/ads';
 import { ensureAttRequested } from './src/services/att';
-import { initAdFrequency, isInstallDay, noteNavigation } from './src/services/adFrequency';
+import { initAdFrequency, isInstallDay, isFirstOpenUser, noteNavigation } from './src/services/adFrequency';
 import { setPromptRoute, setLaunchOverlayUp } from './src/state/promptSurface';
 import { initIap } from './src/services/iap';
 
@@ -140,8 +140,8 @@ export default function App() {
           // time concurrently — initialized only latches after its awaits, so
           // the guard alone doesn't stop overlap (swarm r2).
           adsTimer = setTimeout(() => { adsTimer = null; initAds(); }, ADS_INIT_COLD_START_DELAY_MS);
-          isInstallDay().then((day0) => {
-            if (day0 && adsTimer) {
+          Promise.all([isInstallDay(), isFirstOpenUser()]).then(([day0, firstOpen]) => {
+            if ((day0 || firstOpen) && adsTimer) {
               clearTimeout(adsTimer);
               adsTimer = null;
               initAds();

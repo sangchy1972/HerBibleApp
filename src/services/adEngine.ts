@@ -43,6 +43,7 @@ import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent } from './firebase';
 import { setInterstitialVisible, noteInterstitialShown } from './interstitialVisibility';
+import { firstOpenGateActive, gateSignalFill, gateSignalError } from './firstOpenAdGate';
 import { onAdPaid, normalizeValue } from './adRevenue';
 import { deviceRegion } from './deviceRegion';
 import { MIN_AD_INTERVAL_MS, type AdPlacement } from '../constants/adPacing';
@@ -333,12 +334,18 @@ function request(d: Desired): void {
         } else {
           st.abandoned = false;
           cleanup();
+          // Dropped for priority — but the cache is FULL, so the first-open
+          // loading gate can still show right now (swarm 2026-08-22).
+          if (firstOpenGateActive()) gateSignalFill();
           return;
         }
       }
       st.abandoned = false;
       cache.push({ unit: d.unit, ad, loadedAt: Date.now() });
       if (cacheFull()) abandonLowestInFlight();
+      // First-open loading gate: signal AFTER the cache holds the fill, so
+      // the gate's immediate show attempt cannot race an empty cache.
+      if (firstOpenGateActive()) gateSignalFill();
     }));
     subs.push(ad.addAdEventListener(deps.AdEventType.ERROR, (e: any) => {
       const st = stateOf(d.unit.name);
@@ -350,9 +357,11 @@ function request(d: Desired): void {
         // Connectivity — backoff, retry the SAME unit, never counts toward a
         // breaker (owner-confirmed).
         st.nextAt = Date.now() + Math.max(d.gapMs, netBackoff(st.attempts));
+        if (firstOpenGateActive()) gateSignalError('network');
         return;
       }
       st.nextAt = Date.now() + d.gapMs;
+      if (firstOpenGateActive()) gateSignalError('nofill');
       if (d.breakerLimit != null) {
         st.noFill += 1;
         if (st.noFill >= d.breakerLimit) {

@@ -113,6 +113,20 @@ export async function isInstallDay(): Promise<boolean> {
     return !v || v === ymd();
   } catch { return false; }
 }
+
+/**
+ * The install-day exemption's real purpose is the FIRST-OPEN ad — so a user
+ * who killed the app mid-onboarding and reopened on day 1+ deserves it too
+ * (swarm 2026-08-22: with the 6s deferral they reached the loading gate's
+ * 12s watchdog with the SDK barely started). Reads the onboarding flag
+ * directly, same no-init-dependency contract as isInstallDay.
+ */
+export async function isFirstOpenUser(): Promise<boolean> {
+  try {
+    const done = await AsyncStorage.getItem('onboarding:done:v1');
+    return done !== '1';
+  } catch { return false; }
+}
 /** The NAV trigger is only for established (day ≥ 3) users. The hot-start
  *  trigger deliberately does NOT consult this — it fires for everyone. */
 function isAggressive(): boolean {
@@ -250,6 +264,15 @@ function msSinceOverlayTap(): number {
 }
 
 // Lazy + guarded for the same jest-import-graph reason as above.
+function isFirstOpenGateActiveSafe(): boolean {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const mod = require('./firstOpenAdGate') as { firstOpenGateActive?: () => boolean };
+    return mod.firstOpenGateActive?.() ?? false;
+  } catch { return false; }
+}
+
+// Lazy + guarded for the same jest-import-graph reason as above.
 function isResumeSplashUpSafe(): boolean {
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -308,6 +331,10 @@ async function decideHotStart(bgAtSnap: number | null, adCaused: boolean, deferr
   // than us), or the drain already removed it AND armed the flag in the same
   // microtask (routeSlot is synchronous after its removeItem) — which the flag
   // read below then sees. Skipped when no episode exists: nothing could fire.
+  // A live first-open loading gate owns the first impression outright — a
+  // hot-start ad racing it could legally stack two interstitials back to
+  // back (the gate's show bypasses the interval floor; swarm 2026-08-22).
+  if (isFirstOpenGateActiveSafe()) return;
   if (bgAtSnap != null && (await peekPendingRoute()) != null) return;
 
   const suppressedUntil = hotStartSuppressedUntil;

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { View, Text, ImageBackground, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -10,6 +10,8 @@ import { useReminderInterstitial } from '../state/ReminderInterstitialContext';
 import { useOnboarding } from '../state/OnboardingContext';
 import { useDailyVerses } from '../state/DailyVersesContext';
 import { localeFor } from '../i18n/locale';
+import { useT } from '../i18n/useT';
+import { startFirstOpenAdGate, getFirstOpenGateState, subscribeFirstOpenGate } from '../services/firstOpenAdGate';
 import { LOADING_LINES } from '../constants/loadingContent';
 import { LOADING_IMAGE_FILES } from '../constants/loadingImages';
 import {
@@ -133,6 +135,7 @@ interface Props {
 
 export default function LoadingOverlay({ appReady, onHide }: Props) {
   const { lang } = useUILanguage();
+  const t = useT();
   const reminder = useReminderInterstitial();
   const onboarding = useOnboarding();
   const { getVerse, todayDay } = useDailyVerses();
@@ -199,7 +202,18 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   // 100 % the moment the app is genuinely ready. Shown on the brand card only,
   // and only for brand-new users (returning users don't see a slow cold start).
   const isNewUser = onboarding.ready && !onboarding.done;
-  const allReady = contentReady && contextsReady;
+
+  // First-open ad gate (owner 2026-08-22): a brand-new user's overlay also
+  // waits for the loading-screen ad to resolve — shown, no-fill grace, or a
+  // network hold with a visible message. Returning users never start it.
+  const gateState = useSyncExternalStore(subscribeFirstOpenGate, getFirstOpenGateState);
+  // Guarded on hidingRef: if onboarding hydration outlived the 11s cap the
+  // overlay is already leaving — starting the gate then would pop the ad at a
+  // random onboarding moment instead of during loading (swarm 2026-08-22).
+  useEffect(() => { if (isNewUser && !hidingRef.current) startFirstOpenAdGate(); }, [isNewUser]);
+  const gateHolding = isNewUser && gateState !== 'idle' && gateState !== 'done';
+
+  const allReady = contentReady && contextsReady && !gateHolding;
   const [progress, setProgress] = useState(0);
   useEffect(() => {
     if (!isNewUser) return;
@@ -262,15 +276,19 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   // from when stage 2 actually began, so a slow-to-ready app adds no extra time
   // beyond what it genuinely needs. MAX_VISIBLE_MS still hard-caps everything.
   useEffect(() => {
-    if (phase !== 'content' || !contextsReady) return;
+    if (phase !== 'content' || !contextsReady || gateHolding) return;
     const started = contentStartRef.current ?? Date.now();
     const remaining = Math.max(0, CONTENT_HOLD_MS - (Date.now() - started));
     const tm = setTimeout(fadeOut, remaining);
     return () => clearTimeout(tm);
-  }, [phase, contextsReady, fadeOut]);
+  }, [phase, contextsReady, gateHolding, fadeOut]);
 
   // Hard safety cap — force away even if something never signals ready.
-  useEffect(() => { const cap = setTimeout(fadeOut, MAX_VISIBLE_MS); return () => clearTimeout(cap); }, [fadeOut]);
+  useEffect(() => {
+    if (gateHolding) return;   // first-open gate owns its own exits (12s pending watchdog, 3s grace; network holds by design)
+    const cap = setTimeout(fadeOut, MAX_VISIBLE_MS);
+    return () => clearTimeout(cap);
+  }, [fadeOut, gateHolding]);
 
   // Stage-2 content (only computed/shown once resolved).
   const idx = rot != null ? lineIndexFor(rot) : 0;
@@ -355,15 +373,27 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
         </View>
       </Animated.View>
 
-      {/* FIRST-RUN PROGRESS — brand card only, new users only. A thick, rounded
-          determinate bar + % so a cold-starting first-timer knows content is
-          loading, not stuck. */}
-      {phase === 'brand' && isNewUser && (
+      {/* FIRST-RUN PROGRESS — new users only, BOTH stages (owner 2026-08-22):
+          bottom-anchored so it rides under the pink card AND the photo scene.
+          The ads notice keeps the loading-screen ad honest; a network hold
+          swaps it for the check-your-connection line. */}
+      {isNewUser && (
         <View style={styles.progressWrap} pointerEvents="none">
-          <View style={styles.progressTrack}>
+          <View style={[styles.progressTrack, onContent && onPhoto && styles.progressTrackOnPhoto]}>
             <View style={[styles.progressFill, { width: `${progress}%` }]} />
           </View>
-          <Text style={styles.progressPct}>{Math.round(progress)}%</Text>
+          <Text style={[styles.progressPct, onContent && onPhoto && { color: '#FFFFFF' }, onContent && onPhoto && styles.shadow]}>
+            {Math.round(progress)}%
+          </Text>
+          {gateState === 'network' ? (
+            <Text style={[styles.noNetwork, onContent && onPhoto && styles.shadow]}>
+              {t('loading.noNetwork')}
+            </Text>
+          ) : (
+            <Text style={[styles.adsNotice, onContent && onPhoto && { color: 'rgba(255,255,255,0.82)' }, onContent && onPhoto && styles.shadow]}>
+              {t('loading.adsNotice')}
+            </Text>
+          )}
         </View>
       )}
 
@@ -450,7 +480,10 @@ const styles = StyleSheet.create({
   shadow: { textShadowColor: 'rgba(0,0,0,0.45)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 },
   // First-run progress — sits a little below the brand's resting centre.
   progressWrap: {
-    position: 'absolute', left: 0, right: 0, top: Math.round(height * 0.60),
+    // Bottom-anchored so the SAME bar persists from the pink card into the
+    // photo scene (owner 2026-08-22) without colliding with the verse block
+    // (which bottoms out ~height*0.15+100 above it).
+    position: 'absolute', left: 0, right: 0, bottom: Math.round(height * 0.045),
     alignItems: 'center',
   },
   progressTrack: {
@@ -458,6 +491,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(30,27,46,0.12)', overflow: 'hidden',
   },
   progressFill: { height: '100%', borderRadius: 3.5, backgroundColor: ROSE },
+  progressTrackOnPhoto: { backgroundColor: 'rgba(255,255,255,0.28)' },
+  adsNotice: {
+    marginTop: 8, fontSize: 11.5, color: TXTSUB,
+    fontFamily: FONTS.lato, letterSpacing: 0.3,
+  },
+  noNetwork: {
+    marginTop: 8, fontSize: 12.5, color: ROSE,
+    fontFamily: FONTS.latoBold, fontWeight: '700', letterSpacing: 0.3,
+    textAlign: 'center', paddingHorizontal: 30,
+  },
   progressPct: {
     marginTop: 10, fontFamily: FONTS.merriweatherBold, fontSize: 13,
     fontWeight: '700', letterSpacing: 0.3, color: TXTSUB,

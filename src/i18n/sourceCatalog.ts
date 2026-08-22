@@ -486,6 +486,8 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'wellDone.v4':                   { en: 'Thy word have I hid in mine heart, that I might not sin against thee.', context: 'Verse 4 of 5.' },
   'wellDone.r5':                   { en: 'Isaiah 40:8', context: 'Verse reference 5 of 5.' },
   'wellDone.v5':                   { en: 'The grass withereth, the flower fadeth: but the word of our God shall stand for ever.', context: 'Verse 5 of 5.' },
+  'loading.adsNotice':             { en: 'This process may contain ads.', context: 'Tiny line under the first-run loading progress bar, disclosing that an ad may show during loading. Owner-specified copy (his message said “progress”; normalized to “process”).' },
+  'loading.noNetwork':             { en: 'No network connection. Please check your network settings.', context: 'Replaces the ads notice under the loading bar when the first-open ad request failed with a NETWORK error. The overlay holds until connectivity returns.' },
   'weekly.back':                   { en: 'Back',           context: 'Back button below weekly card — returns to PrayerScreen.' },
   'onboarding.welcome.title': { en: 'Welcome to Her Bible', context: 'First onboarding screen — warm greeting above the language picker. "Her Bible" is the brand, keep it.' },
   'onboarding.welcome.sub': { en: 'A gentle space for your walk with God. First, choose your language.', context: 'Sub-line on the welcome/language step. Rendered in the DETECTED system language before the user picks.' },

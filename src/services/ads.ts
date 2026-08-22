@@ -53,6 +53,7 @@ import { startUsController, stopUsController, usOnShowOpportunity, isUsControlle
 import { startAdEngine, stopAdEngine, isAdEngineActive, engineOnShowOpportunity } from './adEngine';
 import { hydrateAdValueStore } from './adValueStore';
 import { setInterstitialVisible, noteInterstitialShown } from './interstitialVisibility';
+import { firstOpenGateActive, gateSignalFill, gateSignalError } from './firstOpenAdGate';
 import { deviceRegion } from './deviceRegion';
 import { initAdRevenue, onAdPaid } from './adRevenue';
 import { hydrateAdRevenueConfig, refreshAdRevenueConfig, isFirstRun } from './adRevenueConfig';
@@ -379,7 +380,11 @@ function preload(): void {
     interstitial.addAdEventListener(AdEventTypeEnum.LOADED, () => { loaded = true; });
     // When the user closes the ad, immediately preload the next one.
     interstitial.addAdEventListener(AdEventTypeEnum.CLOSED, () => { loaded = false; setInterstitialVisible(false); preload(); });
-    interstitial.addAdEventListener(AdEventTypeEnum.ERROR, () => { loaded = false; setInterstitialVisible(false); });
+    // A LOAD error is not a close: clearing the visible flag here lied while
+    // another unit's ad was genuinely on screen (the first-open gate then
+    // released early; the 45s stuck-timer accounting was skewed). CLOSED and
+    // the visibility module's own failsafe own the flag (swarm 2026-08-22).
+    interstitial.addAdEventListener(AdEventTypeEnum.ERROR, () => { loaded = false; });
     // Impression-level ad revenue — the worldwide path (every non-US user and
     // all of iOS), which until now captured NO revenue at all.
     //
@@ -399,13 +404,28 @@ function preloadOnboarding(): void {
   try {
     onboardingInterstitial = InterstitialAdCls.createForAdRequest(ONBOARDING_INTERSTITIAL_UNIT_ID, {});
     onboardingLoaded = false;
-    onboardingInterstitial.addAdEventListener(AdEventTypeEnum.LOADED, () => { onboardingLoaded = true; });
+    onboardingInterstitial.addAdEventListener(AdEventTypeEnum.LOADED, () => {
+      onboardingLoaded = true;
+      // First-open loading gate (owner 2026-08-22): tell it a fill landed.
+      if (firstOpenGateActive()) gateSignalFill();
+    });
     onboardingInterstitial.addAdEventListener(AdEventTypeEnum.CLOSED, () => { onboardingLoaded = false; setInterstitialVisible(false); });
-    onboardingInterstitial.addAdEventListener(AdEventTypeEnum.ERROR, () => {
+    onboardingInterstitial.addAdEventListener(AdEventTypeEnum.ERROR, (e: any) => {
       onboardingLoaded = false;
+      // First-open loading gate: classify the miss the same way the engine
+      // does — connectivity retries, a REAL no-fill starts the 3s grace.
+      if (firstOpenGateActive()) {
+        const es = String(e?.code ?? e?.message ?? '').toLowerCase();
+        gateSignalError(es.includes('network') || es.includes('timeout') ? 'network' : 'nofill');
+      }
       // Fresh units no-fill often; a few spaced retries raise the odds it's
       // ready before onboarding ends. Latches off for good once shown.
-      if (onboardingRetries < 3 && !onboardingShown) {
+      // While the FIRST-OPEN LOADING GATE is active the retries are UNBOUNDED
+      // (swarm 2026-08-22 HIGH): on iOS this unit is the gate's only signal
+      // source, and a capped retry made the network hold a dead end — four
+      // network errors and the connection-restored promise could never be
+      // kept. Android keeps its promise through the engine's own backoff.
+      if ((onboardingRetries < 3 || firstOpenGateActive()) && !onboardingShown) {
         onboardingRetries += 1;
         setTimeout(() => { if (!onboardingShown) preloadOnboarding(); }, 8000);
       }

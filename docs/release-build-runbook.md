@@ -167,7 +167,7 @@ npm run submit:ios
 > day, and hard limits cap appearances regardless. Cards are never shown on
 > the lock screen, are clearly branded with the app icon and name, and
 > contain only app content — no ads, no promotions, no third-party material.
-> The feature can be turned off at any time via an in-app switch (Profile →
+> The feature can be turned off at any time via an in-app switch (Settings →
 > Cards on your screen) or by revoking the permission; while it is on, a
 > visible (low-priority) notification discloses that it is active.
 

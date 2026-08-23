@@ -4,17 +4,14 @@ import { useFocusEffect } from '@react-navigation/native';
 import { areAdsRemoved } from '../services/ads';
 import { useTabFocusScrollReset } from '../components/shared/useTabFocusEntrance';
 import TabSection from '../components/shared/TabSection';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, Modal, Share, Platform, Keyboard, AppState, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, StyleSheet, Alert, Share, Platform, Keyboard, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import FireFlame from '../components/shared/FireFlame';
-import Animated, {
-  FadeIn, FadeOut, Easing,
-  useSharedValue, useAnimatedStyle, withTiming, runOnJS,
-} from 'react-native-reanimated';
-import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { GestureDetector } from 'react-native-gesture-handler';
 import Constants from 'expo-constants';
 import * as ImagePicker from 'expo-image-picker';
 import Glass from '../components/shared/Glass';
@@ -31,10 +28,9 @@ const APP_VERSION =
   Constants.expoConfig?.version ?? Constants.nativeAppVersion ?? '\u2014';
 
 import Logo from '../components/shared/Logo';
-import { ROSE, BTN_RADIUS, LAV, TXT, TXTSUB, P, FONTS, GREEN_DONE } from '../constants/theme';
+import { ROSE, BTN_RADIUS, LAV, TXT, TXTSUB, P, FONTS } from '../constants/theme';
 import { getHighlightColor } from '../constants/highlightColors';
-import { TRANSLATIONS, useTranslation } from '../state/TranslationsContext';
-import { useUILanguage, UI_LANGUAGES, type UILanguageCode } from '../state/UILanguageContext';
+import { useUILanguage, type UILanguageCode } from '../state/UILanguageContext';
 import { localeFor } from '../i18n/locale';
 import { useT } from '../i18n/useT';
 import { useAuth } from '../state/AuthContext';
@@ -53,20 +49,11 @@ import SignInSheet from '../components/SignInSheet';
 import JourneySection from '../components/profile/JourneySection';
 import { hydrateJourney, getJourneyEntries, subscribeJourney } from '../state/journeyLog';
 import VerseNoteSheet from '../components/VerseNoteSheet';
-import WideSwitch from '../components/WideSwitch';
 import WidgetPreview from '../components/WidgetPreview';
 import { useDailyVerses } from '../state/DailyVersesContext';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
-import { useSheetSurface } from '../state/promptSurface';
-import {
-  overlayCardsSupported, canDrawOverlays, openOverlaySettings,
-  isMiuiDevice, openMiuiPermissionEditor, miuiBackgroundPopupAllowed,
-} from '../../modules/expo-overlay-cards';
-import {
-  getOverlayCardsEnabled, hydrateOverlayCardsEnabled, setOverlayCardsEnabled, subscribeOverlayCardsEnabled,
-} from '../state/overlayCardsPrefs';
+import { useSheetPan, SheetBackdrop } from '../components/shared/sheetPan';
 import { NotesTile } from '../components/ProfileTiles';
-import { getDownloadState, type DownloadState } from '../services/bibleService';
 import type { TabScreenProps } from '../navigation/types';
 
 type FeatherIcon = keyof typeof Feather.glyphMap;
@@ -211,54 +198,6 @@ function MonthGrid({ year, month, activeSet }: { year: number; month: number; ac
 // re-opens at its natural position.
 // Off-screen distance the sheet starts/exits at. Larger than any sheet height
 // so it's fully below the screen edge before sliding up.
-const SHEET_OFFSET = 1000;
-
-function useSheetPan(onClose: () => void, visible: boolean) {
-  const dragY = useSharedValue(SHEET_OFFSET);
-  // The slide-IN is driven by this shared value too — NOT a reanimated
-  // `entering` layout animation. A shared SlideInDown builder reused across
-  // remounts intermittently failed to replay, leaving the sheet parked
-  // off-screen under the backdrop (the "every-other-tap nothing appears" bug).
-  // Driving translateY ourselves replays reliably every open and always
-  // resets, so the bug can't recur.
-  useEffect(() => {
-    if (visible) {
-      dragY.value = SHEET_OFFSET;
-      dragY.value = withTiming(0, { duration: 360, easing: Easing.out(Easing.cubic) });
-    } else {
-      dragY.value = SHEET_OFFSET;          // park off-screen, ready for the next open
-    }
-  }, [visible, dragY]);
-  const pan = Gesture.Pan()
-    .activeOffsetY(12)
-    .onUpdate((e) => {
-      'worklet';
-      if (e.translationY > 0) dragY.value = e.translationY;
-    })
-    .onEnd((e) => {
-      'worklet';
-      if (e.translationY > 120 || e.velocityY > 800) {
-        dragY.value = withTiming(SHEET_OFFSET, { duration: 280 }, (f) => { if (f) runOnJS(onClose)(); });
-      } else {
-        dragY.value = withTiming(0, { duration: 240 });
-      }
-    });
-  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: dragY.value }] }));
-  return { gesture: pan, sheetStyle };
-}
-
-function SheetBackdrop({ onClose }: { onClose: () => void }) {
-  return (
-    <Animated.View
-      entering={FadeIn.duration(300)}
-      style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.4)' }]}
-    >
-      <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={onClose} />
-    </Animated.View>
-  );
-}
-
-
 function CalendarSheet({ activityDates, onClose }: { activityDates: Set<string>; onClose: () => void }) {
   const t = useT();
   const today = new Date();
@@ -283,68 +222,6 @@ function CalendarSheet({ activityDates, onClose }: { activityDates: Set<string>;
               <MonthGrid key={`${y}-${m}`} year={y} month={m} activeSet={activityDates} />
             ))}
           </ScrollView>
-        </Animated.View>
-      </GestureDetector>
-    </View>
-  );
-}
-
-// The overlay-cards mini settings sheet (owner 2026-08-16): a permanent entry
-// whose PRIMARY job is reminding users who never enabled the daily screen cards
-// to turn them on — and, once on, giving them the manual off switch. Two
-// permission steps render as status rows: "Appear on top" for everyone, plus
-// Xiaomi's own "background pop-up" gate on MIUI devices only.
-function OverlayCardsSheet({ onClose }: { onClose: () => void }) {
-  const t = useT();
-  const pan = useSheetPan(onClose, true);
-  // Register with the prompt-surface gate so a nudge can't ambush the sheet.
-  useSheetSurface(true);
-  const enabled = useSyncExternalStore(subscribeOverlayCardsEnabled, getOverlayCardsEnabled);
-  const [granted, setGranted] = useState(() => canDrawOverlays());
-  const [miuiOk, setMiuiOk] = useState<boolean | null>(() => (isMiuiDevice() ? miuiBackgroundPopupAllowed() : true));
-  // Both grants happen in system settings — the return foreground is the only
-  // moment we can learn the outcome and flip the status rows.
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', s => {
-      if (s === 'active') {
-        setGranted(canDrawOverlays());
-        if (isMiuiDevice()) setMiuiOk(miuiBackgroundPopupAllowed());
-      }
-    });
-    return () => sub.remove();
-  }, []);
-
-  const stepRow = (label: string, done: boolean, onPress: () => void, last: boolean) => (
-    <TouchableOpacity
-      style={[styles.overlayStepRow, !last && styles.settingBorder]}
-      activeOpacity={done ? 1 : 0.7}
-      onPress={() => { if (!done) onPress(); }}
-    >
-      <Text style={styles.overlayStepLabel}>{label}</Text>
-      <Text style={[styles.overlayStepState, !done && { color: ROSE }]}>
-        {t(done ? 'overlayCards.on' : 'overlayCards.off')}
-      </Text>
-      {!done && <Feather name="chevron-right" size={18} color={TXTSUB} />}
-    </TouchableOpacity>
-  );
-
-  return (
-    <View style={styles.pickerOverlay}>
-      <SheetBackdrop onClose={onClose} />
-      <GestureDetector gesture={pan.gesture}>
-        <Animated.View style={[styles.pickerSheet, pan.sheetStyle]}>
-          <View style={styles.sheetHandle} />
-          <Text style={styles.pickerTitle}>{t('overlayCards.row')}</Text>
-          <Text style={styles.overlayDesc}>{t('nudge.overlay.body')}</Text>
-          <View style={[styles.overlayStepRow, styles.settingBorder]}>
-            <Text style={styles.overlayStepLabel}>{t('overlayCards.master')}</Text>
-            <WideSwitch value={enabled} onValueChange={setOverlayCardsEnabled} />
-          </View>
-          {stepRow(t('overlayCards.stepSaw'), granted, () => { openOverlaySettings(); }, !isMiuiDevice())}
-          {/* miuiOk === null (unknowable) deliberately renders as not-done: the
-              worst outcome of that guess is one redundant trip to a page where
-              everything is already on. */}
-          {isMiuiDevice() && stepRow(t('overlayCards.stepMiui'), miuiOk === true, () => { openMiuiPermissionEditor(); }, true)}
         </Animated.View>
       </GestureDetector>
     </View>
@@ -377,23 +254,13 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
   // visit too (the badge wall lives here). Idempotent with the home-screen one.
   const { prefetchAll: prefetchBadges } = useBadges();
   useEffect(() => { prefetchBadges(); }, [prefetchBadges]);
-  const { current: currentTranslation, pending: dlPending, setTranslation, pauseDownload, resumeDownload } = useTranslation();
-  const { lang: uiLang, meta: uiMeta, setLang: setUILang } = useUILanguage();
+  const { lang: uiLang } = useUILanguage();
   const t = useT();
-  const [showTranslationPicker, setShowTranslationPicker] = useState(false);
-  // Overlay-cards row status. Granted lives in system settings, so it is
-  // re-read on focus and on the foreground that follows a settings trip; the
-  // master switch comes straight from its store.
-  const [showOverlaySheet, setShowOverlaySheet] = useState(false);
-  const overlayEnabled = useSyncExternalStore(subscribeOverlayCardsEnabled, getOverlayCardsEnabled);
-  const [overlayGranted, setOverlayGranted] = useState(() => canDrawOverlays());
-  useEffect(() => { void hydrateOverlayCardsEnabled(); }, []);
   // Activity journey — module store, hydrated on mount. The hydrate is a
   // disk-union and re-runs after a cloud-restore remount, absorbing the
   // restored entries (see journeyLog.ts).
   const journeyEntries = useSyncExternalStore(subscribeJourney, getJourneyEntries);
   useEffect(() => { void hydrateJourney(); }, []);
-  useFocusEffect(React.useCallback(() => { setOverlayGranted(canDrawOverlays()); }, []));
   // The widget section shows the REAL widget (owner 2026-08-16) — the same live
   // 4×2 preview AddWidgetScreen renders: same clock→segment rule, same verse,
   // same card art. A promo card sold the idea; the thing itself sells better.
@@ -402,7 +269,6 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
   const widgetDemoSegment: 'morning' | 'evening' =
     new Date().getHours() >= 18 || new Date().getHours() < 4 ? 'evening' : 'morning';
   const widgetDemoVerse = getDailyVerse(dailyToday, widgetDemoSegment);
-  const [langExpanded, setLangExpanded] = useState(true);
   const [showSignInSheet, setShowSignInSheet] = useState(false);
   const [showEditNameSheet, setShowEditNameSheet] = useState(false);
   const [showSavedSheet, setShowSavedSheet] = useState(false);
@@ -540,57 +406,6 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
     setShowEditNameSheet(false);
   };
 
-  // Committing a UI language. The Bible version FOLLOWS the UI language, so this
-  // ALSO kicks off the matching Bible download (storage + mobile data). Only
-  // reached after the user confirms in pickLanguage's alert.
-  const commitLanguage = (code: UILanguageCode) => {
-    setUILang(code);
-    const tr = TRANSLATIONS.find(x => x.code === code);
-    if (!tr) return;
-    setTranslation(code);
-    if (dlStates[code]?.status !== 'complete' && code !== currentTranslation.code) {
-      showToast(t('sheet.langBible.toast.bibleDownloading', { name: tr.nativeName }), 3800);
-    }
-  };
-
-  // Picking a UI language. Switching the whole UI + downloading a second Bible
-  // is heavy and (for the UI part) hard to undo if you land on a script you
-  // can't read — so a stray or curious tap must NOT commit silently. We gate the
-  // commit behind a confirmation alert that renders in the CURRENT (pre-switch)
-  // language, so it's always readable. Nothing changes until the user confirms.
-  // If that language's Bible is already cached, the prompt is a lightweight
-  // switch with no download warning.
-  // Pending language to confirm (null = dialog closed). Drives a branded
-  // in-app dialog (see the <Modal> in the render) instead of the OS Alert —
-  // the confirmation text is rendered in the CURRENT UI language via t().
-  const [langConfirm, setLangConfirm] = useState<UILanguageCode | null>(null);
-  const pickLanguage = (code: UILanguageCode) => {
-    if (code === uiLang) return;
-    if (!TRANSLATIONS.find(x => x.code === code)) return;
-    setLangConfirm(code);
-  };
-
-  // Download status per translation — loaded once on mount so the version row
-  // can show "Downloaded / available offline" without re-querying. Live
-  // progress while a switch is downloading comes from the context's `pending`.
-  const [dlStates, setDlStates] = useState<Record<string, DownloadState>>({});
-  useEffect(() => {
-    Promise.all(
-      TRANSLATIONS.map(tr => getDownloadState(tr.code).then(s => [tr.code, s] as const))
-    ).then(entries => setDlStates(Object.fromEntries(entries)));
-  }, []);
-  // Reflect a completed background download into dlStates so the row flips to
-  // the "downloaded" state once the context finishes + clears `pending`.
-  const prevPendingRef = useRef<string | null>(null);
-  useEffect(() => {
-    const prev = prevPendingRef.current;
-    if (prev && !dlPending) {
-      getDownloadState(prev).then(s => setDlStates(p => ({ ...p, [prev]: s })));
-    }
-    prevPendingRef.current = dlPending?.code ?? null;
-  }, [dlPending]);
-
-  // Swipe-down-to-dismiss for the Bible-versions sheet.
   // Keyboard lift for the ONE sheet on this screen with a text field. The app
   // runs edge-to-edge on Android, so the window does not resize for the IME and a
   // bottom-anchored sheet stays put: with autoFocus on, the field she is typing
@@ -606,8 +421,7 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
     return () => { onShow.remove(); onHide.remove(); };
   }, []);
 
-  const transPan = useSheetPan(() => setShowTranslationPicker(false), showTranslationPicker);
-  // Same for the Saved-verses sheet.
+  // Swipe-down-to-dismiss for the Saved-verses sheet.
   const savedPan = useSheetPan(() => setShowSavedSheet(false), showSavedSheet);
   const notesPan = useSheetPan(() => setShowNotesSheet(false), showNotesSheet);
   const bookmarksPan = useSheetPan(() => setShowBookmarksSheet(false), showBookmarksSheet);
@@ -940,39 +754,9 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
       <Text style={[styles.sectionTitle, { marginTop: 28, marginBottom: 14 }]}>{t('profile.section.account')}</Text>
       <Glass style={styles.settingsCard}>
         <SettingRow icon="share-2"     label={t('profile.account.shareApp')}  onPress={onShareApp} />
-        <TouchableOpacity
-          style={[styles.settingRow, styles.settingBorder]}
-          onPress={() => setShowTranslationPicker(true)}
-          activeOpacity={0.85}
-        >
-          <View style={styles.settingIcon}>
-            <Feather name="globe" size={18} color={TXT} />
-          </View>
-          <Text style={styles.settingLabel}>{t('profile.account.bibleVersions')}</Text>
-          <Text style={styles.settingValue}>{currentTranslation.nativeName}</Text>
-          <Feather name="chevron-right" size={18} color={TXTSUB} />
-        </TouchableOpacity>
-        {/* Notifications moved INTO Settings (owner 2026-08-16) — no longer a
-            standalone Account row. The Settings row below is now a real screen. */}
-        {/* Daily overlay cards — the permanent entry whose main job is
-            reminding users who never enabled them (owner 2026-08-16). Status
-            text goes ROSE while off, so the row itself does the inviting. */}
-        {overlayCardsSupported() && (
-          <TouchableOpacity
-            style={[styles.settingRow, styles.settingBorder]}
-            activeOpacity={0.7}
-            onPress={() => setShowOverlaySheet(true)}
-          >
-            <View style={styles.settingIcon}>
-              <Feather name="layers" size={18} color={TXT} />
-            </View>
-            <Text style={styles.settingLabel}>{t('overlayCards.row')}</Text>
-            <Text style={[styles.settingValue, !(overlayGranted && overlayEnabled) && { color: ROSE }]}>
-              {t(overlayGranted && overlayEnabled ? 'overlayCards.on' : 'overlayCards.off')}
-            </Text>
-            <Feather name="chevron-right" size={18} color={TXTSUB} />
-          </TouchableOpacity>
-        )}
+        {/* Bible versions + daily overlay cards moved INTO Settings (owner
+            2026-08-22), joining Notifications there — the Account card keeps
+            only navigation and identity rows. */}
         <SettingRow icon="settings"      label={t('profile.account.settings')}     onPress={() => navigation.navigate('Settings')} />
         <SettingRow icon="message-circle" label={t('profile.account.helpCenter')} onPress={() => navigation.navigate('HelpCenter')} />
         <SettingRow icon="info"          label={t('profile.account.aboutUs')}     isLast onPress={() => navigation.navigate('AboutUs')} />
@@ -1267,12 +1051,6 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
         />
       )}
 
-      {showOverlaySheet && (
-        <OverlayCardsSheet
-          onClose={() => { setShowOverlaySheet(false); setOverlayGranted(canDrawOverlays()); }}
-        />
-      )}
-
       {showReflectionsSheet && (
         <View style={styles.pickerOverlay}>
           <SheetBackdrop onClose={() => setShowReflectionsSheet(false)} />
@@ -1312,156 +1090,6 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'profile'>)
           </GestureDetector>
         </View>
       )}
-
-      {showTranslationPicker && (
-        <View style={styles.pickerOverlay}>
-          <SheetBackdrop onClose={() => setShowTranslationPicker(false)} />
-          <GestureDetector gesture={transPan.gesture}>
-          {/* maxHeight 88% + inner ScrollView — without these the 7-row list
-              renders taller than the screen and the handle gets pushed above
-              the status bar where it can't be reached for swipe-dismiss.
-              See feedback_sheet_swipe_dismiss.md. */}
-          <Animated.View style={[styles.pickerSheet, { maxHeight: '88%' }, transPan.sheetStyle]}>
-            <View style={styles.sheetHandle} />
-            <Text style={[styles.pickerTitle, styles.translationSheetTitle]}>{t('sheet.langBible.title')}</Text>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 12 }}>
-
-              {/* Language section — collapsible. Drives UI strings (and via
-                  UILanguageContext, the plans CDN locale). When collapsed, only the
-                  header + current-language chip stay visible so the Bible-
-                  versions list below dominates the sheet. */}
-              <TouchableOpacity
-                style={styles.langSectionHeader}
-                onPress={() => setLangExpanded(v => !v)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.langSectionTitle}>{t('sheet.langBible.languageHeader')}</Text>
-                <View style={styles.langSectionTrigger}>
-                  <Text style={styles.langSectionCurrent}>{uiMeta.nativeName}</Text>
-                  <Feather name={langExpanded ? 'chevron-up' : 'chevron-down'} size={20} color={ROSE} />
-                </View>
-              </TouchableOpacity>
-
-              {langExpanded && (
-                <>
-                  <View style={styles.langChipGrid}>
-                    {UI_LANGUAGES.map(l => {
-                      const active = l.code === uiLang;
-                      return (
-                        <TouchableOpacity
-                          key={l.code}
-                          style={[styles.langChip, active && styles.langChipActive]}
-                          onPress={() => pickLanguage(l.code)}
-                          activeOpacity={0.85}
-                        >
-                          <Text style={[styles.langChipText, active && styles.langChipTextActive]}>
-                            {l.nativeName}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                </>
-              )}
-
-              {/* Bible version — there's exactly one: the edition for the
-                  selected UI language (the Bible follows the language). We show
-                  only that row instead of the whole list, with its download
-                  status + a pause/resume control so the user can stop the
-                  background download on mobile data and resume on Wi-Fi. */}
-              <Text style={styles.bibleSubHeader}>{t('sheet.langBible.versionsHeader')}</Text>
-
-              {(() => {
-                const tr = TRANSLATIONS.find(x => x.code === uiLang) ?? currentTranslation;
-                const isPending = dlPending?.code === tr.code;
-                const isPaused = !!(isPending && dlPending?.paused);
-                const pct = isPending && dlPending && dlPending.total > 0
-                  ? Math.floor((dlPending.fetched / dlPending.total) * 100) : 0;
-                const downloaded = !isPending && dlStates[tr.code]?.status === 'complete';
-                return (
-                  <View style={styles.pickerRow}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.translationPickerName, { color: ROSE, fontWeight: '700' }]}>
-                        {tr.nativeName}
-                      </Text>
-                      <Text style={styles.translationPickerEdition}>{tr.edition}</Text>
-                      {isPending && !isPaused && (
-                        <Text style={styles.translationPickerProgress}>{t('sheet.langBible.downloading', { pct })}</Text>
-                      )}
-                      {isPaused && (
-                        <Text style={styles.translationPickerProgress}>{t('sheet.langBible.paused', { pct })}</Text>
-                      )}
-                      {downloaded && (
-                        <Text style={styles.translationPickerComplete}>{t('sheet.langBible.readyOffline')}</Text>
-                      )}
-                      {!downloaded && !isPending && (
-                        <Text style={styles.translationPickerProgress}>{t('sheet.langBible.downloadRequired')}</Text>
-                      )}
-                    </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-                      {downloaded ? (
-                        <Feather name="check-circle" size={24} color={GREEN_DONE} />
-                      ) : isPaused ? (
-                        <TouchableOpacity onPress={resumeDownload} hitSlop={12} style={styles.translationPickerDlBtn}>
-                          <Feather name="play" size={22} color={ROSE} />
-                        </TouchableOpacity>
-                      ) : isPending ? (
-                        <TouchableOpacity onPress={pauseDownload} hitSlop={12} style={styles.translationPickerDlBtn}>
-                          <Feather name="pause" size={22} color={ROSE} />
-                        </TouchableOpacity>
-                      ) : (
-                        <TouchableOpacity onPress={() => setTranslation(tr.code)} hitSlop={12} style={styles.translationPickerDlBtn}>
-                          <Feather name="download" size={20} color={ROSE} />
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  </View>
-                );
-              })()}
-            </ScrollView>
-          </Animated.View>
-          </GestureDetector>
-        </View>
-      )}
-
-      {/* Language-switch confirmation — branded in-app dialog (replaces the OS
-          Alert). Text is localized to the CURRENT UI language via t(). */}
-      {langConfirm && (() => {
-        const tr = TRANSLATIONS.find(x => x.code === langConfirm);
-        if (!tr) return null;
-        const ready = dlStates[langConfirm]?.status === 'complete';
-        const close = () => setLangConfirm(null);
-        return (
-          <Modal visible transparent animationType="fade" onRequestClose={close}>
-            <View style={styles.langDlgOverlay}>
-              <View style={styles.langDlgCard}>
-                <Text style={styles.langDlgTitle}>{t('sheet.langConfirm.title', { lang: tr.nativeName })}</Text>
-                <Text style={styles.langDlgBody}>
-                  {ready
-                    ? t('sheet.langConfirm.bodyReady', { lang: tr.nativeName })
-                    : t('sheet.langConfirm.bodyDownload', { lang: tr.nativeName, edition: tr.edition })}
-                </Text>
-                <View style={styles.langDlgActions}>
-                  <TouchableOpacity onPress={close} style={styles.langDlgCancel} activeOpacity={0.85}>
-                    <Text style={styles.langDlgCancelText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-                      {t('sheet.langConfirm.cancel')}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => { const c = langConfirm; close(); commitLanguage(c); }}
-                    style={styles.langDlgConfirm}
-                    activeOpacity={0.9}
-                  >
-                    <Text style={styles.langDlgConfirmText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-                      {ready ? t('sheet.langConfirm.confirm') : t('sheet.langConfirm.confirmDownload')}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </Modal>
-        );
-      })()}
     </View>
   );
 }
@@ -1717,12 +1345,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(216,82,82,0.10)',
   },
   settingLabel: { flex: 1, fontSize: 16.26, fontWeight: '500', color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.4 },                                 // 17.12 → 16.26 (-5 % per user)
-  settingValue: { fontSize: 14, color: TXTSUB, marginRight: 6, maxWidth: 120 },
-  // ── Overlay-cards sheet ──
-  overlayDesc: { fontSize: 14, lineHeight: 20.5, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.3, marginBottom: 10 },
-  overlayStepRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, gap: 8 },
-  overlayStepLabel: { flex: 1, fontSize: 15.5, color: TXT, fontFamily: FONTS.lato, letterSpacing: 0.3 },
-  overlayStepState: { fontSize: 14, color: TXTSUB, fontWeight: '600' },
   pickerOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'transparent',
@@ -1775,121 +1397,6 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     marginTop: 12,
   },
-  pickerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-  },
-  pickerRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(30,27,46,0.06)',
-  },
-  pickerName: { fontSize: 16, fontWeight: '600', color: TXT, marginBottom: 3 },
-  pickerEdition: { fontSize: 13, color: TXTSUB },
-  pickerProgress: { fontSize: 12, color: ROSE, fontWeight: '600', marginTop: 4 },
-  pickerComplete: { fontSize: 12, color: GREEN_DONE, fontWeight: '600', marginTop: 4 },
-  pickerDlBtn: {
-    minWidth: 44,
-    height: 32,
-    paddingHorizontal: 10,
-    borderRadius: 16,
-    backgroundColor: `${ROSE}14`,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 6,
-  },
-  pickerDlBtnText: { fontSize: 12, fontWeight: '700', color: ROSE },
-  pickerDlBtnPct: { fontSize: 12, fontWeight: '700', color: ROSE },
-  // Bible-versions picker — every text/control bumped 10% per request, plus a
-  // hint line and a muted "locked" caption for translations not yet downloaded.
-  translationSheetTitle: { fontSize: 22, marginBottom: 14 },                                         // 20 → 22; extra bottom space now that "Language" section sits between title and Bible list
-  translationSheetHint: { fontSize: 14, color: TXTSUB, marginBottom: 14, lineHeight: 20 },
-  // ── Language section (top of the Language & Bible Versions sheet) ──
-  // Collapsible: header row shows the current language chip + chevron;
-  // expanded body shows all 7 chips in a wrap-grid.
-  langSectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-  },
-  langSectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: TXT,
-    fontFamily: FONTS.loraBold,
-  },
-  langSectionTrigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  langSectionCurrent: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: ROSE,
-  },
-  langChipGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 12,
-    marginBottom: 10,
-  },
-  // Language chips — same pink "pill" pattern as RemoveAdsScreen's feature
-  // chips (No ads / Future features) and the translation-picker download
-  // buttons. Unselected = ROSE @ 8 % fill + ROSE text (tone-on-tone, soft).
-  // Selected = solid ROSE + white text. Replaces an earlier cream/tan
-  // palette that didn't match the app's ROSE-centric brand.
-  langChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    borderRadius: 14,
-    backgroundColor: `${ROSE}14`,
-  },
-  langChipActive: {
-    backgroundColor: ROSE,
-  },
-  langChipText: {
-    fontSize: 14.5,
-    fontWeight: '600',
-    color: ROSE,
-  },
-  langChipTextActive: {
-    color: '#FFFFFF',
-  },
-  langSectionHint: {
-    fontSize: 13,
-    color: TXTSUB,
-    lineHeight: 19,
-    marginBottom: 22,
-  },
-  bibleSubHeader: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: TXT,
-    fontFamily: FONTS.loraBold,
-    marginTop: 6,
-    marginBottom: 6,
-  },
-  translationPickerName: { fontSize: 18, fontWeight: '600', color: TXT, marginBottom: 4 },           // 16 → 18
-  translationPickerEdition: { fontSize: 14, color: TXTSUB },                                         // 13 → 14
-  translationPickerProgress: { fontSize: 13, color: ROSE, fontWeight: '600', marginTop: 5 },         // 12 → 13
-  translationPickerComplete: { fontSize: 13, color: GREEN_DONE, fontWeight: '600', marginTop: 5 },    // 12 → 13
-  translationPickerLocked: { fontSize: 13, color: TXTSUB, fontWeight: '500', marginTop: 5 },
-  translationPickerDlBtn: {
-    minWidth: 48,                       // 44 → 48
-    height: 36,                         // 32 → 36
-    paddingHorizontal: 11,
-    borderRadius: 18,
-    backgroundColor: `${ROSE}14`,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 7,
-  },
-  translationPickerDlBtnPct: { fontSize: 13, fontWeight: '700', color: ROSE },
   signInInput: {
     backgroundColor: 'rgba(30,27,46,0.05)',
     borderRadius: 12,
@@ -2014,56 +1521,4 @@ const styles = StyleSheet.create({
   },
 
   // Language-switch confirm dialog — branded, centered card (replaces the OS Alert).
-  langDlgOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(20,12,24,0.45)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
-  langDlgCard: {
-    width: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingTop: 24,
-    paddingBottom: 16,
-    paddingHorizontal: 22,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    elevation: 8,
-  },
-  langDlgTitle: {
-    fontSize: 20,
-    fontWeight: '600',                     // loraBold + 600 (never 700 on Android)
-    fontFamily: FONTS.loraBold,
-    color: TXT,
-    marginBottom: 10,
-  },
-  langDlgBody: {
-    fontSize: 14.5,
-    lineHeight: 21,
-    color: TXTSUB,
-    fontFamily: FONTS.lato, letterSpacing: 0.4,
-    marginBottom: 22,
-  },
-  langDlgActions: { flexDirection: 'row', alignSelf: 'stretch', gap: 10 },
-  langDlgCancel: {
-    flex: 1,
-    height: 46,
-    borderRadius: 23,
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(30,27,46,0.06)',
-  },
-  langDlgCancelText: { color: TXTSUB, fontSize: 15, fontWeight: '700', fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
-  langDlgConfirm: {
-    flex: 1.4,
-    height: 46,
-    borderRadius: BTN_RADIUS,
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: ROSE,
-    paddingHorizontal: 8,
-  },
-  langDlgConfirmText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
 });

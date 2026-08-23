@@ -578,7 +578,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'nudge.overlay.miuiTitle':       { en: 'One more step on Xiaomi', context: 'MIUI-only follow-up card after "Appear on top" is granted: Xiaomi keeps a second, MIUI-private gate.' },
   'nudge.overlay.miuiBody':        { en: 'Xiaomi phones also need "Display pop-up windows while running in the background" turned on for the cards to appear reliably.', context: 'Body of the MIUI follow-up. The quoted permission name mirrors MIUI\'s own wording.' },
   'nudge.overlay.miuiCta':         { en: 'Open permission page', context: 'CTA of the MIUI follow-up — opens MIUI\'s per-app permission editor.' },
-  'overlayCards.row':              { en: 'Cards on your screen', context: 'Profile row + sheet title for the daily overlay cards. Its main job is inviting users who never enabled them (owner 2026-08-16).' },
+  'overlayCards.row':              { en: 'Cards on your screen', context: 'Settings row + sheet title for the daily overlay cards (row moved from Profile 2026-08-22). Its main job is inviting users who never enabled them (owner 2026-08-16).' },
   'overlayCards.on':               { en: 'On', context: 'Status text — feature/permission active.' },
   'overlayCards.off':              { en: 'Not on yet', context: 'Status text while off — rendered in rose so the row itself invites enabling.' },
   'overlayCards.master':           { en: 'Show daily cards', context: 'Master switch label inside the overlay-cards sheet.' },

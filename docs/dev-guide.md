@@ -1059,9 +1059,11 @@ The physics, because every piece follows from them:
   overlays over their own windows (`setHideOverlayWindows`) — over the
   launcher, which is the normal case, this doesn't apply.
 - Surfaces: the nudge (62) sells + jumps; on MIUI it shows ONE follow-up card
-  after the grant. The Profile row ("Cards on your screen", rose "Not on yet"
+  after the grant. The Settings row ("Cards on your screen", rose "Not on yet"
   while off — its main job is inviting users who never enabled it, owner
-  2026-08-16) opens a sheet with the master switch + per-step status rows
+  2026-08-16; moved from Profile's Account card into Settings 2026-08-22,
+  sheet extracted to `components/OverlayCardsSheet.tsx`) opens a sheet with
+  the master switch + per-step status rows
   (SAW for everyone, MIUI row on Xiaomi only), statuses re-read on every
   foreground. The master switch lives in `state/overlayCardsPrefs.ts`
   (module store, default ON); OFF → OverlayCardsSync tears the alarms down
@@ -1421,6 +1423,7 @@ nothing to fall back to, and the only population served would be sandboxes.
 | `HsdpShimActivity` — targetPackageName null (1 event, **1.2.0 only**) | Google's own Play-delivered shim (`com.google.android.play:hsdp`), Google-internal IllegalStateException, zero frames of ours possible. n=1, so "gone since 1.3.0" would be an overclaim — one event just never repeated. **Close** (not mute): Crashlytics auto-reopens a closed issue on recurrence and fires a regression alert, so closing costs nothing and keeps the Open list meaning something |
 | `NativeAnimatedNodesManager.connectAnimatedNodes` — "child [1114] does not exist" (1 event, 1.4.0) | **Full trace read** (owner export `bb42a75e…`, 2026-08-13). The connect flushes in `didDispatchMountItems` against an already-dropped child node — a native-DRIVER RN Animated op racing an unmount. Investigation, recorded because the first two steps were wrong turns: (1) "we only use Reanimated" was FALSE — `WideSwitch` imports RN core Animated; (2) but WideSwitch is `useNativeDriver: false` (JS driver never enqueues connect ops), so it is CLEARED; (3) the ubiquitous native-driver producer is **RN's own TouchableOpacity press feedback** (`TouchableOpacity.js:242`, `useNativeDriver: true`) — a tap whose press animation races the navigation-unmount it triggers, reachable from any screen. RN-internal; the only app lever is a wholesale Pressable migration, unjustified at n=1. Monitor with `last_screen` |
 | `Preconditions.checkState` (Fresco, 1 event, 1.3.0, Android 11) | **Full trace read** (owner export `ed6a19cf…`): fatal is pure Fresco — `PipelineDraweeController.getImageInfo` checkState on a closed image ref during `reportSuccess`, i.e. the result arrived after the drawee was torn down. Zero app frames in 1,730 lines; the only our-side activity was an expo-file-system download coroutine (prefetch). Fresco is RN's Android `<Image>` backend — library-internal. Monitor |
+| `ViewGroup.dispatchVisibilityChanged` NPE (1 event, 1 user, **1.4.2 (32)**, Motorola, Android 12, backgrounded) | **Full trace read** (owner export `bacaba93…`, 2026-08-22). Fatal is 100% framework: `handleStopActivity` → `setVisibility` walks 8 levels down and hits a **null slot in a ViewGroup child array** — the corruption happened EARLIER; backgrounding only tripped over it. All 148 threads carry zero app/RN frames at crash time (JS + mounting idle; live prayer-audio sockets in the dump = she backgrounded while listening). Same unmount/detach-bookkeeping family as the `getViewState` row above (clip-culling / delayed removals are the classic null-slot sources), but a DIFFERENT signature — the 1.4.3+ reanimated patch does not claim it. Pre-fix build, n=1: **monitor whether it ever appears on build 33+**; if it clusters, attribute via `last_screen` before touching anything |
 
 ### ANR batch 2026-08-14 (Play console, 1.4.0 (26)) — all four traces read
 Four issues, 4 events, 4 users; threshold breach is small-denominator arithmetic, but

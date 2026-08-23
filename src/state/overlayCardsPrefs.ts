@@ -1,9 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// The user-facing master switch for the daily overlay cards (Profile sheet).
-// A module-level store rather than a context: exactly two consumers
-// (OverlayCardsSync re-syncs on flips, the Profile sheet renders the switch),
-// and neither sits near the other in the tree.
+// The user-facing master switch for the daily overlay cards (Settings sheet —
+// the row moved from Profile's Account card 2026-08-22).
+// A module-level store rather than a context: the consumers (OverlayCardsSync
+// re-syncs on flips, the Settings sheet/row render the switch and status)
+// sit nowhere near each other in the tree.
 //
 // Default is ON — the switch exists so she can turn the feature OFF; the real
 // opt-in is the "Appear on top" permission itself (owner 2026-08-16: the row's

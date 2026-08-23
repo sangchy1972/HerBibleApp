@@ -6,7 +6,11 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   testMatch: ['**/__tests__/**/*.test.ts'],
-  testPathIgnorePatterns: ['/backup/'],
+  // '/.claude/' — background-task git worktrees are created INSIDE the repo at
+  // .claude/worktrees/<name>; without this, every suite runs twice (the copy
+  // in the worktree too) and a red edit in a parallel session fails THIS
+  // tree's gate. Discovered 2026-08-22 when a run reported exactly 2x suites.
+  testPathIgnorePatterns: ['/backup/', '/\\.claude/'],
   // RN injects __DEV__ at build time; services/ads.ts reads it at module scope to
   // pick test vs live ad units. Tests run outside the RN runtime, so define it.
   globals: { __DEV__: true },

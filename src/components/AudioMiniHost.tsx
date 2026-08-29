@@ -92,7 +92,7 @@ class ProbeBoundary extends React.Component<
 export default function AudioMiniHost() {
   const t = useT();
   const { width } = useWindowDimensions();
-  const { player, info, ownerFocused, playerKey, dropPlayer } = useAudioMini();
+  const { player, info, ownerFocused, playerKey, dropPlayer, stopNarration } = useAudioMini();
   const [playing, setPlaying] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
@@ -147,11 +147,12 @@ export default function AudioMiniHost() {
 
   // The X on the expanded pill: stop playback outright (the pill's whole reason
   // to exist is off-screen audio, so "close" means "stop"). Per user — replaces
-  // the old chevron, whose job the note + label now do.
+  // the old chevron, whose job the note + label now do. stopNarration also
+  // tears down the lock-screen controls and restores the MIX audio mode.
   const onClose = useCallback(() => {
-    try { player?.pause(); } catch { /* player released — the pill disappears anyway */ }
+    stopNarration();
     setExpanded(false);
-  }, [player]);
+  }, [stopNarration]);
 
   const onOpen = useCallback(() => {
     setExpanded(false);

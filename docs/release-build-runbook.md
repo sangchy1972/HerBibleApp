@@ -196,6 +196,21 @@ npm run submit:ios
 首次带此申报的提审可能被要求演示视频:录一段「开开关 → 授权 → 锁屏 →
 解锁 → 卡片出现 → 点 X 当天不再出现」即可。
 
+### 前台服务 mediaPlayback 申报(圣经朗读后台播放,2026-08-24 起真实使用)
+
+`FOREGROUND_SERVICE_MEDIA_PLAYBACK` 来自 expo-audio 的库清单;圣经章节朗读
+现在支持后台播放 + 锁屏/通知媒体控件,该权限是**真实使用**——不要移除。
+**Play Console → App content → Foreground service permissions → Media
+playback**:勾选 **Media playback**("Show picture in picture" 与 "Other"
+不勾),Video link 填一段 30–60 秒竖屏录屏(YouTube 不公开链接),内容:
+
+1. 打开 app → Bible 标签 → 点粉色耳机按钮开始朗读(EN/ES/PT 才有真人音源,
+   录 EN 最稳);
+2. 按 Home 退到桌面 → **声音继续**;
+3. 下拉通知栏 → 媒体通知可见(书名+章号、播放/暂停、快进/快退);
+4. 锁屏再点亮 → 锁屏控件可暂停/恢复;
+5. 回 app 结束。
+
 ---
 
 ## 6. 上架后

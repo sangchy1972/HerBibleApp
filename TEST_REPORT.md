@@ -38,7 +38,7 @@
 | P1-10 | 通知 | state/NotificationsContext.tsx:284 | FollowHim 的 Continue 在永久拒绝时静默失败,用户以为已开启实则什么都没发生 | 永久拒绝走 openSettings 引导或让横幅可见 |
 | P1-11 | 认证/构建 | app.json plugins | `@react-native-firebase/auth` 缺 config plugin(只有 app+crashlytics),prebuild 后 auth 原生可能未正确接入 | plugins 加入 `@react-native-firebase/auth`(需验证) |
 | P1-12 | 性能 | screens/BibleScreen.tsx / AchievementScreen.tsx | 诗篇119(176节)、72枚徽章在单个 ScrollView **全量渲染** → 低端机卡顿/OOM/ANR | 改 FlatList;BadgeIcon/PlanCover 补 React.memo |
-| P1-13 | 音频会话 | screens/PrayerFlow.tsx:387 | `setAudioModeAsync(mixWithOthers/playsInSilentMode)` 全局粘性、从不复位 → 圣经朗读会与其他 App 混音、无视静音键、切 Tab 残留播放 | 音频会话集中到根 provider 统一声明,或各屏按需声明并复位 |
+| P1-13 | 音频会话 | screens/PrayerFlow.tsx:387 | ~~全局粘性、从不复位~~ **2026-08-24 已按设计解决**:音频模式集中到 services/audioSession.ts(MIX 默认 / 朗读会话 doNotMix,出口复位);跨 Tab 续播与后台续播自此是特性(锁屏媒体控件随行),不是缺陷 — 勿以旧口径重立此案 | — |
 | P1-14 | CDN/弱网 | services/bibleService.ts:114 | commentary 回退链 `await res.json()` 解析失败(弱网半截/200 HTML)会**逃逸 404 兜底**,不再回退 en | `try{json}catch{ continue }` 视同该 variant 不可用 |
 
 ---

@@ -836,7 +836,9 @@ PlanScreen is the reference implementation.
 `__tests__/listenGuide.test.ts`.
 
 Two players run at once and always have: background music at volume 0.8 and the
-narration on top. The audio session is configured app-wide to MIX, not duck.
+narration on top. The audio session DEFAULTS app-wide to MIX, not duck — the
+one exception is the Bible chapter-listening session (doNotMix; see "Bible
+narration goes places" below), which restores MIX when it ends.
 
 ### Background music
 - CDN: `https://covers.everlandapps.com/backgrounds/manifest.json`, files at
@@ -876,6 +878,95 @@ narration on top. The audio session is configured app-wide to MIX, not duck.
 | **user property `prayer_audio_user = 'yes'`** | she has listened at least once, ever. This is how "how many users use narration" is answered — a segment, not a distinct-count on an event. |
 | `listen_guide_shown` / `listen_guide_ack` | the coach mark, with `reason` (`first_flow` / `four_flows`) and `slot`. The pair measures whether the guide converts. |
 `bible_audio_play` is the Bible reader's own, unrelated event — do not conflate them.
+
+### Bible narration goes places (background + lock screen, owner 2026-08-24)
+
+**Files** — `services/audioSession.ts` (the ONLY two audio modes),
+`screens/BibleScreen.tsx` (session start + lock-screen assert),
+`state/AudioMiniContext.tsx` (`stopNarration`), `components/AudioMiniHost.tsx`
+(pill X), `screens/PrayerFlow.tsx` (session end on entry).
+
+- **Two global modes, nobody hand-rolls options** (expo-audio's mode is sticky
+  and a partial set REPLACES it — the inline PrayerFlow call once silently
+  dropped `shouldPlayInBackground` for the whole process): `applyMixAudioMode`
+  (default; §8b's two simultaneous prayer players depend on it) and
+  `applyNarrationAudioMode` (doNotMix + background) for the Bible
+  chapter-listening session only.
+- **Session lifecycle**: the FAB tap starts playback, but the doNotMix focus
+  grab AND the lock-screen assert key on `audioPlaying` flipping TRUE — real
+  playback, never the tap. Four of seven languages have no human voice yet
+  and a missing chapter 404s silently; keying on real playback means a
+  silent play button never kills her music for nothing and never posts a
+  dead notification. (One accepted edge, swarm F3: a transport crossing
+  INTO a missing chapter — EN/ES/PT catalog gaps — can briefly assert over
+  the 404 source via the stale coarse flag; it self-heals on any next
+  action and only paused controls linger.) `stopNarration()` (pill X, or
+  PrayerFlow mount — two
+  narrations at once is never right) pauses, clears the lock-screen
+  controls, restores MIX; `openPlayer` clears the per-instance assert guard
+  so a session restart on the same chapter puts the controls back up.
+  Pausing does NOT end the session — the media notification stays so she
+  can resume from the lock screen.
+- **Lock-screen assert is per PLAYER INSTANCE, on first real play of that
+  instance** (guard reset by `openPlayer` for same-instance session
+  restarts). `useAudioPlayer` creates a new native player per (translation,
+  book, chapter), so the re-assert IS the chapter-crossing metadata update.
+  Background-safety, stated precisely (swarm F5 corrected the first
+  wording): a release runs clearSession → stopForeground FIRST; a re-assert
+  re-promotes the STILL-RUNNING service via `startForeground` from inside
+  it — never `Context.startForegroundService`, the call Android 12+
+  restricts from the background. And today every chapter change is
+  foreground-only anyway (reader UI / transport Modal; lock-screen commands
+  are play/pause/seek only; no auto-advance). ⚠️ If auto-advance is ever
+  added, background crossing becomes real — re-verify first. Every call is
+  try/caught: no controls beats a crash.
+- **Focus behavior** (the owner's ask) — and the trap that nearly shipped
+  (swarm F1): Android requests focus ONLY inside `play()`, and skips the
+  request under MIX — which is the mode when a session's first play starts
+  (the doNotMix flip waits for real sound). Writing the mode grabs nothing.
+  So the rising-edge effect SEQUENCES: once the doNotMix write has landed it
+  re-issues `play()` on the still-playing instance — idempotent for
+  playback, but it runs the native focus request under the new mode. Her
+  music therefore pauses a beat after our sound starts, and from then on
+  another app starting audio pauses US (`AUDIOFOCUS_LOSS` on Android,
+  AVAudioSession interruption on iOS — handled inside expo-audio). The same
+  compensation heals lock-screen resumes, which drive the raw player
+  through the media session and never request focus themselves.
+- **Instance release tears the media session down natively on BOTH
+  platforms** (`sharedObjectDidRelease → clearSession` on Android,
+  `sharedObjectWillRelease → setActivePlayer(nil)` on iOS). Combined with
+  the native-playing guard in the assert effect (`!audioPlayer.playing` —
+  the coarse audioPlaying lags an instance swap by one bridge tick and
+  briefly reports the RELEASED player's true), a manual chapter turn or
+  translation switch while listening reads as an implicit stop: audio
+  stops, controls drop, they return on the next real play. The transport's
+  own prev/next crossing auto-resumes and re-asserts (pre-existing flag).
+- **No auto-advance at chapter end** — the chapter finishes and playback
+  stops; continuous-book playback was NOT requested. The paused media
+  notification lingers until she swipes it away (Android) or the system
+  reclaims it (iOS) — the pill is hidden once playing=false, so the
+  notification is the visible remnant; accepted.
+- The karaoke status bridge keeps ticking (~250 ms) while backgrounded —
+  battery cost accepted while a session is live; it dies with the player.
+- **Content gap, not code**: human voice exists for EN/ES/PT only
+  (`bibleAudioCdn.ts` allowlist); zh-Hans/zh-Hant/de/fr fall to the legacy
+  TTS path and 404 silently where absent. Filling the bucket is a content
+  task; the allowlist grows one line per language when files land.
+- Play declaration: `FOREGROUND_SERVICE_MEDIA_PLAYBACK` (from expo-audio's
+  manifest) is now genuinely used — declaration + demo-video script in the
+  release runbook §5.
+- **Upstream watch (expo-audio 1.1.1, swarm 2026-08-24)**: (a) iOS
+  `MediaController.enableRemoteCommands` adds 6 CLOSURE targets per assert
+  and `removeTarget(self)` cannot remove closures — every chapter crossing
+  leaks a set; if MPRemoteCommandCenter dispatches to all targets, one
+  lock-screen +10s tap seeks N×10s after N crossings. DEVICE TEST: listen
+  across 3+ crossings, tap +10s once — a ~30s jump confirms it; then
+  patch-package MediaController to store and remove the returned targets
+  (do NOT patch blind before a failing device test — the Swift compiles
+  only on EAS). (b) Android keeps the mediaPlayback FGS foregrounded while
+  PAUSED until the X (upstream media3 default) — battery-attribution
+  optics, no policy violation. Both recorded, neither app-fixable cleanly
+  today.
 
 ---
 

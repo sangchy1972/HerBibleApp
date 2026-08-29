@@ -37,6 +37,7 @@ import { bibleAudioUrl } from '../constants/bibleAudioCdn';
 import { loadTimestamps, verseAtTime, type ChapterTimestamps } from '../services/bibleAudioService';
 import BibleAudioPlayer from '../components/BibleAudioPlayer';
 import { useAudioMini } from '../state/AudioMiniContext';
+import { applyNarrationAudioMode } from '../services/audioSession';
 import { logEvent } from '../services/firebase';
 import { useBibleGuide } from '../state/BibleGuideContext';
 import BibleGuideTrigger from '../components/BibleGuideTrigger';
@@ -1235,16 +1236,13 @@ export default function BibleScreen() {
   const onAudioPlayingChange = useCallback((p: boolean) => setAudioPlaying(p), []);
   const onAudioVerseChange = useCallback((v: number | null) => setActiveAudioVerse(v), []);
 
-  // Pause narration whenever the app leaves the foreground — audio must not
-  // keep playing behind the launcher/lock screen (we run no media-session
-  // foreground service, so Android would otherwise keep the raw player going
-  // indefinitely). Deliberately no auto-resume: the user taps play again.
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', s => {
-      if (s !== 'active') { try { audioPlayer.pause(); } catch {} }
-    });
-    return () => sub.remove();
-  }, [audioPlayer]);
+  // Narration deliberately KEEPS PLAYING in the background (owner 2026-08-24).
+  // The old pause-on-background effect lived here; it existed because we ran
+  // no media session, so backgrounded audio was uncontrollable. Both halves
+  // are now real: the lock-screen assert effect below puts up media controls
+  // (Android media notification via expo-audio's foreground service, iOS Now
+  // Playing), and the narration session's doNotMix focus means another app
+  // starting audio pauses us automatically on both platforms.
 
   // Per-verse timestamps for karaoke-style highlighting. Fetched once per
   // chapter (cached in AsyncStorage by the service), then binary-searched
@@ -1402,11 +1400,81 @@ export default function BibleScreen() {
     }, [setOwnerFocused]),
   );
 
+  // Narration session + lock-screen controls (owner 2026-08-24), both driven
+  // by ACTUAL playback — audioPlaying flipping true — never by the tap alone.
+  // Four of seven languages have no human voice yet and a missing chapter
+  // 404s silently (see the audioSrc note above): keying on real playback
+  // means a silent play button never steals audio focus from her music and
+  // never posts a dead media notification.
+  //
+  // The doNotMix mode re-applies on every rising edge (idempotent, cheap);
+  // the lock-screen assert is once per PLAYER INSTANCE. useAudioPlayer
+  // creates a NEW native player for every (translation, book, chapter) — so
+  // re-asserting on instance change IS the metadata update for a chapter
+  // crossing; there is no separate updateLockScreenMetadata call to drift.
+  // openPlayer resets the guard so a session RESTART on the same chapter
+  // (pill X off-tab, back, FAB again) re-asserts controls the X tore down.
+  // Background-safety, stated precisely: releasing an instance runs
+  // clearSession → stopForeground FIRST, and a re-assert re-promotes the
+  // STILL-RUNNING service via startForeground from inside it — never a
+  // Context.startForegroundService, which is the call Android 12+ restricts
+  // from the background. And today every chapter change is foreground-only
+  // anyway (reader UI or the transport Modal; lock-screen commands are
+  // play/pause/seek only, and chapter end does not auto-advance). ⚠️ If
+  // auto-advance at chapter end is ever added, background crossing becomes
+  // real — re-verify this whole block first. The try/catch is the "keep
+  // playing without lock-screen controls rather than crash" floor.
+  const lockAssertedFor = useRef<object | null>(null);
+  useEffect(() => {
+    if (!audioPlaying) return;
+    // audioPlaying is COARSE state and lags an instance swap by one bridge
+    // tick — on a chapter/translation change it is still the RELEASED
+    // player's true. The native getter is this instance's truth: without
+    // this guard, a manual chapter turn re-posted lock-screen controls for
+    // a paused (or 404-silent) player the release had just torn down
+    // (swarm F1, 2026-08-24). Releasing the old instance clears the media
+    // session on BOTH platforms (sharedObjectDidRelease → clearSession /
+    // setActivePlayer(nil)), so skipping here means a manual navigation
+    // reads as "I'm reading now" — controls return on the next real play.
+    if (!audioPlayer.playing) return;
+    // Android requests audio focus ONLY inside play(), and skips the request
+    // entirely under MIX — which is exactly what the mode was when this
+    // playback started (the doNotMix flip deliberately waits for real sound,
+    // see above). Writing the mode alone grabs nothing, so the first play of
+    // every session would neither pause her music nor be pausable by other
+    // apps (swarm F1, 2026-08-24). The fix: once the doNotMix write has
+    // LANDED, re-issue play() on the still-playing instance — idempotent for
+    // playback, but it runs the native focus request under the new mode. The
+    // same compensation heals lock-screen resumes, which drive the raw
+    // player through the media session and never request focus themselves.
+    // The .playing re-check keeps a pause she made during the write's beat
+    // from being overridden.
+    const playingInstance = audioPlayer;
+    applyNarrationAudioMode().then(() => {
+      try { if (playingInstance.playing) playingInstance.play(); } catch { /* released mid-flight — next play re-runs this */ }
+    });
+    if (lockAssertedFor.current === audioPlayer) return;
+    lockAssertedFor.current = audioPlayer;
+    try {
+      audioPlayer.setActiveForLockScreen(
+        true,
+        { title: `${currentBook?.name || bookSlug} ${chapter}`, artist: 'Her Bible' },
+        { showSeekForward: true, showSeekBackward: true },
+      );
+    } catch { /* controls unavailable — playback itself is unaffected */ }
+  }, [audioPlaying, audioPlayer, currentBook?.name, bookSlug, chapter]);
+
   const openPlayer = () => {
     setShowPlayer(true);
     // Genuine "user chose to listen" tap (pink headphones button) — distinct
     // from auto-resume on chapter change. book/chapter/translation = what's played.
     logEvent('bible_audio_play', { book: bookSlug, chapter, translation: translation.code });
+    // A fresh session may be restarting on the SAME player instance (pill X
+    // ended the last one) — clear the assert guard so the effect above puts
+    // the lock-screen controls back up once playback actually starts. The
+    // doNotMix focus grab also lives in that effect, keyed on REAL playback,
+    // so a language without audio files never silences her music for nothing.
+    lockAssertedFor.current = null;
     if (!audioPlayer.playing) { try { audioPlayer.play(); } catch {} }
   };
   // Player verse-nav at a chapter boundary advances the chapter AND flags it

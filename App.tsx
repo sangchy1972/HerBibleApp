@@ -89,7 +89,7 @@ import DeepLinkHandler from './src/navigation/DeepLinkHandler';
 import PrefetchManager from './src/components/PrefetchManager';
 import WidgetSync from './src/components/WidgetSync';
 import LoadingOverlay from './src/components/LoadingOverlay';
-import { setAudioModeAsync } from 'expo-audio';
+import { applyMixAudioMode } from './src/services/audioSession';
 import { initFirebase, logScreenView, setCrashScreen } from './src/services/firebase';
 import { setAppRemountHandler, initCloudBackup } from './src/services/cloudBackup';
 import { initAds } from './src/services/ads';
@@ -174,11 +174,9 @@ export default function App() {
     // interruptionMode stays 'doNotMix' is NOT wanted — 'mixWithOthers' lets a
     // podcast/music keep playing alongside, which is what a devotional reader
     // should do.
-    setAudioModeAsync({
-      playsInSilentMode: true,
-      interruptionMode: 'mixWithOthers',
-      shouldPlayInBackground: true,
-    }).catch(() => {});
+    // Centralized in services/audioSession so the Bible-narration session can
+    // flip to doNotMix and restore THIS exact mode afterwards.
+    applyMixAudioMode();
   }, []);
 
   // One central screen-view hook: log the active route on every navigation

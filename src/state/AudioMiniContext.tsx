@@ -1,5 +1,6 @@
-import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { AudioPlayer } from 'expo-audio';
+import { applyMixAudioMode } from '../services/audioSession';
 
 // Registry for the ONE piece of audio that can outlive the screen that started
 // it: Bible chapter narration.
@@ -55,6 +56,14 @@ interface AudioMiniState {
   setOwnerFocused: (focused: boolean) => void;
   /** A consumer hit a released player — drop it so nothing retries. */
   dropPlayer: () => void;
+  /**
+   * End the listening session: pause, tear down the lock-screen /
+   * media-notification controls, and hand the global audio mode back to MIX.
+   * The two callers are the pill's X and the prayer flow's mount (two
+   * narrations at once is never right). Registration is kept — she can tap
+   * play again on the Bible tab and a fresh session starts.
+   */
+  stopNarration: () => void;
 }
 
 const Ctx = createContext<AudioMiniState | null>(null);
@@ -117,9 +126,26 @@ export function AudioMiniProvider({ children }: { children: React.ReactNode }) {
     labelRef.current = null;
   }, []);
 
+  // The provider unmounts only on a treeEpoch remount (cloud restore /
+  // sign-in). Player release tears the media session down natively on both
+  // platforms, but the GLOBAL audio mode would stay doNotMix until the next
+  // session ended — every later sound (gospel ambient music, prayer music
+  // before its own mount effect ran) would keep stealing focus from other
+  // apps. Hand the mode back on the way out (swarm F2, 2026-08-24).
+  useEffect(() => () => { applyMixAudioMode(); }, []);
+
+  const stopNarration = useCallback(() => {
+    const p = playerRef.current;
+    if (p) {
+      try { p.pause(); } catch { /* player released — nothing left to stop */ }
+      try { p.setActiveForLockScreen(false); } catch { /* controls already gone */ }
+    }
+    applyMixAudioMode();
+  }, []);
+
   const value = useMemo<AudioMiniState>(() => ({
-    player, info, ownerFocused, playerKey, register, unregister, setOwnerFocused, dropPlayer,
-  }), [player, info, ownerFocused, playerKey, register, unregister, dropPlayer]);
+    player, info, ownerFocused, playerKey, register, unregister, setOwnerFocused, dropPlayer, stopNarration,
+  }), [player, info, ownerFocused, playerKey, register, unregister, dropPlayer, stopNarration]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

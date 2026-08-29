@@ -5,7 +5,7 @@ import {
   type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent,
 } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ImageBackground } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,6 +25,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logEvent, setUserProps } from '../services/firebase';
 import { usePrayer } from '../state/PrayerContext';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
+import { useAudioMini } from '../state/AudioMiniContext';
+import { applyMixAudioMode } from '../services/audioSession';
 import { useNotes } from '../state/NotesContext';
 import { useNotifications } from '../state/NotificationsContext';
 import { useSetReminderTime } from '../state/SetReminderTimeContext';
@@ -360,6 +362,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const isFirstEverRef = useRef<boolean>(!everPrayed && !notifRationaleShown);
   const { current: translation } = useTranslation();
   const prayerBg = usePrayerBackgrounds();
+  const { stopNarration } = useAudioMini();
   // Daily prayer background image (slot-specific). Used as the backdrop for
   // ShareVerseSheet so the verse card matches what the user was looking at
   // before opening share.
@@ -579,9 +582,16 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
 
   // One-time audio session setup: play through the iOS silent switch and
   // mix (so our two players — bg music + narration — coexist instead of
-  // one ducking the other). Set once at mount, never per-clip.
+  // one ducking the other). Set once at mount, never per-clip. Uses the
+  // shared MIX mode — the old inline call omitted shouldPlayInBackground and,
+  // since expo-audio REPLACES the whole mode, silently reset that flag for
+  // the rest of the process the first time a user prayed.
+  // Also: end any Bible chapter narration still playing — her prayer
+  // narration is about to start, and two voices at once is never right.
   useEffect(() => {
-    setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers' }).catch(() => {});
+    stopNarration();
+    applyMixAudioMode();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // The verse to narrate, as a STABLE string id + day number. Keying the

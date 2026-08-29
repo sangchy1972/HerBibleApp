@@ -68,14 +68,22 @@
 }
 ```
 
-各语言的双译本约定(traditional = 公版直译体,modern = 现代白话体):
+各语言的双译本约定(traditional = 公版直译体,modern = 现代白话体)。
+**traditional 一列就是 app 内置可读全章的那七本圣经**——用户会从每日经文跳进
+full chapter,所以 traditional 文本必须与这些书逐字一致(取法见 §4b):
 
-| 语言 | traditional | modern |
-|---|---|---|
-| en | KJV | NIV |
-| zh-Hans | CUV 和合本 | CCB |
-| zh-Hant | CUV 和合本(繁) | CCB(繁) |
-| de/fr/es/pt | 该语言公版经典译本 | 该语言现代译本 |
+| 语言 | traditional(= app 内置圣经) | modern |
+| --- | --- | --- |
+| en | King James Version 1769 (KJV) | NIV |
+| zh-Hans | 圣经和合本 1919(简体,CUV) | CCB 当代译本 |
+| zh-Hant | 聖經和合本 1919(繁體,CUV) | CCB 當代譯本(繁) |
+| de | Lutherbibel 1912 | 现代德语译本(如 HFA 体) |
+| fr | Louis Segond 1910 | 现代法语译本(如 BDS 体) |
+| es | Reina-Valera 1909 | 现代西语译本(如 NVI 体) |
+| pt | João Ferreira de Almeida(公版) | 现代葡语译本(如 NVI-PT 体) |
+
+modern 一栏各语言沿用上一批已上线内容所标的 version 名——新批次开工前先
+抽三条旧数据核对 version 字段写法,保持同名。
 
 App 端实际渲染的只有:`reference`、`translations[lang].modern`、
 `devotional[lang].meditation / action_step`、`prayer[lang]`——它们分别就是
@@ -110,8 +118,44 @@ App 端实际渲染的只有:`reference`、`translations[lang].modern`、
 2. **3× 规则**:`devotional.copyright_check.required_min = niv_words × 3`,
    你写的 meditation(EN 词数)**必须 ≥ 这个数**——原创文字必须至少是
    受版权译文引用量的三倍,这是引用正当性的凭据,字段要如实填。
-3. traditional 公版译本(KJV/CUV 等)文本必须**逐字准确**,不改写。
+3. traditional 公版译本文本**不许凭记忆写**——必须从 §4b 的语料库逐字复制。
 4. devotional 与 prayer 里**不再整句复述经文译文**——用自己的话说。
+
+## 4b. 经文查证通道(每条经文必做)
+
+App 的七本圣经全文公开托管,你**不需要仓库权限**,直接 HTTP 取用。这是
+traditional 文本的唯一正源,也是 reference 是否真实存在的裁判。
+
+**URL 模板**(`<lang>` = en / zh-Hans / zh-Hant / de / fr / es / pt):
+
+```
+书卷目录:https://cdn.jsdelivr.net/gh/sangchy1972/pd-text-corpus@e9df0306d76c8b1bf66aae71fc6e93ed8622c8cc/bibles/<lang>/index.json
+章全文: https://cdn.jsdelivr.net/gh/sangchy1972/pd-text-corpus@e9df0306d76c8b1bf66aae71fc6e93ed8622c8cc/bibles/<lang>/books/<slug>/chapters/<N>.json
+```
+
+(`@e9df0306…` 是当前锁定版本;若工程侧升级语料 commit 会同步更新本文。)
+
+- `index.json` = `{ books: [{ name, slug, chapters }] }`,66 卷。**slug 以
+  index 为准,不要自造**——例如启示录是 `revelation-of-john` 而不是
+  `revelation`;雅歌、书信编号卷等同理先查 index。
+- 章文件 = `{ verses: [{ verse: 9, text: "…" }] }`。示例:约翰福音 1:9 →
+  `bibles/en/books/john/chapters/1.json` 里 `verse: 9` 的 `text` 即 KJV
+  原文,与 `translations.en.traditional.text` 必须逐字相同。
+
+**每选定一节经文,七个语言各做一遍四步核对:**
+
+1. `reference.book` 能在该语言 index.json 里找到对应卷(slug 记下来);
+2. `reference.chapter` ≤ 该卷 `chapters` 数;
+3. `reference.verse` 号在该章 `verses` 里**存在**;
+4. 该 verse 的 `text` 与其他语言说的是**同一句话**(语义一致),然后把它
+   逐字复制进该语言的 `traditional.text`。
+
+**版本化差异警示**(不同译本同一卷章的 verse 编号会位移——这些是语料里
+已实测处理过的高危点,遇到必须逐语言核到号,核不齐就换选一节):
+约翰三书(KJV 14 节 / CUV 15 节)、启示录 12 章(17/18 节)、
+以西结书 20 章、路加福音 9 章、哥林多后书 13 章、诗篇标题行(各译本
+是否把题记算作第 1 节不一)。规则:**任一语言四步核对不过 → 该节不可用,
+换一节重来**,绝不"大概对得上"。
 
 ## 5. 跨语言纪律
 
@@ -148,7 +192,8 @@ evening 池同理:暮色、烛光、星空、归家等意象,冷调偏暖收边�
 - [ ] 每条 meditation 恰 3 段(两处 `\n\n`),篇幅在 §3 区间
 - [ ] 每条 EN meditation 词数 ≥ `required_min`(= niv_words × 3),字段如实
 - [ ] prayer 结尾定式正确、单段
-- [ ] traditional 译文与公版原文逐字核对过
+- [ ] 每节经文按 §4b 在**七个语言**各过四步核对,slug 全部取自 index.json
+- [ ] traditional 文本逐字复制自 §4b 语料(不是凭记忆),抽查 10 条回验
 - [ ] JSON 可解析、无尾逗号、UTF-8
 - [ ] `cover_briefs.md` 早/晚各 3–5 条,每条含留白与小组件安全区说明
 

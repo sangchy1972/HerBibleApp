@@ -3,7 +3,9 @@
 > 给 n8n 流水线里的**内容创作 agent**。你的工作是写内容、定义封面画面——
 > **不碰任何代码、不需要访问仓库**。产出物交给下游工程节点去构建、校验、上传。
 > 基线:现行 v2 内容(60 天 × 早/晚 × 7 语言),2026-08-28 由主工程 agent 从
-> 真实生产文件提取本规格。规则冲突时以最新一批已上线内容为准。
+> 真实生产文件提取本规格;同日业主修订 §3(长度与风格)。**冲突时以本文为准**
+> ——旧上线内容的"三段起承转合、140–230 词"惯例已被 §3 v3 取代,其余字段
+> 惯例仍参照旧数据。
 
 ## 1. 你产出什么
 
@@ -53,7 +55,7 @@
   },
   "exegesis": { "verse_category": {}, "niv_word_count": 13, "historical_context": "…", "key_themes": [], "version_note": "…", "original_language_note": "…", "life_connection": [] },
   "devotional": {
-    "structure": "起承转合",
+    "structure": "直解",                    // 本条实际采用的风格标签,取值见 §3 风格库
     "copyright_check": { "niv_words": 13, "required_min": 39, "en_words": 65 },
     "en": {
       "meditation": "…三段,段间用 \\n\\n…",
@@ -90,15 +92,34 @@ App 端实际渲染的只有:`reference`、`translations[lang].modern`、
 四页流程:**verse 页 → meditation 页 → action 页(反思)→ prayer 页**。
 其余字段(exegesis、mood_tags、copyright_check)是创作依据与审核凭据,照样要写全。
 
-## 3. 写作规范(从现行内容归纳,保持一致)
+## 3. 写作规范(v3,2026-08-28 业主修订)
 
-**共同气质**:温柔、贴近、第二人称直接对读者说话;先接住情绪、再引向基督;
-不说教、不居高临下、不制造罪疚;不堆砌经文引用(版权红线见 §4)。
+> ⚠️ 本节长度与结构规则**取代**现行 v2 生产内容的旧惯例(旧内容 140–230
+> 词、固定三段起承转合)——新批次一律按本节写,别被旧数据带偏。
 
-- **meditation**:恒为 **3 段**,段间 `\n\n`。EN 约 **140–230 词**;中文约
-  **280–380 汉字**;其余语言与 EN 篇幅相当。结构「起承转合」:第一段接住
-  读者当下的处境/情绪并引入经文;第二段展开经文对"你"意味着什么;第三段
-  收束到今天的转向与安息。
+**共同气质**:温柔、贴近、直接对读者说话;先接住人,再引向基督;不说教、
+不居高临下、不制造罪疚;不堆砌经文引用(版权红线见 §4)。
+
+- **meditation 长度(硬性)**:EN **≤ 120 词**上限;整批约 **50% 的条目
+  ≤ 80 词**收束。中文对应 **≤ 200 汉字**上限、五成条目 ≤ 135 字;其余
+  语言与 EN 相当。**短是刻意的**——一个清楚的念头讲完就停,不为凑字加段。
+- **段落**:**1–2 段**(≤80 词通常单段);段间仍用 `\n\n`。
+- **风格库(structure 字段取值)**——同一批内轮换使用,**不许连续两天
+  同风格**,每种风格整批都要出现;经文本身适合哪种就用哪种:
+  - `直解` — 用贴近经文的语气解释这句经文说了什么、对"你"意味着什么,
+    一步应用收尾。(例:*Christ humbled Himself to serve — even to wash
+    feet. That is the shape of love He hands us today: quietly putting
+    someone else first.*)
+  - `发问` — 短解之后以一个直接望向读者的问题收束。(例:*God's call
+    rarely shouts; it invites. He is still sending. Are you ready to
+    answer?*)
+  - `同行劝勉` — "As Christians, we…" 的同行口吻,一起走、一起做。
+  - `宣告鼓励` — 面向"你"的宣告与打气,允许一个感叹号,不浮夸。
+  - `见证` — 第一人称匿名心声(如病中、失业、独自带娃的姊妹之声),
+    朴素克制,结在盼望上。**每批 ≤ 6 条**;匿名、不给可核实的具体身份
+    细节,不渲染细节苦难。
+- **教义稳妥**:解经不越界——例如平静风浪显明的是耶稣的神性权柄,不写成
+  "耶稣相信自己的力量"这类含混表述;拿不准就退回最朴素的读法。
 - **action_step**:**1–2 句**,今天就能做的一个具体、微小、可执行的动作
   (说出一个名字、写下一件事、为某处邀请耶稣进入)。不布置读经作业。
 - **prayer**:**单段**,EN 约 80–120 词,称呼以 "Dear Heavenly Father" 一类
@@ -116,10 +137,16 @@ App 端实际渲染的只有:`reference`、`translations[lang].modern`、
 
 1. **modern 现代译本每条只引用当节经文本身**,一字不多。
 2. **3× 规则**:`devotional.copyright_check.required_min = niv_words × 3`,
-   你写的 meditation(EN 词数)**必须 ≥ 这个数**——原创文字必须至少是
-   受版权译文引用量的三倍,这是引用正当性的凭据,字段要如实填。
-3. traditional 公版译本文本**不许凭记忆写**——必须从 §4b 的语料库逐字复制。
-4. devotional 与 prayer 里**不再整句复述经文译文**——用自己的话说。
+   合规口径是**本条目原创文字合计**(meditation + action_step + prayer 的
+   EN 词数)≥ required_min——meditation 压短后(§3)靠三块合计仍轻松过线;
+   `en_words` 字段填 meditation 词数,全部如实。
+3. **禁止模板残渣**(竞品实拍事故,引以为戒):meditation / action_step /
+   prayer 三个正文字段里不得出现 `#标签`、未填充的占位符(如
+   "*Let us lift up your name before God*" 这类模板句混进祷文)、变量名、
+   编号残留;交付前对这三个字段搜 `#`、`{`、`<`(`mood_tags` 字段的 # 是
+   合法的,不在此列)。
+4. traditional 公版译本文本**不许凭记忆写**——必须从 §4b 的语料库逐字复制。
+5. devotional 与 prayer 里**不再整句复述经文译文**——用自己的话说。
 
 ## 4b. 经文查证通道(每条经文必做)
 
@@ -189,8 +216,10 @@ evening 池同理:暮色、烛光、星空、归家等意象,冷调偏暖收边�
 - [ ] 每个文件恰 120 条:morning 60 + evening 60,day 1–60 无缺无重
 - [ ] `id` 与 `day/segment` 对应(m_001…m_060 / e_001…e_060)
 - [ ] 七文件的 id/reference/mood_tags/special_occasion 逐条一致
-- [ ] 每条 meditation 恰 3 段(两处 `\n\n`),篇幅在 §3 区间
-- [ ] 每条 EN meditation 词数 ≥ `required_min`(= niv_words × 3),字段如实
+- [ ] 每条 EN meditation **≤ 120 词**;整批统计约 50% 条目 ≤ 80 词;1–2 段
+- [ ] `structure` 字段 = 实际风格标签;无连续两天同风格;`见证` ≤ 6 条/批
+- [ ] 每条 EN 原创合计(meditation+action_step+prayer)≥ `required_min`,字段如实
+- [ ] meditation/action_step/prayer 三字段搜 `#`、`{`、`<` 零命中(mood_tags 的 # 除外)
 - [ ] prayer 结尾定式正确、单段
 - [ ] 每节经文按 §4b 在**七个语言**各过四步核对,slug 全部取自 index.json
 - [ ] traditional 文本逐字复制自 §4b 语料(不是凭记忆),抽查 10 条回验

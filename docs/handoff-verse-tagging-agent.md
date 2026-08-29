@@ -99,10 +99,20 @@ https://cdn.jsdelivr.net/gh/sangchy1972/pd-text-corpus@e9df0306d76c8b1bf66aae71f
 4. **每主题保底**:词表里每个主题最终应有 **≥25 节**高质量命中(核心
    主题如 love/faith/hope 会有数百节,正常)。反向检查发现某主题
    全书 <25 节 → 要么补标遗漏,要么这个主题该在词表定稿阶段就被合并。
-5. **公版辅助召回**:Nave's Topical Bible(1896,公有领域)与 TSK 串珠
-   可以拿来**辅助召回**(防漏),但它们是 19 世纪的命名与取舍——
-   映射到我们的现代词表后仍要逐节自判,不照单全收。**不得参考任何
-   现代网站/App 的主题→经文映射**(那是别人的编辑成果,版权红线)。
+5. **公版辅助召回**:Nave's Topical Bible(1896)与 Torrey(1897)可以
+   拿来**辅助召回**(防漏)。已验证的现成数据源(主 agent 2026-08-29
+   开箱核查过):GitHub `j86schroeder/topical-bible-search`(MIT,2026
+   审计数字化版,勘误内置、零未解析引用)——
+   - `dist/nave/topics.jsonl`(5,321 主题)+ `dist/nave/assertions.jsonl`
+     (77,970 条 topic→单节断言);`dist/torrey/` 同构(620 主题/38,583 条);
+   - 断言已结构化:`book`(英文全名,如 "Joshua")+
+     `chapterStart/verseStart`,逗号引用已拆成单节,KJV 编号;书名 →
+     我们的 slug 用 §2b 的 index.json(name→slug)对照;
+   - 用法:先建一张「我们词表 id ↔ nave/torrey 主题 slug(可多对一)」
+     映射表,按映射拉候选节;它们是 19 世纪的命名与取舍,**候选仅供
+     防漏,逐节仍要自判**,不照单全收。
+   **不得参考任何现代网站/App 的主题→经文映射**(那是别人的编辑成果,
+   版权红线)。
 6. **教义稳妥**:标签本身就是解经立场——拿不准某节是否"讲"某主题时,
    用最朴素的读法;争议性归类(如把某节标给 hell/punishment)从严。
 

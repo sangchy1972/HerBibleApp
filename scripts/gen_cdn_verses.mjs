@@ -49,6 +49,10 @@ for (const lang of LANGS) {
         verse: v.reference.verse,
         full_reference: v.reference.full_reference,
       },
+      // fr/de psalm-title numbering shift (schema 3.2, 5 entries per lang).
+      ...(v.verse_local ? { verse_local: v.verse_local } : {}),
+      // Per-language background note (schema 3.2) — the ⓘ icon on the verse page.
+      ...(v.exegesis?.context_note ? { exegesis: { context_note: v.exegesis.context_note } } : {}),
       // Keep BOTH traditional + modern so the client can later offer a
       // version toggle without another CDN shape change; the service
       // currently reads only `.modern`.
@@ -87,4 +91,6 @@ for (const lang of LANGS) {
   console.log(`${lang}: ${slimVerses.length} verses → ${outFile} (${kb} KB)`);
 }
 
-console.log('\nDone. Upload these 7 files to pd-text-corpus at /daily-verses/.');
+console.log('\nDone. Upload with scripts/upload_daily_verses_r2.sh (v-prefixed keys —');
+console.log('live builds refetch this bucket on every cold start, so a breaking batch');
+console.log('must NEVER overwrite the keys an already-shipped build reads).');

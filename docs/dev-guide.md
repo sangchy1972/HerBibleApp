@@ -1245,7 +1245,47 @@ above the Account block; merger in `services/progressMerge.ts`; tests
   silently fails.
 - Commentary corpus, per-language style contracts and the `CORPUS_COMMIT` bump workflow
   are covered by the memory notes and `docs/plan-subsystem-handoff.md` — run
-  `node scripts/verify_alignment.mjs` after any content change.
+  `node scripts/verify_alignment.mjs` after any content change (its section 3 is a
+  HARD gate over the authoring batch dir — non-zero exit on any failure; keep its
+  `COMMIT` pin in lockstep with `constants/corpus.ts`, it drifted once).
+
+### Daily-verse batches (batch 2 integration, 2026-08-30)
+
+- **The verses bucket (`verses.everlandapps.com`) is its own animal**: shipped
+  builds re-fetch it on EVERY cold start (`DailyVersesContext` language effect),
+  so a content-breaking batch must NEVER overwrite the keys an old build reads —
+  batch 2 would have blanked live users' verse pages (empty `modern.text` +
+  the old `slim()` accepting it). Every breaking batch gets its own key prefix
+  (`DAILY_VERSES_PATH`, now `v2/`), bumped in LOCKSTEP with the upload script's
+  `VERSION` and `DAILY_VERSES_VERSION` (the AsyncStorage cache tag). Same-key
+  overwrite + ETag remains fine only for shape-compatible fixes within a batch.
+- **modern vs traditional (owner plan C)**: the modern editions (NIV/CCB/…) are
+  in copyright and ship EMPTY until licensed; `slim()` (service + bundled gen,
+  kept mirror-identical) prefers `modern.text` when non-empty, else falls back
+  to the public-domain `traditional` — byte-identical to the in-app chapter.
+  Backfill is per-entry and needs no client change. An entry with no usable
+  text now DROPS instead of rendering blank.
+- **Narration audio is OFF for batch 2** (`AVAILABLE_DAILY_VERSE_AUDIO_LANGS`
+  emptied): the audio manifest maps by BARE verseId and batch 2 reuses batch 1's
+  ids for different verses — re-enabling without regenerating the manifest from
+  batch-2 recordings would voice the WRONG verse. Listen button, prefetch and
+  the listen coach all die from that one set; re-add langs only after
+  `gen_dailyverse_audio_manifest.mjs` + a full-coverage probe — and when you
+  do, re-check the ⓘ-dialog/listen-coach stacking (dialog z60, coaches z90;
+  both are one-shots so a collision is rare, but the choreography has never
+  been exercised live).
+- **`verse_local`** (schema 3.2): Segond/Luther count long psalm titles as v1 —
+  5 psalm entries carry a shifted local number, shown when the ACTIVE Bible is
+  fr/de (PrayerFlow `refSource`). Known accepted edge: an en-UI user reading a
+  de Bible sees the KJV number on those 5 (the en file carries no verse_local).
+- **`context_note`** (schema 3.2): per-language background note behind the ⓘ
+  on the verse page; house dialog + a one-shot SpotlightCoach
+  (`guide:contextNote:v1`, burned on display, yields to the listen coach).
+- **Upstream corpus defects** found by content-side: de ×2 (Ps 119:105
+  `meine→meines`, Isa 25:1 `dein→deine`) + es/pt ×7 from batch 1 — fix in
+  pd-text-corpus then bump `CORPUS_COMMIT` AND the verify script's pin;
+  content deliberately quotes the corpus verbatim, so the app text follows
+  the fix automatically.
 
 ---
 

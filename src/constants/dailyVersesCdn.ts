@@ -24,8 +24,19 @@
 //      (not for routine content edits — ETag handles those).
 
 // Local AsyncStorage cache tag. Bump on a schema/shape change to discard
-// every device's stale parsed copy. Not part of the URL anymore.
-export const DAILY_VERSES_VERSION = 'v1';
+// every device's stale parsed copy.
+export const DAILY_VERSES_VERSION = 'v2';
+
+// ⚠️ CONTENT-BATCH PATH VERSION — the hard lesson of batch 2 (2026-08-30):
+// shipped builds re-fetch this bucket on EVERY cold start
+// (DailyVersesContext's language effect → fetchAndCacheDailyVerses), so
+// overwriting the same keys with a batch an old build cannot render would
+// break LIVE users instantly (batch 2 ships modern.text empty; the old
+// slim() accepted it and would render 840 blank verse pages). Every
+// content-breaking batch therefore gets its own key prefix; old builds keep
+// reading their own files forever. Same-key overwrite + ETag remains fine
+// ONLY for shape-compatible fixes within a batch.
+export const DAILY_VERSES_PATH = 'v2';
 
 // Daily verses are served PUBLICLY + R2-direct from the dedicated
 // herbible-verses-7languages bucket, exposed via its own R2 Custom Domain
@@ -38,7 +49,7 @@ export const DAILY_VERSES_VERSION = 'v1';
 // NOTE: if you bind a different subdomain, update VERSES_HOST below.
 const VERSES_HOST = 'https://verses.everlandapps.com';
 export function dailyVersesUrl(lang: string): string {
-  return `${VERSES_HOST}/verses_${lang}.json`;
+  return `${VERSES_HOST}/${DAILY_VERSES_PATH}/verses_${lang}.json`;
 }
 
 // Holiday daily-verse override files. Served PUBLICLY + R2-direct (no Worker,

@@ -32,7 +32,15 @@ export const DAILY_VERSE_AUDIO_LANG = 'en';
 // so the single bundled manifest serves all three — only this set (plus the
 // per-verse holes below) gates what we offer. When another language lands on
 // Cloudflare, add its code here after a full-coverage probe.
-export const AVAILABLE_DAILY_VERSE_AUDIO_LANGS = new Set<string>(['en', 'es', 'pt']);
+// ⚠️ EMPTY since daily-verse batch 2 (owner 2026-08-30): batch 2 has NO
+// narration audio yet, and the audio manifest maps by BARE verseId
+// (m_001…e_060) — ids batch 2 REUSES for different verses. Re-enabling
+// without regenerating the manifest from batch-2 recordings would play
+// batch-1 audio over batch-2 text (the filenames even embed the old
+// references). When batch-2 audio lands: run
+// scripts/gen_dailyverse_audio_manifest.mjs against the new files, probe
+// full coverage (check_daily_verse_audio.sh), THEN re-add languages here.
+export const AVAILABLE_DAILY_VERSE_AUDIO_LANGS = new Set<string>([]);
 
 // Per-language upload HOLES at VERSE granularity — any missing step mp3 hides
 // that verse's Listen for that language (a shown button that 404s mid-flow is

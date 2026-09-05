@@ -1,0 +1,6019 @@
+{
+  "meta": {
+    "language": "zh-Hans",
+    "language_label": "简体中文",
+    "version": 3,
+    "schema": "3.2",
+    "total_verses": 120,
+    "morning_count": 60,
+    "evening_count": 60,
+    "coverage_days": 60,
+    "generated": "2026-08-29",
+    "note": "English source fields, the copyright audit record and the internal exegesis notes live only in verses_en.json — map by verse id. This file carries only what it renders plus verse-level facts.",
+    "pending": [
+      "translations.zh-Hans.modern.text — awaiting licensed source"
+    ]
+  },
+  "verses": [
+    {
+      "id": "m_001",
+      "day": 1,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Psalms",
+        "chapter": 143,
+        "verse": "8",
+        "full_reference": "Psalms 143:8"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#寻求方向",
+        "#渴望被爱"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "求你使我清晨得听你慈爱之言，因我倚靠你；求你使我知道当行的路，因我的心仰望你。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "psalm/lament",
+          "primary_theme": "guidance"
+        },
+        "niv_word_count": 32,
+        "context_note": "诗篇一百四十三篇是一首哀歌。前面几节里，大卫直说自己正被人追杀。这不是从安稳处发出的清晨祷告，是一个身处险境的人写下的。「慈爱」的希伯来原文是 chesed，指立约的忠诚——一种事先就把自己许出去、事后反悔不了的爱。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "大卫不是在描述一个美好的清晨，他是在求一个。他求的顺序值得我们借来用。\n\n先听见自己被爱，然后才知道该往哪里走。我们大多数人是反着来的——一睁眼就来要方向、要答案、要那件事到底该怎么办。可是没有爱托着的方向，很快就变成压力，这样的日子我们多半都过过一阵。今天早晨，我们先求第一样。第二样跑不掉，它会等着我们。",
+          "action_step": "今天安排任何事之前，先出声说一句：我先是被爱的，才是有用的。然后把清单上第一件事交给神。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，在我开口问你我该往哪里去之前，求你先让我听见我是被爱的。我承认自己常常跳过这一步，一醒来就直奔计划和安排。今天早晨，求你先对我里面那个需要被安慰的地方说话，然后再指给我下一步。我把这一整天都举到你面前。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_002",
+      "day": 2,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Romans",
+        "chapter": 8,
+        "verse": "6",
+        "full_reference": "Romans 8:6"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#思绪纷乱",
+        "#寻求平安"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "体贴肉体的，就是死；体贴圣灵的，乃是生命、平安。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "mindset"
+        },
+        "niv_word_count": 19,
+        "context_note": "罗马书第八章一开头就说「不定罪」，这节经文是落在那个应许里面的，不是站在它对面。保罗用来形容体贴肉体的那个词是 phronema，指的不是某一个念头，而是一种固定的倾向——心思没人管的时候会往哪边偏。他在描述一股水流，不是在下判决。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "保罗在这里不是在评判你的行为。他说的是：当你不再刻意去管的时候，你的心思会自己滑到哪里去——那个它总要回去的频道。\n\n而应许是对你说的：另一个频道通向生命和平安。不是让你想得更整齐，是生命。你不必被那个默认设定困住，神也从来没有指望你靠自己一个人挣脱出来！",
+          "action_step": "今天留意一下，心思一空下来，第一个跑去的地方是哪里。不要评判它，只把它告诉神。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，你知道我不看着它的时候，心思会往哪里去，其中有些对我并没有好处。求你今天早晨把我的思想转向真正带来生命的事——不是用强的，是用你的吸引。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_003",
+      "day": 3,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "2 Corinthians",
+        "chapter": 3,
+        "verse": "17",
+        "full_reference": "2 Corinthians 3:17"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#总想证明自己",
+        "#神的接纳"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "主就是那灵；主的灵在哪里，那里就得以自由。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "freedom"
+        },
+        "niv_word_count": 17,
+        "context_note": "保罗刚讲完摩西见过神之后用帕子蒙脸。他要对比的，是一份隔着帕子、保持距离守住的约，和一份可以坦然露着脸活出来的约。希腊文 eleutheria 指的是一个获释之人的法律身份——是一种地位，不是一种心情。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "我们做基督徒，很容易不知不觉把信仰也变成又一个被打分的地方。又一张清单，又一场表现，又一个可能显得自己不够格的房间。\n\n保罗说这个房间不是那样的。主的灵在哪里，那里就有自由——不是想做什么就做什么，是不必再证明什么的松开。今天就带着这个走。你不是在试镜。",
+          "action_step": "想一件你今天主要是为了证明什么才做的事。去做，或者放下——但要像一个自由人，不是应聘者。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，谢谢你，你的灵带来的是自由，不是又一场考试。我承认自己常把信仰变成一件可能考砸的事。求你今天松开我里面这一处，让我做事说话的时候，像一个已经被接纳的人。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_004",
+      "day": 4,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Proverbs",
+        "chapter": 16,
+        "verse": "3",
+        "full_reference": "Proverbs 16:3"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#职场压力",
+        "#提前焦虑"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "你所做的，要交托耶和华，你所谋的，就必成立。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "wisdom",
+          "primary_theme": "work"
+        },
+        "niv_word_count": 13,
+        "context_note": "箴言十六章是一连串关于人的筹算和神的掌权的话。「交托」的希伯来原文字面意思是把东西滚到别人身上——像把一个重担从自己背上卸下来，挪到另一个人肩上。「成立」用的是打地基那个词根：说的不是心情平静，是所立的计划站得住。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "你知道那种早晨：人还没出门，心里已经吵完三场架了——把会议先演一遍，给那条还没来的消息先拟好回复，连自己会怎么被误解都提前定好了。到八点钟，还没开始做事，你已经累了。\n\n而这里的应许，走的是相反的方向。先把手上的事交托，安定的心随后就来。不是倒过来。这个次序是恩典：神没有要求你先把心思理平、先把结果都锁死，才有资格开始这一天。你把工作交出去，回到你手里的，是那份你一直想先攒够的稳！",
+          "action_step": "把你脑子里已经预演过好几遍的那件工作说出来，在打开电脑之前，用一句话把它交给神。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，这一天还没开始，我已经累了，因为从睁眼那一刻起我就在心里反复演练。我把那场会议、那条我不敢看的消息、那个我控制不了的结果，都交在你手里。我不是先求你让我感觉平静，我是把这些事交给你，相信你会把其余的安定下来。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_005",
+      "day": 5,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Hebrews",
+        "chapter": 12,
+        "verse": "14",
+        "full_reference": "Hebrews 12:14"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#关系张力",
+        "#主动和好"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "你们要追求与众人和睦，并要追求圣洁；非圣洁没有人能见主。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/exhortation",
+          "primary_theme": "peacemaking"
+        },
+        "niv_word_count": 21,
+        "context_note": "希伯来书第十二章讲的是持续跑下去——赛跑、忍受管教。「追求」译自 diōkō，这个词在别处也用来指追捕、甚至逼迫：是紧追不放。在这句话里，和睦不是冲突停下来之后出现的东西，是你要去追的猎物。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "「追求」是个动词。这里的和睦不是等所有人终于讲道理之后自己落下来的心情，是要我们主动去追的东西，而且常常是在对方还没准备好的时候。\n\n这意味着，即使事情并不公平，即使受委屈的是我们自己，和睦也可以由我们先走这一步。不是假装什么都没发生过。是有意地、先一步地，去追那件我们更想等别人先开口的事。",
+          "action_step": "今天朝着和睦向那个人迈一小步——那一步你平常都是等他先走的。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，有一段关系里，我一直在等对方先动。求你给我勇气去追求和睦，而不是干等它临到——不靠假装，也不放弃那些真实的事。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_006",
+      "day": 6,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "2 Timothy",
+        "chapter": 3,
+        "verse": "16",
+        "full_reference": "2 Timothy 3:16"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#读经枯燥",
+        "#愿意被更正"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "圣经都是神所默示的（或译：凡神所默示的圣经），于教训、督责、使人归正、教导人学义都是有益的，"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "scripture"
+        },
+        "niv_word_count": 15,
+        "context_note": "保罗写下这段话时，正在写他最后一封信，收信的是一位即将接过这份工作的年轻同工。「神所默示的」在希腊文里只有一个词：theopneustos，字面就是神呼出来的，这个词在新约里再没有出现过。他所列的四种用处，是从你被教导什么，一路走向你成为什么样的人。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "「默示」背后的字面意思是神呼出来的气。不是口授，也不只是事后认可——是呼出来的，像你自己的气息带着你的声音出去。这就改变了读经是怎么回事：不那么像查资料，更像有人在对你说话。\n\n保罗列了四种用处，其中只有一种让人舒服——教训、督责、使人归正、教导人学义。把这当成好消息，不是警告。一本能纠正你的书，才是真能帮到你的书，而这本书现在就在你手里。它不是一本你老是达不到标准的规则手册。它是一个声音，今天早晨正在对你说话！",
+          "action_step": "今天读一章，不带着找什么的目的去读。若有一句话让你停住，就在那里多待一分钟，不要急着往下。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，谢谢你，你的话就是你自己的声音，不只是信息。我承认我大多数时候来读它，是为了找到印证自己的东西。求你给我被它纠正的谦卑，也给我耐心，在那些让我不舒服的段落里多留一会儿。你说话，我真的听。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_007",
+      "day": 7,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Philippians",
+        "chapter": 4,
+        "verse": "13",
+        "full_reference": "Philippians 4:13"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#日常疲惫",
+        "#学习知足"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "我靠着那加给我力量的，凡事都能做。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "contentment"
+        },
+        "niv_word_count": 11,
+        "context_note": "保罗一面谢腓立比教会送来的馈赠，一面坚持说，就算没有这份馈赠，他也早已学会怎么过。前面两节列的是丰富与饥饿、有余与缺乏。他用的「知足」是 autarkes，斯多亚学派用它来指自给自足；保罗悄悄改了它的意思——不是自己够用，是在基督里够用。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "这大概是这卷书里被引用最多的一句，而几乎每次都被引到反方向去——当成打赢什么的燃料。\n\n看看保罗紧接在前面说了什么。他在讲知足：怎样处丰富，怎样处卑贱，怎样饱足，怎样饥饿。「凡事」指的就是这些事。我们可以不再把它读成一句「你一定会成功」的应许。它应许的是：无论这一周我们落在哪一样里，都有人稳稳地托着我们，一样托得住。",
+          "action_step": "把这句经文用在今天最难熬的那件平常事上，而不是用在目标上。这趟接送我能撑住。这个班我能上完。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我曾经用这节经文向你要结果。今天我想把它用对。无论这一周是丰富还是贫乏，求你教我在哪一样里都能被你托住。那些我总盼着能跳过去的琐碎日常，求你给我力气去做完。我把今天的软弱和需要都交给你。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_008",
+      "day": 8,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Acts",
+        "chapter": 16,
+        "verse": "31",
+        "full_reference": "Acts 16:31"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#为家人担忧",
+        "#单纯的信"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "他们说：「当信主耶稣，你和你一家都必得救。」"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "narrative",
+          "primary_theme": "faith"
+        },
+        "niv_word_count": 15,
+        "context_note": "这是保罗和西拉半夜唱诗的那所监狱。地震震开了门，禁卒按当时的法律要用自己的命为逃走的囚犯负责，正要自杀，被保罗喝住。「你和你一家」扩大的是这份邀请，不是保证结果；这里并没有应许别人替谁相信。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "问这话的人刚刚经历一场地震，监门全开，他已经把刀拔出来对准自己了。他得到的回答不是一套方案，是一个人：当信主耶稣。\n\n接着还有几个字，一直在抓住人——你和你一家。今天早晨，无论你为家里人背着什么，请留意：神从来没有把你当成屋里唯一的那一个！",
+          "action_step": "今天早晨，把家里一个人的名字出声说给神听。只说名字就好。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，谢谢你，答案是一位救主，不是一套我必须完成的流程。今天早晨我把同住屋檐下的这些人，一个一个提名带到你面前。我背不动他们，但我可以把他们交给你。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_009",
+      "day": 9,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Isaiah",
+        "chapter": 41,
+        "verse": "10",
+        "full_reference": "Isaiah 41:10"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#感到害怕",
+        "#神必同在"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "你不要害怕，因为我与你同在；不要惊惶，因为我是你的神。我必坚固你，我必帮助你；我必用我公义的右手扶持你。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "prophecy/comfort",
+          "primary_theme": "courage"
+        },
+        "niv_word_count": 34,
+        "context_note": "以赛亚书四十一章说给一群面对远比自己庞大的帝国的百姓。「我公义的右手」既是身体的画面，也是法庭的画面——一位已经判你无罪的审判者，伸手抓住你。希伯来原文里「扶持」的意思是抓紧、不放手，不是从旁边撑一把。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "数一数那些应许：我与你同在、我是你的神、我必坚固你、帮助你、扶持你。两句吩咐，压着五个应许。\n\n这个比例本身就是信息，值得我们带在身上。神不是叫我们别害怕，然后就丢下我们自己想办法。他先说不要害怕，接着用一整句话告诉我们，凭什么可以不怕。",
+          "action_step": "把这节经文读一遍，用手指数出那五个应许。然后走进你今天最不想面对的那件事。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，今天早晨我不想假装自己不害怕。谢谢你，你没有只叫我别怕，你还告诉我凭什么可以不怕。求你牵着我的手，走进今天我最发怵的那一段。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_010",
+      "day": 10,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "John",
+        "chapter": 11,
+        "verse": "40",
+        "full_reference": "John 11:40"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#不敢面对",
+        "#相信才看见"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "耶稣说：「我不是对你说过，你若信，就必看见神的荣耀吗？」"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "gospel/narrative",
+          "primary_theme": "belief"
+        },
+        "niv_word_count": 19,
+        "context_note": "这一幕在拉撒路的墓前。就在这句话之前，马大说得很直白：他已经臭了，四天了。耶稣的回答，是重复他在同一段对话里早先说过的话。希腊文的语序把「信」放在「看见」前面，正好把我们习惯的次序倒了过来。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "马大该说的话都说对了。她信复活——信在末日，安全地远在天边，不用付什么代价。她抗拒的是现在就把石头挪开，当着左邻右舍的面，而里面已经放了四天。\n\n耶稣没有因此羞辱她。他只是把应许重说了一遍，然后等。所以，这话也是对你说的：那件你宁可封着的事，在他那里并没有烂到没救；他也不是嫌恶地站在外面。他在等那块石头挪开！",
+          "action_step": "想一件你一直关着、因为打开会难堪的事。把它是什么告诉神。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我笼统地相信，具体的地方却迟疑。有一件事我宁可一直封着，因为打开来太难堪了。求你给我胆量，让你靠近它。我宁愿被你看见，也不愿意维持这份体面的紧闭。今天早晨，求你在那里与我相遇。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_011",
+      "day": 11,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Proverbs",
+        "chapter": 21,
+        "verse": "21",
+        "full_reference": "Proverbs 21:21"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#日复一日",
+        "#持守良善"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "追求公义仁慈的，就寻得生命、公义，和尊荣。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "wisdom",
+          "primary_theme": "pursuit"
+        },
+        "niv_word_count": 10,
+        "context_note": "箴言在这里把两个希伯来文常常连用的词放在一起：tsedaqah，行得正；chesed，稳定不变的信实与仁慈。两者缺一不可——只有公义没有仁慈会变硬，只有仁慈没有公义会变软。译作「追求」的动词，和追赶仇敌用的是同一个词。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "留意这节经文应许了什么，又没有应许什么。它没有说你会得到你追的那样东西。它说你会寻得生命——还有两样你原本没在追的。\n\n我们很容易在行善上悄悄变得像在做交易，一边做一边斜眼看它划不划算。今天我们把这个放下。好好地做对的事，做得温柔，不去看回报。回来的东西通常不是你瞄准的那一样，而且通常更好。",
+          "action_step": "今天做一件对的、也是善意的事，一件没人会追查到你头上的事。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我承认自己总在偷偷计算，行善对我到底划不划算。今天求你把这道算式从我手里拿走。让我好好地做对的事，做得温柔，把结果留给你。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_012",
+      "day": 12,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "1 Chronicles",
+        "chapter": 16,
+        "verse": "34",
+        "full_reference": "1 Chronicles 16:34"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#说不出感恩",
+        "#神的良善"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "应当称谢耶和华；因他本为善，他的慈爱永远长存！"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "narrative/psalm",
+          "primary_theme": "thanksgiving"
+        },
+        "niv_word_count": 13,
+        "context_note": "大卫唱这首歌的那一天，约柜终于进了耶路撒冷——在它停放别处多年、并有过一次惨痛的搬运之后。这句话后来成了固定的礼拜应答，由许多当下并没有感觉的人一遍遍唱出来。「慈爱」背后的 chesed，指的是一种早已许下的忠诚，与今天过得如何无关。"
+      },
+      "devotional": {
+        "structure": "见证",
+        "zh-Hans": {
+          "meditation": "有一段日子，我每天早晨都说这句话，一个字都不是真心的。我觉得自己在说谎，差点就不说了。后来变了的，是我留意到这句话到底在说什么。它没说今天是好的。它说的是他本为善——他的慈爱比我的情绪撑得久。这是两句不同的话，只有其中一句是要我撒谎。\n\n我就继续说下去。不知道是在哪一天，它不再是我说出口的一句话，成了我知道的一件事。",
+          "action_step": "今天早晨把这句经文出声念一遍，哪怕心里没有感觉。留意它说的是神是谁，不是你这一周过得怎么样。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，有些早晨我说这句话是真心的，有些早晨我说了却不是。谢谢你，你的良善不是靠我说得多有说服力来衡量的，也不需要我先有感觉才成为真的。在我只是嘴上说说的那段长路上，求你稳稳地扶着我。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_013",
+      "day": 13,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Ephesians",
+        "chapter": 3,
+        "verse": "16",
+        "full_reference": "Ephesians 3:16"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#内里疲乏",
+        "#圣灵加力"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "求他按着他丰盛的荣耀，借着他的灵，叫你们心里的力量刚强起来，"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/prayer",
+          "primary_theme": "inner strength"
+        },
+        "niv_word_count": 21,
+        "context_note": "这句话在保罗从监狱里写给一间教会的祷告中。他求的是一个很具体的地方——里面那个人得着力量，而不是求他们的处境松一点。他说的量器是「按着他丰盛的荣耀」：供应是从神的库房里取的，不是从你还剩下的那点里取。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "留意这力量要加在哪里。不是加在我们的日程上，也不是加在处境上。是加在里面那个人身上——那个没有人看得见它在见底的地方。\n\n也留意保罗祷告时用的量器：按着他丰盛的荣耀。不是按着我们还剩下多少。我们总在求更多的时间，今天我们改求这个。",
+          "action_step": "把你磨得最薄的那一处指出来，出声说出那个地方，然后为它求力量。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，外面这些事，我还能再撑一阵。见底的是里面。今天早晨求你在那里加给我力量——不是从我剩下的里面拿，是从你所有的里面给。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_014",
+      "day": 14,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Jeremiah",
+        "chapter": 29,
+        "verse": "11",
+        "full_reference": "Jeremiah 29:11"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#看不见未来",
+        "#神有计划"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "耶和华说：我知道我向你们所怀的意念是赐平安的意念，不是降灾祸的意念，要叫你们末后有指望。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "prophecy/letter",
+          "primary_theme": "hope"
+        },
+        "niv_word_count": 29,
+        "context_note": "这段话出自耶利米写给已经被掳到巴比伦的人的一封信——紧挨着的前几节叫他们盖房子、栽园子、安顿下来，因为他们要在那里住七十年。应许是真的，时间也是真的长。多数引用这节经文的人，没有读它前面那一句。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "这是常被印在卡片上的一节，而它当初是写给一群刚被告知七十年回不了家的人。盖房子。栽园子。娶妻生子。然后才是：我知道我向你们所怀的意念。\n\n所以请照它本来的意思听。它应许的不是你这段难熬的日子快过去了——是这段日子不是一段绕路，是有一位正托着你整个人生的形状，包括那段比你计划中长得多的部分。你在这里过的每一天都是算数的。你不是坐在真实人生的候诊室里。你已经在里面了！",
+          "action_step": "今天做一件把这段日子当作真实人生来对待的事——种点什么，修点什么，或者请一个人来家里坐坐。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我一直把这段日子当成真实人生的一次打岔。原谅我这样屏着一口气过日子。谢谢你，你并没有因为没把这个季节挪开，就不在其中。求你帮我在这里也建造点什么，一边等着下一步的到来。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_015",
+      "day": 15,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Mark",
+        "chapter": 11,
+        "verse": "24",
+        "full_reference": "Mark 11:24"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#祷告没有回应",
+        "#放胆求"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "所以我告诉你们，凡你们祷告祈求的，无论是甚么，只要信是得着的，就必得着。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "gospel/teaching",
+          "primary_theme": "prayer"
+        },
+        "niv_word_count": 21,
+        "context_note": "耶稣说这话，是在咒诅无花果树的第二天早晨，正走回耶路撒冷，那是他在世的最后一周。这里的背景不是私人的许愿成真，而是一个宗教体制即将倾覆。要和约翰一书 5:14 一起读——照着他的旨意求——初代教会一直把这两句话放在一起。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "我们大多数人都悄悄把祷告缩小了。我们求的是那些本来大概也会发生的事，这样就什么都不用押上去。\n\n我们可以诚实说出原因：这样比较安全。但耶稣不是在教一套拿到结果的技术，他是在叫人别再防御式地祷告。今天就为那件真的事求——就是那件你一改再改、越改越小的事。",
+          "action_step": "今天就为那件真实的事祷告一次，不是那个被你缩小过的版本。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，为了不失望，我一直向你求比我真正想要的小得多的事。这一次，我把真的那件说出来。我不打算替你安排答案，我只是好好地求一次。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_016",
+      "day": 16,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "2 Corinthians",
+        "chapter": 9,
+        "verse": "7",
+        "full_reference": "2 Corinthians 9:7"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#被消耗",
+        "#甘心乐意"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "各人要随本心所酌定的，不要作难，不要勉强，因为捐得乐意的人是神所喜爱的。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "generosity"
+        },
+        "niv_word_count": 25,
+        "context_note": "保罗当时正在教会之间组织一次捐献，对钱是怎么募来的很小心。希腊文 hilaros——英文 hilarious 的词根——比「乐意」还要强。留意前一句里的自由：各人照自己心里所酌定的。保罗把说不的权利写在了里面。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "先读见这节经文里的自由，再读那句吩咐。各人要照自己心里所酌定的——不是被人内疚出来的，不是被人替你报了名的。\n\n神不缺资源，也不需要你那个勉强的「好」。他要的是那个甘心的。这就是说，你可以自己决定，你也可以说不。不管你从前被教成什么样，这都不是自私。真正欢欢喜喜的「愿意」，从来只长在这块土上——一块你可以自由说不的土上！",
+          "action_step": "找一件你出于内疚才答应下来的事。今天要么心甘情愿地重新认领它，要么放下它。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我所给出去的，有些是欢喜的，有些其实是穿了体面外衣的害怕。求你今天早晨让我看清这两者的分别。该说不的地方，求你给我说不的勇气；这样当我说愿意的时候，那份愿意对领受的人才是有分量的。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_017",
+      "day": 17,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Psalms",
+        "chapter": 119,
+        "verse": "105",
+        "full_reference": "Psalms 119:105"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#看不清前路",
+        "#一步之光"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "你的话是我脚前的灯，是我路上的光。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "psalm",
+          "primary_theme": "guidance"
+        },
+        "niv_word_count": 13,
+        "context_note": "这个画面里的灯，是一盏可以拿在手里或系在脚踝上的小陶土油灯——它照亮的大概只有下一步，不是整条路。写诗篇一百一十九篇的人没有被应许看得见前路，他被应许的是够用的光，走下一步而不跌倒。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "这里的灯不是探照灯。那是一盏小小的陶土油灯，提在手里，压得很低，照亮的大约是前面一步的地方。\n\n而这正是我们真正拿到的应许。不是我们会看清这条路通向哪里，是我们能走下一步而不摔倒。如果我们一直在等看清整条路才肯挪动，那我们等的，是一样从来没有应许给我们的东西。",
+          "action_step": "找出真正的下一步——不是那个计划，是那一步——然后今天就把它走出去。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我想看见整条路，而你给我的是够走一步的灯。求你帮我不再为更多的光讨价还价，就用手上这点光起步。今天早晨，求你指给我下一步。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_018",
+      "day": 18,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Mark",
+        "chapter": 10,
+        "verse": "27",
+        "full_reference": "Mark 10:27"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#走投无路",
+        "#在神凡事都能"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "耶稣看着他们，说：「在人是不能，在神却不然，因为神凡事都能。」"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "gospel/narrative",
+          "primary_theme": "possibility"
+        },
+        "niv_word_count": 21,
+        "context_note": "门徒刚刚很惊慌地问：这样谁能得救呢。马可特别记下耶稣先看着他们，然后才回答——这个「看」和耶稣看着那个财主少年人并爱他时用的是同一个动词。这句回答不是口号，是说给害怕的人听的。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "耶稣没有把前半句说软。在人是不能。他让这句立在那里，你也该让它立着。\n\n因为后半句只有在前半句被出声承认之后才起作用。把那件不可能的事平平白白地说出来。然后听后面那句：在神却不然。那件你一直悄悄扛着、又一直扛不动的事，在他那里连一点吃力都算不上！",
+          "action_step": "把那件不可能的事出声说出来，说得平白，句子末尾不要再补上一个解决办法。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，有一件事真的超过我的能力，我却一直撑着，还管它叫「还行」。它是不可能的。今天早晨我把这句话说明白。然后我把它交给那位凡事都能的神。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_019",
+      "day": 19,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "John",
+        "chapter": 15,
+        "verse": "16",
+        "full_reference": "John 15:16"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#怀疑自己",
+        "#被拣选"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "不是你们拣选了我，是我拣选了你们，并且分派你们去结果子，叫你们的果子常存，使你们奉我的名，无论向父求甚么，他就赐给你们。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "gospel/farewell discourse",
+          "primary_theme": "calling"
+        },
+        "niv_word_count": 23,
+        "context_note": "耶稣说这话是在最后一夜，听的人不久之后都会失败。在古代世界，是学生选拉比；耶稣有意把这个惯例反了过来。「分派」译自 tithēmi，意思是任命、安置——这是被授予职分的用语，不是通过考试的用语。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "在那个年代，是学生挑老师。耶稣故意把它倒过来说，而且是在最后一夜说的，说给一屋子马上就要重重地叫他失望的人听。我们做基督徒的，可能花好些年在暗暗试镜——努力活成那种「本来就会被选上」的人。这句话把那条路堵死了。你是先被拣选，被分派，然后才被差出去结果子的。果子跟在拣选后面，从来不是果子换来了拣选。\n\n这就把今天大大地松开了。我们不是在为一个席位打工，我们是从一个早就白白给了我们的席位出发去做事。",
+          "action_step": "开始工作之前，按正确的次序说一遍：我是先被拣选，然后被差出去的。然后去做清单上的第一件事。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我一直在为一个我早就拥有的位置拼命试镜。谢谢你，你是先拣选，后差派。求你今天早晨把这件事在我心里安顿下来，让我今天所做的一切，是从归属里长出来的，不是从焦虑里挤出来的。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_020",
+      "day": 20,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Proverbs",
+        "chapter": 4,
+        "verse": "23",
+        "full_reference": "Proverbs 4:23"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#耗尽自己",
+        "#看顾内心"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "你要保守你心，胜过保守一切（或译：你要切切保守你心），因为一生的果效是由心发出。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "wisdom",
+          "primary_theme": "the inner life"
+        },
+        "niv_word_count": 13,
+        "context_note": "希伯来原文的「胜过保守一切」意思是：在你所看守的一切当中，先守这一样。「心」这个字 lev，同时包含思想、意志和情感——是整个内在的中控室。译作「果效」的词用在泉水上：是溪流所出的源头。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "「胜过保守一切」的意思是：在你眼下正在看守的所有东西里，先守这一样。不是等有空了再守，是先守。我们大多数人恰好反着来。我们护住日程，护住家人，护住工作，护住名声，却把自己里面的那点生命，当成那个「剩下多少算多少」的东西。然后又纳闷，从自己里面出来的话怎么带上了苦味。\n\n这节经文不是在教你自私。它是在告诉你水是从哪里来的。守住泉眼，下游的每一个人才有得喝。任它干下去，最后谁都没有，包括你自己！",
+          "action_step": "今天给自己里面的生命留一件事——十五分钟，不必分享，也不用有产出。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我什么都守，唯独不守那个一切都从中流出来的地方。我一直把自己里面的生命当成可以将就、可以最后再说的那一样。求你教我，照顾它是顺服，不是纵容自己。今天求你指给我一件可以改的事，也给我真的去改的勇气。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_021",
+      "day": 21,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Philippians",
+        "chapter": 4,
+        "verse": "19",
+        "full_reference": "Philippians 4:19"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#供应不足",
+        "#神必供应"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "我的神必照他荣耀的丰富，在基督耶稣里，使你们一切所需用的都充足。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "provision"
+        },
+        "niv_word_count": 18,
+        "context_note": "保罗写这话，是写给刚刚从自己的穷乏中拿钱供给他的人。这个应许给的是已经把自己给空了的人，不是给还想多要一点的人。「照他荣耀的丰富」是按着神的库存来配给，不是从一个固定的罐子里往外扣。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "留意这话是写给谁的。腓立比人刚刚送出一份他们其实负担不起的礼物。保罗不是在对宽裕的人说，神会保你继续宽裕。\n\n他是在对那些给到自己也紧起来的人说：你们不会被亏待。我们大多数人就活在这里——从本来就不够的余地里往外拿。衡量的尺子是他的丰富，不是我们账上还剩多少。",
+          "action_step": "说出那个你一直独自扛着、没跟人提的需要。把它原原本本告诉神，数目也好，实话也好。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，这个需要我一直自己扛着，还把它叫作信心。现在我原原本本摆在你面前。谢谢你，你的供应是照着你所有的来量，不是照着我剩下的。这一个星期，求你在这件事上来见我。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_022",
+      "day": 22,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Romans",
+        "chapter": 12,
+        "verse": "2",
+        "full_reference": "Romans 12:2"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#被比较淹没",
+        "#心意更新"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "不要效法这个世界，只要心意更新而变化，叫你们察验何为神的善良、纯全、可喜悦的旨意。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/exhortation",
+          "primary_theme": "transformation"
+        },
+        "niv_word_count": 18,
+        "context_note": "「效法」的希腊文是 syschematizo，指取用外在的形状，像液体随着容器成形。「变化」是 metamorphoō，耶稣登山变像时用的正是这个词：改变由内而外。这两个动词都是被动语态——没有一个是你能靠力气对自己做成的。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "「效法」原文 syschematizo，是随着容器改变形状的意思。它是默认发生的，不需要你做任何决定——这正是它危险的地方。没有人早上醒来，是特意决定要拿别人家的厨房来量自己这一生的。\n\n「变化」用的是另一个词 metamorphoō，耶稣登山变像时用的就是它：改变从里面往外走。而且这两个词都是被动的。所以你听清楚：没有人要求你靠意志力把自己硬掰成一个更好的形状，你也没有在一件从来没交给你的事上失败。你正在被塑造。慢慢地，从里面，由另一位来做！",
+          "action_step": "留意今天早上你第一眼拿什么在跟自己比。换掉一个入口——那个信息流、那个群、那个应用，就换一天。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我活成了一些我从来没有真正选择过的样子。我没有决定要这样衡量自己的人生，我只是不知不觉地吸进来了。求你把那个模子松开。求你从我里面更新我的思想，需要多慢就多慢，也求你给我判断力，不再泡在那些让我变形的东西里。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_023",
+      "day": 23,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "2 Corinthians",
+        "chapter": 5,
+        "verse": "7",
+        "full_reference": "2 Corinthians 5:7"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#看不到结果",
+        "#凭信而行"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "因我们行事为人是凭着信心，不是凭着眼见。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "faith"
+        },
+        "niv_word_count": 8,
+        "context_note": "保罗写这句话的时候，正在讲自己身体的衰残，和对身后的盼望。这句话在希腊文里只有五个词。「行事为人」是 peripateō，就是日常过日子、出门办事的那个普通动词，不是什么属灵比喻。信心在这里是一种走路的姿态，不是资讯不足时的替代品。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "这句话在希腊文里只有五个词，讲的却是怎么熬过一个普通的星期二。作为基督徒，我们常常把信心变成一种自己持守的看法。保罗把它变成一种走路的方式——用的是日常出门办事的那个动词 peripateō。这就是说，信心首先不是你确定了什么，而是在还不确定的时候，你接下来仍然迈出的那一步。\n\n我们今天就走吧，有多快走多快。看见的那部分，可以晚一点跟上来，通常也真的会跟上来。",
+          "action_step": "今天走出一步——那种只有当你看不见的事是真的，你才会走的一步。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我总是在等到证据够了才肯动，一等就等过了一天又一天。今天我想走，不想再等。求你把今天该走的那一步指给我，让我不必先跟你讨价还价、要先看清这条路的尽头在哪里才肯抬脚。剩下的那张地图，我交在你手里。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_024",
+      "day": 24,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Isaiah",
+        "chapter": 40,
+        "verse": "31",
+        "full_reference": "Isaiah 40:31"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#低电量",
+        "#等候得力"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "但那等候耶和华的必重新得力。他们必如鹰展翅上腾；他们奔跑却不困倦，行走却不疲乏。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "prophecy/comfort",
+          "primary_theme": "strength"
+        },
+        "niv_word_count": 32,
+        "context_note": "以赛亚书四十章说话的对象，是离家还有几十年的被掳之民。「等候」的希伯来文是 qavah，与一条拉紧的绳子同源——是带着期待的张力，不是闲着。留意三个动词的次序：上腾、奔跑、行走。这份清单停在最慢的那一个，而那恰恰是多数日子真正需要的速度。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "留意这个次序停在哪里。不是停在鹰，是停在「行走」。展翅、奔跑、行走——越往后越慢，而最后那一句应许，正是你大多数日子最需要的。\n\n所以今天如果只是个走路的日子，你并没有掉出这节经文之外，你恰恰就在里面。今早等候他，他给多快的力气，你就领多快的！",
+          "action_step": "在做别的事之前，先安静地坐两分钟，为一个走路的日子求力气，不为展翅的日子求。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我今天不会展翅上腾，我也不再假装我可能会。求你给我够用的力气，让我走完今天而不至疲乏。谢谢你，最慢的那个速度，也仍然在你的应许里面。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_025",
+      "day": 25,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Proverbs",
+        "chapter": 4,
+        "verse": "18",
+        "full_reference": "Proverbs 4:18"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#成长缓慢",
+        "#渐渐明亮"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "但义人的路好像黎明的光，越照越明，直到日午。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "wisdom",
+          "primary_theme": "growth"
+        },
+        "niv_word_count": 19,
+        "context_note": "箴言第四章是一位父亲在教导儿女，通篇把两条路对照着讲。希伯来原文这里用了两个连着的分词——走着，也照着——所以明亮是在行走当中一点点累积的，不是一次到位。这个意象就是日出：慢是它本来的设计，而慢并不减损它的确定。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "黎明不是一下子就来的。它是一度一度亮起来的——先是灰，然后一线薄金，然后就是寻常的大白天——太阳从来不为自己升得慢而道歉。\n\n与神同行的一生就是这个形状。作为基督徒，我们该更常彼此说说这件事，因为我们这一周读到的几乎所有别的东西，都在暗示相反的说法。不是一次戏剧性的翻转。不是九十天之后一个焕然一新、彻底成形的自己。是光一点一点压过黑暗，每天早晨多一点点，多到从里面看几乎察觉不出来。我们不妨彼此认一认，已经走过的那段路，是真的走过了。",
+          "action_step": "说出一件你比一年前更往前了的小事。写下来，放在你以后还会翻到的地方。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，谢谢你，你不急着赶我，虽然我一直在赶自己。我为还没走完的那段路狠狠地责备自己，却几乎看不见已经走过的那一段。求你让我看见你已经给的光。看不远的地方，就求你给够走下一步的亮，也给我耐心，肯把这样就叫作够了。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_026",
+      "day": 26,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Ephesians",
+        "chapter": 6,
+        "verse": "11",
+        "full_reference": "Ephesians 6:11"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#心里有争战",
+        "#穿戴装备"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "要穿戴神所赐的全副军装，就能抵挡魔鬼的诡计。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/exhortation",
+          "primary_theme": "spiritual armour"
+        },
+        "niv_word_count": 18,
+        "context_note": "保罗写这封信时正在被囚，他描述的军装，就是看守他的那个士兵身上的装备。除了一件之外，每一件都是防守用的，而经文说明的目标是站立得住，不是往前推进。希腊文 methodeia 的意思是「方法」：一条反复出现、可以预料的攻击路线，不是一次惊天动地的突袭。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "留意这里的目标是什么。不是打赢一场仗，不是往前推进——是站立得住。\n\n再留意「诡计」这个词，原文 methodeia，意思是方法。可预测、会重复、每次都是同一句台词。这值得知道，因为早上七点准时来告诉你「你不值什么」的那个念头，很可能已经按这个时刻表来了好多年。它不是关于你的新消息，它是一套方法，而且一直没有人拦它。今天，趁它还没到，先把衣服穿上！",
+          "action_step": "说出那个几乎每天早上都来找你的指控。今天出声回它一次，用一句真的话。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，同一个念头几乎每天早上都来见我，而大多数早上它都赢了。它是一套方法，不是真相。求你在它到之前先给我穿戴整齐，把一句真实的话放在我手里，让我拿它来回应。求你让我站住，哪怕我今天所能做的只有站住。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_027",
+      "day": 27,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Proverbs",
+        "chapter": 16,
+        "verse": "32",
+        "full_reference": "Proverbs 16:32"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#容易发火",
+        "#管住自己"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "不轻易发怒的，胜过勇士；治服己心的，强如取城。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "wisdom",
+          "primary_theme": "self-control"
+        },
+        "niv_word_count": 16,
+        "context_note": "「不轻易发怒」这个希伯来文短语，圣经里一再用来形容神自己。箴言是有意把家常的德行和英雄式的功业摆在一起：那个文化里最高的成就是攻下一座有城墙的城，而这句箴言把治服自己的脾气排在它之上。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "这个对比是故意不公平的。在那个世界里，取一座城是一个人所能做到的最高成就，箴言偏偏把它拿来和在家里不发脾气比。\n\n作为基督徒，我们容易把节制看成一种收拾屋子式的小美德。圣经却把它看作更难攻下的那座城。今天没有人会为你没说出口的那句话向你道贺。它仍然是你今天做成的更大的事。",
+          "action_step": "今天留意火气上来的那一刻。开口之前先等十秒。整个操练就是这个。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我在最安全的地方最容易发脾气，也就是对着我最爱的人。今天求你给我十秒钟。就十秒。让这十秒足以改变我说出口的话。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_028",
+      "day": 28,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "2 Corinthians",
+        "chapter": 4,
+        "verse": "16",
+        "full_reference": "2 Corinthians 4:16"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#隐形付出",
+        "#不失望"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "所以，我们不丧胆。外体虽然毁坏，内心却一天新似一天。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/testimony",
+          "primary_theme": "renewal"
+        },
+        "niv_word_count": 21,
+        "context_note": "保罗写这段话是在为自己的服事辩护，紧接在他列举那些把身体拖垮的患难之后——所以这话出自一个真的在衰残的人。「一天新似一天」的希腊文动词是被动的：他是被更新的那一个。做这工的不是他，而他也看不见这工正在进行。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "有一种活儿，没有人看见。那条你改了四遍才发出去的信息，为的是让对方好受一点。那件你早早发现、悄悄处理掉、没让它变成谁的麻烦的事。那场你在底下托着、功劳却记在别人名下的会。保罗描述的正是这个形状，而且是他自己的人生：外面看得见地在毁坏，里面却在被重建，两个钟走的不是一个时间，而能看见的只有一个。\n\n所以今天早上你要听见这句：可见的那条线在往下走，不等于你失败了。有些东西正在一个没有人——包括你自己——现在看得见的地方，被建起来！",
+          "action_step": "说出这一周你做了而没有人留意到的一件事。把它讲给神听——不是抱怨，只是让它在某个地方被说出来。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，谢谢你在我里面做的那些无人看见的工，连我自己也看不见。我总用看得见的部分来衡量自己的人生，而当看得见的只是一个疲惫的女人在硬撑，我很快就丧了胆。今天早上我觉得自己被用空了，求你仍然做那更深处的工。求你提醒我，没有被看见，不等于被忘记。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_029",
+      "day": 29,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "1 Corinthians",
+        "chapter": 16,
+        "verse": "13",
+        "full_reference": "1 Corinthians 16:13"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#想要放弃",
+        "#站立得稳"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "你们务要警醒，在真道上站立得稳，要作大丈夫，要刚强。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/exhortation",
+          "primary_theme": "steadfastness"
+        },
+        "niv_word_count": 13,
+        "context_note": "这是一封又长又难写的书信最后的嘱咐，一连四个短促的命令。其中第三个 andrizesthe，字面意思是「像成年男人那样行事」，一六一一年的英文译作 quit you like men。放回上下文，它说的是要像一个成熟的人那样行事为人，并不是对女性的警告。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "一封又长又难写的信，末了是四个命令，个个都短。警醒。站稳。作大丈夫。刚强。\n\n留意这里没有一个是「感觉」。站立得稳，是脚站在那里，而里面还在吵个不停——这不是假冒为善，这就是基督徒生活的大半。我们不必等到心里稳了才站得住。第三个词 andrizesthe 直译是「像成年男人那样行事」，说的其实很朴素：在这件事上，做个成年人。所以我们今天就待在原地吧。整个功课就是这个。",
+          "action_step": "找出这一周你想要放弃的那一件事。决定再多守一天，只多一天。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我想把这件事放下。有些日子放下是智慧，但今天我想不是。求你把我的脚按在原处，再多站一天。我不是求你让我觉得自己勇敢，我只是求你给我力气，再留一天。这一天之后的事，等这一天过完了再说。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_030",
+      "day": 30,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Deuteronomy",
+        "chapter": 31,
+        "verse": "8",
+        "full_reference": "Deuteronomy 31:8"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#面对未知",
+        "#神先行"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "耶和华必在你前面行；他必与你同在，必不撇下你，也不丢弃你。不要惧怕，也不要惊惶。」"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "narrative/commission",
+          "primary_theme": "presence"
+        },
+        "niv_word_count": 27,
+        "context_note": "摩西是在全会众面前，公开对约书亚说这话的，那时离他自己离世只有几天。希伯来原文把两种状态分开了：一种是怕前面的事，一种是被前面的事压垮。神两样都提到了。「在你前面行」是探路者的说法——先到，而不只是陪着走。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "「在你前面行」。不是在旁边，是在前头。那是先到的人的说法——你进屋的时候，他已经在屋里了。\n\n而且这里点了两样不同的东西，因为神知道它们不一样。不要惧怕，那是朝前看的。不要惊惶，那是事后的，是事情已经砸了、你整个人塌下来的时候。两样他都管了。你还没醒，他就已经在今天里面了！",
+          "action_step": "分辨一下今天压着你的是惧怕，还是塌下来的那种没力气。就着那一样，具体地求神。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，今天早上与其说是惧怕，不如说是整个人塌着，而这一样我更难说出口。谢谢你，两样你都点了名。求你走在我前头进入今天，在我到之前就已经在那里。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_031",
+      "day": 31,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "1 Corinthians",
+        "chapter": 15,
+        "verse": "57",
+        "full_reference": "1 Corinthians 15:57"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#屡战屡败",
+        "#得胜是被赐的"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "感谢神，使我们借着我们的主耶稣基督得胜。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "victory"
+        },
+        "niv_word_count": 15,
+        "context_note": "这句话收束了保罗关于复活的长篇论证，所说的「得胜」是胜过死亡本身，不是胜过你最糟糕的那个习惯。希腊文动词是现在式、持续的：神一直在把这得胜给出来。保罗是在任何看得见的改变发生之前就先说感谢的——整章的形状都是这样。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "看这个动词。不是「曾经给过」，不是很久以前给过一次就完了。是一直在给——包括今天早上这一份。\n\n再看是谁在做这件事。作为基督徒，我们很容易把这节经文悄悄改写成一节讲自律的经文，然后到了周四就觉得自己像个骗子。保罗没有说我们赢了，他说的是感谢神，是神使我们得胜。你上个星期带来的那同一个失败，并不叫你今天早上失去资格；同样的得胜，仍然按第一次的条件递到你手里。",
+          "action_step": "说出那件你一次次输给它的事。然后就着这一件，用现在时把这节经文说一遍。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我厌倦了一次又一次把同一个失败带到你面前。谢谢你，你一直在给，并没有开始限量。今天早上我不敢说自己赢了什么，因为我没有。我只是伸手接住你仍然在发的那一份。求你让我今天带着这个走。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_032",
+      "day": 32,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Deuteronomy",
+        "chapter": 6,
+        "verse": "6",
+        "full_reference": "Deuteronomy 6:6"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#灵修断断续续",
+        "#放在心上"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "我今日所吩咐你的话都要记在心上，"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "law/instruction",
+          "primary_theme": "internalising"
+        },
+        "niv_word_count": 13,
+        "context_note": "这节经文紧接在那句著名的吩咐之前——要把这些话教训你的儿女。次序是有意的：先记在自己心上，然后才在家里、在路上谈论。希伯来文的「心」包括思想和意志，不只是情感，是整个里面的操控室。"
+      },
+      "devotional": {
+        "structure": "见证",
+        "zh-Hans": {
+          "meditation": "有好些年，我一直在教孩子一样我自己还没让它落在心里的东西。这是看得出来的。孩子分得清：哪一条是你在执行的规矩，哪一样是你真的靠它活着。\n\n后来改变的地方很小，也不起眼：一节经文，在脑子里带了整整一个星期，不研究，就是带着。第七节说的教导儿女，是后来才发生的，而且比我以为的容易。",
+          "action_step": "今天带一句经文在身上。不要研究它，就带着，时不时回来看一眼。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我一直想把一样还没在我里面安顿下来的东西交出去。求你让我慢下来。今天求你把你的一句话放在我心里，一次次把我带回到它那里。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_033",
+      "day": 33,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "1 Thessalonians",
+        "chapter": 5,
+        "verse": "18",
+        "full_reference": "1 Thessalonians 5:18"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#难以感恩",
+        "#在其中而非因为"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "凡事谢恩；因为这是神在基督耶稣里向你们所定的旨意。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/exhortation",
+          "primary_theme": "thanksgiving"
+        },
+        "niv_word_count": 15,
+        "context_note": "这里的希腊文介词是 en——在凡事之中，不是为凡事。保罗不是要谁为一件可怕的事发生而心存感激。他说的是，在事情正中间，仍然有一样真实的可以对神说谢谢，而去找它并不是自欺。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "是「凡事中」，不是「为凡事」。保罗没有要我们为这件事发生而感谢。他是要我们在事情正发生的时候，找到一样可以向他道谢的。\n\n这个要求小得多，也可行得多。作为基督徒，我们有时彼此索要的，其实是一种叫作否认的感恩。这一节不是那个。我们不必把难处说成好事——只是承认，这里不止有它一样。",
+          "action_step": "说出一样和难处同时存在、并且是真的、值得感谢的事——不是拿它来取代难处。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我没办法为这件事感谢你，我也不打算装。但我可以在这件事里面感谢你。今天早上，有一样也是真的，我把它端到你面前。求你帮我两样都拿得住，哪一样都不放手。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_034",
+      "day": 34,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Psalms",
+        "chapter": 73,
+        "verse": "26",
+        "full_reference": "Psalms 73:26"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#身心俱疲",
+        "#神是我的份"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "我的肉体和我的心肠衰残；但神是我心里的力量，又是我的福分，直到永远。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "psalm",
+          "primary_theme": "sufficiency"
+        },
+        "niv_word_count": 19,
+        "context_note": "诗篇七十三篇的作者，曾因嫉妒那些日子过得轻省的人，几乎失了信心。他没有把这不公解开，他是走到了另一个地方。「福分」这个词，是当年地业在各支派中分配时用的：属于你的那一份，不管别的一切发生什么，它都仍是你的。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "他一开口就先认了：身体撑不住了，里面那部分也一样。没有辩解，没有转折——你也不必替自己找一个。\n\n接着是「福分」这个词：当年分地的时候，各支派所领的那一份。你的那一份。不管别的一切怎么样，它都是你的。所以问题不是你会不会用尽——你会的。问题是，用尽的那一刻，仍然有一位是属于你的！",
+          "action_step": "先老老实实地说出前半句——你哪里正在撑不住——然后再说后半句。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我的身体累了，我这个人也累了，今天早上我不想把它说得好听。求你在那个已经空掉的地方，作我里面的力量。别的都不剩了，你仍然是我的福分。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_035",
+      "day": 35,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Matthew",
+        "chapter": 5,
+        "verse": "9",
+        "full_reference": "Matthew 5:9"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#夹在中间",
+        "#使人和睦"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "使人和睦的人有福了！因为他们必称为神的儿子。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "gospel/beatitude",
+          "primary_theme": "peacemaking"
+        },
+        "niv_word_count": 12,
+        "context_note": "希腊文是 eirēnopoios——造和平的人，是去促成和睦的人，不是把场面按住不出声的人。使人和睦，多半意味着走进冲突里，而不是绕开它。耶稣把神儿子这个称呼，接在这一件具体的事上，这暗示它是要付代价的。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "是「使人和睦」，不是「维持不吵」。这两样差得太远了。\n\n维持不吵，是没有人把声音抬高。使人和睦，是走进那间真正有事的屋子。作为基督徒，我们常常因为前一样被夸奖，被呼召去做的却是后一样。如果你是家里那个把话咽下去、好让这顿饭吃得和气的人，这节经文所祝福的不是这个。它比这个更难，也比这个更轻省。",
+          "action_step": "找出一处你靠咽下去来维持不吵的地方。问问自己：在那里真的去使人和睦，会是另一个样子吗？"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我一直在维持不吵，却把它叫作使人和睦。求你让我看见这两样的分别，给我勇气说出那句真能修补些什么的话，也给我智慧分得清：沉默什么时候是爱，什么时候是怕。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_036",
+      "day": 36,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Colossians",
+        "chapter": 3,
+        "verse": "23",
+        "full_reference": "Colossians 3:23"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#职场无人赏识",
+        "#为主而做"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "无论做甚么，都要从心里做，像是给主做的，不是给人做的，"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/exhortation",
+          "primary_theme": "work"
+        },
+        "niv_word_count": 19,
+        "context_note": "保罗这话是写给家中仆婢的，而在同一封信里他也吩咐作主人的要公平待人——他不是在认可这种制度，而是在对身处其中的人说话。「从心里做」原文是 ek psychēs，从魂里发出。重点是换了观众，不是要求人喜欢不公平的处境。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "这封信最初写给的，是一群工作确实不被看重、又走不掉的人。保罗没有告诉他们「这样也挺好」。他告诉他们的是：有谁在看。今天早上，如果你正在一个付出会消失的地方——那份报告最后署了别人的名字，那个家只有在少了什么的时候才注意到——这句话就有分量。要做的事没有变，变的是观众。\n\n这也不是叫人接受被苛待。同一封信里，保罗也对作主人的说了话。这是一个许可：你可以不再用「那个本来就没在看的人有没有注意到」，来衡量自己的工作了！",
+          "action_step": "今天挑一件不会有人打分的活儿，认认真真做完。就当有人会打分那样做。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我在一些没有人看见的事上真的用了心，而这渐渐让我心里发苦。今天早上，求你换掉我做工的对象。让我把它做好，是因为你在看；也求你拦住我，别再拿那些本来就没在看的人来衡量自己。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_037",
+      "day": 37,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Isaiah",
+        "chapter": 25,
+        "verse": "1",
+        "full_reference": "Isaiah 25:1"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#回顾过往",
+        "#神的信实"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "耶和华啊，你是我的神；我要尊崇你，我要称赞你的名。因为你以忠信诚实行过奇妙的事，成就你古时所定的。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "prophecy/song",
+          "primary_theme": "praise"
+        },
+        "niv_word_count": 26,
+        "context_note": "以赛亚是在一大段关于将来审判的信息中间，忽然唱起歌来的。「古时所定的」在希伯来原文里，指的是很久以前就已成形的计划——以赛亚所称颂的，不是一次突然的搭救，而是一个长久的心意终于显出来了。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "以赛亚称颂的，不是刚刚发生的一件事。他称颂的是一个早已定下的计划，他到这时候才看得出来。\n\n信实对我们来说，通常就是这个样子：当时看不出，回头才明白，而且要回头看得够远，才看得见它的形状。我们今早就这样看一看，别只回头看到上个星期。",
+          "action_step": "回头想五年前。说出一件当时你看不见、如今才明白是神做的事。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，你已经做过的那些事，我记性很差。今天早上求你把我带回去，让我看见它的形状。谢谢你，在我察觉之前很久，你就已经定下了那些计划。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_038",
+      "day": 38,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "2 Timothy",
+        "chapter": 1,
+        "verse": "7",
+        "full_reference": "2 Timothy 1:7"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#畏缩不前",
+        "#刚强的心"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "因为神赐给我们，不是胆怯的心，乃是刚强、仁爱、谨守的心。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "courage"
+        },
+        "niv_word_count": 18,
+        "context_note": "保罗写这话，是写给一位似乎正在往后缩的年轻同工。这三样是一套：刚强若没有仁爱就会变硬，仁爱若没有 sōphronismos 就没有形状。最后那个词指的是清醒、自我管束的心思——是清明，不是压抑。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "三样，一起给的，而且彼此需要。刚强单独存在会变硬。仁爱单独存在没有形状。第三个词说的是一个清明、能自我管束的心思——是判断力，不是压抑。\n\n再留意没有列在里面的那一样。胆怯从来没有发给过你。这一周是什么让你把话收了回去，那不是从神来的！",
+          "action_step": "找出这一周你没有说出口的那一句话。今天就决定：说，还是不说。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，该开口的地方我沉默了，还把它叫作谦卑。求你把刚强、仁爱和清明的心思一同给我，不要只有其中一样。今天该说什么，求你指给我看。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_039",
+      "day": 39,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Jeremiah",
+        "chapter": 33,
+        "verse": "3",
+        "full_reference": "Jeremiah 33:3"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#祷告像独白",
+        "#神会回答"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "你求告我，我就应允你，并将你所不知道、又大又难的事指示你。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "prophecy",
+          "primary_theme": "prayer"
+        },
+        "niv_word_count": 19,
+        "context_note": "神对耶利米说这话时，先知正被拘禁，城正被围困——这是最不像发出「尽管问」这种邀请的时刻。「又大又难的事」背后的希伯来文，本义是被围起来、进不去的：那是你再怎么使劲想也够不着的东西。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "神说这话的对象，是一个被关押的人，所在的城眼看就要陷落。这就是那句「你求告我」发出时的处境。\n\n作为基督徒，我们习惯拿些整齐的问题去问神，附带一个可以接受的答案。这里「又大又难的事」原文的意思是被围起来的、够不着的——不是你多想一会儿就能想到的。今天问他一个你还不知道答案的问题。",
+          "action_step": "今天早上向神问一个真问题。不是求什么，是问什么。问完，给它留出空白。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我称之为祷告的，大半是我在说话。今天我想问你一件事，然后真的等一等。这个我一直躲着不问的问题，现在放在这里。求你把我自己够不着的指给我看。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_040",
+      "day": 40,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Hebrews",
+        "chapter": 11,
+        "verse": "1",
+        "full_reference": "Hebrews 11:1"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#看不见证据",
+        "#信心的实底"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "信就是所望之事的实底，是未见之事的确据。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "faith"
+        },
+        "niv_word_count": 17,
+        "context_note": "「实底」的希腊文 hypostasis，意思是站在底下的东西——地基，或一纸地契。「确据」elenchos 是法庭用语，指呈上的证据。两个词都与感受的强弱无关。希伯来书给信心下的定义，是一件有重量、站得住的东西，不是一种你把自己鼓动起来的状态。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "这节经文里的两个词都是硬邦邦的。「实底」原文 hypostasis，是站在下面的东西——地基，或者一纸地契。「确据」是个法庭上的词。\n\n所以信心不是你今天早上的感觉有多强烈。它是有重量的东西，托着你所盼望的那件事。这就是说，一个信心安静、声音发抖的女人，脚下站的地和任何人是同一块！",
+          "action_step": "今天别再评估自己有多少信心。就着你说你相信的，去做一件事，让那件事作为衡量。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我总在检查自己的信心够不够，结果总是不够。谢谢你，信心是一个地基，不是一种感觉。今天求你让我站在上面，而不是一直去试它。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_041",
+      "day": 41,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Jeremiah",
+        "chapter": 29,
+        "verse": "13",
+        "full_reference": "Jeremiah 29:13"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#觉得神很远",
+        "#专心寻求"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "你们寻求我，若专心寻求我，就必寻见。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "prophecy/letter",
+          "primary_theme": "seeking"
+        },
+        "niv_word_count": 15,
+        "context_note": "这句话和那句著名的「我知道我向你们所怀的意念」出自同一封信——写给已经被掳走、并被告知要在巴比伦住七十年的人。寻见神的应许是在被掳之中给的，不是等被掳结束之后。希伯来文的「心」同时包含思想和意志，所以「专心」说的是不分心、不留退路，而不是情绪有多强烈。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "留意这话是写给谁的。不是给日子顺遂的人，是给被掳到巴比伦、被告知要在那里住上大半辈子的人。\n\n也留意那个条件：专心。希伯来文里的「心」不是指情绪有多热烈，而是指整个人不再分成两半——一边找神，一边悄悄把退路铺好，好让找不着也照样过得去。我们大多数人很擅长铺后面那条路。今天少铺一点，像真的想被寻见的人那样去寻求。",
+          "action_step": "今天给神十分钟，不分心的十分钟。手机不放在同一个房间，不列清单，背景里什么也不开着。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我总是在别的事情的缝隙里找你，然后又奇怪你为什么显得那么远。今天我想好好地找你一次，不是拿剩下的时间打发你。十分钟，不分心，别的什么都不开着。求你在那里与我相遇——就算这十分钟里我只做到安静地坐着。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_042",
+      "day": 42,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Isaiah",
+        "chapter": 40,
+        "verse": "29",
+        "full_reference": "Isaiah 40:29"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#耗尽了",
+        "#软弱中得力"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "疲乏的，他赐能力；软弱的，他加力量。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "prophecy/comfort",
+          "primary_theme": "strength"
+        },
+        "niv_word_count": 13,
+        "context_note": "前一节说，神自己永不疲乏、也不困倦——这个对比是有意写的。和合本译作「软弱的」，希伯来原文比「累了」重得多，指的是一点力量都没有了。在以赛亚书这一章里，一无所有不是领受的障碍，恰恰是领受的资格。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "先看这话是对谁说的。不是对「疲乏的」——那半句另有一个词。是对那些一点力气都不剩的人。\n\n这值得停一停。因为我们大多默认，神帮的是那些差一点就撑住了的人。一个靠着空油箱在跑的女人，往往觉得自己没有资格：好像枯竭是她早该解决掉的性格缺陷。其实正相反。在这节经文里，空，是资格，不是障碍。所以别再把自己所剩无几的事藏起来，好像那是在神面前见不得人的东西。他把力量给的，正是那些一点力量也没有的人。今天早晨的你就是这样的人，而这正是重点！",
+          "action_step": "今天照实告诉神你还剩多少力气。不要给属灵的答案——给那个诚实的数字。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我已经空着跑了好一阵子，还管这个叫作撑得住。今天早晨我几乎什么都不剩了，我不想再在你面前假装了。谢谢你，一无所有并不会取消我来到你面前的资格。求你把力量赐给疲乏的人，就从这里开始。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_043",
+      "day": 43,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Ephesians",
+        "chapter": 5,
+        "verse": "16",
+        "full_reference": "Ephesians 5:16"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#时间不够用",
+        "#赎回光阴"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "要爱惜光阴，因为现今的世代邪恶。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/exhortation",
+          "primary_theme": "time"
+        },
+        "niv_word_count": 11,
+        "context_note": "「爱惜」在希腊文是 exagorazō，一个市场用词：把东西从它现在所在的地方买出来、赎回来。「光阴」用的是 kairos，指恰好的时机，不是 chronos 那种钟表上的时间。保罗不是在叫人更有效率，他是说：好的时机必须被赎回来，否则这一天会替你把它花掉。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "「爱惜」在原文里是个市场用语：把东西赎回来、买回来。而「光阴」不是钟表上的时间，是那个恰好的时机、那个口子。这几乎和我们用这节经文的方式相反。作为基督徒，我们把它变成了一道效率命令，然后一休息就内疚。保罗说的是一件更难也更温柔的事：一天如果任它自己走，它会把你最好的时机花在别人的紧急事情上。把一刻买回来，往往意味着做得更少而不是更多——这个版本没人会印在海报上。\n\n所以我们今天都问自己一句：哪一刻需要在这一天把它拿走之前，先赎回来。",
+          "action_step": "找出今天最要紧的那一刻，在别的事情来抢之前，先把它守住。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我的日子总花在别人的紧急事上，我还把这叫作忠心。求你让我看见今天真正要紧的是哪一刻，在那么多争抢我的事情里面。也求你给我勇气把它赎回来——哪怕因此有件事没做完，哪怕有人会注意到。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_044",
+      "day": 44,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Jeremiah",
+        "chapter": 17,
+        "verse": "7",
+        "full_reference": "Jeremiah 17:7"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#靠谁",
+        "#倚靠神的人有福"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "倚靠耶和华、以耶和华为可靠的，那人有福了！"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "prophecy",
+          "primary_theme": "trust"
+        },
+        "niv_word_count": 15,
+        "context_note": "紧接着的第八节把这样的人比作栽在水边的树——根扎到溪水那里，旱年里叶子仍旧青翠。耶利米刚刚描述过相反的样子：沙漠里的杜松。所以这里的福不是一种心情，是一套根系，而它偏偏要到干旱的年头才显出来。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "紧接着的下一节把这句话画成了一幅图：一棵栽在水边的树，旱年里叶子还是绿的，仍旧结果子。\n\n这就是这里说的「有福」。不是运气一路顺，是一套根系。根系是看不见的，长得也慢，只有在不下雨的那一年才显出它的要紧。所以今天早晨，如果你觉得什么都没在长，这句话正是给你的！",
+          "action_step": "说出事情一紧的时候你其实靠的是什么。诚实地说出来，然后把它交给神。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，一紧张我先抓的是自己的计划。谢谢你，信靠你是一套根系，不是一种心情。求你在我里面安静地长它，朝着水的方向。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_045",
+      "day": 45,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Proverbs",
+        "chapter": 3,
+        "verse": "5",
+        "full_reference": "Proverbs 3:5"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#想不明白",
+        "#专心倚靠"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "你要专心仰赖耶和华，不可倚靠自己的聪明，"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "wisdom",
+          "primary_theme": "trust"
+        },
+        "niv_word_count": 15,
+        "context_note": "译作「倚靠」的希伯来动词，本义是把重量靠上去，像人拄着拐杖那样把身体压上去。箴言并不反对聪明——整卷书都在教人得着它。它反对的是把整个人的重量压在聪明上，这是两回事。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "「倚靠」这个动词的意思是把身体的重量压上去。这不是叫人别思考——箴言整本书都在教人把事情想清楚。\n\n它说的是重量该压在哪里。我们可以一整天都在用自己的聪明，同时并不把整个人压在它上面。这中间的差别，就是一个把事情安排周到的女人，和一个不把事情想出结果就睡不着的女人之间的差别。",
+          "action_step": "把这件事诚实地想到你能想的尽头，然后停下来，把重量放到别处去。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，这件事我已经想到头了，还是翻来覆去。我不打算停止动脑子，我只是不再站在它上面。今天早晨，求你接过这件事的重量。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_046",
+      "day": 46,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Romans",
+        "chapter": 12,
+        "verse": "12",
+        "full_reference": "Romans 12:12"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#长期忍耐",
+        "#恒切祷告"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "在指望中要喜乐；在患难中要忍耐；祷告要恒切。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/exhortation",
+          "primary_theme": "endurance"
+        },
+        "niv_word_count": 10,
+        "context_note": "希腊原文是三个短句，每一句都是一个名词配一个「抓住不放」的动词。最后那个 proskartereō，意思是紧贴着一样东西不肯被挪开，圣经里也用它来形容人挤在人群中仍然跟紧耶稣。这里的喜乐是挂在指望上的，不是挂在处境上。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "三个短句，像三脚架一样彼此撑住。喜乐挂在指望上，不挂在今天过得怎么样。忍耐是给那些你缩短不了的患难预备的。最后那个词的意思是：黏住一样东西，不肯被挪开。\n\n如果你已经松开了第三样——最近的祷告只剩下心里匆匆过一下——这件事值得知道，而不值得自责——另外两样通常撑不了多久也会塌，现在你知道原因了。今天早晨重新抓住它。一句话就是个开始！",
+          "action_step": "三样里挑出你放掉的那一样。今天用最小的方式把它做一次。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我把祷告松开了，接着喜乐和忍耐也一样样掉了。今天早晨我不需要一套计划，我也知道自己坚持不了那样的计划。只求你帮我重新抓住，用最小最小的方式，就从我现在说的这句话开始。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_047",
+      "day": 47,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Mark",
+        "chapter": 9,
+        "verse": "23",
+        "full_reference": "Mark 9:23"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#信心不足",
+        "#凡事都能"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "耶稣对他说：「你若能信，在信的人，凡事都能。」"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "gospel/narrative",
+          "primary_theme": "faith"
+        },
+        "niv_word_count": 12,
+        "context_note": "一位父亲刚为儿子说过「你若能做什么，求你怜悯我们」，耶稣把这句话原样递还给他。用这节经文之前，先读下一节：父亲回答「我信，但我信不足，求主帮助」——耶稣照样动了手。这段故事的重点从来不是谁的信心够不够大。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "别停在这一节。往下读一节：那位父亲说，我信，但我信不足，求主帮助。而耶稣照样为他做了他求的事。\n\n作为基督徒，我们容易把这句话听成一道跨不过去的门槛。它不是。它是一段对话的开头，对面是一位快撑不住的父亲，他的信心正在出声地裂开，结局却是好的。今天早晨把你手里有的都带来，包括那个不管用的部分。",
+          "action_step": "为那件你已经半放弃的事祷告，并且把诚实的后半句也说出来：求主帮助我的不信。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我信，我又不信，今天早晨这两样都是真的。求你帮助我的不信。我把那件已经半不敢盼望的事，就照我现在的样子带到你面前。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_048",
+      "day": 48,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Romans",
+        "chapter": 15,
+        "verse": "13",
+        "full_reference": "Romans 15:13"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#心里干涸",
+        "#盼望满溢"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "但愿使人有盼望的神，因信将诸般的喜乐、平安充满你们的心，使你们借着圣灵的能力大有盼望！"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/benediction",
+          "primary_theme": "hope"
+        },
+        "niv_word_count": 31,
+        "context_note": "这是保罗在他最长的一段论证收尾时的祝福。留意顺序：神充满，漫出来是结果——没有被充满过的东西不可能漫出来。他称神为「使人有盼望的神」，把盼望说成神本身的属性，而不是我们自己鼓起来的一种情绪。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "注意顺序，因为我们常常反着来。先充满，才漫出来。没有人靠使劲挤杯壁，就让一个空杯子溢出来。\n\n也注意那个称呼：使人有盼望的神。盼望先是他的，然后才是你的。这意味着今天早晨，没有人要求你自己造出一点盼望来。你被邀请的，是被充满！",
+          "action_step": "今天在你给出任何东西之前，先求神充满你。就用这几个字说出来。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我一直用一个空杯子往外倒，还称它作服事。今天早晨，求你先充满我。不是为了让我感觉好一点，是为了让流到别人那里的，真是你的。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_049",
+      "day": 49,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Joshua",
+        "chapter": 1,
+        "verse": "9",
+        "full_reference": "Joshua 1:9"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#面对未知",
+        "#神必同在"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "我岂没有吩咐你吗？你当刚强壮胆！不要惧怕，也不要惊惶；因为你无论往哪里去，耶和华─你的神必与你同在。」"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "narrative/commission",
+          "primary_theme": "courage"
+        },
+        "niv_word_count": 29,
+        "context_note": "摩西刚刚去世，约书亚必须带领整个民族过约旦河，进入一片没有人画过地图的土地。和合本「刚强壮胆」背后是两个希伯来动词 chazaq 和 amats，本义都是「被使之坚固」——力量是从他自己以外来的。神回应他的惧怕，用的不是计划，是陪伴。"
+      },
+      "devotional": {
+        "structure": "直解",
+        "zh-Hans": {
+          "meditation": "这话是对一个站在自己从未走过的路口上的人说的。他要接替的那位领袖，没有人能真正替上。而神给的答案不是一套方略，也不是一份把风险都算清楚的计划，是一个同在——「你无论往哪里去」，这半句盖住的，正是你此刻还没想到的那些地方。\n\n所以就当这话是对你说的。你要找的勇气，不是一种你得先练出来的性格。它是那一位与你一同进入今天的结果。",
+          "action_step": "说出今天你最想躲开的那一件事，把时间也说出来，然后求神陪你一起进去。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，谢谢你陪我进入的是真实的这一天，不是一个更安全的版本。这一天里有些部分我心里发怵，而你并没有为此责备我。求你用你的同在回答我的害怕，也求你先我一步，走进那件我一直不想面对的事。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_050",
+      "day": 50,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Psalms",
+        "chapter": 150,
+        "verse": "6",
+        "full_reference": "Psalms 150:6"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#提不起劲",
+        "#还有气息"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "凡有气息的都要赞美耶和华！你们要赞美耶和华！"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "psalm",
+          "primary_theme": "praise"
+        },
+        "niv_word_count": 11,
+        "context_note": "这是整卷诗篇的最后一句话，而这卷书里的哀哭远多于赞美。放在前面一百四十九篇的背景里读——包括那些结束在黑暗里的诗篇——它给出的门槛是刻意压到最低的：有气息。除此以外，什么都不要求。"
+      },
+      "devotional": {
+        "structure": "发问",
+        "zh-Hans": {
+          "meditation": "这是整卷诗篇的最后一句，而这卷书里的抱怨比赞美多得多。所以那个限定条件很值得留意。不是让日子过得顺的人来赞美他，是凡有气息的都可以。\n\n那么今天早晨的门槛就是呼吸。无论这一个星期是怎么熬过来的，你都还在呼吸——那么这句话有没有可能，本来就是写给此刻的你的？",
+          "action_step": "深深吸一口气，然后说一句关于神的、你真心认同的好话。今天就这一件。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，今天早晨我状态不好，能拿出来的很少。我还在呼吸，而你似乎认为这就够了。那么我就说：你是良善的，我现在说出来。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_051",
+      "day": 51,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Exodus",
+        "chapter": 23,
+        "verse": "25",
+        "full_reference": "Exodus 23:25"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#日常琐碎",
+        "#祝福在饭桌上"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "你们要事奉耶和华─你们的神，他必赐福与你的粮与你的水，也必从你们中间除去疾病。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "law/covenant",
+          "primary_theme": "provision"
+        },
+        "niv_word_count": 23,
+        "context_note": "这是神在西奈山上对以色列人说的立约的话，不是一份普遍的健康保证——这些应许连着一个特定的民族和一份特定的约。真正扎眼的是被祝福的东西有多小：不是异象，不是胜仗，是粮和水，是桌上最平常的那些。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "看清楚神说他要赐福的是什么。不是你的呼召，不是你的事奉。是你的粮，你的水。\n\n作为基督徒，我们有时会养出一套奇怪的等级：厨房是真实生活被打断的地方，灵修才是真实生活发生的地方。这节经文把祝福放在你一天里待得最久的那些地方。放在饭上。放在水上。放在最平常的事上。",
+          "action_step": "今天为一件最平常的事好好道一次谢——一顿饭，一杯茶，或者打开就有的自来水。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我一直把生活里大半的部分当成不算数的那部分。求你今天祝福这些平常事——一顿顿饭，洗不完的碗，还有我早已不再留意的小小供应。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_052",
+      "day": 52,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "1 Corinthians",
+        "chapter": 15,
+        "verse": "58",
+        "full_reference": "1 Corinthians 15:58"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#付出看不见成果",
+        "#劳苦不是徒然"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "所以，我亲爱的弟兄们，你们务要坚固，不可摇动，常常竭力多做主工；因为知道，你们的劳苦在主里面不是徒然的。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/exhortation",
+          "primary_theme": "perseverance"
+        },
+        "niv_word_count": 35,
+        "context_note": "这是保罗论复活那一章的最后一句，「所以」这个词很要紧——不放弃的理由，完全建立在他刚刚论证过的死人复活上。译作「徒然」的希腊文 kenos 意思是空的。保罗要说的是：在基督里做的，没有一样最后是空壳。"
+      },
+      "devotional": {
+        "structure": "见证",
+        "zh-Hans": {
+          "meditation": "有六年左右，我做的事拿不出任何可以给人看的成果。我把孩子带大，而他们不记得其中的大部分；我在一份工作里，好的那些部分没有人看得见。那几年我读这节经文，读了会生气——听起来像有人拍拍我的头。我漏掉的是一个词：所以。保罗不是在给人打气，他是在从整整一章关于死人复活的论证里，得出一个结论。\n\n也就是说，这不是在夸我用力用得好，这是在说事情最后去了哪里。凡放进去的，不会落空。那时候我感觉不到。后来，我一点一点信了。",
+          "action_step": "说出一段做了很久却看不见结果的日子。然后出声说一句：那不是白费的。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我把很多年花在了没有人看得见的事情上，心里也悄悄怀疑过，这些到底有没有落在什么地方。谢谢你，在你里面所做的，没有一样是空的。我看不见它们去了哪里，我愿意相信你看得见。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_053",
+      "day": 53,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "James",
+        "chapter": 1,
+        "verse": "22",
+        "full_reference": "James 1:22"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#知道却不做",
+        "#行出来"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "只是你们要行道，不要单单听道，自己欺哄自己。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "obedience"
+        },
+        "niv_word_count": 15,
+        "context_note": "希腊文 paralogizomai 是个记账的词：算错账，把实际上不在账上的东西记进账里。雅各不是在责备人不够努力，他是在指出一种很具体的自欺——把「听见了」记成了「做过了」。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "「欺哄」这个词在原文里是记账用语：把一笔实际上并不存在的数记进自己的账里。听了一篇好道，就觉得自己有长进——发生的正是这件事。\n\n雅各不是要我们在周五之前活出一个更新的人生。他要的是一件事，从「听见」那一栏挪到「去做」那一栏。一件。今天。我们各自挑一件吧。",
+          "action_step": "把一件你已经知道好几周该做的事，今天做掉——做得不漂亮也没关系。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我一直把只是听懂了的事记在自己账上。求你今天把其中一件挪过去。让我看清是哪一件，也让我在还没想完之前就先去做。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_054",
+      "day": 54,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "1 Corinthians",
+        "chapter": 6,
+        "verse": "19",
+        "full_reference": "1 Corinthians 6:19"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#与身体的关系",
+        "#身体是圣殿"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "岂不知你们的身子就是圣灵的殿吗？这圣灵是从神而来，住在你们里头的；并且你们不是自己的人，"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "the body"
+        },
+        "niv_word_count": 28,
+        "context_note": "保罗写这段话，是写给一间容忍性剥削的教会，所以它原本针对的处境很具体。但底下那个宣告比它的第一层应用宽得多：身体不是人里面次一等的部分，也不是一个需要被克服的问题。它是神选择居住的地方。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "我们大多数人和自己的身体，有一段很长、很不友善的关系。它是要被修正的、要被遮住的、要硬撑过去的、要替它道歉的。很少有女人能一路走到四十岁，底下还没有一段一直在播放的挑剔声音。\n\n保罗一句话就切到了这一切下面。这里是神选择住下来的地方。不是十年前的那个版本，也不是你一直说要恢复到的那个版本。是今天早晨的这一个，带着它扛过的所有事，也带着它已经做不动的那些事。他搬进来了，他没有要求换一个！",
+          "action_step": "今天为身体做一件善待它的事——好好吃饭，喝够水，早点睡，或者在它喊停的时候真的停下来。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我大半辈子都在对自己的身体说刻薄的话，还把这叫作自律。你却选择住在这里。求你教我像你那样对待它——不把它当一个待改造的项目，也不把它当一个让人失望的东西。今天求你指给我一件善待它的小事。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_055",
+      "day": 55,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Deuteronomy",
+        "chapter": 31,
+        "verse": "6",
+        "full_reference": "Deuteronomy 31:6"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#怕面对的人",
+        "#祂不撇下"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "你们当刚强壮胆，不要害怕，也不要畏惧他们，因为耶和华─你的神和你同去。他必不撇下你，也不丢弃你。」"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "narrative/exhortation",
+          "primary_theme": "courage"
+        },
+        "niv_word_count": 29,
+        "context_note": "摩西先对全会众说这话，之后才私下对约书亚重说一次——勇气不是留给领袖的。「因他们」指的是具体的对手，不是一般意义上的焦虑。希伯来原文用了双重否定，语气很重：必不撇下，必不丢弃。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "注意，这话先是对所有人说的，之后才单独对约书亚说一次。勇气不是只发给带头的那个人。\n\n也注意它有多具体：不要因他们而惧怕。不是泛泛地讲焦虑，是某一群具体的人，在某一个具体的日子。作为基督徒，我们容易把惧怕说得很属灵、很笼统。圣经通常把它按在具体的地方，因为惧怕本来就住在那里。",
+          "action_step": "说出你正在发怵的那个具体的人，或者那一场会。就为那一件祷告，指名道姓地祷告。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，今天早晨不是笼统的害怕，是一次具体的谈话，一个具体的人。求你陪我进那个房间。谢谢你，你必不撇下我，也不会中途走开。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_056",
+      "day": 56,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Galatians",
+        "chapter": 3,
+        "verse": "26",
+        "full_reference": "Galatians 3:26"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨力量",
+        "#靠成就定义自己",
+        "#神的儿女"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "所以，你们因信基督耶稣都是神的儿子。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "identity"
+        },
+        "niv_word_count": 12,
+        "context_note": "保罗针对的，是一间被告知「你们还需要额外资格才算真正属于神」的教会。在那个世界里，身份地位就是一切——所以「都」是这句话里最锋利的字。这里的「儿子」是一个法律词，指在家中拥有完全的身份和继承权，不是一个亲昵的称呼。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "注意那个「都」字。保罗写信的对象，正被人告知：你们还得再添些资格，才算真正属于这里。这也是我们大多数人一直泡在里面的水。你问一个女人她是谁，她通常会告诉你她做什么；如果那件事最近变了——工作没了，一个角色结束了，孩子长大了——她会先愣一下才回答。\n\n这节经文给你的身份，不是任何一次升迁颁发的，因此也不是任何一封裁员通知能收回的。今天早晨，在你还没做出任何一件事之前，你因着信，已经是神的儿女了！",
+          "action_step": "今天早晨向自己介绍你自己，不提职业，也不提任何角色。说说剩下的是什么。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我总是用我做出了什么来定义我自己，一到什么都没做出来的日子，就不知道自己是谁了。谢谢你，这个身份是白白给的，不是挣来的，也没有人能收回一样他并没有发出的东西。今天让我从这个身份里去做事，而不是为了挣它去做事。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_057",
+      "day": 57,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Lamentations",
+        "chapter": 3,
+        "verse": "23",
+        "full_reference": "Lamentations 3:23"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#疲惫不堪",
+        "#神的信实"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "每早晨，这都是新的；你的诚实极其广大！"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "poetry/lament",
+          "primary_theme": "mercy"
+        },
+        "niv_word_count": 9,
+        "context_note": "耶利米是在耶路撒冷的废墟里写下这句话的，大约在主前 586 年——不是从安全的地方，是从瓦砾堆上。「诚实」背后的希伯来文是 emunah，指结实到可以站上去的东西，不是一种温暖的情绪。他描述的是：当别的都塌了，还立着的是什么。"
+      },
+      "devotional": {
+        "structure": "直解",
+        "zh-Hans": {
+          "meditation": "耶利米写下这句话时，他的城正躺在瓦砾里。这不是顺境里的感叹，是从废墟中一点一点数出来的。他还在数那些新的。\n\n留意那个时间点。神的慈爱不是攒起来、按功劳配给的，而是每天早晨新鲜送到——不管你昨夜睡得好不好。昨天那一份已经过去，因为你不再需要它了。今天等着你的，是专为今天预备的。",
+          "action_step": "在你伸手去拿手机之前，先出声说一句话：今天有属于今天的怜悯。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，谢谢你在天刚亮的时候就来见我，而不是等我力气用尽了才出现。我醒来时手里还攥着昨天。求你帮我松开它，也开我的眼睛，看见你今天早晨新做的事。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_058",
+      "day": 58,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Numbers",
+        "chapter": 6,
+        "verse": "24",
+        "full_reference": "Numbers 6:24"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#需要被祝福",
+        "#蒙保守"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "『愿耶和华赐福给你，保护你。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "law/blessing",
+          "primary_theme": "blessing"
+        },
+        "niv_word_count": 7,
+        "context_note": "神一字一句地口授这段祝福，吩咐祭司要说在百姓身上——经文说，他们这样做，就是把神的名放在百姓身上。这也是目前出土最古老的圣经经文，写在一个约主前 600 年的小银卷上。它从一开始就是要被大声说出来的，不是自己默读的。"
+      },
+      "devotional": {
+        "structure": "发问",
+        "zh-Hans": {
+          "meditation": "这段祝福不是神描述出来的，是他一字一句口授的，并且吩咐祭司要出声说在人身上。它本来就是给人听的，不是给人读的。而我们大多数人为别人祝福，比自己接受祝福熟练得多。\n\n那么，上一次有人这样为你祝福，是什么时候？如果答案是很久没有了，你愿不愿意今天早晨让神亲口对你说一次？",
+          "action_step": "把这节经文出声读一遍，中间放进你自己的名字。今天再为另一个人这样说一次。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我很会替别人求，却很不会为自己领受什么。今天早晨我要让你祝福我。求你今天赐福给我、保护我，也让我在天黑以前把它传给一个人。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_059",
+      "day": 59,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Galatians",
+        "chapter": 5,
+        "verse": "22",
+        "full_reference": "Galatians 5:22"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#结不出果子",
+        "#圣灵的工作"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "圣灵所结的果子，就是仁爱、喜乐、和平、忍耐、恩慈、良善、信实、"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "growth"
+        },
+        "niv_word_count": 14,
+        "context_note": "希腊文里「果子」是单数——一个果子有九个面，不是一张九项的清单。保罗把它和前面几节的「情欲的事」对照着写：那一串在原文里叫作「行为」。行为是做出来的，果子是长出来的。没有人能靠更用力，让一个苹果长出来。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "「果子」在原文里是单数。一个果子，九个面，不是九个格子等着你一个一个交白卷。也留意保罗在做的对比：前面那一串叫作「行为」，这一串叫作「果子」。行为是做出来的；果子是长出来的，慢慢地，靠的是植物里面正在发生的事，不是外面加在它身上的事。\n\n所以，从来没有人是靠使劲变得更有忍耐的。今天我们可以不再跟果子较劲，转过头去照顾那看不见的根。",
+          "action_step": "今天先别再操练你最想拥有的那种品格。把那段时间用来单单和神在一起。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我一直想自己造出只有你才能长出来的东西，然后又因为它没有按时出现而觉得自己失败。今天早晨，求你把我的注意力从果子转到根上。你在长什么就长什么，按你自己的速度，也求你给我耐心，不要一遍遍去翻看。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "m_060",
+      "day": 60,
+      "segment": "morning",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Proverbs",
+        "chapter": 2,
+        "verse": "6",
+        "full_reference": "Proverbs 2:6"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#早晨盼望",
+        "#需要智慧",
+        "#祂赐智慧"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "因为，耶和华赐人智慧；知识和聪明都由他口而出。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "wisdom",
+          "primary_theme": "wisdom"
+        },
+        "niv_word_count": 12,
+        "context_note": "箴言第二章以一长串条件句开头——如果你寻找它像寻找银子，搜寻它像搜寻隐藏的珍宝——然后这一节给出这些寻找之所以有效的原因。智慧不是靠力气挖出来的，是被赐下的。雅各书一章五节把同一件事说得更直接。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "这一章的开头是大段的寻找：像寻找银子那样寻找，像挖藏宝那样去挖。然后这一节说明了为什么那些寻找会有结果：因为智慧是耶和华赐的。\n\n所以，寻找是真的要寻找，但产生智慧的不是寻找本身。智慧是从他口里出来的。这意味着，你面前这个决定，不是一场考你聪不聪明的考试。开口求就是了！",
+          "action_step": "就一个具体的决定，简单直白地求智慧。不是求一般的引导——是求这一件事。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我面前有一个决定，我一直把它当成对自己判断力的考试。智慧是你赐的。所以我现在直白地求你，就为这一件事。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_001",
+      "day": 1,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Hebrews",
+        "chapter": 4,
+        "verse": "16",
+        "full_reference": "Hebrews 4:16"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#不敢开口",
+        "#神的恩典"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "所以，我们只管坦然无惧地来到施恩的宝座前，为要得怜恤，蒙恩惠，作随时的帮助。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/exhortation",
+          "primary_theme": "access"
+        },
+        "niv_word_count": 27,
+        "context_note": "希伯来书写给的是犹太基督徒。他们知道至圣所一年只能进一次，只能由一个人进去，还要带着血。在这样的背景下，「坦然无惧地来」是件让人吃惊的事。这里的希腊文是 parrhesia，指公民在众人面前坦白讲话的自由，不是闯入者的胆量。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "我们来到神面前，常常像去见考核——话还没说，心里已经把自我辩护打了半份草稿。希伯来书用的却是另一个词：坦然无惧。不是小心翼翼，也不是先把自己收拾干净再来。\n\n再留意这宝座叫什么名字。是施恩，不是审查。今晚就照着我们真实的样子来吧，别再在路上背台词了。",
+          "action_step": "把你本来打算自己扛下来的那一件事带到神面前。睡前出声说出来。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，今晚我不先把自己收拾整齐才来，因为这是你允许的。谢谢你，这是施恩的宝座，不是审查台。我需要帮助的在这里，我做得不好的也在这里。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_002",
+      "day": 2,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "2 Kings",
+        "chapter": 20,
+        "verse": "5",
+        "full_reference": "2 Kings 20:5"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#流泪祷告",
+        "#被神看见"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "「你回去告诉我民的君希西家说：耶和华─你祖大卫的神如此说：『我听见了你的祷告，看见了你的眼泪，我必医治你；到第三日，你必上到耶和华的殿。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "narrative",
+          "primary_theme": "being heard"
+        },
+        "niv_word_count": 35,
+        "context_note": "希西家当时已经病危，先知刚刚告诉他要交代后事。以赛亚人还没走出王宫，神就叫他回头。希伯来原文里「看见你的眼泪」用的是最普通的那个「看」，没有一点修辞。要说的正是这个：祷告里说不出话的那一部分，神也在留心。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "希西家已经听见了答案：不行。先知说完就走出去了。然后神把他叫了回来。留意神说话的次序：在应许之前，在任何事情有转机之前，先有这一句——我听见了你的祷告，我看见了你的眼泪。眼泪单独占了一句。神没有把它并进祷告里，好像哭只是一种效率低的求告。他是分开数的。\n\n你一直在为之落泪的那件事——那件你已经不想再跟人解释的事——已经被看见了。神并不需要你先把它说得有条有理。不是被忽略，不是被勉强忍受。是被看见！",
+          "action_step": "把那件你已经不再向任何人解释的事，出声说出来。不必替它辩护，说出来就好。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，谢谢你把眼泪和言语分开来数，也谢谢你从没有听厌我的眼泪。这件事我很久以前就不再向人解释了，但我不会停止向你说。谢谢你，被你看见，和被人可怜完全不是一回事。今晚我把它交在你手里，求你替我拿着。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_003",
+      "day": 3,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Acts",
+        "chapter": 16,
+        "verse": "25",
+        "full_reference": "Acts 16:25"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#睡不着",
+        "#患难中的赞美"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "约在半夜，保罗和西拉祷告，唱诗赞美神，众囚犯也侧耳而听。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "narrative",
+          "primary_theme": "praise in trouble"
+        },
+        "niv_word_count": 20,
+        "context_note": "保罗和西拉被剥了衣服、用棍打过，又下在最里面的监牢里——这三样路加都写得很清楚。他们唱诗，希腊文用的是 hymneo，与耶稣在客西马尼之前和门徒同唱的那个词相同。「别的囚犯听见了」是路加自己加的一笔，他是有意写下的。"
+      },
+      "devotional": {
+        "structure": "直解",
+        "zh-Hans": {
+          "meditation": "两个人，被打过，锁在最里面的一间牢房，两脚上了木狗。时间是半夜。路加特意记下他们在那个钟点做了什么：祷告，然后唱诗。\n\n留意最后那一句，因为它常常被读过去——别的囚犯都听见了。没有人是唱给听众听的，那里根本没有听众，只有同在黑暗里睡不着的人。但一个人在难熬的夜里守住的信心，从来不会完全是私事。隔壁房间的女人听得见。走廊那头的孩子听得见。你的半夜比你以为的响，而且不一定是坏事。而半夜里唱得出来的，多半是白天存下的。",
+          "action_step": "今晚若你在该睡的时候醒着，别再跟它较劲十分钟。用那十分钟祷告，能出声就出声。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，此刻我并不想醒着，也很想这一切快点过去。谢谢你，深夜的中间你并没有缺席。如果我睡不着，就让我祷告。若身边有人听见，愿他们从我这里听见的是信靠，不是绝望。求你也把睡眠还给我；若还不能，就陪我坐到天亮。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_004",
+      "day": 4,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Ephesians",
+        "chapter": 4,
+        "verse": "2",
+        "full_reference": "Ephesians 4:2"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#人际摩擦",
+        "#学习忍耐"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "凡事谦虚、温柔、忍耐，用爱心互相宽容，"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/exhortation",
+          "primary_theme": "patience"
+        },
+        "niv_word_count": 13,
+        "context_note": "保罗写这封信时正在坐牢，这一句是以弗所书后半实际教导的开头。希腊文 anechomenoi 的意思是撑住、忍住，别处也用来指忍受艰难。它说的不是你对人的感觉，而是你决定怎么处理心里已经有的那份不耐烦。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "忍耐是个不起眼的词，保罗偏偏选了它。不是彼此纠正。不是把道理说赢。是彼此担待。\n\n作为基督徒，我们有时把对人的耐性当成次一等的美德——改变不了对方，才退而求其次。保罗却把它放得很靠前。真正撑住一个家、撑住一段长久友谊的爱，大半就是这一件事：又一次，选择不说出那句你完全有理由说的重话。今晚不必因为忍不住而定自己的罪，神对你的担待，比你对任何人的都长。",
+          "action_step": "想一想今天你对谁最没有耐性。定下一件明天不再提起的具体事情。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，谢谢你在我学会担待任何人之前，就已经这样担待我。我承认，我的耐性最先用完的地方，往往是最亲近的人身上。求你在我里面养出一些慢下来的东西。明天当我完全有理由说那句重话时，帮我选择不说。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_005",
+      "day": 5,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Proverbs",
+        "chapter": 17,
+        "verse": "9",
+        "full_reference": "Proverbs 17:9"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚赦免",
+        "#家庭旧账",
+        "#选择放下"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "遮掩人过的，寻求人爱；屡次挑错的，离间密友。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "wisdom",
+          "primary_theme": "forgiveness"
+        },
+        "niv_word_count": 16,
+        "context_note": "箴言在这里把处理别人过错的两种方式摆在一起。「遮掩」的希伯来原文是 kasah，与神遮盖人罪所用的是同一个词，意思是挪到看不见的地方，不是当作没有过。「屡次挑错」直译是再走一遍老路：同一块地反复踩，踩出一条道来。"
+      },
+      "devotional": {
+        "structure": "发问",
+        "zh-Hans": {
+          "meditation": "每个家里都有一件被反复提起的事。你母亲每次见面都要说的那句。你每次顶回去的那句。那桩旧账被磨了太多回，如今说出来几乎带点亲昵的口气，却照样伤人。箴言不是要你假装它没发生过——遮掩人的过错，和否认它，是两回事。遮掩是决定：这件事已经说够了，而停下来的那个人，可以是你。\n\n那么，老实说：你家里那件被你一遍遍重提的事，是哪一件？不再说它，并不等于认输——让它在今年安静下来，你要付上的又是什么？",
+          "action_step": "说出你总是拿出来讲的那一件事。现在就决定下次不再提——并告诉神，这是你的选择，不是你输了。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，有一件事我一直反复地说，还告诉自己那叫诚实。有一部分确实是。也有一部分，只是伤口在说话。求你让我分得出来。给我力量把它放下，却不必假装它从没让我痛过；也求你拦住我，别把沉默当成刀子用。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_006",
+      "day": 6,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Psalms",
+        "chapter": 23,
+        "verse": "1",
+        "full_reference": "Psalms 23:1"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#感到匮乏",
+        "#神是牧者"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "（大卫的诗。）耶和华是我的牧者，我必不致缺乏。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "psalm",
+          "primary_theme": "provision"
+        },
+        "niv_word_count": 8,
+        "context_note": "大卫真的牧过羊，所以这个比喻一点也不浪漫——放羊是又脏又累的活，还常常要熬夜。「必不致缺乏」在希伯来原文里只是一个动词，意思是缺少。它应许的不是丰足有余，而是够用：所需要的，会在那里。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "整句只有几个字，而一切都定在开头那两个字上：耶和华「是」。不是曾经是，不是也许是。是现在，是今晚。\n\n还有那个「我的」。大卫没有说一位牧者，也没有说以色列的牧者，虽然两样都真。他说的是我的。今天这一天无论花掉你多少，这句话仍然是你可以出声说出来的，用现在式，在睡前说！",
+          "action_step": "把这节经文慢慢出声念一遍，在前面加上你自己的名字。然后就不要再说话了。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，今晚我不求什么大事。我只想说这一句，并且真心地说：你是我的牧者，我必不致缺乏。求你安静我里面那个一直在清点缺口的声音。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_007",
+      "day": 7,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "1 John",
+        "chapter": 4,
+        "verse": "19",
+        "full_reference": "1 John 4:19"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#感情里的计算",
+        "#被神先爱"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "我们爱，因为神先爱我们。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "love"
+        },
+        "niv_word_count": 7,
+        "context_note": "约翰写信的那间教会刚被一群离开的人撕裂过，整封信有很大篇幅在讲：一个受过伤的群体里，真正的爱是什么样子。希腊原文把「他」放在句首以示强调——是他先爱了我们。和合本这里只说「我们爱」，没有宾语；全句的分量，全落在事情发生的先后上。"
+      },
+      "devotional": {
+        "structure": "直解",
+        "zh-Hans": {
+          "meditation": "我们大多数人学爱，像学一门手艺——先看别人怎么做，然后想办法把别人给我们的还回去。所以很多的爱是紧绷的。你记着自己付出了多少。你留意到哪一份没有回来。婚姻里，多年的友情里，还有那段你最没有把握的关系里，心里总有一本正在走的账。\n\n约翰用一句话、一个字把这一切从底下切断了：先。你被爱，是在你有任何表现之前，在你被谁选中之前，在任何人欠你什么之前。这就是说，爱不是你在还的一笔债。它是先被放在你手里的东西，如今你可以放开地花出去。",
+          "action_step": "今晚为身边的一个人做一件小小的好事，别让对方知道，好让这件事没有任何回音。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我心里有一本不肯承认的账——在婚姻里，在友情里，在那段我最没有把握的关系里。谢谢你，在还没有任何东西可以计算之前，你就爱了我。求你松开我手里那份「你欠我」的抓握。让我明天去爱一个人，而不去查看有没有回音。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_008",
+      "day": 8,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Psalms",
+        "chapter": 32,
+        "verse": "5",
+        "full_reference": "Psalms 32:5"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚赦免",
+        "#难以启齿",
+        "#神的赦免"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "我向你陈明我的罪，不隐瞒我的恶。我说：我要向耶和华承认我的过犯，你就赦免我的罪恶。（细拉）"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "psalm",
+          "primary_theme": "confession"
+        },
+        "niv_word_count": 32,
+        "context_note": "诗篇三十二篇开头称被赦免的人是有福的，而这一节前面刚刚描述了隐瞒对大卫身体的影响——骨头枯干，力气像夏天的水一样干涸。「细拉」大概是个音乐记号，表示停顿。不论它原本的技术含义是什么，放在「赦免」之后，读起来就像一口屏住又松开的气。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "读这一节，要读它的时间点，那才是重点。他说：我要去承认。紧接着，在他还没有真的出声说出来之前——你就赦免了。中间没有空档。没有一段时间是他被晾在门口，等着别人对他作出裁决。\n\n作为基督徒，我们花了极大的力气去防备那个空档。我们预演它会怎样发生。我们事先决定要承认多少，要怎么措辞才显得好看一点。今晚，当你终于把那句一直躲着不说的老实话说出口，你会发现：中间什么冷冰冰的事都没有发生。",
+          "action_step": "把那句你在心里改了又改的话说出来。说朴素的那一版，不是修饰过的那一版。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，这份认罪我一直在起草，却没有真的说出口。现在我说朴素的那一版，不再修饰。谢谢你，从我说出口到你赦免之间，没有一段冷冷的沉默。求你把它接过去，也让我把连同它一起背了很久的那些预演放下。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_009",
+      "day": 9,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "2 Thessalonians",
+        "chapter": 3,
+        "verse": "16",
+        "full_reference": "2 Thessalonians 3:16"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚平安",
+        "#等不到改变",
+        "#单求平安"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "愿赐平安的主随时随事亲自给你们平安！愿主常与你们众人同在！"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/benediction",
+          "primary_theme": "peace"
+        },
+        "niv_word_count": 24,
+        "context_note": "这是保罗写给帖撒罗尼迦教会的结尾祝福，那间教会正为将来忧心，也被各种传言搅得不安。「赐平安的主」这个称呼，保罗只在这里用过一次。译作「随时随事」的原文是 en panti tropō——用各样的方式、各样的路径。它不是把祈求说得更强烈，而是把口子开得更宽。"
+      },
+      "devotional": {
+        "structure": "发问",
+        "zh-Hans": {
+          "meditation": "保罗求的不是环境太平。他求赐平安的主亲自把平安给他们——是源头亲手交出那样东西。随时随事：也包括你不会去挑、也安排不来的那些方式。\n\n那么今晚，你是不是一直在等平安以处境改变的样子出现，而它其实正试着从另一条完全不同的路来到你这里？",
+          "action_step": "今晚求平安的时候，不要说出你想要被改变的那件事。就单单求那份平安。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我一直在求你改变我的处境，还把这叫作求平安。今晚我求的是平安本身，不管你选哪一条路送来。求你与我同在，直到天亮。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_010",
+      "day": 10,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Psalms",
+        "chapter": 121,
+        "verse": "7",
+        "full_reference": "Psalms 121:7"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#心神耗损",
+        "#神的看守"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "耶和华要保护你，免受一切的灾害；他要保护你的性命。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "psalm/ascent",
+          "primary_theme": "protection"
+        },
+        "niv_word_count": 13,
+        "context_note": "诗篇一百二十一篇是朝圣的人上耶路撒冷时唱的歌之一。整篇诗都转在一个希伯来动词上——shamar，看守、保护、守望——八节里出现了六次。它是在路上唱的，唱的人正远离家乡，而且很清楚自己远离了家乡。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "短短一行里，「保护」出现了两次。希伯来诗歌重复一个词，是因为它要把这件事按进你心里。\n\n后半句是更宽的应许。不只是免受一切灾害，还有你的性命——就是你里面那个即使什么大事都没发生、也在一天天变薄的部分。今晚，这两样都有人看着。安心睡吧，你是被守着的！",
+          "action_step": "躺下之前说一句：看守我的那一位不打盹。然后让这一天就此结束。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，谢谢你今夜在看守——看守这个家，也看守我里面那个没有人看见、正在磨薄的地方。我现在要停下手里的守卫，去睡了。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_011",
+      "day": 11,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Matthew",
+        "chapter": 6,
+        "verse": "14",
+        "full_reference": "Matthew 6:14"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚赦免",
+        "#家人之间",
+        "#放下怨怼"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "「你们饶恕人的过犯，你们的天父也必饶恕你们的过犯；"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "gospel/teaching",
+          "primary_theme": "forgiveness"
+        },
+        "niv_word_count": 18,
+        "context_note": "耶稣说这句话，紧接在教完主祷文之后；主祷文里唯一被他回头再解释一遍的，就是这一条。希腊文 paraptōma 指的是失足、走错一步，不是重罪——正是家人之间彼此造成的那种普通的伤。他不是把饶恕定成一笔费用，他是在描述一个被赦免的人会变成什么样子。"
+      },
+      "devotional": {
+        "structure": "直解",
+        "zh-Hans": {
+          "meditation": "这一节常被读成一笔交易——你先饶恕，然后才有资格。但耶稣刚刚教完人称神为父。他不是在标价。他是在描述：一个真正明白自己被赦免了多少的人，身上会发生什么。\n\n而最难试出来的，从来不是陌生人。是那个一次都没有说过对不起的人，那个根本不觉得有什么需要道歉的人，那个下个月还会坐在同一张饭桌旁的人。这一句说的正是他。不是因为他做的事很小，而是因为你本来就不该扛这么久。把它放下，不是替他脱罪，是把账交回神手里。",
+          "action_step": "说出那个人的名字。你不必对他有好感。只要告诉神，你愿意不再向他讨这笔账。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，你知道我心里想的是谁。我并不觉得自己能饶恕，我也不打算假装。但我愿意。今晚就把这笔账从我手里拿走吧，别让我再往上面添什么。谢谢你，你没有等到我够懊悔了才赦免我，也没有等到我配得。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_012",
+      "day": 12,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Psalms",
+        "chapter": 20,
+        "verse": "4",
+        "full_reference": "Psalms 20:4"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#心中所愿",
+        "#交给神"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "将你心所愿的赐给你，成就你的一切筹算。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "psalm/blessing",
+          "primary_theme": "desire"
+        },
+        "niv_word_count": 15,
+        "context_note": "诗篇二十篇是会众在王出征之前为他唱的祝福——整篇诗都是一群人在为一个人祷告。这个框架很要紧：它不是神对结果作出的应许，而是一个群体敢于为自己所爱的人求的话。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "这一句不是「你想要什么就会得到什么」的应许。它是一群人在一个艰难的日子之前，出声为他们所爱的人祷告的话。\n\n作为基督徒，我们对「想要」这件事常常变得别扭——好像把心愿说出口就是信心不够。可这里是整个会众为他们的王把它说了出来。今晚，让别人为你这样祷告。或者，指名为另一个人这样祷告。",
+          "action_step": "今晚指名为一个具体的人祷告这节经文，说出她的名字，也说出她真正想要的那件事。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，今晚这个祷告我是为别人求的。你知道她想要什么，也知道她等了多久。求你将她心所愿的赐给她。而我自己那些不好意思承认的渴望，求你让我在你面前说实话。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_013",
+      "day": 13,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "2 Corinthians",
+        "chapter": 1,
+        "verse": "4",
+        "full_reference": "2 Corinthians 1:4"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安慰",
+        "#难处中",
+        "#被安慰后安慰人"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "我们在一切患难中，他就安慰我们，叫我们能用神所赐的安慰去安慰那遭各样患难的人。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "comfort"
+        },
+        "niv_word_count": 24,
+        "context_note": "保罗用这句话开启这封信——他最私人、也最带伤的一封。希腊原文在一节里把同一个词根叠用了五次：parakaleō，意思是呼唤某人到自己身边来。它不是让人高兴起来，而是走过去，站在一个自己站不住的人旁边。"
+      },
+      "devotional": {
+        "structure": "发问",
+        "zh-Hans": {
+          "meditation": "留意安慰行走的方向。它先进来，然后再出去——不是在原有的负担上再加一件义务，而是同一样东西继续往前流动。这也意味着：你所经历的一切，没有一样是搁浅在那里的。它有地方可去。\n\n那么今晚，有谁正需要的，恰好就是你曾经需要过的那份安慰？",
+          "action_step": "想一个正经历你走过的那段路的人。明天给她发一条短信——不给建议，只让她知道你在。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，这段日子我自己也很需要安慰，所剩不多。求你先把我这里填满。然后指给我看一个人，让我能用我走过的这一段，站到她旁边。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_014",
+      "day": 14,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "James",
+        "chapter": 1,
+        "verse": "6",
+        "full_reference": "James 1:6"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#信心摇摆",
+        "#单一的心"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "只要凭着信心求，一点不疑惑；因为那疑惑的人，就像海中的波浪，被风吹动翻腾。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "faith"
+        },
+        "niv_word_count": 28,
+        "context_note": "雅各这段话讲的是向神求智慧。希腊文 diakrinomenos 不是指一个人挣扎着相信的那种诚实的疑问，它的意思是被分成两半——一面求，一面同时安排好不必用到那个答案。雅各描写的是留后路，不是软弱。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "这节经文常被拿来对付那些本来就信得吃力的人，而这几乎和雅各的意思相反。他说的不是信心摇摆，是心被分成两半——一边求神，一边悄悄安排好后路，好让自己永远不必真的依靠那个答案。\n\n所以今晚请听清楚：觉得信心难，并不会取消你的资格。照样求，并且不留后手地求。神要的不是十足的把握，他要的是一个真的转过身来面向他的人！",
+          "action_step": "今晚为一件事向神开口。求完之后，不要马上盘算他若不成就你要怎么办。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我向你求，然后又悄悄安排好一切，好叫自己不必真的需要你。今晚我求，不留后路。我没有完全的信心，也不打算假装有。但我是朝着你的，我在求。求你也帮助我，在等答案的时候不缩回去。谢谢你，你从没有嫌弃过这样的信心。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_015",
+      "day": 15,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "1 Chronicles",
+        "chapter": 29,
+        "verse": "14",
+        "full_reference": "1 Chronicles 29:14"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#不觉得自己够好",
+        "#一切都是恩典"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "「我算甚么，我的民算甚么，竟能如此乐意奉献？因为万物都从你而来，我们把从你而得的献给你。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "narrative/prayer",
+          "primary_theme": "gratitude"
+        },
+        "niv_word_count": 35,
+        "context_note": "大卫说这段祷告，是在他生命的末了，百姓刚为一座他活着看不到建成的圣殿慷慨奉献之后。这不是假谦虚——整件事确实是他一手筹办的。他要说的是：连奉献的能力，本身也是被赐下的。"
+      },
+      "devotional": {
+        "structure": "直解",
+        "zh-Hans": {
+          "meditation": "大卫刚刚组织完以色列历史上最大的一次奉献，他对这件事的说法是：万物本来都是从你那里来的，我们献上的，不过是从你手里得来的。\n\n这不是自贬。他是看见了：连能够奉献的这份力气，也是别人交到他手上的。在一整天产出之后，这个念头让人能歇下来。你今天给出去的是真的。它也是先被给你的。",
+          "action_step": "说出今天你做成的一件事，再说出做这件事的力气是从哪里来的。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，今天我把手里有的都给出去了，我很累。谢谢你，连能给出去的力气，本来也是你的。求你拿走我里面那个想要被记功的部分，让我不再清点自己贡献了多少，安心睡下。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_016",
+      "day": 16,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "1 Corinthians",
+        "chapter": 13,
+        "verse": "4",
+        "full_reference": "1 Corinthians 13:4"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#亲密关系",
+        "#学习相爱"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "爱是恒久忍耐，又有恩慈；爱是不嫉妒；爱是不自夸，不张狂，"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "love"
+        },
+        "niv_word_count": 18,
+        "context_note": "保罗写这段话，是写给一间正因地位和恩赐彼此撕扯的教会，不是写给婚礼。他列出的第一样 makrothumeō，直译是「长脾气」，和一点就着正好相反。希腊文里他列的每一样都是动词：在这里，爱不是一种感情，而是一个人所做的一连串事。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "这几句你在婚礼上听过太多次，听到已经不再有意思了。换个地方试试。把它放到上个星期二来读。名单上的第一个词是忍耐，希腊原文直译是「长脾气」——和一点就着正好相反。它不是一种感觉，是一段长度。第二个词是恩慈，同样是做出来的，不是感觉出来的。\n\n对一个疲惫的、身在长久关系里的女人来说，这其实是个好消息。我们并不总有那份感觉，可就算感觉很薄的夜里，爱依然是我们能拿得出来的。它是晚上十一点，你其实不想做、却仍然可以做的一件事。",
+          "action_step": "从这节经文里挑一句，明天对最亲近的那个人认真做一次——不管当时有没有那份感觉。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，这些话我听得太熟，熟到听不见了。求你让它们重新变得日常——关于厨房，关于明天早上，关于那个我对他最苛刻的人。在感觉很薄的时候，仍让我选择忍耐；在不想的时候，仍让我选择恩慈。也谢谢你，你一直就是这样待我的。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_017",
+      "day": 17,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "1 Thessalonians",
+        "chapter": 5,
+        "verse": "11",
+        "full_reference": "1 Thessalonians 5:11"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#关系疏离",
+        "#彼此建立"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "所以，你们该彼此劝慰，互相建立，正如你们素常所行的。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/exhortation",
+          "primary_theme": "encouragement"
+        },
+        "niv_word_count": 16,
+        "context_note": "保罗多加的那几个字很容易被读过去：你们素来就是这样行的。他不是在纠正他们，而是指出他们已经在做的事，然后请他们做得更多。希腊文 oikodomeo，「建立」，是个建筑用词——加砌一层砖，而不是说一句恭维话。"
+      },
+      "devotional": {
+        "structure": "发问",
+        "zh-Hans": {
+          "meditation": "保罗加了一句大多数人读过去就算了的话：正如你们一向所做的。他不是在责备他们，才让他们去做。他是先说出他们已经在做的事，然后请他们多做一点。\n\n「建立」在希腊文里是个建筑用词——再砌上一层砖，不是说一句好听的话。那么：今天你在谁身上砌了一层砖？又有谁，是你本来想去建立、却没有去的？",
+          "action_step": "把你今天想到、却没有说出口的那一句具体的话，发给那个人。今晚就发。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我留意到别人身上的好，却总是留在心里。这样谁也帮不到。明天求你让我把其中一句说出口。而当我自己也快撑不住的时候，也求你差人来对我说一句。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_018",
+      "day": 18,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "John",
+        "chapter": 11,
+        "verse": "25",
+        "full_reference": "John 11:25"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#面对失去",
+        "#基督的应许"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "耶稣对她说：「复活在我，生命也在我。信我的人虽然死了，也必复活；"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "gospel/narrative",
+          "primary_theme": "life"
+        },
+        "niv_word_count": 23,
+        "context_note": "马大刚说完，她知道弟弟在末日必要复活——正确的教义，却搁在一个安全的距离之外。耶稣把整件事挪进现在式，也挪进一个人身上：复活在我。他说这话时，人已经迟到了四天，站在坟墓外面，对着一个在他不在的日子里独自伤心的女人。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "马大说的是对的话：末日复活的时候，他必复活。这话真实，却很遥远，那个下午一点也帮不到她。耶稣没有纠正她的神学，他把它挪了位置。不是一个日期，是一位站在她面前的人，用现在式说：复活在我。\n\n今晚不论你在为谁哀伤，请留意：这个应许不是排在以后的某一天。它有名字，此刻就在这屋子里，和你在一起。它迟到了四天，没有道歉，也没有因此少了一分真实。你不必等到末日才有依靠，因为那位说「复活在我」的，今夜就在你身边！",
+          "action_step": "说出你思念的那个人的名字。然后把这节经文开头的四个字出声念一遍。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，有些安慰是真的，今晚却离我太远，够不着。谢谢你，耶稣没有给马大一个日期，他把自己给了她。求你也这样靠近我。我不是求你让我不再思念谁，我求的是：不要让我一个人扛着这份思念。也谢谢你，你并不催我快点好起来。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_019",
+      "day": 19,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Psalms",
+        "chapter": 119,
+        "verse": "165",
+        "full_reference": "Psalms 119:165"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚平安",
+        "#容易被激怒",
+        "#心里安稳"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "爱你律法的人有大平安，甚么都不能使他们绊脚。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "psalm",
+          "primary_theme": "peace"
+        },
+        "niv_word_count": 14,
+        "context_note": "英文旧译本里的「offend」旧义是绊倒，不是冒犯；希伯来原文是绊脚石的图像。诗篇一百一十九篇是一首离合诗，也是圣经最长的一章，通篇都在讲爱慕神的话语。这一节所应许的很具体：不是一生顺遂，而是脚下站得稳。"
+      },
+      "devotional": {
+        "structure": "直解",
+        "zh-Hans": {
+          "meditation": "「绊脚」这个词说的是让人跌倒，不是让人不高兴。所以这应许不是从此没有事情来烦你，而是没有一件事能把你的脚从底下抽走。\n\n这是一种很具体的平安，也正是我们多数人真正需要的那一种。不是一整天都没有摩擦，而是下午四点那句尖利的话，不至于把整个晚上都占了去。今晚，看一看今天绊你的是什么，也看一看：它没有权柄把你按在地上。",
+          "action_step": "说出今天绊了你一下的那件事。出声宣告：今晚剩下的时间不归它。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，今天有一件小事把我绊倒了，我已经带着它走了好几个小时。现在我把它放下。求你给我那种在底下托住我的平安，而不是那种必须一整天都不出岔子才有的平安。也谢谢你，脚下不稳的时候，你没有走开。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_020",
+      "day": 20,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "1 Corinthians",
+        "chapter": 1,
+        "verse": "10",
+        "full_reference": "1 Corinthians 1:10"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#关系裂痕",
+        "#寻求合一"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "弟兄们，我藉我们主耶稣基督的名劝你们都说一样的话。你们中间也不可分党，只要一心一意，彼此相合。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/appeal",
+          "primary_theme": "unity"
+        },
+        "niv_word_count": 35,
+        "context_note": "保罗写信的对象，是一间围着各自喜欢的教师分成派别的教会。译作「彼此相合」的希腊文 katartizō，正是接骨和补渔网所用的词——是修补的语言，不是划一的语言。他的前提是：裂痕已经在那里了。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "保罗说的「彼此相合」，用的是接骨的那个词，也是补破渔网的那个词。是修补的语言。他不是要一间教会在每件事上意见一致，他是求那些已经裂开的人，让这道断口被接回去。接骨是疼的，是由别人来做的，而且比谁想的都慢。\n\n今晚想一想，你在哪件事上悄悄地站在了某一边——家里，工作上，或者一段已经冷成客气的友情。并没有发生什么惊天动地的事。我们中间的分裂，多半就是这样开始的。而修补，也可以从今晚一个很小的动作开始。",
+          "action_step": "说出那段已经冷成客气的关系。定下这个星期里一件具体的事，去把它捂热一点。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我生命里有一段关系已经变得安静而客气，而我一直由它这样下去。我不想站在哪一边。求你指给我看第一步该怎么走，哪怕是很小的一步；也求你给我谦卑，让我不必等到对方先道歉才动。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_021",
+      "day": 21,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Micah",
+        "chapter": 7,
+        "verse": "18",
+        "full_reference": "Micah 7:18"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚赦免",
+        "#怕神生气",
+        "#神喜爱怜悯"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "神啊，有何神像你，赦免罪孽，饶恕你产业之余民的罪过，不永远怀怒，喜爱施恩？"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "prophecy",
+          "primary_theme": "mercy"
+        },
+        "niv_word_count": 30,
+        "context_note": "「弥迦」的意思是「谁像耶和华」，他在这里把自己的名字问成了一个问题。全书用了六章讲审判，才走到这一句。「喜爱」的希伯来原文是 chaphets，意思是以此为乐、心里愿意。施恩不是神让步的结果，是他自己乐意做的事。"
+      },
+      "devotional": {
+        "structure": "发问",
+        "zh-Hans": {
+          "meditation": "弥迦这个名字的意思是「谁像耶和华」。写到这里，他把自己的名字变成了一个问句——而在这之前，他已经用了六章说审判的话。他给出的答案不是神宽松，是神喜爱施恩。喜爱。是以此为乐，是心里愿意。\n\n这和很多人心里那位从未被检查过的神很不一样：那位神照规矩赦免你，但赦得勉强，而且把这件事记下来存档，留着下次再提。这两位相差很远，而我们多半从来没有停下来分辨过。今晚老实说，当你开口祷告的时候，你心里预备要遇见的，是哪一位？",
+          "action_step": "把那件你已经认过好几次的事，再拿到神面前说一次。这一次留意：他没有在叹气。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我一直是绷着来见你的，好像你的赦免是勉强给的，而且快要用完了。谢谢你，你喜爱施恩——不是勉强容忍，是喜爱。今晚求你让这句话落到我里面，比我道歉的习惯更深的地方，让我不再绷着来见你。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_022",
+      "day": 22,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Proverbs",
+        "chapter": 11,
+        "verse": "25",
+        "full_reference": "Proverbs 11:25"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#付出很多",
+        "#也被滋润"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "好施舍的，必得丰裕；滋润人的，必得滋润。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "wisdom",
+          "primary_theme": "generosity"
+        },
+        "niv_word_count": 11,
+        "context_note": "这句话用的是农田的画面：浇灌人的，自己也被浇灌。箴言不是在应许一笔交易，而是在描述一个家、一个村子、一整套善意的往来长期下来是怎么运转的。「丰裕」原文的画面是健康、够用，不是过剩。"
+      },
+      "devotional": {
+        "structure": "见证",
+        "zh-Hans": {
+          "meditation": "有很多年，我是那个滋润所有人的人。读到这节，我心里想的是：这是一笔神还没有付的账。\n\n后来回报真的来了，形式却完全不是我等的那种。不是从我浇灌过的人身上来，是从别处来的，而且常常是在我已经不再开口要的时候。我仍然觉得那些付出真的耗掉了我一些东西。我也真的被滋润了。",
+          "action_step": "留意今天有谁滋润了你，而你从未浇灌过他。出声对他说一句谢谢。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我给出去了很久，现在我是干的。我不想再假装不是。求你按你选择的方式滋润我，也让我在它来的时候认得出来。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_023",
+      "day": 23,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Isaiah",
+        "chapter": 41,
+        "verse": "13",
+        "full_reference": "Isaiah 41:13"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#心里发慌",
+        "#神握着手"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "因为我耶和华─你的神必搀扶你的右手，对你说：不要害怕！我必帮助你。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "prophecy/comfort",
+          "primary_theme": "reassurance"
+        },
+        "niv_word_count": 25,
+        "context_note": "希伯来原文的次序有意义：神先握住手，然后才说话。右手是干活的手，拿工具、拿兵器的那一只——握住它既是安慰，也是打断。这里的动词是抓牢、握住不放，不是轻轻扶一下。"
+      },
+      "devotional": {
+        "structure": "直解",
+        "zh-Hans": {
+          "meditation": "留意次序。他先握住你的手，话是后来才说的。\n\n我们通常不是这样被安慰的——先被告知不要怕，然后自己想办法做到。这里反过来：手先握住了，「不要害怕」是在你已经被抓牢之后才说出口的。今晚，重点在那只手。那句话不过是这只手在说什么。",
+          "action_step": "把你的右手伸出来一会儿，让这节经文就是在说这只手。然后去睡。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，今晚我不需要一套道理，我需要被握住。谢谢你总是先伸手握住我，然后才开口说话。求你抓着我的手，一直到天亮。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_024",
+      "day": 24,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Matthew",
+        "chapter": 19,
+        "verse": "14",
+        "full_reference": "Matthew 19:14"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#育儿疲惫",
+        "#孩子在神手中"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "耶稣说：「让小孩子到我这里来，不要禁止他们；因为在天国的，正是这样的人。」"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "gospel/narrative",
+          "primary_theme": "children"
+        },
+        "niv_word_count": 24,
+        "context_note": "当时门徒正在把这些家庭挡回去——母亲们把孩子带来求祝福，却被支到一边。耶稣责备的是守门的人，不是父母。和合本的「容让」在原文里就是允许、不要拦阻。天国属于那些手上没有筹码、也没有身份要维护的人。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "这段故事里被责备的不是小孩子，是那些认定小孩子打扰了正事的大人。也留意是谁把孩子带来的：是母亲们，在一天将尽的时候，抱着小小的人，来见一位她们盼望会祝福他们的主——然后为这件事被挡到一边。\n\n我们大多数人心里都有一把尺，天天量自己今天算不算一个合格的母亲。如果今天满是吵闹和不耐烦，你正躺在那里觉得自己不像样：把你推开的从来不是他，今晚也不会是。那把尺一向是别人的，从来不是他的。",
+          "action_step": "把你照看的每个孩子的名字说出来，一个一个交托给神过夜。然后停止回放今天。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，今天我跟他们在一起的样子不是最好的。我说话很冲，我知道，他们睡着以后我一直在心里翻。谢谢你从来没有把孩子当成打扰，也没有把我当成打扰。今晚他们交给你。让我睡吧，不要再给自己打分了。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_025",
+      "day": 25,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Psalms",
+        "chapter": 91,
+        "verse": "1",
+        "full_reference": "Psalms 91:1"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#无处可躲",
+        "#隐密处"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "住在至高者隐密处的，必住在全能者的荫下。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "psalm",
+          "primary_theme": "shelter"
+        },
+        "niv_word_count": 17,
+        "context_note": "希伯来文 sether 指藏身之处——一个隐蔽的地方，不只是有遮盖。译作「住」的动词说的是居住，不是造访。这首诗分得很清楚：为着求助从神面前经过，和真的在那里安家，是两件事。"
+      },
+      "devotional": {
+        "structure": "发问",
+        "zh-Hans": {
+          "meditation": "是「住」，不是「来一趟」。这首诗划了一条线：为着求助来到神面前，和真的住在这荫下，是两回事。而「隐密处」的意思是藏起来、看不见的地方，在那里没有人打量你。我们大多数人已经没有这样一个房间了。\n\n那么今晚，你去哪里可以不被看见？那个地方给你的，是这节经文所应许的吗？",
+          "action_step": "今晚找一个没有人看得见你的地方待五分钟，这五分钟里不做任何有产出的事。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我整天被看着、被评估，我已经累了。谢谢你那里有一个地方，在那里什么都不被衡量。今晚让我住下来，不只是路过。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_026",
+      "day": 26,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "2 Chronicles",
+        "chapter": 7,
+        "verse": "14",
+        "full_reference": "2 Chronicles 7:14"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#盼望复兴",
+        "#谦卑寻求"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "这称为我名下的子民，若是自卑、祷告，寻求我的面，转离他们的恶行，我必从天上垂听，赦免他们的罪，医治他们的地。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "narrative/covenant",
+          "primary_theme": "return"
+        },
+        "niv_word_count": 41,
+        "context_note": "这是圣殿献殿的次夜神对所罗门说的话，是对一个国家立的约。细看那四件事——自卑、祷告、寻求、转离——都是朝向神的动作，不是要交出来的成绩。「寻求我的面」在原文里说的是想要这个人，不是想要结果。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "这里要求了四件事，没有一件是成就。自卑。祷告。寻求我的面。转离恶行。每一件都是一个方向，不是一场表现。\n\n这是让人松一口气的，因为我们常以为，要回到神那里，得先把自己变成一个值得回去的人。不必先变成那样的人。你只需要转身，而转身可以从你此刻所在的地方开始——今晚，不管你是什么状态，不管手上有多少还没收拾好的东西。再留意他先应许了什么：不是赦免，不是医治，是「我必从天上垂听」。一切从这里开始。他听见了！",
+          "action_step": "今晚用你能做到的最小的方式转一次身：对神说一句真心话，而不是什么都不说。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我一直以为要先把自己整理好、像个样子了才能回来。今晚我只是转个身。除了这个转身，我什么也没带，也没有什么可带。谢谢你在应许别的之前先应许了垂听，而这份垂听从来不需要我去挣。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_027",
+      "day": 27,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Isaiah",
+        "chapter": 43,
+        "verse": "2",
+        "full_reference": "Isaiah 43:2"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#正在难处中",
+        "#神必同在"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "你从水中经过，我必与你同在；你蹚过江河，水必不漫过你；你从火中行过，必不被烧，火焰也不着在你身上。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "prophecy/comfort",
+          "primary_theme": "presence"
+        },
+        "niv_word_count": 42,
+        "context_note": "以赛亚写给的是已经趟过水、走过火的人，不是被免去的人。原文说的是「当你经过」，不是「如果」。这两个画面对当时的读者都有真实的历史——身后是红海，四围是被掳之地的熔炉。这应许限定的是伤害，不是取消这一趟。"
+      },
+      "devotional": {
+        "structure": "直解",
+        "zh-Hans": {
+          "meditation": "读慢一点，注意那个小小的词。是「你从水中经过」的时候，不是「如果」，也不是「你不必经过」。这话写给的是已经趟过水、也走过火的人，不是写给被免去这一趟的人。\n\n神没有应许他们一生不遇深水。他应许的是水不漫过你的头顶，是他在水里与你同在——这比我们心里想要的那个应许小，却比我们预料的有用得多。如果今晚你正在一件没有人能替你缩短的事情中间：他没有站在岸上喊话。你不是被丢在里面，你是被陪着走进去的。",
+          "action_step": "把你此刻的位置说出来——在水里、在火里、还是刚上岸。只是准确地告诉神，先不求他解决。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我正在这件事的中间，没有人能替我把它缩短。我已经不再求你缩短了。今晚我只求你在这里面和我一起，别让水漫过我的头顶，也别让火烧着我。谢谢你说的是经过的时候，不是如果。你早就知道。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_028",
+      "day": 28,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "John",
+        "chapter": 14,
+        "verse": "27",
+        "full_reference": "John 14:27"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚平安",
+        "#心里害怕",
+        "#基督的平安"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "我留下平安给你们；我将我的平安赐给你们。我所赐的，不像世人所赐的。你们心里不要忧愁，也不要胆怯。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "gospel/farewell discourse",
+          "primary_theme": "peace"
+        },
+        "niv_word_count": 32,
+        "context_note": "耶稣说这话，是在十字架前的最后一夜，最坏的还在前头。这个词背后是希伯来文的 shalom：样样都在该在的位置上，不只是没有冲突。他在自己最没有平安的那一夜，把平安送了出去。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "他说这话是在上十字架的前一夜，这就说明了他给的是哪一种平安。不是没有难处——他前面的难处大得很。\n\n我们常常等着环境配合，然后把那个叫作平安。他的平安不靠结果，不靠对方的回音，也不靠这个月能顺利过完。那是他自己里面的稳，交到我们手里——它可以待在一个很糟的夜里。",
+          "action_step": "说出今晚你怕的一件事，然后说：这是真的，耶稣也在这里。两句都留着。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，你知道我带着什么进入今晚。谢谢你，耶稣给的平安不等我的处境好转。求你安静我乱转的念头，提醒我这房间里我不是一个人。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_029",
+      "day": 29,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "1 John",
+        "chapter": 4,
+        "verse": "16",
+        "full_reference": "1 John 4:16"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#难以相信被爱",
+        "#神就是爱"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "神爱我们的心，我们也知道也信。神就是爱；住在爱里面的，就是住在神里面，神也住在他里面。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "love"
+        },
+        "niv_word_count": 27,
+        "context_note": "约翰把两个动词并排放：我们知道，也信。后一个 pisteuō 带着把重量压上去的意思。他在描述一段距离——接受「神爱我」这个事实，和真的把自己交上去安歇，中间隔得很远，许多信徒在这段距离里住了很多年。"
+      },
+      "devotional": {
+        "structure": "发问",
+        "zh-Hans": {
+          "meditation": "约翰用了两个动词，我们大多数人就活在这两个词的距离里：我们知道，我们也信。后一个的意思是把重量压上去。你可以知道神爱你，却始终不把重量放上去；可以教它、唱它，然后夜里躺下，心里其实还是觉得自己只是被容忍。\n\n今晚，这份爱在你这里是哪一种——知道，还是靠上去了？",
+          "action_step": "把它说成靠上去的样子：不是「神就是爱」，而是「神爱我，今晚我要枕着这句睡」。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，这件事我知道，却没有靠上去。今晚我想把重量放上去一点。你爱我。不是我愿意给你看的那个我，是今天真实的我。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_030",
+      "day": 30,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Psalms",
+        "chapter": 4,
+        "verse": "8",
+        "full_reference": "Psalms 4:8"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#难以入睡",
+        "#安然居住"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "我必安然躺下睡觉，因为独有你─耶和华使我安然居住。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "psalm",
+          "primary_theme": "sleep"
+        },
+        "niv_word_count": 17,
+        "context_note": "大卫写这句时正被人追逼。希伯来原文把「躺下」和「睡着」当作两个动作，因为对一个焦虑的人来说，这真是两回事。「独有」是强调的语气：不是墙，不是守卫。这里的睡是一个信靠的举动，所以才这么难。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "希伯来原文把这两件事分开说：我要躺下，我要睡着。凡是盯着天花板过一整夜的人都知道，这不是同一件事。\n\n而撑住这节经文的那个词是「独有」。不是锁好的门，不是明天的计划，也不是你自己的警醒。睡着，就是你不再守夜，让另一位来守。现在就去吧！",
+          "action_step": "先把手机放下，别的都往后排。然后把这节经文说一遍，就不要再说话了。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我躺下了，却还在守着。今晚这一班交给你。使我安然居住的独有你——不是我反复检查，不是我的安排。我现在要睡了。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_031",
+      "day": 31,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Isaiah",
+        "chapter": 26,
+        "verse": "3",
+        "full_reference": "Isaiah 26:3"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚平安",
+        "#思绪停不下来",
+        "#心思定住"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "坚心倚赖你的，你必保守他十分平安，因为他倚靠你。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "prophecy",
+          "primary_theme": "peace"
+        },
+        "niv_word_count": 16,
+        "context_note": "希伯来原文直译是 shalom shalom——「平安平安」，重复一次是为了加重，相当于中文说「十分平安」。译作「坚心」的词意思是被支撑、被倚靠：一个把重量搁在自身之外的心思，而不是自己硬撑着的心思。"
+      },
+      "devotional": {
+        "structure": "直解",
+        "zh-Hans": {
+          "meditation": "希伯来原文把「平安」说了两遍——平安，平安——因为说一遍装不下它要描述的东西。\n\n而条件不是你的脑子停下来，是你的心把重量搁在哪里。「坚心」那个词的意思是被撑住、被支住。凌晨三点的脑子不是安静的，它是在硬撑着自己。今晚，让它靠在一个地方。",
+          "action_step": "今晚念头一开始乱转，不要跟它辩。说一句关于神的真话，让思绪靠在那里。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，今晚我的脑子停不下来，跟它讲道理从来没有用过。我不求你把它关掉，我求你让它有个可靠的地方。求你稳住我的思绪，直到我睡着。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_032",
+      "day": 32,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Matthew",
+        "chapter": 11,
+        "verse": "28",
+        "full_reference": "Matthew 11:28"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#疲惫不堪",
+        "#重担压身"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "凡劳苦担重担的人可以到我这里来，我就使你们得安息。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "gospel/invitation",
+          "primary_theme": "rest"
+        },
+        "niv_word_count": 16,
+        "context_note": "耶稣说这话的对象，是被越来越繁琐的宗教规条压垮的人群。「安息」原文是 anapauō——扛重担的人卸下担子时的那一口气，不是睡觉。他没有要求他们先够格；这个邀请专门是给那些一来就已经很累的人。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "他没有说：等你把自己收拾好了、有力气了再来。他说的是来——就照你现在的样子，在一天结束、消耗大过得着的时候。\n\n作为基督徒，我们连这一句都能读成一条自己没做到的命令：要好好安息，要有平安，不要挣扎。可是再看一次交给你的那个动词。不是「安息」，是「来」。安息是这句话里属于他的那一半，而他做自己那一半的事，从来没有一次需要人帮忙。",
+          "action_step": "把此刻心里最重的那件事说出来，然后说：今晚我把它交给你。就留在那里，到天亮再说。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我累的这种累，光靠睡觉补不回来。谢谢你这么晚了邀请还开着，也谢谢你不要求我先休息好了才能来。我现在就照这个样子来，没有别的可带，只带着这一身疲乏。把这份重量从我手里接过去，替我拿着，直到天亮。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_033",
+      "day": 33,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Romans",
+        "chapter": 11,
+        "verse": "36",
+        "full_reference": "Romans 11:36"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#世界太大",
+        "#一切都在祂里面"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "因为万有都是本于他，倚靠他，归于他。愿荣耀归给他，直到永远。阿们！"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/doxology",
+          "primary_theme": "God's scale"
+        },
+        "niv_word_count": 19,
+        "context_note": "保罗用了三章处理他所知最难的问题——神在以色列身上要做什么——最后并没有给出答案，他到达的是这句颂赞。和合本作「本于他，倚靠他，归于他」：万有的源头、托住万有的、万有的归宿，都是他。这是论证走到尽头时说的话，不是论证解开了才说的话。"
+      },
+      "devotional": {
+        "structure": "发问",
+        "zh-Hans": {
+          "meditation": "保罗刚刚用了三章处理他整封信里最难的问题，而他没有解开它。他接下来说的就是这一句——不是论证的结论，是论证走到尽头、再也推不下去之后，他所做的事。\n\n这值得留意，因为我们大多数人把答不上来的问题当成信心出了毛病。保罗把它当成敬拜的理由。他不知道，也没有假装知道，他照实说了。然后他说：万有都是本于他，倚靠他，归于他。今晚，如果你不再逼着要一个答案，而是让这件事比你大，会有什么不一样？",
+          "action_step": "说出那个你解不开的问题。然后把这节经文放在它上面，不必假装它已经有答案了。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，有一件事我怎么也想不通，我一直把这当成我信心出了毛病。今晚我不再要它被解开，我让它比我大，也让你比我大。万有都是本于你，倚靠你，归于你——包括我不明白的那一部分，包括我今晚还想不通的这件事。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_034",
+      "day": 34,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Proverbs",
+        "chapter": 27,
+        "verse": "19",
+        "full_reference": "Proverbs 27:19"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#亲密关系",
+        "#被真正看见"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "水中照脸，彼此相符；人与人，心也相对。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "wisdom",
+          "primary_theme": "knowing"
+        },
+        "niv_word_count": 11,
+        "context_note": "这句希伯来原文很紧凑，历来有两种读法：一个人的心显出他是谁；或者，人心与人心相对，就像脸与水中的影相对。古时的读者没有镜子，只有静水，而水必须不被扰动才照得出东西。两种读法都需要静。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "那个时代没有镜子。要看见自己的脸，得找一处静水，等它安定下来。稍微一动，影像就碎了。\n\n我们最亲近的关系出问题，多半就出在这里。不是没有人认识你，是没有一刻是静的，静到能照出什么来。七点进家门，一天的事还在心里翻腾，然后聊的全是安排和琐事，一直聊到睡。有个离你很近的人一直想看清你，而这一周，水一次也没有静下来过。这不需要一整个晚上，也不需要你先把话想好。今晚就让它静一会儿，哪怕只有十分钟，哪怕笨拙！",
+          "action_step": "今晚和最亲近的那个人坐十分钟，什么都不开着——不看屏幕，不谈安排。就让它安静。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我身边的人其实并不真的看见我，这里面有一部分是我自己造成的——我从不肯停下来久到能被人看见。求你给我勇气，今晚安静地和一个人待一会儿。让一点真实的东西被照出来，哪怕很短。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_035",
+      "day": 35,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Psalms",
+        "chapter": 133,
+        "verse": "1",
+        "full_reference": "Psalms 133:1"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#家里的张力",
+        "#同住的恩典"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "（大卫上行之诗。）看哪，弟兄和睦同居是何等地善，何等地美！"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "psalm/ascent",
+          "primary_theme": "unity"
+        },
+        "niv_word_count": 13,
+        "context_note": "这是上行之诗，朝圣的人往节期走时唱的——一家一家人同行好几天，和睦在那时就不再只是一种感觉。原文的动词就是坐在一起、住在一起。这首诗接着把它比作油流下来、露水降下来：都是从上面来、往下铺开的东西。"
+      },
+      "devotional": {
+        "structure": "直解",
+        "zh-Hans": {
+          "meditation": "这是一家一家人一同走路上耶路撒冷时唱的歌，一走好几天——和睦正是在这种时候，从一个想法变成一门功课。\n\n而那个词是「同居」：真的住在同一个屋檐下，不是隔着距离对人心怀好意。也留意这首诗接下去怎么形容和睦：像油浇下来，像露水降下来。都是从上头来的，不是大家一起再努力一点就能造出来的。今晚如果你家里气氛紧，那不等于你失败了。那是一个住着真人的家。",
+          "action_step": "今晚做一件小事，让家里的温度降下来一点，而不是去证明你有理。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我家不总是和睦的地方，这里面也有我的份。谢谢你，和睦是你从上头浇下来的，不是我们一起咬紧牙关就能造出来的。今晚求你让一点浇到这个家里，也让它从我开始，从我先放下那一份理直气壮开始。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_036",
+      "day": 36,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Exodus",
+        "chapter": 33,
+        "verse": "14",
+        "full_reference": "Exodus 33:14"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#孤单撑着",
+        "#神必同去"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "耶和华说：「我必亲自和你同去，使你得安息。」"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "narrative/dialogue",
+          "primary_theme": "presence"
+        },
+        "niv_word_count": 15,
+        "context_note": "金牛犊之后，神提出要差使者在前面带路，自己不同去，摩西拒绝了这个条件。这里的希伯来原文直译是「我的面」——本人亲自到场，不是派个代表。摩西求的是神，不是结果，而安息是跟着他的同在一起来的。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "神提出可以给摩西一个好结果，只是不亲自同去，摩西不要。整场对话就是这么一件事。\n\n我们求的常常是反过来的：把这件事解决了，你不必亲自来。可是留意这里的安息挂在什么上面。不是问题被解决，是他亲自同去。如果今晚什么都没解决，你还是得睡，这一点就很要紧。",
+          "action_step": "今晚不求神解决什么，只求他留下来陪你。用你自己的话对他说出来。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我的祷告大半是一张清单，写着我想改变的事。今晚我宁愿你在我近旁，胜过样样都摆平。求你在这没解决的地方陪着我。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_037",
+      "day": 37,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Proverbs",
+        "chapter": 28,
+        "verse": "13",
+        "full_reference": "Proverbs 28:13"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚赦免",
+        "#隐藏与坦白",
+        "#寻见怜悯"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "遮掩自己罪过的，必不亨通；承认离弃罪过的，必蒙怜恤。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "wisdom",
+          "primary_theme": "confession"
+        },
+        "niv_word_count": 17,
+        "context_note": "箴言在这里用的动词和十七章九节是同一个，只是方向反了：遮掩别人的过错是爱，遮掩自己的却是腐蚀。也要留意，这里应许的是蒙怜恤，不是后果被取消；而承认与离弃，是被当作一个动作扣在一起说的。"
+      },
+      "devotional": {
+        "structure": "发问",
+        "zh-Hans": {
+          "meditation": "「遮掩」用的是同一个动词，只是方向反了过来。遮掩别人的过错是爱；遮掩自己的，会在暗处慢慢烂掉。\n\n也留意这节把两件事扣在一起：承认，并且离弃。说了却不离开，不是这里说的那回事；悄悄离开却从不肯承认它发生过，也不是。那么，有什么是你一直一个人扛着的——不是因为它说不出口，而是因为说出来要付一个你还没准备好付的代价？",
+          "action_step": "今晚把那件事对神说出来。如果它需要对某个人说，就定下是谁，这周哪一天。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，有一件事我一直自己扛着，因为说出来要付代价。可是扛着它，代价更大。现在我把它交出来。求你给我勇气面对接下来的事，也面对那个该听见的人。谢谢你，我在这里遇见的是怜恤，不是清算。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_038",
+      "day": 38,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Philippians",
+        "chapter": 4,
+        "verse": "6",
+        "full_reference": "Philippians 4:6"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#焦虑不安",
+        "#具体地求"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "应当一无挂虑，只要凡事借着祷告、祈求，和感谢，将你们所要的告诉神。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/exhortation",
+          "primary_theme": "anxiety"
+        },
+        "niv_word_count": 21,
+        "context_note": "和合本的「挂虑」，原文说的是被忧虑充满、心被扯开，不是「小心谨慎」。保罗没有叫人别有感觉，他给了这份感觉一个可去之处。「祈求」的希腊原文是具体的、分项的，像一份写好的呈文，而不是一团模糊的心情。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "保罗不是在叫你不要有焦虑的感觉。他是在告诉你把它放到哪里去——这是很不一样的一件事。\n\n而「祈求」这个词说的是具体的、一项一项列出来的东西，是呈文的语言，不是一种情绪。所以今晚不要笼统地为你的忧虑祷告。为那一件具体的事祷告：说出它，交出去，一路谢着他走！",
+          "action_step": "把你的忧虑写成一句具体的祈求。不是那个情绪，是那一件事。然后把这句话祷告出来。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我一直笼统地为我的焦虑祷告，没什么帮助。这里是那件具体的事。今晚我把这一项交给你，也先谢谢你要如何处理它。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_039",
+      "day": 39,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Proverbs",
+        "chapter": 3,
+        "verse": "3",
+        "full_reference": "Proverbs 3:3"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#想成为温柔的人",
+        "#慈爱与诚实"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "不可使慈爱、诚实离开你，要系在你颈项上，刻在你心版上。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "wisdom",
+          "primary_theme": "character"
+        },
+        "niv_word_count": 20,
+        "context_note": "chesed 和 emet——不动摇的良善与真实——在旧约里常常成对出现，用来描述神自己的性情。后面跟着两个画面：系在颈项上，是看得见、天天戴着的；刻在心版上，是在里面、擦不掉的。"
+      },
+      "devotional": {
+        "structure": "直解",
+        "zh-Hans": {
+          "meditation": "慈爱和诚实，旧约里几乎从不把这两个词拆开：一是不动摇的良善，一是把真话说出来。合起来，说的是神自己的性情。\n\n所以只拿其中一样，总是会出岔子。有慈爱没有诚实，慢慢会变成摆布——不是跟人交底，是把人往你要的方向引。有诚实没有慈爱，就成了一种问心无愧的攻击。我们大多数人明显偏向一边，而且觉得那是自己的性格，不是一个选择。站在我们对面的那个人，通常很清楚我们偏哪一边。",
+          "action_step": "想一想这两样里你偏离的是哪一样。明天就练这一样，对着一个具体的人。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我偏向一边，而这份偏向要我身边的人来付账。求你把这两样都系在我身上——慈爱和诚实一起，不是拿一样去换另一样。求你把它们刻得够深，深到我疲惫的时候、被惹恼的时候，它们仍然立得住。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_040",
+      "day": 40,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "1 John",
+        "chapter": 5,
+        "verse": "14",
+        "full_reference": "1 John 5:14"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#祷告没回应",
+        "#祂垂听"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "我们若照他的旨意求甚么，他就听我们，这是我们向他所存坦然无惧的心。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "prayer"
+        },
+        "niv_word_count": 21,
+        "context_note": "约翰应许的是垂听，不是照办——早期教会一向把马可福音十一章二十四节和这一节放在一起读。「照他的旨意」不是一个脱身的说法，而是让祷告不至于变成一台机器的条件。这里「坦然无惧」的希腊原文是 parrhesia：在有权柄的人面前可以放胆说话。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "看清楚这里应许的是什么。他听我们。不是：他照办。\n\n作为基督徒，我们心里其实会为这个不平，直到想起另一种可能——一位把我们在糟糕的一周里所求的每一件都照办的神。被听见不是安慰奖，那就是正事本身。有一位比你更有智慧的，收下了你的请求，并且没有不理会。",
+          "action_step": "为你一直在求的那件事祷告，然后说：我知道你听见了。就把它放在那里。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，这件事我求了很久，一直没有回音。谢谢你，被听见不等于被忽略。今晚我再一次把它留在你那里，也不再反复去查看了。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_041",
+      "day": 41,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Matthew",
+        "chapter": 18,
+        "verse": "20",
+        "full_reference": "Matthew 18:20"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#孤单",
+        "#祂在其中"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "因为无论在哪里，有两三个人奉我的名聚会，那里就有我在他们中间。」"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "gospel/teaching",
+          "primary_theme": "presence"
+        },
+        "niv_word_count": 14,
+        "context_note": "这段话的上下文是和好：耶稣刚讲完两个人之间有了过犯该怎样处理，「两三个人」原指作见证的人数。后来把这节用在一切聚会上，也说得通——但它起初是给那些正在费力修补关系的人的应许。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "两三个人。不是坐满的礼堂，不是漂亮的出席人数——两个。\n\n留意主是在什么话之后说的：就在讲完两个人怎样处理彼此之间的过犯之后。所以他不只在诗歌声里。他也在那场尴尬的对话里，在你的厨房里，在那位还愿意接你电话的朋友身边。你的圈子还剩下什么，你都没有低于门槛。他算这就够了！",
+          "action_step": "今晚给一个人发条信息，约她这个星期一起祷告。两个人就够了。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我的那两三个人散了，我也任由它散了。谢谢你从来没有定过最低人数。求你这个星期把一个人重新带回我够得着的地方，也给我开口的谦卑。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_042",
+      "day": 42,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Colossians",
+        "chapter": 3,
+        "verse": "14",
+        "full_reference": "Colossians 3:14"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#关系里的裂缝",
+        "#爱把一切联络"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "在这一切之外，要存着爱心，爱心就是联络全德的。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/exhortation",
+          "primary_theme": "love"
+        },
+        "niv_word_count": 16,
+        "context_note": "保罗在前面刚列了一串品格——怜悯、恩慈、谦虚、忍耐——都当作衣服来说。爱是穿在最外面的那件，或者说是把其余几件系住的腰带。这段里每个动词都是「穿上」：这些是你去做的事，不是等着心情来了才有的状态。"
+      },
+      "devotional": {
+        "structure": "见证",
+        "zh-Hans": {
+          "meditation": "我婚姻里有过一整年，什么都没出错，什么也不温暖。我们客气、有耐心，一周的活儿分得很公平，一次架也没吵过。保罗那张单子上的每一样，严格说都在，可整件事仍然像一份协议，不像一个家。\n\n我漏掉的是最后一样——他称作腰带的那一样。爱是要刻意穿上去的，穿在其余的外面，穿在我一点也不想穿的那些晚上。它没有很快修好什么，也没有一夜之间把温度找回来。它是在事情慢慢变好的那段日子里，把散着的东西拢住。我后来才明白，腰带本来就是干这个用的。",
+          "action_step": "今晚为那个你一直只是公平待他的人，刻意做一件带着爱的小事。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我一直客气、公平、周到，可不知从哪一天起，我不再刻意去爱谁了。求你指给我今晚该穿上的那一件。不是感觉——感觉我叫不来——是那个动作。求你把我们之间松了很久、久到我一直不肯承认的地方，重新拢住。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_043",
+      "day": 43,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "John",
+        "chapter": 16,
+        "verse": "33",
+        "full_reference": "John 16:33"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚平安",
+        "#难处不断",
+        "#祂已得胜"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "我将这些事告诉你们，是要叫你们在我里面有平安。在世上，你们有苦难；但你们可以放心，我已经胜了世界。」"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "gospel/farewell discourse",
+          "primary_theme": "overcoming"
+        },
+        "niv_word_count": 29,
+        "context_note": "耶稣说这话，是在客西马尼园之前的最后几分钟。原文 tharseite 更接近「拿出勇气」，不是「高兴点」——那是将领对士兵说的话，不是朋友在宴席上说的话。而「我已经胜了世界」用的是完成的语气：十字架还没发生，事情已经办成了。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "两半都要听进去，哪一半都别削软。在世上你们有苦难——他说得很直白，而且他说对了。\n\n然后是：我已经胜了世界。已经完成的语气，说在十字架还没发生之前。所以今晚给你的平安，不是苦难消失了。是在你的苦难开始之前，结局就已经定了。你可以放心！",
+          "action_step": "今晚诚实地把这件难处叫出名字。然后对着它说出这节经文最后那句：我已经胜了世界。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，这阵子一件接一件，我已经听腻了别人叫我乐观。谢谢你，耶稣从来没有那样应许过。今晚求你给我勇气，不是给我笑容，让我在那件已经完成的事上歇一歇。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_044",
+      "day": 44,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Colossians",
+        "chapter": 3,
+        "verse": "15",
+        "full_reference": "Colossians 3:15"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚平安",
+        "#心里争战",
+        "#让平安作主"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "又要叫基督的平安在你们心里作主；你们也为此蒙召，归为一体；且要存感谢的心。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/exhortation",
+          "primary_theme": "peace"
+        },
+        "niv_word_count": 23,
+        "context_note": "原文 brabeuō 是运动会上裁判做的事：仲裁、判定。所以这不是一句「愿你心情平静」的建议，而是一道指令——当你里面起了争执，让平安来做决定。和合本这里作「基督的平安」。保罗随后加了一句：且要存感谢的心。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "「作主」这个词，原文是裁判做的事——吹哨、判定、把争执了结。所以保罗不是叫你去感觉平安。他是叫你在胸口两个声音同时开口的时候，让基督的平安投那决定性的一票。不是最大声的那个。也不是最焦虑的那个——焦虑的声音听起来往往最像负责任。是你安静坐下来之后，仍让你心里平稳的那一个。\n\n然后他像顺口一提似的加了一句：要存感谢的心。我们大多数人，习惯把这两件事的顺序做反了。",
+          "action_step": "今晚在你两难的那件事上，留意哪一个选择让你心里平稳，就让它投票。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我心里今晚有两个声音，焦虑的那个更大声。求你让基督的平安来判这一局。求你今晚了结我胸口里的这场争执；在它慢慢平息的时候，也给我一件可以诚实感谢的事。就照这个顺序，哪怕只这一次。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_045",
+      "day": 45,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Mark",
+        "chapter": 11,
+        "verse": "25",
+        "full_reference": "Mark 11:25"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚赦免",
+        "#心里有结",
+        "#祷告前先放下"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "你们站着祷告的时候，若想起有人得罪你们，就当饶恕他，好叫你们在天上的父也饶恕你们的过犯。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "gospel/teaching",
+          "primary_theme": "forgiveness"
+        },
+        "niv_word_count": 24,
+        "context_note": "耶稣把这句直接接在一个关于祷告的应许后面——这两件事在他那里不是两个话题。「若想起有人得罪你们」是假定你会想起，不是责备。那时候站着是最平常的祷告姿势，所以这说的是你天天祷告的那一刻，不是什么特别的场合。"
+      },
+      "devotional": {
+        "structure": "发问",
+        "zh-Hans": {
+          "meditation": "留意那个「若」字。耶稣假定会有这么一个人。你心里存着什么，他并不吃惊。也留意他把这件事放在哪里——就放在祷告当中，是同一个动作的一部分，不是另外安排一个属灵项目留到以后。\n\n那么，刚才在你读完这节经文之前，浮上来的是谁的脸？",
+          "action_step": "今晚把那个人的名字说给神听，也把那句你其实不太想说出口的话说出来。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，一张脸马上就浮上来了，我宁可它没有。我不打算假装这没什么。求你帮我今晚就放下它，别让它再往里扎得更深。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_046",
+      "day": 46,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "1 Corinthians",
+        "chapter": 13,
+        "verse": "13",
+        "full_reference": "1 Corinthians 13:13"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#亲密关系",
+        "#爱是最大的"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "如今常存的有信，有望，有爱这三样，其中最大的是爱。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "love"
+        },
+        "niv_word_count": 16,
+        "context_note": "保罗是拿这三样和哥林多人正在争的属灵恩赐作对比——他说那些都会止住。「常存」的原文 menō 是留下、存留：当别的都已经结束，它还在那里。爱之所以最大，一部分原因是它会一直延续到今生以后。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "保罗刚对一群迷恋恩赐的信徒说：那些全都会止住。然后他说，这三样常存。「常存」的意思是，当别的都结束了，它还在。在一段很长的关系里读到这句话，是件奇怪又让人站得稳的事——尤其在一个再普通不过的周二晚上，没有什么大事发生，也没有什么值得一提。\n\n婚姻里那些叫人惊艳的部分，确实会止住。最初那段特别的日子，也会止住。留下来的是信，是望，是这个固执又平常、还在一次次选择下去的东西。保罗说，这最后一样，是屋子里最大的那一个！",
+          "action_step": "想想你生命里最长的那段关系，说出一样在别的都停了之后、爱仍然留下来的东西。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我最亲近的几段关系里，那些让人心跳的部分悄悄地结束了，我为此难过的程度，比我说出来的要多。谢谢你，爱是那个留下来的部分。今晚求你让我看见它还在的地方——朴素的、不起眼的、一直撑着的。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_047",
+      "day": 47,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Jeremiah",
+        "chapter": 29,
+        "verse": "12",
+        "full_reference": "Jeremiah 29:12"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#久无回应",
+        "#祂必侧耳"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "你们要呼求我，祷告我，我就应允你们。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "prophecy/letter",
+          "primary_theme": "being heard"
+        },
+        "niv_word_count": 18,
+        "context_note": "这一节夹在那句有名的「我知道我向你们所怀的意念」和「你们寻求我，若专心寻求我，就必寻见」中间——三句话都是寄给被掳到巴比伦的人的。「应允」的希伯来原文有侧耳靠过去的意思，是一个主动的姿势，不是被动地听见。"
+      },
+      "devotional": {
+        "structure": "直解",
+        "zh-Hans": {
+          "meditation": "和合本这里给了你两个动作：呼求，祷告。神那边只有一个：我就应允。而希伯来文里的「听」不只是听见，是侧过身来靠近——那是一个人怕漏掉什么才有的姿势。\n\n这话最初是写给一群离家千里的人的，他们有一万个理由相信神已经不再听了。今晚，这话也是写给你的。",
+          "action_step": "今晚就祷告一句话，说的时候当他正侧耳靠过来，而不是当他正忙着别的。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我一直是当你只听了一半在祷告。谢谢你，你是侧耳靠过来的那一位。今晚这句话我要说给你听，说的时候相信你正在靠近。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_048",
+      "day": 48,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Proverbs",
+        "chapter": 22,
+        "verse": "6",
+        "full_reference": "Proverbs 22:6"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#为儿女忧心",
+        "#尽力之后交托"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "教养孩童，使他走当行的道，就是到老他也不偏离。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "wisdom",
+          "primary_theme": "parenting"
+        },
+        "niv_word_count": 21,
+        "context_note": "箴言说的是人生大体上怎样运作的通则，不是对个别人的保证——同一卷书也说智慧之子使父亲欢乐，而圣经里例外多得是。有学者把原文读作「照着他自己的路」，指这孩子本身的性情。无论哪一种读法，都不允许拿这节去追究谁的责任。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "箴言讲的是事情通常怎么走。它不是一纸合同，也从来没打算被当成合同念——这一点非常要紧，如果你的孩子走远了，而你这些年一直在悄悄为此服刑。有学者把这句希伯来原文读作「照着他的路」，意思是照着眼前这一个孩子的性情，而不是一套对所有孩子通用的方法。\n\n无论按哪一种读法，这节都是一句关于人一生长期塑造的智慧话。我们当中有人把它当成判决书，念了很多年。它不是对你的判决，在夜里十一点不是，从来都不是。",
+          "action_step": "如果你一直在为孩子后来的样子责怪自己，今晚说一句话，把他重新交回神手里。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，这节经文我拿来对付自己很多年了。今晚我把它放下。我从来没有能力保证一个结果，一次也没有。求你把我的孩子接回你手中——他本来就一直在那里。今晚让我睡下的时候，身上没有那张判决书。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_049",
+      "day": 49,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Psalms",
+        "chapter": 56,
+        "verse": "3",
+        "full_reference": "Psalms 56:3"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#害怕",
+        "#就在害怕时信靠"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "我惧怕的时候要倚靠你。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "psalm",
+          "primary_theme": "fear"
+        },
+        "niv_word_count": 10,
+        "context_note": "照诗篇的标题，大卫写这句时正被非利士人在迦特拿住——是真的走投无路，真的害怕。希伯来原文一点也没有要否认那份惧怕的意思。它只是把倚靠放进了同一刻里，而不是放在惧怕过去之后。"
+      },
+      "devotional": {
+        "structure": "发问",
+        "zh-Hans": {
+          "meditation": "整句只有九个字，没有一个字假装惧怕已经过去了。这正是它能用的原因。他没有说：等我不怕了，我就倚靠。他说的是，这两件事在同一刻发生，在同一副身体里，同时。\n\n那么今晚，一边害怕一边倚靠，不等第一件先结束，会是什么样子？",
+          "action_step": "今晚一口气把两半都说出声来：这件事我很怕，同时，我倚靠你。说完就去睡。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我今晚害怕，我不再为这个道歉了。我不打算等惧怕过去了才倚靠你。那就两样一起吧。在我还害怕的时候，求你抱住我。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_050",
+      "day": 50,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "1 John",
+        "chapter": 1,
+        "verse": "9",
+        "full_reference": "1 John 1:9"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚赦免",
+        "#心中自责",
+        "#被神接纳"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "我们若认自己的罪，神是信实的，是公义的，必要赦免我们的罪，洗净我们一切的不义。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle",
+          "primary_theme": "forgiveness"
+        },
+        "niv_word_count": 22,
+        "context_note": "约翰写这封信，是针对当时那些否认罪是真实存在的教师。「认」的原文是 homologeō，字面意思是「说同样的话」：照着神已经怎样说它，就怎样说，不加修饰，也不夸大。「信实」和「公义」摆在一起是有意的：赦免是一个守住的应许，不是一时的心情。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "信实，公义。不是慈悲，不是宽大——那会是另外两个词，也是另外一回事。这意味着这里的赦免，不是神在心情好的日子里为你破一次例。是神守自己的话，而他守自己的话，从来没有一次失手。\n\n所以你今晚不是在求一个人情，也不是指望赶上他慷慨的时候。你是在求他做他本来就是的那一位。带着这个走进一个房间，和带着前一种走进去，完全是两回事！",
+          "action_step": "今晚把那件你宁可含糊带过的事，具体地说给神听。一句话就好。说完就停住，别再补上那些自责。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，谢谢你，我今晚求的不是一个人情，而是你早就应许过的事。这就是我一直不太想说出口的那件事。求你洗净它，让我今晚睡下的时候，不再把整件事在脑子里重放两遍。也求你让我明天对身边最近的人温柔一点。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_051",
+      "day": 51,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "John",
+        "chapter": 15,
+        "verse": "13",
+        "full_reference": "John 15:13"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#爱得辛苦",
+        "#舍己的爱"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "人为朋友舍命，人的爱心没有比这个大的。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "gospel/farewell discourse",
+          "primary_theme": "sacrificial love"
+        },
+        "niv_word_count": 15,
+        "context_note": "耶稣说这话，离十字架只剩几个小时；紧接着，他称门徒为朋友，不再称他们为仆人。「舍命」里的动词原义是把东西放下、搁在一边——可以指一次的举动，也可以指一再重复的举动。多数活出这节经文的人，是一小份一小份地做完的。"
+      },
+      "devotional": {
+        "structure": "直解",
+        "zh-Hans": {
+          "meditation": "我们容易把这句读成一个壮烈的瞬间，因为耶稣正是那样成全了它。但原文那个动词，本义只是「放下」，可以放一次，也可以放一千次。事实上，大多数的爱正是这样一点点放下去的：那份没去接的工作。给了某个需要你的人的那些年。又一个夜晚，安安静静地交出去，交给一个根本不会记得这一晚的人。\n\n如果这就是你这些年过的日子，而你私下里怀疑过它到底算不算数，请再看一遍耶稣给它的评价：没有比这更大的爱了。",
+          "action_step": "说出一件你为某个人放下过的事。不必解释，也不必给它找理由，说出来就好。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我把很多年一小块一小块地给了人，有时候会私下里想，这些到底有没有被记下。谢谢你，你把这称作最大的爱，也没有要求它一定要是壮烈的一次。求你让我明天那一份，也能不带怨气地放下去。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_052",
+      "day": 52,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Psalms",
+        "chapter": 46,
+        "verse": "10",
+        "full_reference": "Psalms 46:10"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#停不下来",
+        "#安静下来"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "你们要休息，要知道我是神！我必在外邦中被尊崇，在遍地上也被尊崇。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "psalm",
+          "primary_theme": "stillness"
+        },
+        "niv_word_count": 24,
+        "context_note": "这首诗讲的是一座被围困的城，不是一处安静的退修地。和合本把这个动词译作「休息」，原文的意思更接近「停手」「松开」，是对一个还在挣扎的人说的话。这里的安息不是一种平静的心情，是交出掌控权。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "和合本这里译作「休息」。它说的不是安静下来，是停手：对一个还在死撑的人说，够了，放下吧。\n\n作为基督徒，我们常把这句听成一个关于平静心情的邀请，然后照例做不到。它不是那个意思。它是一道指令：别再管着结局了。那个「知道」是随后才来的，来给已经松开的手。",
+          "action_step": "今晚一边念这节经文，一边把手掌摊开三十秒。让这个动作替你说话。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，这件事我攥了一整天，两只手都没松。你说，休息。那我今晚就把手摊开，并且不再合上。你是神，我不是——这真让人松一口气。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_053",
+      "day": 53,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "1 Peter",
+        "chapter": 5,
+        "verse": "7",
+        "full_reference": "1 Peter 5:7"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#焦虑不安",
+        "#被神看顾"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "你们要将一切的忧虑卸给神，因为他顾念你们。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/exhortation",
+          "primary_theme": "care"
+        },
+        "niv_word_count": 11,
+        "context_note": "在原文里，这句是接着前一句说下去的——你们要自卑，把忧虑抛给他。两件事是一个动作，所以把忧虑交出去是谦卑，不是软弱。epiriptō 这个词，说的是把行囊猛地甩到驮兽背上：一次干脆的转移。"
+      },
+      "devotional": {
+        "structure": "发问",
+        "zh-Hans": {
+          "meditation": "这个动词不是「分担」，也不是「聊一聊」。它是把一副担子从自己背上甩下来、甩到一头驮得动的牲口身上的那个动作。一下，然后你的手就空了。而在原文里，它和前一句是连着的：你们要自卑，并且要卸给他。这一下就把整件事翻过来了。死死抱着自己的忧虑，不是刚强。那是一种安静的坚持——坚持这副担子只能由我来扛。\n\n那么，有什么是你还扛着，只因为交出去就等于承认自己扛不动？",
+          "action_step": "说出那件忧虑的名字，然后说：今晚这不归我扛。上床之前先把它放下。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我死死抱着自己的忧虑，因为放手好像就是承认我应付不来。今晚我承认了。这一整副担子，我甩过来给你了，求你今晚替我拿着。谢谢你，那些我说出口都会觉得难为情的小事，你也在意。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_054",
+      "day": 54,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "1 Corinthians",
+        "chapter": 16,
+        "verse": "14",
+        "full_reference": "1 Corinthians 16:14"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#做了很多事",
+        "#凡事凭爱心"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "凡你们所做的都要凭爱心而做。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/exhortation",
+          "primary_theme": "love"
+        },
+        "niv_word_count": 4,
+        "context_note": "这是保罗书信结尾那串嘱咐里最短的一句，夹在关于行程和捐项的实际交代之间。中文九个字，希腊原文只有四个词。它没有给你加一件要做的事，它说的是你手上那些事该用什么方式去做。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "原文只有四个词，夹在一堆关于行程安排和捐项的交代中间。\n\n留意它并没有往你的清单上再加一件事。它没有说，你要多做一点。它说的是，同样那些事，换个做法。今晚这句话对你是松一口气还是一记提醒，得看你今天是怎么做的！",
+          "action_step": "回头看今天做过的一件事。想一想，如果是凭爱心做的，它会是什么样子，然后把那个样子带到明天。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我今天做完了很多事，可有多少是凭爱心做的，我自己也没底。谢谢你，你没有往我的清单上再加什么。求你改变我明天做事的方式，从家里开始。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_055",
+      "day": 55,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Psalms",
+        "chapter": 42,
+        "verse": "11",
+        "full_reference": "Psalms 42:11"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#低落",
+        "#对自己说话"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "我的心哪，你为何忧闷？为何在我里面烦躁？应当仰望神，因我还要称赞他。他是我脸上的光荣（原文是帮助），是我的神。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "psalm/lament",
+          "primary_theme": "discouragement"
+        },
+        "niv_word_count": 27,
+        "context_note": "这一句在诗篇四十二篇和四十三篇里出现了三次——是作者反复回到的一句副歌，因为事情还没有解决。他问了自己两遍，也没有作答。他做的是对自己说话，而不只是听自己说，并且把这段自言自语的方向指向前面。"
+      },
+      "devotional": {
+        "structure": "直解",
+        "zh-Hans": {
+          "meditation": "他把这个问题问了两遍，一次也没有回答。这个细节很值钱，因为我们大多以为，心里忧闷得先说出个理由才算被允许。他做的是另一件事：他对自己说话，而不只是听自己说。这两者不一样。夜里十一点听自己说话，是一个低落的晚上变成一个低落的星期的方式。对自己说——应当仰望神——是完全不同的一个动作。\n\n再留意他说这话的时态：我还要称赞他。不是我现在就想。是还要，是以后。他没有对今晚撒谎，他只是不让今晚说了算。",
+          "action_step": "今晚出声对自己说一句话——是对自己说，不是念叨自己。用「我还要」开头。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我今晚很低落，说不清为什么，而我一直把这当成自己的失败。谢谢你，诗人也把那个问题问了两遍，也没有回答。求你让我对自己说话，而不是一直听自己说。我还要称赞你。也许不是今晚。但我一定还要。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_056",
+      "day": 56,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Luke",
+        "chapter": 6,
+        "verse": "37",
+        "full_reference": "Luke 6:37"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚赦免",
+        "#评断别人",
+        "#先饶恕"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "「你们不要论断人，就不被论断；你们不要定人的罪，就不被定罪；你们要饶恕人，就必蒙饶恕（饶恕：原文是释放）；"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "gospel/teaching",
+          "primary_theme": "judgement"
+        },
+        "niv_word_count": 24,
+        "context_note": "原文里这两个动词是分开的：krinō 是判断、分辨，katadikazō 是定罪、下判决。耶稣禁止的不是分辨——路加福音里满是分辨。他禁止的是从「看出」跨到「判刑」那一步。下一节还补了一句：你们用什么量器量给人，也必用什么量器量给你们。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "这里用了两个不同的词，分别很要紧。头一个是「看出、评估」，第二个是「定罪、判刑」。耶稣不是要你别再看出人身上的事——他自己一直在看。他是要你别从「看出」滑到「判刑」：那个为着别人怎么带孩子、婚姻如何、如今变成什么样子，在心里悄悄开庭的小法庭。\n\n而他给的理由不是道德上的高低。是那把尺会回来。我们拿来量别人的标准，就是凌晨三点回来量我们的那一把。",
+          "action_step": "想想今天你在心里悄悄给谁判了刑。撤了那个判决，看看你自己里面是不是也松了一点。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我几乎天天在心里开一个私设的法庭，法官都是我。在那个法庭里，我对自己比对任何人都狠，我开始怀疑这两件事是连着的。求你让我今晚停止给人判刑。也包括我自己。尤其是我自己。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_057",
+      "day": 57,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Ephesians",
+        "chapter": 4,
+        "verse": "32",
+        "full_reference": "Ephesians 4:32"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚赦免",
+        "#家里的语气",
+        "#如同神饶恕你"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "并要以恩慈相待，存怜悯的心，彼此饶恕，正如神在基督里饶恕了你们一样。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/exhortation",
+          "primary_theme": "kindness"
+        },
+        "niv_word_count": 17,
+        "context_note": "保罗在前面刚列了要除掉的东西——苦毒、恼恨、嚷闹——这一节是用来顶替它们的。原文 eusplanchnos 字面意思是「里面的脏腑是好的」：那种在身体里、在肚腹里感觉到的怜悯。他给的尺子不是公平，而是神已经怎样待你。"
+      },
+      "devotional": {
+        "structure": "发问",
+        "zh-Hans": {
+          "meditation": "「怜悯」这个词，原文字面的意思是「里面是软的」。它是个身体性的词——那种在肚腹里感觉到的疼惜，不是脑子里作出的决定。再留意保罗给的那把尺。不是照他该得的分量去饶恕。不是按比例饶恕。是神在基督里怎样饶恕了你，你就怎样饶恕。这是一条很高的线，可奇怪的是，它同时让人松了口气——因为它在你还没开始之前，就把「谁配得什么」这整件事挪走了。\n\n那么今晚问一句诚实的：你今天的语气在哪里硬了下来，谁接住了那句话——那个人真的是欠你这一句的人吗？",
+          "action_step": "想想你今天在家里是怎么说话的。挑出一个瞬间，想好明天同样的话你要怎么说。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我今天的语气硬了，对着一个不该承受我最坏那一面的人，是哪一刻我心里很清楚。求你把我里面硬掉的地方重新软下来。求你让我明天在家里存恩慈——不是因为他们配得，而是因为你从来不是这样量我的。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_058",
+      "day": 58,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Psalms",
+        "chapter": 147,
+        "verse": "3",
+        "full_reference": "Psalms 147:3"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#心碎",
+        "#祂医治"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "他医好伤心的人，裹好他们的伤处。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "psalm",
+          "primary_theme": "healing"
+        },
+        "niv_word_count": 9,
+        "context_note": "紧接着的下一节说，神数点星宿的数目，一一称它的名——诗人是刻意把这两句放在一起的。「裹好」是慢的、要动手的、不好看的工作：不是隔着距离对伤口说一句话，而是把布一圈圈缠上去，明天再换一次。"
+      },
+      "devotional": {
+        "structure": "宣告鼓励",
+        "zh-Hans": {
+          "meditation": "读一读紧接着这节的下一句：他数点星宿的数目，一一称它的名。诗人是有意把这两句摆在一起的。\n\n再留意第二个动词。不是医好了就走开——是「裹好」。包扎是慢的、贴身的活儿。明天还得再包一次，后天也是。你里面裂开的那一处，不是被远远地喊了一声。是正在被一层层裹起来！",
+          "action_step": "今晚诚实地叫出那道伤的名字。不必求它马上过去，只让它被照料。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，这件事还没有好，而身边的人已经开始觉得它该好了。谢谢你，包扎本来就是慢工，你也不催我。今晚求你再为我裹一次。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_059",
+      "day": 59,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Colossians",
+        "chapter": 4,
+        "verse": "2",
+        "full_reference": "Colossians 4:2"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚交托",
+        "#祷告断续",
+        "#恒切与警醒"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "你们要恒切祷告，在此警醒感恩。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "NT",
+          "genre": "epistle/exhortation",
+          "primary_theme": "prayer"
+        },
+        "niv_word_count": 8,
+        "context_note": "短短一行里三道吩咐。proskartereō 的意思是紧紧靠着不挪开。「警醒」原是站岗时不睡觉的那个词——在这里，是守着看那个回应。感谢被放在这两者旁边，是做这两件事时该有的姿态。"
+      },
+      "devotional": {
+        "structure": "同行劝勉",
+        "zh-Hans": {
+          "meditation": "一句话里三件事：不放手，别睡着，存感谢。\n\n作为基督徒，我们大多在第一件上还行，第二件就悄悄跳过去了。「警醒」的意思是留意那个答案——如果我们从来不看，祷告就只剩下开口要，不再是对话。神看起来沉默，有一半原因是：我们三月里求了，四月就不再看了。",
+          "action_step": "回想一件几个月前你求过的事。问问自己：是不是有什么已经发生了，只是你没留意。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，我求完就不看了，然后回过头说你没有答应我。今晚求你让我不放手，也让我的眼睛睁着。求你指给我看一件你早已做成、我却径直走过去的事。奉主耶稣的名祷告，阿们。"
+      }
+    },
+    {
+      "id": "e_060",
+      "day": 60,
+      "segment": "evening",
+      "language": "zh-Hans",
+      "reference": {
+        "book": "Proverbs",
+        "chapter": 17,
+        "verse": "17",
+        "full_reference": "Proverbs 17:17"
+      },
+      "special_occasion": null,
+      "mood_tags": [
+        "#夜晚安息",
+        "#被陪伴",
+        "#患难中的家人"
+      ],
+      "translations": {
+        "zh-Hans": {
+          "traditional": {
+            "version": "和合本",
+            "text": "朋友乃时常亲爱，弟兄为患难而生。"
+          },
+          "modern": {
+            "version": "当代译本",
+            "text": ""
+          }
+        }
+      },
+      "exegesis": {
+        "verse_category": {
+          "testament": "OT",
+          "genre": "wisdom",
+          "primary_theme": "friendship"
+        },
+        "niv_word_count": 16,
+        "context_note": "希伯来原文很紧凑：朋友时常亲爱，弟兄为患难而生。箴言对人际关系并不煽情——它是在观察哪一种关系承得住重量。「时常」包括那些不方便的时候，而这正是整句话的要点。"
+      },
+      "devotional": {
+        "structure": "见证",
+        "zh-Hans": {
+          "meditation": "那一年，一切都散了。大多数人的好意持续了大约三个星期。这不是抱怨——三个星期已经是我们多数人拿得出来的分量，我自己也不止一次做过别人的「三周朋友」。我记得的，是第七个月还在的那两位。那时候已经没有新的话可说，也没有什么还能修补。其中一位是亲戚，本来也没有什么特别的理由喜欢我。她还是来了。\n\n这句箴言一点也不煽情。它是在观察：哪一种关系压得住重量。「时常」说的就是那些不方便的时候。我现在知道那要付多少，因为有人替我付过。",
+          "action_step": "想一个正处在艰难第七个月的人。明天联系她，不用带上任何有用的话。"
+        }
+      },
+      "prayer": {
+        "structure_used": "free_form",
+        "zh-Hans": "亲爱的天父，谢谢你，为那些在事情不再新鲜之后仍然留下来的人。我现在知道那对他们意味着什么了。求你让我也成为别人的那一个人，也求你今晚让我想起那位正走在艰难一年最安静那一段里的人。奉主耶稣的名祷告，阿们。"
+      }
+    }
+  ]
+}

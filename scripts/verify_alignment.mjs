@@ -14,7 +14,9 @@
 
 import { readFileSync } from 'node:fs';
 
-const COMMIT = '4cd531edd1e5877eb6fd7f9c5eada58513cda9e7';
+// Keep in LOCKSTEP with CORPUS_COMMIT in src/constants/corpus.ts — this
+// script had silently drifted to an older pin once (caught 2026-08-30).
+const COMMIT = 'e9df0306d76c8b1bf66aae71fc6e93ed8622c8cc';
 const CDN = `https://cdn.jsdelivr.net/gh/sangchy1972/pd-text-corpus@${COMMIT}/bibles`;
 const LANGS = ['en', 'zh-Hans', 'zh-Hant', 'de', 'fr', 'es', 'pt'];
 const EDITION = {
@@ -290,10 +292,99 @@ async function probeAdjustment() {
   }
 }
 
+// ─── 3. Authoring-batch validation (schema 3.2, hard gate) ──────────────────
+// Validates the RAW 7-language authoring files of a content delivery. Unlike
+// sections 1-2 (advisory, for eyeballing), failures here exit non-zero — this
+// is the engineering acceptance gate the content spec's §8 promises.
+// Default dir: docs/daily-verse-batch2; override with argv[2].
+function checkAuthoringBatch() {
+  const dir = process.argv[2] || 'docs/daily-verse-batch2';
+  let fail = 0;
+  const flag = (msg) => { fail++; console.log(`  ✗ ${msg}`); };
+  console.log(`\n\n═══ 3. Authoring batch gate (${dir}) ═══`);
+  let files;
+  try {
+    files = Object.fromEntries(LANGS.map(l => [l, JSON.parse(readFileSync(`${dir}/verses_${l}.json`, 'utf8'))]));
+  } catch (e) {
+    console.log(`  (batch dir unreadable — skipped: ${e.message})`);
+    return 0;
+  }
+
+  // Per-file counts + id integrity.
+  const byId = {};
+  for (const l of LANGS) {
+    const vs = files[l].verses || [];
+    if (vs.length !== 120) flag(`${l}: ${vs.length} verses (want 120)`);
+    const m = vs.filter(v => v.segment === 'morning').length;
+    if (m !== 60) flag(`${l}: ${m} morning (want 60)`);
+    const ids = new Set(vs.map(v => v.id));
+    if (ids.size !== vs.length) flag(`${l}: duplicate ids`);
+    byId[l] = new Map(vs.map(v => [v.id, v]));
+  }
+
+  // Cross-language: the schema-3.2 shared fields must be byte-identical.
+  const en = byId.en;
+  const shared = (v) => JSON.stringify([
+    v.id, v.day, v.segment, v.reference, v.special_occasion, v.mood_tags,
+    v.devotional?.structure, v.exegesis?.verse_category, v.exegesis?.niv_word_count,
+  ]);
+  for (const [id, ev] of en) {
+    const want = shared(ev);
+    for (const l of LANGS) {
+      const lv = byId[l].get(id);
+      if (!lv) { flag(`${l}: missing ${id}`); continue; }
+      if (shared(lv) !== want) flag(`${l} ${id}: shared fields drift from en`);
+    }
+  }
+
+  // Per-language prose: chosen verse text (modern||traditional), the three
+  // prose fields non-empty + free of template debris, paragraph rules.
+  let ctxMin = Infinity, ctxMax = 0;
+  for (const l of LANGS) {
+    for (const [id, v] of byId[l]) {
+      const trs = v.translations?.[l];
+      const chosen = trs?.modern?.text?.trim() || trs?.traditional?.text?.trim();
+      if (!chosen) flag(`${l} ${id}: no usable verse text (modern AND traditional empty)`);
+      const dev = v.devotional?.[l] || {};
+      const prose = { meditation: dev.meditation, action_step: dev.action_step, prayer: v.prayer?.[l] };
+      for (const [k, txt] of Object.entries(prose)) {
+        if (!txt?.trim()) { flag(`${l} ${id}: empty ${k}`); continue; }
+        for (const c of ['#', '{', '<']) if (txt.includes(c)) flag(`${l} ${id}: '${c}' in ${k}`);
+      }
+      if ((prose.meditation?.match(/\n\n/g) || []).length > 1) flag(`${l} ${id}: meditation >2 paragraphs`);
+      if (prose.prayer?.includes('\n')) flag(`${l} ${id}: prayer not single-paragraph`);
+      const note = v.exegesis?.context_note?.trim();
+      if (!note) flag(`${l} ${id}: empty context_note`);
+      else { ctxMin = Math.min(ctxMin, note.length); ctxMax = Math.max(ctxMax, note.length); }
+    }
+  }
+
+  // verse_local: fr/de only, identical id sets, same-chapter psalm shifts.
+  const vlSet = (l) => new Set([...byId[l].values()].filter(v => v.verse_local).map(v => v.id));
+  for (const l of LANGS) {
+    const s = vlSet(l);
+    if (l === 'fr' || l === 'de') {
+      for (const id of s) {
+        const v = byId[l].get(id);
+        if (!/^[1-3]?\s?[A-Za-z]+ \d+:\d+$/.test(v.verse_local)) flag(`${l} ${id}: unparseable verse_local "${v.verse_local}"`);
+      }
+    } else if (s.size) flag(`${l}: verse_local present outside fr/de (${[...s].join(',')})`);
+  }
+  const frS = [...vlSet('fr')].sort().join(','), deS = [...vlSet('de')].sort().join(',');
+  if (frS !== deS) flag(`verse_local id sets differ: fr=[${frS}] de=[${deS}]`);
+
+  console.log(fail === 0
+    ? `  ✓ batch gate clean (840 entries; verse_local fr/de: ${vlSet('fr').size}; context_note len ${ctxMin}–${ctxMax})`
+    : `  ${fail} failure(s)`);
+  return fail;
+}
+
 async function main() {
   await checkAllBibles();
   await checkDailyVerses();
   await probeAdjustment();
+  const fail = checkAuthoringBatch();
+  if (fail > 0) process.exit(1);
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

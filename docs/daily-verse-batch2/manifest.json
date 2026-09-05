@@ -1,0 +1,77 @@
+{
+  "v": 1,
+  "batch": 2,
+  "schema": "3.2",
+  "contentSpec": "v3.1",
+  "generated": "2026-08-29",
+  "coverageDays": 60,
+  "note": "Daily Verse 第二批。schema 3.2 = 非 EN 文件不重复英文字段(见 INTEGRATION.md 第 3 节)。",
+  "blocking": [
+    "translations.<lang>.modern.text 七语言全部为空 —— app 的 verse 页正是渲染这一栏,上线前必须由持牌来源回填,或改渲染 traditional。见 INTEGRATION.md 第 5 节。"
+  ],
+  "languages": {
+    "en": {
+      "file": "verses_en.json",
+      "count": 120,
+      "morning": 60,
+      "evening": 60,
+      "bytes": 380656,
+      "sha256": "a74db236d5a9b6c8",
+      "verse_local_count": 0
+    },
+    "zh-Hans": {
+      "file": "verses_zh-Hans.json",
+      "count": 120,
+      "morning": 60,
+      "evening": 60,
+      "bytes": 284201,
+      "sha256": "2df818dfb2b99add",
+      "verse_local_count": 0
+    },
+    "zh-Hant": {
+      "file": "verses_zh-Hant.json",
+      "count": 120,
+      "morning": 60,
+      "evening": 60,
+      "bytes": 284198,
+      "sha256": "b191bbb2295679d2",
+      "verse_local_count": 0
+    },
+    "de": {
+      "file": "verses_de.json",
+      "count": 120,
+      "morning": 60,
+      "evening": 60,
+      "bytes": 303589,
+      "sha256": "30827c914ffd30a7",
+      "verse_local_count": 5
+    },
+    "fr": {
+      "file": "verses_fr.json",
+      "count": 120,
+      "morning": 60,
+      "evening": 60,
+      "bytes": 305828,
+      "sha256": "30bc52be827d4c28",
+      "verse_local_count": 5
+    },
+    "es": {
+      "file": "verses_es.json",
+      "count": 120,
+      "morning": 60,
+      "evening": 60,
+      "bytes": 288463,
+      "sha256": "ae2c34bc86084269",
+      "verse_local_count": 0
+    },
+    "pt": {
+      "file": "verses_pt.json",
+      "count": 120,
+      "morning": 60,
+      "evening": 60,
+      "bytes": 292386,
+      "sha256": "211b51a4ccf5662c",
+      "verse_local_count": 0
+    }
+  }
+}

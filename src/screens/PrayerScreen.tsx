@@ -20,6 +20,7 @@ import { usePrayer } from '../state/PrayerContext';
 import { useActivity } from '../state/ActivityContext';
 import { useFirstRunTour, measureRefInWindow } from '../state/FirstRunTourContext';
 import { useDailyVerses } from '../state/DailyVersesContext';
+import { displayRefFor } from '../services/dailyVersesService';
 import { useTranslation } from '../state/TranslationsContext';
 import { useReadChapters } from '../state/ReadChaptersContext';
 import { usePlanCompletion } from '../state/PlanCompletionContext';
@@ -971,8 +972,11 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
     toggleWidth.value = e.nativeEvent.layout.width;
   };
 
-  const liveVerseRef = dailyVerse?.reference.full_reference
-    ? localizeReference(translation.code, dailyVerse.reference.full_reference)
+  // displayRefFor: the shared fr/de psalm-numbering helper — the SAME string
+  // keys the saved-verses heart and drives the chapter jump, so all surfaces
+  // agree (swarm F2, 2026-08-30).
+  const liveVerseRef = dailyVerse
+    ? localizeReference(translation.code, displayRefFor(dailyVerse, translation.code))
     : '';
   const liveVerseText = dailyVerse?.modernText || '';
 
@@ -1004,7 +1008,9 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
   };
 
   const openVerseInBible = () => {
-    const ref = dailyVerse?.reference.full_reference;
+    // Local numbering for fr/de — otherwise the jump highlights the verse
+    // BEFORE the one she just read in Segond/Luther psalms.
+    const ref = dailyVerse ? displayRefFor(dailyVerse, translation.code) : undefined;
     const focus = ref ? parseReference(ref) : null;
     navigation.navigate('Tabs', focus
       ? { screen: 'bible', params: { focus } }
@@ -1123,8 +1129,8 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           waitHint={waitHint}
           bgSource={prayerBg.imageFor(morning ? 'morning' : 'evening')}
           cardLabel={morning ? labels.verseOfDay : labels.verseOfNight}
-          verseRef={dailyVerse?.reference.full_reference
-            ? localizeReference(translation.code, dailyVerse.reference.full_reference)
+          verseRef={dailyVerse
+            ? localizeReference(translation.code, displayRefFor(dailyVerse, translation.code))
             : ''}
           verseText={dailyVerse?.modernText || ''}
           onBegin={() => navigation.navigate('PrayerFlow', { kind: morning ? 'morning' : 'evening' })}

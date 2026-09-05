@@ -18,7 +18,14 @@ interface UpstreamVerse {
   day: number;
   segment: 'morning' | 'evening';
   reference: { book: string; chapter: number; verse: string | number; full_reference: string };
-  translations: Record<string, { modern?: { version: string; text: string } }>;
+  /** fr/de only: local numbering where Segond/Luther count long psalm titles
+   *  as verse 1 (5 entries per batch 2 delivery). */
+  verse_local?: string;
+  translations: Record<string, {
+    traditional?: { version: string; text: string };
+    modern?: { version: string; text: string };
+  }>;
+  exegesis?: { context_note?: string };
   devotional: Record<string, { meditation: string; action_step: string }>;
   prayer: Record<string, string>;
 }
@@ -33,10 +40,21 @@ interface UpstreamFile {
 // never happen with the canonical files, but keeps a corrupt entry from
 // crashing the whole pull).
 function slim(v: UpstreamVerse, lang: LanguageCode): FullDailyVerse | null {
-  const tr = v.translations?.[lang]?.modern;
+  const trs = v.translations?.[lang];
   const dev = v.devotional?.[lang];
   const prayer = v.prayer?.[lang];
-  if (!tr || !dev || !prayer) return null;
+  if (!trs || !dev || !prayer) return null;
+  // Batch 2+: the modern edition (NIV/CCB/…) is in copyright and ships with
+  // an EMPTY text until a licensed source backfills it. Prefer modern when it
+  // actually has text; otherwise fall back to the public-domain traditional
+  // (KJV / 和合本 1919 / Luther 1912 / …) — byte-identical to what she reads
+  // when she opens the full chapter. Backfill is per-entry: the moment a
+  // licensed modern text lands in the CDN file, this picks it up with no
+  // client change. An entry with NO usable text drops entirely (the old code
+  // accepted an empty modern and rendered a blank verse page — swarm-free
+  // catch during batch-2 integration, 2026-08-30).
+  const chosen = trs.modern?.text?.trim() ? trs.modern : trs.traditional;
+  if (!chosen?.text?.trim()) return null;
   return {
     day: v.day,
     segment: v.segment,
@@ -46,8 +64,10 @@ function slim(v: UpstreamVerse, lang: LanguageCode): FullDailyVerse | null {
       verse: String(v.reference.verse),
       full_reference: v.reference.full_reference,
     },
-    modernVersion: tr.version,
-    modernText: tr.text,
+    ...(v.verse_local ? { verseLocal: v.verse_local } : {}),
+    modernVersion: chosen.version,
+    modernText: chosen.text,
+    ...(v.exegesis?.context_note ? { contextNote: v.exegesis.context_note } : {}),
     meditation: dev.meditation,
     actionStep: dev.action_step,
     prayer,
@@ -66,6 +86,23 @@ function parseUpstream(raw: string, lang: LanguageCode): FullDailyVerse[] {
   // linear find is fine — no need for a Map.
   out.sort((a, b) => a.day - b.day || (a.segment === 'morning' ? -1 : 1));
   return out;
+}
+
+// The ONE reference string to show and navigate with for this verse under
+// the active Bible translation. Segond 1910 / Luther 1912 count long psalm
+// titles as verse 1, so five psalm entries carry a shifted local number in
+// `verseLocal` — and every surface (home hero, prayer flow, the saved-verses
+// key, the read-full-chapter jump, the past-verses list) must derive from
+// THIS same string, or hearts desync across screens and jumps land one verse
+// off (swarm F2, 2026-08-30). English book name + local numbering — feed it
+// to localizeReference for display and parseReference for navigation.
+export function displayRefFor(
+  v: Pick<FullDailyVerse, 'verseLocal' | 'reference'>,
+  translationCode: string,
+): string {
+  return v.verseLocal && (translationCode === 'fr' || translationCode === 'de')
+    ? v.verseLocal
+    : v.reference.full_reference;
 }
 
 export async function getCachedDailyVerses(lang: LanguageCode): Promise<FullDailyVerse[] | null> {

@@ -5,6 +5,7 @@ import Feather from '@expo/vector-icons/Feather';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { ROSE, TXT, TXTSUB, P, FONTS, SERIF_BODY } from '../constants/theme';
 import { useDailyVerses } from '../state/DailyVersesContext';
+import { displayRefFor } from '../services/dailyVersesService';
 import { useTranslation } from '../state/TranslationsContext';
 import { useUILanguage, type UILanguageCode } from '../state/UILanguageContext';
 import { localizeReference } from '../services/parseReference';
@@ -99,14 +100,16 @@ export default function PastVersesScreen({ navigation }: RootStackScreenProps<'P
       for (const seg of ['morning', 'evening'] as const) {
         const v = getVerse(dayOfCycle, seg);
         if (!v) continue;
-        const refRaw = v.reference.full_reference;
+        const refRaw = displayRefFor(v, translation.code);
         out.push({
           key: `${i}-${seg}`,
           segment: seg,
           ref: localizeReference(translation.code, refRaw),
           refRaw,
           text: v.modernText,
-          verseLabel: v.reference.verse ? String(v.reference.verse) : null,
+          // From refRaw's tail, not reference.verse — the fr/de shifted psalms
+          // would otherwise show a label disagreeing with the ref beside it.
+          verseLabel: refRaw.includes(':') ? refRaw.split(':').pop() ?? null : null,
           date: label,
           day: dayOfCycle,
         });

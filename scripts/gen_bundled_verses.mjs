@@ -33,10 +33,17 @@ if (!inputDir) {
 // payload are byte-identical in structure. Returns null if the
 // language-specific fields are missing (defensive).
 function slim(v, lang) {
-  const tr = v.translations?.[lang]?.modern;
+  const trs = v.translations?.[lang];
   const dev = v.devotional?.[lang];
   const prayer = v.prayer?.[lang];
-  if (!tr || !dev || !prayer) return null;
+  if (!trs || !dev || !prayer) return null;
+  // Batch 2+: modern (NIV/CCB/…) is in copyright and ships EMPTY until a
+  // licensed source backfills it. Prefer modern when it has text, else fall
+  // back to the public-domain traditional (KJV / 和合本 / Luther / …) — the
+  // same text the user sees when she opens the full chapter. Mirrors
+  // dailyVersesService.slim() exactly. An entry with NO usable text drops.
+  const chosen = trs.modern?.text?.trim() ? trs.modern : trs.traditional;
+  if (!chosen?.text?.trim()) return null;
   return {
     day: v.day,
     segment: v.segment,
@@ -46,8 +53,10 @@ function slim(v, lang) {
       verse: String(v.reference.verse),
       full_reference: v.reference.full_reference,
     },
-    modernVersion: tr.version,
-    modernText: tr.text,
+    ...(v.verse_local ? { verseLocal: v.verse_local } : {}),
+    modernVersion: chosen.version,
+    modernText: chosen.text,
+    ...(v.exegesis?.context_note ? { contextNote: v.exegesis.context_note } : {}),
     meditation: dev.meditation,
     actionStep: dev.action_step,
     prayer,
@@ -89,8 +98,17 @@ export interface DailyVerse {
     verse: string;
     full_reference: string;
   };
+  /** Local verse numbering where Segond/Luther shift psalm titles into v1
+   *  (fr/de only, 5 psalm entries) — display this over full_reference when
+   *  the active Bible matches the verse's language. */
+  verseLocal?: string;
+  /** Which edition modernText actually holds. Batch 2+: the licensed modern
+   *  text ships empty, so this is usually the public-domain traditional
+   *  edition until a licensed backfill lands. */
   modernVersion: string;
   modernText: string;
+  /** Per-language background note (schema 3.2) — the ⓘ icon on the verse page. */
+  contextNote?: string;
   meditation: string;
   actionStep: string;
   prayer: string;

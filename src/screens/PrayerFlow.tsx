@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Dimensions,
-  Keyboard, Platform, Linking, Modal, AppState,
+  Keyboard, Platform, Linking, Modal, AppState, BackHandler,
   type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent,
 } from 'react-native';
 import * as Notifications from 'expo-notifications';
@@ -40,6 +40,7 @@ import ReminderTimeScreen from '../components/ReminderTimeScreen';
 import RemindersOffScreen from '../components/RemindersOffScreen';
 import { useActivity } from '../state/ActivityContext';
 import { useDailyVerses } from '../state/DailyVersesContext';
+import { displayRefFor } from '../services/dailyVersesService';
 import { useTranslation } from '../state/TranslationsContext';
 import { useT } from '../i18n/useT';
 import { useOnboarding } from '../state/OnboardingContext';
@@ -76,6 +77,10 @@ const AUTO_FLIP_TAP_GUARD_MS = 700;
 // Narration coach-mark state. Module-level helpers rather than a context: only
 // this screen reads it, and a provider for three integers would be ceremony.
 const LISTEN_GUIDE_KEY = 'listenGuide:v1';
+// One-shot coach for the verse page's ⓘ (context note). Burned on display,
+// same rationale as the listen guide: a force-quit mid-guide must not hand
+// her the same lifetime show again.
+const CTX_GUIDE_KEY = 'guide:contextNote:v1';
 async function loadListenGuide(): Promise<ListenGuidePersisted> {
   try {
     const raw = await AsyncStorage.getItem(LISTEN_GUIDE_KEY);
@@ -375,10 +380,33 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // The corpus stores English book names; localize for the active translation
   // so Chinese / Spanish / Portuguese / etc. readers see "創世記 1:2" instead
   // of "Genesis 1:2" under the daily-verse heading.
-  const verseRef = dailyVerse?.reference.full_reference
-    ? localizeReference(translation.code, dailyVerse.reference.full_reference)
-    : '';
+  // fr/de psalm-title numbering shift lives in displayRefFor — the shared
+  // helper EVERY surface uses (home hero, save key, chapter jump, past list),
+  // so the number here always agrees with the rest of the app.
+  const refSource = dailyVerse ? displayRefFor(dailyVerse, translation.code) : '';
+  const verseRef = refSource ? localizeReference(translation.code, refSource) : '';
   const verseText = dailyVerse?.modernText || '';
+
+  // ── Context-note (ⓘ) dialog + its one-shot coach ─────────────────────────
+  const [showCtxNote, setShowCtxNote] = useState(false);
+  const ctxInfoRef = useRef<View>(null);
+  const measureCtxInfo = useCallback(() => measureRefInWindow(ctxInfoRef), []);
+  const [ctxGuideUp, setCtxGuideUp] = useState(false);
+  const openContextNote = useCallback(() => {
+    // She did the thing the coach asks for — drop it before the dialog paints.
+    setCtxGuideUp(false);
+    setShowCtxNote(true);
+  }, []);
+  // Android hardware back over the dialog closes IT — without this the press
+  // bubbles to the navigator and exits the whole prayer flow (swarm F4).
+  useEffect(() => {
+    if (!showCtxNote) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setShowCtxNote(false);
+      return true;
+    });
+    return () => sub.remove();
+  }, [showCtxNote]);
 
   // Verse action-row state — same trio of affordances as the home verse
   // card (Save / Notes / Share). The Save toggle mirrors the home card's
@@ -769,6 +797,28 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listenOk, readUris]);
+
+  // Decide the ⓘ coach ONCE per flow, only while the verse page (page 0) is
+  // showing and the icon actually rendered — spotlighting absent chrome is
+  // the exact failure the listen guide's comment warns about. One lifetime
+  // show, burned on display. No arbitration needed with the listen coach in
+  // practice (narration is disabled while batch 2 has no audio), but the
+  // render below still yields to it defensively.
+  const ctxGuideDecidedRef = useRef(false);
+  useEffect(() => {
+    if (ctxGuideDecidedRef.current) return;
+    if (page !== 0 || !dailyVerse?.contextNote) return;
+    ctxGuideDecidedRef.current = true;
+    let live = true;
+    (async () => {
+      const seen = await AsyncStorage.getItem(CTX_GUIDE_KEY).catch(() => null);
+      if (!live || seen === '1') return;
+      AsyncStorage.setItem(CTX_GUIDE_KEY, '1').catch(() => {});
+      setCtxGuideUp(true);
+    })();
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, dailyVerse?.contextNote]);
 
   const noteListenStarted = useCallback(() => {
     usedListenRef.current = true;
@@ -1410,7 +1460,24 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
           <View key="verse" style={styles.pagerPageCenter}>
             <Animated.View style={styles.pageContent}>
               <Text style={styles.verseCaption}>{verseCaption}</Text>
-              <Text style={styles.pageRef}>{verseRef}</Text>
+              {/* ⓘ opens the per-language background note (schema 3.2's
+                  context_note — owner 2026-08-30). Rendered only when the
+                  entry carries one, so batch-1 cache/holiday verses without
+                  it keep the plain reference line. */}
+              <View style={styles.pageRefRow}>
+                <Text style={[styles.pageRef, styles.pageRefInRow]}>{verseRef}</Text>
+                {!!dailyVerse?.contextNote && (
+                  <TouchableOpacity
+                    ref={ctxInfoRef}
+                    onPress={openContextNote}
+                    hitSlop={10}
+                    activeOpacity={0.7}
+                    accessibilityLabel={t('prayerFlow.ctx.a11y')}
+                  >
+                    <Feather name="info" size={17} color="rgba(255,255,255,0.92)" />
+                  </TouchableOpacity>
+                )}
+              </View>
               <NarratedBody
                 player={readPlayer}
                 text={verseText}
@@ -1675,6 +1742,39 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
           already hidden and the hole would frame nothing.
           `focused` is hardcoded true: PrayerFlow is a fullScreenModal the user is
           looking at, not a tab screen that can lose focus behind another. */}
+      {ctxGuideUp && !amened && !listenGuideUp && (
+        <SpotlightCoach
+          focused={page === 0}
+          measure={measureCtxInfo}
+          pad={10}
+          radius={22}
+          title={t('prayerFlow.ctxGuide.title')}
+          body={t('prayerFlow.ctxGuide.body')}
+          primaryLabel={t('prayerFlow.ctxGuide.cta')}
+          // Let her tap the ⓘ through the hole — openContextNote drops the
+          // coach itself before the dialog paints over it.
+          interactiveHole
+          onPrimary={() => setCtxGuideUp(false)}
+          onSkip={() => setCtxGuideUp(false)}
+          onUnmeasurable={() => setCtxGuideUp(false)}
+        />
+      )}
+
+      {showCtxNote && !!dailyVerse?.contextNote && (
+        <View style={styles.ctxDlgOverlay}>
+          <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={() => setShowCtxNote(false)} />
+          <View style={styles.ctxDlgCard}>
+            <Text style={styles.ctxDlgTitle}>{verseRef}</Text>
+            <ScrollView style={styles.ctxDlgScroll} showsVerticalScrollIndicator={false}>
+              <Text style={styles.ctxDlgBody}>{dailyVerse.contextNote}</Text>
+            </ScrollView>
+            <TouchableOpacity onPress={() => setShowCtxNote(false)} style={styles.ctxDlgBtn} activeOpacity={0.9}>
+              <Text style={styles.ctxDlgBtnText}>{t('prayerFlow.ctxGuide.cta')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
       {listenGuideUp && !amened && (
         <SpotlightCoach
           focused
@@ -2024,6 +2124,54 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,                                                         // matches heroRef
     marginBottom: 27.6,                                                         // card heroBody.paddingTop 24 × 1.15
   },
+  // Reference + ⓘ on one centered line. The row owns the bottom margin so
+  // the icon sits on the text's baseline band, not below it.
+  // flex-start, NOT center — the bare ref was left-aligned with the caption
+  // and verse text; wrapping it in a row must not move it (swarm F1).
+  pageRefRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: 8, marginBottom: 27.6 },
+  pageRefInRow: { marginBottom: 0 },
+  // Context-note dialog — same house dialog family as the language-switch
+  // and no-network cards (white card, CARD-radius 20, rose pill).
+  ctxDlgOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(20,12,24,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    zIndex: 60,
+  },
+  ctxDlgCard: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingTop: 22,
+    paddingBottom: 16,
+    paddingHorizontal: 22,
+  },
+  ctxDlgTitle: {
+    fontSize: 18,
+    fontWeight: '600',                     // loraBold + 600 (never 700 on Android)
+    fontFamily: FONTS.loraBold,
+    color: TXT,
+    marginBottom: 10,
+  },
+  ctxDlgScroll: { maxHeight: 260 },
+  ctxDlgBody: {
+    fontSize: 14.5,
+    lineHeight: 22,
+    color: TXTSUB,
+    fontFamily: FONTS.lato,
+    letterSpacing: 0.3,
+  },
+  ctxDlgBtn: {
+    marginTop: 18,
+    height: 46,
+    borderRadius: BTN_RADIUS,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: ROSE,
+  },
+  ctxDlgBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
   pageVerse: {
     fontFamily: FONTS.merriweather,                                             // matches heroText
     fontSize: 23.09,                                                            // 20.99 → 23.09 (+10 % per user)

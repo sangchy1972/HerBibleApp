@@ -19,22 +19,23 @@
 # content under a new /vN/ folder.
 set -euo pipefail
 
-# NOTE: verses are now served through the attested plans Worker
-# (plans.everlandapps.com/v1/verses/<lang>.json), reading plaintext files
-# from the ROOT of this private bucket. There is NO public custom domain
-# and NO version folder — the Worker reads key `verses_<lang>.json`
-# directly, and content freshness is handled by R2 ETags.
+# NOTE: verses are served PUBLICLY + R2-direct via the bucket's custom
+# domain verses.everlandapps.com (the attested-Worker note that used to sit
+# here was stale — see src/constants/dailyVersesCdn.ts).
+#
+# ⚠️ VERSION PREFIX IS MANDATORY for content-breaking batches: shipped
+# builds re-fetch this bucket on every cold start, so overwriting the keys
+# an old build reads would break live users instantly (batch 2 ships
+# modern.text empty — old slim() would render blank verse pages). Keep
+# VERSION in lockstep with DAILY_VERSES_PATH in dailyVersesCdn.ts.
 WRANGLER="${HOME}/claude_herbible_plan/workers/herbible-plans-7languages/node_modules/.bin/wrangler"
+# Fall back to npx when the workers checkout isn't on this machine.
+if [ ! -x "$WRANGLER" ]; then WRANGLER="npx --yes wrangler"; fi
 BUCKET="herbible-verses-7languages"
+VERSION="v2"
 SRC_DIR="$(cd "$(dirname "$0")/.." && pwd)/_cdn_ready"
 
 LANGS=(en zh-Hans zh-Hant de fr es pt)
-
-if [ ! -x "$WRANGLER" ]; then
-  echo "ERROR: wrangler not found at $WRANGLER" >&2
-  echo "Adjust the WRANGLER path at the top of this script, or install/login wrangler." >&2
-  exit 1
-fi
 
 if [ ! -d "$SRC_DIR" ]; then
   echo "ERROR: $SRC_DIR not found. Run first:" >&2
@@ -42,24 +43,21 @@ if [ ! -d "$SRC_DIR" ]; then
   exit 1
 fi
 
-echo "Uploading 7 files to the ROOT of ${BUCKET} ..."
+echo "Uploading 7 files to ${BUCKET}/${VERSION}/ ..."
 for lang in "${LANGS[@]}"; do
   file="${SRC_DIR}/verses_${lang}.json"
-  key="verses_${lang}.json"
+  key="${VERSION}/verses_${lang}.json"
   if [ ! -f "$file" ]; then
     echo "  ! skip ${lang} — missing $file" >&2
     continue
   fi
   echo ">>> ${key}"
-  "$WRANGLER" r2 object put "${BUCKET}/${key}" \
+  $WRANGLER r2 object put "${BUCKET}/${key}" \
     --file "$file" \
     --content-type "application/json" \
     --remote
 done
 
 echo ""
-echo "Done. The bucket is PRIVATE — verify through the attested Worker, not"
-echo "a public URL. Quickest check: open the app and confirm the prayer"
-echo "card shows day-N content past day 3 (the bundle only covers 1-3)."
-echo "Or, with a valid Bearer token:"
-echo "  curl -s -H 'Authorization: Bearer <JWT>' https://plans.everlandapps.com/v1/verses/en.json | head -c 200"
+echo "Done. Verify the public URL directly:"
+echo "  curl -s https://verses.everlandapps.com/${VERSION}/verses_en.json | head -c 200"

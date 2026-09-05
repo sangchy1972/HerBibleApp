@@ -1444,6 +1444,12 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'listenGuide.body':              { en: 'Tap here and a voice will read the prayer with you. The music keeps playing underneath.', context: 'Body of that coach mark. Two facts: the button starts a spoken reading, and it does not replace the background music. Supports **bold** spans.' },
   'listenGuide.cta':               { en: 'Got it', context: 'The single button on that coach mark; dismisses it. MUST stay short — it is a small pill in the corner of a bubble. Two words at most, ideally one. Not "OK" (too curt) and not a full sentence.' },
 
+  // ─── Verse context note (ⓘ on the daily-verse page) ─────────────────────
+  'prayerFlow.ctxGuide.title':     { en: 'The story behind this verse', context: 'Title of the one-time coach mark spotlighting the ⓘ icon next to the daily verse reference.' },
+  'prayerFlow.ctxGuide.body':      { en: 'Tap here to see when and why these words were written.', context: 'Body of that coach mark. One sentence; invites a tap on the ⓘ.' },
+  'prayerFlow.ctxGuide.cta':       { en: 'Got it', context: 'Single dismiss button on the ⓘ coach mark AND on the context-note dialog. Short.' },
+  'prayerFlow.ctx.a11y':           { en: 'About this verse', context: 'Accessibility label of the ⓘ icon that opens the verse background note.' },
+
   // ─── Full-screen reminder flow ───────────────────────────────────────────
   // ReminderTimeScreen (cream ground, rose CTA) then, if she declines the OS
   // dialog, RemindersOffScreen. Since 2026-08-21 RemindersOffScreen ALSO

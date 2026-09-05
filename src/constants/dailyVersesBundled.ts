@@ -15,8 +15,17 @@ export interface DailyVerse {
     verse: string;
     full_reference: string;
   };
+  /** Local verse numbering where Segond/Luther shift psalm titles into v1
+   *  (fr/de only, 5 psalm entries) — display this over full_reference when
+   *  the active Bible matches the verse's language. */
+  verseLocal?: string;
+  /** Which edition modernText actually holds. Batch 2+: the licensed modern
+   *  text ships empty, so this is usually the public-domain traditional
+   *  edition until a licensed backfill lands. */
   modernVersion: string;
   modernText: string;
+  /** Per-language background note (schema 3.2) — the ⓘ icon on the verse page. */
+  contextNote?: string;
   meditation: string;
   actionStep: string;
   prayer: string;
@@ -33,91 +42,97 @@ export const BUNDLED_DAILY_VERSES: Record<LanguageCode, DailyVerse[]> =
       "day": 1,
       "segment": "morning",
       "reference": {
-        "book": "John",
-        "chapter": 1,
-        "verse": "9",
-        "full_reference": "John 1:9"
+        "book": "Psalms",
+        "chapter": 143,
+        "verse": "8",
+        "full_reference": "Psalms 143:8"
       },
       "modernVersion": "NIV",
-      "modernText": "The true light that gives light to everyone was coming into the world.",
-      "meditation": "If you woke up today feeling as if the light is far away, this verse meets you with a gentle promise. Darkness is not always dramatic. Sometimes it is a quiet heaviness, a confused search for what is true, or the ache of loss and failure. John does not tell us to escape that darkness by becoming stronger or more worthy. He points us to Jesus, the true Light who has already come into the world.\n\nThis Light is not reserved for people who have life under control. He gives light to everyone, including you when faith feels small, your heart feels tired, or the next step is unclear. Jesus does not stand far away waiting for you to reach Him. He enters your darkness with His presence.\n\nToday, turning toward Christ means letting His truth become the first light in your heart. You do not have to create the light or earn it. You only need to turn toward the One who has come near.",
-      "actionStep": "Name one place in your life that feels dark or unclear. Invite Jesus, the true Light, to meet you there today.",
-      "prayer": "Dear Heavenly Father, I thank You for sending Jesus, the true Light who gives light to everyone without exception. I praise You that His light enters our darkness and leads us into Your truth and grace. I do not want to agree with this only in words and then return unchanged. Meet me in the hidden places where fear, habit, or self-protection still rule me. Teach me to open those places to Your love, and let my response to You become honest, steady, and whole. In Jesus' name, amen."
+      "modernText": "Let the morning bring me word of your unfailing love, for I have put my trust in you. Show me the way I should go, for to you I entrust my life.",
+      "contextNote": "Psalm 143 is a lament — David is being hunted, and says so plainly a few verses earlier. This is not a serene morning prayer; it was written by someone in trouble. The Hebrew behind 'lovingkindness' is chesed: covenant loyalty, love that committed itself in advance and cannot be talked back out of it.",
+      "meditation": "David is not describing a good morning. He is asking for one, and the order he asks in is worth borrowing.\n\nFirst to hear that he is loved. Then to know where to go. As Christians we usually reverse it — we come for the direction, the decision, what to do about the thing. But direction without love turns into pressure, and most of us have tried living that way for a stretch. Let's ask for the first one this morning. The second will keep.",
+      "actionStep": "Before you plan anything today, say one sentence out loud: I am loved before I am useful. Then ask God about the first decision on your list.",
+      "prayer": "Dear Heavenly Father, before I ask You where to go, let me hear that I am loved. I confess how easily I skip that part and go straight to the planning. Speak first to the part of me that needs reassuring, and then show me the next step. I am lifting my whole day up to You. In Jesus' name, amen."
     },
     {
       "day": 1,
       "segment": "evening",
       "reference": {
-        "book": "John",
-        "chapter": 14,
-        "verse": "1",
-        "full_reference": "John 14:1"
-      },
-      "modernVersion": "NIV",
-      "modernText": "Do not let your hearts be troubled. You believe in God; believe also in me.",
-      "meditation": "When anxiety settles in, it rarely asks permission. It may come through a breakup, a lost job, frightening health news, or the quiet hours of night when every possible fear grows louder. You may not even know how to name what you feel. You only know your heart is unsettled, tired, and afraid.\n\nJesus spoke to His disciples in a moment like that, not when life was calm. He knew they were about to see Him arrested. He knew the cross would shake everything they thought they understood. Their world was not about to become easier, yet He still told them not to let their hearts be troubled. His comfort was not built on pleasant circumstances, but on trust: if they believed in God, they could also believe in Him.\n\nThat kind of faith does not deny trouble. It turns the heart toward the One whose goodness, power, and faithfulness hold steady when life does not. Jesus entered the deepest darkness to save you; He will not abandon you in ordinary fear. Today, your anxiety is not the final voice. His presence is nearer than the trouble pressing on your heart.",
-      "actionStep": "Write down the fear or trouble that is speaking loudest in your heart today. Bring it to Jesus without polishing it, then write one sentence of trust beside it: “Lord, I choose to place this in Your hands.” Return to that sentence whenever the fear rises.",
-      "prayer": "Dear Heavenly Father, I thank You that in Christ my heart does not have to be ruled by fear. When trouble feels louder than Your promise, teach me to bring my anxious thoughts honestly to You. Steady me with Your presence, and help me take the next step with a heart that trusts You. I do not want to agree with this only in words and then return unchanged. Meet me in the hidden places where fear, habit, or self-protection still rule me. Teach me to open those places to Your love, and let my response to You become honest, steady, and whole. In Jesus' name, amen."
-    },
-    {
-      "day": 2,
-      "segment": "morning",
-      "reference": {
-        "book": "Jeremiah",
-        "chapter": 29,
-        "verse": "11",
-        "full_reference": "Jeremiah 29:11"
-      },
-      "modernVersion": "NIV",
-      "modernText": "\"For I know the plans I have for you,\" declares the Lord, \"plans to prosper you and not to harm you, plans to give you hope and a future.\"",
-      "meditation": "Jeremiah wrote these words to people living in exile, not to people whose lives felt easy or settled. They had lost home, security, and a clear future. Into that uncertainty, God says, 'I know the plans I have for you.' He is not merely watching their pain; He is still holding a purpose for them.\n\nThis promise does not deny the hardship. It reveals God's heart within it. His plans are not meant to destroy His people, but to lead them toward peace, restoration, and hope. When your future feels interrupted, or when your past mistakes seem to have the final word, this verse reminds you that God has not stopped thinking mercifully toward you. Your circumstances may still be unfinished, but His intention remains faithful.\n\nSo do not rush to call your present chapter the end of the story. Exile felt like an ending to Judah, but God was already speaking about a future. Your waiting, grief, or uncertainty may be real, but it is not stronger than God's faithful love. Let this promise steady you without forcing you to pretend: God can hold both your present pain and your future hope.",
-      "actionStep": "Write this in your journal or phone notes: “God has plans of peace for me, not disaster.” When doubt comes up, read it again. If you can, read it in the morning and evening, and let it slowly shape the way you see your future.",
-      "prayer": "Dear Heavenly Father, I praise You for Your promise that Your plans for us are for our good — filled with hope and a flourishing future. You hold our days in Your hands. Your purposes are not to harm us but to establish us in hope. Your plans do not fail — not one of them. History is Your story, and You write it with hope as the final word. What a good Father You are, one who plans our flourishing before we can even imagine it. I bring You the tired parts of my heart that know the right words but struggle to believe them. Sit with me there, Father, and make Your truth warmer than my shame and stronger than my fear. Help me pray not from distance, but from the trust that I am already held by You. In Jesus' name, amen."
-    },
-    {
-      "day": 2,
-      "segment": "evening",
-      "reference": {
-        "book": "John",
-        "chapter": 14,
+        "book": "Hebrews",
+        "chapter": 4,
         "verse": "16",
-        "full_reference": "John 14:16"
+        "full_reference": "Hebrews 4:16"
       },
       "modernVersion": "NIV",
-      "modernText": "And I will ask the Father, and he will give you another advocate to help you and be with you forever—",
-      "meditation": "When someone important leaves, the absence can feel bigger than the room itself. A move, a breakup, a death, or a sudden goodbye can make your whole sense of safety collapse. The disciples knew that fear. When Jesus told them He was leaving, they did not feel brave; they felt exposed and afraid.\n\nInto that fear, Jesus promised another Advocate who would remain with them forever. This was not a colder replacement for His presence. It was a deeper nearness. Jesus would no longer simply walk beside them; by the Spirit, God would dwell within them. The sorrow of separation would become the beginning of an intimacy they did not yet understand.\n\nThe Holy Spirit does not come and go like a visitor. He stays in the lonely midnight, the confusing decision, the grief you cannot explain, and the moment you need courage but cannot find it in yourself. He knows your heart, understands what you cannot put into words, and helps you pray when your own prayers feel weak. You are not left to survive by memory alone. God is with you now, and He will not leave.",
-      "actionStep": "Pause and ask yourself: Where do I feel most alone today, and what do I need from God there? Pray simply, “Holy Spirit, remind me that I am not abandoned.” Then stay quiet for a moment and notice any comfort, wisdom, or strength He gives.",
-      "prayer": "Dear Heavenly Father, I praise You for giving Your Spirit to remain with us. When absence, change, or loneliness makes me feel unprotected, remind me that I am not left to face life by myself. Help me listen for the Spirit's comfort and follow His quiet guidance today. I bring You the tired parts of my heart that know the right words but struggle to believe them. Sit with me there, Father, and make Your truth warmer than my shame and stronger than my fear. Help me pray not from distance, but from the trust that I am already held by You. In Jesus' name, amen."
+      "modernText": "Let us then approach God's throne of grace with confidence, so that we may receive mercy and find grace to help us in our time of need.",
+      "contextNote": "Hebrews was written to Jewish Christians who knew the holy of holies could be entered once a year, by one man, carrying blood. Against that background, 'come boldly' is startling. The Greek is parrhesia — the freedom of a citizen to speak plainly in public, not the nerve of an intruder.",
+      "meditation": "As Christians we tend to approach God the way we approach an appraisal — with the case for ourselves already half drafted. Hebrews uses a different word for it: boldly. Not carefully, not once we have tidied ourselves up first.\n\nAnd notice what the throne is named for. Grace, not review. So let's come as we actually are tonight, and stop rehearsing the explanation on the way in.",
+      "actionStep": "Bring God the one thing you were planning to handle by yourself. Say it out loud before you sleep.",
+      "prayer": "Dear Heavenly Father, I come to You tonight without tidying myself up first, because You said I could. Thank You that this is a throne of grace and not a review. Here is what I need help with, and here is where I fell short. In Jesus' name, amen."
+    },
+    {
+      "day": 2,
+      "segment": "morning",
+      "reference": {
+        "book": "Romans",
+        "chapter": 8,
+        "verse": "6",
+        "full_reference": "Romans 8:6"
+      },
+      "modernVersion": "NIV",
+      "modernText": "The mind governed by the flesh is death, but the mind governed by the Spirit is life and peace.",
+      "contextNote": "Romans 8 opens with 'no condemnation', and this verse sits inside that promise rather than against it. Paul's word for a flesh-governed mind is phronema — not a single thought but a settled leaning, the direction a mind drifts when it is left alone. He is describing a current, not passing a verdict.",
+      "meditation": "Paul is not moralising about your behaviour here. He is talking about where your mind goes when you stop steering it — the channel it returns to on its own.\n\nAnd here is the promise, aimed at you: the other channel opens into life and peace. Not tidier thinking. Life. You are not stuck with the default, and you were never expected to fight your way out of it on your own!",
+      "actionStep": "Notice the first place your mind goes when it goes idle today. Don't judge it — just tell God what it was.",
+      "prayer": "Dear Heavenly Father, You know where my mind goes when I stop steering it, and some of that is not doing me any good. Would You turn my thinking toward what actually gives life this morning — not by force, but by drawing me. In Jesus' name, amen."
+    },
+    {
+      "day": 2,
+      "segment": "evening",
+      "reference": {
+        "book": "2 Kings",
+        "chapter": 20,
+        "verse": "5",
+        "full_reference": "2 Kings 20:5"
+      },
+      "modernVersion": "NIV",
+      "modernText": "Go back and tell Hezekiah, the ruler of my people, 'This is what the LORD, the God of your father David, says: I have heard your prayer and seen your tears; I will heal you.'",
+      "contextNote": "Hezekiah was terminally ill and had just been told to set his house in order. Isaiah was already leaving the palace when God turned him around. In Hebrew, 'I have seen thy tears' uses the ordinary verb for looking at a thing — no poetic flourish. The point is that God attends to the part of prayer that has no words.",
+      "meditation": "Hezekiah had already been told the answer was no; the prophet had walked out. Then God sent him back. And read the order of what God says. Before the promise, before anything changes, there is this: I have heard your prayer, I have seen your tears. The tears get their own clause. God does not fold them into the prayer as though weeping were an inefficient way of asking. He counts them separately.\n\nWhatever you have been crying about — the thing you stopped explaining to people because you got tired of explaining it — it has been seen. Not overlooked, not endured. Seen!",
+      "actionStep": "Say out loud the thing you have stopped explaining to anyone. You don't have to make a case for it. Just say it.",
+      "prayer": "Dear Heavenly Father, thank You that You count tears separately from words, and that You have not grown tired of mine. I stopped explaining this to people a while ago. I am not going to stop explaining it to You. Thank You that being seen by You is not the same as being pitied. Hold what I have brought You tonight. In Jesus' name, amen."
     },
     {
       "day": 3,
       "segment": "morning",
       "reference": {
-        "book": "Matthew",
-        "chapter": 28,
-        "verse": "19",
-        "full_reference": "Matthew 28:19"
+        "book": "2 Corinthians",
+        "chapter": 3,
+        "verse": "17",
+        "full_reference": "2 Corinthians 3:17"
       },
       "modernVersion": "NIV",
-      "modernText": "Therefore go and make disciples of all nations, baptizing them in the name of the Father and of the Son and of the Holy Spirit,",
-      "meditation": "Jesus' command to make disciples begins with Jesus' power and authority, not our ability. Before He says, 'Go,' He declares that all authority in heaven and on earth belongs to Him. That means what we share does not rest on perfect words, complete confidence, or having every answer. It rests on the risen Christ who sends us and goes with us. Many of us hesitate because we feel unqualified. But Jesus is not asking you to act like a religious expert; He is inviting you to share what you have received from Him. Your changed life, your honest story, and your quiet faithfulness in ordinary places can become a doorway for someone else to meet Him.\n\nGod often uses willing people more than impressive people. This means small obedience matters. A quiet conversation, a patient answer, a prayer offered with someone, or a moment when you refuse to hide what Jesus means to you can become part of His mission. The nations may feel far away, but helping someone follow Jesus often begins with the person in front of you. You are called to be faithful with the person before you.",
-      "actionStep": "Think of one person in your life who seems open or searching. This week, start a natural conversation with them. Do not force a religious discussion; simply share one practical way your faith has helped you, and listen well.",
-      "prayer": "Dear Heavenly Father, I receive this grace: You have entrusted the mission of making disciples to those who follow Jesus. Give us courage to witness faithfully and humility to always point others to Christ. Where I still try to control outcomes, loosen my grip and quiet my anxious heart. I admit that I often want certainty more than surrender. Draw me back to You until obedience feels less like losing myself and more like coming home to the One who loves me best. In Jesus' name, amen."
+      "modernText": "Now the Lord is the Spirit, and where the Spirit of the Lord is, there is freedom.",
+      "contextNote": "Paul has just described Moses veiling his face after being with God. The contrast he draws is between a covenant kept at a distance behind a veil and one lived with the face uncovered. The Greek eleutheria means the legal standing of a freed person — a status, not a mood.",
+      "meditation": "As Christians we can quietly turn faith into one more place we are being measured. Another list, another performance, one more room where we might not be enough.\n\nPaul says the opposite thing about the room. Where the Spirit is, there is freedom — not licence to do anything, but the release of not having to prove anything. Let's carry that into today. You are not auditioning.",
+      "actionStep": "Name one thing you were going to do today mainly to prove something. Do it, or drop it — but as a free woman, not an applicant.",
+      "prayer": "Dear Heavenly Father, thank You that Your Spirit brings freedom and not another test. I confess how often I turn my faith into something I could fail. Loosen that in me today. Let me work and speak as someone who is already accepted. In Jesus' name, amen."
     },
     {
       "day": 3,
       "segment": "evening",
       "reference": {
-        "book": "Genesis",
-        "chapter": 1,
-        "verse": "2",
-        "full_reference": "Genesis 1:2"
+        "book": "Acts",
+        "chapter": 16,
+        "verse": "25",
+        "full_reference": "Acts 16:25"
       },
       "modernVersion": "NIV",
-      "modernText": "Now the earth was formless and empty, darkness was over the surface of the deep, and the Spirit of God was hovering over the waters.",
-      "meditation": "Some seasons do not feel like a life being built; they feel formless. Plans dissolve, familiar ground disappears, and the future has no clear shape. Darkness can make you assume nothing good is happening, but the beginning of Scripture shows us something different: emptiness is not too empty for God.\n\nBefore there was order, beauty, or visible fruit, the Spirit of God was already present, hovering over the deep. He was not distant, delayed, or confused by the chaos. His presence came before the transformation could be seen. That is a quiet promise for every season where your life feels unfinished and hard to read.\n\nThe Spirit's hovering suggests tenderness as much as power. God does not need to force His way into your darkness; He is already near, guarding what looks fragile, preparing what is not yet formed. Your confusion is not beyond Him. Your waiting is not wasted. The same God who brings creation out of emptiness can move over the unshaped places of your life and begin again with order, light, and life.",
-      "actionStep": "Name one area of life that feels unfinished, confused, or without clear shape. Invite God’s Spirit into that place, not with a forced plan, but with trust. Ask Him to show one small step toward order, light, or patient faith today.",
-      "prayer": "Dear Heavenly Father, I receive this grace: Your Spirit is present even when life feels unfinished and without shape. Come near to the places in me that feel confused, dark, or empty. Breathe order, patience, and hope into what I cannot yet understand, and help me trust Your work before I can see its form. Where I keep trying to control outcomes, soften my hands and quiet my heart. I confess that I often want certainty more than I want surrender. Draw me back to You until obedience feels less like losing myself and more like coming home to the One who loves me best. In Jesus' name, amen."
+      "modernText": "About midnight Paul and Silas were praying and singing hymns to God, and the other prisoners were listening to them.",
+      "contextNote": "Paul and Silas had been stripped, beaten with rods and thrown into the innermost cell — Luke is specific about all three. The Greek for their singing, hymneo, is the same verb used of the hymn Jesus sang with his disciples before Gethsemane. That the prisoners 'heard them' is Luke's own detail, and he includes it deliberately.",
+      "meditation": "Two men, beaten and locked in the inner cell, feet in the stocks. It is midnight. And Luke records what they did with that particular hour: they prayed, and then they sang.\n\nNotice the last clause, because it is the one usually skipped. The other prisoners heard them. Nobody was singing for an audience — there was no audience, only people in the same dark lying awake. But faith in a bad night is never entirely private. The woman in the next room hears. The child down the hall hears. Your midnight is louder than you think, and not always in a bad way.",
+      "actionStep": "If you are awake tonight when you would rather be asleep, stop fighting it for ten minutes. Pray in that time instead — out loud, if you can.",
+      "prayer": "Dear Heavenly Father, I would rather not be awake right now, and I would rather this were over. Thank You that You are not absent from the middle of the night. If I cannot sleep, let me pray. And if anyone near me is listening, let what they hear from me be trust and not despair. In Jesus' name, amen."
     }
   ],
   "zh-Hans": [
@@ -125,91 +140,97 @@ export const BUNDLED_DAILY_VERSES: Record<LanguageCode, DailyVerse[]> =
       "day": 1,
       "segment": "morning",
       "reference": {
-        "book": "John",
-        "chapter": 1,
-        "verse": "9",
-        "full_reference": "John 1:9"
+        "book": "Psalms",
+        "chapter": 143,
+        "verse": "8",
+        "full_reference": "Psalms 143:8"
       },
-      "modernVersion": "CCB",
-      "modernText": "真光来了，它照亮所有进入世界的人。",
-      "meditation": "如果今天你一醒来，就觉得光离自己很远，这节经文带着温柔的应许来靠近你。黑暗不一定总是惊天动地的。很多时候，它只是心里说不清的沉重，是对真理和方向的困惑，也是失去或失败之后留下的阴影。约翰没有叫我们先变得更坚强、更明白、更配得；他把我们的眼光带向那已经来到世界的真光——耶稣。\n\n这光不是只照给生命整齐、信心稳定的人。经文说，祂照亮一切生在世上的人，也包括你：在你信心微弱、心里疲惫、看不清下一步的时候。耶稣不是远远等你走出黑暗；祂亲自进入你的黑暗，用祂的同在驱散惧怕和谎言。\n\n今天转向基督，就是让祂的真理成为你心里的第一道光。你不需要制造这光，也不需要证明自己配得。你只需要转向那位已经靠近你的主。",
-      "actionStep": "今天，具体说出一个让你感到沉重或混乱的地方，并邀请耶稣这位真光照进那里。",
-      "prayer": "亲爱的天父，感谢祢赐下主耶稣这真光，照亮每一个人，没有例外，也没有阻隔。赞美祢使祂的光进入我们的黑暗，引导我们进入祢的真理和恩典。我不愿只是在话语上同意这真理，然后仍旧原样离开。求祢在我里面那些被惧怕、习惯或自我保护掌管的隐秘之处遇见我。教我把这些地方向祢的爱打开，使我对祢的回应变得诚实、稳定，也更完整。奉主耶稣的名祷告，阿们。"
+      "modernVersion": "和合本",
+      "modernText": "求你使我清晨得听你慈爱之言，因我倚靠你；求你使我知道当行的路，因我的心仰望你。",
+      "contextNote": "诗篇一百四十三篇是一首哀歌。前面几节里，大卫直说自己正被人追杀。这不是从安稳处发出的清晨祷告，是一个身处险境的人写下的。「慈爱」的希伯来原文是 chesed，指立约的忠诚——一种事先就把自己许出去、事后反悔不了的爱。",
+      "meditation": "大卫不是在描述一个美好的清晨，他是在求一个。他求的顺序值得我们借来用。\n\n先听见自己被爱，然后才知道该往哪里走。我们大多数人是反着来的——一睁眼就来要方向、要答案、要那件事到底该怎么办。可是没有爱托着的方向，很快就变成压力，这样的日子我们多半都过过一阵。今天早晨，我们先求第一样。第二样跑不掉，它会等着我们。",
+      "actionStep": "今天安排任何事之前，先出声说一句：我先是被爱的，才是有用的。然后把清单上第一件事交给神。",
+      "prayer": "亲爱的天父，在我开口问你我该往哪里去之前，求你先让我听见我是被爱的。我承认自己常常跳过这一步，一醒来就直奔计划和安排。今天早晨，求你先对我里面那个需要被安慰的地方说话，然后再指给我下一步。我把这一整天都举到你面前。奉主耶稣的名祷告，阿们。"
     },
     {
       "day": 1,
       "segment": "evening",
       "reference": {
-        "book": "John",
-        "chapter": 14,
-        "verse": "1",
-        "full_reference": "John 14:1"
-      },
-      "modernVersion": "CCB",
-      "modernText": "你们的心不要不安。你们信神，也要信我。",
-      "meditation": "焦虑来的时候，常常不会先给你准备。它可能来自一段关系的破裂，一份工作的失去，一个关于健康的坏消息，也可能只是夜深时，脑子里不断浮现各种可能出错的事。你也许说不清自己到底怎么了，只知道心里不安、疲惫，也害怕。\n\n耶稣对门徒说安慰的话时，并不是在一个平静的时刻。祂知道他们很快要看见祂被捉拿，也要看见十字架震动他们所有的理解。他们的处境不会马上变轻松，但耶稣仍然呼召他们信靠：既信神，也当信祂。祂不是用“事情都会顺利”来安慰他们，而是把他们的心带回祂自己，带回祂可靠的同在。\n\n这样的信心不是否认困难，而是把心转向那位在一切摇动中仍然良善、信实、有能力的主。耶稣曾进入最深的黑暗，为要拯救你；祂也不会在你今天的焦虑里撇下你。此刻，惧怕不是最后的声音。祂知道你的处境，也能扶持你的心。祂的同在比压在你心上的忧虑更近。你可以在不安还没有完全消失时，就先把心交给祂。",
-      "actionStep": "写下今天在你心里声音最大的那个惧怕或忧虑，不用修饰，也不用先让自己坚强。把它诚实带到耶稣面前，并在旁边写一句信靠的话：“主啊，我把这件事交在你手中。”当惧怕再次浮上来，就回到这句话里。",
-      "prayer": "亲爱的天父，感谢祢在基督里使我的心不必被惧怕支配。当困难的声音大过祢的应许，求祢教我诚实把焦虑带到祢面前。用祢的同在稳住我，使我今天能带着信靠走下一步。我不愿只是在话语上同意这真理，然后仍旧原样离开。求祢在我里面那些被惧怕、习惯或自我保护掌管的隐秘之处遇见我。教我把这些地方向祢的爱打开，使我对祢的回应变得诚实、稳定，也更完整。奉主耶稣的名祷告，阿们。"
-    },
-    {
-      "day": 2,
-      "segment": "morning",
-      "reference": {
-        "book": "Jeremiah",
-        "chapter": 29,
-        "verse": "11",
-        "full_reference": "Jeremiah 29:11"
-      },
-      "modernVersion": "CCB",
-      "modernText": "耶和华说：「我知道我对你们所有的计划，都是为了祝福你们，而不是伤害你们，要给你们一个美好的未来和希望。」",
-      "meditation": "耶利米写下这句话时，听见的人不是生活顺利安稳的人，而是被掳、失落、看不见未来的百姓。他们失去家园、安全感和清晰的前路。就在这样的不确定中，神说：我知道我向你们所怀的意念。祂不是只看见他们的痛苦，祂仍然为他们持守一个目的。\n\n这个应许没有否认艰难，却显明神在艰难中的心。祂的计划不是要毁坏祂的百姓，而是要带他们进入平安、恢复和盼望。当你的未来被打断，或过去的错误好像已经决定结局时，这节经文提醒你：神仍以怜悯记念你。你的处境可能还没有完成，但祂向你的心意仍然信实。\n\n所以，不要太快把现在这一章称为结局。对犹大人来说，被掳像是故事结束了，但神已经在谈论未来。你的等待、伤痛和不确定都是真实的，却不比神守约的信实更大。让这个应许稳住你，而不是逼你假装没事：神能同时托住你今天的痛，也托住你将来的盼望。",
-      "actionStep": "在日记或手机备忘录里写下：「关于我，神有平安的计划，不是灾祸的计划。」每当怀疑出现，就再读一遍。如果可以，早上和晚上都读一次，让这个真理慢慢改变你看未来的方式。",
-      "prayer": "亲爱的天父，赞美祢应许我们，祢的计划是为了赐下平安、盼望和未来。我们的日子在祢手中，祢的心意不是伤害我们，而是建立我们、扶持我们走向盼望。祢的计划不会落空。求祢让这应许稳住我们的心，使我们在等待中仍然信靠祢的良善。我把心里那些疲惫的地方带到祢面前：它们知道正确的话，却仍然很难真正相信。父啊，求祢在那里陪伴我，使祢的真理比我的羞耻更温暖，比我的惧怕更有力量。帮助我不是远远地祷告，而是在已经被祢扶持的信靠中祷告。奉主耶稣的名祷告，阿们。"
-    },
-    {
-      "day": 2,
-      "segment": "evening",
-      "reference": {
-        "book": "John",
-        "chapter": 14,
+        "book": "Hebrews",
+        "chapter": 4,
         "verse": "16",
-        "full_reference": "John 14:16"
+        "full_reference": "Hebrews 4:16"
       },
-      "modernVersion": "CCB",
-      "modernText": "我会向父祈求，父会赐给你们另一位保惠师，他要永远与你们同在。",
-      "meditation": "当一个重要的人离开时，空缺有时会大到占满整个房间。搬到陌生城市、一段关系结束、所爱之人离世，或突然的告别，都可能让安全感一下子崩塌。门徒也经历过这种惧怕。当耶稣告诉他们祂要离开时，他们并不勇敢，而是慌乱、无助。\n\n就在这样的黑暗时刻，耶稣应许赐下另一位保惠师，永远与他们同在。这不是把祂的同在降级为一个替代品，而是一种更深的亲近。耶稣不只是走在他们身边；借着圣灵，神要住在他们里面。门徒起初只感到失去，后来却明白，圣灵的同在使他们不再只是回忆耶稣，而是天天被祂带领、安慰和坚固。\n\n圣灵不是偶尔来探访的客人。祂在孤单的深夜、困惑的决定、无法解释的悲伤里同在，也在你没有力量祷告时帮助你。祂知道你的心，明白你说不出的叹息，甚至在你软弱时扶持你转向神。你不是靠回忆撑下去。神现在与你同在，也永远不会离开你。这同在是真实的。",
-      "actionStep": "停下来问问自己：我今天在哪个地方最觉得孤单？在那里，我最需要神给我什么？简单祷告：“圣灵啊，提醒我，我没有被遗弃。”然后安静片刻，留意祂怎样赐下安慰、智慧或力量。",
-      "prayer": "亲爱的天父，我领受这个恩典：祢赐下圣灵与我们同住。当离别、改变或孤单让我觉得无依无靠，求祢提醒我，我不是独自面对生活。帮助我听见圣灵温柔的安慰，也顺服祂今天细微的引导。我把心里那些疲惫的地方带到祢面前：它们知道正确的话，却仍然很难真正相信。父啊，求祢在那里陪伴我，使祢的真理比我的羞耻更温暖，比我的惧怕更有力量。帮助我不是远远地祷告，而是在已经被祢扶持的信靠中祷告。奉主耶稣的名祷告，阿们。"
+      "modernVersion": "和合本",
+      "modernText": "所以，我们只管坦然无惧地来到施恩的宝座前，为要得怜恤，蒙恩惠，作随时的帮助。",
+      "contextNote": "希伯来书写给的是犹太基督徒。他们知道至圣所一年只能进一次，只能由一个人进去，还要带着血。在这样的背景下，「坦然无惧地来」是件让人吃惊的事。这里的希腊文是 parrhesia，指公民在众人面前坦白讲话的自由，不是闯入者的胆量。",
+      "meditation": "我们来到神面前，常常像去见考核——话还没说，心里已经把自我辩护打了半份草稿。希伯来书用的却是另一个词：坦然无惧。不是小心翼翼，也不是先把自己收拾干净再来。\n\n再留意这宝座叫什么名字。是施恩，不是审查。今晚就照着我们真实的样子来吧，别再在路上背台词了。",
+      "actionStep": "把你本来打算自己扛下来的那一件事带到神面前。睡前出声说出来。",
+      "prayer": "亲爱的天父，今晚我不先把自己收拾整齐才来，因为这是你允许的。谢谢你，这是施恩的宝座，不是审查台。我需要帮助的在这里，我做得不好的也在这里。奉主耶稣的名祷告，阿们。"
+    },
+    {
+      "day": 2,
+      "segment": "morning",
+      "reference": {
+        "book": "Romans",
+        "chapter": 8,
+        "verse": "6",
+        "full_reference": "Romans 8:6"
+      },
+      "modernVersion": "和合本",
+      "modernText": "体贴肉体的，就是死；体贴圣灵的，乃是生命、平安。",
+      "contextNote": "罗马书第八章一开头就说「不定罪」，这节经文是落在那个应许里面的，不是站在它对面。保罗用来形容体贴肉体的那个词是 phronema，指的不是某一个念头，而是一种固定的倾向——心思没人管的时候会往哪边偏。他在描述一股水流，不是在下判决。",
+      "meditation": "保罗在这里不是在评判你的行为。他说的是：当你不再刻意去管的时候，你的心思会自己滑到哪里去——那个它总要回去的频道。\n\n而应许是对你说的：另一个频道通向生命和平安。不是让你想得更整齐，是生命。你不必被那个默认设定困住，神也从来没有指望你靠自己一个人挣脱出来！",
+      "actionStep": "今天留意一下，心思一空下来，第一个跑去的地方是哪里。不要评判它，只把它告诉神。",
+      "prayer": "亲爱的天父，你知道我不看着它的时候，心思会往哪里去，其中有些对我并没有好处。求你今天早晨把我的思想转向真正带来生命的事——不是用强的，是用你的吸引。奉主耶稣的名祷告，阿们。"
+    },
+    {
+      "day": 2,
+      "segment": "evening",
+      "reference": {
+        "book": "2 Kings",
+        "chapter": 20,
+        "verse": "5",
+        "full_reference": "2 Kings 20:5"
+      },
+      "modernVersion": "和合本",
+      "modernText": "「你回去告诉我民的君希西家说：耶和华─你祖大卫的神如此说：『我听见了你的祷告，看见了你的眼泪，我必医治你；到第三日，你必上到耶和华的殿。",
+      "contextNote": "希西家当时已经病危，先知刚刚告诉他要交代后事。以赛亚人还没走出王宫，神就叫他回头。希伯来原文里「看见你的眼泪」用的是最普通的那个「看」，没有一点修辞。要说的正是这个：祷告里说不出话的那一部分，神也在留心。",
+      "meditation": "希西家已经听见了答案：不行。先知说完就走出去了。然后神把他叫了回来。留意神说话的次序：在应许之前，在任何事情有转机之前，先有这一句——我听见了你的祷告，我看见了你的眼泪。眼泪单独占了一句。神没有把它并进祷告里，好像哭只是一种效率低的求告。他是分开数的。\n\n你一直在为之落泪的那件事——那件你已经不想再跟人解释的事——已经被看见了。神并不需要你先把它说得有条有理。不是被忽略，不是被勉强忍受。是被看见！",
+      "actionStep": "把那件你已经不再向任何人解释的事，出声说出来。不必替它辩护，说出来就好。",
+      "prayer": "亲爱的天父，谢谢你把眼泪和言语分开来数，也谢谢你从没有听厌我的眼泪。这件事我很久以前就不再向人解释了，但我不会停止向你说。谢谢你，被你看见，和被人可怜完全不是一回事。今晚我把它交在你手里，求你替我拿着。奉主耶稣的名祷告，阿们。"
     },
     {
       "day": 3,
       "segment": "morning",
       "reference": {
-        "book": "Matthew",
-        "chapter": 28,
-        "verse": "19",
-        "full_reference": "Matthew 28:19"
+        "book": "2 Corinthians",
+        "chapter": 3,
+        "verse": "17",
+        "full_reference": "2 Corinthians 3:17"
       },
-      "modernVersion": "CCB 当代译本",
-      "modernText": "所以，你们要去，使所有民族都成为我的门徒，奉父、子、圣灵的名给他们施洗，",
-      "meditation": "耶稣使人作门徒的命令，从祂的权柄开始，而不是从我们的能力开始。祂先宣告：天上地下所有的权柄都赐给我了，然后才说：你们要去。因此，我们的分享信仰不是建立在完美表达、完全自信或拥有所有答案上，而是建立在差遣我们、也与我们同行的复活基督身上。很多时候我们犹豫，是因为觉得自己不够资格。但耶稣不是要你装作宗教专家，祂邀请你见证自己真实领受的恩典。\n\n你被改变的生命、诚实的故事、在日常中的忠心，都可能成为别人遇见祂的一扇门。神常使用愿意的人，多过使用看起来厉害的人。这使微小的顺服也很重要。一次安静的谈话，一个耐心的回答，和别人一起做的一个祷告，或一次不再隐藏耶稣对你意义的时刻，都可能成为祂使命的一部分。万民听起来很远，但门徒训练常常从你眼前的那个人开始。",
-      "actionStep": "想一想你身边一个似乎愿意了解信仰、或正在寻找答案的人。这一周，和他/她自然地聊一次。不要硬把话题变成宗教讨论，只分享一个你的信仰怎样实际帮助过你的例子，并好好聆听。",
-      "prayer": "亲爱的天父，我领受祢的恩典：祢借着主耶稣把使万民作门徒的使命交托给祂的门徒。求祢赐我们勇气忠心见证，也赐我们谦卑，使我们始终把人指向基督。在我仍想掌控结果的地方，求祢松开我紧握的手，安静我不安的心。我承认，我常常想要确定感，胜过想要降服。求祢把我重新拉回祢面前，直到顺服不再像失去自己，而像回到最爱我的那一位家中。奉主耶稣的名祷告，阿们。"
+      "modernVersion": "和合本",
+      "modernText": "主就是那灵；主的灵在哪里，那里就得以自由。",
+      "contextNote": "保罗刚讲完摩西见过神之后用帕子蒙脸。他要对比的，是一份隔着帕子、保持距离守住的约，和一份可以坦然露着脸活出来的约。希腊文 eleutheria 指的是一个获释之人的法律身份——是一种地位，不是一种心情。",
+      "meditation": "我们做基督徒，很容易不知不觉把信仰也变成又一个被打分的地方。又一张清单，又一场表现，又一个可能显得自己不够格的房间。\n\n保罗说这个房间不是那样的。主的灵在哪里，那里就有自由——不是想做什么就做什么，是不必再证明什么的松开。今天就带着这个走。你不是在试镜。",
+      "actionStep": "想一件你今天主要是为了证明什么才做的事。去做，或者放下——但要像一个自由人，不是应聘者。",
+      "prayer": "亲爱的天父，谢谢你，你的灵带来的是自由，不是又一场考试。我承认自己常把信仰变成一件可能考砸的事。求你今天松开我里面这一处，让我做事说话的时候，像一个已经被接纳的人。奉主耶稣的名祷告，阿们。"
     },
     {
       "day": 3,
       "segment": "evening",
       "reference": {
-        "book": "Genesis",
-        "chapter": 1,
-        "verse": "2",
-        "full_reference": "Genesis 1:2"
+        "book": "Acts",
+        "chapter": 16,
+        "verse": "25",
+        "full_reference": "Acts 16:25"
       },
-      "modernVersion": "CCB",
-      "modernText": "大地一片混乱空洞，黑暗笼罩着深洋；神的灵在水面上运行。",
-      "meditation": "有些季节不像生命正在被建造，反而像一切都没有形状。计划散开，熟悉的地面消失，未来也看不见轮廓。你可能经历失去、等待、停滞，或一种说不清的混乱。黑暗会让人以为什么好事都没有发生，但神创造的起头告诉我们：再空旷的虚空，也不超出神的工作。\n\n在秩序、美丽和果效出现以前，神的灵已经在那里运行。祂不是远远观看，也不是迟迟未到，更不是被混乱难住。祂的同在先于我们能看见的改变。这对每一个感到人生未成形的人，都是安静的应许。你看不见结构时，神仍然知道祂正在塑造什么；你看不见结果时，祂仍然没有停止工作。黑暗不是祂缺席的证据，空白也不是祂放弃的记号。\n\n圣灵的运行显出能力，也显出温柔。神不需要粗暴闯入你的黑暗；祂已经靠近，守护那些看似脆弱的地方，预备尚未成形的生命。就像母亲俯身看顾孩子，又像双手护住珍贵之物，祂的同在不是冷漠的观察，而是带着目的的守护。你的困惑没有大到祂不能进入，你的等待也没有白费。那位从空虚中创造生命的神，也能在你混乱之处重新带来光、秩序和生命。今天你也许只能看见水面上的黑暗，但神的灵已经在那里运行。所以，不要急着用眼前的混乱定义整个故事。神常常先在看不见的地方运行，然后才让我们慢慢看见光怎样出现、道路怎样展开。",
-      "actionStep": "写下你生命中一个还没有形状、让你困惑或看不清方向的领域。邀请神的灵进入那里，不是急着做完整计划，而是带着信靠求祂带领。今天只求一个小小的下一步，走向秩序、光或更深的信心。",
-      "prayer": "亲爱的天父，求祢让我看见这个恩典：祢在生命还混乱、没有形状的时候仍然同在。求祢临近我里面困惑、黑暗、空荡的地方。把秩序、忍耐和盼望吹进我还看不明白的处境里，使我在看见结果以前就学习信靠祢。在我仍想掌控结果的地方，求祢松开我紧握的手，安静我不安的心。我承认，我常常想要确定感，胜过想要降服。求祢把我重新拉回祢面前，直到顺服不再像失去自己，而像回到最爱我的那一位家中。奉主耶稣的名祷告，阿们。"
+      "modernVersion": "和合本",
+      "modernText": "约在半夜，保罗和西拉祷告，唱诗赞美神，众囚犯也侧耳而听。",
+      "contextNote": "保罗和西拉被剥了衣服、用棍打过，又下在最里面的监牢里——这三样路加都写得很清楚。他们唱诗，希腊文用的是 hymneo，与耶稣在客西马尼之前和门徒同唱的那个词相同。「别的囚犯听见了」是路加自己加的一笔，他是有意写下的。",
+      "meditation": "两个人，被打过，锁在最里面的一间牢房，两脚上了木狗。时间是半夜。路加特意记下他们在那个钟点做了什么：祷告，然后唱诗。\n\n留意最后那一句，因为它常常被读过去——别的囚犯都听见了。没有人是唱给听众听的，那里根本没有听众，只有同在黑暗里睡不着的人。但一个人在难熬的夜里守住的信心，从来不会完全是私事。隔壁房间的女人听得见。走廊那头的孩子听得见。你的半夜比你以为的响，而且不一定是坏事。而半夜里唱得出来的，多半是白天存下的。",
+      "actionStep": "今晚若你在该睡的时候醒着，别再跟它较劲十分钟。用那十分钟祷告，能出声就出声。",
+      "prayer": "亲爱的天父，此刻我并不想醒着，也很想这一切快点过去。谢谢你，深夜的中间你并没有缺席。如果我睡不着，就让我祷告。若身边有人听见，愿他们从我这里听见的是信靠，不是绝望。求你也把睡眠还给我；若还不能，就陪我坐到天亮。奉主耶稣的名祷告，阿们。"
     }
   ],
   "zh-Hant": [
@@ -217,91 +238,97 @@ export const BUNDLED_DAILY_VERSES: Record<LanguageCode, DailyVerse[]> =
       "day": 1,
       "segment": "morning",
       "reference": {
-        "book": "John",
-        "chapter": 1,
-        "verse": "9",
-        "full_reference": "John 1:9"
+        "book": "Psalms",
+        "chapter": 143,
+        "verse": "8",
+        "full_reference": "Psalms 143:8"
       },
-      "modernVersion": "CCB",
-      "modernText": "真光來了，它照亮所有進入世界的人。",
-      "meditation": "如果今天你一醒来，就覺得光离自己很遠，這节經文带著温柔的應許来靠近你。黑暗不一定总是惊天動地的。很多時候，它只是心裡說不清的沉重，是對真理和方向的困惑，也是失去或失敗之後留下的阴影。约翰没有叫我們先變得更堅強、更明白、更配得；他把我們的眼光带向那已經来到世界的真光——耶穌。\n\n這光不是只照給生命整齐、信心稳定的人。經文說，祂照亮一切生在世上的人，也包括你：在你信心微弱、心裡疲惫、看不清下一步的時候。耶穌不是遠遠等你走出黑暗；祂親自进入你的黑暗，用祂的同在驱散惧怕和谎言。\n\n今天轉向基督，就是讓祂的真理成為你心裡的第一道光。你不需要制造這光，也不需要證明自己配得。你只需要轉向那位已經靠近你的主。",
-      "actionStep": "今天，具體說出一個讓你感到沉重或混乱的地方，並邀請耶穌這位真光照进那裡。",
-      "prayer": "親愛的天父，感謝祢赐下主耶穌這真光，照亮每一個人，没有例外，也没有阻隔。讚美祢使祂的光进入我們的黑暗，引导我們进入祢的真理和恩典。我不愿只是在話語上同意這真理，然後仍舊原样离開。求祢在我裡面那些被惧怕、習惯或自我保護掌管的隐秘之處遇見我。教我把這些地方向祢的愛打開，使我對祢的回應變得诚實、稳定，也更完整。奉主耶穌的名禱告，阿們。"
+      "modernVersion": "和合本",
+      "modernText": "求你使我清晨得聽你慈愛之言，因我倚靠你；求你使我知道當行的路，因我的心仰望你。",
+      "contextNote": "詩篇一百四十三篇是一首哀歌。前面幾節裡，大衛直說自己正被人追殺。這不是從安穩處發出的清晨禱告，是一個身處險境的人寫下的。「慈愛」的希伯來原文是 chesed，指立約的忠誠——一種事先就把自己許出去、事後反悔不了的愛。",
+      "meditation": "大衛不是在描述一個美好的清晨，他是在求一個。他求的順序值得我們借來用。\n\n先聽見自己被愛，然後才知道該往哪裡走。我們大多數人是反著來的——一睜眼就來要方向、要答案、要那件事到底該怎麼辦。可是沒有愛託著的方向，很快就變成壓力，這樣的日子我們多半都過過一陣。今天早晨，我們先求第一樣。第二樣跑不掉，它會等著我們。",
+      "actionStep": "今天安排任何事之前，先出聲說一句：我先是被愛的，才是有用的。然後把清單上第一件事交給神。",
+      "prayer": "親愛的天父，在我開口問你我該往哪裡去之前，求你先讓我聽見我是被愛的。我承認自己常常跳過這一步，一醒來就直奔計劃和安排。今天早晨，求你先對我裡面那個需要被安慰的地方說話，然後再指給我下一步。我把這一整天都舉到你面前。奉主耶穌的名禱告，阿們。"
     },
     {
       "day": 1,
       "segment": "evening",
       "reference": {
-        "book": "John",
-        "chapter": 14,
-        "verse": "1",
-        "full_reference": "John 14:1"
-      },
-      "modernVersion": "CCB",
-      "modernText": "你們的心不要不安。你們信神，也要信我。",
-      "meditation": "焦慮来的時候，常常不會先給你准備。它可能来自一段關係的破裂，一份工作的失去，一個關于健康的坏消息，也可能只是夜深時，脑子裡不斷浮現各種可能出错的事。你也许說不清自己到底怎麼了，只知道心裡不安、疲惫，也害怕。\n\n耶穌對門徒說安慰的話時，並不是在一個平静的時刻。祂知道他們很快要看見祂被捉拿，也要看見十字架震動他們所有的理解。他們的處境不會马上變輕松，但耶穌仍然呼召他們信靠：既信神，也當信祂。祂不是用“事情都會順利”来安慰他們，而是把他們的心带回祂自己，带回祂可靠的同在。\n\n這样的信心不是否認困難，而是把心轉向那位在一切摇動中仍然良善、信實、有能力的主。耶穌曾进入最深的黑暗，為要拯救你；祂也不會在你今天的焦慮裡撇下你。此刻，惧怕不是最後的声音。祂知道你的處境，也能扶持你的心。祂的同在比壓在你心上的憂慮更近。你可以在不安還没有完全消失時，就先把心交給祂。",
-      "actionStep": "寫下今天在你心裡声音最大的那個惧怕或憂慮，不用修饰，也不用先讓自己堅強。把它诚實帶到耶穌面前，並在旁邊寫一句信靠的話：“主啊，我把這件事交在你手中。”當惧怕再次浮上来，就回到這句話裡。",
-      "prayer": "親愛的天父，感謝祢在基督裡使我的心不必被惧怕支配。當困難的声音大過祢的應許，求祢教我诚實把焦慮帶到祢面前。用祢的同在稳住我，使我今天能带著信靠走下一步。我不愿只是在話語上同意這真理，然後仍舊原样离開。求祢在我裡面那些被惧怕、習惯或自我保護掌管的隐秘之處遇見我。教我把這些地方向祢的愛打開，使我對祢的回應變得诚實、稳定，也更完整。奉主耶穌的名禱告，阿們。"
-    },
-    {
-      "day": 2,
-      "segment": "morning",
-      "reference": {
-        "book": "Jeremiah",
-        "chapter": 29,
-        "verse": "11",
-        "full_reference": "Jeremiah 29:11"
-      },
-      "modernVersion": "CCB",
-      "modernText": "耶和華說：「我知道我對你們所有的計劃，都是為了祝福你們，而不是傷害你們，要給你們一個美好的未來和希望。」",
-      "meditation": "耶利米寫下這句話時，聽見的人不是生活順利安稳的人，而是被掳、失落、看不見未来的百姓。他們失去家园、安全感和清晰的前路。就在這样的不确定中，神說：我知道我向你們所懷的意念。祂不是只看見他們的痛苦，祂仍然為他們持守一個目的。\n\n這個應許没有否認艰難，却显明神在艰難中的心。祂的計劃不是要毁坏祂的百姓，而是要带他們进入平安、恢復和盼望。當你的未来被打斷，或過去的错误好像已經决定結局時，這节經文提醒你：神仍以憐憫記念你。你的處境可能還没有完成，但祂向你的心意仍然信實。\n\n所以，不要太快把現在這一章称為結局。對犹大人来說，被掳像是故事結束了，但神已經在谈论未来。你的等待、伤痛和不确定都是真實的，却不比神守约的信實更大。讓這個應許稳住你，而不是逼你假装没事：神能同時托住你今天的痛，也托住你将来的盼望。",
-      "actionStep": "在日記或手机備忘录裡寫下：「關于我，神有平安的計劃，不是灾祸的計劃。」每當懷疑出現，就再讀一遍。如果可以，早上和晚上都讀一次，讓這個真理慢慢改變你看未来的方式。",
-      "prayer": "親愛的天父，讚美祢應許我們，祢的計劃是為了赐下平安、盼望和未来。我們的日子在祢手中，祢的心意不是傷害我們，而是建立我們、扶持我們走向盼望。祢的計劃不會落空。求祢讓這應許稳住我們的心，使我們在等待中仍然信靠祢的良善。我把心裡那些疲惫的地方帶到祢面前：它們知道正确的話，却仍然很難真正相信。父啊，求祢在那裡陪伴我，使祢的真理比我的羞耻更温暖，比我的惧怕更有力量。幫助我不是遠遠地禱告，而是在已經被祢扶持的信靠中禱告。奉主耶穌的名禱告，阿們。"
-    },
-    {
-      "day": 2,
-      "segment": "evening",
-      "reference": {
-        "book": "John",
-        "chapter": 14,
+        "book": "Hebrews",
+        "chapter": 4,
         "verse": "16",
-        "full_reference": "John 14:16"
+        "full_reference": "Hebrews 4:16"
       },
-      "modernVersion": "CCB",
-      "modernText": "我會向父祈求，父會賜給你們另一位保惠師，他要永遠與你們同在。",
-      "meditation": "當一個重要的人离開時，空缺有時會大到占滿整個房間。搬到陌生城市、一段關係結束、所愛之人离世，或突然的告别，都可能讓安全感一下子崩塌。門徒也經歷過這種惧怕。當耶穌告訴他們祂要离開時，他們並不勇敢，而是慌乱、無助。\n\n就在這样的黑暗時刻，耶穌應許赐下另一位保惠師，永遠與他們同在。這不是把祂的同在降級為一個替代品，而是一種更深的親近。耶穌不只是走在他們身邊；藉著聖靈，神要住在他們裡面。門徒起初只感到失去，後来却明白，聖靈的同在使他們不再只是回忆耶穌，而是天天被祂带领、安慰和堅固。\n\n聖靈不是偶尔来探访的客人。祂在孤单的深夜、困惑的决定、無法解释的悲伤裡同在，也在你没有力量禱告時幫助你。祂知道你的心，明白你說不出的叹息，甚至在你軟弱時扶持你轉向神。你不是靠回忆撑下去。神現在與你同在，也永遠不會离開你。這同在是真實的。",
-      "actionStep": "停下来问问自己：我今天在哪個地方最覺得孤单？在那裡，我最需要神給我什麼？简单禱告：“聖靈啊，提醒我，我没有被遗弃。”然後安静片刻，留意祂怎样赐下安慰、智慧或力量。",
-      "prayer": "親愛的天父，我领受這個恩典：祢赐下聖靈與我們同住。當离别、改變或孤单讓我覺得無依無靠，求祢提醒我，我不是独自面對生活。幫助我聽見聖靈温柔的安慰，也順服祂今天细微的引导。我把心裡那些疲惫的地方帶到祢面前：它們知道正确的話，却仍然很難真正相信。父啊，求祢在那裡陪伴我，使祢的真理比我的羞耻更温暖，比我的惧怕更有力量。幫助我不是遠遠地禱告，而是在已經被祢扶持的信靠中禱告。奉主耶穌的名禱告，阿們。"
+      "modernVersion": "和合本",
+      "modernText": "所以，我們只管坦然無懼地來到施恩的寶座前，為要得憐恤，蒙恩惠，作隨時的幫助。",
+      "contextNote": "希伯來書寫給的是猶太基督徒。他們知道至聖所一年只能進一次，只能由一個人進去，還要帶著血。在這樣的背景下，「坦然無懼地來」是件讓人喫驚的事。這裡的希臘文是 parrhesia，指公民在衆人面前坦白講話的自由，不是闖入者的膽量。",
+      "meditation": "我們來到神面前，常常像去見考覈——話還沒說，心裡已經把自我辯護打了半份草稿。希伯來書用的卻是另一個詞：坦然無懼。不是小心翼翼，也不是先把自己收拾乾淨再來。\n\n再留意這寶座叫什麼名字。是施恩，不是審查。今晚就照著我們真實的樣子來吧，別再在路上背臺詞了。",
+      "actionStep": "把你本來打算自己扛下來的那一件事帶到神面前。睡前出聲說出來。",
+      "prayer": "親愛的天父，今晚我不先把自己收拾整齊才來，因為這是你允許的。謝謝你，這是施恩的寶座，不是審查臺。我需要幫助的在這裡，我做得不好的也在這裡。奉主耶穌的名禱告，阿們。"
+    },
+    {
+      "day": 2,
+      "segment": "morning",
+      "reference": {
+        "book": "Romans",
+        "chapter": 8,
+        "verse": "6",
+        "full_reference": "Romans 8:6"
+      },
+      "modernVersion": "和合本",
+      "modernText": "體貼肉體的，就是死；體貼聖靈的，乃是生命、平安。",
+      "contextNote": "羅馬書第八章一開頭就說「不定罪」，這節經文是落在那個應許裡面的，不是站在它對面。保羅用來形容體貼肉體的那個詞是 phronema，指的不是某一個念頭，而是一種固定的傾向——心思沒人管的時候會往哪邊偏。他在描述一股水流，不是在下判決。",
+      "meditation": "保羅在這裡不是在評判你的行為。他說的是：當你不再刻意去管的時候，你的心思會自己滑到哪裡去——那個它總要回去的頻道。\n\n而應許是對你說的：另一個頻道通向生命和平安。不是讓你想得更整齊，是生命。你不必被那個默認設定困住，神也從來沒有指望你靠自己一個人掙脫出來！",
+      "actionStep": "今天留意一下，心思一空下來，第一個跑去的地方是哪裡。不要評判它，只把它告訴神。",
+      "prayer": "親愛的天父，你知道我不看著它的時候，心思會往哪裡去，其中有些對我並沒有好處。求你今天早晨把我的思想轉向真正帶來生命的事——不是用強的，是用你的吸引。奉主耶穌的名禱告，阿們。"
+    },
+    {
+      "day": 2,
+      "segment": "evening",
+      "reference": {
+        "book": "2 Kings",
+        "chapter": 20,
+        "verse": "5",
+        "full_reference": "2 Kings 20:5"
+      },
+      "modernVersion": "和合本",
+      "modernText": "「你回去告訴我民的君希西家說：耶和華─你祖大衛的神如此說：『我聽見了你的禱告，看見了你的眼淚，我必醫治你；到第三日，你必上到耶和華的殿。",
+      "contextNote": "希西家當時已經病危，先知剛剛告訴他要交代後事。以賽亞人還沒走出王宮，神就叫他回頭。希伯來原文裡「看見你的眼淚」用的是最普通的那個「看」，沒有一點修辭。要說的正是這個：禱告裡說不出話的那一部分，神也在留心。",
+      "meditation": "希西家已經聽見了答案：不行。先知說完就走出去了。然後神把他叫了回來。留意神說話的次序：在應許之前，在任何事情有轉機之前，先有這一句——我聽見了你的禱告，我看見了你的眼淚。眼淚單獨佔了一句。神沒有把它並進禱告裡，好像哭只是一種效率低的求告。他是分開數的。\n\n你一直在為之落淚的那件事——那件你已經不想再跟人解釋的事——已經被看見了。神並不需要你先把它說得有條有理。不是被忽略，不是被勉強忍受。是被看見！",
+      "actionStep": "把那件你已經不再向任何人解釋的事，出聲說出來。不必替它辯護，說出來就好。",
+      "prayer": "親愛的天父，謝謝你把眼淚和言語分開來數，也謝謝你從沒有聽厭我的眼淚。這件事我很久以前就不再向人解釋了，但我不會停止向你說。謝謝你，被你看見，和被人可憐完全不是一回事。今晚我把它交在你手裡，求你替我拿著。奉主耶穌的名禱告，阿們。"
     },
     {
       "day": 3,
       "segment": "morning",
       "reference": {
-        "book": "Matthew",
-        "chapter": 28,
-        "verse": "19",
-        "full_reference": "Matthew 28:19"
+        "book": "2 Corinthians",
+        "chapter": 3,
+        "verse": "17",
+        "full_reference": "2 Corinthians 3:17"
       },
-      "modernVersion": "CCB 當代譯本",
-      "modernText": "所以，你們要去，使所有民族都成為我的門徒，奉父、子、聖靈的名給他們施洗，",
-      "meditation": "耶穌使人作門徒的命令，從祂的權柄開始，而不是從我們的能力開始。祂先宣告：天上地下所有的權柄都赐給我了，然後才說：你們要去。因此，我們的分享信仰不是建立在完美表达、完全自信或擁有所有答案上，而是建立在差遣我們、也與我們同行的復活基督身上。很多時候我們犹豫，是因為覺得自己不夠资格。但耶穌不是要你装作宗教专家，祂邀請你見證自己真實领受的恩典。\n\n你被改變的生命、诚實的故事、在日常中的忠心，都可能成為别人遇見祂的一扇門。神常使用愿意的人，多過使用看起来厉害的人。這使微小的順服也很重要。一次安静的谈話，一個耐心的回答，和别人一起做的一個禱告，或一次不再隐藏耶穌對你意義的時刻，都可能成為祂使命的一部分。萬民聽起来很遠，但門徒训练常常從你眼前的那個人開始。",
-      "actionStep": "想一想你身邊一個似乎愿意了解信仰、或正在尋找答案的人。這一周，和他/她自然地聊一次。不要硬把話題變成宗教讨论，只分享一個你的信仰怎样實际幫助過你的例子，並好好聆聽。",
-      "prayer": "親愛的天父，我领受祢的恩典：祢藉著主耶穌把使萬民作門徒的使命交托給祂的門徒。求祢赐我們勇氣忠心見證，也赐我們谦卑，使我們始终把人指向基督。在我仍想掌控結果的地方，求祢松開我緊握的手，安静我不安的心。我承認，我常常想要确定感，胜過想要降服。求祢把我重新拉回祢面前，直到順服不再像失去自己，而像回到最愛我的那一位家中。奉主耶穌的名禱告，阿們。"
+      "modernVersion": "和合本",
+      "modernText": "主就是那靈；主的靈在哪裡，那裡就得以自由。",
+      "contextNote": "保羅剛講完摩西見過神之後用帕子蒙臉。他要對比的，是一份隔著帕子、保持距離守住的約，和一份可以坦然露著臉活出來的約。希臘文 eleutheria 指的是一個獲釋之人的法律身份——是一種地位，不是一種心情。",
+      "meditation": "我們做基督徒，很容易不知不覺把信仰也變成又一個被打分的地方。又一張清單，又一場表現，又一個可能顯得自己不夠格的房間。\n\n保羅說這個房間不是那樣的。主的靈在哪裡，那裡就有自由——不是想做什麼就做什麼，是不必再證明什麼的鬆開。今天就帶著這個走。你不是在試鏡。",
+      "actionStep": "想一件你今天主要是為了證明什麼才做的事。去做，或者放下——但要像一個自由人，不是應聘者。",
+      "prayer": "親愛的天父，謝謝你，你的靈帶來的是自由，不是又一場考試。我承認自己常把信仰變成一件可能考砸的事。求你今天鬆開我裡面這一處，讓我做事說話的時候，像一個已經被接納的人。奉主耶穌的名禱告，阿們。"
     },
     {
       "day": 3,
       "segment": "evening",
       "reference": {
-        "book": "Genesis",
-        "chapter": 1,
-        "verse": "2",
-        "full_reference": "Genesis 1:2"
+        "book": "Acts",
+        "chapter": 16,
+        "verse": "25",
+        "full_reference": "Acts 16:25"
       },
-      "modernVersion": "CCB",
-      "modernText": "大地一片混亂空洞，黑暗籠罩著深洋；神的靈在水面上運行。",
-      "meditation": "有些季节不像生命正在被建造，反而像一切都没有形状。計劃散開，熟悉的地面消失，未来也看不見轮廓。你可能經歷失去、等待、停滞，或一種說不清的混乱。黑暗會讓人以為什麼好事都没有發生，但神創造的起頭告訴我們：再空旷的虛空，也不超出神的工作。\n\n在秩序、美丽和果效出現以前，神的靈已經在那裡运行。祂不是遠遠观看，也不是迟迟未到，更不是被混乱難住。祂的同在先于我們能看見的改變。這對每一個感到人生未成形的人，都是安静的應許。你看不見結构時，神仍然知道祂正在塑造什麼；你看不見結果時，祂仍然没有停止工作。黑暗不是祂缺席的證据，空白也不是祂放弃的記号。\n\n聖靈的运行显出能力，也显出温柔。神不需要粗暴闯入你的黑暗；祂已經靠近，守護那些看似脆弱的地方，預備尚未成形的生命。就像母親俯身看顧孩子，又像雙手護住珍贵之物，祂的同在不是冷漠的观察，而是带著目的的守護。你的困惑没有大到祂不能进入，你的等待也没有白费。那位從空虛中創造生命的神，也能在你混乱之處重新带来光、秩序和生命。今天你也许只能看見水面上的黑暗，但神的靈已經在那裡运行。所以，不要急著用眼前的混乱定義整個故事。神常常先在看不見的地方运行，然後才讓我們慢慢看見光怎样出現、道路怎样展開。",
-      "actionStep": "寫下你生命中一個還没有形状、讓你困惑或看不清方向的领域。邀請神的靈进入那裡，不是急著做完整計劃，而是带著信靠求祂带领。今天只求一個小小的下一步，走向秩序、光或更深的信心。",
-      "prayer": "親愛的天父，求祢讓我看見這個恩典：祢在生命還混乱、没有形状的時候仍然同在。求祢临近我裡面困惑、黑暗、空荡的地方。把秩序、忍耐和盼望吹进我還看不明白的處境裡，使我在看見結果以前就學習信靠祢。在我仍想掌控結果的地方，求祢松開我緊握的手，安静我不安的心。我承認，我常常想要确定感，胜過想要降服。求祢把我重新拉回祢面前，直到順服不再像失去自己，而像回到最愛我的那一位家中。奉主耶穌的名禱告，阿們。"
+      "modernVersion": "和合本",
+      "modernText": "約在半夜，保羅和西拉禱告，唱詩讚美神，衆囚犯也側耳而聽。",
+      "contextNote": "保羅和西拉被剝了衣服、用棍打過，又下在最裡面的監牢裡——這三樣路加都寫得很清楚。他們唱詩，希臘文用的是 hymneo，與耶穌在客西馬尼之前和門徒同唱的那個詞相同。「別的囚犯聽見了」是路加自己加的一筆，他是有意寫下的。",
+      "meditation": "兩個人，被打過，鎖在最裡面的一間牢房，兩腳上了木狗。時間是半夜。路加特意記下他們在那個鐘點做了什麼：禱告，然後唱詩。\n\n留意最後那一句，因為它常常被讀過去——別的囚犯都聽見了。沒有人是唱給聽衆聽的，那裡根本沒有聽衆，只有同在黑暗裡睡不著的人。但一個人在難熬的夜裡守住的信心，從來不會完全是私事。隔壁房間的女人聽得見。走廊那頭的孩子聽得見。你的半夜比你以為的響，而且不一定是壞事。而半夜裡唱得出來的，多半是白天存下的。",
+      "actionStep": "今晚若你在該睡的時候醒著，別再跟它較勁十分鐘。用那十分鐘禱告，能出聲就出聲。",
+      "prayer": "親愛的天父，此刻我並不想醒著，也很想這一切快點過去。謝謝你，深夜的中間你並沒有缺席。如果我睡不著，就讓我禱告。若身邊有人聽見，願他們從我這裡聽見的是信靠，不是絕望。求你也把睡眠還給我；若還不能，就陪我坐到天亮。奉主耶穌的名禱告，阿們。"
     }
   ],
   "de": [
@@ -309,91 +336,97 @@ export const BUNDLED_DAILY_VERSES: Record<LanguageCode, DailyVerse[]> =
       "day": 1,
       "segment": "morning",
       "reference": {
-        "book": "John",
-        "chapter": 1,
-        "verse": "9",
-        "full_reference": "John 1:9"
+        "book": "Psalms",
+        "chapter": 143,
+        "verse": "8",
+        "full_reference": "Psalms 143:8"
       },
-      "modernVersion": "Lutherbibel 2017",
-      "modernText": "Das wahre Licht, das jeden Menschen erleuchtet, kam in die Welt.",
-      "meditation": "Wenn du heute aufgewacht bist und es sich anfühlt, als wäre das Licht weit weg, begegnet dir dieser Vers mit einer sanften Verheißung. Dunkelheit ist nicht immer dramatisch. Manchmal ist sie eine stille Schwere, eine verwirrte Suche nach Wahrheit oder der Schmerz von Verlust und Versagen. Johannes sagt nicht, dass wir dieser Dunkelheit entkommen, indem wir stärker oder würdiger werden. Er weist uns auf Jesus hin, das wahre Licht, das bereits in die Welt gekommen ist.\n\nDieses Licht ist nicht nur für Menschen, die ihr Leben im Griff haben. Es erleuchtet jeden Menschen, auch dich, wenn dein Glaube klein ist, dein Herz müde wird oder du den nächsten Schritt nicht siehst. Jesus wartet nicht aus der Ferne, bis du ihn erreichst. Er kommt mit seiner Gegenwart in deine Dunkelheit.\n\nSich heute Christus zuzuwenden heißt, seine Wahrheit zum ersten Licht im Herzen werden zu lassen. Du musst das Licht nicht erzeugen oder verdienen. Du darfst dich dem öffnen, der dir nahe gekommen ist.",
-      "actionStep": "Benenne einen Bereich, der dunkel oder unklar wirkt. Lade Jesus, das wahre Licht, ein, dir dort heute zu begegnen.",
-      "prayer": "Lieber himmlischer Vater, ich danke dir, dass du Jesus gesandt hast, das wahre Licht, das jeden Menschen erleuchtet. Ich preise dich, weil sein Licht in unsere Dunkelheit kommt und uns in deine Wahrheit und Gnade führt. Ich möchte dem nicht nur mit Worten zustimmen und dann unverändert weitergehen. Begegne mir an den verborgenen Orten, wo Angst, Gewohnheit oder Selbstschutz mich noch beherrschen. Lehre mich, diese Orte deiner Liebe zu öffnen, und lass meine Antwort an dich ehrlich, beständig und ganz werden. In Jesu Namen. Amen."
+      "modernVersion": "Lutherbibel 1912",
+      "modernText": "Laß mich frühe hören deine Gnade; denn ich hoffe auf dich. Tue mir kund den Weg, darauf ich gehen soll; denn mich verlangt nach dir.",
+      "contextNote": "Psalm 143 ist ein Klagelied. David wird verfolgt, und wenige Verse vorher sagt er das ganz ungeschützt. Das hier ist kein ruhiges Morgengebet, sondern das Gebet eines Bedrängten. Hinter dem Wort „Gnade“ steht im Hebräischen chesed: Bundestreue, eine Liebe, die sich vorher festgelegt hat und sich nicht mehr herausredet.",
+      "meditation": "David beschreibt keinen guten Morgen. Er bittet um einen. Er sagt nicht: Ich höre deine Gnade. Er sagt: Lass mich hören. Das Hören stellt sich also nicht von allein ein, und er weiß das.\n\nDann bittet er um zweierlei, und die Reihenfolge steht fest: erst die Gnade, dann der Weg. Die meisten von uns drehen das um. Wir wollen morgens zuerst wissen, wo es langgeht, und hoffen, dass die Zusage sich unterwegs schon einstellt. Aber ein Weg ohne diese Zusage wird schnell zu Druck. Bitten wir heute um das Erste. Das Zweite läuft uns nicht weg.",
+      "actionStep": "Sag heute Morgen einen Satz laut, bevor du irgendetwas planst: Ich bin geliebt, bevor ich nützlich bin. Und frag Gott danach nach der ersten Entscheidung auf deiner Liste.",
+      "prayer": "Lieber himmlischer Vater, bevor ich dich frage, wohin ich gehen soll, lass mich hören, dass du mich liebst. Ich gebe zu, wie schnell ich diesen Teil überspringe und gleich beim Planen lande. Rede zuerst zu dem Teil in mir, der Zuspruch braucht, und zeig mir danach den nächsten Schritt. Diesen ganzen Tag lege ich dir hin. In Jesu Namen, Amen."
     },
     {
       "day": 1,
       "segment": "evening",
       "reference": {
-        "book": "John",
-        "chapter": 14,
-        "verse": "1",
-        "full_reference": "John 14:1"
-      },
-      "modernVersion": "Lutherbibel 2017",
-      "modernText": "Euer Herz erschrecke nicht! Glaubt an Gott und glaubt an mich.",
-      "meditation": "Wenn Angst sich in dein Herz setzt, fragt sie selten um Erlaubnis. Sie kann durch eine Trennung kommen, durch den Verlust der Arbeit, durch schlechte Nachrichten über die Gesundheit oder nachts, wenn alle möglichen Sorgen lauter werden. Vielleicht kannst du nicht einmal genau sagen, was du fühlst. Du weißt nur: dein Herz ist unruhig und müde.\n\nJesus sprach solche Worte nicht in einer ruhigen Stunde, sondern kurz bevor Seine Jünger Ihn leiden sehen würden. Ihre Welt sollte erschüttert werden. Trotzdem rief Er sie zum Vertrauen: Wer Gott glaubt, darf auch Ihm glauben.\n\nDieser Glaube leugnet die Not nicht. Er richtet das Herz auf den, dessen Güte und Treue halten, wenn nichts anderes hält. Jesus ist durch tiefste Dunkelheit gegangen, um dich zu retten; Er verlässt dich nicht in deiner heutigen Angst.",
-      "actionStep": "Schreibe die Angst oder Sorge auf, die heute am lautesten in deinem Herzen spricht. Bring sie ungefiltert zu Jesus und schreibe daneben einen Satz des Vertrauens: „Herr, ich lege das in deine Hände.“ Kehre zu diesem Satz zurück, wenn die Angst wieder aufsteigt.",
-      "prayer": "Lieber himmlischer Vater, ich danke dir, dass mein Herz in Christus nicht von Angst beherrscht werden muss. Wenn Sorgen lauter werden als deine Verheißung, lehre mich, sie ehrlich vor dich zu bringen. Stärke mich durch deine Nähe und hilf mir, heute den nächsten Schritt im Vertrauen zu gehen. Ich möchte dem nicht nur mit Worten zustimmen und dann unverändert weitergehen. Begegne mir an den verborgenen Orten, wo Angst, Gewohnheit oder Selbstschutz mich noch beherrschen. Lehre mich, diese Orte deiner Liebe zu öffnen, und lass meine Antwort an dich ehrlich, beständig und ganz werden. In Jesu Namen. Amen."
-    },
-    {
-      "day": 2,
-      "segment": "morning",
-      "reference": {
-        "book": "Jeremiah",
-        "chapter": 29,
-        "verse": "11",
-        "full_reference": "Jeremiah 29:11"
-      },
-      "modernVersion": "Lutherbibel 2017",
-      "modernText": "Denn ich weiß wohl, welche Gedanken ich von euch habe, spricht der Herr, Gedanken des Friedens und nicht des Unheils, um euch Zukunft und Hoffnung zu geben.",
-      "meditation": "Jeremia schrieb diese Worte an Menschen im Exil, nicht an Menschen, deren Leben leicht oder geordnet wirkte. Sie hatten Heimat, Sicherheit und eine klare Zukunft verloren. In diese Ungewissheit hinein sagt Gott: 'Ich weiß, welche Pläne ich für euch habe.' Er sieht ihren Schmerz nicht nur; er hält weiterhin eine Absicht für sie fest. Diese Verheißung leugnet die Not nicht. Sie offenbart Gottes Herz mitten darin. Seine Pläne sollen sein Volk nicht zerstören, sondern zu Frieden, Wiederherstellung und Hoffnung führen.\n\nWenn deine Zukunft unterbrochen wirkt oder vergangene Fehler das letzte Wort zu haben scheinen, erinnert dich dieser Vers: Gott denkt weiterhin barmherzig an dich. Deine Umstände mögen noch offen sein, aber seine Absicht bleibt treu. Nenne dein gegenwärtiges Kapitel also nicht zu schnell das Ende der Geschichte. Für Juda fühlte sich das Exil wie ein Ende an, doch Gott sprach bereits von Zukunft. Dein Warten, deine Trauer oder deine Unsicherheit mögen real sein, aber sie sind nicht stärker als Gottes Bundestreue.",
-      "actionStep": "Schreibe in dein Tagebuch oder in deine Notizen: „Gott hat Pläne des Friedens für mich, nicht des Unheils.“ Wenn Zweifel kommen, lies diesen Satz wieder. Wenn möglich, lies ihn morgens und abends, damit diese Wahrheit langsam deinen Blick auf die Zukunft prägt.",
-      "prayer": "Lieber himmlischer Vater, ich preise dich, weil du weißt. Ich preise dich, weil du nicht ein gleichgültiger Gott bist, sondern ein Gott voller Liebe mit absichtlichen Plänen für mich. Ich gestehe ein, dass ich manchmal Schwierigkeiten habe, das zu glauben. Meine Geschichte, meine Fehler, die Dinge, die mich unwürdig fühlen lassen, lassen mich zweifeln. Aber du sagst, deine Pläne sind Pläne des Friedens, nicht der Katastrophe. Hilf mir, diese Verheißung anzunehmen. Während ich darauf warte, deine Pläne sich entfalten zu sehen, gib mir Frieden in meinem Herzen. Lass mich dir jeden Tag mehr vertrauen. Ich bringe dir die müden Teile meines Herzens, die die richtigen Worte kennen und sie doch kaum glauben können. Bleib dort bei mir, Vater, und mach deine Wahrheit wärmer als meine Scham und stärker als meine Angst. Hilf mir, nicht aus Distanz zu beten, sondern aus dem Vertrauen, dass du mich bereits hältst. In Jesu Namen. Amen."
-    },
-    {
-      "day": 2,
-      "segment": "evening",
-      "reference": {
-        "book": "John",
-        "chapter": 14,
+        "book": "Hebrews",
+        "chapter": 4,
         "verse": "16",
-        "full_reference": "John 14:16"
+        "full_reference": "Hebrews 4:16"
       },
-      "modernVersion": "Lutherbibel 2017",
-      "modernText": "Und ich werde den Vater bitten, und er wird euch einen anderen Beistand geben, dass er bei euch bleibt auf ewig—",
-      "meditation": "Wenn ein wichtiger Mensch geht, kann die Leere größer wirken als alles andere. Ein Umzug, eine Trennung, ein Todesfall oder ein plötzliches Abschiednehmen kann jedes Gefühl von Sicherheit erschüttern. Die Jünger kannten diese Angst. Als Jesus ihnen sagte, dass Er gehen würde, waren sie nicht stark und gefasst, sondern verwirrt, erschrocken und hilflos.\n\nGerade in diese dunkle Stunde hinein versprach Jesus den anderen Beistand, der für immer bei ihnen bleiben würde. Das war kein schwächerer Ersatz für Seine Nähe, sondern eine tiefere Form der Gemeinschaft. Jesus würde nicht nur neben ihnen gehen; durch den Heiligen Geist wollte Gott in ihnen wohnen. Was zuerst wie Verlust aussah, wurde später zur Quelle von Trost, Leitung, Mut und innerer Kraft.\n\nDer Heilige Geist ist kein gelegentlicher Besucher. Er ist da in einsamen Nächten, in schweren Entscheidungen, in Trauer, die du kaum erklären kannst, und auch dann, wenn dir die Worte zum Beten fehlen. Er kennt dein Herz und versteht dein unausgesprochenes Seufzen. Du musst nicht nur von vergangenen Erfahrungen leben. Gott ist jetzt bei dir, und Er wird dich nicht verlassen. Gerade deshalb darf auch deine heutige Einsamkeit vor Ihm ausgesprochen werden.",
-      "actionStep": "Halte inne und frage dich: Wo fühle ich mich heute am einsamsten, und was brauche ich dort von Gott? Bete schlicht: „Heiliger Geist, erinnere mich daran, dass ich nicht verlassen bin.“ Bleib einen Moment still und achte auf Trost, Weisheit oder Kraft, die Er schenkt.",
-      "prayer": "Lieber himmlischer Vater, ich preise dich, weil du deinen Geist gibst, um bei uns zu bleiben. Wenn Abschied, Veränderung oder Einsamkeit mich schutzlos fühlen lassen, erinnere mich daran, dass ich das Leben nicht allein tragen muss. Hilf mir, den Trost des Geistes zu empfangen und seiner leisen Führung heute zu folgen. Ich bringe dir die müden Teile meines Herzens, die die richtigen Worte kennen und sie doch kaum glauben können. Bleib dort bei mir, Vater, und mach deine Wahrheit wärmer als meine Scham und stärker als meine Angst. Hilf mir, nicht aus Distanz zu beten, sondern aus dem Vertrauen, dass du mich bereits hältst. In Jesu Namen. Amen."
+      "modernVersion": "Lutherbibel 1912",
+      "modernText": "Darum laßt uns hinzutreten mit Freudigkeit zu dem Gnadenstuhl, auf daß wir Barmherzigkeit empfangen und Gnade finden auf die Zeit, wenn uns Hilfe not sein wird.",
+      "contextNote": "Der Hebräerbrief richtet sich an Menschen aus dem Judentum, die wussten: In das Allerheiligste ging einmal im Jahr ein einziger Mann, mit Blut. „Gnadenstuhl“ ist Luthers Wort für genau diesen Ort. Das griechische parrhesia hinter „Freudigkeit“ meint die Freiheit einer Bürgerin, öffentlich offen zu reden — nicht die Dreistigkeit einer Eindringlingin.",
+      "meditation": "„Freudigkeit“ — das ist das Wort, das hier steht, und am Ende eines Tages wie diesem klingt es fast unpassend. Nicht vorsichtig. Nicht erst, wenn wir uns vorzeigbar gemacht haben. Und der Ort, zu dem wir treten dürfen, heißt Gnadenstuhl: die Stelle, an der Versöhnung geschah, keine Prüfungsstelle.\n\nDie meisten von uns bringen abends zuerst die Bilanz mit und dann erst das Anliegen. Drehen wir das heute um. Wir dürfen freudig kommen, weil dort Barmherzigkeit ausgeteilt wird und niemand Punkte vergibt.",
+      "actionStep": "Bring Gott heute Abend die eine Sache, die du eigentlich allein regeln wolltest. Sprich sie laut aus, bevor du schlafen gehst.",
+      "prayer": "Lieber himmlischer Vater, ich komme heute Abend zu dir, ohne mich vorher zurechtzumachen, weil du es mir erlaubt hast. Danke, dass hier Barmherzigkeit wartet und keine Abrechnung. Hier ist, wobei ich Hilfe brauche, und hier ist, wo ich heute daneben lag. In Jesu Namen, Amen."
+    },
+    {
+      "day": 2,
+      "segment": "morning",
+      "reference": {
+        "book": "Romans",
+        "chapter": 8,
+        "verse": "6",
+        "full_reference": "Romans 8:6"
+      },
+      "modernVersion": "Lutherbibel 1912",
+      "modernText": "Aber fleischlich gesinnt sein ist der Tod, und geistlich gesinnt sein ist Leben und Friede.",
+      "contextNote": "Römer 8 beginnt mit „keine Verdammnis“, und dieser Vers steht innerhalb dieser Zusage, nicht dagegen. Das Wort des Paulus für den fleischlichen Sinn ist phronema — kein einzelner Gedanke, sondern eine eingefahrene Neigung, die Richtung, in die ein Denken driftet, wenn man es sich selbst überlässt. Er beschreibt eine Strömung, kein Urteil.",
+      "meditation": "Paulus hält hier keine Moralpredigt über dein Verhalten. Er spricht davon, wohin deine Gedanken laufen, wenn du sie nicht mehr lenkst — die Spur, in die sie von allein zurückfallen, sobald nichts sie hält.\n\nDie eine Richtung endet in einer Art Erstarrung. Die andere öffnet sich zu Leben und Frieden. Und das Gute daran: Es geht nicht darum, dass du dich heute besser zusammenreißt. Es geht darum, worauf dein Sinn gerichtet ist — und der darf heute Morgen neu gedreht werden!",
+      "actionStep": "Achte heute darauf, wohin deine Gedanken gehen, sobald du sie loslässt. Bewerte es nicht — sag Gott einfach, was es war.",
+      "prayer": "Lieber himmlischer Vater, du weißt, wohin meine Gedanken laufen, wenn ich sie nicht mehr lenke, und manches davon tut mir nicht gut. Dreh mein Denken heute Morgen dorthin, wo Leben und Friede sind — nicht mit Gewalt, sondern indem du mich ziehst. In Jesu Namen, Amen."
+    },
+    {
+      "day": 2,
+      "segment": "evening",
+      "reference": {
+        "book": "2 Kings",
+        "chapter": 20,
+        "verse": "5",
+        "full_reference": "2 Kings 20:5"
+      },
+      "modernVersion": "Lutherbibel 1912",
+      "modernText": "Kehre um und sage Hiskia, dem Fürsten meines Volkes: So spricht der HERR, der Gott deines Vaters David: Ich habe dein Gebet gehört und deine Tränen gesehen. Siehe, ich will dich gesund machen, am dritten Tage wirst du hinauf in das Haus des HERRN gehen,",
+      "contextNote": "Hiskia war todkrank, und man hatte ihm gerade gesagt, er solle sein Haus bestellen. Jesaja verließ bereits den Palast, als Gott ihn umkehren ließ. Für das Sehen der Tränen steht im Hebräischen das ganz gewöhnliche Verb für Anschauen, ohne jedes poetische Schmuckwerk. Gott wendet sich dem Teil des Gebets zu, der keine Worte hat.",
+      "meditation": "Hiskia hatte die Antwort längst bekommen, und sie hieß Nein; der Prophet war schon aus dem Zimmer. Dann schickte Gott ihn zurück. Achte auf die Reihenfolge dessen, was Gott ihm mitgibt. Vor jeder Zusage, bevor sich irgendetwas ändert, steht zweierlei: Das Gebet ist gehört. Die Tränen sind gesehen. Die Tränen bekommen einen eigenen Halbsatz. Gott verrechnet sie nicht stillschweigend mit dem Gebet, als wäre Weinen nur eine unbeholfene Art zu bitten. Er zählt sie einzeln.\n\nUnd worüber du auch weinst — das eine Thema, das du irgendwann aufgehört hast, Menschen zu erklären, weil dich das Erklären müde gemacht hat: Es ist gesehen. Nicht übersehen, nicht bloß geduldet. Gesehen!",
+      "actionStep": "Sprich heute Abend laut aus, was du längst niemandem mehr erklärst. Du musst dafür nichts begründen. Sag es einfach.",
+      "prayer": "Lieber himmlischer Vater, danke, dass du Tränen gesondert zählst und meiner nicht müde geworden bist. Vor Menschen habe ich vor einer Weile aufgehört, das zu erklären. Vor dir höre ich damit nicht auf. Danke, dass von dir gesehen zu werden etwas anderes ist als bemitleidet zu werden. Halt fest, was ich dir heute Abend hinlege. In Jesu Namen, Amen."
     },
     {
       "day": 3,
       "segment": "morning",
       "reference": {
-        "book": "Matthew",
-        "chapter": 28,
-        "verse": "19",
-        "full_reference": "Matthew 28:19"
+        "book": "2 Corinthians",
+        "chapter": 3,
+        "verse": "17",
+        "full_reference": "2 Corinthians 3:17"
       },
-      "modernVersion": "Lutherbibel 2017",
-      "modernText": "Darum gehet hin und machet zu Jüngern alle Völker, und täufet sie auf den Namen des Vaters und des Sohnes und des heiligen Geistes,",
-      "meditation": "Der Missionsauftrag beginnt mit der Autorität Jesu, nicht mit unserer Fähigkeit. Bevor er sagt: 'Geht', erklärt er, dass ihm alle Macht im Himmel und auf Erden gegeben ist. Darum ruht unser Zeugnis nicht auf perfekten Worten, vollständigem Selbstvertrauen oder darauf, jede Antwort zu haben. Es ruht auf dem auferstandenen Christus, der uns sendet und mit uns geht. Viele von uns zögern, weil wir uns ungeeignet fühlen.\n\nDoch Jesus bittet dich nicht, eine religiöse Rolle zu spielen; er lädt dich ein, von dem zu zeugen, was du empfangen hast. Dein verändertes Leben, deine ehrliche Geschichte und deine stille Treue an gewöhnlichen Orten können für einen anderen Menschen eine Tür zu ihm werden. Gott gebraucht oft eher bereite als beeindruckende Menschen. Das verleiht kleinem Gehorsam Würde.",
-      "actionStep": "Denke an eine Person in deinem Leben, die offen oder suchend wirkt. Beginne diese Woche ein natürliches Gespräch mit ihr. Erzwinge kein religiöses Thema; erzähle einfach, wie dein Glaube dir praktisch geholfen hat, und höre gut zu.",
-      "prayer": "Lieber himmlischer Vater, ich empfange diese Gnade: Jesus seinen Jüngern den Auftrag gegeben hat, alle Völker zu Jüngern zu machen. Gib uns Mut, treu Zeugnis zu geben, und Demut, andere auf Christus hinzuweisen. Wo ich Ergebnisse kontrollieren will, öffne meine Hände und beruhige mein Herz. Ich bekenne, dass ich oft mehr nach Sicherheit verlange als nach Hingabe. Zieh mich zu dir zurück, bis Gehorsam sich weniger wie ein Verlust anfühlt und mehr wie Heimkehr zu dem, der mich am besten liebt. In Jesu Namen. Amen."
+      "modernVersion": "Lutherbibel 1912",
+      "modernText": "Denn der HERR ist der Geist; wo aber der Geist des HERRN ist, da ist Freiheit.",
+      "contextNote": "Kurz vorher beschreibt Paulus, wie Mose sein Gesicht verhüllte, nachdem er bei Gott gewesen war. Der Gegensatz ist ein Bund, den man hinter einer Decke auf Abstand hält, und einer, der mit unbedecktem Gesicht gelebt wird. Das griechische eleutheria meint den Rechtsstand einer Freigelassenen — ein Status, keine Stimmung.",
+      "meditation": "Als Christinnen machen wir aus dem Glauben still und leise noch einen Ort, an dem wir gemessen werden. Noch eine Liste, noch eine Leistung, noch ein Raum, in dem wir vielleicht nicht genügen.\n\nPaulus sagt etwas anderes über diesen Raum. Wo Gottes Geist wirkt, entsteht Freiheit — keine Erlaubnis, alles zu tun, sondern die Entlastung, nichts mehr beweisen zu müssen. Nehmen wir das heute mit in den Tag. Du stehst nicht auf dem Prüfstand.",
+      "actionStep": "Nenn eine Sache, die du heute vor allem tun wolltest, um etwas zu beweisen. Tu sie oder lass sie — aber als freie Frau, nicht als Bewerberin.",
+      "prayer": "Lieber himmlischer Vater, danke, dass dein Geist Freiheit bringt und nicht die nächste Prüfung. Ich gebe zu, wie oft ich meinen Glauben in etwas verwandle, woran ich scheitern könnte. Lockere das heute in mir. Lass mich arbeiten und reden als eine, die längst angenommen ist. In Jesu Namen, Amen."
     },
     {
       "day": 3,
       "segment": "evening",
       "reference": {
-        "book": "Genesis",
-        "chapter": 1,
-        "verse": "2",
-        "full_reference": "Genesis 1:2"
+        "book": "Acts",
+        "chapter": 16,
+        "verse": "25",
+        "full_reference": "Acts 16:25"
       },
-      "modernVersion": "Lutherbibel 2017",
-      "modernText": "Und die Erde war wüst und leer, und Finsternis lag auf der Urflut, und der Geist Gottes schwebte über dem Wasser.",
-      "meditation": "Manche Zeiten fühlen sich nicht wie Aufbau an, sondern formlos. Pläne lösen sich auf, vertrauter Boden verschwindet, und die Zukunft hat keine klare Gestalt. Dunkelheit kann dich glauben lassen, dass nichts Gutes geschieht. Doch Gottes Schöpfungsgeschichte zeigt: Selbst Leere und Chaos liegen nicht außerhalb Seines Wirkens.\n\nBevor Ordnung, Schönheit und Frucht sichtbar wurden, war Gottes Geist schon gegenwärtig. Er schaute nicht nur aus der Ferne zu, kam nicht zu spät und war von der Unordnung nicht überfordert. Seine Nähe beginnt oft, bevor wir Veränderung erkennen. Wenn du keine Struktur siehst, weiß Gott dennoch, was Er formt; wenn du kein Ergebnis siehst, arbeitet Er weiter.\n\nSein Wirken ist kraftvoll und zugleich behutsam. Gott kann in deine Dunkelheit kommen, ohne dich zu zerbrechen. Er bewahrt, was schwach aussieht, und bereitet Leben vor, das noch keine Gestalt hat. Auch der Anfang, der dir ungeordnet erscheint, kann in Seinen Händen ein Anfang von Leben sein.",
-      "actionStep": "Nenne einen Bereich deines Lebens, der unfertig, verworren oder ohne klare Gestalt wirkt. Lade Gottes Geist dorthin ein, nicht mit einem erzwungenen Plan, sondern mit Vertrauen. Bitte Ihn um einen kleinen Schritt zu Ordnung, Licht oder geduldiger Hoffnung.",
-      "prayer": "Lieber himmlischer Vater, ich empfange diese Gnade: dein Geist gegenwärtig ist, auch wenn mein Leben ungeordnet und unfertig wirkt. Komm den verwirrten, dunklen und leeren Stellen in mir nahe. Atme Ordnung, Geduld und Hoffnung in das, was ich noch nicht verstehe, und lehre mich, deinem Wirken zu vertrauen. Wo ich Ergebnisse kontrollieren will, öffne meine Hände und beruhige mein Herz. Ich bekenne, dass ich oft mehr nach Sicherheit verlange als nach Hingabe. Zieh mich zu dir zurück, bis Gehorsam sich weniger wie ein Verlust anfühlt und mehr wie Heimkehr zu dem, der mich am besten liebt. In Jesu Namen. Amen."
+      "modernVersion": "Lutherbibel 1912",
+      "modernText": "Um Mitternacht aber beteten Paulus und Silas und lobten Gott. Und es hörten sie die Gefangenen.",
+      "contextNote": "Paulus und Silas waren ausgezogen, mit Ruten geschlagen und in den innersten Kerker geworfen worden — Lukas nennt alle drei Punkte. Ihr Tun in dieser Nacht heißt bei Luther beten und Gott loben. Dass die Gefangenen ihnen zuhörten, ist eine Beobachtung, die Lukas eigens hinzufügt; er hätte sie auch weglassen können.",
+      "meditation": "Zwei Männer, geschlagen, im innersten Kerker, die Füße im Block. Es ist Mitternacht — die Stunde, in der niemand mehr zusieht und nichts mehr zu machen ist. Und in dieser Stunde beten Paulus und Silas, und sie loben Gott. Nicht erst, als die Türen aufspringen. Vorher, als sich noch gar nichts geändert hatte.\n\nDer letzte Halbsatz wird meistens überlesen: Die anderen Gefangenen hörten mit. Niemand betete für ein Publikum, es gab keins — nur Menschen im selben Dunkel, die wach lagen. Aber Vertrauen in einer schlechten Nacht bleibt nie ganz privat. Die Frau im Nebenzimmer hört es. Das Kind auf dem Flur hört es. Wenn du heute Nacht wach liegst, bete so laut, dass du dich selbst hörst — deine Mitternacht trägt weiter, als du denkst.",
+      "actionStep": "Wenn du heute Nacht wach liegst, obwohl du schlafen willst, hör für zehn Minuten auf, dagegen anzukämpfen. Bete in dieser Zeit — laut, wenn es geht.",
+      "prayer": "Lieber himmlischer Vater, ich wäre jetzt lieber nicht wach, und ich wäre lieber schon durch damit. Danke, dass du der Mitte der Nacht nicht fernbleibst. Wenn ich nicht schlafen kann, dann lass mich beten. Und wenn jemand neben mir zuhört, dann lass ihn Vertrauen hören und nicht Verzweiflung. In Jesu Namen, Amen."
     }
   ],
   "fr": [
@@ -401,91 +434,97 @@ export const BUNDLED_DAILY_VERSES: Record<LanguageCode, DailyVerse[]> =
       "day": 1,
       "segment": "morning",
       "reference": {
-        "book": "John",
-        "chapter": 1,
-        "verse": "9",
-        "full_reference": "John 1:9"
+        "book": "Psalms",
+        "chapter": 143,
+        "verse": "8",
+        "full_reference": "Psalms 143:8"
       },
-      "modernVersion": "PDV",
-      "modernText": "Cette lumière était la véritable lumière, celle qui éclaire tout être humain.",
-      "meditation": "Si tu t'es réveillée aujourd'hui avec l'impression que la lumière est loin, ce verset vient à ta rencontre avec une douce promesse. L’obscurité n’a pas toujours quelque chose de spectaculaire. Parfois, elle est une lourdeur silencieuse, une recherche confuse de la vérité, ou la douleur d’une perte ou d’un échec. Jean ne nous dit pas d’en sortir en devenant plus forts ou plus dignes. Il nous montre Jésus, la vraie Lumière déjà venue dans le monde.\n\nCette Lumière n’est pas réservée à ceux qui semblent avoir leur vie en ordre. Elle éclaire chacun, y compris toi lorsque ta foi paraît faible, lorsque ton cœur est fatigué ou lorsque tu ne vois pas le prochain pas. Jésus n’attend pas au loin que tu l’atteignes. Il entre dans ton obscurité par sa présence.\n\nAujourd’hui, te tourner vers Christ, c’est laisser sa vérité devenir la première lumière de ton cœur. Tu n’as pas à produire cette lumière ni à la mériter. Tu peux simplement t’ouvrir à Celui qui s’est approché.",
-      "actionStep": "Nomme un domaine de ta vie qui semble sombre ou confus. Invite Jésus, la vraie Lumière, à t’y rencontrer aujourd’hui.",
-      "prayer": "Cher Père céleste, je te remercie d’avoir envoyé Jésus, la vraie Lumière qui éclaire tout être humain. Je te loue parce que sa lumière entre dans nos ténèbres et nous conduit dans ta vérité et ta grâce. Je ne veux pas être d’accord seulement avec des mots puis repartir inchangée. Rejoins-moi dans les lieux cachés où la peur, l’habitude ou l’autoprotection me gouvernent encore. Apprends-moi à ouvrir ces lieux à ton amour, et que ma réponse à toi devienne honnête, stable et entière. Au nom de Jésus, amen."
+      "modernVersion": "Louis Segond 1910",
+      "modernText": "Fais-moi dès le matin entendre ta bonté! Car je me confie en toi. Fais-moi connaître le chemin où je dois marcher! Car j'élève à toi mon âme.",
+      "contextNote": "Le Psaume 143 est une plainte : quelques versets plus haut, David dit sans détour qu'on le poursuit. Ce n'est pas une prière matinale sereine, elle vient de quelqu'un en danger. Le mot hébreu derrière « bonté » est chesed — une loyauté d'alliance, un attachement engagé d'avance, dont on ne se dédit pas.",
+      "meditation": "David ne décrit pas une belle matinée : il en demande une. Le verbe est une requête — fais-moi entendre — ce qui suppose que la chose ne va pas de soi, et il le sait très bien.\n\nPuis il demande deux choses, dans cet ordre : d'abord entendre la bonté de Dieu, ensuite connaître le chemin. La plupart d'entre nous inversons : la direction tout de suite, la bonté plus tard, s'il reste du temps. Mais une direction reçue sans bonté se transforme très vite en pression, et nous avons presque toutes essayé de vivre ainsi. Demandons donc la première ce matin, en élevant notre âme vers lui. La seconde tiendra bien jusque-là.",
+      "actionStep": "Avant d'organiser quoi que ce soit aujourd'hui, dis une phrase à voix haute : je suis aimée avant d'être utile. Puis parle à Dieu de la première décision de ta liste.",
+      "prayer": "Cher Père céleste, avant de te demander où aller, laisse-moi entendre ta bonté. Je reconnais que je saute presque toujours cette étape pour passer directement aux plans de la journée. Parle d'abord à la part de moi qui a besoin d'être rassurée, puis montre-moi le pas suivant. J'élève vers toi cette journée entière, telle qu'elle est. Au nom de Jésus, amen."
     },
     {
       "day": 1,
       "segment": "evening",
       "reference": {
-        "book": "John",
-        "chapter": 14,
-        "verse": "1",
-        "full_reference": "John 14:1"
-      },
-      "modernVersion": "PDV",
-      "modernText": "Que votre cœur ne soit pas troublé. Croyez en Dieu, et croyez aussi en moi.",
-      "meditation": "Quand l'anxiété s'installe, elle demande rarement la permission. Elle peut venir par une rupture, la perte d'un travail, une mauvaise nouvelle médicale, ou ces heures de nuit où chaque peur devient plus bruyante. Tu ne sais peut-être même pas nommer ce que tu ressens; tu sais seulement que ton cœur est agité, fatigué et effrayé.\n\nJésus a parlé de consolation à ses disciples dans un moment qui n'avait rien de paisible. Il savait qu'ils Le verraient bientôt arrêté et que la croix bouleverserait tout ce qu'ils comprenaient. Leur situation ne deviendrait pas facile tout de suite, mais Jésus les appelait à faire confiance: croire en Dieu et croire aussi en Lui. Il ne les rassurait pas en disant que tout se passerait comme prévu; Il ramenait leur cœur vers Lui-même.\n\nCette foi ne nie pas la difficulté. Elle tourne le cœur vers le Seigneur qui reste bon, fidèle et puissant quand tout vacille. C'est pourquoi, même si ton émotion ne change pas immédiatement, tu peux respirer devant Lui et laisser Sa présence porter ce que ta force ne peut plus porter.",
-      "actionStep": "Écris la peur ou l’inquiétude qui parle le plus fort dans ton cœur aujourd’hui. Apporte-la à Jésus sans la polir, puis écris à côté une phrase de confiance : « Seigneur, je remets cela entre Tes mains. » Reviens à cette phrase chaque fois que la peur remonte.",
-      "prayer": "Cher Père céleste, je te loue parce qu'en Christ mon cœur n'a pas à être gouverné par la peur. Quand les soucis parlent plus fort que ta promesse, apprends-moi à les déposer honnêtement devant toi. Affermis-moi par ta présence et aide-moi à avancer aujourd'hui dans la confiance. Je ne veux pas être d’accord seulement avec des mots puis repartir inchangée. Rejoins-moi dans les lieux cachés où la peur, l’habitude ou l’autoprotection me gouvernent encore. Apprends-moi à ouvrir ces lieux à ton amour, et que ma réponse à toi devienne honnête, stable et entière. Au nom de Jésus, amen."
-    },
-    {
-      "day": 2,
-      "segment": "morning",
-      "reference": {
-        "book": "Jeremiah",
-        "chapter": 29,
-        "verse": "11",
-        "full_reference": "Jeremiah 29:11"
-      },
-      "modernVersion": "PDV",
-      "modernText": "\"Je connais bien les projets que j'ai pour vous, déclare l'Éternel, des projets de paix et non de malheur, pour vous donner un avenir et de l'espérance.\"",
-      "meditation": "Jérémie a écrit ces paroles à des personnes en exil, non à des personnes dont la vie semblait facile ou bien rangée. Elles avaient perdu leur maison, leur sécurité et une vision claire de l’avenir. Au cœur de cette incertitude, Dieu dit : 'Je connais les projets que j’ai formés pour vous.' Il ne fait pas qu’observer leur douleur; il porte encore un dessein pour elles. Cette promesse ne nie pas l’épreuve. Elle révèle le cœur de Dieu au milieu d’elle. Ses projets ne visent pas à détruire son peuple, mais à le conduire vers la paix, la restauration et l’espérance.\n\nQuand ton avenir semble interrompu, ou que tes erreurs passées paraissent avoir le dernier mot, ce verset rappelle que Dieu continue de penser à toi avec miséricorde. Tes circonstances peuvent rester inachevées, mais son intention demeure fidèle. Ne te hâte donc pas d’appeler ton chapitre présent la fin de l’histoire. Pour Juda, l’exil ressemblait à une fin, mais Dieu parlait déjà d’avenir. Ton attente, ta peine ou ton incertitude peuvent être réelles, mais elles ne sont pas plus fortes que la fidélité de l’alliance de Dieu.",
-      "actionStep": "Écris dans ton journal ou dans les notes de ton téléphone : « Dieu a des projets de paix pour moi, non de malheur. » Quand le doute revient, relis cette phrase. Si tu peux, relis-la matin et soir, et laisse cette vérité changer peu à peu ta manière de regarder l’avenir.",
-      "prayer": "Cher Père céleste, je te loue pour ta promesse que tes plans pour nous sont pour le bien — remplis d'espoir et d'un avenir prospère. Tu tiens nos jours dans tes mains. Tes desseins ne nous blessent pas mais nous établissent dans l'espoir. Tes plans ne faillissent jamais. Tu écris l'histoire avec espoir. Quel bon Père tu es. Je t’apporte les parties fatiguées de mon cœur qui connaissent les bons mots mais peinent à les croire. Reste avec moi là, Père, et rends ta vérité plus chaude que ma honte et plus forte que ma peur. Aide-moi à prier non depuis la distance, mais depuis la confiance que je suis déjà portée par toi. Au nom de Jésus, amen."
-    },
-    {
-      "day": 2,
-      "segment": "evening",
-      "reference": {
-        "book": "John",
-        "chapter": 14,
+        "book": "Hebrews",
+        "chapter": 4,
         "verse": "16",
-        "full_reference": "John 14:16"
+        "full_reference": "Hebrews 4:16"
       },
-      "modernVersion": "PDV",
-      "modernText": "Et moi, je vais demander au Père, et il vous donnera un autre Défenseur pour être avec vous à jamais.",
-      "meditation": "Quand une personne importante s'en va, l'absence peut sembler remplir toute la pièce. Un déménagement, une rupture, un décès ou un départ soudain peut faire disparaître tout sentiment de sécurité. Les disciples ont connu cette peur. Lorsque Jésus leur a dit qu'Il allait partir, ils n'étaient pas courageux et calmes; ils étaient troublés, désorientés et remplis de tristesse.\n\nC'est précisément dans cette heure sombre que Jésus a promis un autre Consolateur, présent avec eux pour toujours. Ce n'était pas une présence moins forte, mais une proximité plus profonde. Jésus ne marcherait pas seulement à côté d'eux; par le Saint-Esprit, Dieu habiterait en eux. Ce qui ressemblait d'abord à une perte deviendrait une source de consolation, de direction, de courage et de force intérieure.\n\nLe Saint-Esprit n'est pas un visiteur occasionnel. Il est là dans les nuits solitaires, les décisions confuses, les peines impossibles à expliquer, et même lorsque tu n'as plus de mots pour prier. Il connaît ton cœur et comprend tes soupirs. Tu ne vis pas seulement de souvenirs. Dieu est avec toi maintenant, et Il ne t'abandonnera pas. C'est pourquoi ta solitude d'aujourd'hui peut aussi être nommée devant Dieu. Tu n'as pas seulement des souvenirs à garder; tu peux recevoir une présence vivante.",
-      "actionStep": "Arrête-toi et demande-toi : où est-ce que je me sens le plus seule aujourd’hui, et de quoi ai-je besoin de la part de Dieu à cet endroit ? Prie simplement : « Saint-Esprit, rappelle-moi que je ne suis pas abandonnée. » Reste en silence un instant et remarque la consolation, la sagesse ou la force qu’Il donne.",
-      "prayer": "Cher Père céleste, je te loue de nous donner ton Esprit pour demeurer avec nous. Quand l'absence, le changement ou la solitude me font me sentir sans appui, rappelle-moi que je n'affronte pas la vie seule. Aide-moi à recevoir la consolation de l'Esprit et à suivre aujourd'hui sa direction discrète. Je t’apporte les parties fatiguées de mon cœur qui connaissent les bons mots mais peinent à les croire. Reste avec moi là, Père, et rends ta vérité plus chaude que ma honte et plus forte que ma peur. Aide-moi à prier non depuis la distance, mais depuis la confiance que je suis déjà portée par toi. Au nom de Jésus, amen."
+      "modernVersion": "Louis Segond 1910",
+      "modernText": "Approchons-nous donc avec assurance du trône de la grâce, afin d'obtenir miséricorde et de trouver grâce, pour être secourus dans nos besoins.",
+      "contextNote": "L'épître aux Hébreux s'adresse à des chrétiens d'origine juive : ils savaient qu'on entrait dans le lieu très saint une fois l'an, un seul homme, avec du sang. Sur ce fond, s'approcher avec assurance est stupéfiant. Le grec parrhesia désigne la liberté du citoyen de parler ouvertement en public, pas l'audace d'un intrus.",
+      "meditation": "Avec assurance : voilà le mot choisi, au bout d'une journée pareille. Pas prudemment. Pas une fois que nous nous serons remises en ordre. Et remarquons de quoi ce trône porte le nom — la grâce, et non l'examen.\n\nEn tant que chrétiennes, nous trions souvent avant d'entrer, et nous ne présentons que le présentable. Qu'apporterais-tu vraiment ce soir, si tu croyais cela de la pièce où tu entres ?",
+      "actionStep": "Apporte à Dieu la seule chose que tu comptais gérer toute seule. Dis-la à voix haute avant de dormir.",
+      "prayer": "Cher Père céleste, je viens à toi ce soir sans m'être d'abord remise en ordre, parce que tu me l'as permis. Merci : c'est un trône de grâce, et non un tribunal. Voici ce pour quoi j'ai besoin d'aide, et voici où j'ai manqué. Au nom de Jésus, amen."
+    },
+    {
+      "day": 2,
+      "segment": "morning",
+      "reference": {
+        "book": "Romans",
+        "chapter": 8,
+        "verse": "6",
+        "full_reference": "Romans 8:6"
+      },
+      "modernVersion": "Louis Segond 1910",
+      "modernText": "Et l'affection de la chair, c'est la mort, tandis que l'affection de l'esprit, c'est la vie et la paix;",
+      "contextNote": "Romains 8 s'ouvre sur « aucune condamnation », et ce verset se tient à l'intérieur de cette promesse, non pas contre elle. Le mot grec de Paul, phronema, ne désigne pas une pensée isolée mais un penchant installé, la direction où l'on se laisse aller quand personne ne regarde. Il décrit un courant, il ne prononce pas un verdict.",
+      "meditation": "Paul ne fait pas ici la morale sur les comportements. Il parle de ce vers quoi ton affection penche quand tu cesses de la tenir : l'attachement où tout revient tout seul, dès que rien ne te retient.\n\nUn penchant aboutit à une forme de mort. L'autre s'ouvre sur la vie et la paix. La vraie question de ce matin n'est donc pas ce que tu vas faire, mais vers quoi ton cœur s'incline depuis quelque temps, sans que tu l'aies décidé. Et cette inclination-là n'est pas ta condamnation : elle peut être déplacée !",
+      "actionStep": "Remarque aujourd'hui vers quoi ton cœur revient dès qu'il n'a plus rien à faire. Ne le juge pas : dis simplement à Dieu ce que c'était.",
+      "prayer": "Cher Père céleste, tu sais vers quoi mon cœur penche quand je cesse de le tenir, et une partie de cela ne me fait aucun bien. Tourne ce matin mon affection vers ce qui donne vraiment la vie et la paix — non par contrainte, mais en m'attirant. Au nom de Jésus, amen."
+    },
+    {
+      "day": 2,
+      "segment": "evening",
+      "reference": {
+        "book": "2 Kings",
+        "chapter": 20,
+        "verse": "5",
+        "full_reference": "2 Kings 20:5"
+      },
+      "modernVersion": "Louis Segond 1910",
+      "modernText": "Retourne, et dis à Ézéchias, chef de mon peuple: Ainsi parle l'Éternel, le Dieu de David, ton père: J'ai entendu ta prière, j'ai vu tes larmes. Voici, je te guérirai; le troisième jour, tu monteras à la maison de l'Éternel.",
+      "contextNote": "Ézéchias est mourant et vient de recevoir l'ordre de mettre sa maison en ordre. Ésaïe quittait déjà le palais quand Dieu l'a retourné. En hébreu, la phrase sur les larmes emploie le verbe ordinaire pour regarder une chose, sans aucun effet poétique. Dieu prête attention à la part de la prière qui n'a pas de mots.",
+      "meditation": "On avait déjà dit à Ézéchias que la réponse était non ; le prophète était sorti du palais. Et Dieu l'a fait revenir sur ses pas. Regarde l'ordre des mots. Avant la promesse, avant que quoi que ce soit change, il y a ceci : ta prière, il l'a entendue ; tes larmes, il les a vues. Les larmes reçoivent leur propre proposition. Dieu ne les range pas à l'intérieur de la prière, comme si pleurer n'était qu'une façon maladroite de demander. Il les compte à part.\n\nCe sur quoi tu pleures depuis des mois — ce que tu as cessé d'expliquer aux autres, à force de l'expliquer — a été vu. Ni négligé, ni seulement toléré. Vu !",
+      "actionStep": "Dis à voix haute la chose que tu n'expliques plus à personne. Tu n'as ni à la plaider ni à la justifier. Dis-la, simplement, et laisse-la là.",
+      "prayer": "Cher Père céleste, merci de compter les larmes à part des mots, et de ne pas t'être lassé des miennes. J'ai arrêté depuis longtemps d'expliquer cela autour de moi. Je n'arrêterai pas de te l'expliquer à toi. Merci : être vue par toi n'est pas la même chose qu'être plainte. Garde cette nuit ce que je viens de déposer devant toi. Au nom de Jésus, amen."
     },
     {
       "day": 3,
       "segment": "morning",
       "reference": {
-        "book": "Matthew",
-        "chapter": 28,
-        "verse": "19",
-        "full_reference": "Matthew 28:19"
+        "book": "2 Corinthians",
+        "chapter": 3,
+        "verse": "17",
+        "full_reference": "2 Corinthians 3:17"
       },
-      "modernVersion": "PDV",
-      "modernText": "Allez donc, faites de toutes les nations des disciples. Baptisez-les au nom du Père, du Fils et du Saint-Esprit.",
-      "meditation": "Va et fais de toutes les nations des disciples. Quand tu lis ces paroles, peut-être que le doute apparaît. Mais écoute ce que Jésus a dit avant: \"Toute autorité m'a été donnée.\" Cela ne dit pas que tu dois avoir toutes les réponses. Cela dit: j'ai toute l'autorité, et je vais avec toi. Partager la foi n'exige pas un doctorat en théologie. Cela exige une vraie histoire. Peut-être que ton amie lutte au travail, et tu lui racontes comment la prière t'a aidée.\n\nPeut-être que quelqu'un est en deuil, et ton honnêteté sur ta propre douleur ouvre une conversation sur l'espoir. Peut-être que tu vis simplement différemment—avec plus de paix, plus de pardon, plus de joie—et quelqu'un demande pourquoi. Ta voix compte. Ton petit témoignage, ta foi authentique, ta volonté de partager ce que Jésus a fait pour toi—cela change des vies.",
-      "actionStep": "Pense à une personne dans ta vie qui semble ouverte ou en recherche. Cette semaine, commence une conversation naturelle avec elle. Ne force pas une discussion religieuse; partage simplement une manière concrète dont ta foi t’a aidée, et écoute bien.",
-      "prayer": "Cher Père céleste, je reçois cette grâce : Jésus a confié à ses disciples la mission de faire de toutes les nations des disciples. Donne-nous le courage de témoigner fidèlement et l’humilité de conduire les autres vers Christ. Là où je cherche encore à contrôler les résultats, détends mes mains et apaise mon cœur. Je reconnais que je désire souvent la certitude plus que l’abandon. Ramène-moi vers toi jusqu’à ce que l’obéissance ressemble moins à une perte de moi-même qu’à un retour à la maison auprès de Celui qui m’aime le mieux. Au nom de Jésus, amen."
+      "modernVersion": "Louis Segond 1910",
+      "modernText": "Or, le Seigneur c'est l'Esprit; et là où est l'Esprit du Seigneur, là est la liberté.",
+      "contextNote": "Paul vient de rappeler Moïse se voilant le visage après avoir été avec Dieu. Le contraste porte sur deux alliances : l'une tenue à distance derrière un voile, l'autre vécue à visage découvert. Le grec eleutheria désigne le statut juridique d'une personne affranchie — une position acquise, pas une humeur passagère.",
+      "meditation": "En tant que chrétiennes, nous transformons parfois la foi en un endroit de plus où l'on nous mesure. Une liste supplémentaire, une performance de plus, encore une pièce où nous risquons de ne pas suffire.\n\nPaul dit exactement le contraire de cette pièce-là : là où est l'Esprit, il y a la liberté. Non pas la permission de tout faire, mais le soulagement de n'avoir plus rien à prouver. Emportons cela dans la journée. Tu ne passes pas une audition.",
+      "actionStep": "Nomme une chose que tu allais faire aujourd'hui surtout pour prouver quelque chose. Fais-la, ou renonces-y — mais en femme libre, pas en candidate.",
+      "prayer": "Cher Père céleste, merci : ton Esprit apporte la liberté, et non un examen de plus. Je reconnais combien souvent je transforme ma foi en quelque chose que je pourrais rater. Desserre cela en moi aujourd'hui. Que je travaille et que je parle en femme déjà accueillie. Au nom de Jésus, amen."
     },
     {
       "day": 3,
       "segment": "evening",
       "reference": {
-        "book": "Genesis",
-        "chapter": 1,
-        "verse": "2",
-        "full_reference": "Genesis 1:2"
+        "book": "Acts",
+        "chapter": 16,
+        "verse": "25",
+        "full_reference": "Acts 16:25"
       },
-      "modernVersion": "PDV",
-      "modernText": "La terre était en désordre total, les ténèbres couvraient l'abîme, et l'Esprit de Dieu se mouvait sur les eaux.",
-      "meditation": "Certaines saisons ne ressemblent pas à une vie en construction; elles semblent sans forme. Les projets se défont, les repères disparaissent, et l'avenir n'a plus de contours clairs. L'obscurité peut te faire croire que rien de bon ne se passe. Pourtant, le commencement de la création nous rappelle ceci: même le vide et le chaos ne sont pas hors de l'action de Dieu.\n\nAvant que l'ordre, la beauté et le fruit apparaissent, l'Esprit de Dieu était déjà présent. Il ne regardait pas de loin, Il n'arrivait pas en retard, et Il n'était pas dépassé par le désordre. Sa présence commence souvent avant que nous voyions le changement. Quand tu ne vois pas encore la forme, Dieu sait ce qu'Il façonne; quand tu ne vois pas le résultat, Il continue d'agir.\n\nSon œuvre est à la fois puissante et douce. Dieu entre dans ton obscurité sans t'écraser. Même le commencement qui te semble désordonné peut devenir, entre Ses mains, le début d'une vie nouvelle.",
-      "actionStep": "Nomme un domaine de ta vie qui semble inachevé, confus ou sans forme claire. Invite l’Esprit de Dieu à y venir, non avec un plan forcé, mais avec confiance. Demande-Lui un petit pas vers l’ordre, la lumière ou une foi patiente aujourd’hui.",
-      "prayer": "Cher Père céleste, je reçois cette grâce : ton Esprit est présent même quand ma vie paraît informe et inachevée. Approche-toi des lieux confus, sombres et vides en moi. Souffle ordre, patience et espérance dans ce que je ne comprends pas encore, et apprends-moi à faire confiance à ton œuvre. Là où je cherche encore à contrôler les résultats, détends mes mains et apaise mon cœur. Je reconnais que je désire souvent la certitude plus que l’abandon. Ramène-moi vers toi jusqu’à ce que l’obéissance ressemble moins à une perte de moi-même qu’à un retour à la maison auprès de Celui qui m’aime le mieux. Au nom de Jésus, amen."
+      "modernVersion": "Louis Segond 1910",
+      "modernText": "Vers le milieu de la nuit, Paul et Silas priaient et chantaient les louanges de Dieu, et les prisonniers les entendaient.",
+      "contextNote": "Paul et Silas avaient été dévêtus, battus de verges et jetés dans le cachot le plus intérieur — Luc précise les trois. Le verbe grec de leur chant, hymneo, est celui de l'hymne que Jésus a chanté avec ses disciples avant Gethsémané. Que les détenus les aient entendus est un détail propre à Luc, ajouté à dessein.",
+      "meditation": "Deux hommes battus, enfermés dans le cachot le plus intérieur, les pieds pris dans des entraves. Il est minuit. Et voilà ce qu'ils font de cette heure-là : ils prient, puis ils chantent.\n\nRemarque la dernière proposition, celle qu'on saute d'habitude : les autres détenus les entendaient. Personne ne chantait pour un public — il n'y avait pas de public, seulement des gens couchés dans la même obscurité, éveillés eux aussi. Mais la foi, dans une mauvaise nuit, n'est jamais tout à fait privée. La femme de la chambre d'à côté entend. L'enfant au bout du couloir entend. Ton minuit porte plus loin que tu ne crois, et pas toujours en mal. Ce soir, choisis ce qu'on entendra de toi.",
+      "actionStep": "Si tu es réveillée cette nuit alors que tu voudrais dormir, cesse de lutter pendant dix minutes. Prie pendant ce temps-là — à voix haute, si tu peux.",
+      "prayer": "Cher Père céleste, je préférerais ne pas être éveillée maintenant, et je préférerais que tout cela soit fini. Merci de n'être pas absent du milieu de la nuit. Si je ne peux pas dormir, que je prie. Et si quelqu'un près de moi écoute, que ce qu'il entend de moi soit la confiance et non le désespoir. Au nom de Jésus, amen."
     }
   ],
   "es": [
@@ -493,91 +532,97 @@ export const BUNDLED_DAILY_VERSES: Record<LanguageCode, DailyVerse[]> =
       "day": 1,
       "segment": "morning",
       "reference": {
-        "book": "John",
-        "chapter": 1,
-        "verse": "9",
-        "full_reference": "John 1:9"
+        "book": "Psalms",
+        "chapter": 143,
+        "verse": "8",
+        "full_reference": "Psalms 143:8"
       },
-      "modernVersion": "NVI",
-      "modernText": "Esa luz verdadera que ilumina a todos viene al mundo.",
-      "meditation": "Si hoy despertaste sintiendo que la luz está lejos, este versículo se acerca con una promesa tierna. La oscuridad no siempre es dramática. A veces es un peso silencioso, una búsqueda confusa de la verdad, o el dolor de una pérdida o un fracaso. Juan no nos dice que escapemos de esa oscuridad siendo más fuertes o más dignos. Nos señala a Jesús, la Luz verdadera que ya vino al mundo.\n\nEsta Luz no está reservada para quienes tienen la vida en orden. Ilumina a todos, también a ti cuando tu fe se siente pequeña, tu corazón está cansado o no ves el siguiente paso. Jesús no espera lejos hasta que logres alcanzarlo. Él entra en tu oscuridad con su presencia.\n\nHoy, volverte hacia Cristo significa dejar que su verdad sea la primera luz en tu corazón. No tienes que producir la luz ni ganártela. Solo necesitas abrirte a Aquel que se ha acercado.",
-      "actionStep": "Nombra un área de tu vida que se sienta oscura o confusa. Invita a Jesús, la Luz verdadera, a encontrarte allí hoy.",
-      "prayer": "Querido Padre celestial, te doy gracias por enviar a Jesús, la luz verdadera que ilumina a todos. Te alabo porque su luz entra en nuestra oscuridad y nos conduce a tu verdad y a tu gracia. No quiero estar de acuerdo con esto solo de palabra y luego seguir igual. Encuéntrame en los lugares escondidos donde el miedo, la costumbre o la autoprotección todavía me gobiernan. Enséñame a abrir esos lugares a tu amor, y que mi respuesta a ti sea sincera, firme e íntegra. En el nombre de Jesús, amén."
+      "modernVersion": "Reina-Valera 1909",
+      "modernText": "Hazme oir por la mañana tu misericordia, porque en ti he confiado: hazme saber el camino por donde ande, porque á ti he alzado mi alma.",
+      "contextNote": "El Salmo 143 es un lamento: unos versículos antes, David dice sin rodeos que lo persiguen. No es una oración serena de la mañana; la escribió alguien en peligro. La palabra hebrea detrás de misericordia es chesed: lealtad de pacto, un amor que ya se comprometió de antemano y no se echa atrás.",
+      "meditation": "David no está describiendo una buena mañana. Está pidiendo una, y vale la pena copiarle el orden en que pide.\n\nPrimero, oír que es amado. Después, saber por dónde caminar. Nosotras casi siempre lo hacemos al revés: llegamos por la dirección, por la decisión, por qué hacer con el asunto que nos quita el sueño. Pero la dirección sin amor se vuelve presión, y casi todas hemos vivido así por temporadas largas. Pidamos hoy lo primero. Lo segundo puede esperar. Dios no se cansa de empezar por ahí.",
+      "actionStep": "Antes de planear nada hoy, di una frase en voz alta: soy amada antes de ser útil. Después pregúntale a Dios por la primera decisión de tu lista.",
+      "prayer": "Amado Padre celestial, antes de preguntarte hacia dónde ir, déjame oír que me amas. Reconozco que salto esa parte con demasiada facilidad y me voy directo a organizar el día. Habla primero a la parte de mí que necesita ser tranquilizada, y después muéstrame el siguiente paso. Levanto hacia ti todo este día, tal como viene. En el nombre de Jesús, amén."
     },
     {
       "day": 1,
       "segment": "evening",
       "reference": {
-        "book": "John",
-        "chapter": 14,
-        "verse": "1",
-        "full_reference": "John 14:1"
-      },
-      "modernVersion": "NVI",
-      "modernText": "No dejen que se turbe su corazón. Crean en Dios, y crean también en mí.",
-      "meditation": "Cuando la ansiedad se instala, rara vez pide permiso. Puede llegar por una ruptura, la pérdida de un trabajo, una noticia médica difícil o esas horas de la noche en que cada temor parece crecer. Tal vez ni siquiera sabes nombrar lo que sientes; solo sabes que tu corazón está inquieto, cansado y asustado.\n\nJesús habló palabras de consuelo a sus discípulos en un momento nada tranquilo. Sabía que pronto lo verían arrestado y que la cruz sacudiría todo lo que entendían. Su situación no se volvería fácil de inmediato, pero Jesús los llamó a confiar: creer en Dios y creer también en Él. No los consoló diciendo que todo saldría como esperaban, sino llevándolos de nuevo a Él mismo.\n\nEsa fe no niega la dificultad. Vuelve el corazón hacia el Señor que sigue siendo bueno, fiel y poderoso cuando todo tiembla. Él no te deja sola en la ansiedad de hoy. Por eso, aun cuando tu emoción no cambia de inmediato, puedes respirar delante de Él y dejar que su presencia sostenga lo que tu fuerza no puede cargar.",
-      "actionStep": "Escribe el temor o la preocupación que hoy habla más fuerte en tu corazón. Llévalo a Jesús sin arreglarlo ni suavizarlo, y escribe al lado una frase de confianza: «Señor, pongo esto en tus manos». Vuelve a esa frase cada vez que el miedo se levante.",
-      "prayer": "Querido Padre celestial, te doy gracias porque en Cristo mi corazón no tiene que vivir gobernado por el miedo. Cuando las preocupaciones suenen más fuerte que tu promesa, enséñame a traerlas con honestidad delante de ti. Afírmame con tu presencia y ayúdame a dar hoy el siguiente paso confiando en ti. No quiero estar de acuerdo con esto solo de palabra y luego seguir igual. Encuéntrame en los lugares escondidos donde el miedo, la costumbre o la autoprotección todavía me gobiernan. Enséñame a abrir esos lugares a tu amor, y que mi respuesta a ti sea sincera, firme e íntegra. En el nombre de Jesús, amén."
-    },
-    {
-      "day": 2,
-      "segment": "morning",
-      "reference": {
-        "book": "Jeremiah",
-        "chapter": 29,
-        "verse": "11",
-        "full_reference": "Jeremiah 29:11"
-      },
-      "modernVersion": "NVI",
-      "modernText": "\"Porque sé los planes que tengo para ustedes —afirma el Señor—, planes de bienestar y no de calamidad, a fin de darles un futuro y una esperanza.\"",
-      "meditation": "Jeremías escribió estas palabras a personas en el exilio, no a personas cuya vida se sentía fácil u ordenada. Habían perdido hogar, seguridad y un futuro claro. En medio de esa incertidumbre, Dios dice: 'Yo sé los planes que tengo para ustedes.' Él no solo observa su dolor; todavía sostiene un propósito para ellos. Esta promesa no niega la dificultad. Revela el corazón de Dios dentro de ella. Sus planes no son para destruir a su pueblo, sino para conducirlo hacia paz, restauración y esperanza.\n\nCuando tu futuro parece interrumpido, o cuando tus errores pasados parecen tener la última palabra, este versículo te recuerda que Dios no ha dejado de pensar en ti con misericordia. Tus circunstancias quizá sigan inconclusas, pero su intención permanece fiel. Así que no te apresures a llamar final al capítulo que estás viviendo. Para Judá, el exilio parecía un final, pero Dios ya estaba hablando de futuro. Tu espera, dolor o incertidumbre pueden ser reales, pero no son más fuertes que la fidelidad del pacto de Dios.",
-      "actionStep": "Escribe en tu diario o en las notas del teléfono: “Dios tiene planes de paz para mí, no de desastre.” Cuando aparezca la duda, vuelve a leerlo. Si puedes, léelo por la mañana y por la noche, dejando que esta verdad cambie poco a poco tu manera de mirar el futuro.",
-      "prayer": "Querido Padre celestial, te alabo por tu promesa de que tus planes para nosotros son para bien — llenos de esperanza y un futuro próspero. Sostienes nuestros días en tus manos. Tus propósitos no son para dañarnos sino para establecernos en esperanza. Tus planes nunca fallan. Escribes la historia con esperanza. Qué buen Padre eres. Te traigo las partes cansadas de mi corazón que conocen las palabras correctas, pero luchan por creerlas. Quédate conmigo allí, Padre, y haz que tu verdad sea más cálida que mi vergüenza y más fuerte que mi miedo. Ayúdame a orar no desde la distancia, sino desde la confianza de que ya estoy sostenida por ti. En el nombre de Jesús, amén."
-    },
-    {
-      "day": 2,
-      "segment": "evening",
-      "reference": {
-        "book": "John",
-        "chapter": 14,
+        "book": "Hebrews",
+        "chapter": 4,
         "verse": "16",
-        "full_reference": "John 14:16"
+        "full_reference": "Hebrews 4:16"
       },
-      "modernVersion": "NVI",
-      "modernText": "Y yo le pediré al Padre, y él les dará otro Consolador para que los acompañe siempre.",
-      "meditation": "Cuando alguien importante se va, la ausencia puede llenar toda la habitación. Una mudanza, una ruptura, una muerte o una despedida repentina puede hacer que tu sentido de seguridad se derrumbe. Los discípulos conocieron ese miedo. Cuando Jesús les dijo que se iba, no reaccionaron con valentía tranquila, sino con confusión, tristeza y temor.\n\nEn esa hora oscura, Jesús prometió enviar a otro Consolador para estar con ellos para siempre. No era un reemplazo menor de su presencia, sino una cercanía más profunda. Jesús no solo caminaría junto a ellos; por el Espíritu Santo, Dios viviría en ellos. Lo que al principio parecía pérdida se convertiría en consuelo, guía, valentía y fuerza interior.\n\nEl Espíritu Santo no es un visitante ocasional. Está contigo en las noches solitarias, en decisiones confusas, en tristezas que no sabes explicar y cuando no tienes palabras para orar. Él conoce tu corazón y entiende tus suspiros. No vives sostenida solo por recuerdos. Dios está contigo ahora y no te abandonará. Por eso tu soledad de hoy también puede ser nombrada delante de Dios. No tienes que sostenerte solo con recuerdos; puedes pedir una ayuda viva y presente.",
-      "actionStep": "Detente y pregúntate: ¿Dónde me siento más sola hoy, y qué necesito de Dios en ese lugar? Ora con sencillez: «Espíritu Santo, recuérdame que no estoy abandonada». Quédate en silencio un momento y observa si Él trae consuelo, sabiduría o fuerza.",
-      "prayer": "Querido Padre celestial, te alabo por darnos tu Espíritu para permanecer con nosotros. Cuando la ausencia, el cambio o la soledad me hagan sentir desprotegida, recuérdame que no enfrento la vida a solas. Ayúdame a recibir el consuelo del Espíritu y a seguir hoy su guía suave. Te traigo las partes cansadas de mi corazón que conocen las palabras correctas, pero luchan por creerlas. Quédate conmigo allí, Padre, y haz que tu verdad sea más cálida que mi vergüenza y más fuerte que mi miedo. Ayúdame a orar no desde la distancia, sino desde la confianza de que ya estoy sostenida por ti. En el nombre de Jesús, amén."
+      "modernVersion": "Reina-Valera 1909",
+      "modernText": "Lleguémonos pues confiadamente al trono de la gracia, para alcanzar misericordia, y hallar gracia para el oportuno socorro.",
+      "contextNote": "Hebreos se escribió a cristianos judíos que sabían que al lugar santísimo se entraba una vez al año, un solo hombre, con sangre. Con ese trasfondo, 'lleguémonos confiadamente' sorprende. La palabra griega es parrhesia: la libertad de un ciudadano para hablar sin rodeos en público, no el atrevimiento de quien se cuela.",
+      "meditation": "Como cristianas solemos acercarnos a Dios igual que a una evaluación: con nuestra defensa medio redactada antes de entrar. Hebreos usa otra palabra: confiadamente. No con cautela, no después de arreglarnos un poco.\n\nY fíjate en el nombre de ese trono. Gracia, no revisión. Vengamos esta noche tal como estamos, sin ir ensayando la explicación por el camino.",
+      "actionStep": "Lleva a Dios esa única cosa que pensabas resolver tú sola. Dila en voz alta antes de dormir, aunque te salga torpe y entrecortada.",
+      "prayer": "Amado Padre celestial, vengo a ti esta noche sin arreglarme primero, porque tú me dijiste que podía. Gracias porque este es un trono de gracia y no una revisión. Aquí está lo que necesito y aquí está donde fallé. En el nombre de Jesús, amén."
+    },
+    {
+      "day": 2,
+      "segment": "morning",
+      "reference": {
+        "book": "Romans",
+        "chapter": 8,
+        "verse": "6",
+        "full_reference": "Romans 8:6"
+      },
+      "modernVersion": "Reina-Valera 1909",
+      "modernText": "Porque la intención de la carne es muerte; mas la intención del espíritu, vida y paz:",
+      "contextNote": "Romanos 8 empieza con la palabra ninguna condenación, y este versículo vive dentro de esa promesa, no en contra de ella. El término de Pablo para la mente gobernada por la carne es phronema: no un pensamiento suelto, sino una inclinación asentada, la dirección hacia la que la mente se va sola. Describe una corriente, no dicta una sentencia.",
+      "meditation": "Pablo no está aquí dando una lección de moral sobre tu conducta. Habla de adónde va tu mente cuando dejas de dirigirla, del canal al que vuelve sola.\n\nY esta es la promesa, dirigida a ti: el otro canal se abre en vida y paz. No en pensamientos más ordenados. Vida. ¡No estás atrapada en lo de siempre, y nunca se esperó que salieras de ahí peleando sola!",
+      "actionStep": "Fíjate hoy en el primer lugar al que va tu mente cuando queda libre. No lo juzgues: solo cuéntale a Dios lo que encontraste.",
+      "prayer": "Amado Padre celestial, tú sabes adónde va mi mente cuando dejo de dirigirla, y parte de eso no me hace ningún bien. Vuelve hoy mi pensamiento hacia lo que de verdad da vida, no a la fuerza, sino atrayéndome. En el nombre de Jesús, amén."
+    },
+    {
+      "day": 2,
+      "segment": "evening",
+      "reference": {
+        "book": "2 Kings",
+        "chapter": 20,
+        "verse": "5",
+        "full_reference": "2 Kings 20:5"
+      },
+      "modernVersion": "Reina-Valera 1909",
+      "modernText": "Vuelve, y di á Ezechîas, príncipe de mi pueblo: Así dice Jehová, el Dios de David tu padre: Yo he oído tu oración, y he visto tus lágrimas: he aquí yo te sano; al tercer día subirás á la casa de Jehová.",
+      "contextNote": "Ezequías estaba enfermo de muerte y acababan de decirle que pusiera su casa en orden. Isaías ya salía del palacio cuando Dios lo hizo volver. En hebreo, el verbo para ver las lágrimas es el común de mirar algo, sin adorno poético. La idea es que Dios atiende la parte de la oración que no tiene palabras.",
+      "meditation": "A Ezequías ya le habían dado la respuesta: no. El profeta ya se había ido. Y entonces Dios lo mandó de vuelta. Fíjate en el orden de lo que Dios dice. Antes de la promesa, antes de que nada cambie, Dios menciona dos cosas: la oración que escuchó y las lágrimas que vio. Las lágrimas tienen su propia frase. Dios no las mete dentro de la oración como si llorar fuera una manera torpe de pedir. Las cuenta aparte.\n\nEso por lo que has estado llorando, aquello que dejaste de explicarle a la gente porque te cansaste de explicarlo, ya fue visto. No pasado por alto, no tolerado. ¡Visto!",
+      "actionStep": "Di en voz alta aquello que ya dejaste de explicarle a nadie. No tienes que defenderlo ni justificarlo delante de Dios. Solo dilo, con las palabras que te salgan.",
+      "prayer": "Amado Padre celestial, gracias porque cuentas mis lágrimas aparte de mis palabras, y porque no te has cansado de ellas. Hace tiempo dejé de explicarle esto a la gente. A ti no voy a dejar de explicártelo. Gracias porque ser vista por ti no es lo mismo que dar lástima. Sostén esta noche lo que he traído delante de ti. En el nombre de Jesús, amén."
     },
     {
       "day": 3,
       "segment": "morning",
       "reference": {
-        "book": "Matthew",
-        "chapter": 28,
-        "verse": "19",
-        "full_reference": "Matthew 28:19"
+        "book": "2 Corinthians",
+        "chapter": 3,
+        "verse": "17",
+        "full_reference": "2 Corinthians 3:17"
       },
-      "modernVersion": "NVI",
-      "modernText": "Por lo tanto, vayan y hagan discípulos de todas las naciones, bautizándolos en el nombre del Padre y del Hijo y del Espíritu Santo,",
-      "meditation": "La Gran Comisión comienza con la autoridad de Jesús, no con nuestra capacidad. Antes de decir 'vayan', Él declara que toda autoridad en el cielo y en la tierra le pertenece. Eso significa que nuestro testimonio no descansa en palabras perfectas, confianza completa o tener todas las respuestas. Descansa en el Cristo resucitado que nos envía y va con nosotros. Muchos dudamos porque nos sentimos poco preparados.\n\nPero Jesús no te pide que desempeñes un papel religioso; te invita a dar testimonio de lo que has recibido. Tu vida transformada, tu historia sincera y tu fidelidad silenciosa en lugares ordinarios pueden abrir una puerta para que alguien más lo encuentre. Dios suele usar más a personas disponibles que a personas impresionantes. Esto da dignidad a la obediencia pequeña.",
-      "actionStep": "Piensa en una persona de tu vida que parezca abierta o en búsqueda. Esta semana, empieza una conversación natural con ella. No fuerces una charla religiosa; comparte simplemente una forma práctica en que tu fe te ha ayudado, y escucha con atención.",
-      "prayer": "Querido Padre celestial, recibo esta gracia: Jesús confió a sus discípulos la misión de hacer discípulos de todas las naciones. Danos valor para dar testimonio fielmente y humildad para dirigir a otros hacia Cristo. Donde sigo intentando controlar los resultados, afloja mis manos y aquieta mi corazón. Confieso que muchas veces deseo más la certeza que la entrega. Atráeme de nuevo a ti hasta que la obediencia se sienta menos como perderme y más como volver a casa con Aquel que más me ama. En el nombre de Jesús, amén."
+      "modernVersion": "Reina-Valera 1909",
+      "modernText": "Porque el Señor es el Espíritu; y donde hay el Espíritu del Señor, allí hay libertad.",
+      "contextNote": "Pablo acaba de describir a Moisés cubriéndose el rostro con un velo después de estar con Dios. El contraste es entre un pacto vivido a distancia, detrás de un velo, y otro vivido a cara descubierta. El griego eleutheria era el estatus legal de una persona liberada: una condición, no un estado de ánimo.",
+      "meditation": "Como cristianas podemos convertir la fe, sin darnos cuenta, en un lugar más donde nos miden. Otra lista, otro desempeño, otro cuarto donde quizá no seamos suficientes.\n\nPablo describe ese cuarto al revés. Donde el Espíritu está presente hay aire para respirar: no es permiso para hacer cualquier cosa, sino el alivio de no tener que demostrar nada. Llevemos eso al día de hoy. No estás en una audición.",
+      "actionStep": "Nombra una cosa que ibas a hacer hoy sobre todo para demostrar algo. Hazla o déjala, pero como mujer libre, no como candidata.",
+      "prayer": "Amado Padre celestial, gracias porque tu Espíritu trae libertad y no otra prueba. Reconozco cuántas veces convierto mi fe en algo que podría reprobar. Aflójame eso hoy. Que trabaje y hable como alguien que ya fue aceptada. En el nombre de Jesús, amén."
     },
     {
       "day": 3,
       "segment": "evening",
       "reference": {
-        "book": "Genesis",
-        "chapter": 1,
-        "verse": "2",
-        "full_reference": "Genesis 1:2"
+        "book": "Acts",
+        "chapter": 16,
+        "verse": "25",
+        "full_reference": "Acts 16:25"
       },
-      "modernVersion": "NVI",
-      "modernText": "La tierra era un caos total, las tinieblas cubrían el abismo, y el Espíritu de Dios se movía sobre la superficie de las aguas.",
-      "meditation": "Hay temporadas que no se sienten como una vida en construcción, sino como algo sin forma. Los planes se disuelven, el suelo conocido desaparece y el futuro no tiene contorno claro. La oscuridad puede hacerte pensar que nada bueno está sucediendo, pero el comienzo de la historia de Dios muestra otra cosa: el vacío no es demasiado vacío para Él.\n\nAntes de que hubiera orden, belleza o fruto visible, el Espíritu de Dios ya estaba presente. No estaba lejos ni confundido por el caos. Su presencia llegó antes de que la transformación pudiera verse. Esa es una promesa silenciosa para los tiempos en que tu vida se siente incompleta.\n\nEl Espíritu que se mueve sobre lo informe revela poder y ternura. Dios no necesita irrumpir con violencia en tu oscuridad; ya está cerca, guardando lo frágil y preparando lo que aún no tiene forma. Tu espera no está desperdiciada. Bajo Su mano, puede volver la luz, el orden y la vida.",
-      "actionStep": "Nombra un área de tu vida que se siente incompleta, confusa o sin forma clara. Invita allí al Espíritu de Dios, no con un plan forzado, sino con confianza. Pídele un paso pequeño hacia orden, luz o una fe paciente hoy.",
-      "prayer": "Querido Padre celestial, recibo esta gracia: tu Espíritu está presente aun cuando mi vida parece desordenada e incompleta. Acércate a los lugares confundidos, oscuros y vacíos dentro de mí. Sopla orden, paciencia y esperanza en lo que todavía no entiendo, y enséñame a confiar en tu obra. Donde sigo intentando controlar los resultados, afloja mis manos y aquieta mi corazón. Confieso que muchas veces deseo más la certeza que la entrega. Atráeme de nuevo a ti hasta que la obediencia se sienta menos como perderme y más como volver a casa con Aquel que más me ama. En el nombre de Jesús, amén."
+      "modernVersion": "Reina-Valera 1909",
+      "modernText": "Mas á media noche, orando Pablo y Silas, cantaban himnos á Dios: y los que estaban presos los oían.",
+      "contextNote": "A Pablo y Silas los habían desnudado, azotado con varas y echado en el calabozo más interior; Lucas es preciso en los tres detalles. El verbo griego de su canto, hymneo, es el mismo del himno que Jesús cantó con sus discípulos antes de Getsemaní. Que los presos 'los oían' es un detalle propio de Lucas, y lo incluye a propósito.",
+      "meditation": "Dos hombres golpeados y encerrados en el calabozo de más adentro, con los pies en el cepo. Es medianoche. Y Lucas anota qué hicieron con esa hora en particular: oraron, y después cantaron.\n\nFíjate en la última frase, que es la que solemos saltarnos. Los demás presos los oían. Nadie estaba cantando para un público, porque público no había: solo gente en la misma oscuridad, despierta. Pero la fe en una noche mala nunca es del todo privada. La mujer del cuarto de al lado escucha. El hijo que duerme en el pasillo escucha. Tu medianoche suena más fuerte de lo que crees, y no siempre para mal.",
+      "actionStep": "Si esta noche estás despierta cuando preferirías dormir, deja de pelear con el insomnio diez minutos. Ora en ese rato, en voz alta si puedes.",
+      "prayer": "Amado Padre celestial, preferiría no estar despierta ahora, y preferiría que todo esto ya hubiera pasado. Gracias porque tú no estás ausente de la mitad de la noche. Si no puedo dormir, déjame orar. Y si alguien cerca de mí está escuchando, que lo que oiga de mí sea confianza y no desesperación. En el nombre de Jesús, amén."
     }
   ],
   "pt": [
@@ -585,91 +630,97 @@ export const BUNDLED_DAILY_VERSES: Record<LanguageCode, DailyVerse[]> =
       "day": 1,
       "segment": "morning",
       "reference": {
-        "book": "John",
-        "chapter": 1,
-        "verse": "9",
-        "full_reference": "John 1:9"
+        "book": "Psalms",
+        "chapter": 143,
+        "verse": "8",
+        "full_reference": "Psalms 143:8"
       },
-      "modernVersion": "NVI-PT",
-      "modernText": "A verdadeira luz que ilumina todos vinha chegando ao mundo.",
-      "meditation": "Se hoje você acordou sentindo que a luz está longe, este versículo se aproxima com uma promessa terna. A escuridão nem sempre parece dramática. Às vezes, é um peso silencioso, uma busca confusa pela verdade, ou a dor de uma perda ou de um fracasso. João não nos diz que saímos dessa escuridão sendo mais fortes ou mais dignos. Ele aponta para Jesus, a verdadeira Luz que já veio ao mundo.\n\nEssa Luz não é reservada para quem tem a vida em ordem. Ela ilumina todos, inclusive tu, quando tua fé parece pequena, teu coração está cansado ou o próximo passo não está claro. Jesus não espera de longe até que consigas alcançá-lo. Ele entra na tua escuridão com sua presença.\n\nHoje, voltar-te para Cristo significa deixar que sua verdade seja a primeira luz no teu coração. Tu não precisas produzir essa luz nem merecê-la. Só precisas abrir-te Àquele que se aproximou.",
-      "actionStep": "Dá nome a uma área da tua vida que parece escura ou confusa. Convida Jesus, a verdadeira Luz, a encontrar-te ali hoje.",
-      "prayer": "Querido Pai celestial, eu te agradeço por enviares Jesus, a verdadeira Luz que ilumina todos. Eu te louvo porque a sua luz entra em nossa escuridão e nos conduz à tua verdade e graça. Não quero concordar com isso apenas em palavras e depois continuar igual. Encontra-me nos lugares escondidos onde o medo, o hábito ou a autoproteção ainda me governam. Ensina-me a abrir esses lugares ao teu amor, e que minha resposta a ti se torne sincera, firme e inteira. Em nome de Jesus, amém."
+      "modernVersion": "João Ferreira de Almeida",
+      "modernText": "Faze-me ouvir da tua benignidade pela manhã, pois em ti confio; faze-me saber o caminho que devo seguir, porque a ti elevo a minha alma.",
+      "contextNote": "O Salmo 143 é um lamento: poucos versículos antes, Davi diz que está sendo perseguido. Não é uma oração serena de manhã; foi escrita por alguém em apuros. A palavra hebraica traduzida por benignidade é chesed — lealdade de aliança, um amor que já se comprometeu antes e não volta atrás.",
+      "meditation": "Davi não está descrevendo uma manhã boa. Ele está pedindo por uma, e a ordem do pedido vale a pena copiar.\n\nPrimeiro ele quer ouvir que é amado. Depois, saber para onde ir. Como cristãs, nós costumamos inverter a ordem: chegamos atrás da direção, da decisão, do que fazer com aquele assunto. Mas direção sem amor vira pressão, e quase todas nós já vivemos assim por um tempo. Hoje de manhã, vamos pedir a primeira coisa: a bondade que nos alcança antes de qualquer resposta. A segunda pode esperar.",
+      "actionStep": "Antes de planejar qualquer coisa hoje, diga uma frase em voz alta: sou amada antes de ser útil. Depois pergunte a Deus sobre a primeira decisão da sua lista.",
+      "prayer": "Amado Pai celestial, antes de eu te perguntar para onde ir, deixa-me ouvir que sou amada. Confesso como pulo essa parte com facilidade e corro direto para o planejamento. Fala primeiro com a parte de mim que precisa de segurança, e depois mostra-me o próximo passo. Eu te entrego o meu dia inteiro. Em nome de Jesus, amém."
     },
     {
       "day": 1,
       "segment": "evening",
       "reference": {
-        "book": "John",
-        "chapter": 14,
-        "verse": "1",
-        "full_reference": "John 14:1"
-      },
-      "modernVersion": "NVI-PT",
-      "modernText": "Não deixem que seus corações se perturbem. Creiam em Deus; creiam também em mim.",
-      "meditation": "Quando a ansiedade se instala, raramente pede permissão. Ela pode vir por uma separação, a perda de um emprego, uma notícia difícil sobre saúde ou as horas silenciosas da noite, quando todo medo parece crescer. Talvez você nem saiba nomear o que sente; só sabe que seu coração está inquieto, cansado e assustado.\n\nJesus falou palavras de consolo aos discípulos em um momento nada tranquilo. Ele sabia que logo o veriam ser preso e que a cruz abalaria tudo o que entendiam. A situação deles não ficaria fácil de imediato, mas Jesus os chamou a confiar: crer em Deus e crer também nele. Ele não os consolou dizendo que tudo sairia como esperavam; levou o coração deles de volta para si mesmo.\n\nEssa fé não nega a dificuldade. Ela volta o coração para o Senhor que continua bom, fiel e poderoso quando tudo treme. Por isso, mesmo quando a emoção não muda de imediato, você pode respirar diante dele e permitir que sua presença sustente o que sua força já não consegue carregar.",
-      "actionStep": "Escreva o medo ou a preocupação que fala mais alto em seu coração hoje. Leve isso a Jesus sem tentar arrumar as palavras e escreva ao lado uma frase de confiança: “Senhor, coloco isto em tuas mãos.” Volte a essa frase sempre que o medo surgir.",
-      "prayer": "Querido Pai celestial, eu te agradeço porque em Cristo meu coração não precisa ser governado pelo medo. Quando as preocupações falarem mais alto que a tua promessa, ensina-me a trazê-las com honestidade diante de ti. Firma-me com a tua presença e ajuda-me a dar hoje o próximo passo confiando em ti. Não quero concordar com isso apenas em palavras e depois continuar igual. Encontra-me nos lugares escondidos onde o medo, o hábito ou a autoproteção ainda me governam. Ensina-me a abrir esses lugares ao teu amor, e que minha resposta a ti se torne sincera, firme e inteira. Em nome de Jesus, amém."
-    },
-    {
-      "day": 2,
-      "segment": "morning",
-      "reference": {
-        "book": "Jeremiah",
-        "chapter": 29,
-        "verse": "11",
-        "full_reference": "Jeremiah 29:11"
-      },
-      "modernVersion": "NVI-PT",
-      "modernText": "\"Porque eu bem sei os planos que tenho para vocês\", declara o Senhor, \"planos de bem-estar e não de calamidade, para lhes dar um futuro cheio de esperança.\"",
-      "meditation": "Jeremias escreveu estas palavras a pessoas no exílio, não a pessoas cuja vida parecia fácil ou organizada. Elas haviam perdido casa, segurança e uma visão clara do futuro. No meio dessa incerteza, Deus diz: 'Eu sei os planos que tenho para vocês.' Ele não apenas observa a dor delas; ainda sustenta um propósito para elas. Essa promessa não nega a dificuldade. Ela revela o coração de Deus dentro dela. Seus planos não são para destruir seu povo, mas para conduzi-lo à paz, à restauração e à esperança.\n\nQuando teu futuro parece interrompido, ou quando teus erros passados parecem ter a última palavra, este versículo lembra que Deus não deixou de pensar em ti com misericórdia. Tuas circunstâncias talvez ainda estejam inacabadas, mas a intenção dele permanece fiel. Por isso, não te apresses em chamar o capítulo presente de fim da história. Para Judá, o exílio parecia um fim, mas Deus já falava de futuro. Tua espera, dor ou incerteza podem ser reais, mas não são mais fortes que a fidelidade da aliança de Deus.",
-      "actionStep": "Escreva no diário ou nas notas do celular: “Deus tem planos de paz para mim, não de desastre.” Quando a dúvida aparecer, leia de novo. Se puder, leia de manhã e à noite, deixando essa verdade mudar pouco a pouco a forma como você olha para o futuro.",
-      "prayer": "Querido Pai celestial, eu te louvo por tua promessa de que teus planos para nós são para bem — cheios de esperança e um futuro próspero. Tu sustentas nossos dias em tuas mãos. Teus propósitos não são para nos prejudicar mas para nos estabelecer em esperança. Os teus planos nunca falham. Escreves a história com esperança. Que bom Pai és. Trago-te as partes cansadas do meu coração que conhecem as palavras certas, mas lutam para crer nelas. Fica comigo ali, Pai, e torna tua verdade mais quente que minha vergonha e mais forte que meu medo. Ajuda-me a orar não de longe, mas a partir da confiança de que já sou sustentada por ti. Em nome de Jesus, amém."
-    },
-    {
-      "day": 2,
-      "segment": "evening",
-      "reference": {
-        "book": "John",
-        "chapter": 14,
+        "book": "Hebrews",
+        "chapter": 4,
         "verse": "16",
-        "full_reference": "John 14:16"
+        "full_reference": "Hebrews 4:16"
       },
-      "modernVersion": "NVI-PT",
-      "modernText": "Vou pedir ao Pai, e ele lhes dará outro Consolador para estar com vocês para sempre—",
-      "meditation": "Quando alguém importante vai embora, a ausência pode parecer maior que o próprio quarto. Uma mudança, uma separação, uma morte ou uma despedida repentina pode derrubar todo senso de segurança. Os discípulos conheceram esse medo. Quando Jesus disse que partiria, eles não reagiram com coragem tranquila, mas com confusão, tristeza e temor.\n\nNessa hora escura, Jesus prometeu enviar outro Consolador para estar com eles para sempre. Não era uma presença menor, mas uma intimidade mais profunda. Jesus não apenas caminharia ao lado deles; pelo Espírito Santo, Deus habitaria neles.\n\nO Espírito Santo não é um visitante ocasional. Ele está com você nas noites solitárias, nas decisões confusas, nas tristezas que você não consegue explicar e quando faltam palavras para orar. Ele conhece seu coração e entende seus suspiros. Você não vive sustentada apenas por lembranças. Deus está com você agora e não vai abandoná-la.",
-      "actionStep": "Pare e pergunte a si mesma: onde me sinto mais sozinha hoje, e do que preciso de Deus nesse lugar? Ore com simplicidade: “Espírito Santo, lembra-me de que não estou abandonada.” Fique em silêncio por um momento e perceba se Ele traz consolo, sabedoria ou força.",
-      "prayer": "Querido Pai celestial, eu te louvo por nos dares o teu Espírito para permanecer conosco. Quando a ausência, a mudança ou a solidão me fizerem sentir desprotegida, lembra-me de que não enfrento a vida sozinha. Ajuda-me a receber o consolo do Espírito e a seguir hoje a sua direção suave. Trago-te as partes cansadas do meu coração que conhecem as palavras certas, mas lutam para crer nelas. Fica comigo ali, Pai, e torna tua verdade mais quente que minha vergonha e mais forte que meu medo. Ajuda-me a orar não de longe, mas a partir da confiança de que já sou sustentada por ti. Em nome de Jesus, amém."
+      "modernVersion": "João Ferreira de Almeida",
+      "modernText": "Cheguemo-nos, pois, confiadamente ao trono da graça, para que recebamos misericórdia e achemos graça, a fim de sermos socorridos no momento oportuno.",
+      "contextNote": "Hebreus foi escrito a cristãos judeus que sabiam: no Santo dos Santos se entrava uma vez por ano, por um só homem, levando sangue. Diante disso, chegar confiadamente é surpreendente. O grego é parrhesia — a liberdade que um cidadão tinha de falar abertamente em público, não a ousadia de quem invade.",
+      "meditation": "Como cristãs, muitas vezes chegamos diante de Deus como quem chega a uma avaliação: com a defesa já meio pronta na cabeça. Hebreus usa outra palavra: confiadamente. Não com cuidado, não depois de nos ajeitarmos.\n\nE repare no nome daquele trono. Graça, não julgamento. Então vamos chegar esta noite como realmente estamos, sem ensaiar a explicação no caminho.",
+      "actionStep": "Leve a Deus aquela única coisa que você estava planejando resolver sozinha. Diga em voz alta, antes de dormir, sem preparar argumento nenhum.",
+      "prayer": "Amado Pai celestial, chego a ti esta noite sem me ajeitar primeiro, porque tu mesmo disseste que eu podia. Obrigada porque este é um trono de graça, e não um tribunal. Aqui está o que preciso, e aqui está onde eu falhei. Em nome de Jesus, amém."
+    },
+    {
+      "day": 2,
+      "segment": "morning",
+      "reference": {
+        "book": "Romans",
+        "chapter": 8,
+        "verse": "6",
+        "full_reference": "Romans 8:6"
+      },
+      "modernVersion": "João Ferreira de Almeida",
+      "modernText": "Porque a inclinação da carne é morte; mas a inclinação do Espírito é vida e paz.",
+      "contextNote": "Romanos 8 começa com 'nenhuma condenação', e este versículo está dentro dessa promessa, não contra ela. A palavra de Paulo para a mente dominada pela carne é phronema: não um pensamento isolado, mas uma inclinação firme, a direção para onde a mente escorrega quando é deixada em paz. Ele descreve uma correnteza, não profere uma sentença.",
+      "meditation": "Paulo não está aqui dando lição de moral sobre o seu comportamento. Ele está falando do lugar para onde a sua mente vai quando você para de conduzi-la — o canal em que ela sintoniza sozinha.\n\nE aqui está a promessa, endereçada a você: o outro canal abre para vida e paz. Não para pensamentos mais organizados. Vida. Você não está presa ao automático, e nunca se esperou que você saísse dele lutando sozinha!",
+      "actionStep": "Repare hoje no primeiro lugar para onde a sua mente vai quando ela fica à toa. Não julgue o que encontrar; apenas conte a Deus o que era.",
+      "prayer": "Amado Pai celestial, tu sabes para onde a minha mente vai quando eu paro de conduzi-la, e parte disso não me faz bem nenhum. Volta o meu pensamento hoje para aquilo que dá vida de verdade — não à força, mas me atraindo. Em nome de Jesus, amém."
+    },
+    {
+      "day": 2,
+      "segment": "evening",
+      "reference": {
+        "book": "2 Kings",
+        "chapter": 20,
+        "verse": "5",
+        "full_reference": "2 Kings 20:5"
+      },
+      "modernVersion": "João Ferreira de Almeida",
+      "modernText": "Volta, e dize a Ezequias, príncipe do meu povo: Assim diz o Senhor Deus de teu pai Davi: Ouvi a tua oração, e vi as tuas lágrimas. Eis que eu te sararei; ao terceiro dia subirás à casa do Senhor.",
+      "contextNote": "Ezequias estava doente, sem cura à vista, e acabara de ouvir que devia pôr a casa em ordem. Isaías já saía do palácio quando Deus o fez voltar. Em hebraico, vi as tuas lágrimas usa o verbo comum de olhar para alguma coisa, sem nenhum enfeite poético. É a parte da oração que não tem palavras, e Deus repara nela.",
+      "meditation": "A Ezequias já tinha sido dito que a resposta era não. O profeta já estava saindo. E então Deus o mandou voltar. Repare na ordem do que Deus diz. Antes da promessa, antes de qualquer coisa mudar, vem isto: ele ouviu a oração, e viu as lágrimas. As lágrimas ganham uma frase só delas. Deus não as dissolve dentro da oração, como se chorar fosse um jeito ineficiente de pedir. Ele conta as duas coisas separadamente.\n\nAquilo que você tem chorado — aquilo que você parou de explicar para as pessoas porque cansou de explicar — isso foi visto. Não passou despercebido, não foi apenas tolerado. Foi visto!",
+      "actionStep": "Diga em voz alta aquilo que você já parou de explicar para todo mundo. Você não precisa justificar nem construir argumento. Só diga.",
+      "prayer": "Amado Pai celestial, obrigada porque tu contas as lágrimas à parte das palavras, e porque não te cansaste das minhas. Faz um tempo que parei de explicar isso para as pessoas. Contigo eu não vou parar. Obrigada porque ser vista por ti não é o mesmo que ser motivo de pena. Guarda esta noite aquilo que eu trouxe. Em nome de Jesus, amém."
     },
     {
       "day": 3,
       "segment": "morning",
       "reference": {
-        "book": "Matthew",
-        "chapter": 28,
-        "verse": "19",
-        "full_reference": "Matthew 28:19"
+        "book": "2 Corinthians",
+        "chapter": 3,
+        "verse": "17",
+        "full_reference": "2 Corinthians 3:17"
       },
-      "modernVersion": "NVI-PT",
-      "modernText": "Portanto, vão e façam discípulos de todas as nações, batizando-os em nome do Pai e do Filho e do Espírito Santo,",
-      "meditation": "A Grande Comissão começa com a autoridade de Jesus, não com nossa capacidade. Antes de dizer 'ide', ele declara que toda autoridade no céu e na terra pertence a ele. Isso significa que nosso testemunho não repousa em palavras perfeitas, confiança completa ou em ter todas as respostas. Repousa no Cristo ressuscitado que nos envia e vai conosco. Muitos de nós hesitamos porque nos sentimos despreparados.\n\nMas Jesus não te pede para desempenhar um papel religioso; ele te convida a testemunhar o que recebeste. Tua vida transformada, tua história sincera e tua fidelidade silenciosa em lugares comuns podem se tornar uma porta para que outra pessoa o encontre. Deus costuma usar pessoas disponíveis mais do que pessoas impressionantes. Isso dá dignidade à pequena obediência.",
-      "actionStep": "Pense em uma pessoa da sua vida que pareça aberta ou em busca. Esta semana, comece uma conversa natural com ela. Não force uma conversa religiosa; compartilhe simplesmente uma forma prática como sua fé ajudou você, e escute bem.",
-      "prayer": "Querido Pai celestial, recebo esta graça: Jesus confiou aos seus discípulos a missão de fazer discípulos de todas as nações. Dá-nos coragem para testemunhar fielmente e humildade para apontar outros para Cristo. Onde continuo tentando controlar os resultados, afrouxa minhas mãos e aquieta meu coração. Confesso que muitas vezes desejo mais a certeza do que a entrega. Atrai-me de volta a ti até que a obediência pareça menos perder a mim mesma e mais voltar para casa junto daquele que mais me ama. Em nome de Jesus, amém."
+      "modernVersion": "João Ferreira de Almeida",
+      "modernText": "Ora, o Senhor é o Espírito; e onde está o Espírito do Senhor aí há liberdade.",
+      "contextNote": "Pouco antes, Paulo lembra Moisés cobrindo o rosto com um véu depois de estar com Deus. O contraste é entre uma aliança vivida a distância, atrás do véu, e outra vivida de rosto descoberto. O grego eleutheria descreve a condição legal de quem foi libertado: um status conquistado por outro, não um estado de espírito.",
+      "meditation": "Como cristãs, nós conseguimos transformar a fé em mais um lugar onde estamos sendo medidas. Outra lista, outro desempenho, mais uma sala em que talvez não sejamos suficientes.\n\nPaulo diz outra coisa sobre essa sala: onde o Espírito habita, a marca é liberdade — não permissão para qualquer coisa, mas o alívio de não ter nada a provar. Vamos levar isso para hoje. Você não está em uma seleção.",
+      "actionStep": "Escolha uma coisa que você faria hoje só para provar algo. Faça ou deixe de lado, mas decida como mulher livre, e não como candidata a uma vaga.",
+      "prayer": "Amado Pai celestial, obrigada porque o teu Espírito traz liberdade e não mais uma prova. Confesso quantas vezes transformo a minha fé em algo que eu poderia reprovar. Afrouxa isso em mim hoje. Que eu trabalhe e fale como quem já foi aceita. Em nome de Jesus, amém."
     },
     {
       "day": 3,
       "segment": "evening",
       "reference": {
-        "book": "Genesis",
-        "chapter": 1,
-        "verse": "2",
-        "full_reference": "Genesis 1:2"
+        "book": "Acts",
+        "chapter": 16,
+        "verse": "25",
+        "full_reference": "Acts 16:25"
       },
-      "modernVersion": "NVI-PT",
-      "modernText": "A terra era um caos total, as trevas cobriam o abismo, e o Espírito de Deus se movia sobre as águas.",
-      "meditation": "Algumas fases não parecem uma vida sendo construída, mas algo sem forma. Planos se desfazem, o chão conhecido desaparece, e o futuro não tem contorno claro. A escuridão pode fazer você pensar que nada bom está acontecendo, mas o começo da história da criação lembra: até o vazio e o caos estão dentro do alcance de Deus.\n\nAntes que ordem, beleza e fruto aparecessem, o Espírito de Deus já estava presente. Ele não observava de longe, não chegava atrasado e não estava confuso diante da desordem. Sua presença muitas vezes vem antes da mudança visível. Quando você não vê forma, Deus ainda sabe o que está moldando; quando não vê resultado, Ele continua trabalhando.\n\nSeu agir é poderoso e também gentil. Deus entra na sua escuridão sem esmagar você. Até o começo que parece desordenado pode se tornar, nas mãos dele, o início de uma vida nova. A sua espera não é invisível para Deus.",
-      "actionStep": "Dê nome a uma área da vida que parece inacabada, confusa ou sem forma clara. Convide o Espírito de Deus para esse lugar, não com um plano forçado, mas com confiança. Peça a Ele um pequeno passo rumo à ordem, luz ou fé paciente hoje.",
-      "prayer": "Querido Pai celestial, recebo esta graça: o teu Espírito está presente mesmo quando minha vida parece sem forma e inacabada. Aproxima-te dos lugares confusos, escuros e vazios dentro de mim. Sopra ordem, paciência e esperança naquilo que ainda não entendo, e ensina-me a confiar na tua obra. Onde continuo tentando controlar os resultados, afrouxa minhas mãos e aquieta meu coração. Confesso que muitas vezes desejo mais a certeza do que a entrega. Atrai-me de volta a ti até que a obediência pareça menos perder a mim mesma e mais voltar para casa junto daquele que mais me ama. Em nome de Jesus, amém."
+      "modernVersion": "João Ferreira de Almeida",
+      "modernText": "Pela meia-noite Paulo e Silas oravam e cantavam hinos a Deus, enquanto os presos os escutavam.",
+      "contextNote": "Paulo e Silas tinham sido despidos, açoitados com varas e jogados na cela mais interna — Lucas faz questão de citar as três coisas. O verbo grego do canto deles, hymneo, é o mesmo usado do hino que Jesus cantou com os discípulos antes do Getsêmani. E o detalhe de que os presos os escutavam é de Lucas, colocado ali de propósito.",
+      "meditation": "Dois homens, açoitados e trancados na cela mais interna, com os pés presos no tronco de madeira. É meia-noite. E Lucas registra o que eles fizeram com aquela hora exata: oraram e depois cantaram.\n\nRepare na última frase, que é a que costuma passar batido na leitura. E os outros presos estavam ali, escutando. Ninguém estava cantando para uma plateia — não havia plateia nenhuma, só gente no mesmo escuro, deitada e acordada. Mas a fé numa noite ruim nunca é totalmente particular. A mulher do quarto ao lado escuta. A filha no corredor escuta. A sua meia-noite faz mais barulho do que você imagina, e nem sempre para o mal.",
+      "actionStep": "Se você estiver acordada hoje quando queria estar dormindo, pare de brigar com isso por dez minutos. Use esse tempo para orar — em voz alta, se der.",
+      "prayer": "Amado Pai celestial, eu preferia não estar acordada agora, e preferia que isto já tivesse passado. Obrigada porque tu não estás ausente do meio da noite. Se eu não conseguir dormir, que eu ore. E se alguém perto de mim estiver escutando, que o que essa pessoa ouvir de mim seja confiança, e não desespero. Em nome de Jesus, amém."
     }
   ]
 };

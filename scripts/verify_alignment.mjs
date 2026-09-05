@@ -322,6 +322,28 @@ function checkAuthoringBatch() {
     byId[l] = new Map(vs.map(v => [v.id, v]));
   }
 
+  // Numbering contract (2026-09-05, batch 3+): id ≡ m_/e_ + day zero-padded to
+  // three — audio filenames, the audio manifest and on-device caches all key on
+  // this — and the batch's days form ONE contiguous 60-day run (morning +
+  // evening each day). Global continuity across batches (batch N starts at
+  // (N−1)·60+1) is a handoff rule; the gate reports the range so integration
+  // can eyeball the start, without hardcoding which batch this is.
+  {
+    const vs = files.en.verses || [];
+    for (const v of vs) {
+      const wantId = `${v.segment === 'morning' ? 'm' : 'e'}_${String(v.day).padStart(3, '0')}`;
+      if (v.id !== wantId) flag(`en ${v.id}: id/day mismatch (day ${v.day} ${v.segment} → want ${wantId})`);
+    }
+    const days = [...new Set(vs.map(v => v.day))].sort((a, b) => a - b);
+    if (days.length !== 60) flag(`en: ${days.length} distinct days (want 60)`);
+    else if (days[59] - days[0] !== 59) flag(`en: days not contiguous (${days[0]}…${days[59]})`);
+    for (const d of days) {
+      const segs = vs.filter(v => v.day === d).map(v => v.segment).sort().join(',');
+      if (segs !== 'evening,morning') flag(`en day ${d}: segments [${segs}] (want morning+evening)`);
+    }
+    if (days.length) console.log(`  day range: ${days[0]}–${days[days.length - 1]}`);
+  }
+
   // Cross-language: the schema-3.2 shared fields must be byte-identical.
   const en = byId.en;
   const shared = (v) => JSON.stringify([

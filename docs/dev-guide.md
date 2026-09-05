@@ -1274,6 +1274,15 @@ above the Account block; merger in `services/progressMerge.ts`; tests
   do, re-check the ⓘ-dialog/listen-coach stacking (dialog z60, coaches z90;
   both are one-shots so a collision is rare, but the choreography has never
   been exercised live).
+- **Batch numbering is globally continuous from batch 3 on** (owner 2026-09-05):
+  batch N covers days (N−1)·60+1 … N·60 (batch 3 = 61–120), id ≡ m_/e_ + day
+  padded to three. Batch 2's restart-at-1 was per the old handoff spec — the
+  bare-id collision it caused with the audio manifest is WHY the scheme
+  changed. Integration publishes the CONCATENATION (v3 = batch 2 ⊕ batch 3,
+  240 entries): `coverageDays` is data-driven (max day), so the cycle grows to
+  120 days with zero client change — but days 1–60 must stay in the file, or
+  half of every user's cycle goes blank. verify_alignment's batch gate now
+  enforces id↔day/segment and day-run contiguity, and prints the range.
 - **Holiday narration has its OWN availability set** (2026-09-05):
   `isHolidayVerseAudioAvailable` used to read the regular set above, so the
   batch-2 kill switch silently disabled holiday Listen too — decoupled into

@@ -1164,7 +1164,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           under it on Android — they rendered but ate every tap. One wrapper
           per block keeps each animated subtree small and self-contained. */}
       <TabSection delay={45}>
-      <View style={[styles.section, { paddingTop: 18 }]}>
+      <View style={[styles.section, { paddingTop: 24 }]}>
         <GospelPsalmCards
           onOpen={(slot) => navTap(`gospel_${slot}`, () => navigation.navigate('GospelPsalm', { slot }))}
         />
@@ -1207,11 +1207,12 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           the home screen reads as a consistent stack of cards. Progress is
           shown as percentage + filled track on the right of the % — the
           track is `flex: 1` so it always spans the remaining width. */}
-      {/* paddingTop → 25 per user — extra leading before the "Bible Reading
-          Progress" heading only; the shared sectionTitle style stays
-          untouched so "Plans In Progress" above is unaffected. */}
-      <View style={[styles.section, { paddingTop: 25 }]}>
-        <Text style={styles.sectionTitle}>{t('prayer.section.bibleProgress')}</Text>
+      {/* Unified 24pt section rhythm (owner 2026-09-06). */}
+      <View style={[styles.section, { paddingTop: 24 }]}>
+        {/* Unified section pattern (owner 2026-09-06): the title lives INSIDE
+            the container card, like My Reading Plans / Quiz Challenge. */}
+        <View style={styles.progressCard}>
+        <Text style={styles.cardSectionTitle}>{t('prayer.section.bibleProgress')}</Text>
         <TouchableOpacity
           onPress={() => navTap('continue_reading', () => navigation.navigate('Tabs', { screen: 'bible' }))}
           activeOpacity={0.85}
@@ -1239,6 +1240,7 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           </View>
           <Feather name="chevron-right" size={22} color={TXTSUB} />
         </TouchableOpacity>
+        </View>
       </View>
       </TabSection>
 
@@ -1571,7 +1573,7 @@ const styles = StyleSheet.create({
     paddingRight: 19,                                                            // matches heroBody right padding too
   },
   heroLabel: {
-    fontSize: 12.52,                                                            // 13.91 × 0.9 (-10 % per user, second round)
+    fontSize: 12.5,                                                             // caption tier (scale normalized 2026-09-06)
     color: 'rgba(255,255,255,0.65)',
     marginBottom: 5,
   },
@@ -1728,12 +1730,6 @@ const styles = StyleSheet.create({
     marginBottom: 13,
     paddingHorizontal: P,
   },
-  sectionTitle: {
-    fontSize: 19.85,                                                          // 16 → 18 → 19.85 — Lora bold per latest design
-    fontWeight: '600',                                                        // Lora bold rule: pair `loraBold` with `'600'`, not `'700'`
-    color: TXT,
-    fontFamily: FONTS.loraBold,
-  },
   // "See past days" dead-zone prompt (app-styled centered dialog).
   pastPromptOverlay: {
     flex: 1, backgroundColor: 'rgba(30,27,46,0.45)',
@@ -1829,20 +1825,27 @@ const styles = StyleSheet.create({
   // radius 3 / elevation 1). Keeps the home screen visually cohesive: the
   // "Plans In Progress" cards and "Bible Reading Progress" card are now
   // one continuous design language.
+  // Unified container card (owner 2026-09-06): title inside, content rows bare.
+  progressCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: CARD_RADIUS,
+    paddingVertical: 16,
+    paddingHorizontal: 14,
+    marginTop: 12,
+  },
+  cardSectionTitle: {
+    fontSize: 20, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold,
+    marginBottom: 12,
+  },
   continueRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    backgroundColor: '#FFFFFF',
-    borderRadius: CARD_RADIUS,
-    paddingVertical: 11.4,
-    paddingHorizontal: 12,
-    marginTop: 12,
   },
   continueIcon: {
-    width: 92.15,                    // match PlanProgressCard's cover (92.15² ) so this card's
-    height: 92.15,                   // height equals the Plans-in-Progress card exactly
-    borderRadius: 10,                // match PlanProgressCard cover radius (was 13)
+    width: 120,                      // 4:3 — same geometry family as the G&P banners' art
+    height: 90,                      // (owner 2026-09-06; the art was re-cropped 4:3 to match)
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -1871,7 +1874,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   continueTitle: {                   // card title ("Joshua · Chapter 12")
-    fontSize: 17.28,                  // 16 × 1.08 (+8 % per user)
+    fontSize: 17,                     // row-title tier (scale normalized 2026-09-06)
     fontWeight: '600',
     color: TXT,
     fontFamily: FONTS.latoBold, letterSpacing: 0.5,                                                // Lato per user (was Lora); latoBold + 600 = the app's "Lato 600"

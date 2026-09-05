@@ -33,6 +33,22 @@ same repo. Touch only the files you are changing. Commits auto-sync to GitHub; a
 
 ## 1. UI style — the rules that get accidentally reverted
 
+### Home-screen type scale + section pattern (owner 2026-09-06 overhaul)
+- **Four-tier scale, no more drifted decimals**: section titles **20 · Lora
+  '600'**, row titles **17 · LatoBold**, meta **14 · Lato**, captions
+  **12.5**. The historical ×1.08/×0.9 values (19.85 / 21 / 17.28 / 17.16 /
+  14.04 / 12.52) were all normalized — do not reintroduce per-spot sizes.
+- **One section pattern**: a white container card (CARD_RADIUS 14) with the
+  section title INSIDE at top-left; rows inside are bare (no card-in-card).
+  Exceptions that carry their own identity instead: the verse hero and the
+  Gospel & Psalm banners (full-bleed photo cards with an in-card eyebrow +
+  dark scrim — the TouchPoint style the owner picked).
+- **Merriweather is for SCRIPTURE ONLY** (hero verse, flow verse pages,
+  reader body). Quiz questions and every other UI string are Lato.
+- Row thumbnails: shape follows content (plan covers 63×81 portrait, reading
+  art 120×90 landscape 4:3), radius 10, gap 14 — the metrics are what unify.
+- CTA labels stay 17.5 (standing owner decision — untouched by the scale).
+
 ### Colour
 - **Never hardcode a colour.** Import from `src/constants/theme.ts`:
   `ROSE #E63F69`, `LAV #866BC0`, `TXT #1E1B2E`, `TXTSUB rgba(30,27,46,0.50)`,

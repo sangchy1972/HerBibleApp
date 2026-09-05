@@ -279,14 +279,14 @@ const styles = StyleSheet.create({
   // register as its neighbours — deliberately NOT the +8% quiz scale, which
   // applies inside the quiz itself.
   title: {
-    fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 19.85,
+    fontFamily: FONTS.loraBold, fontWeight: '600', fontSize: 20,   // section-title tier (scale normalized 2026-09-06)
     color: TXT, letterSpacing: 0.3,
   },
   bar: { marginTop: 14 },
   // Centred under the bar, matching the full screen's counter row.
   status: {
-    // 13 → 14.3 (+10 %) → 17.16 (+20 % more, per user)
-    fontFamily: FONTS.lato, fontSize: 17.16, color: TXTSUB,
+    // meta tier 14 (scale normalized 2026-09-06 — was 17.16 from stacked +% passes)
+    fontFamily: FONTS.lato, fontSize: 14, color: TXTSUB,
     letterSpacing: 0.4, textAlign: 'center', marginTop: 10,
   },
   // The quiz's own question type: Merriweather at the +8 % scale.
@@ -295,7 +295,9 @@ const styles = StyleSheet.create({
     // 19 → 17.1 (−10 %, per user). lineHeight scales with it: 30 against 17.1
     // would be a 1.75 ratio, which reads as a gap between lines rather than a
     // paragraph — and the point of this pass was to make the card tighter.
-    fontFamily: FONTS.merriweather, fontSize: 17.1, lineHeight: 27,
+    // Lato, not Merriweather (owner 2026-09-06): the serif face is reserved
+    // for SCRIPTURE — a quiz question is UI copy.
+    fontFamily: FONTS.lato, fontSize: 15.5, lineHeight: 23,
     color: TXT, letterSpacing: 0.1, marginLeft: 3, marginTop: 16, marginBottom: 18,
   },
   // Cancels the trailing option's own 11 marginBottom so the card's 16 of

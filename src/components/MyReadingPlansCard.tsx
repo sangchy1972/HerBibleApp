@@ -16,8 +16,8 @@ import type { ReadingPlansCardModel } from '../services/planRecommendations';
 // R2 ORIGINALS (noTransform — already cached from the Plan screens, so no
 // billable Cloudflare variant) and crop on-device via resizeMode="cover".
 
-const COVER_W = 70;
-const COVER_H = 90;    // 70x90 (per user)
+const COVER_W = 63;
+const COVER_H = 81;    // 70x90 → −10% (owner 2026-09-06), book proportion kept
 
 // Circular progress ring, PlanScreen percent math (completed/total).
 function ProgressRing({ percent }: { percent: number }) {
@@ -116,14 +116,14 @@ const styles = StyleSheet.create({
   // Flat white card — app-wide card system (radius 20, no border/shadow).
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 14,   // CARD_RADIUS rule (was 20 — 2026-09-06 normalization)
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 12,
     marginTop: 12,
   },
   title: {
-    fontSize: 21, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold, letterSpacing: 0.6,   // Lora 600 (back per user), keep 0.6 tracking
+    fontSize: 20, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold, letterSpacing: 0.6,   // section-title tier 20 (scale normalized 2026-09-06)
     textAlign: 'center', marginBottom: 6,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 8 },
@@ -138,8 +138,8 @@ const styles = StyleSheet.create({
   //
   // Applies to the ACTIVE plans too, not just the suggested ones — both lists
   // share these two styles. That is the right outcome: they are the same row.
-  rowTitle: { fontSize: 17.28, fontWeight: '600', color: TXT, fontFamily: FONTS.latoBold, letterSpacing: 0.5, lineHeight: 22.68 },
-  rowMeta: { fontSize: 14.04, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.5, marginTop: 4 },
+  rowTitle: { fontSize: 17, fontWeight: '600', color: TXT, fontFamily: FONTS.latoBold, letterSpacing: 0.5, lineHeight: 22.5 },
+  rowMeta: { fontSize: 14, color: TXTSUB, fontFamily: FONTS.lato, letterSpacing: 0.5, marginTop: 4 },
   ringText: { fontSize: 11.5, fontWeight: '700', color: TXT, fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6, marginBottom: 2 },
   dividerLabel: { fontSize: 12, fontWeight: '600', color: ROSE, fontFamily: FONTS.latoBold, letterSpacing: 1.1 },

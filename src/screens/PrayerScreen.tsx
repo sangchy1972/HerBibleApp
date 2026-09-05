@@ -1217,9 +1217,15 @@ export default function PrayerScreen({ navigation }: TabScreenProps<'prayer'>) {
           activeOpacity={0.85}
           style={styles.continueRow}
         >
-          <LinearGradient colors={['#F6B5D0', '#EB8BB6']} style={styles.continueIcon}>
-            <Feather name="book-open" size={42} color="#fff" />
-          </LinearGradient>
+          {/* An actual Bible book (owner 2026-09-05) — square crop of the
+              gp_psalm_019 art (open book under the sunrise, blank pages so it
+              reads in every language). Bundled, so it renders instantly and
+              offline; replaces the old pink-gradient glyph tile. */}
+          <Image
+            source={require('../../assets/bible_progress_book.jpg')}
+            style={styles.continueIcon}
+            resizeMode="cover"
+          />
           <View style={styles.continueMeta}>
             <Text style={styles.continueTitle} numberOfLines={1} ellipsizeMode="tail">
               {continueBookName} · Chapter {lastRead.chapter}

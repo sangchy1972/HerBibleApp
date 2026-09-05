@@ -10,6 +10,7 @@
 
 export type NudgeId =
   | 'firstRunTour'
+  | 'weeklyRecap'
   | 'achievementUnlock'
   | 'streakDaily'
   | 'resumeReminders'
@@ -32,6 +33,11 @@ export const NUDGE_PRIORITY: Record<NudgeId, number> = {
   // The first-run home tour outranks everything: it runs exactly once, on the
   // very first open after the questionnaire, and nothing may sit on top of it.
   firstRunTour:       5,
+  // The weekly recap unlock (owner 2026-09-05: highest of all). Only the
+  // once-ever first-run tour outranks it, and the two cannot collide — recap
+  // exempts users younger than 3 days. At most one show per day, three per
+  // week, gone once opened (services/weeklyRecap.ts owns that gating).
+  weeklyRecap:        8,
   achievementUnlock: 10,
   // The once-a-day full-screen streak ritual (first open of each local day,
   // streak ≥ 1). Right after achievement unlocks: a reward she just earned

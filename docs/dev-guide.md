@@ -817,6 +817,20 @@ PlanScreen is the reference implementation.
   PrayerScreen doubles as the streak-star flight origin; QuizPromoHost's
   afternoon `inGap` is now `mDone && !eDone && hour ∈ [12,18)` — slightly
   wider than the old waitEvening (readings no longer gate it).
+- **Weekly Recap** (`components/recap/`, `services/weeklyRecap.ts`, 2026-09-05):
+  Sunday-start weeks; the recap seen during week W covers all of W-1 — pure,
+  jest-covered calendar/aggregation/persona logic in the service. Prompt
+  gating: <3-day accounts exempt, 1 show/day, 3/week, opened-or-rolled = gone
+  forever (no archive). Nudge priority 8 (`weeklyRecap`, ignoresBudget) — the
+  highest after the once-ever first-run tour. Data is REAL: prayer DayRecords,
+  activity dates, quiz history, and ReadChapters' NEW `dailyCounts` (ymd →
+  chapters completed, rolling 35 days — counts only accrue from the build that
+  ships this, so the first recap honestly under-reports reading). Zero-weeks
+  still recap (quietSojourner, kindness-only copy). Persona copy: 8 ids under
+  `recap.persona.*`; ⚠️ non-EN strings are TEMPORARY English placeholders
+  until the owner signs off the EN copy — translate then. Backgrounds are
+  bundled `assets/recap/bg-*.jpg` (owner's art, AI badge cropped, ~340KB
+  total); every text block sits on a white card by rule.
 - **Share promo card** (`components/home/SharePromoCard.tsx`, 2026-08-22): the
   very last card of the home stack. One big square image (CDN
   `v1/share-promo/ShareHerBible-<EN|ES|DE|FR|PT>.webp`, ~160KB each; zh → EN

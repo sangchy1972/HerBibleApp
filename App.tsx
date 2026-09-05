@@ -62,6 +62,7 @@ import { FeaturedPlansProvider } from './src/state/FeaturedPlansContext';
 import { PlanCompletionProvider } from './src/state/PlanCompletionContext';
 import { GospelsPsalmsProvider } from './src/state/GospelsPsalmsContext';
 import AchievementUnlockSheet from './src/components/AchievementUnlockSheet';
+import WeeklyRecapHost from './src/components/recap/WeeklyRecapHost';
 import { LoginPromptProvider } from './src/state/LoginPromptContext';
 import { NudgeCoordinatorProvider } from './src/state/NudgeCoordinatorContext';
 import { FirstRunTourProvider } from './src/state/FirstRunTourContext';
@@ -340,6 +341,12 @@ export default function App() {
                                               AchievementsContext, so it fires
                                               from anywhere a counter changes. */}
                                           <AchievementUnlockSheet />
+                                          {/* Weekly Recap — the highest-priority
+                                              nudge (see nudgePriority). Checks
+                                              eligibility 2.5s after interactions
+                                              settle; two AsyncStorage reads, no
+                                              other cold-start work. */}
+                                          <WeeklyRecapHost />
                                           {/* Routes notification taps + widget
                                               deep-link URLs to the right
                                               destination screen. Must sit

@@ -34,8 +34,12 @@ BUCKET="herbible-verses-7languages"
 PREFIX="corpus/${SHORT}"
 DONE_LIST="${SRC_DIR}/.upload-done-${SHORT}"
 
-WRANGLER="${HOME}/claude_herbible_plan/workers/herbible-plans-7languages/node_modules/.bin/wrangler"
-if [ ! -x "$WRANGLER" ]; then WRANGLER="$(command -v wrangler || true)"; fi
+# WRANGLER_BIN env overrides everything — point it at a DIRECT binary
+# (node_modules/.bin/wrangler). npx-per-file costs ~8s of startup each; the
+# direct binary ~1s, which on 18k files is 3.5 hours versus ~25 minutes.
+WRANGLER="${WRANGLER_BIN:-}"
+if [ -z "$WRANGLER" ]; then WRANGLER="${HOME}/claude_herbible_plan/workers/herbible-plans-7languages/node_modules/.bin/wrangler"; fi
+if [ ! -x "${WRANGLER%% *}" ]; then WRANGLER="$(command -v wrangler || true)"; fi
 if [ -z "$WRANGLER" ]; then WRANGLER="npx --yes wrangler"; fi
 
 touch "$DONE_LIST"

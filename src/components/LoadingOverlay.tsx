@@ -11,7 +11,7 @@ import { useOnboarding } from '../state/OnboardingContext';
 import { useDailyVerses } from '../state/DailyVersesContext';
 import { localeFor } from '../i18n/locale';
 import { useT } from '../i18n/useT';
-import { startFirstOpenAdGate, getFirstOpenGateState, subscribeFirstOpenGate, gateRetryNow } from '../services/firstOpenAdGate';
+import { startFirstOpenAdGate, getFirstOpenGateState, subscribeFirstOpenGate } from '../services/firstOpenAdGate';
 import { LOADING_LINES } from '../constants/loadingContent';
 import { LOADING_IMAGE_FILES } from '../constants/loadingImages';
 import {
@@ -204,8 +204,8 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   const isNewUser = onboarding.ready && !onboarding.done;
 
   // First-open ad gate (owner 2026-08-22): a brand-new user's overlay also
-  // waits for the loading-screen ad to resolve — shown, no-fill grace, or a
-  // network hold with a visible message. Returning users never start it.
+  // waits briefly for the loading-screen ad — shown, or a short grace, never
+  // a wall (owner 2026-09-06). Returning users never start it.
   const gateState = useSyncExternalStore(subscribeFirstOpenGate, getFirstOpenGateState);
   // Guarded on hidingRef: if onboarding hydration outlived the 11s cap the
   // overlay is already leaving — starting the gate then would pop the ad at a
@@ -219,9 +219,14 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
     if (!isNewUser) return;
     const id = setInterval(() => {
       setProgress(prev => {
-        const target = allReady ? 100 : 90;
+        // Never freeze (owner 2026-09-06: the bar used to park dead at 90%
+        // while the ad gate held). It rides briskly to ~90, then keeps
+        // CRAWLING asymptotically toward 97 during any wait — always visibly
+        // alive — and sweeps to 100 the moment everything is ready.
+        const target = allReady ? 100 : 97;
         if (prev >= target) return prev;
-        const next = prev + Math.max(0.7, (target - prev) * 0.12);
+        const crawling = !allReady && prev >= 90;
+        const next = prev + Math.max(crawling ? 0.05 : 0.7, (target - prev) * (crawling ? 0.02 : 0.12));
         return Math.min(next, target);
       });
     }, 55);
@@ -285,7 +290,7 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
 
   // Hard safety cap — force away even if something never signals ready.
   useEffect(() => {
-    if (gateHolding) return;   // first-open gate owns its own exits (12s pending watchdog, 3s grace; network holds by design)
+    if (gateHolding) return;   // first-open gate owns its own exits (8s pending watchdog, 3s grace)
     const cap = setTimeout(fadeOut, MAX_VISIBLE_MS);
     return () => clearTimeout(cap);
   }, [fadeOut, gateHolding]);
@@ -330,14 +335,13 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   const onContent = phase === 'content';
 
   return (
-    // pointerEvents: normally "none" — nothing here is interactive, and a
+    // pointerEvents: ALWAYS "none" — nothing here is interactive (the network
+    // dialog that once needed taps is retired, owner 2026-09-06), and a
     // full-screen 'auto' View with no responder SWALLOWS touches (taps during
-    // the 700ms fade-out used to die). "box-none" ONLY while the network
-    // dialog is up, so its Try-again button can receive the tap; the moment
-    // the gate leaves 'network' the overlay goes tap-transparent again.
+    // the 700ms fade-out used to die).
     <Animated.View
       style={[StyleSheet.absoluteFillObject, styles.root, fade]}
-      pointerEvents={gateState === 'network' ? 'box-none' : 'none'}
+      pointerEvents="none"
     >
       {/* BACKDROP — fades in under the rising brand and pushes in 100 % → 110 %. */}
       {onContent && (
@@ -379,37 +383,18 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
 
       {/* FIRST-RUN PROGRESS — new users only, BOTH stages (owner 2026-08-22):
           bottom-anchored so it rides under the pink card AND the photo scene.
-          The ads notice keeps the loading-screen ad honest; a network hold
-          swaps it for the check-your-connection line. */}
+          The ads notice sits ABOVE the bar (owner 2026-09-06). */}
       {isNewUser && (
         <View style={styles.progressWrap} pointerEvents="none">
+          <Text style={[styles.adsNotice, onContent && onPhoto && { color: 'rgba(255,255,255,0.82)' }, onContent && onPhoto && styles.shadow]}>
+            {t('loading.adsNotice')}
+          </Text>
           <View style={[styles.progressTrack, onContent && onPhoto && styles.progressTrackOnPhoto]}>
             <View style={[styles.progressFill, { width: `${progress}%` }]} />
           </View>
           <Text style={[styles.progressPct, onContent && onPhoto && { color: '#FFFFFF' }, onContent && onPhoto && styles.shadow]}>
             {Math.round(progress)}%
           </Text>
-          <Text style={[styles.adsNotice, onContent && onPhoto && { color: 'rgba(255,255,255,0.82)' }, onContent && onPhoto && styles.shadow]}>
-            {t('loading.adsNotice')}
-          </Text>
-        </View>
-      )}
-
-      {/* NETWORK DIALOG — the house centered-card pattern (BibleScreen's
-          unread-confirm family): dim scrim, white card, bold title, rose
-          Try-again pill. Stays up while the gate holds in 'network'; a
-          restored connection exits the state and the dialog with it. The
-          automatic retries run regardless — the button adds agency (and an
-          immediate re-kick of the iOS onboarding unit). */}
-      {gateState === 'network' && (
-        <View style={styles.netScrim} pointerEvents="auto">
-          <View style={styles.netCard}>
-            <Text style={styles.netTitle}>{t('loading.noNetwork.title')}</Text>
-            <Text style={styles.netBody}>{t('loading.noNetwork.body')}</Text>
-            <TouchableOpacity style={styles.netBtn} activeOpacity={0.85} onPress={gateRetryNow}>
-              <Text style={styles.netBtnText}>{t('loading.noNetwork.retry')}</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       )}
 
@@ -509,34 +494,8 @@ const styles = StyleSheet.create({
   progressFill: { height: '100%', borderRadius: 3.5, backgroundColor: ROSE },
   progressTrackOnPhoto: { backgroundColor: 'rgba(255,255,255,0.28)' },
   adsNotice: {
-    marginTop: 8, fontSize: 11.5, color: TXTSUB,
+    marginBottom: 9, fontSize: 11.5, color: TXTSUB,   // sits ABOVE the bar (owner 2026-09-06)
     fontFamily: FONTS.lato, letterSpacing: 0.3,
-  },
-  netScrim: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(10,8,24,0.45)',
-    alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: 34,
-  },
-  netCard: {
-    width: '100%', backgroundColor: '#FFFFFF', borderRadius: CARD_RADIUS,
-    paddingHorizontal: 22, paddingTop: 22, paddingBottom: 18,
-  },
-  netTitle: {
-    fontSize: 19, fontWeight: '700', color: TXT, textAlign: 'center',
-    fontFamily: FONTS.latoBold, marginBottom: 10,
-  },
-  netBody: {
-    fontSize: 14.5, lineHeight: 21, color: TXTSUB, textAlign: 'center',
-    fontFamily: FONTS.lato, marginBottom: 18,
-  },
-  netBtn: {
-    height: 48, borderRadius: BTN_RADIUS, backgroundColor: ROSE,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  netBtnText: {
-    color: '#FFFFFF', fontSize: 16, fontFamily: FONTS.latoBold,
-    fontWeight: '700', letterSpacing: 0.4,
   },
   progressPct: {
     marginTop: 10, fontFamily: FONTS.merriweatherBold, fontSize: 13,

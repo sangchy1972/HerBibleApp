@@ -90,29 +90,27 @@ test('a late fill inside the grace window still shows', () => {
   expect(getFirstOpenGateState()).toBe('shown');
 });
 
-test('network holds past every watchdog and recovers on a later fill', () => {
+test('a network error means the same short grace as a no-fill — never a hold (owner 2026-09-06)', () => {
   startFirstOpenAdGate();
   gateSignalError('network');
-  expect(getFirstOpenGateState()).toBe('network');
-  jest.advanceTimersByTime(60_000);            // far past the 15s pending watchdog
-  expect(getFirstOpenGateState()).toBe('network');
-  ads.maybeShowOnboardingInterstitial.mockImplementation(() => { vis.__setVisible(true); return true; });
-  gateSignalFill();
-  expect(getFirstOpenGateState()).toBe('shown');
-});
-
-test('network → later real no-fill falls into the 3s grace', () => {
-  startFirstOpenAdGate();
-  gateSignalError('network');
-  gateSignalError('nofill');
   expect(getFirstOpenGateState()).toBe('grace');
   jest.advanceTimersByTime(3_000);
   expect(getFirstOpenGateState()).toBe('done');
 });
 
-test('15 silent seconds in pending give up', () => {
+test('a fill landing inside the network-error grace still shows', () => {
   startFirstOpenAdGate();
-  jest.advanceTimersByTime(14_999);
+  gateSignalError('network');
+  expect(getFirstOpenGateState()).toBe('grace');
+  ads.maybeShowOnboardingInterstitial.mockImplementation(() => { vis.__setVisible(true); return true; });
+  jest.advanceTimersByTime(1_000);
+  gateSignalFill();
+  expect(getFirstOpenGateState()).toBe('shown');
+});
+
+test('8 silent seconds in pending give up', () => {
+  startFirstOpenAdGate();
+  jest.advanceTimersByTime(7_999);
   expect(getFirstOpenGateState()).toBe('pending');
   jest.advanceTimersByTime(1);
   expect(getFirstOpenGateState()).toBe('done');

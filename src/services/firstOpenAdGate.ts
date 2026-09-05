@@ -7,23 +7,20 @@ import { onInterstitialVisibility, isInterstitialVisible } from './interstitialV
 // States and their exits:
 //   idle    — gate never started (returning user) → overlay ignores it.
 //   pending — waiting for init + first fill. Exits: fill→shown,
-//             real no-fill→grace, network error→network,
-//             PENDING_WATCHDOG_MS with no answer at all→done (never trap her
-//             on a silently-stalled SDK; the onboarding flow's own attempts
-//             remain as the catch-up, unchanged).
+//             any error→grace, PENDING_WATCHDOG_MS with no answer→done.
 //   shown   — the interstitial is on screen (over the overlay). Exit: the ad
 //             closes (interstitialVisibility flips false) → done.
-//   grace   — a REAL no-fill arrived; per owner, wait at most GRACE_MS more
+//   grace   — a no-fill OR network error arrived; wait at most GRACE_MS more
 //             (a late fill inside the window still shows), then done.
-//   network — the load failed as a NETWORK error; per owner, tell her to
-//             check her connection and hold. Deliberately unbounded, and the
-//             hold is honest on BOTH platforms: the engine retries forever on
-//             its own backoff (5s→60s), and the iOS onboarding unit's retry
-//             cap is LIFTED while this gate is active (ads.ts — the swarm
-//             found the capped 3×8s made this state a dead end there). A
-//             later fill/no-fill exits to shown/grace; first-run content
-//             needs the network anyway.
 //   done    — overlay may leave. Terminal.
+//
+// Policy rewrite (owner 2026-09-06: “没有广告就算了，广告可以后续加载”): the
+// gate is now a SHORT courtesy window, never a wall. The old unbounded
+// 'network' hold (check-your-connection dialog until connectivity returned)
+// is retired — a network-class ad failure gets the same short grace as a
+// no-fill, and the user walks into the app. An ad that fills late is not
+// lost: the onboarding flow's own maybeShowOnboardingInterstitial attempts
+// remain as the catch-up, unchanged (ads.ts).
 //
 // The ad layers (ads.ts onboarding unit, adEngine on Android) emit
 // gateSignalFill / gateSignalError from their existing LOADED/ERROR handlers,
@@ -31,15 +28,13 @@ import { onInterstitialVisibility, isInterstitialVisible } from './interstitialV
 // else. The show itself goes through maybeShowOnboardingInterstitial — same
 // once-ever latch the onboarding flow uses, so the two entry points can never
 // double-fire.
-export type FirstOpenGateState = 'idle' | 'pending' | 'shown' | 'grace' | 'network' | 'done';
+export type FirstOpenGateState = 'idle' | 'pending' | 'shown' | 'grace' | 'done';
 
-// 15s, not 12: day-0 initAds now starts 2.5s after interactions settle
-// (DAY0_ADS_INIT_STAGGER_MS in App.tsx — the ANR stagger, owner 2026-09-05),
-// so the watchdog grows by the same budget to keep the ad's effective
-// init+fill window at ~12s. The overlay's MAX_VISIBLE_MS cap is neutered
-// while the gate holds (gateHolding in LoadingOverlay), so no other number
-// needs to move.
-const PENDING_WATCHDOG_MS = 15_000;
+// 8s (owner 2026-09-06, down from 15): the 2.5s day-0 ads-init stagger plus
+// ~5.5s of real init+fill room. A US-network fill typically lands well inside
+// this; anyone slower walks into the app and the onboarding catch-up shows
+// the ad when it eventually loads. Never make her stare at a bar for an ad.
+const PENDING_WATCHDOG_MS = 8_000;
 const GRACE_MS = 3_000;
 const POLL_MS = 400;
 
@@ -79,7 +74,7 @@ function tryShow(): boolean {
 }
 
 function attempt(): void {
-  if (state !== 'pending' && state !== 'grace' && state !== 'network') return;
+  if (state !== 'pending' && state !== 'grace') return;
   // adsRemoved hydrates inside initAds — a restored purchaser reads false at
   // start and true a few seconds later; release immediately then rather than
   // spending the 12s watchdog (swarm 2026-08-22).
@@ -120,7 +115,7 @@ export function startFirstOpenAdGate(): void {
 
 /** True while ad layers should report their load outcomes here. */
 export function firstOpenGateActive(): boolean {
-  return state === 'pending' || state === 'grace' || state === 'network';
+  return state === 'pending' || state === 'grace';
 }
 
 export function gateSignalFill(): void {
@@ -130,30 +125,15 @@ export function gateSignalFill(): void {
 
 export function gateSignalError(kind: 'nofill' | 'network'): void {
   if (!firstOpenGateActive()) return;
-  if (kind === 'network') {
-    if (state === 'grace') return;   // grace already counting down — let it end
-    if (watchdogTimer) { clearTimeout(watchdogTimer); watchdogTimer = null; }
-    setState('network');
-    return;
-  }
-  // Real no-fill → the owner's 3s grace. A late fill inside the window still
-  // shows (the poll keeps attempting); otherwise enter the app.
-  if (state === 'grace') return;
+  // No-fill and network failures land in the same short grace now (owner
+  // 2026-09-06): a late fill inside the window still shows (the poll keeps
+  // attempting); otherwise she enters the app and the onboarding catch-up
+  // owns any ad that loads later. `kind` is kept for callers/logging.
+  void kind;
+  if (state === 'grace') return;   // grace already counting down — let it end
   if (watchdogTimer) { clearTimeout(watchdogTimer); watchdogTimer = null; }
   setState('grace');
   graceTimer = setTimeout(() => { if (state === 'grace') finish(); }, GRACE_MS);
-}
-
-/** The network dialog's Try-again: nudge the loaders and re-attempt now.
- *  The automatic retries keep running regardless — this only adds agency. */
-export function gateRetryNow(): void {
-  if (state !== 'network') return;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const ads = require('./ads') as { kickFirstOpenLoad?: () => void };
-    ads.kickFirstOpenLoad?.();
-  } catch { /* the poll keeps attempting either way */ }
-  attempt();
 }
 
 export function getFirstOpenGateState(): FirstOpenGateState { return state; }

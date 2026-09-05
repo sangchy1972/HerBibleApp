@@ -40,6 +40,9 @@ export const DAILY_VERSE_AUDIO_LANG = 'en';
 // references). When batch-2 audio lands: run
 // scripts/gen_dailyverse_audio_manifest.mjs against the new files, probe
 // full coverage (check_daily_verse_audio.sh), THEN re-add languages here.
+// This set gates ONLY the regular daily-verse narration — holiday narration
+// has its own set below (separate folder, separate manifest, untouched by
+// batch 2; emptying this one must never silence the holidays again).
 export const AVAILABLE_DAILY_VERSE_AUDIO_LANGS = new Set<string>([]);
 
 // Per-language upload HOLES at VERSE granularity — any missing step mp3 hides
@@ -105,9 +108,33 @@ export function dailyVerseAudioUrl(filename: string, lang: string = DAILY_VERSE_
 export const HOLIDAY_VERSE_AUDIO_BASE =
   'https://audio.everlandapps.com/dailyverse_4steps_audio_7languages_holidays';
 
-// Holiday audio ships in the same three languages as the regular narration.
+// Holiday narration availability — INDEPENDENT of the regular set above.
+// The holiday recordings (10 holidays × morning/evening × 4 steps) predate
+// batch 2, live in their own folder + bundled manifest, and were never part
+// of the id-collision problem that emptied AVAILABLE_DAILY_VERSE_AUDIO_LANGS.
+// This function used to read that shared set, so the batch-2 kill switch
+// silently coupled the two — decoupled 2026-09-05.
+//
+// ⚠️ EMPTY because the files are GONE from the CDN (probed 2026-09-05):
+// commit b5faae4 verified …_holidays/EN|ES|PT/ live on 2026-07-08, but every
+// probe of those exact URLs now 404s while the regular narration in the SAME
+// bucket still 200s — the holiday folder was deleted from R2 some time after
+// July, and no local copy was found on this machine. Shipped builds ≤35 still
+// offer the button and will hit the 404 on the next holiday (Thanksgiving
+// 2026-11-26). When the 80 clips (+ .json timing siblings) are re-uploaded
+// under the layout holidayVerseAudioUrl() builds, re-add 'en','es','pt' here —
+// nothing else needs touching.
+export const AVAILABLE_HOLIDAY_VERSE_AUDIO_LANGS = new Set<string>([]);
+
 export function isHolidayVerseAudioAvailable(lang: string): boolean {
-  return AVAILABLE_DAILY_VERSE_AUDIO_LANGS.has(lang);
+  return AVAILABLE_HOLIDAY_VERSE_AUDIO_LANGS.has(lang);
+}
+
+// Holiday counterpart of resolveDailyVerseAudioLang: the UI language itself
+// when holiday narration exists for it, otherwise null (no silent fallback
+// to English for non-English readers).
+export function resolveHolidayVerseAudioLang(uiLang: string): string | null {
+  return AVAILABLE_HOLIDAY_VERSE_AUDIO_LANGS.has(uiLang) ? uiLang : null;
 }
 
 export function holidayVerseAudioUrl(filename: string, lang: string = DAILY_VERSE_AUDIO_LANG): string {

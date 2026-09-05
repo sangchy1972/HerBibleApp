@@ -1274,6 +1274,20 @@ above the Account block; merger in `services/progressMerge.ts`; tests
   do, re-check the ⓘ-dialog/listen-coach stacking (dialog z60, coaches z90;
   both are one-shots so a collision is rare, but the choreography has never
   been exercised live).
+- **Holiday narration has its OWN availability set** (2026-09-05):
+  `isHolidayVerseAudioAvailable` used to read the regular set above, so the
+  batch-2 kill switch silently disabled holiday Listen too — decoupled into
+  `AVAILABLE_HOLIDAY_VERSE_AUDIO_LANGS`. That set is ALSO empty, for a
+  different reason: **the 80 holiday clips are gone from R2**. Commit b5faae4
+  verified `…_7languages_holidays/EN|ES|PT/` live on 2026-07-08; the same URLs
+  404 as of 2026-09-05 while regular narration in the same bucket still 200s,
+  and no local copy exists on the dev machine. Builds ≤35 still offer holiday
+  Listen and will 404 on Thanksgiving (2026-11-26) — dead button, no crash.
+  To restore: re-upload (or re-TTS) the 80 mp3s + their `.json` timing
+  siblings under the exact layout `holidayVerseAudioUrl()` builds (UPPERCASE
+  lang folders), probe coverage, then re-add en/es/pt to the holiday set —
+  one line, independent of the batch-2 switch. Holiday TEXT overrides are
+  unaffected (covers.everlandapps.com/v1/holiday-verses/, probed 200 ×7).
 - **`verse_local`** (schema 3.2): Segond/Luther count long psalm titles as v1 —
   5 psalm entries carry a shifted local number, shown when the ACTIVE Bible is
   fr/de (PrayerFlow `refSource`). Known accepted edge: an en-UI user reading a

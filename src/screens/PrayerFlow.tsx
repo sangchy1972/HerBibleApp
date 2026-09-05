@@ -61,7 +61,7 @@ import { useUILanguage } from '../state/UILanguageContext';
 const LOTTIE_PRAYER_HANDS = require('../../assets/lottie/prayer-hands.json');
 const LOTTIE_CONFETTI = require('../../assets/lottie/confetti.json');
 import { prepareVerseAudio, prepareHolidayVerseAudio, verseIdFor } from '../services/dailyVerseAudioService';
-import { DAILY_VERSE_AUDIO_LANG, resolveDailyVerseAudioLang, isDailyVerseAudioAvailable, isHolidayVerseAudioAvailable } from '../constants/dailyVerseAudioCdn';
+import { DAILY_VERSE_AUDIO_LANG, resolveDailyVerseAudioLang, resolveHolidayVerseAudioLang, isDailyVerseAudioAvailable, isHolidayVerseAudioAvailable } from '../constants/dailyVerseAudioCdn';
 import { fetchStepTimings, type SentenceTiming } from '../services/verseHighlight';
 import HighlightedText from '../components/HighlightedText';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -560,10 +560,19 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // page's clip from 0. The bg music keeps playing throughout — separate
   // players, separate controls.
   const { lang: uiLang } = useUILanguage();
-  // Narration language for this UI language (en/es/pt today), or null when
-  // none is recorded. The full Listen gate ALSO checks per-verse availability
-  // below (`listenOk`) once today's verseId is known.
-  const audioLang = resolveDailyVerseAudioLang(uiLang);
+  // Holiday verses carry a `holidayId` and live in a SEPARATE audio
+  // folder/manifest (their m_NNN/e_NNN ids collide with the regular set), so
+  // route narration — availability included — to the holiday pipeline when
+  // today's verse is a holiday.
+  const isHolidayVerse = !!dailyVerse && (dailyVerse as { holidayId?: string }).holidayId != null;
+  // Narration language for this UI language, or null when none is recorded.
+  // Holiday and regular narration have INDEPENDENT availability sets (batch 2
+  // emptied the regular one while the holiday recordings stayed live), so
+  // resolve against the set that matches today's verse. The full Listen gate
+  // ALSO checks per-verse availability below (`listenOk`).
+  const audioLang = isHolidayVerse
+    ? resolveHolidayVerseAudioLang(uiLang)
+    : resolveDailyVerseAudioLang(uiLang);
   const [listenOn, setListenOn] = useState(false);
 
   // ── Narration coach mark ─────────────────────────────────────────────────
@@ -634,12 +643,8 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const [stepTimings, setStepTimings] = useState<(SentenceTiming[] | null)[] | null>(null);
 
   const verseDay = dailyVerse?.day ?? null;
-  // Holiday verses carry a `holidayId` and live in a SEPARATE audio
-  // folder/manifest (their m_NNN/e_NNN ids collide with the regular set), so
-  // route narration to the holiday pipeline when today's verse is a holiday.
-  const isHolidayVerse = !!dailyVerse && (dailyVerse as { holidayId?: string }).holidayId != null;
-  // Listen availability = language recorded AND per-verse: the holiday bucket
-  // is English-only, and the regular set may have per-language upload holes
+  // Listen availability = language recorded AND per-verse: the holiday set is
+  // en/es/pt, and the regular set may have per-language upload holes
   // (isDailyVerseAudioAvailable) — a visible button that 404s is worse than
   // no button. verseId stays null when unavailable, which disables the whole
   // download/timings pipeline below.

@@ -25,7 +25,7 @@
 
 // Local AsyncStorage cache tag. Bump on a schema/shape change to discard
 // every device's stale parsed copy.
-export const DAILY_VERSES_VERSION = 'v2';
+export const DAILY_VERSES_VERSION = 'v4';
 
 // ⚠️ CONTENT-BATCH PATH VERSION — the hard lesson of batch 2 (2026-08-30):
 // shipped builds re-fetch this bucket on EVERY cold start
@@ -36,7 +36,7 @@ export const DAILY_VERSES_VERSION = 'v2';
 // content-breaking batch therefore gets its own key prefix; old builds keep
 // reading their own files forever. Same-key overwrite + ETag remains fine
 // ONLY for shape-compatible fixes within a batch.
-export const DAILY_VERSES_PATH = 'v2';
+export const DAILY_VERSES_PATH = 'v4';
 
 // Daily verses are served PUBLICLY + R2-direct from the dedicated
 // herbible-verses-7languages bucket, exposed via its own R2 Custom Domain

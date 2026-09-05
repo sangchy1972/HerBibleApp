@@ -1311,9 +1311,22 @@ above the Account block; merger in `services/progressMerge.ts`; tests
   one line, independent of the batch-2 switch. Holiday TEXT overrides are
   unaffected (covers.everlandapps.com/v1/holiday-verses/, probed 200 ×7).
 - **`verse_local`** (schema 3.2): Segond/Luther count long psalm titles as v1 —
-  5 psalm entries carry a shifted local number, shown when the ACTIVE Bible is
-  fr/de (PrayerFlow `refSource`). Known accepted edge: an en-UI user reading a
-  de Bible sees the KJV number on those 5 (the en file carries no verse_local).
+  shifted psalm entries carry a local number, shown when the ACTIVE Bible is
+  fr/de (PrayerFlow `refSource`). **9 entries since batch-2 r2** (was 5): Ps
+  62/59/34/20/4/56/46/38/42 — the r2 verse replacements added four more.
+  Known accepted edge: an en-UI user reading a de Bible sees the KJV number on
+  those (the en file carries no verse_local).
+- **Batch-2 r2 (2026-09-05)**: 21 verses duplicated live batch 1 (the content
+  agent couldn't see batch-1's list and didn't say so — owner ordered the
+  replacement). Only reference + scripture text + prose + exegesis (+
+  verse_local fr/de) changed; day/id/segment/structure untouched. mood_tags
+  DID follow the new verses on all 21 — contrary to the delivery note, but
+  authoring-side only (gen_cdn strips them; the client never reads them).
+  Deployed as **/v4/** with the bundled subset unchanged (days 1–3 contain no
+  replaced entry). ⚠️ **/v3/ is dead — never reuse it**: the upload script
+  used to ignore its dir argument and shipped a stale `_cdn_ready` leftover to
+  v3/, and the verification curls cached those bytes at the edge. The script
+  now honors `$1`; always spot-check a CHANGED entry after any upload.
 - **`context_note`** (schema 3.2): per-language background note behind the ⓘ
   on the verse page; house dialog + a one-shot SpotlightCoach
   (`guide:contextNote:v1`, burned on display, yields to the listen coach).

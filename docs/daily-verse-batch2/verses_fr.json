@@ -323,20 +323,20 @@
       "reference": {
         "book": "Philippians",
         "chapter": 4,
-        "verse": "13",
-        "full_reference": "Philippians 4:13"
+        "verse": "8",
+        "full_reference": "Philippians 4:8"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨力量",
-        "#日常疲惫",
-        "#学习知足"
+        "#思绪纷乱",
+        "#想要专注",
+        "#被念头缠住"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "Je puis tout par celui qui me fortifie."
+            "text": "Au reste, frères, que tout ce qui est vrai, tout ce qui est honorable, tout ce qui est juste, tout ce qui est pur, tout ce qui est aimable, tout ce qui mérite l'approbation, ce qui est vertueux et digne de louange, soit l'objet de vos pensées."
           },
           "modern": {
             "version": "BDS",
@@ -348,21 +348,21 @@
         "verse_category": {
           "testament": "NT",
           "genre": "epistle",
-          "primary_theme": "contentment"
+          "primary_theme": "thoughts"
         },
-        "niv_word_count": 11,
-        "context_note": "Paul remercie les Philippiens pour un don tout en affirmant qu'il avait déjà appris à s'en passer. Les deux versets précédents énumèrent l'abondance et la faim, le trop et le manque. Son mot pour « se contenter » est autarkes, terme que les stoïciens employaient pour l'autosuffisance ; Paul le déplace sans bruit : non pas suffisant en lui-même, suffisant en Christ."
+        "niv_word_count": 41,
+        "context_note": "Paul écrit depuis une résidence surveillée, à une Église qu'il aime et ne peut pas visiter. Le verbe grec derrière cette liste, logizomai, est un terme de comptabilité : porter au registre, tenir compte de. Segond le traduit par une tournure d'attention — ce qui doit occuper la pensée. Il décrit une orientation délibérée, non une humeur, et c'est bien pour cela qu'elle peut être commandée."
       },
       "devotional": {
         "structure": "同行劝勉",
         "fr": {
-          "meditation": "C'est sans doute le verset le plus cité de cette lettre, et presque toujours dans le mauvais sens — comme carburant pour gagner quelque chose.\n\nRegardons ce que Paul écrit juste avant. Il parle d'avoir appris à se contenter : être rassasié, avoir faim, être dans l'abondance, être dans le dénuement. Le « tout » du verset, ce sont ces situations-là. En tant que chrétiennes, nous pouvons cesser de lire cette phrase comme la promesse que nous réussirons. C'est la promesse que nous serons tenues, dans celle de ces situations où nous nous trouvons cette semaine.",
-          "action_step": "Dis ce verset à propos de la partie la plus ordinaire et la plus pénible de ta journée, pas d'un objectif. Je peux faire ce trajet. Je peux tenir ce service."
+          "meditation": "Ce n'est pas un ordre d'être positive. Paul écrit depuis sa détention, et sa liste contient ce qui est vrai et ce qui est juste — pas seulement ce qui est agréable.\n\nRegarde la formule qu'il emploie : que ces choses soient l'objet de ta pensée. Il ne demande pas de ressentir autrement, il indique ce qui doit occuper la place. Et cela, on peut le décider. En tant que chrétiennes, nous essayons surtout d'arrêter de penser à quelque chose, et ça ne marche presque jamais. L'instruction va dans l'autre sens : mettre quelque chose dedans, plutôt que se battre pour en sortir quelque chose.",
+          "action_step": "Choisis une chose vraie au sujet de Dieu et emporte-la dans ton premier moment difficile aujourd'hui. Dis-la une fois, en silence, avant de prendre la parole."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, je me suis servie de ce verset pour te réclamer des résultats. Aujourd'hui je voudrais m'en servir correctement. Que cette semaine soit pleine ou maigre, apprends-moi à être tenue dans les deux cas. Donne-moi de la force pour les parties ordinaires que j'espère toujours pouvoir sauter. Au nom de Jésus, amen."
+        "fr": "Cher Père céleste, mon esprit retourne aux mêmes endroits usés sans me demander mon avis, et me répéter d'arrêter n'a jamais rien donné. Donne-moi ce matin quelque chose de meilleur à y mettre. Montre-moi une chose vraie, et laisse-la-moi sous les yeux pendant les heures de cette journée que je redoute déjà. Au nom de Jésus, amen."
       }
     },
     {
@@ -671,22 +671,22 @@
       "segment": "morning",
       "language": "fr",
       "reference": {
-        "book": "Jeremiah",
-        "chapter": 29,
-        "verse": "11",
-        "full_reference": "Jeremiah 29:11"
+        "book": "Micah",
+        "chapter": 7,
+        "verse": "7",
+        "full_reference": "Micah 7:7"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#看不见未来",
-        "#神有计划"
+        "#等了很久",
+        "#盼望未至",
+        "#想要交托"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "Car je connais les projets que j'ai formés sur vous, dit l'Éternel, projets de paix et non de malheur, afin de vous donner un avenir et de l'espérance."
+            "text": "Pour moi, je regarderai vers l'Éternel, Je mettrai mon espérance dans le Dieu de mon salut; Mon Dieu m'exaucera."
           },
           "modern": {
             "version": "BDS",
@@ -697,22 +697,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "OT",
-          "genre": "prophecy/letter",
+          "genre": "prophecy",
           "primary_theme": "hope"
         },
-        "niv_word_count": 29,
-        "context_note": "Ces mots viennent d'une lettre que Jérémie envoie à des déportés déjà installés à Babylone. Les versets qui précèdent leur disent de bâtir des maisons, de planter des jardins et de s'installer, car ils resteront là soixante-dix ans. La promesse est réelle et l'échéance est longue. Beaucoup de gens citent ce verset sans avoir lu la phrase d'avant."
+        "niv_word_count": 27,
+        "context_note": "Michée 7 s'ouvre sur une société qui s'effondre — juges achetés, trahison jusque dans la maison. Le texte français ne dit pas « c'est pourquoi » mais « pour moi » : une prise de position personnelle au milieu du désastre. Et l'espérance y est un verbe d'action, quelque chose qu'on met quelque part, ce qui explique qu'on puisse le choisir un mauvais matin."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "fr": {
-          "meditation": "C'est le verset qu'on imprime sur les cartes, et il a été écrit à des gens qui venaient d'apprendre qu'ils ne rentreraient pas chez eux avant soixante-dix ans. Bâtissez des maisons. Plantez des jardins. Fondez des familles. Et c'est seulement après cette consigne-là que vient la phrase sur les projets de paix.\n\nAlors entends bien ce qui t'est promis ce matin. Pas que la saison difficile touche à sa fin. Mais qu'elle n'est pas un détour, et que Quelqu'un tient la forme entière de ta vie, y compris la partie qui prend beaucoup plus de temps que tu ne l'avais prévu. Tu n'as pas à attendre que ta vraie vie redémarre. Elle a déjà commencé, ici, dans celle-ci !",
-          "action_step": "Fais aujourd'hui une chose qui traite cette saison comme ta vraie vie et non comme une salle d'attente. Plante quelque chose, répare quelque chose, invite quelqu'un."
+          "meditation": "Lis ce qui précède. Michée vient de décrire une société où l'on ne peut plus se fier à son voisin, à son ami, ni à la personne qui dort à côté de soi. C'est le paragraphe le plus noir du livre. Puis vient : pour moi. Deux mots qui ne nient rien de ce qui précède et qui se placent quand même en face.\n\nTrois mouvements suivent, et aucun n'est une solution. Je regarderai. Je mettrai mon espérance. Mon Dieu m'exaucera. Regarde le verbe du milieu : mettre. L'espérance n'est pas ici un état d'âme qui nous tombe dessus, c'est quelque chose qu'on dépose quelque part, volontairement, comme on pose un objet lourd à un endroit précis. Tu n'es pas en train d'échouer parce que rien n'a encore changé. Déposer, c'est déjà l'acte demandé !",
+          "action_step": "Avant de regarder quoi que ce soit d'autre ce matin, lève les yeux une fois et dis à Dieu où tu déposes ton espérance aujourd'hui."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, je traite cette période comme une interruption de ma vraie vie. Pardonne-moi de retenir mon souffle en attendant qu'elle passe enfin. Merci de ne pas être absent d'une saison que tu n'as pas enlevée. Aide-moi à bâtir quelque chose ici, dans celle-là même, pendant que j'attends ce qui viendra ensuite. Au nom de Jésus, amen."
+        "fr": "Cher Père céleste, rien n'a changé et je n'ai plus d'idées pour que cela change. Ce matin, je ne demande pas un plan. Je demande la patience de rester tournée vers toi pendant que j'attends. Je dépose mon espérance chez toi, faute de meilleur endroit. Merci de ce qu'attendre n'est pas ne rien faire, et que tu m'entends de toute façon. Au nom de Jésus, amen."
       }
     },
     {
@@ -821,22 +821,22 @@
       "segment": "morning",
       "language": "fr",
       "reference": {
-        "book": "Psalms",
-        "chapter": 119,
-        "verse": "105",
-        "full_reference": "Psalms 119:105"
+        "book": "Daniel",
+        "chapter": 2,
+        "verse": "22",
+        "full_reference": "Daniel 2:22"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
         "#看不清前路",
-        "#一步之光"
+        "#寻求方向",
+        "#心里发暗"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "Ta parole est une lampe à mes pieds, Et une lumière sur mon sentier."
+            "text": "Il révèle ce qui est profond et caché, il connaît ce qui est dans les ténèbres, et la lumière demeure avec lui."
           },
           "modern": {
             "version": "BDS",
@@ -847,22 +847,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "OT",
-          "genre": "psalm",
+          "genre": "narrative",
           "primary_theme": "guidance"
         },
-        "niv_word_count": 13,
-        "context_note": "La lampe de cette image est une petite lampe d'argile, tenue à la main ou attachée à la cheville. Elle éclairait peut-être un pas, certainement pas la route. Celle ou celui qui a écrit le Psaume 119 ne s'est pas vu promettre de la visibilité, mais assez de lumière pour avancer d'un pas sans tomber."
+        "niv_word_count": 22,
+        "context_note": "Daniel est sur le point d'être exécuté avec les autres conseillers de Babylone, faute d'avoir interprété un rêve que le roi refusait de décrire. Ces mots sont sa réaction quand la réponse lui est donnée. L'araméen derrière « profond » évoque l'insondable : le texte ne promet pas que Dieu explique tout, mais que rien ne lui est caché."
       },
       "devotional": {
         "structure": "同行劝勉",
         "fr": {
-          "meditation": "La lampe de ce verset n'est pas un projecteur. C'est une petite lampe d'argile portée bas, qui éclaire à peu près un pas devant les pieds.\n\nEt c'est là toute l'honnêteté de la promesse. Non pas que nous verrons où tout cela nous mène, mais que nous pourrons poser le pied suivant sans tomber. Si tu attends de voir la route entière avant de bouger, tu attends une chose qui ne t'a jamais été promise.",
-          "action_step": "Identifie le tout prochain pas, pas le plan mais le pas, et fais-le aujourd'hui avant que la journée ne se remplisse toute seule."
+          "meditation": "Daniel dit cela après qu'on lui a demandé d'interpréter un rêve que personne ne voulait lui raconter. Une mission impossible, et sa réponse ne parle pas du tout de ses propres capacités.\n\nRemarque la ligne du milieu : il connaît ce qu'il y a dans les ténèbres — pas : il les supprimera. En tant que chrétiennes, nous demandons qu'on allume la lumière. Le texte dit qu'il y a Quelqu'un qui voit déjà là-dedans. C'est une autre consolation, et souvent la seule disponible.",
+          "action_step": "Nomme une situation dont tu ne vois pas l'issue. Remets-la à Dieu ce matin sans réclamer encore l'explication, et occupe-toi seulement de la journée qui vient."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, je veux voir toute la route, et tu m'as donné une lampe pour un seul pas. Aide-moi à cesser de négocier plus de lumière et à me mettre en marche avec ce que j'ai. Montre-moi le pas suivant, ce matin. Au nom de Jésus, amen."
+        "fr": "Cher Père céleste, je ne vois pas clair là-dedans et j'ai cessé de faire semblant. Merci de ce que l'obscurité n'est pas obscure pour toi. Continue de voir ce que je ne vois pas, et donne-moi assez de lumière pour aujourd'hui. Au nom de Jésus, amen."
       }
     },
     {
@@ -1521,22 +1521,22 @@
       "segment": "morning",
       "language": "fr",
       "reference": {
-        "book": "1 Corinthians",
-        "chapter": 15,
-        "verse": "57",
-        "full_reference": "1 Corinthians 15:57"
+        "book": "2 Thessalonians",
+        "chapter": 3,
+        "verse": "3",
+        "full_reference": "2 Thessalonians 3:3"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#屡战屡败",
-        "#得胜是被赐的"
+        "#被人辜负",
+        "#想要依靠",
+        "#学习分辨"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "Mais grâces soient rendues à Dieu, qui nous donne la victoire par notre Seigneur Jésus-Christ!"
+            "text": "Le Seigneur est fidèle, il vous affermira et vous préservera du malin."
           },
           "modern": {
             "version": "BDS",
@@ -1548,21 +1548,21 @@
         "verse_category": {
           "testament": "NT",
           "genre": "epistle",
-          "primary_theme": "victory"
+          "primary_theme": "faithfulness"
         },
-        "niv_word_count": 15,
-        "context_note": "Paul referme ici un long chapitre sur la résurrection : la victoire dont il parle est remportée sur la mort elle-même, pas sur ta pire habitude. Le verbe grec est au présent continu — Dieu ne cesse pas de la donner. Et Paul rend grâce avant que rien de visible n'ait changé."
+        "niv_word_count": 14,
+        "context_note": "Paul écrit à une Église pressée de l'extérieur et troublée de l'intérieur par de faux enseignements. Le grec pistos, « fidèle », partage sa racine avec la « foi » que tout le monde n'a pas, un verset plus haut ; le français garde cet écho. Segond n'ouvre pas par « mais » : la fidélité de Dieu est simplement posée, sans nier la première constatation."
       },
       "devotional": {
         "structure": "同行劝勉",
         "fr": {
-          "meditation": "Regarde le temps du verbe. Pas « a donné », une fois, il y a très longtemps. Il donne — encore, ce matin compris.\n\nEt regarde qui agit. En tant que chrétiennes, nous récrivons souvent ce verset en discours sur notre propre discipline, et dès le jeudi nous nous sentons imposteures. Paul ne dit pas que nous gagnons. Il rend grâce à Dieu, parce que c'est lui qui la donne, et il la donne à des gens qui n'ont rien remporté. Ce qui veut dire que l'échec rapporté ici la semaine dernière ne te disqualifie pas : la même victoire t'est tendue ce matin, aux mêmes conditions que la première fois.",
-          "action_step": "Nomme la chose devant laquelle tu perds toujours. Puis redis ce verset sur elle, au présent, à voix haute, une seule fois."
+          "meditation": "Regarde le contraste que Paul est en train de tracer. La phrase précédente parle de gens sur qui on ne peut pas compter : tous n'ont pas la foi, dit-il, sans détour. Puis, immédiatement : le Seigneur est fidèle. En français, les deux mots viennent de la même racine — la foi et la fidélité — et l'écho est voulu.\n\nIl ne leur conseille pas de trouver de meilleures fréquentations. Il déplace le poids. En tant que chrétiennes, nous essayons souvent de restaurer la confiance là où elle n'est objectivement pas justifiée, puis nous nous reprochons de manquer de grâce. Paul ne demande pas cela. Il met ce qui est solide ailleurs, et laisse le reste porter son nom.",
+          "action_step": "Nomme une personne que tu essaies de rendre fiable. Ce matin, pose ce poids ailleurs, et dis à Dieu que tu le lui confies."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, je suis fatiguée de t'apporter toujours le même échec. Merci de continuer à donner, sans avoir jamais commencé à rationner. Je ne prétends rien avoir gagné ce matin, parce que ce n'est pas vrai. Je reçois simplement ce que tu tends encore. Aide-moi à repartir d'ici les mains ouvertes plutôt que serrées. Au nom de Jésus, amen."
+        "fr": "Cher Père céleste, je continue de m'appuyer sur quelqu'un qui ne peut pas me porter, puis je m'en veux quand tout cède. Ce matin, je veux mettre mon poids là où cela tiendra. Affermis-moi de l'intérieur, pour que je cesse de réclamer aux gens ce que toi seul peux donner. Au nom de Jésus, amen."
       }
     },
     {
@@ -1871,22 +1871,22 @@
       "segment": "morning",
       "language": "fr",
       "reference": {
-        "book": "2 Timothy",
-        "chapter": 1,
-        "verse": "7",
-        "full_reference": "2 Timothy 1:7"
+        "book": "Psalms",
+        "chapter": 119,
+        "verse": "114",
+        "full_reference": "Psalms 119:114"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨力量",
-        "#畏缩不前",
-        "#刚强的心"
+        "#需要庇护",
+        "#鼓起勇气",
+        "#今天要面对"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "Car ce n'est pas un esprit de timidité que Dieu nous a donné, mais un esprit de force, d'amour et de sagesse."
+            "text": "Tu es mon asile et mon bouclier; J'espère en ta promesse."
           },
           "modern": {
             "version": "BDS",
@@ -1896,23 +1896,23 @@
       },
       "exegesis": {
         "verse_category": {
-          "testament": "NT",
-          "genre": "epistle",
+          "testament": "OT",
+          "genre": "psalm",
           "primary_theme": "courage"
         },
-        "niv_word_count": 18,
-        "context_note": "Paul écrit à un collègue plus jeune qui semble se replier. Les trois dons viennent en bloc : la force sans l'amour durcit, l'amour sans sagesse perd toute forme. La Segond traduit le troisième mot par « sagesse » — savoir quoi faire de la force et de l'amour qu'on a reçus."
+        "niv_word_count": 15,
+        "context_note": "Le Psaume 119 est un acrostiche sur la parole de Dieu, écrit par quelqu'un sous une opposition durable. L'hébreu sether désigne un abri physique — une cachette, un endroit où va réellement quelqu'un qu'on poursuit ; Segond dit « asile ». Les deux images ne sont pas une variation poétique : elles décrivent deux situations, tenues par la même personne."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "fr": {
-          "meditation": "Trois choses données ensemble, et elles ont besoin les unes des autres. La force seule durcit. L'amour seul n'a pas de forme. La sagesse est ce qui sait où poser l'un et l'autre, avec qui, et à quel moment.\n\nPaul écrit cela parce que Timothée est en train de se rétracter. Ce que Dieu t'a mis dans les mains, ce n'est pas la timidité, mais la force, l'amour et la sagesse — les trois ensemble, jamais l'un sans les autres. Tu as donc de quoi parler aujourd'hui, et de quoi bien le faire!",
-          "action_step": "Repère la phrase que tu n'as pas dite cette semaine. Décide si tu la dis aujourd'hui, à qui, et avec quels mots exactement."
+          "meditation": "Deux images, et elles font le contraire l'une de l'autre. Un asile, c'est un lieu où l'on entre pour être hors d'atteinte. Un bouclier, c'est ce qu'on emporte avec soi pour y aller. Les deux, de la même personne, dans une seule ligne.\n\nCe verset ne tranche donc pas la question : faut-il se retirer ou tenir debout ? Il dit qui est là dans les deux cas. Il y a des matins pour rentrer et des matins pour sortir. Lui ne change pas d'un matin à l'autre !",
+          "action_step": "Décide quel genre de matin c'est — un matin d'asile ou un matin de bouclier — et dis-le à voix haute avant de commencer quoi que ce soit."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, je me suis tue là où j'aurais dû parler, et j'ai appelé cela de l'humilité. Donne-moi ensemble la force, l'amour et la sagesse — pas l'un sans les autres. Montre-moi ce que j'ai à dire aujourd'hui. Au nom de Jésus, amen."
+        "fr": "Cher Père céleste, ce matin je ne sais pas s'il faut me mettre à l'abri ou tenir debout, et j'en ai fait une chose que je devrais deviner correctement. Sois les deux pour moi. Couvre-moi là où j'ai besoin d'un abri, et marche devant moi là où je dois y aller. Au nom de Jésus, amen."
       }
     },
     {
@@ -1971,22 +1971,22 @@
       "segment": "morning",
       "language": "fr",
       "reference": {
-        "book": "Hebrews",
-        "chapter": 11,
-        "verse": "1",
-        "full_reference": "Hebrews 11:1"
+        "book": "Matthew",
+        "chapter": 7,
+        "verse": "24",
+        "full_reference": "Matthew 7:24"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#看不见证据",
-        "#信心的实底"
+        "#听了很多",
+        "#想要落地",
+        "#没人看见"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "Or la foi est une ferme assurance des choses qu'on espère, une démonstration de celles qu'on ne voit pas."
+            "text": "C'est pourquoi, quiconque entend ces paroles que je dis et les met en pratique, sera semblable à un homme prudent qui a bâti sa maison sur le roc."
           },
           "modern": {
             "version": "BDS",
@@ -1997,22 +1997,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "epistle",
+          "genre": "gospel",
           "primary_theme": "faith"
         },
-        "niv_word_count": 17,
-        "context_note": "Le grec hypostasis désigne ce qui se tient dessous ; elenchos est un mot de tribunal, la preuve qu'on produit. La Segond les rend par « ferme assurance » et « démonstration ». Ni l'un ni l'autre ne mesure l'intensité d'un sentiment : l'épître définit la foi comme quelque chose qui tient, pas comme un état qu'on s'efforce d'atteindre."
+        "niv_word_count": 30,
+        "context_note": "Ces mots ferment le Sermon sur la montagne : la dernière chose que Jésus dit après trois chapitres d'enseignement. Matthieu ne décrit pas de fouilles — il oppose seulement deux maisons et deux terrains, et il appelle le premier bâtisseur « prudent », un mot de prévoyance. Les deux hommes entendent ; seule la mise en pratique diffère."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "fr": {
-          "meditation": "Deux mots portent la phrase, et aucun des deux ne parle de ce que tu ressens. Ferme : qui ne bouge pas selon l'humeur du jour. Démonstration : quelque chose qu'on peut produire et montrer.\n\nSi tu te réveilles sans élan ce matin, tu n'as donc pas moins de foi. Ici, l'assurance ne veut pas dire se sentir sûre de soi ; elle veut dire que ce sur quoi tu t'appuies tient tout seul, même quand ta voix tremble. Une femme discrète qui agit sur ce qu'elle tient pour vrai se tient sur le même sol que n'importe qui!",
-          "action_step": "Cesse aujourd'hui d'évaluer la quantité de foi que tu ressens. Agis une fois sur ce que tu dis vrai, et prends cela pour mesure."
+          "meditation": "Les deux bâtisseurs de l'histoire entendent. C'est la partie qu'on saute. La différence n'est pas la connaissance, ni la sincérité, ni ce qu'ils ont préféré du sermon. La différence tient en trois mots : les mettre en pratique.\n\nEt remarque l'adjectif choisi pour cet homme : prudent. Pas brillant, pas doué. Prudent, c'est-à-dire quelqu'un qui a pensé au mauvais temps avant qu'il arrive. Une fois la maison debout, on ne voit plus sur quoi elle repose ; les deux se ressemblent jusqu'à l'orage. Ce que tu as fait aujourd'hui sans témoin, c'est exactement de cela qu'il parle !",
+          "action_step": "Prends une chose que tu sais déjà devoir faire et fais-la aujourd'hui, si petite soit-elle. N'en parle à personne, même pas ce soir."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, je passe mon temps à vérifier si je ressens assez de foi, et la réponse est toujours non. Merci que la foi soit ferme d'une fermeté qui ne vient pas de moi. Aujourd'hui, laisse-moi m'appuyer dessus au lieu de la mettre à l'épreuve. Au nom de Jésus, amen."
+        "fr": "Cher Père céleste, j'ai entendu bien plus que je n'ai mis en pratique, et je le sais. Merci de ne pas exiger une vie transformée d'ici vendredi, mais seulement qu'une chose bouge. Montre-moi laquelle, et donne-moi de la faire aujourd'hui. Au nom de Jésus, amen."
       }
     },
     {
@@ -2221,22 +2221,22 @@
       "segment": "morning",
       "language": "fr",
       "reference": {
-        "book": "Proverbs",
-        "chapter": 3,
-        "verse": "5",
-        "full_reference": "Proverbs 3:5"
+        "book": "Psalms",
+        "chapter": 62,
+        "verse": "7",
+        "full_reference": "Psalms 62:7"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#想不明白",
-        "#专心倚靠"
+        "#寻找依靠",
+        "#心里不稳",
+        "#学习交托"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "Confie-toi en l'Éternel de tout ton cœur, Et ne t'appuie pas sur ta sagesse;"
+            "text": "Sur Dieu reposent mon salut et ma gloire; Le rocher de ma force, mon refuge, est en Dieu."
           },
           "modern": {
             "version": "BDS",
@@ -2247,23 +2247,24 @@
       "exegesis": {
         "verse_category": {
           "testament": "OT",
-          "genre": "wisdom",
+          "genre": "psalm",
           "primary_theme": "trust"
         },
-        "niv_word_count": 15,
-        "context_note": "Le verbe hébreu rendu par « s'appuyer » signifie poser son poids sur quelque chose, comme on s'appuie sur un bâton. Segond précise « ta sagesse » : ce n'est pas la réflexion qui est visée, puisque tout le livre sert à l'acquérir, mais le fait d'y mettre tout son poids. La nuance est décisive."
+        "niv_word_count": 18,
+        "context_note": "Le Psaume 62 a été confié à Jeduthun, l'un des chefs de musique de David ; dans la numérotation Segond, c'est le verset 8. Une particule hébraïque revient tout au long du psaume pour dire « lui seul », que Segond rend par « oui ». Le mot tsur, rocher, désigne la roche mère : ce qui était là avant toi et ne bouge pas."
       },
       "devotional": {
         "structure": "同行劝勉",
         "fr": {
-          "meditation": "S'appuyer, c'est poser son poids sur quelque chose. Ce n'est pas un ordre d'arrêter de réfléchir : les Proverbes sont un livre entier consacré à apprendre à bien penser.\n\nC'est un ordre sur l'endroit où va le poids. Nous pouvons nous servir de notre sagesse toute la journée sans y poser tout notre être. La plupart d'entre nous connaissons la différence : c'est celle qui sépare la femme qui prépare soigneusement les choses de celle qui ne dort pas tant qu'elle n'a pas tout résolu.",
-          "action_step": "Réfléchis à ton problème aussi loin que tu le peux honnêtement. Puis arrête-toi là, et pose le poids ailleurs : dis-le à Dieu en une seule phrase."
+          "meditation": "Compte combien de fois il le répète. Le salut, la gloire, le rocher, le refuge — quatre mots, tous placés au même endroit. En Dieu. Il ne varie pas le vocabulaire pour faire joli ; il redonne une adresse.\n\nEn tant que chrétiennes, nous répartissons plutôt ces choses sur plusieurs adresses. La force ici, la réputation là, la sécurité ailleurs. David met les quatre au même endroit, ce qui est soit imprudent, soit le seul arrangement qui tienne.",
+          "action_step": "Nomme ce matin où repose réellement ton sentiment de sécurité. Puis dis une phrase, à voix haute, pour le déplacer en Dieu."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, j'ai réfléchi à cela aussi loin que la réflexion peut aller, et je le retourne encore. Je ne vais pas cesser de me servir de ma tête. Je vais cesser de me tenir debout dessus. Prends le poids de cette affaire ce matin. Au nom de Jésus, amen."
-      }
+        "fr": "Cher Père céleste, ma sécurité est répartie en fines couches sur plusieurs choses qui peuvent toutes céder. Ce matin, je la veux en un seul endroit. Sois le rocher sur lequel je me tiens vraiment, pas seulement celui que je nomme. Au nom de Jésus, amen."
+      },
+      "verse_local": "Psalms 62:8"
     },
     {
       "id": "m_046",
@@ -2371,22 +2372,22 @@
       "segment": "morning",
       "language": "fr",
       "reference": {
-        "book": "Romans",
-        "chapter": 15,
-        "verse": "13",
-        "full_reference": "Romans 15:13"
+        "book": "John",
+        "chapter": 1,
+        "verse": "5",
+        "full_reference": "John 1:5"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#心里干涸",
-        "#盼望满溢"
+        "#长夜未明",
+        "#盼望微弱",
+        "#仍在等"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "Que le Dieu de l'espérance vous remplisse de toute joie et de toute paix dans la foi, pour que vous abondiez en espérance, par la puissance du Saint-Esprit!"
+            "text": "La lumière luit dans les ténèbres, et les ténèbres ne l'ont point reçue."
           },
           "modern": {
             "version": "BDS",
@@ -2397,22 +2398,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "epistle/benediction",
+          "genre": "gospel",
           "primary_theme": "hope"
         },
-        "niv_word_count": 31,
-        "context_note": "C'est la bénédiction par laquelle Paul referme sa plus longue argumentation. Note l'ordre : Dieu remplit, et l'abondance en est la conséquence ; on ne fait pas déborder ce qui n'a pas d'abord été rempli. Il appelle Dieu « le Dieu de l'espérance » : l'espérance est d'abord un attribut de Dieu, pas une humeur que nous produisons."
+        "niv_word_count": 15,
+        "context_note": "Jean ouvre son évangile en faisant écho à la Genèse — lumière, ténèbres, commencement. Le grec katalambano porte deux sens, saisir par l'esprit et se saisir de force ; les traducteurs se sont divisés, et Segond a choisi une troisième voie, « recevoir ». Le verbe « luit », lui, est au présent : continu, en cours, pas un événement passé."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "fr": {
-          "meditation": "Regarde l'ordre, parce que nous l'essayons d'habitude à l'envers. D'abord être remplie, ensuite déborder. Personne ne fait déborder une coupe vide en appuyant plus fort sur les bords.\n\nEt regarde le nom : le Dieu de l'espérance. L'espérance est à lui avant d'être à toi. Ce matin, on ne te demande donc pas d'en fabriquer. On te demande de te laisser remplir !",
-          "action_step": "Avant de donner quoi que ce soit à qui que ce soit aujourd'hui, demande d'abord à être remplie. Dis-le avec ces mots-là, à voix haute."
+          "meditation": "Le temps du verbe est le présent. Pas « a lui » une fois, dans l'histoire — « luit », maintenant, sans interruption. Quoi que ce matin ait l'air d'être, ce verbe-là n'a pas changé.\n\nEt regarde la seconde moitié : les ténèbres ne l'ont pas accueillie. Segond ne dit ni qu'elles n'ont pas compris ni qu'elles n'ont pas vaincu — elles ont simplement refusé de recevoir. Et le premier verbe reste au présent malgré ce refus. La lumière ne brille pas parce qu'on la reçoit bien. Elle brille, un point c'est tout !",
+          "action_step": "Avant que la journée commence, nomme un endroit qui te paraît encore sombre. Puis dis le verbe à voix haute : là aussi, la lumière luit."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, j'essaie de verser à partir d'une coupe vide et j'appelle cela servir. Remplis-moi d'abord, ce matin. Pas pour que je me sente mieux, mais pour que ce qui atteint les autres vienne réellement de toi. Au nom de Jésus, amen."
+        "fr": "Cher Père céleste, cette situation a le même visage depuis longtemps et j'ai commencé à lire cela comme ton absence. Rappelle-moi ce matin que la lumière ne s'est pas éteinte, seulement que je ne vois pas loin. Continue de briller là où je ne vois rien. Au nom de Jésus, amen."
       }
     },
     {
@@ -2721,22 +2722,22 @@
       "segment": "morning",
       "language": "fr",
       "reference": {
-        "book": "Deuteronomy",
-        "chapter": 31,
-        "verse": "6",
-        "full_reference": "Deuteronomy 31:6"
+        "book": "Psalms",
+        "chapter": 59,
+        "verse": "16",
+        "full_reference": "Psalms 59:16"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨力量",
-        "#怕面对的人",
-        "#祂不撇下"
+        "#清晨无力",
+        "#还没有解决",
+        "#选择赞美"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "Fortifiez-vous et ayez du courage! Ne craignez point et ne soyez point effrayés devant eux; car l'Éternel, ton Dieu, marchera lui-même avec toi, il ne te délaissera point, il ne t'abandonnera point."
+            "text": "Et moi, je chanterai ta force; Dès le matin, je célébrerai ta bonté. Car tu es pour moi une haute retraite, Un refuge au jour de ma détresse."
           },
           "modern": {
             "version": "BDS",
@@ -2747,23 +2748,24 @@
       "exegesis": {
         "verse_category": {
           "testament": "OT",
-          "genre": "narrative/exhortation",
+          "genre": "psalm",
           "primary_theme": "courage"
         },
-        "niv_word_count": 29,
-        "context_note": "Moïse dit ces mots à la nation entière avant de les redire à Josué seul : le courage n'est pas réservé aux chefs. « Devant eux » désigne des adversaires identifiés, pas une inquiétude diffuse. En hébreu, la double négation de la fin est emphatique : il ne te lâchera pas, il ne partira pas, jamais."
+        "niv_word_count": 33,
+        "context_note": "Le titre du psaume situe la scène la nuit où les hommes de Saül surveillaient la maison de David en attendant le jour pour le tuer ; dans la numérotation Segond, c'est le verset 17. L'heure indiquée est volontaire : le matin, celle où le danger devait arriver. Et Segond parle au présent — non pas « tu as été », mais « tu es »."
       },
       "devotional": {
         "structure": "同行劝勉",
         "fr": {
-          "meditation": "Remarque à qui Moïse parle : d'abord à tout le peuple, et seulement ensuite à Josué en particulier. Le courage n'est pas délivré uniquement à celle qui dirige.\n\nEt remarque la précision : la peur visée est celle qui se lève devant eux. Pas une consigne générale sur l'anxiété — des gens précis, un jour précis. En tant que chrétiennes, nous avons tendance à spiritualiser la peur jusqu'à la rendre floue. L'Écriture, elle, la garde concrète, parce que c'est là qu'elle habite réellement. Ce matin, ta peur a probablement un prénom et une heure de rendez-vous.",
-          "action_step": "Nomme la personne précise ou la réunion que tu redoutes. Prie pour celle-là, en la nommant, avant de sortir de chez toi."
+          "meditation": "Remarque l'heure. Dès le matin — et l'homme qui écrit cela a passé la nuit avec sa maison encerclée par des gens qui attendaient le jour pour le tuer.\n\nIl ne chante pas parce que c'est fini. Il chante à l'heure où cela dure encore, et il parle au présent : tu es, aujourd'hui, une hauteur où je me retire. En tant que chrétiennes, nous avons tendance à remettre le chant à plus tard, quand on saura comment cela finit. David le place au début de la journée, avant de savoir.",
+          "action_step": "Dis ou chante une chose vraie au sujet de Dieu avant de regarder ton téléphone. À voix haute, même mal, même sans y croire tout à fait."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, ce n'est pas la peur en général ce matin. C'est une conversation précise, et une personne précise. Entre avec moi dans cette pièce. Merci de ne pas me faire défaut et de ne pas quitter la salle. Au nom de Jésus, amen."
-      }
+        "fr": "Cher Père céleste, rien n'est réglé et il fait déjà jour. Je n'ai pas envie de chanter, alors je commence quand même. Tu es aujourd'hui la hauteur où je me retire, et je compte là-dessus pour traverser cette journée. Au nom de Jésus, amen."
+      },
+      "verse_local": "Psalms 59:17"
     },
     {
       "id": "m_056",
@@ -2921,22 +2923,22 @@
       "segment": "morning",
       "language": "fr",
       "reference": {
-        "book": "Galatians",
-        "chapter": 5,
-        "verse": "22",
-        "full_reference": "Galatians 5:22"
+        "book": "Proverbs",
+        "chapter": 19,
+        "verse": "8",
+        "full_reference": "Proverbs 19:8"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#结不出果子",
-        "#圣灵的工作"
+        "#想要成长",
+        "#总在给别人",
+        "#学着善待自己"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "Mais le fruit de l'Esprit, c'est l'amour, la joie, la paix, la patience, la bonté, la bénignité, la fidélité, la douceur, la tempérance;"
+            "text": "Celui qui acquiert du sens aime son âme; Celui qui garde l'intelligence trouve le bonheur."
           },
           "modern": {
             "version": "BDS",
@@ -2946,23 +2948,23 @@
       },
       "exegesis": {
         "verse_category": {
-          "testament": "NT",
-          "genre": "epistle",
+          "testament": "OT",
+          "genre": "wisdom",
           "primary_theme": "growth"
         },
-        "niv_word_count": 14,
-        "context_note": "Le mot fruit est au singulier en grec : un seul fruit à neuf aspects, et non une liste de neuf cases à cocher. Paul l'oppose aux œuvres de la chair énumérées juste avant — une œuvre se produit, un fruit se cultive. Personne n'a jamais obtenu une pomme en faisant davantage d'efforts."
+        "niv_word_count": 19,
+        "context_note": "L'hébreu dit littéralement « acquiert du cœur » — dans cette littérature, le cœur est le siège du jugement, pas du sentiment ; Segond traduit par « du sens ». Le second membre emploie le mot ordinaire pour trouver, comme on trouve ce qu'on cherchait. Les Proverbes présentent ici la sagesse comme un souci de soi bien compris : celle qui l'acquiert en profite la première."
       },
       "devotional": {
         "structure": "同行劝勉",
         "fr": {
-          "meditation": "Le fruit est au singulier. Un seul fruit, neuf facettes — pas neuf cases où échouer séparément. Et regarde le contraste que Paul construit : la liste précédente s'appelle des œuvres, celle-ci s'appelle un fruit. Une œuvre se fabrique ; un fruit pousse, lentement, à cause de ce qui se passe dans la plante et non de ce qu'on lui fait subir.\n\nC'est pourquoi s'efforcer d'être patiente n'a jamais rendu personne patiente. En tant que chrétiennes, nous pouvons cesser de tirer sur le fruit et nous occuper enfin de la racine — c'est-à-dire du temps passé auprès de celui qui fait pousser.",
-          "action_step": "Arrête aujourd'hui de travailler la qualité qui te manque le plus. Donne ce temps-là à être simplement avec Dieu, sans rien produire."
+          "meditation": "Le français est plus direct qu'on ne l'entend d'habitude : acquérir du sens, c'est aimer sa propre âme. La sagesse est décrite ici comme un acte de soin envers soi-même, ce qui n'est pas la version qu'on nous a le plus souvent servie.\n\nEn tant que chrétiennes, nous traitons souvent la croissance comme une dette — envers Dieu, envers nos familles, envers ceux qui comptent sur nous. Ce proverbe dit que la première bénéficiaire, c'est toi. Apprendre à penser juste n'est pas un devoir de plus. C'est plus proche du fait de se nourrir. Et le second membre de phrase le confirme : celle qui garde l'intelligence y trouve du bonheur, au présent, pas en récompense plus tard.",
+          "action_step": "Donne quinze minutes aujourd'hui à quelque chose qui te rend plus sage, pas plus utile. Mets-les tout de suite dans ton agenda."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, j'essaie de fabriquer ce que toi seul fais pousser, puis je me trouve nulle quand cela n'apparaît pas dans les délais. Tourne mon attention vers la racine ce matin, et non vers le fruit. Fais pousser ce que tu fais pousser, à ton rythme, et donne-moi assez de patience pour ne pas venir vérifier tous les jours. Au nom de Jésus, amen."
+        "fr": "Cher Père céleste, j'ai traité le fait de grandir comme une dette de plus envers les autres, et je l'ai mal vécu. Montre-moi ce matin que devenir sage est quelque chose que tu me donnes pour moi-même. Aide-moi à le recevoir comme un cadeau plutôt que comme un devoir, et donne-moi quinze minutes honnêtes pour cela aujourd'hui. Au nom de Jésus, amen."
       }
     },
     {
@@ -3272,21 +3274,21 @@
       "language": "fr",
       "reference": {
         "book": "Psalms",
-        "chapter": 23,
-        "verse": "1",
-        "full_reference": "Psalms 23:1"
+        "chapter": 34,
+        "verse": "8",
+        "full_reference": "Psalms 34:8"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#感到匮乏",
-        "#神是牧者"
+        "#想要亲近神",
+        "#只是听说过",
+        "#今晚试一试"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "Cantique de David. L'Éternel est mon berger: je ne manquerai de rien."
+            "text": "Sentez et voyez combien l'Éternel est bon! Heureux l'homme qui cherche en lui son refuge!"
           },
           "modern": {
             "version": "BDS",
@@ -3300,20 +3302,21 @@
           "genre": "psalm",
           "primary_theme": "provision"
         },
-        "niv_word_count": 8,
-        "context_note": "David avait réellement gardé des troupeaux, ce qui explique l'absence de sentimentalisme : le métier était dur, sale, et se faisait aussi la nuit. La promesse finale traduit un unique verbe hébreu qui signifie manquer. Ce n'est pas une promesse d'abondance, mais de suffisance : ce qui est nécessaire sera là."
+        "niv_word_count": 18,
+        "context_note": "Le titre du psaume renvoie au jour où David a échappé à Abimélec en feignant la folie — pas un sauvetage très glorieux. Dans la numérotation Segond, c'est le verset 9. Le verbe hébreu ta'am signifie goûter, éprouver par soi-même ; Segond le rend par « sentir ». Ce n'est pas une doctrine qu'on te propose, c'est une expérience."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "fr": {
-          "meditation": "Tout se décide sur un verbe minuscule : est. Pas était. Pas sera peut-être un jour. Au présent, ce soir, pendant que tu poses ton téléphone.\n\nEt puis ce possessif : mon. David ne dit pas un berger, ni le berger d'Israël, bien que ce soit vrai aussi. Il dit le mien. Quoi que la journée t'ait coûté, cette phrase reste à toi, au présent, avant de dormir !",
-          "action_step": "Dis la phrase à voix haute une fois, lentement, en mettant ton prénom devant. Puis arrête de parler et laisse-la travailler."
+          "meditation": "Sentir, puis voir : c'est l'ordre du verset, et il ne s'inverse pas. D'abord éprouver, ensuite comprendre. On ne te demande pas d'être convaincue avant d'approcher, et personne ne peut faire cette expérience à ta place.\n\nEt remarque le second vers : le bonheur n'est pas promis à celle qui a tout compris, mais à celle qui va se réfugier en lui. Un refuge, c'est un lieu où l'on entre. Ce soir, entre — ne serait-ce que d'un pas, et laisse la certitude venir après !",
+          "action_step": "Ce soir, fais une seule chose que tu ne ferais pas si Dieu n'était pas bon — un pardon, un appel, une prière courte — et regarde ce qui se passe ensuite."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, ce soir je ne demande pas grand-chose. Je veux seulement le dire et le penser vraiment : tu es mon berger, et rien ne me manquera. Fais taire en moi la part qui énumère ce qui manque encore. Au nom de Jésus, amen."
-      }
+        "fr": "Cher Père céleste, je crois des choses sur toi depuis des années sans les avoir jamais éprouvées. Ce soir, je préfère te connaître plutôt que savoir des choses à ton sujet. Donne-moi d'éprouver ta bonté une seule fois avant de dormir, même très peu. Au nom de Jésus, amen."
+      },
+      "verse_local": "Psalms 34:9"
     },
     {
       "id": "e_007",
@@ -3772,22 +3775,22 @@
       "segment": "evening",
       "language": "fr",
       "reference": {
-        "book": "1 Corinthians",
-        "chapter": 13,
-        "verse": "4",
-        "full_reference": "1 Corinthians 13:4"
+        "book": "1 John",
+        "chapter": 4,
+        "verse": "12",
+        "full_reference": "1 John 4:12"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#亲密关系",
-        "#学习相爱"
+        "#关系疲惫",
+        "#想要看见神",
+        "#学习去爱"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "La charité est patiente, elle est pleine de bonté; la charité n'est point envieuse; la charité ne se vante point, elle ne s'enfle point d'orgueil,"
+            "text": "Personne n'a jamais vu Dieu; si nous nous aimons les uns les autres, Dieu demeure en nous, et son amour est parfait en nous."
           },
           "modern": {
             "version": "BDS",
@@ -3801,19 +3804,19 @@
           "genre": "epistle",
           "primary_theme": "love"
         },
-        "niv_word_count": 18,
-        "context_note": "Paul écrit cela à une Église qui se déchirait pour des questions de rang et de dons, pas du tout à des mariés. La première qualité qu'il nomme, makrothumeō, signifie littéralement « à la colère longue », le contraire d'une mèche courte. En grec, chaque élément de sa liste est un verbe, même si le français les rend par des adjectifs."
+        "niv_word_count": 27,
+        "context_note": "Jean écrit à une Église divisée par des gens qui se disaient spirituellement supérieurs. Son critère est volontairement banal. Le grec teteleiomene signifie « mené jusqu'à son but » — un amour achevé, non pas un amour plus intense. Segond traduit « parfait » : l'amour de Dieu n'est pas accompli dans la force de notre sentiment, mais dans le fait qu'il atteigne quelqu'un."
       },
       "devotional": {
         "structure": "同行劝勉",
         "fr": {
-          "meditation": "Tu as entendu ces mots à tant de mariages qu'ils ont fini par ne plus rien vouloir dire. Essaie-les ailleurs. Relis-les en pensant à mardi dernier. Le premier mot de la liste est la patience, et le terme grec que Paul emploie, makrothumia, parle d'une longueur, d'un souffle qui dure, le contraire d'une mèche courte. Vient ensuite la bonté. Le français les met en adjectifs, mais dans l'original ce sont des verbes, des choses qui se font.\n\nEt c'est une nouvelle étrangement bonne pour nous, femmes fatiguées dans de longues relations. Les soirs où le sentiment est mince, la charité reste à notre portée. C'est quelque chose que nous pouvons encore faire à onze heures du soir, quand nous préférerions vraiment ne pas.",
-          "action_step": "Choisis une seule ligne de ce verset et mets-la en pratique demain, une fois, envers la personne la plus proche de toi, que tu le ressentes ou non."
+          "meditation": "Jean pose un problème et ne le résout pas comme on s'y attendrait. Dieu, personne ne l'a jamais vu. Au lieu d'apporter une preuve, il désigne l'endroit où Dieu devient visible : deux personnes qui continuent de s'aimer.\n\nEn tant que chrétiennes, nous cherchons Dieu dans le silence, dans la lecture, dans le moment où nous sommes seules. Il y est. Mais Jean dit qu'il habite un lieu beaucoup moins intime : un mariage qui choisit encore la patience, une amitié qui survit à la phrase de trop. C'est là que son amour arrive à son terme. Pas dans ce que nous ressentons pour lui — dans la manière dont nous continuons de nous traiter.",
+          "action_step": "Ce soir, fais un geste d'amour tout ordinaire pour celui ou celle qui t'a été le plus difficile à aimer cette semaine. Sans l'annoncer, sans attendre qu'on te le rende."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, j'ai entendu ces mots si souvent que je ne les entends plus du tout. Rends-les ordinaires à nouveau, ramène-les à ma cuisine, à demain matin, à la personne avec qui je suis la plus dure. Là où le sentiment est mince, laisse-moi choisir quand même la patience, et choisir quand même la bonté. Au nom de Jésus, amen."
+        "fr": "Cher Père céleste, j'ai voulu te voir, et je t'ai cherché dans les endroits calmes. Ce soir, montre-moi que tu es aussi dans la patience ordinaire que je dois choisir avec ceux qui vivent le plus près de moi. Là où l'amour a refroidi, réchauffe-le. Là où j'ai cessé d'essayer, aide-moi à recommencer — pas parce que je le ressens, mais parce que tu y es. Au nom de Jésus, amen."
       }
     },
     {
@@ -3822,22 +3825,22 @@
       "segment": "evening",
       "language": "fr",
       "reference": {
-        "book": "1 Thessalonians",
-        "chapter": 5,
-        "verse": "11",
-        "full_reference": "1 Thessalonians 5:11"
+        "book": "Psalms",
+        "chapter": 118,
+        "verse": "5",
+        "full_reference": "Psalms 118:5"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚交托",
-        "#关系疏离",
-        "#彼此建立"
+        "#被压得很紧",
+        "#需要喘息",
+        "#向神呼求"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "C'est pourquoi exhortez-vous réciproquement, et édifiez-vous les uns les autres, comme en réalité vous le faites."
+            "text": "Du sein de la détresse j'ai invoqué l'Éternel: L'Éternel m'a exaucé, m'a mis au large."
           },
           "modern": {
             "version": "BDS",
@@ -3847,23 +3850,23 @@
       },
       "exegesis": {
         "verse_category": {
-          "testament": "NT",
-          "genre": "epistle/exhortation",
+          "testament": "OT",
+          "genre": "psalm",
           "primary_theme": "encouragement"
         },
-        "niv_word_count": 16,
-        "context_note": "Paul ajoute quatre mots qu'on saute facilement, « comme en réalité vous le faites ». Il ne corrige pas les Thessaloniciens, il nomme ce qu'ils font déjà et en demande davantage. Le grec oikodomeō, « édifier », vient du vocabulaire de la construction, ajouter une rangée de briques, et non offrir un compliment."
+        "niv_word_count": 18,
+        "context_note": "Le Psaume 118 se chantait à la Pâque ; Jésus l'a probablement chanté la veille de la croix. L'hébreu metsar désigne un lieu resserré, merchav un pays ouvert — et le mot français « détresse » vient lui aussi d'une idée de serrement. Le psaume ne raconte pas une sortie de l'épreuve, mais un changement d'espace à l'intérieur."
       },
       "devotional": {
         "structure": "发问",
         "fr": {
-          "meditation": "Paul ajoute quatre mots que nous lisons trop vite, « comme en réalité vous le faites ». Il ne les gronde pas pour les y pousser. Il nomme une chose qu'ils font déjà, et il en demande simplement davantage.\n\nÉdifier, en grec, est un mot de chantier. Poser une rangée de briques de plus, pas faire un compliment poli. Alors, ce soir, sur qui as-tu posé une brique aujourd'hui, et à qui as-tu pensé le faire sans jamais le faire ?",
-          "action_step": "Envoie à une personne la phrase précise que tu as pensée d'elle aujourd'hui sans la lui dire. Une seule phrase suffit, et ce soir suffit."
+          "meditation": "Le vocabulaire est spatial, pas émotionnel. La détresse, c'est un resserrement : des murs trop proches, pas de place pour se retourner. Et la réponse n'est pas que les murs ont bougé. C'est lui qui a été déplacé — posé au large.\n\nRemarque qu'il ne dit pas que l'épreuve s'est arrêtée. Il dit que l'espace a changé. Alors, où es-tu à l'étroit ce soir — et as-tu vraiment demandé de l'espace, ou seulement que les murs reculent ?",
+          "action_step": "Nomme à voix haute, ce soir, l'endroit où tu te sens à l'étroit. Puis demande, en une seule phrase, de l'espace pour respirer là-dedans, plutôt que la disparition de l'épreuve."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, je remarque de belles choses chez les gens et je les garde pour moi. Cela n'aide personne. Demain, laisse-moi en dire une à voix haute. Et là où je suis moi-même à bout, envoie-moi quelqu'un pour m'en dire une. Au nom de Jésus, amen."
+        "fr": "Cher Père céleste, je te demande depuis longtemps de changer ma situation, et pas une seule fois de l'espace pour respirer à l'intérieur. Ce soir, je te le demande. Mets mes pieds dans un endroit plus large avant que je m'endorme. Au nom de Jésus, amen."
       }
     },
     {
@@ -3872,22 +3875,22 @@
       "segment": "evening",
       "language": "fr",
       "reference": {
-        "book": "John",
-        "chapter": 11,
-        "verse": "25",
-        "full_reference": "John 11:25"
+        "book": "Romans",
+        "chapter": 6,
+        "verse": "14",
+        "full_reference": "Romans 6:14"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#面对失去",
-        "#基督的应许"
+        "#反复失败",
+        "#想要自由",
+        "#不再被定义"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "Jésus lui dit: Je suis la résurrection et la vie. Celui qui croit en moi vivra, quand même il serait mort;"
+            "text": "Car le péché n'aura point de pouvoir sur vous, puisque vous êtes, non sous la loi, mais sous la grâce."
           },
           "modern": {
             "version": "BDS",
@@ -3898,22 +3901,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "gospel/narrative",
-          "primary_theme": "life"
+          "genre": "epistle",
+          "primary_theme": "freedom"
         },
-        "niv_word_count": 23,
-        "context_note": "Marthe vient de dire qu'elle sait que son frère ressuscitera au dernier jour, une doctrine juste, tenue à bonne distance. Jésus ramène tout au présent et à une personne. Il le dit avec quatre jours de retard, devant un tombeau, à une femme qui a traversé les premiers jours de son deuil sans lui."
+        "niv_word_count": 20,
+        "context_note": "Paul écrit à des chrétiens inquiets : si la grâce couvre tout, l'obéissance devient-elle facultative ? Le grec kyrieuo signifie exercer l'autorité d'un maître — un droit, pas une intensité. Segond le rend par « pouvoir ». L'argument de Paul porte sur le régime auquel tu appartiens désormais, non sur la force que l'ancien exerce encore."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "fr": {
-          "meditation": "Marthe avait dit la bonne chose. Son frère ressusciterait au dernier jour. C'était vrai, c'était très loin, et cela ne l'aidait en rien cet après-midi-là. Jésus ne corrige pas sa théologie, il la déplace. Pas une date, mais quelqu'un, debout devant elle, au présent.\n\nQuoi que tu portes comme deuil ce soir, remarque que la promesse n'est pas programmée pour plus tard. Elle a un nom. Marthe n'a pas reçu un discours sur la patience, elle a reçu une personne qui pleure avec elle avant de faire quoi que ce soit d'autre. C'est ainsi qu'il vient aussi vers toi, avec quatre jours de retard, sans s'excuser, et sans être une miette moins vrai !",
-          "action_step": "Dis le nom de la personne qui te manque. Puis dis à voix haute les trois premiers mots que Jésus prononce ici, et reste tranquille un instant."
+          "meditation": "Regarde le temps du verbe. Ce n'est pas : le péché ne devrait pas avoir de pouvoir sur toi. C'est un futur — il n'en aura pas. Une déclaration sur ce qui sera vrai, pas un ordre que tu es en train de rater.\n\nEt regarde la raison donnée. Pas parce que tu vas te battre davantage. Parce que tu as changé de régime : tu ne vis plus sous la loi, tu vis sous la grâce. Ce n'est pas une question d'effort, c'est une question de place. Ce que tu combats depuis un an n'est donc pas ton maître. Cela peut encore parler fort. Cela n'a plus d'emprise sur toi !",
+          "action_step": "Nomme la chose devant laquelle tu cèdes toujours. Puis dis une phrase à voix haute ce soir : ceci a une voix, ceci n'a plus autorité sur moi."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, certaines consolations sont vraies et restent trop lointaines pour m'atteindre ce soir. Merci que Jésus n'ait pas offert une date à Marthe, mais lui-même. Sois aussi proche de moi. Je ne te demande pas de cesser de manquer de quelqu'un. Je te demande seulement de ne pas rester seule avec ce manque. Au nom de Jésus, amen."
+        "fr": "Cher Père céleste, je me bats contre la même chose depuis si longtemps que j'ai fini par l'appeler mon identité. Ce soir, je veux t'entendre le dire autrement. Merci de ce qu'elle a perdu tout droit sur moi, y compris les jours où elle crie le plus fort. Apprends-moi à lui répondre comme à quelque chose qui ne donne plus les ordres. Au nom de Jésus, amen."
       }
     },
     {
@@ -4573,22 +4576,22 @@
       "segment": "evening",
       "language": "fr",
       "reference": {
-        "book": "Matthew",
-        "chapter": 11,
-        "verse": "28",
-        "full_reference": "Matthew 11:28"
+        "book": "1 Peter",
+        "chapter": 5,
+        "verse": "10",
+        "full_reference": "1 Peter 5:10"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#疲惫不堪",
-        "#重担压身"
+        "#撑得太久",
+        "#盼望被修复",
+        "#想要安稳"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "Venez à moi, vous tous qui êtes fatigués et chargés, et je vous donnerai du repos."
+            "text": "Le Dieu de toute grâce, qui vous a appelés en Jésus-Christ à sa gloire éternelle, après que vous aurez souffert un peu de temps, vous perfectionnera lui-même, vous affermira, vous fortifiera, vous rendra inébranlables."
           },
           "modern": {
             "version": "BDS",
@@ -4599,22 +4602,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "gospel/invitation",
+          "genre": "epistle",
           "primary_theme": "rest"
         },
-        "niv_word_count": 16,
-        "context_note": "Jésus parle à des foules épuisées par des règles religieuses devenues lourdes et minutieuses. Le mot grec traduit par repos, anapauō, désigne le souffle que reprend l'ouvrier quand on lui ôte sa charge — pas le sommeil. Il ne demande à personne de se qualifier d'abord : l'invitation vise précisément celles qui arrivent déjà fatiguées."
+        "niv_word_count": 38,
+        "context_note": "Pierre écrit à des croyants dispersés et réellement sous pression, pas à des gens de mauvaise humeur. Le dernier de ses quatre verbes, themelioo, signifie poser sur un fondement ; Segond en garde l'effet plutôt que l'image : inébranlable. Les quatre sont l'œuvre de Dieu — la part des lecteurs est de rester. « Un peu de temps » traduit oligon, volontairement non mesuré."
       },
       "devotional": {
         "structure": "同行劝勉",
         "fr": {
-          "meditation": "Il ne dit pas : viens quand tu te seras remise d'aplomb. Il dit viens — telle que tu es, au bout d'une journée qui a pris plus qu'elle n'a donné.\n\nEn tant que chrétiennes, nous arrivons à transformer même cela en consigne que nous ratons : repose-toi correctement, sois en paix, cesse de courir. Mais regarde de nouveau le verbe qui t'est confié. Ce n'est pas « repose-toi ». C'est « viens ». Le repos, c'est sa moitié de la phrase à lui, et il n'a jamais eu besoin d'aide pour tenir sa moitié de quoi que ce soit.",
-          "action_step": "Dis à voix haute la chose la plus lourde de ta journée, puis ceci : je te la donne pour cette nuit. Et laisse-la là jusqu'au matin."
+          "meditation": "Quatre verbes, et ils arrivent dans un ordre qui mérite d'être remarqué. Il achèvera. Il affermira. Il fortifiera. Et pour finir : inébranlable — ce qui ne bouge plus quand on pousse dessus.\n\nNous voudrions presque toutes l'inébranlable tout de suite, et sauter le milieu. Pierre donne la séquence honnête, et il ne prétend pas que le milieu soit court : un peu de temps, sans dire combien. Mais regarde qui fait les quatre verbes. Pas nous. Le texte prend soin de le préciser : lui-même. On ne nous demande pas de nous reconstruire — seulement d'être encore là quand il le fera.",
+          "action_step": "Ce soir, arrête d'essayer de réparer une seule chose. Dis clairement laquelle, et laisse-la à Dieu jusqu'à demain matin, sans y revenir."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, je suis fatiguée d'une fatigue que le sommeil seul ne répare pas. Merci que ton invitation soit encore ouverte à cette heure-ci, et qu'elle ne me demande pas d'arriver reposée avant de venir. Prends ce poids de mes mains et garde-le jusqu'au matin. Je viens sans rien avoir arrangé. Au nom de Jésus, amen."
+        "fr": "Cher Père céleste, je suis fatiguée d'être celle qui doit tout tenir ensemble, et je n'y arrive pas si bien que ça. Merci de ce que le raccommodage est ton travail et non le mien. Fais les parties que je n'atteins pas. Affermis ce qui bouge sans cesse en moi. Je serai encore là demain matin, et c'est tout ce que je promets ce soir. Au nom de Jésus, amen."
       }
     },
     {
@@ -5123,22 +5126,22 @@
       "segment": "evening",
       "language": "fr",
       "reference": {
-        "book": "John",
-        "chapter": 16,
-        "verse": "33",
-        "full_reference": "John 16:33"
+        "book": "Luke",
+        "chapter": 8,
+        "verse": "50",
+        "full_reference": "Luke 8:50"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚平安",
-        "#难处不断",
-        "#祂已得胜"
+        "#已经放弃盼望",
+        "#怕再失望",
+        "#还想再信一次"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "Je vous ai dit ces choses, afin que vous ayez la paix en moi. Vous aurez des tribulations dans le monde; mais prenez courage, j'ai vaincu le monde."
+            "text": "Mais Jésus, ayant entendu cela, dit au chef de la synagogue: Ne crains pas, crois seulement, et elle sera sauvée."
           },
           "modern": {
             "version": "BDS",
@@ -5149,22 +5152,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "gospel/farewell discourse",
-          "primary_theme": "overcoming"
+          "genre": "gospel",
+          "primary_theme": "faith"
         },
-        "niv_word_count": 29,
-        "context_note": "Jésus dit cela dans les dernières minutes avant Gethsémané. Le grec tharseite se rend mieux par « prenez courage » que par « réjouissez-vous » : c'est le mot d'un chef avant l'épreuve, pas celui d'un ami à une fête. Et « j'ai vaincu » est au parfait, c'est-à-dire déjà fait, avant même la croix."
+        "niv_word_count": 22,
+        "context_note": "Jaïrus dirigeait une synagogue — un homme en vue, demandant publiquement l'aide d'un prédicateur itinérant. Le grec sozo sert à la fois pour guérir et pour sauver, ce que Segond rend ici par « sauvée ». Jésus parle avant que Jaïrus ait pu réagir à la nouvelle, et c'est justement le point : la parole qui rassure vient en premier."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "fr": {
-          "meditation": "Il ne promet pas un monde plus facile. Il annonce clairement un monde dur, puis il dit : prenez courage. En grec, c'est bien de courage qu'il s'agit, pas de bonne humeur.\n\nEt le verbe de la victoire est déjà accompli. Il le dit avant la croix, au parfait. La paix offerte ce soir n'est donc pas l'absence de trouble : c'est que l'issue était réglée avant même que ton trouble ne commence !",
-          "action_step": "Nomme honnêtement ce qui pèse ce soir, sans l'adoucir. Puis dis à voix haute, par-dessus cette chose, que lui a déjà vaincu le monde."
+          "meditation": "Le message était déjà arrivé : elle est morte, inutile de déranger le maître. Jésus l'entend et répond avant même que Jaïrus ait le temps de réagir.\n\nRemarque ce qu'il demande. Pas plus de foi. Seulement la foi — comme s'il retirait des choses au lieu d'en ajouter. On ne demande pas à Jaïrus de se sentir courageux ni de produire une certitude. On lui demande de continuer à marcher vers sa fille avec une seule chose intacte. C'est aussi tout ce qu'on te demande ce soir !",
+          "action_step": "Nomme ce soir la chose que tu as déjà classée comme perdue. Puis fais malgré tout un petit pas dans sa direction, un seul."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, c'est une chose après l'autre et je suis fatiguée qu'on me dise de positiver. Merci que Jésus n'ait rien promis de tel. Donne-moi du courage plutôt que de l'entrain ce soir, et laisse-moi me reposer sur ce qui est déjà accompli. Au nom de Jésus, amen."
+        "fr": "Cher Père céleste, j'ai cessé d'espérer pour celle-ci il y a un moment, parce qu'espérer faisait plus mal. Ce soir, je ne demande pas de me sentir certaine. Je demande de continuer à marcher. Tiens la seule chose qui me reste. Au nom de Jésus, amen."
       }
     },
     {
@@ -5173,22 +5176,22 @@
       "segment": "evening",
       "language": "fr",
       "reference": {
-        "book": "Colossians",
-        "chapter": 3,
-        "verse": "15",
-        "full_reference": "Colossians 3:15"
+        "book": "John",
+        "chapter": 14,
+        "verse": "26",
+        "full_reference": "John 14:26"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚平安",
-        "#心里争战",
-        "#让平安作主"
+        "#夜里想不起",
+        "#需要提醒",
+        "#知道却抓不住"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "Et que la paix de Christ, à laquelle vous avez été appelés pour former un seul corps, règne dans vos cœurs. Et soyez reconnaissants."
+            "text": "Mais le consolateur, l'Esprit-Saint, que le Père enverra en mon nom, vous enseignera toutes choses, et vous rappellera tout ce que je vous ai dit."
           },
           "modern": {
             "version": "BDS",
@@ -5199,22 +5202,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "epistle/exhortation",
-          "primary_theme": "peace"
+          "genre": "gospel",
+          "primary_theme": "comfort"
         },
-        "niv_word_count": 23,
-        "context_note": "Le verbe grec brabeuō décrivait le rôle de l'arbitre aux jeux : trancher, rendre la décision. Segond traduit par « règne », l'image d'une souveraineté qui a le dernier mot. Dans les deux cas, il ne s'agit pas de ressentir de la paix, mais de la laisser décider quand un conflit se joue en toi. Paul ajoute trois mots : et soyez reconnaissants."
+        "niv_word_count": 34,
+        "context_note": "Jésus dit cela quelques heures avant son arrestation, à des hommes qui en auront oublié l'essentiel au matin. Parakletos désigne celui qu'on appelle auprès de soi — un défenseur, pas une émotion ; Segond traduit « consolateur ». Anamimnesko, « rappeler », est le mot ordinaire pour se remettre en mémoire une chose connue. La promesse suppose l'oubli."
       },
       "devotional": {
         "structure": "同行劝勉",
         "fr": {
-          "meditation": "« Règne » est un mot de royauté : quelque chose qui gouverne et qui a le dernier mot. Paul ne te demande donc pas de te sentir paisible. Il te demande de laisser la paix du Christ décider, quand deux voix parlent en même temps dans ta poitrine. Pas la plus forte. Pas la plus inquiète, qui a pourtant toujours l'air la plus responsable. Celle qui te laisse en paix quand tu restes un moment avec elle.\n\nEt ensuite, presque comme une remarque en passant : soyez reconnaissants. Nous prenons d'habitude ces deux-là dans l'ordre inverse, et nous attendons d'avoir de quoi remercier avant de laisser quoi que ce soit régner.",
-          "action_step": "Là où tu es tiraillée ce soir, remarque laquelle des deux options te laisse en paix, et laisse cette paix trancher avant que tu n'éteignes la lumière."
+          "meditation": "Deux tâches, et la seconde est plus discrète. Enseigner toutes choses — on s'y attend. Mais aussi : rappeler. Pas une information neuve, l'ancienne, celle que tu avais déjà et que tu as perdue.\n\nEn tant que chrétiennes, nous supposons que le secours dont nous avons besoin est quelque chose que nous n'avons pas encore appris. La plupart des soirs, non. C'est ce que nous savions très bien en plein jour et que nous ne retrouvons plus à onze heures. Une partie du travail de l'Esprit consiste à retrouver. Ce qui te tenait debout n'a pas disparu. Tu l'as égaré, et ce n'est pas toi qui dois partir le chercher.",
+          "action_step": "Écris une chose que tu savais de Dieu dans une meilleure saison. Pose ce papier là où tu le verras demain matin, avant tout le reste."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, il y a deux voix en moi ce soir et l'inquiète parle plus fort. Que ta paix règne à leur place et tranche pour moi. Apaise ce débat dans ma poitrine, et pendant qu'il s'apaise, donne-moi une seule chose dont je puisse honnêtement te remercier. Dans cet ordre-là, pour une fois. Au nom de Jésus, amen."
+        "fr": "Cher Père céleste, ce soir je ne retrouve pas des choses que je suis certaine d'avoir sues. Je ne te demande pas de m'apprendre du neuf. Je te demande de me rendre ce que tu m'as déjà donné. Rappelle-moi, dans le noir, ce qui était évident en pleine lumière. Et garde-le près de moi jusqu'au matin. Au nom de Jésus, amen."
       }
     },
     {
@@ -5374,21 +5377,21 @@
       "language": "fr",
       "reference": {
         "book": "Proverbs",
-        "chapter": 22,
-        "verse": "6",
-        "full_reference": "Proverbs 22:6"
+        "chapter": 6,
+        "verse": "20",
+        "full_reference": "Proverbs 6:20"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚交托",
-        "#为儿女忧心",
-        "#尽力之后交托"
+        "#想起母亲",
+        "#家庭传承",
+        "#未曾被道谢"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "Instruis l'enfant selon la voie qu'il doit suivre; Et quand il sera vieux, il ne s'en détournera pas."
+            "text": "Mon fils, garde les préceptes de ton père, Et ne rejette pas l'enseignement de ta mère."
           },
           "modern": {
             "version": "BDS",
@@ -5400,21 +5403,21 @@
         "verse_category": {
           "testament": "OT",
           "genre": "wisdom",
-          "primary_theme": "parenting"
+          "primary_theme": "family"
         },
-        "niv_word_count": 21,
-        "context_note": "Les Proverbes énoncent comment la vie fonctionne d'ordinaire, non des garanties sur chaque cas : le même livre dit qu'un fils sage réjouit son père, et l'Écriture est pleine d'exceptions. Segond traduit « la voie qu'il doit suivre » ; certains lisent l'hébreu comme « selon sa propre voie ». Les deux lectures interdisent d'en tirer une accusation."
+        "niv_word_count": 16,
+        "context_note": "Dans le Proche-Orient ancien, l'instruction formelle revenait au père, ce qui rend cette ligne inhabituelle. Le mot hébreu pour ce que donne la mère est torah — celui-là même qui désigne l'instruction de Dieu. Segond le traduit simplement par « enseignement », mais les Proverbes traitent bien sa parole comme faisant autorité, non comme un complément."
       },
       "devotional": {
         "structure": "同行劝勉",
         "fr": {
-          "meditation": "Les Proverbes disent comment les choses se passent en général. Ce n'est pas un contrat, et cela n'a jamais été écrit pour être lu comme tel, ce qui change tout si ton enfant s'est éloigné et que tu purges depuis, en silence, une peine que personne ne t'a infligée.\n\nEn tant que chrétiennes, nous transformons facilement une sagesse en garantie, puis la garantie en verdict contre nous-mêmes. Le texte français parle de la voie que l'enfant doit suivre ; certains spécialistes lisent l'hébreu autrement, « selon sa voie à lui », c'est-à-dire selon le tempérament de cet enfant-là. Dans les deux cas, il s'agit du long façonnage d'une vie, et pas d'un jugement rendu sur toi à onze heures du soir.",
-          "action_step": "Si tu te reproches ce qu'est devenu l'un de tes enfants, dis ce soir une seule phrase qui le remet entre les mains de Dieu."
+          "meditation": "Regarde comment la phrase est construite. Les préceptes du père et — dans le même souffle, sous le même impératif — l'enseignement de la mère. Rien ne hiérarchise les deux. Et il faut bien que ce qu'elle transmettait ait eu du poids, puisqu'on prend la peine de dire de ne pas le rejeter.\n\nEn tant que chrétiennes, nous transmettons beaucoup sans nous en apercevoir. Pas des discours. La façon dont tu encaisses une mauvaise nouvelle à table. Ce que tu fais quand tu as tort. La plupart d'entre nous avons appris davantage en regardant qu'en écoutant, et les femmes de nos familles ont enseigné bien plus qu'on ne les en a jamais remerciées.",
+          "action_step": "Nomme une chose qu'une femme de ta famille t'a apprise sans le vouloir. Ce soir, remercie-la, ou remercie Dieu pour elle."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, j'ai utilisé ce verset contre moi-même pendant des années. Ce soir, je le pose. Je n'ai jamais eu le pouvoir de garantir une issue, et je ne l'ai jamais eu. Reprends mon enfant dans tes mains, là où il a toujours été. Laisse-moi dormir sans le verdict. Au nom de Jésus, amen."
+        "fr": "Cher Père céleste, merci pour ce que m'ont transmis des femmes à qui personne n'a sans doute jamais dit que cela comptait. Je vis encore sur une partie de cet héritage. Là où ce que j'ai reçu était bon, aide-moi à le transmettre sans le rendre pesant. Là où il ne l'était pas, aide-moi à le poser sans amertume. Au nom de Jésus, amen."
       }
     },
     {
@@ -5474,22 +5477,22 @@
       "segment": "evening",
       "language": "fr",
       "reference": {
-        "book": "1 John",
-        "chapter": 1,
-        "verse": "9",
-        "full_reference": "1 John 1:9"
+        "book": "Hebrews",
+        "chapter": 8,
+        "verse": "12",
+        "full_reference": "Hebrews 8:12"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚赦免",
-        "#心中自责",
-        "#被神接纳"
+        "#反复自责",
+        "#难以放过自己",
+        "#想要被赦免"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "Si nous confessons nos péchés, il est fidèle et juste pour nous les pardonner, et pour nous purifier de toute iniquité."
+            "text": "parce que je pardonnerai leurs iniquités, et que je ne me souviendrai plus de leurs péchés."
           },
           "modern": {
             "version": "BDS",
@@ -5503,19 +5506,19 @@
           "genre": "epistle",
           "primary_theme": "forgiveness"
         },
-        "niv_word_count": 22,
-        "context_note": "Jean écrit contre des maîtres qui niaient l'existence même du péché. Le grec homologeō, « confesser », signifie littéralement dire la même chose : décrire une chose comme Dieu la décrit déjà, sans l'habiller ni l'exagérer. « Fidèle et juste » vont ensemble à dessein : le pardon est une promesse tenue, pas une humeur."
+        "niv_word_count": 20,
+        "context_note": "Hébreux cite la promesse de la nouvelle alliance chez Jérémie, à des lecteurs qui connaissaient la répétition annuelle des sacrifices. Le grec mnestho, « se souvenir », a une nuance juridique : produire une charge. La promesse n'est pas que Dieu perde la mémoire, mais qu'il a décidé une fois pour toutes de ne plus rien engager contre toi."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "fr": {
-          "meditation": "Fidèle et juste. Pas indulgent et clément : ce seraient d'autres mots. Le pardon n'est donc pas Dieu qui fait une exception pour toi un jour de bonne humeur. C'est Dieu qui tient sa parole, ce qu'il n'a encore jamais manqué de faire sur quoi que ce soit.\n\nCe soir, tu ne viens donc pas quémander une faveur, et tu n'espères pas le prendre dans un bon moment. Tu lui demandes d'être ce qu'il est déjà. C'est tout autre chose à tenir dans la main en entrant dans une pièce !",
-          "action_step": "Dis à Dieu ce soir une chose précise que tu préférerais survoler. Une seule phrase. Puis arrête-toi là, et n'ajoute pas les reproches."
+          "meditation": "Dieu n'oublie pas. Il n'est pas capable de perdre une information. Donc « ne plus se souvenir » ne peut pas vouloir dire que le dossier a été égaré.\n\nRegarde l'ordre : d'abord le pardon, ensuite l'oubli. Le second découle du premier. Ce n'est pas une défaillance de mémoire, c'est une décision prise — et une décision peut tenir, alors qu'un oubli, ça se défait. Il ne remettra plus la chose sur la table, et cela ne dépend plus de sa mémoire mais de sa parole. La liste que tu rouvres chaque soir, lui l'a fermée !",
+          "action_step": "Nomme ce que tu continues de te reprocher toi-même. Puis dis-le une fois à voix haute, ce soir : Dieu a refermé ce dossier."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, merci : ce soir je ne demande pas une faveur, mais quelque chose que tu as déjà promis. Voici la chose que j'aurais préféré taire. Purifie-la, et laisse-moi dormir sans rejouer toute la scène deux fois de plus. Aide-moi à me réveiller demain plus douce avec ceux qui vivent le plus près de moi. Au nom de Jésus, amen."
+        "fr": "Cher Père céleste, j'ai une petite liste que je me relis sans arrêt, et tu as dit que tu ne ferais plus jamais valoir aucune de ces choses contre moi. Aide-moi à le croire ce soir plutôt qu'à discuter avec toi. Referme ce que je force sans cesse à rouvrir. Laisse-moi dormir comme quelqu'un qui n'est plus en procès. Au nom de Jésus, amen."
       }
     },
     {
@@ -5625,22 +5628,22 @@
       "segment": "evening",
       "language": "fr",
       "reference": {
-        "book": "1 Peter",
-        "chapter": 5,
-        "verse": "7",
-        "full_reference": "1 Peter 5:7"
+        "book": "Psalms",
+        "chapter": 38,
+        "verse": "9",
+        "full_reference": "Psalms 38:9"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚交托",
-        "#焦虑不安",
-        "#被神看顾"
+        "#说不出口",
+        "#被神看见",
+        "#心里有话"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "et déchargez-vous sur lui de tous vos soucis, car lui-même prend soin de vous."
+            "text": "Seigneur! Tous mes désirs sont devant toi, Et mes soupirs ne te sont point cachés."
           },
           "modern": {
             "version": "BDS",
@@ -5650,24 +5653,25 @@
       },
       "exegesis": {
         "verse_category": {
-          "testament": "NT",
-          "genre": "epistle/exhortation",
+          "testament": "OT",
+          "genre": "psalm",
           "primary_theme": "care"
         },
-        "niv_word_count": 11,
-        "context_note": "En grec, cette ligne prolonge la phrase précédente : humiliez-vous, et jetez sur lui votre inquiétude. Les deux ne font qu'un seul mouvement — confier son souci relève donc de l'humilité, pas de la faiblesse. Epiriptō décrit le geste de hisser un ballot sur le dos d'une bête de somme : un transfert net, en une fois."
+        "niv_word_count": 16,
+        "context_note": "Le Psaume 38 fait partie des psaumes de repentance ; il vient de quelqu'un physiquement malade et socialement abandonné. Dans la numérotation Segond, c'est le verset 10. L'hébreu anachah désigne un gémissement — un son sans mots. David le place à côté du désir formulable comme une chose déjà entièrement connue de Dieu, sans avoir à la traduire d'abord."
       },
       "devotional": {
         "structure": "发问",
         "fr": {
-          "meditation": "Le verbe n'est ni partager ni en parler. Se décharger, c'est faire basculer un fardeau de son propre dos sur une bête capable de le porter : un seul mouvement, et les mains sont vides. Et la phrase est soudée à celle qui précède, celle qui appelle à s'humilier : les deux ne font qu'un seul geste. Cela change tout le tableau. Garder ses soucis serrés contre soi n'est pas de la force. C'est une manière discrète d'affirmer que c'est encore à toi de tout porter, et que personne ne le fera aussi bien.\n\nAlors, qu'est-ce que tu portes encore ce soir parce que le confier reviendrait à reconnaître que tu n'y arrives pas ?",
-          "action_step": "Nomme le souci à voix haute, puis dis : ce n'est pas à moi de le porter cette nuit. Pose-le avant de te coucher."
+          "meditation": "Deux choses différentes sont nommées ici, et la plupart d'entre nous n'apportons que la première. Le désir — ce que tu pourrais formuler si on te le demandait. Et le soupir : le bruit qui sort quand il ne reste plus de mots dedans.\n\nDavid ne range pas le second dans le premier. Il dit que les deux sont déjà devant Dieu, y compris la part qu'il n'aurait pas su expliquer même en essayant. Alors : qu'est-ce que tu attends de savoir formuler correctement avant de l'apporter ? Et qui t'a dit que c'était la condition ?",
+          "action_step": "Apporte à Dieu ce que tu n'arrives pas à formuler. N'explique rien. Rester assise là avec ça, en silence, compte déjà comme une prière."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, je m'accroche à mes soucis parce que lâcher ressemble à un aveu : je n'y arrive pas. Ce soir, je le reconnais. Voilà tout le fardeau, basculé sur toi. Merci de prendre soin même des petites choses que j'aurais honte de dire à voix haute devant quelqu'un d'autre. Au nom de Jésus, amen."
-      }
+        "fr": "Cher Père céleste, il y a une chose que je ne t'ai pas apportée parce que je n'arrive pas à la dire correctement, et j'attendais d'avoir les mots. Ce soir, je te l'apporte inachevée. Tu entends déjà ce qu'il y a sous la phrase. Merci de ne pas exiger que je sois claire avant de m'écouter. Au nom de Jésus, amen."
+      },
+      "verse_local": "Psalms 38:10"
     },
     {
       "id": "e_054",
@@ -5976,22 +5980,22 @@
       "segment": "evening",
       "language": "fr",
       "reference": {
-        "book": "Proverbs",
-        "chapter": 17,
-        "verse": "17",
-        "full_reference": "Proverbs 17:17"
+        "book": "Ecclesiastes",
+        "chapter": 4,
+        "verse": "10",
+        "full_reference": "Ecclesiastes 4:10"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#被陪伴",
-        "#患难中的家人"
+        "#孤单过一阵",
+        "#有人守着",
+        "#想要陪伴谁"
       ],
       "translations": {
         "fr": {
           "traditional": {
             "version": "Louis Segond 1910",
-            "text": "L'ami aime en tout temps, Et dans le malheur il se montre un frère."
+            "text": "Car, s'ils tombent, l'un relève son compagnon; mais malheur à celui qui est seul et qui tombe, sans avoir un second pour le relever!"
           },
           "modern": {
             "version": "BDS",
@@ -6005,19 +6009,19 @@
           "genre": "wisdom",
           "primary_theme": "friendship"
         },
-        "niv_word_count": 16,
-        "context_note": "L'hébreu est très ramassé. La Segond rend la seconde moitié ainsi : dans le malheur, c'est le même ami qui se montre un frère. Les Proverbes ne sont pas sentimentaux sur les relations, ils observent lesquelles tiennent sous la charge. « En tout temps » englobe les moments peu commodes, et c'est tout le sens de la ligne."
+        "niv_word_count": 31,
+        "context_note": "L'Ecclésiaste passe l'essentiel de ses pages sur ce qui ne dure pas. Ce court passage est l'un de ses rares biens simples : deux valent mieux qu'un, à cause de ce qui arrive quand l'un tombe. L'hébreu est très concret — il n'y a personne pour le relever. Ce n'est pas un sentiment sur l'amitié, c'est un calcul de probabilités."
       },
       "devotional": {
         "structure": "见证",
         "fr": {
-          "meditation": "L'année où tout s'est défait, la plupart des gens ont été gentils pendant trois semaines environ. Ce n'est pas un reproche : trois semaines, c'est ce que la plupart d'entre nous avons à donner, et j'ai souvent été cette amie-là. Ce dont je me souviens, ce sont les deux qui étaient encore là au septième mois, quand il n'y avait plus rien à dire ni rien à réparer.\n\nCe proverbe n'a rien de sentimental : il observe quelles relations tiennent sous la charge. Aimer en tout temps, cela comprend les moments peu commodes. Et la suite ne dit pas qu'un frère naîtrait pour le malheur : elle dit que le malheur révèle, chez la même personne, quelqu'un de la famille. On ne le sait pas d'avance. Je le sais maintenant, parce que quelqu'un l'a payé pour moi.",
-          "action_step": "Pense à quelqu'un qui en est au septième mois de quelque chose de dur. Écris-lui demain, sans rien d'utile à proposer."
+          "meditation": "Il y a eu une année où j'ai cessé de répondre aux messages. Pas par colère — je n'avais simplement rien à dire en retour, et me taire paraissait plus simple qu'expliquer. Ma sœur, elle, a continué d'envoyer les siens. Rien d'exigeant. Une photo. Une phrase sur sa semaine. Je ne l'ai pas remerciée à l'époque. Je ne suis même pas sûre d'avoir répondu pendant un long moment.\n\nCe que je comprends maintenant, c'est qu'elle n'attendait pas que je redevienne fréquentable. Elle se tenait assez près pour rester à portée, afin que le jour où je pourrais enfin parler, il y ait déjà quelqu'un debout à côté de moi. J'ai essayé de faire cela pour une autre depuis. C'est un travail plus silencieux que je ne l'imaginais.",
+          "action_step": "Envoie ce soir un message à quelqu'un qui s'est tu depuis un moment. Ne lui demande rien, pas même une réponse."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "fr": "Cher Père céleste, merci pour celles et ceux qui sont restés bien après le moment où il était intéressant de rester. Je sais maintenant ce que cela leur a coûté. Fais de moi cette personne-là pour quelqu'un d'autre, et rappelle-moi ce soir le nom de celle qui traverse la partie silencieuse d'une année difficile. Au nom de Jésus, amen."
+        "fr": "Cher Père céleste, merci pour ceux qui sont restés près de moi quand je n'avais plus rien à rendre. Je ne l'ai pas toujours remarqué, et je l'ai rarement dit. Montre-moi ce soir qui s'est tu autour de moi, et garde-moi assez près pour rester à portée, sans exiger de cette personne qu'elle s'explique. Au nom de Jésus, amen."
       }
     }
   ]

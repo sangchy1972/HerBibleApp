@@ -440,25 +440,25 @@
       "reference": {
         "book": "Philippians",
         "chapter": 4,
-        "verse": "13",
-        "full_reference": "Philippians 4:13"
+        "verse": "8",
+        "full_reference": "Philippians 4:8"
       },
-      "niv_primary": "I can do all this through him who gives me strength.",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#早晨力量",
-        "#日常疲惫",
-        "#学习知足"
+        "#思绪纷乱",
+        "#想要专注",
+        "#被念头缠住"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "I can do all things through Christ which strengtheneth me."
+            "text": "Finally, brethren, whatsoever things are true, whatsoever things are honest, whatsoever things are just, whatsoever things are pure, whatsoever things are lovely, whatsoever things are of good report; if there be any virtue, and if there be any praise, think on these things."
           },
           "modern": {
             "version": "NIV",
-            "text": "I can do all this through him who gives me strength."
+            "text": ""
           }
         }
       },
@@ -466,32 +466,32 @@
         "verse_category": {
           "testament": "NT",
           "genre": "epistle",
-          "primary_theme": "contentment"
+          "primary_theme": "thoughts"
         },
-        "niv_word_count": 11,
-        "context_note": "Paul is thanking the Philippians for a gift while insisting he had already learned to manage without it. The two verses before this list plenty and hunger, abundance and need. His word for 'content' is autarkes, a term the Stoics used for self-sufficiency — which Paul quietly redefines: not sufficient in himself, sufficient in Christ.",
+        "niv_word_count": 41,
+        "context_note": "Paul writes this from house arrest, to a church he loves and cannot visit. The verb behind 'think on' is logizomai, an accounting term — to reckon up, to enter on the ledger. It describes deliberate attention rather than mood, which is why it can be commanded at all.",
         "key_themes": [
-          "上下文是知足不是成功",
-          "「凡事」包括缺乏",
-          "被托住而不是必然得胜"
+          "不是叫你积极",
+          "logizomai 是记账的动词",
+          "放进去,不是赶出来"
         ],
-        "version_note": "KJV 的 all things 与 NIV 的 all this 都承接上文的「或饱足或饥饿」;脱离上下文单读易被误解为成功保证。",
+        "version_note": "KJV 'think on these things' 的希腊文是 logizomai(记账/盘点);和合本作「思念」。",
         "life_connection": [
-          "拿这节经文给自己打鸡血",
-          "撑不住又觉得信心不够",
-          "厌倦日复一日的琐事"
+          "同一件事在脑子里转了一整周",
+          "越叫自己别想越想",
+          "早上还没开始就已经很累"
         ]
       },
       "devotional": {
         "structure": "同行劝勉",
         "copyright_check": {
-          "niv_words": 11,
-          "required_min": 33,
-          "en_words": 93
+          "niv_words": 41,
+          "required_min": 123,
+          "en_words": 96
         },
         "en": {
-          "meditation": "This is probably the most quoted verse in the book, and almost always in the wrong direction — as fuel for winning something.\n\nLook at what Paul says immediately before it. He is talking about being content: how to be full, how to be hungry, how to have plenty and how to have nothing. All things means all of those. As Christians we can stop reading this as a promise that we will succeed. It is a promise that we will be held, in whichever of those we happen to be in this week.",
-          "action_step": "Say the verse about the hardest ordinary part of today — not about a goal. I can do this school run. I can do this shift."
+          "meditation": "This is not a command to be positive. Paul is writing from custody, and the list includes things that are true and just — not merely pleasant.\n\nThe verb matters. Logizomai is an accounting word: to reckon, to take account of, to keep on the ledger. He is not telling us to feel differently. He is telling us where to spend attention, which we can actually choose. As Christians we mostly try to stop thinking about something. That rarely works. The instruction here is the other direction — put something in, rather than fight to get something out.",
+          "action_step": "Pick one true thing about God and carry it into your first difficult moment today. Say it once before you speak."
         }
       },
       "prayer": {
@@ -499,7 +499,7 @@
         "copyright_check": {
           "en_words": 51
         },
-        "en": "Dear Heavenly Father, I have used this verse to ask You for outcomes. Today I want to use it properly. Whether this week turns out full or thin, teach me to be held either way. Give me strength for the ordinary parts I keep hoping to skip. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, my mind goes to the same worn places without my permission, and telling myself to stop has never worked. Give me something better to put there this morning. Show me one thing that is true and let me keep it in view through the parts of today I am already dreading. In Jesus' name, amen."
       }
     },
     {
@@ -928,60 +928,60 @@
       "segment": "morning",
       "language": "en",
       "reference": {
-        "book": "Jeremiah",
-        "chapter": 29,
-        "verse": "11",
-        "full_reference": "Jeremiah 29:11"
+        "book": "Micah",
+        "chapter": 7,
+        "verse": "7",
+        "full_reference": "Micah 7:7"
       },
-      "niv_primary": "For I know the plans I have for you, declares the LORD, plans to prosper you and not to harm you, plans to give you hope and a future.",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#看不见未来",
-        "#神有计划"
+        "#等了很久",
+        "#盼望未至",
+        "#想要交托"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "For I know the thoughts that I think toward you, saith the Lord, thoughts of peace, and not of evil, to give you an expected end."
+            "text": "Therefore I will look unto the Lord; I will wait for the God of my salvation: my God will hear me."
           },
           "modern": {
             "version": "NIV",
-            "text": "For I know the plans I have for you, declares the LORD, plans to prosper you and not to harm you, plans to give you hope and a future."
+            "text": ""
           }
         }
       },
       "exegesis": {
         "verse_category": {
           "testament": "OT",
-          "genre": "prophecy/letter",
+          "genre": "prophecy",
           "primary_theme": "hope"
         },
-        "niv_word_count": 29,
-        "context_note": "This is from a letter Jeremiah sent to people already deported to Babylon — and the verses just before it tell them to build houses, plant gardens and settle in, because they will be there seventy years. The promise is real and the timescale is long. Most people who quote this verse have not read the sentence before it.",
+        "niv_word_count": 27,
+        "context_note": "Micah 7 opens with a society in collapse — bribed judges, betrayal inside the household. 'Therefore' turns on all of it. The Hebrew tsaphah means to keep watch as a sentry on a wall: alert, deliberate, facing outward. It is a posture, not a mood, which is why it can be chosen on a bad morning.",
         "key_themes": [
-          "写给被掳的人不是顺境的人",
-          "应许的时间尺度很长",
-          "盼望不等于快速脱困"
+          "therefore 前面是最黑的一段",
+          "三个动词没有一个是解决",
+          "等候是哨兵的姿势"
         ],
-        "version_note": "KJV 的 expected end 与 NIV 的 hope and a future 同译希伯来 acharit vetiqvah,直译近于「一个后来,和一条盼望的线」。",
+        "version_note": "KJV 'wait' 的希伯来文是 tsaphah(守望/放哨),不是被动地等;和合本作「等候」。",
         "life_connection": [
-          "处在看不到头的一段日子",
-          "把这节经文当作快速脱困的保证",
-          "对「计划」这个词感到疲惫"
+          "祷告很久没有回音",
+          "身边的人都靠不住",
+          "看不出还能指望什么"
         ]
       },
       "devotional": {
         "structure": "宣告鼓励",
         "copyright_check": {
-          "niv_words": 29,
-          "required_min": 87,
-          "en_words": 112
+          "niv_words": 27,
+          "required_min": 81,
+          "en_words": 108
         },
         "en": {
-          "meditation": "This is the verse people put on cards, and it was written to people who had just been told they were not going home for seventy years. Build houses. Plant gardens. Marry, have children. And then: I know the thoughts I think toward you.\n\nSo hear it the way it was meant. The promise is not that your hard season is nearly over — it is that the hard season is not a detour, and that Someone is holding the whole shape of your life, including the part taking far longer than you planned. This stretch counts. You are not sitting in the waiting room of your real life. You are in it!",
-          "action_step": "Do one thing today that treats this season as real life rather than a waiting room — plant something, fix something, invite someone."
+          "meditation": "Read what comes before the therefore. Micah has just described a society where you cannot trust your neighbour, your friend, or the person asleep beside you. It is the bleakest paragraph in the book. Then: therefore. Not therefore I will fix it. Three verbs, and none of them is a solution. I will look. I will wait. My God will hear.\n\nWatch the middle one, because it is the hardest. Waiting is not passivity here — the Hebrew is the posture of a sentry, awake on purpose, facing the direction help will come from. You are not failing at this because nothing has changed yet. Watching is the assignment!",
+          "action_step": "Before you check anything else this morning, look up once and say where you are watching from."
         }
       },
       "prayer": {
@@ -989,7 +989,7 @@
         "copyright_check": {
           "en_words": 55
         },
-        "en": "Dear Heavenly Father, I have been treating this stretch as an interruption to my real life. Forgive me for holding my breath. Thank You that You are not absent from a season You did not remove. Help me build something here, in this one, while I wait for whatever comes next. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, nothing has changed and I have run out of ways to make it change. This morning I am not asking for a plan. I am asking for the patience to keep facing Your direction while I wait. Thank You that watching is not the same as doing nothing, and that You hear me either way. In Jesus' name, amen."
       }
     },
     {
@@ -1138,60 +1138,60 @@
       "segment": "morning",
       "language": "en",
       "reference": {
-        "book": "Psalms",
-        "chapter": 119,
-        "verse": "105",
-        "full_reference": "Psalms 119:105"
+        "book": "Daniel",
+        "chapter": 2,
+        "verse": "22",
+        "full_reference": "Daniel 2:22"
       },
-      "niv_primary": "Your word is a lamp for my feet, a light on my path.",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
         "#看不清前路",
-        "#一步之光"
+        "#寻求方向",
+        "#心里发暗"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "Thy word is a lamp unto my feet, and a light unto my path."
+            "text": "He revealeth the deep and secret things: he knoweth what is in the darkness, and the light dwelleth with him."
           },
           "modern": {
             "version": "NIV",
-            "text": "Your word is a lamp for my feet, a light on my path."
+            "text": ""
           }
         }
       },
       "exegesis": {
         "verse_category": {
           "testament": "OT",
-          "genre": "psalm",
+          "genre": "narrative",
           "primary_theme": "guidance"
         },
-        "niv_word_count": 13,
-        "context_note": "The lamp in this image is a small clay oil lamp carried in the hand or tied at the ankle — it lit perhaps the next step, not the road. Whoever wrote Psalm 119 was not promised visibility. He was promised enough light to take one more step without falling.",
+        "niv_word_count": 22,
+        "context_note": "Daniel is about to be executed along with Babylon's other advisers, for failing to interpret a dream the king refused to describe. This is his response to being given the answer. The Aramaic behind 'deep' is used of the unsearchable; the claim is not that God explains everything, but that nothing is hidden from Him.",
         "key_themes": [
-          "灯只照到脚前",
-          "够走下一步就够",
-          "不必看见全程"
+          "他知道暗中有什么",
+          "不是把灯打开",
+          "另一种安慰"
         ],
-        "version_note": "KJV 与 NIV 都保留「脚」与「路」的双重意象;古代的灯是提在手上的小油灯,照明范围极小,这是理解本节的关键。",
+        "version_note": "KJV 'deep and secret things' 的亚兰文指不可测度的事;和合本作「深奥隐秘的事」。",
         "life_connection": [
-          "想要看见整条路才敢走",
-          "对未来的不确定焦虑",
-          "把没有全盘计划当成失败"
+          "有件事怎么想都想不明白",
+          "等一个还没有的答案",
+          "不知道下一步往哪走"
         ]
       },
       "devotional": {
         "structure": "同行劝勉",
         "copyright_check": {
-          "niv_words": 13,
-          "required_min": 39,
-          "en_words": 71
+          "niv_words": 22,
+          "required_min": 66,
+          "en_words": 75
         },
         "en": {
-          "meditation": "The lamp in this verse is not a floodlight. It is a small clay oil lamp, carried low, throwing light about a step ahead.\n\nWhich is the promise we actually have. Not that we will see where this is going. That we will take the next step without falling. If we have been waiting to see the whole road before moving, we have been waiting for something we were never offered.",
-          "action_step": "Identify the very next step — not the plan, the step — and take it today."
+          "meditation": "Daniel says this after being told to interpret a dream nobody would describe to him. An impossible brief, and his answer is not about his own ability.\n\nNotice the middle line. He knows what is in the darkness — not He will remove it. As Christians we ask for the light to be switched on. This says Someone is already able to see in there, which is a different comfort and often the only one available.",
+          "action_step": "Name one thing you cannot see your way through. Hand it over without asking for the explanation yet."
         }
       },
       "prayer": {
@@ -1199,7 +1199,7 @@
         "copyright_check": {
           "en_words": 45
         },
-        "en": "Dear Heavenly Father, I want to see the whole road, and You have given me a lamp for one step. Help me stop negotiating for more light and start walking with what I have. Show me the next step this morning. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, I cannot see into this and I have stopped pretending I can. Thank You that the dark is not dark to You. Go on seeing what I cannot, and give me enough light for today. In Jesus' name, amen."
       }
     },
     {
@@ -2118,27 +2118,27 @@
       "segment": "morning",
       "language": "en",
       "reference": {
-        "book": "1 Corinthians",
-        "chapter": 15,
-        "verse": "57",
-        "full_reference": "1 Corinthians 15:57"
+        "book": "2 Thessalonians",
+        "chapter": 3,
+        "verse": "3",
+        "full_reference": "2 Thessalonians 3:3"
       },
-      "niv_primary": "But thanks be to God! He gives us the victory through our Lord Jesus Christ.",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#屡战屡败",
-        "#得胜是被赐的"
+        "#被人辜负",
+        "#想要依靠",
+        "#学习分辨"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "But thanks be to God, which giveth us the victory through our Lord Jesus Christ."
+            "text": "But the Lord is faithful, who shall stablish you, and keep you from evil."
           },
           "modern": {
             "version": "NIV",
-            "text": "But thanks be to God! He gives us the victory through our Lord Jesus Christ."
+            "text": ""
           }
         }
       },
@@ -2146,32 +2146,32 @@
         "verse_category": {
           "testament": "NT",
           "genre": "epistle",
-          "primary_theme": "victory"
+          "primary_theme": "faithfulness"
         },
-        "niv_word_count": 15,
-        "context_note": "This closes Paul's long argument about resurrection, and the 'victory' in view is over death itself, not over your worst habit. The Greek verb is present and continuous: God keeps on giving it. Paul writes thanks before anything visible has changed, which is the shape of the whole chapter.",
+        "niv_word_count": 14,
+        "context_note": "Paul writes to a church under pressure from outside and unsettled by false teaching within. The Greek pistos, 'faithful,' is the same root as the 'faith' not everyone has in the previous line — a deliberate echo. He answers human unreliability by naming God's reliability, not by denying the first.",
         "key_themes": [
-          "得胜是现在式的赐予",
-          "不是我打赢的",
-          "感谢在胜利之前"
+          "上一句说人不可靠",
+          "他不叫你换一批人",
+          "把重量挪个地方"
         ],
-        "version_note": "KJV 的 giveth 与 NIV 的 gives 都是现在进行的语气,不是一次性的过去事件;和合本作「使我们得胜」。",
+        "version_note": "KJV 'faithful' 的希腊文 pistos 与上一句「不是人人有信心」同一词根,是刻意的呼应。",
         "life_connection": [
-          "同一个软弱反复跌倒",
-          "觉得自己毫无长进",
-          "把得胜理解成再也不失败"
+          "一次次指望同一个人再一次次失望",
+          "以为是自己不够包容",
+          "分不清该信谁"
         ]
       },
       "devotional": {
         "structure": "同行劝勉",
         "copyright_check": {
-          "niv_words": 15,
-          "required_min": 45,
-          "en_words": 89
+          "niv_words": 14,
+          "required_min": 42,
+          "en_words": 87
         },
         "en": {
-          "meditation": "Read the verb. Not gave, once, long ago. Giveth — keeps on giving, this morning included.\n\nAnd read who does it. As Christians we can quietly rewrite this into a verse about our own discipline, and then feel like frauds by Thursday. Paul does not say we win. He says thanks be to God, who gives it to us. Which means the same failure you brought here last week does not disqualify you from being handed the same victory again this morning, on the same terms as the first time.",
-          "action_step": "Name the thing you keep losing to. Then say the verse about that specific thing, in the present tense."
+          "meditation": "Notice the contrast Paul is drawing. The previous sentence is about people who are unreliable — not everyone has faith, he says, plainly. Then: but the Lord is faithful.\n\nHe does not tell them to find better people. He moves the weight. As Christians we often try to restore trust in a situation where trust is genuinely not warranted, and then feel we have failed at grace. Paul does not ask for that. He puts what is reliable in a different place, and lets the unreliable stay named.",
+          "action_step": "Name one person you have been trying to make dependable. Put that weight somewhere else this morning."
         }
       },
       "prayer": {
@@ -2179,7 +2179,7 @@
         "copyright_check": {
           "en_words": 52
         },
-        "en": "Dear Heavenly Father, I am tired of bringing You the same failure. Thank You that You keep giving and have not started rationing it. I am not claiming to have won anything this morning, because I have not. I am simply receiving what You are still handing out. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, I keep leaning on someone who cannot hold it, and then blaming myself when it gives way. This morning I want to put my weight where it will hold. Make me steady from the inside so I am not asking people for something only You can give. In Jesus' name, amen."
       }
     },
     {
@@ -2608,60 +2608,60 @@
       "segment": "morning",
       "language": "en",
       "reference": {
-        "book": "2 Timothy",
-        "chapter": 1,
-        "verse": "7",
-        "full_reference": "2 Timothy 1:7"
+        "book": "Psalms",
+        "chapter": 119,
+        "verse": "114",
+        "full_reference": "Psalms 119:114"
       },
-      "niv_primary": "For the Spirit God gave us does not make us timid, but gives us power, love and self-discipline.",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#早晨力量",
-        "#畏缩不前",
-        "#刚强的心"
+        "#需要庇护",
+        "#鼓起勇气",
+        "#今天要面对"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "For God hath not given us the spirit of fear; but of power, and of love, and of a sound mind."
+            "text": "Thou art my hiding place and my shield: I hope in thy word."
           },
           "modern": {
             "version": "NIV",
-            "text": "For the Spirit God gave us does not make us timid, but gives us power, love and self-discipline."
+            "text": ""
           }
         }
       },
       "exegesis": {
         "verse_category": {
-          "testament": "NT",
-          "genre": "epistle",
+          "testament": "OT",
+          "genre": "psalm",
           "primary_theme": "courage"
         },
-        "niv_word_count": 18,
-        "context_note": "Paul writes this to a younger colleague who seems to be shrinking back. The three gifts come as a set: power without love turns hard, love without sōphronismos turns shapeless. That last word means a sound, self-governed mind — clarity, not repression.",
+        "niv_word_count": 15,
+        "context_note": "Psalm 119 is an acrostic on God's word, written by someone under sustained opposition. The Hebrew word for hiding place, sether, is a physical shelter — a covert, somewhere a hunted person actually goes. The two images are not poetic variation: they describe two different situations, met by the same person.",
         "key_themes": [
-          "三样一起给的",
-          "谨守是清醒不是压抑",
-          "胆怯不是你的性格"
+          "藏身处和盾牌是相反的两件事",
+          "不是选退还是进",
+          "是谁陪着你"
         ],
-        "version_note": "KJV 的 sound mind 与 NIV 的 self-discipline 同译 sōphronismos;该词兼含「清醒、自制、判断力」三义,难以单词对译。",
+        "version_note": "KJV 'hiding place' 的希伯来文 sether 是实体的隐蔽处;和合本作「藏身之处」。",
         "life_connection": [
-          "该说话的场合沉默了",
-          "把胆小当成谦卑",
-          "怕自己太多了"
+          "今天有一件很不想面对的事",
+          "想躲起来又躲不掉",
+          "不知道该硬撑还是该退"
         ]
       },
       "devotional": {
         "structure": "宣告鼓励",
         "copyright_check": {
-          "niv_words": 18,
-          "required_min": 54,
-          "en_words": 60
+          "niv_words": 15,
+          "required_min": 45,
+          "en_words": 74
         },
         "en": {
-          "meditation": "Three things, given together, and they need each other. Power on its own turns hard. Love on its own has no shape. The third word means a clear, governed mind — judgement, not repression.\n\nAnd notice what is not on the list. Timidity was never issued to you. Whatever made you go quiet this week, it did not come from God!",
-          "action_step": "Identify the sentence you did not say this week. Decide whether to say it today."
+          "meditation": "Two images, and they do opposite things. A hiding place is where you go to be out of it. A shield is what you carry into it. Both, from the same person, in one line.\n\nSo this is not a verse about whether you should retreat or stand. It is about who is with you in either. There are mornings for going in and mornings for going out. He does not change between them!",
+          "action_step": "Decide which kind of morning this is — hiding or shielded — and say so out loud before you start."
         }
       },
       "prayer": {
@@ -2669,7 +2669,7 @@
         "copyright_check": {
           "en_words": 42
         },
-        "en": "Dear Heavenly Father, I went quiet where I should have spoken, and I called it humility. Give me the power, the love and the clear head together — not one without the others. Show me what to say today. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, I do not know this morning whether to hide or to stand, and I have treated that as something I must get right. Be both for me. Cover me where I need cover, and go in front of me where I must go. In Jesus' name, amen."
       }
     },
     {
@@ -2748,60 +2748,60 @@
       "segment": "morning",
       "language": "en",
       "reference": {
-        "book": "Hebrews",
-        "chapter": 11,
-        "verse": "1",
-        "full_reference": "Hebrews 11:1"
+        "book": "Matthew",
+        "chapter": 7,
+        "verse": "24",
+        "full_reference": "Matthew 7:24"
       },
-      "niv_primary": "Now faith is confidence in what we hope for and assurance about what we do not see.",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#看不见证据",
-        "#信心的实底"
+        "#听了很多",
+        "#想要落地",
+        "#没人看见"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "Now faith is the substance of things hoped for, the evidence of things not seen."
+            "text": "Therefore whosoever heareth these sayings of mine, and doeth them, I will liken him unto a wise man, which built his house upon a rock:"
           },
           "modern": {
             "version": "NIV",
-            "text": "Now faith is confidence in what we hope for and assurance about what we do not see."
+            "text": ""
           }
         }
       },
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "epistle",
+          "genre": "gospel",
           "primary_theme": "faith"
         },
-        "niv_word_count": 17,
-        "context_note": "The Greek hypostasis means what stands underneath — a foundation or title deed. Elenchos is a legal word for proof brought in court. Neither is about intensity of feeling. Hebrews defines faith as something with weight and standing, not something you work yourself up into.",
+        "niv_word_count": 30,
+        "context_note": "This closes the Sermon on the Mount — the last thing Jesus says after three chapters of teaching. In Galilee, building on rock meant digging down through winter-dry topsoil to bedrock, work that is invisible once the house is up. Both builders in the parable hear; only the labour differs.",
         "key_themes": [
-          "实底是站得住的东西",
-          "确据是法律用语",
-          "信心不是感觉强烈"
+          "两个人都听见了",
+          "差别是有人挖了",
+          "磐石从外面看不见"
         ],
-        "version_note": "KJV 的 substance 与 evidence 分别译 hypostasis 与 elenchos;前者指「底座、实体」,后者是法律上的「证据」。",
+        "version_note": "KJV 'built his house upon a rock' —— 加利利要挖穿旱季的表土才见岩层;和合本作「盖在磐石上」。",
         "life_connection": [
-          "怀疑自己信心不够",
-          "把信心当成情绪强度",
-          "等一个确据才敢盼望"
+          "道理都懂就是做不到",
+          "做的事没人知道",
+          "怀疑坚持有没有用"
         ]
       },
       "devotional": {
         "structure": "宣告鼓励",
         "copyright_check": {
-          "niv_words": 17,
-          "required_min": 51,
-          "en_words": 68
+          "niv_words": 30,
+          "required_min": 90,
+          "en_words": 71
         },
         "en": {
-          "meditation": "Both words in this verse are solid ones. Substance means what stands underneath — a foundation, or a title deed. Evidence is a courtroom word.\n\nSo faith is not how strongly you feel this morning. It is something with weight, holding up the thing you are hoping for. Which means a woman with quiet faith and a shaky voice is standing on exactly the same ground as anyone else!",
-          "action_step": "Stop assessing how much faith you feel today. Act once on what you say is true, and let that be the measure."
+          "meditation": "Both builders in the story hear. That is the part people skip. The difference is not knowledge, not sincerity, not how much of the sermon they liked. The difference is one of them dug.\n\nAnd notice the rock is not visible from outside afterwards. The two houses look the same until weather comes. Which means the small unglamorous thing you did today, that nobody saw, is exactly what this is about!",
+          "action_step": "Take one thing you already know you should do and do it today, however small. Do not tell anyone."
         }
       },
       "prayer": {
@@ -2809,7 +2809,7 @@
         "copyright_check": {
           "en_words": 42
         },
-        "en": "Dear Heavenly Father, I keep checking whether I feel enough faith and finding I do not. Thank You that faith is a foundation and not a feeling. Let me stand on it today rather than keep testing it. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, I have heard more than I have done, and I know it. Thank You that You are not asking for a transformed life by Friday, only for one thing to move. Show me the one, and give me the will to dig. In Jesus' name, amen."
       }
     },
     {
@@ -3098,60 +3098,60 @@
       "segment": "morning",
       "language": "en",
       "reference": {
-        "book": "Proverbs",
-        "chapter": 3,
-        "verse": "5",
-        "full_reference": "Proverbs 3:5"
+        "book": "Psalms",
+        "chapter": 62,
+        "verse": "7",
+        "full_reference": "Psalms 62:7"
       },
-      "niv_primary": "Trust in the LORD with all your heart and lean not on your own understanding;",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#想不明白",
-        "#专心倚靠"
+        "#寻找依靠",
+        "#心里不稳",
+        "#学习交托"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "Trust in the Lord with all thine heart; and lean not unto thine own understanding."
+            "text": "In God is my salvation and my glory: the rock of my strength, and my refuge, is in God."
           },
           "modern": {
             "version": "NIV",
-            "text": "Trust in the LORD with all your heart and lean not on your own understanding;"
+            "text": ""
           }
         }
       },
       "exegesis": {
         "verse_category": {
           "testament": "OT",
-          "genre": "wisdom",
+          "genre": "psalm",
           "primary_theme": "trust"
         },
-        "niv_word_count": 15,
-        "context_note": "The Hebrew verb translated 'lean' means to rest your weight on something, the way you lean on a stick. Proverbs is not against understanding — the whole book is about acquiring it. It is against putting your full weight on it, which is a different thing.",
+        "niv_word_count": 18,
+        "context_note": "Psalm 62 was written for Jeduthun, one of David's music leaders, and its refrain repeats the word 'only' — God alone. The Hebrew tsur, rock, means bedrock rather than a stone: something that was there before you and does not move. David piles four terms into one location deliberately.",
         "key_themes": [
-          "倚靠是把重量放上去",
-          "不是叫你别思考",
-          "全心是不分裂"
+          "四个词放在同一个地址",
+          "我们习惯分散摆放",
+          "要么鲁莽要么唯一可行"
         ],
-        "version_note": "KJV 的 lean not 与 NIV 的 lean not 同译一个「靠上去、把重量压上」的希伯来动词,不是「不要思考」。",
+        "version_note": "KJV 'rock' 的希伯来文 tsur 指基岩而非石块;和合本作「磐石」。",
         "life_connection": [
-          "想把每件事都想通",
-          "怕交托等于放弃负责",
-          "分析到失眠"
+          "安全感建在好几样会塌的东西上",
+          "嘴上说信靠心里另有打算",
+          "怕失去某一样就全没了"
         ]
       },
       "devotional": {
         "structure": "同行劝勉",
         "copyright_check": {
-          "niv_words": 15,
-          "required_min": 45,
-          "en_words": 72
+          "niv_words": 18,
+          "required_min": 54,
+          "en_words": 66
         },
         "en": {
-          "meditation": "Lean means to put your weight on something. This is not a command to stop thinking — Proverbs is a book about learning to think well.\n\nIt is a command about where the weight goes. We can use our understanding all day and still not rest our whole selves on it. That distinction is the difference between a woman who plans carefully and a woman who cannot sleep until she has solved it.",
-          "action_step": "Think the problem through as far as you honestly can. Then stop, and put the weight somewhere else."
+          "meditation": "Count how many times he says it. Salvation, glory, rock, refuge — four words, all placed in the same location. In God. He is not varying the vocabulary for beauty; he is repeating an address.\n\nAs Christians we usually spread these across several places. Strength here, reputation there, safety somewhere else. David puts all four in one, which is either reckless or the only arrangement that holds.",
+          "action_step": "Name where your sense of safety actually sits this morning. Then say one sentence moving it."
         }
       },
       "prayer": {
@@ -3159,7 +3159,7 @@
         "copyright_check": {
           "en_words": 48
         },
-        "en": "Dear Heavenly Father, I have thought this as far as thinking goes and I am still turning it over. I am not going to stop using my head. I am going to stop standing on it. Take the weight of this one this morning. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, I have my security spread thin across several things that could each give way. This morning I want it in one place. Be the rock I am actually standing on, not the one I say I am. In Jesus' name, amen."
       }
     },
     {
@@ -3308,60 +3308,60 @@
       "segment": "morning",
       "language": "en",
       "reference": {
-        "book": "Romans",
-        "chapter": 15,
-        "verse": "13",
-        "full_reference": "Romans 15:13"
+        "book": "John",
+        "chapter": 1,
+        "verse": "5",
+        "full_reference": "John 1:5"
       },
-      "niv_primary": "May the God of hope fill you with all joy and peace as you trust in him, so that you may overflow with hope by the power of the Holy Spirit.",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#心里干涸",
-        "#盼望满溢"
+        "#长夜未明",
+        "#盼望微弱",
+        "#仍在等"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "Now the God of hope fill you with all joy and peace in believing, that ye may abound in hope, through the power of the Holy Ghost."
+            "text": "And the light shineth in darkness; and the darkness comprehended it not."
           },
           "modern": {
             "version": "NIV",
-            "text": "May the God of hope fill you with all joy and peace as you trust in him, so that you may overflow with hope by the power of the Holy Spirit."
+            "text": ""
           }
         }
       },
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "epistle/benediction",
+          "genre": "gospel",
           "primary_theme": "hope"
         },
-        "niv_word_count": 31,
-        "context_note": "This is Paul's blessing at the close of his longest argument. Note the order: God fills, and overflow is the result — you cannot overflow what has not been filled first. He calls God 'the God of hope', making hope God's own attribute rather than a mood we generate.",
+        "niv_word_count": 15,
+        "context_note": "John opens his gospel echoing Genesis — light, darkness, beginning. The Greek katalambano carries both senses, to grasp with the mind and to seize or overpower, and translators have split over which John meant. The verb 'shines' is present tense: continuous, ongoing, not a past event.",
         "key_themes": [
-          "神被称为盼望的神",
-          "充满之后才满溢",
-          "喜乐与平安是同一份"
+          "动词是现在式",
+          "两种译法都不是败",
+          "黑夜从没赢过一次"
         ],
-        "version_note": "KJV 的 abound in hope 与 NIV 的 overflow with hope 同译 perisseuō「多到溢出」;和合本作「大有盼望」。",
+        "version_note": "KJV 'comprehended' 的希腊文 katalambano 兼有「明白」与「胜过」两义,译本各取其一;和合本作「不接受」。",
         "life_connection": [
-          "自己都空了还要给别人",
-          "盼望不起来",
-          "把干涸当成属灵问题"
+          "同一件事很久没有变化",
+          "开始把没变化读成神不在",
+          "只看得见眼前一小段"
         ]
       },
       "devotional": {
         "structure": "宣告鼓励",
         "copyright_check": {
-          "niv_words": 31,
-          "required_min": 93,
-          "en_words": 58
+          "niv_words": 15,
+          "required_min": 45,
+          "en_words": 76
         },
         "en": {
-          "meditation": "Read the order, because we usually try it backwards. Fill, then overflow. Nobody overflows an empty cup by pressing harder on the sides.\n\nAnd notice the name: the God of hope. Hope is His, before it is ever yours. Which means this morning you are not being asked to manufacture any. You are being asked to be filled!",
-          "action_step": "Before you give anything to anyone today, ask to be filled first. Say it in those words."
+          "meditation": "The tense is present. Not shone, once, historically — shines, now, continuously. Whatever this morning looks like, that verb has not changed.\n\nAnd the second half is a translator's dilemma worth knowing: the Greek can mean the darkness did not understand it, or did not overcome it. Both are true and neither is a defeat. It is still shining. The dark has had every night since the beginning to put it out and has not managed once!",
+          "action_step": "Before the day starts, name one place that still looks dark. Say the verb out loud: it is shining there."
         }
       },
       "prayer": {
@@ -3369,7 +3369,7 @@
         "copyright_check": {
           "en_words": 43
         },
-        "en": "Dear Heavenly Father, I have been trying to pour out of an empty cup and calling it service. Fill me first this morning. Not so that I feel better, but so that what reaches other people is actually Yours. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, this has looked the same for a long time and I have started reading that as Your absence. Remind me this morning that the light did not go out, only that I cannot see far. Keep shining where I cannot see. In Jesus' name, amen."
       }
     },
     {
@@ -3798,60 +3798,60 @@
       "segment": "morning",
       "language": "en",
       "reference": {
-        "book": "Deuteronomy",
-        "chapter": 31,
-        "verse": "6",
-        "full_reference": "Deuteronomy 31:6"
+        "book": "Psalms",
+        "chapter": 59,
+        "verse": "16",
+        "full_reference": "Psalms 59:16"
       },
-      "niv_primary": "Be strong and courageous. Do not be afraid or terrified because of them, for the LORD your God goes with you; he will never leave you nor forsake you.",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#早晨力量",
-        "#怕面对的人",
-        "#祂不撇下"
+        "#清晨无力",
+        "#还没有解决",
+        "#选择赞美"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "Be strong and of a good courage, fear not, nor be afraid of them: for the Lord thy God, he it is that doth go with thee; he will not fail thee, nor forsake thee."
+            "text": "But I will sing of thy power; yea, I will sing aloud of thy mercy in the morning: for thou hast been my defence and refuge in the day of my trouble."
           },
           "modern": {
             "version": "NIV",
-            "text": "Be strong and courageous. Do not be afraid or terrified because of them, for the LORD your God goes with you; he will never leave you nor forsake you."
+            "text": ""
           }
         }
       },
       "exegesis": {
         "verse_category": {
           "testament": "OT",
-          "genre": "narrative/exhortation",
+          "genre": "psalm",
           "primary_theme": "courage"
         },
-        "niv_word_count": 29,
-        "context_note": "Moses says this to the whole nation before repeating it privately to Joshua — the courage is not reserved for leaders. 'Because of them' points at specific opponents rather than a general anxiety. The double negative in Hebrew is emphatic: not fail, not forsake.",
+        "niv_word_count": 33,
+        "context_note": "The heading places this psalm at the night Saul's men watched David's house, waiting for daylight to kill him. The Hebrew for 'sing aloud' is a shout of joy, and the timestamp is deliberate: morning, the hour the danger was due to arrive. Nothing had been resolved when he wrote it.",
         "key_themes": [
-          "说给全会众不只给领袖",
-          "「因为他们」指具体的对手",
-          "不撇下是双重否定"
+          "时间戳是早晨",
+          "唱的时候事还没完",
+          "把唱歌放在一天的前面"
         ],
-        "version_note": "KJV 的 he will not fail thee, nor forsake thee 是希伯来的双重否定强调;和合本作「必不撇下你,也不丢弃你」。",
+        "version_note": "KJV 'sing aloud' 的希伯来文是欢呼式的高唱;和合本作「歌唱」。",
         "life_connection": [
-          "要面对某个人的一天",
-          "怕冲突",
-          "觉得只能自己撑住"
+          "一睁眼问题还在",
+          "没有心情却还得开始",
+          "把感恩留到事情好转之后"
         ]
       },
       "devotional": {
         "structure": "同行劝勉",
         "copyright_check": {
-          "niv_words": 29,
-          "required_min": 87,
-          "en_words": 74
+          "niv_words": 33,
+          "required_min": 99,
+          "en_words": 78
         },
         "en": {
-          "meditation": "Notice this is said to everyone first, and only afterwards to Joshua on his own. Courage is not issued only to the person in charge.\n\nAnd notice how specific it is: do not be afraid because of them. Not a general instruction about anxiety — a particular set of people, on a particular day. As Christians we can spiritualise fear into something vague. Scripture usually keeps it concrete, because that is where it actually lives.",
-          "action_step": "Name the specific person or meeting you are dreading. Pray about that one, by name."
+          "meditation": "Notice the timestamp. In the morning — and this was written by a man whose house was surrounded overnight by people waiting to kill him.\n\nHe is not singing because it is over. He is singing at the hour when it is still going on, about something that has already proved true. As Christians we tend to postpone the singing until the outcome is in. David puts it at the front of the day instead, and calls it defence.",
+          "action_step": "Say or sing one true thing about God before you look at your phone. Out loud, even badly."
         }
       },
       "prayer": {
@@ -3859,7 +3859,7 @@
         "copyright_check": {
           "en_words": 43
         },
-        "en": "Dear Heavenly Father, it is not fear in general this morning. It is one particular conversation and one particular person. Go with me into that room. Thank You that You will not fail me and will not walk out. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, nothing is resolved and it is already morning. I do not feel like singing, so I am starting anyway. You have held me before and I am counting on that today. Be my defence again. In Jesus' name, amen."
       }
     },
     {
@@ -4078,60 +4078,60 @@
       "segment": "morning",
       "language": "en",
       "reference": {
-        "book": "Galatians",
-        "chapter": 5,
-        "verse": "22",
-        "full_reference": "Galatians 5:22"
+        "book": "Proverbs",
+        "chapter": 19,
+        "verse": "8",
+        "full_reference": "Proverbs 19:8"
       },
-      "niv_primary": "But the fruit of the Spirit is love, joy, peace, forbearance, kindness, goodness, faithfulness,",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#结不出果子",
-        "#圣灵的工作"
+        "#想要成长",
+        "#总在给别人",
+        "#学着善待自己"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "But the fruit of the Spirit is love, joy, peace, longsuffering, gentleness, goodness, faith,"
+            "text": "He that getteth wisdom loveth his own soul: he that keepeth understanding shall find good."
           },
           "modern": {
             "version": "NIV",
-            "text": "But the fruit of the Spirit is love, joy, peace, forbearance, kindness, goodness, faithfulness,"
+            "text": ""
           }
         }
       },
       "exegesis": {
         "verse_category": {
-          "testament": "NT",
-          "genre": "epistle",
+          "testament": "OT",
+          "genre": "wisdom",
           "primary_theme": "growth"
         },
-        "niv_word_count": 14,
-        "context_note": "The word for fruit is singular in Greek — one fruit with nine aspects, not a checklist of nine. Paul is contrasting this with 'the works of the flesh' in the verses before: works are produced, fruit is grown. Nobody makes an apple by trying harder.",
+        "niv_word_count": 19,
+        "context_note": "The Hebrew reads literally 'acquires heart' — in this literature the heart is the seat of judgment, not feeling. The second line's 'find good' is the ordinary word for finding, as of something searched for. Proverbs frames wisdom here as self-regard in the healthy sense: the person who gains it is the first beneficiary.",
         "key_themes": [
-          "果子是单数不是清单",
-          "果子是长出来的不是做出来的",
-          "对照的是「行为」"
+          "希伯来文直译是「获得心」",
+          "得益的第一个人是你",
+          "不是又一项义务"
         ],
-        "version_note": "原文的「果子」是单数,九样是同一个果子的九个面,不是九项待办;这是本节最常被误读之处。",
+        "version_note": "KJV 'getteth wisdom' 希伯来文直译作「获得心」,箴言里的「心」指判断力而非情感;和合本作「得着智慧」。",
         "life_connection": [
-          "拿九样对照自己觉得样样不及格",
-          "想靠努力变温柔",
-          "把成长当成任务清单"
+          "把成长当成欠别人的",
+          "所有时间都给了别人",
+          "很久没有为自己学点什么"
         ]
       },
       "devotional": {
         "structure": "同行劝勉",
         "copyright_check": {
-          "niv_words": 14,
-          "required_min": 42,
-          "en_words": 82
+          "niv_words": 19,
+          "required_min": 57,
+          "en_words": 83
         },
         "en": {
-          "meditation": "Fruit is singular here. One fruit, nine facets — not nine boxes to fail at separately. And notice the contrast Paul is drawing. The list before this one is called works. This one is called fruit. Works are produced; fruit is grown, slowly, by something happening in the plant rather than to it.\n\nWhich is why trying harder to be patient has never once made anyone patient. As Christians we can stop straining at the fruit and pay attention to the root instead.",
-          "action_step": "Stop working on the quality you most want to have. Give that time to being with God instead, today."
+          "meditation": "The Hebrew is blunter than it sounds in English: the one who acquires sense loves his own life. Wisdom is described here as an act of self-care, which is not how most of us have heard it framed.\n\nAs Christians we often treat growth as something owed — to God, to our families, to the people relying on us. This proverb says the person who benefits first is you. Learning to think well is not one more duty. It is closer to feeding yourself.",
+          "action_step": "Give fifteen minutes today to something that makes you wiser, not more useful. Put it in the calendar now."
         }
       },
       "prayer": {
@@ -4139,7 +4139,7 @@
         "copyright_check": {
           "en_words": 62
         },
-        "en": "Dear Heavenly Father, I have been trying to manufacture what only You can grow, and then feeling like a failure when it did not appear on schedule. Turn my attention to the root this morning instead of to the fruit. Grow whatever You are growing, at Your own pace, and give me the patience not to keep checking. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, I have treated growing as one more thing I owe other people, and then resented it. Show me this morning that becoming wise is something You give me for my own sake. Help me take it as a gift rather than a duty, and give me fifteen honest minutes for it today. In Jesus' name, amen."
       }
     },
     {
@@ -4569,26 +4569,26 @@
       "language": "en",
       "reference": {
         "book": "Psalms",
-        "chapter": 23,
-        "verse": "1",
-        "full_reference": "Psalms 23:1"
+        "chapter": 34,
+        "verse": "8",
+        "full_reference": "Psalms 34:8"
       },
-      "niv_primary": "The LORD is my shepherd, I lack nothing.",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#感到匮乏",
-        "#神是牧者"
+        "#想要亲近神",
+        "#只是听说过",
+        "#今晚试一试"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "The Lord is my shepherd; I shall not want."
+            "text": "O taste and see that the Lord is good: blessed is the man that trusteth in him."
           },
           "modern": {
             "version": "NIV",
-            "text": "The LORD is my shepherd, I lack nothing."
+            "text": ""
           }
         }
       },
@@ -4598,30 +4598,30 @@
           "genre": "psalm",
           "primary_theme": "provision"
         },
-        "niv_word_count": 8,
-        "context_note": "David had actually kept sheep, which is why the picture is unsentimental — shepherding was hard, dirty, night work. The Hebrew behind 'I shall not want' is a single verb meaning to lack. It is not a promise of abundance but of sufficiency: that what is needed will be there.",
+        "niv_word_count": 18,
+        "context_note": "Psalm 34's heading places it after David escaped Abimelech by pretending to be insane — not a dignified rescue. The Hebrew ta'am means to taste, to sample by mouth; it is also used for exercising discernment. David is not offering a doctrine. He is handing you the spoon.",
         "key_themes": [
-          "现在式的宣告",
-          "「我的」牧者",
-          "不缺乏是够用不是丰盛"
+          "尝是最第一手的动词",
+          "先尝后知,不是先信后来",
+          "没有人能替你尝"
         ],
-        "version_note": "KJV 的 I shall not want 与 NIV 的 I lack nothing 同译一个希伯来动词「缺乏」;和合本作「必不致缺乏」。",
+        "version_note": "KJV 'taste' 的希伯来文 ta'am 既指口尝也指分辨;和合本作「尝尝主恩的滋味」。",
         "life_connection": [
-          "睡前清点自己没有的东西",
-          "拿别人的生活对比自己的",
-          "长期觉得不够"
+          "认识关于神的很多道理却没有体验",
+          "等被说服了才肯靠近",
+          "别人的见证听多了自己却空着"
         ]
       },
       "devotional": {
         "structure": "宣告鼓励",
         "copyright_check": {
-          "niv_words": 8,
-          "required_min": 24,
-          "en_words": 62
+          "niv_words": 18,
+          "required_min": 54,
+          "en_words": 76
         },
         "en": {
-          "meditation": "Six words, and everything is decided by the first two: the Lord is. Not was, not might be. Present tense, tonight.\n\nAnd my — David does not say a shepherd, or the shepherd of Israel, though both are true. He says mine. Whatever the day cost you, this sentence is still yours to say, out loud, in the present tense, before you sleep!",
-          "action_step": "Say the verse out loud once, slowly, putting your own name in front of it. Then stop talking."
+          "meditation": "Taste is an odd verb for a theology. David does not say think about, or conclude, or believe on good authority. He says taste — the most first-hand word there is. Nobody tastes on your behalf.\n\nAnd notice the order: taste, then see. The knowing comes after, not before. You are not being asked to be convinced first and then approach. You are being asked to try one mouthful of Him tonight and let the knowing follow!",
+          "action_step": "Do one small thing tonight that you would only do if God were good — and see."
         }
       },
       "prayer": {
@@ -4629,7 +4629,7 @@
         "copyright_check": {
           "en_words": 43
         },
-        "en": "Dear Heavenly Father, tonight I am not asking for much. I just want to say it and mean it: You are my shepherd, and I shall not want. Quiet the part of me that keeps listing what is missing. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, I have believed things about You for years without ever tasting them. Tonight I would rather know You than know about You. Give me one real mouthful of Your goodness before I sleep. In Jesus' name, amen."
       }
     },
     {
@@ -5268,27 +5268,27 @@
       "segment": "evening",
       "language": "en",
       "reference": {
-        "book": "1 Corinthians",
-        "chapter": 13,
-        "verse": "4",
-        "full_reference": "1 Corinthians 13:4"
+        "book": "1 John",
+        "chapter": 4,
+        "verse": "12",
+        "full_reference": "1 John 4:12"
       },
-      "niv_primary": "Love is patient, love is kind. It does not envy, it does not boast, it is not proud.",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#亲密关系",
-        "#学习相爱"
+        "#关系疲惫",
+        "#想要看见神",
+        "#学习去爱"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "Charity suffereth long, and is kind; charity envieth not; charity vaunteth not itself, is not puffed up,"
+            "text": "No man hath seen God at any time. If we love one another, God dwelleth in us, and his love is perfected in us."
           },
           "modern": {
             "version": "NIV",
-            "text": "Love is patient, love is kind. It does not envy, it does not boast, it is not proud."
+            "text": ""
           }
         }
       },
@@ -5298,30 +5298,30 @@
           "genre": "epistle",
           "primary_theme": "love"
         },
-        "niv_word_count": 18,
-        "context_note": "Paul wrote this to a church tearing itself apart over status and gifting, not to a wedding. The first quality he names, makrothumeō, is literally 'long-tempered' — the opposite of a short fuse. Every item on his list is a verb in Greek: love is not a feeling here but a set of things a person does.",
+        "niv_word_count": 27,
+        "context_note": "John writes to a church split by people who claimed superior spiritual knowledge. His test is deliberately unglamorous. The Greek teteleiomene means brought to its intended end — love completed, not love intensified. God's love is not finished in how strongly we feel it but in whether it reaches another person.",
         "key_themes": [
-          "爱首先是耐性",
-          "这是婚礼经文也是日常经文",
-          "先做后感觉"
+          "约翰不解决「看不见」这个难题",
+          "神在两个人之间显形",
+          "爱被完成不是被加强"
         ],
-        "version_note": "KJV 的 charity 与 NIV 的 love 同译 agapē;KJV 用 charity 是为区别于情感之爱,今日英语已不再传达此意。",
+        "version_note": "KJV 'perfected' 的希腊文 teteleiomene 意为「被带到该到的终点」,不是「变得更强烈」;和合本作「完全」。",
         "life_connection": [
-          "被读了太多遍以致麻木的婚礼经文",
-          "在关系里耐性先耗尽",
-          "拿伴侣和别人比较"
+          "在最近的关系里已经不想再让步",
+          "只在安静独处时找神",
+          "对着同一个人一次次选择耐性"
         ]
       },
       "devotional": {
         "structure": "同行劝勉",
         "copyright_check": {
-          "niv_words": 18,
-          "required_min": 54,
-          "en_words": 104
+          "niv_words": 27,
+          "required_min": 81,
+          "en_words": 110
         },
         "en": {
-          "meditation": "You have heard this at weddings until it stopped meaning anything. Try it somewhere else. Read it about last Tuesday. The first word on the list is patience, and in Greek it is literally long-tempered — the opposite of a short fuse. Not a feeling. A length. And the second is kindness, which is also something you do rather than something you feel.\n\nWhich is oddly good news for a tired woman in a long relationship. On the nights when the feeling is thin, love is still available to you. It is a thing you can do at eleven o'clock when you would rather not.",
-          "action_step": "Pick one line from this verse and do it once tomorrow for the person you are closest to — deliberately, whether or not you feel it."
+          "meditation": "John starts with a problem and does not solve it the way we expect. Nobody has seen God. Then, instead of offering proof, he points at the one place God becomes visible: two people who keep loving each other.\n\nAs Christians we tend to look for God in the quiet, in the reading, in the moment alone. He is there. But John says the unseen God shows up somewhere much less private — in a marriage that keeps choosing patience, in a friendship that survives the thing that was said. That is where His love gets finished. Not in how we feel about Him. In how we keep treating each other.",
+          "action_step": "Do one ordinary loving thing tonight for the person hardest to love this week — no announcement, no credit."
         }
       },
       "prayer": {
@@ -5329,7 +5329,7 @@
         "copyright_check": {
           "en_words": 54
         },
-        "en": "Dear Heavenly Father, I have heard these words so often that I stopped hearing them. Make them ordinary again — about the kitchen, about tomorrow morning, about the person I am hardest on. Where the feeling is thin, let me still choose the patience, and let me still choose the kindness. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, I have wanted to see You, and I have been looking in the quiet places. Tonight show me that You are also in the ordinary patience I keep having to choose with the people closest to me. Where love has gone cold, warm it. Where I have stopped trying, help me start again — not because I feel it, but because You are in it. In Jesus' name, amen."
       }
     },
     {
@@ -5338,60 +5338,60 @@
       "segment": "evening",
       "language": "en",
       "reference": {
-        "book": "1 Thessalonians",
-        "chapter": 5,
-        "verse": "11",
-        "full_reference": "1 Thessalonians 5:11"
+        "book": "Psalms",
+        "chapter": 118,
+        "verse": "5",
+        "full_reference": "Psalms 118:5"
       },
-      "niv_primary": "Therefore encourage one another and build each other up, just as in fact you are doing.",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚交托",
-        "#关系疏离",
-        "#彼此建立"
+        "#被压得很紧",
+        "#需要喘息",
+        "#向神呼求"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "Wherefore comfort yourselves together, and edify one another, even as also ye do."
+            "text": "I called upon the Lord in distress: the Lord answered me, and set me in a large place."
           },
           "modern": {
             "version": "NIV",
-            "text": "Therefore encourage one another and build each other up, just as in fact you are doing."
+            "text": ""
           }
         }
       },
       "exegesis": {
         "verse_category": {
-          "testament": "NT",
-          "genre": "epistle/exhortation",
+          "testament": "OT",
+          "genre": "psalm",
           "primary_theme": "encouragement"
         },
-        "niv_word_count": 16,
-        "context_note": "Paul adds four words that are easy to skip: as in fact you are doing. He is not correcting them; he is naming something they already do and asking for more of it. The Greek oikodomeo, 'build up', is a construction word — adding a course of bricks, not offering a compliment.",
+        "niv_word_count": 18,
+        "context_note": "Psalm 118 was sung at Passover — Jesus likely sang it the night before the cross. The Hebrew metsar means a narrow, constricted place; merchav is open country. The psalm does not describe an escape from trouble but a change of room inside it.",
         "key_themes": [
-          "建立是可以练习的动作",
-          "保罗先肯定再劝勉",
-          "一句话就够"
+          "希伯来文是空间不是情绪",
+          "窄地与宽阔地",
+          "不是墙动了是人被挪了"
         ],
-        "version_note": "KJV 的 comfort 与 NIV 的 encourage 同译 parakaleō;和合本作「彼此劝慰」,兼含安慰与鼓励两面。",
+        "version_note": "KJV 'distress' 希伯来文 metsar 意为「窄处」,'large place' 是 merchav「宽阔地」;和合本作「急难中」「宽阔之地」。",
         "life_connection": [
-          "很久没有对人说过肯定的话",
-          "总在心里夸别人却不说出口",
-          "自己也很久没被鼓励"
+          "生活里没有一点余地",
+          "求神改变环境求了很久",
+          "喘不过气但说不出哪里不对"
         ]
       },
       "devotional": {
         "structure": "发问",
         "copyright_check": {
-          "niv_words": 16,
-          "required_min": 48,
-          "en_words": 65
+          "niv_words": 18,
+          "required_min": 54,
+          "en_words": 72
         },
         "en": {
-          "meditation": "Paul adds four words most of us read past: even as also ye do. He is not scolding them into it. He is naming something they are already doing and asking for more.\n\nBuilding up is a construction word in Greek — laying another course of bricks, not paying a compliment. So: who did you build on today, and who did you mean to and didn't?",
-          "action_step": "Send one person the specific sentence you thought about them today but did not say."
+          "meditation": "The Hebrew here is spatial, not emotional. Distress is a narrow place — walls close, no room to turn. And the answer is not that the walls moved. It is that he did: set down somewhere wide.\n\nNotice he does not say the trouble ended. He says the room changed. So where are you pressed in tonight — and have you actually asked to be moved, or only asked for the walls to shift?",
+          "action_step": "Name the narrow place out loud tonight. Then ask, in one sentence, to be given room rather than to have it removed."
         }
       },
       "prayer": {
@@ -5399,7 +5399,7 @@
         "copyright_check": {
           "en_words": 45
         },
-        "en": "Dear Heavenly Father, I notice good things about people and keep them to myself. That helps no one. Tomorrow, let me say one of them out loud. And where I am running low myself, send someone to say one to me. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, I have been asking You to change my circumstances and I have not once asked for room to breathe inside them. Tonight I am asking. Set my feet somewhere wider before I sleep. In Jesus' name, amen."
       }
     },
     {
@@ -5408,60 +5408,60 @@
       "segment": "evening",
       "language": "en",
       "reference": {
-        "book": "John",
-        "chapter": 11,
-        "verse": "25",
-        "full_reference": "John 11:25"
+        "book": "Romans",
+        "chapter": 6,
+        "verse": "14",
+        "full_reference": "Romans 6:14"
       },
-      "niv_primary": "Jesus said to her, “I am the resurrection and the life. The one who believes in me will live, even though they die;",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#面对失去",
-        "#基督的应许"
+        "#反复失败",
+        "#想要自由",
+        "#不再被定义"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "Jesus said unto her, I am the resurrection, and the life: he that believeth in me, though he were dead, yet shall he live:"
+            "text": "For sin shall not have dominion over you: for ye are not under the law, but under grace."
           },
           "modern": {
             "version": "NIV",
-            "text": "Jesus said to her, “I am the resurrection and the life. The one who believes in me will live, even though they die;"
+            "text": ""
           }
         }
       },
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "gospel/narrative",
-          "primary_theme": "life"
+          "genre": "epistle",
+          "primary_theme": "freedom"
         },
-        "niv_word_count": 23,
-        "context_note": "Martha has just said she knows her brother will rise at the last day — correct doctrine, held at a safe distance. Jesus moves the whole thing into the present tense and into a person: I am. He says it standing four days late, outside a tomb, to a woman who has been grieving without him.",
+        "niv_word_count": 20,
+        "context_note": "Paul writes to Christians worried that grace makes obedience optional. 'Dominion' translates kyrieuo — to exercise the authority of a lord, a legal standing rather than a feeling. His argument is about jurisdiction: which master has the right to command, not how strong the pull still feels.",
         "key_themes": [
-          "应许是一位而不是一个日期",
-          "对着坟墓说的话",
-          "现在式的我是"
+          "shall not 是陈述不是命令",
+          "dominion 是管辖权",
+          "有声音不等于有权柄"
         ],
-        "version_note": "KJV 与 NIV 都保留「我就是」的现在式;耶稣把马大对「末日」的盼望拉回到眼前的一位。",
+        "version_note": "KJV 'have dominion' 的希腊文 kyrieuo 指「以主人的身分行使权柄」,是法律地位而非感受;和合本作「作你们的主」。",
         "life_connection": [
-          "失去亲人后的夜晚",
-          "对死亡的恐惧",
-          "安慰的话听起来都太远"
+          "同一件事反复跌倒",
+          "把失败读成「我就是这样的人」",
+          "已经不敢再下决心"
         ]
       },
       "devotional": {
         "structure": "宣告鼓励",
         "copyright_check": {
-          "niv_words": 23,
-          "required_min": 69,
-          "en_words": 101
+          "niv_words": 20,
+          "required_min": 60,
+          "en_words": 105
         },
         "en": {
-          "meditation": "Martha said the right thing. He will rise again at the last day. It is true, and it is very far away, and it was not helping her at all that afternoon. Jesus does not correct her theology. He relocates it. Not a date — a person, standing in front of her, in the present tense: I am the resurrection.\n\nWhatever you are grieving tonight, notice that the promise is not scheduled for later. It has a name, and it is here in the room with you, and it arrived four days late without apologising and without being one bit less true!",
-          "action_step": "Say the name of the person you are missing. Then say the first three words of the verse out loud."
+          "meditation": "Read the tense. Not sin should not rule you — sin shall not. It is a statement about what is going to be true, not an instruction you are failing to carry out.\n\nAnd notice the reason given. Not because you will try harder. Because of where you now stand. Dominion is a word about jurisdiction: which authority has the legal right to give you orders. Paul is saying the old one has lost its standing over you, whatever it still shouts. So the thing you have fought all year is not your master. It may still have a voice. It no longer has the authority!",
+          "action_step": "Name the thing you keep losing to. Say one sentence out loud tonight: this has a voice, not authority."
         }
       },
       "prayer": {
@@ -5469,7 +5469,7 @@
         "copyright_check": {
           "en_words": 56
         },
-        "en": "Dear Heavenly Father, some comfort is true and still too far away to reach me tonight. Thank You that Jesus did not offer Martha a date. He offered her Himself. Be that close to me. I am not asking to stop missing anyone. I am asking not to be alone with it. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, I have been fighting the same thing so long that I started calling it who I am. Tonight I want to hear You say it differently. Thank You that it has lost its right to rule me even on the days it is loud. Teach me to answer it as something that no longer gives the orders. In Jesus' name, amen."
       }
     },
     {
@@ -6388,60 +6388,60 @@
       "segment": "evening",
       "language": "en",
       "reference": {
-        "book": "Matthew",
-        "chapter": 11,
-        "verse": "28",
-        "full_reference": "Matthew 11:28"
+        "book": "1 Peter",
+        "chapter": 5,
+        "verse": "10",
+        "full_reference": "1 Peter 5:10"
       },
-      "niv_primary": "Come to me, all you who are weary and burdened, and I will give you rest.",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#疲惫不堪",
-        "#重担压身"
+        "#撑得太久",
+        "#盼望被修复",
+        "#想要安稳"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "Come unto me, all ye that labour and are heavy laden, and I will give you rest."
+            "text": "But the God of all grace, who hath called us unto his eternal glory by Christ Jesus, after that ye have suffered a while, make you perfect, stablish, strengthen, settle you."
           },
           "modern": {
             "version": "NIV",
-            "text": "Come to me, all you who are weary and burdened, and I will give you rest."
+            "text": ""
           }
         }
       },
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "gospel/invitation",
+          "genre": "epistle",
           "primary_theme": "rest"
         },
-        "niv_word_count": 16,
-        "context_note": "Jesus says this to crowds worn down by religious rules that had grown heavy and very detailed. 'Rest' is anapauō — the breath a labourer takes when the load comes off, not sleep. He does not ask them to qualify first; the invitation is aimed at whoever arrives already tired.",
+        "niv_word_count": 38,
+        "context_note": "Peter writes to scattered believers under real pressure, not a passing bad mood. The last of his four verbs, themelioo, means to set on a foundation. All four are things God does; the readers' part is to remain. 'A while' is oligon — a little, and deliberately unmeasured.",
         "key_themes": [
-          "无条件的邀请",
-          "安息是被赐下的",
-          "耶稣主动就近疲惫的人"
+          "四个动词的次序",
+          "settle 是安放在根基上",
+          "四个动词的主语都是神"
         ],
-        "version_note": "KJV 的 labour and are heavy laden 强调劳动,NIV 的 weary and burdened 强调被压;两者合起来才是原文的完整画面。",
+        "version_note": "KJV 'settle' 的希腊文 themelioo 意为「安放在根基上」;和合本作「坚固」。",
         "life_connection": [
-          "带完孩子后半夜仍睡不着",
-          "工作日结束却停不下来",
-          "觉得必须先把自己收拾好才配来"
+          "长期在撑一件事",
+          "总觉得该由自己修好",
+          "想要一个不再摇的状态"
         ]
       },
       "devotional": {
         "structure": "同行劝勉",
         "copyright_check": {
-          "niv_words": 16,
-          "required_min": 48,
-          "en_words": 86
+          "niv_words": 38,
+          "required_min": 114,
+          "en_words": 93
         },
         "en": {
-          "meditation": "He does not say come when you have sorted yourself out. He says come — as you are, at the end of a day that took more than it gave.\n\nAs Christians we can turn even this into an instruction we are failing at: rest properly, be at peace, stop striving. But look again at the verb you are given. It is not rest. It is come. The resting is His half of the sentence, and He has never once needed help with His half of anything.",
-          "action_step": "Say the heaviest thing on your mind out loud, then: I am giving this to You tonight. Leave it there until morning."
+          "meditation": "Four verbs, and they arrive in an order worth noticing. Perfect — put back together what came apart. Stablish. Strengthen. And last, settle: a word for putting something on a foundation so it stops shifting.\n\nAs Christians we usually want the settling first and the suffering skipped. Peter gives the honest sequence, and he does not pretend the middle is short. But notice who does the four verbs. Not us. Every one of them has God as the subject. We are not asked to rebuild ourselves — only to still be here when He does.",
+          "action_step": "Stop trying to fix one thing tonight. Say plainly which one, and leave it with God until morning."
         }
       },
       "prayer": {
@@ -6449,7 +6449,7 @@
         "copyright_check": {
           "en_words": 54
         },
-        "en": "Dear Heavenly Father, I am tired in a way sleep alone will not fix. Thank You that Your invitation is still open this late, and that it does not require me to arrive rested before I come. Take the weight out of my hands and hold it there until morning. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, I am tired of being the one who has to hold everything together, and I am not very good at it anyway. Thank You that the mending is Your work and not mine. Do the parts I cannot reach. Settle what keeps shifting in me. I will still be here in the morning, and that is all I am promising tonight. In Jesus' name, amen."
       }
     },
     {
@@ -7158,60 +7158,60 @@
       "segment": "evening",
       "language": "en",
       "reference": {
-        "book": "John",
-        "chapter": 16,
-        "verse": "33",
-        "full_reference": "John 16:33"
+        "book": "Luke",
+        "chapter": 8,
+        "verse": "50",
+        "full_reference": "Luke 8:50"
       },
-      "niv_primary": "I have told you these things, so that in me you may have peace. In this world you will have trouble. But take heart! I have overcome the world.",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚平安",
-        "#难处不断",
-        "#祂已得胜"
+        "#已经放弃盼望",
+        "#怕再失望",
+        "#还想再信一次"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "These things I have spoken unto you, that in me ye might have peace. In the world ye shall have tribulation: but be of good cheer; I have overcome the world."
+            "text": "But when Jesus heard it, he answered him, saying, Fear not: believe only, and she shall be made whole."
           },
           "modern": {
             "version": "NIV",
-            "text": "I have told you these things, so that in me you may have peace. In this world you will have trouble. But take heart! I have overcome the world."
+            "text": ""
           }
         }
       },
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "gospel/farewell discourse",
-          "primary_theme": "overcoming"
+          "genre": "gospel",
+          "primary_theme": "faith"
         },
-        "niv_word_count": 29,
-        "context_note": "Jesus says this in the last minutes before Gethsemane. The Greek tharseite is closer to 'take courage' than 'cheer up' — it is what a commander says, not what a friend says at a party. And 'I have overcome' is in the perfect tense: already done, before the cross had happened.",
+        "niv_word_count": 22,
+        "context_note": "Jairus was a synagogue ruler — a man with standing, publicly asking a travelling teacher for help. The Greek behind 'made whole' is sozo, used for both healing and saving. Jesus speaks before Jairus can react to the news, which is the point: the reassurance comes first.",
         "key_themes": [
-          "患难是被预告的",
-          "平安在祂里面不在环境",
-          "得胜是完成式"
+          "坏消息先到",
+          "不是要更多信心是只要信",
+          "只要一样东西还在"
         ],
-        "version_note": "KJV 的 be of good cheer 与 NIV 的 take heart 同译 tharseō「壮胆」,不是「高兴起来」;这个区别很重要。",
+        "version_note": "KJV 'made whole' 的希腊文 sozo 兼指医治与拯救;和合本作「得救」。",
         "life_connection": [
-          "一件事接一件事",
-          "被劝要正能量",
-          "怀疑信主为什么还这么难"
+          "有件事已经不敢再抱希望",
+          "怕说出来又落空",
+          "别人都说算了吧"
         ]
       },
       "devotional": {
         "structure": "宣告鼓励",
         "copyright_check": {
-          "niv_words": 29,
-          "required_min": 87,
-          "en_words": 67
+          "niv_words": 22,
+          "required_min": 66,
+          "en_words": 75
         },
         "en": {
-          "meditation": "Hear both halves and do not soften either one. In this world you will have trouble — He says it plainly, and He was right.\n\nAnd then: I have overcome. Already finished, in the perfect tense, said before the cross had even happened. So the peace on offer tonight is not the absence of trouble. It is that the outcome was settled before your trouble started. Take courage!",
-          "action_step": "Name tonight's trouble honestly. Then say the last five words of the verse over it."
+          "meditation": "The message had already arrived: she is dead, do not trouble the Teacher. Jesus hears it and answers before Jairus can.\n\nNotice what He asks for. Not more faith. Only faith — as though He were taking things away rather than adding them. Jairus is not told to feel brave or to produce certainty. He is told to keep walking toward his daughter with one thing intact. That is all being asked of you tonight too!",
+          "action_step": "Name the thing you have already written off tonight. Then take one small step toward it anyway."
         }
       },
       "prayer": {
@@ -7219,7 +7219,7 @@
         "copyright_check": {
           "en_words": 49
         },
-        "en": "Dear Heavenly Father, it has been one thing after another and I am tired of being told to be positive. Thank You that Jesus never promised otherwise. Give me courage rather than cheerfulness tonight, and let me rest in the part that is already finished. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, I stopped hoping for this one a while ago because hoping hurt more. Tonight I am not asking to feel certain. I am asking to keep walking. Hold the one thing I have left. In Jesus' name, amen."
       }
     },
     {
@@ -7228,60 +7228,60 @@
       "segment": "evening",
       "language": "en",
       "reference": {
-        "book": "Colossians",
-        "chapter": 3,
-        "verse": "15",
-        "full_reference": "Colossians 3:15"
+        "book": "John",
+        "chapter": 14,
+        "verse": "26",
+        "full_reference": "John 14:26"
       },
-      "niv_primary": "Let the peace of Christ rule in your hearts, since as members of one body you were called to peace. And be thankful.",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚平安",
-        "#心里争战",
-        "#让平安作主"
+        "#夜里想不起",
+        "#需要提醒",
+        "#知道却抓不住"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "And let the peace of God rule in your hearts, to the which also ye are called in one body; and be ye thankful."
+            "text": "But the Comforter, which is the Holy Ghost, whom the Father will send in my name, he shall teach you all things, and bring all things to your remembrance, whatsoever I have said unto you."
           },
           "modern": {
             "version": "NIV",
-            "text": "Let the peace of Christ rule in your hearts, since as members of one body you were called to peace. And be thankful."
+            "text": ""
           }
         }
       },
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "epistle/exhortation",
-          "primary_theme": "peace"
+          "genre": "gospel",
+          "primary_theme": "comfort"
         },
-        "niv_word_count": 23,
-        "context_note": "The Greek brabeuō is what an umpire does at the games — it means to arbitrate, to make the call. So this is not a suggestion to feel peaceful. It is an instruction to let peace be the thing that decides when there is a dispute inside you. Paul adds three words: and be thankful.",
+        "niv_word_count": 34,
+        "context_note": "Jesus says this hours before the arrest, to men who will forget most of it by morning. Parakletos means one called alongside — an advocate, not a feeling. Anamimnesko, 'bring to remembrance,' is the ordinary word for recalling something known. The promise assumes forgetting.",
         "key_themes": [
-          "「作主」是裁判的动作",
-          "平安可以做决定",
-          "并且要感谢"
+          "第二件工作更安静",
+          "不是新知识是找回旧的",
+          "圣灵的工作有一部分是取回"
         ],
-        "version_note": "KJV 的 rule 与 NIV 的 rule 同译 brabeuō,原指运动会裁判的判定;和合本作「作主」,亦有「决断」之意。",
+        "version_note": "KJV 'Comforter' 的希腊文 parakletos 意为「被召来在旁边的那一位」;和合本作「保惠师」。",
         "life_connection": [
-          "心里两个声音吵不停",
-          "凭情绪做决定",
-          "把不安当成直觉"
+          "白天明明知道晚上就找不着了",
+          "半夜想不起任何一句安慰",
+          "以为自己信心退步了"
         ]
       },
       "devotional": {
         "structure": "同行劝勉",
         "copyright_check": {
-          "niv_words": 23,
-          "required_min": 69,
-          "en_words": 91
+          "niv_words": 34,
+          "required_min": 102,
+          "en_words": 94
         },
         "en": {
-          "meditation": "The word for rule is what an umpire does — makes the call, settles the dispute. So Paul is not telling you to feel peaceful. He is telling you to let peace be the deciding vote when there are two voices going at once in your chest. Not the loudest one. Not the most anxious one, which usually sounds the most responsible. The one that leaves you at peace when you sit with it.\n\nAnd then, almost as an afterthought: be thankful. As Christians we usually try those in the wrong order.",
-          "action_step": "Where you are torn tonight, notice which option leaves you at peace and let that be the vote."
+          "meditation": "Two jobs, and the second is quieter. Teach you all things — we expect that. But also bring to your remembrance: not new information, the old kind you already had and lost.\n\nAs Christians we assume the help we need is something we have not learned yet. Most nights it is not. It is what we knew perfectly well in daylight and cannot find at eleven o'clock. The Spirit's work is partly retrieval. What steadied you before is not gone. You have misplaced it, and you are not the one who has to go looking.",
+          "action_step": "Write down one thing you knew about God in a better season. Put it where you will see it tomorrow."
         }
       },
       "prayer": {
@@ -7289,7 +7289,7 @@
         "copyright_check": {
           "en_words": 53
         },
-        "en": "Dear Heavenly Father, there are two voices in me tonight and the anxious one is louder. Let Your peace make the call instead. Settle the dispute in my chest tonight, and while it settles, give me one thing I can honestly be thankful for. In that order, for once. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, tonight I cannot find things I am certain I once knew. I am not asking You to teach me something new. I am asking You to bring back what You already gave me. Remind me, in the dark, of what was obvious in the light. In Jesus' name, amen."
       }
     },
     {
@@ -7509,26 +7509,26 @@
       "language": "en",
       "reference": {
         "book": "Proverbs",
-        "chapter": 22,
-        "verse": "6",
-        "full_reference": "Proverbs 22:6"
+        "chapter": 6,
+        "verse": "20",
+        "full_reference": "Proverbs 6:20"
       },
-      "niv_primary": "Start children off on the way they should go, and even when they are old they will not turn from it.",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚交托",
-        "#为儿女忧心",
-        "#尽力之后交托"
+        "#想起母亲",
+        "#家庭传承",
+        "#未曾被道谢"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "Train up a child in the way he should go: and when he is old, he will not depart from it."
+            "text": "My son, keep thy father's commandment, and forsake not the law of thy mother:"
           },
           "modern": {
             "version": "NIV",
-            "text": "Start children off on the way they should go, and even when they are old they will not turn from it."
+            "text": ""
           }
         }
       },
@@ -7536,32 +7536,32 @@
         "verse_category": {
           "testament": "OT",
           "genre": "wisdom",
-          "primary_theme": "parenting"
+          "primary_theme": "family"
         },
-        "niv_word_count": 21,
-        "context_note": "Proverbs states general truths about how life usually works, not guarantees about individual cases — the same book says a wise son makes a glad father, and Scripture is full of exceptions. Some scholars read the Hebrew as 'according to his way', meaning according to the child's own bent. Either reading rules out using this verse to assign blame.",
+        "niv_word_count": 16,
+        "context_note": "In the ancient Near East, formal instruction was the father's role — which makes this line unusual. The Hebrew for what the mother gives is torah, the same word used for God's own instruction. Proverbs treats her teaching as authoritative, not supplementary.",
         "key_themes": [
-          "箴言是通则不是保证",
-          "「当行的道」也可解作「照他的性情」",
-          "尽力之后仍需交托"
+          "母亲的教导用的是 torah 这个词",
+          "与父亲的诫命同等分量",
+          "多半是看会的不是被教会的"
         ],
-        "version_note": "本节是箴言体的通则,不是个别的应许;把它读成对每个孩子的保证会给父母带来不该有的罪疚,这是解经上的重要界限。",
+        "version_note": "KJV 'the law of thy mother' 的希伯来文正是 torah,与神的律法同一个词;和合本作「你母亲的法则」。",
         "life_connection": [
-          "孩子长大后离开信仰",
-          "觉得都是自己没教好",
-          "拿别人的孩子比较"
+          "从母亲那里学到的东西从没说过谢谢",
+          "在家里做的事没有人记账",
+          "怕自己把不好的也传下去"
         ]
       },
       "devotional": {
         "structure": "同行劝勉",
         "copyright_check": {
-          "niv_words": 21,
-          "required_min": 63,
-          "en_words": 102
+          "niv_words": 16,
+          "required_min": 48,
+          "en_words": 108
         },
         "en": {
-          "meditation": "Proverbs tells you how things generally go. It is not a contract, and it was never meant to be read as one — which matters enormously if your child has walked away and you have been quietly serving a sentence for it. Some read the Hebrew as: according to his way, meaning according to the particular child in front of you rather than a single method for all of them.\n\nEither way, this verse is a wise general truth about the long shaping of a life. It is not a verdict on you at eleven o'clock at night, and it never has been.",
-          "action_step": "If you have been blaming yourself for how a child turned out, say one sentence tonight putting them back in God's hands."
+          "meditation": "Read who is named. The father's commandment and — in the same breath, with the same weight — the mother's torah. That is the word used for the law of God. Whatever a mother was worth in the culture around this book, the writer gives what she taught the same standing.\n\nAs Christians we hand a great deal of this on without noticing we are doing it. Not lectures. The way you handle bad news at the table. What you do when you are wrong. Most of us learned more from watching than from being told, and the women in our families taught more than they were ever thanked for.",
+          "action_step": "Name one thing a woman in your family taught you without meaning to. Thank her, or thank God for her, tonight."
         }
       },
       "prayer": {
@@ -7569,7 +7569,7 @@
         "copyright_check": {
           "en_words": 56
         },
-        "en": "Dear Heavenly Father, I have used this verse against myself for years. Tonight I am putting it down. I did not have the power to guarantee an outcome, and I never did. Take my child back into Your hands, where they have been the whole time. Let me sleep without the verdict. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, thank You for what was handed to me by women who were probably never told it mattered. Some of it I am still living on. Where what I received was good, help me pass it on without making it heavy. Where it was not, help me set it down without bitterness. In Jesus' name, amen."
       }
     },
     {
@@ -7648,27 +7648,27 @@
       "segment": "evening",
       "language": "en",
       "reference": {
-        "book": "1 John",
-        "chapter": 1,
-        "verse": "9",
-        "full_reference": "1 John 1:9"
+        "book": "Hebrews",
+        "chapter": 8,
+        "verse": "12",
+        "full_reference": "Hebrews 8:12"
       },
-      "niv_primary": "If we confess our sins, he is faithful and just and will forgive us our sins and purify us from all unrighteousness.",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚赦免",
-        "#心中自责",
-        "#被神接纳"
+        "#反复自责",
+        "#难以放过自己",
+        "#想要被赦免"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "If we confess our sins, he is faithful and just to forgive us our sins, and to cleanse us from all unrighteousness."
+            "text": "For I will be merciful to their unrighteousness, and their sins and their iniquities will I remember no more."
           },
           "modern": {
             "version": "NIV",
-            "text": "If we confess our sins, he is faithful and just and will forgive us our sins and purify us from all unrighteousness."
+            "text": ""
           }
         }
       },
@@ -7678,30 +7678,30 @@
           "genre": "epistle",
           "primary_theme": "forgiveness"
         },
-        "niv_word_count": 22,
-        "context_note": "John wrote against teachers who denied sin was real at all. The Greek for 'confess' is homologeō — literally to say the same thing: to describe something the way God already describes it, without dressing it up or exaggerating it. 'Faithful and just' sit together on purpose; forgiveness is a promise kept, not a mood.",
+        "niv_word_count": 20,
+        "context_note": "Hebrews quotes Jeremiah's new-covenant promise to readers who knew the sacrificial system's yearly repetition. The Greek mnestho, 'remember,' carries a legal sense — to bring forward as a charge. The promise is not divine forgetfulness but a settled decision never to prosecute again.",
         "key_themes": [
-          "坦白而非掩盖",
-          "信实与公义并列",
-          "赦免不需要争取"
+          "神不会忘记",
+          "remember 是法庭用语",
+          "不再提出来控告"
         ],
-        "version_note": "KJV 与 NIV 都把 faithful and just 并列——赦免不是神心软的例外,而是祂守约的必然。",
+        "version_note": "KJV 'remember no more' 的希腊文带法律义,指「不再作为控罪提出」,不是失忆;和合本作「不再记念」。",
         "life_connection": [
-          "睡前反复回放自己说错的话",
-          "对家人发火后的懊悔",
-          "把自责误当成悔改"
+          "同一件旧事翻来覆去自责",
+          "神赦免了自己却不肯",
+          "夜里翻旧账"
         ]
       },
       "devotional": {
         "structure": "宣告鼓励",
         "copyright_check": {
-          "niv_words": 22,
-          "required_min": 66,
-          "en_words": 87
+          "niv_words": 20,
+          "required_min": 60,
+          "en_words": 91
         },
         "en": {
-          "meditation": "Faithful and just. Not merciful and lenient — those would be different words. Which means forgiveness here is not God making an exception for you on a good day. It is God keeping His word, which He has never once failed to do about anything.\n\nSo you are not asking for a favour tonight, and you are not hoping to catch Him in a generous mood. You are asking Him to be what He already is. That is a very different thing to walk into a room holding!",
-          "action_step": "Say one specific thing to God tonight that you would rather gloss over. One sentence. Then stop — do not add the self-criticism."
+          "meditation": "God does not forget. He is not capable of losing information. So remember no more cannot mean the file went missing.\n\nIt is courtroom language. To remember, in this sense, is to bring something forward as evidence — to raise it again. What God promises is not amnesia. It is that He will never again bring it up against you. Which is different, and better. Forgetting could be undone. A promise not to raise it is a decision, and He has already made it. The thing you keep re-opening He has closed!",
+          "action_step": "Name the thing you keep bringing back up on yourself. Say once, out loud: God has closed this."
         }
       },
       "prayer": {
@@ -7709,7 +7709,7 @@
         "copyright_check": {
           "en_words": 64
         },
-        "en": "Dear Heavenly Father, thank You that I am not asking for a favour tonight but for something You have already promised. Here is the thing I would rather have kept quiet about. Cleanse it, and let me sleep tonight without replaying the whole thing twice more. Help me wake up gentler tomorrow with the people who live closest to me. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, I have a short list I keep re-reading to myself, and You have said You will not raise any of it against me. Help me believe that tonight rather than argue with it. Close what I keep prising back open. Let me sleep as someone who is not on trial. In Jesus' name, amen."
       }
     },
     {
@@ -7858,60 +7858,60 @@
       "segment": "evening",
       "language": "en",
       "reference": {
-        "book": "1 Peter",
-        "chapter": 5,
-        "verse": "7",
-        "full_reference": "1 Peter 5:7"
+        "book": "Psalms",
+        "chapter": 38,
+        "verse": "9",
+        "full_reference": "Psalms 38:9"
       },
-      "niv_primary": "Cast all your anxiety on him because he cares for you.",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚交托",
-        "#焦虑不安",
-        "#被神看顾"
+        "#说不出口",
+        "#被神看见",
+        "#心里有话"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "Casting all your care upon him; for he careth for you."
+            "text": "Lord, all my desire is before thee; and my groaning is not hid from thee."
           },
           "modern": {
             "version": "NIV",
-            "text": "Cast all your anxiety on him because he cares for you."
+            "text": ""
           }
         }
       },
       "exegesis": {
         "verse_category": {
-          "testament": "NT",
-          "genre": "epistle/exhortation",
+          "testament": "OT",
+          "genre": "psalm",
           "primary_theme": "care"
         },
-        "niv_word_count": 11,
-        "context_note": "In Greek this continues the sentence before it — humble yourselves, and throw your anxiety onto him. The two are one movement, which means handing worry over is an act of humility rather than weakness. Epiriptō is the motion of heaving a pack onto a pack animal: one decisive transfer.",
+        "niv_word_count": 16,
+        "context_note": "Psalm 38 is one of the penitential psalms, written by someone physically ill and socially abandoned. The Hebrew anachah is a groan — wordless sound, not speech. David names it alongside articulate desire as something already fully known to God, without translating it first.",
         "key_themes": [
-          "卸是一次性的动作",
-          "谦卑与交托相连",
-          "神顾念是交托的理由"
+          "两样东西不是一样",
+          "anachah 是没有words的声音",
+          "不必先讲清楚才带来"
         ],
-        "version_note": "KJV 的 casting 与 NIV 的 cast 同译 epiriptō,是把包袱整个甩上牲口背的动作;和合本作「卸给」。",
+        "version_note": "KJV 'groaning' 的希伯来文 anachah 指无言的叹息声,与可以说出口的「心愿」并列;和合本作「叹息」。",
         "life_connection": [
-          "熄灯后开始复盘一整天",
-          "为家人的处境反复担忧",
-          "觉得自己的焦虑不值得拿出来"
+          "有件事一直说不清楚所以没说",
+          "等能讲明白了再祷告",
+          "只是很闷说不上为什么"
         ]
       },
       "devotional": {
         "structure": "发问",
         "copyright_check": {
-          "niv_words": 11,
-          "required_min": 33,
-          "en_words": 91
+          "niv_words": 16,
+          "required_min": 48,
+          "en_words": 96
         },
         "en": {
-          "meditation": "The verb is not 'share' or 'discuss'. It is the motion of swinging a load off your own back and onto an animal that can carry it. One movement, and then your hands are empty. And it is grammatically joined to the sentence before: humble yourselves, and cast. Which reframes the whole thing. Keeping hold of your worry is not strength. It is a quiet insistence that you are the one who has to carry it.\n\nSo what are you still carrying because handing it over would mean admitting you cannot?",
-          "action_step": "Name the worry, then say: this is not mine to carry tonight. Put it down before you get into bed."
+          "meditation": "Two different things are named here, and most of us only bring the first. Desire — the thing you could put into words if asked. And groaning: the Hebrew is anachah, the sound that comes out when there are no words left in it.\n\nDavid does not tidy the second into the first. He says both are already in front of God, including the part he could not have explained if he tried. So what have you been waiting to be able to phrase properly before you brought it? And who told you that was the requirement?",
+          "action_step": "Bring God the thing you cannot phrase. Do not explain it. Sitting there with it counts."
         }
       },
       "prayer": {
@@ -7919,7 +7919,7 @@
         "copyright_check": {
           "en_words": 53
         },
-        "en": "Dear Heavenly Father, I hold on to my worries because letting go feels like admitting I cannot manage. Tonight I am admitting it. Here is the whole load, swung over onto You. Thank You that You care about the small things I would be embarrassed to say out loud. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, there is something I have not brought You because I cannot say it properly, and I have been waiting to have the words. Tonight I am bringing it unfinished. You already hear the part underneath the sentence. Thank You that You do not need me to be articulate before You will listen. In Jesus' name, amen."
       }
     },
     {
@@ -8348,27 +8348,27 @@
       "segment": "evening",
       "language": "en",
       "reference": {
-        "book": "Proverbs",
-        "chapter": 17,
-        "verse": "17",
-        "full_reference": "Proverbs 17:17"
+        "book": "Ecclesiastes",
+        "chapter": 4,
+        "verse": "10",
+        "full_reference": "Ecclesiastes 4:10"
       },
-      "niv_primary": "A friend loves at all times, and a brother is born for a time of adversity.",
+      "niv_primary": "",
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#被陪伴",
-        "#患难中的家人"
+        "#孤单过一阵",
+        "#有人守着",
+        "#想要陪伴谁"
       ],
       "translations": {
         "en": {
           "traditional": {
             "version": "KJV",
-            "text": "A friend loveth at all times, and a brother is born for adversity."
+            "text": "For if they fall, the one will lift up his fellow: but woe to him that is alone when he falleth; for he hath not another to help him up."
           },
           "modern": {
             "version": "NIV",
-            "text": "A friend loves at all times, and a brother is born for a time of adversity."
+            "text": ""
           }
         }
       },
@@ -8378,30 +8378,30 @@
           "genre": "wisdom",
           "primary_theme": "friendship"
         },
-        "niv_word_count": 16,
-        "context_note": "The Hebrew is compact: a friend loves at all times, and a brother is born for adversity. Proverbs is not sentimental about relationships — it is observing which ones hold under load. 'At all times' includes the inconvenient ones, which is the whole point of the line.",
+        "niv_word_count": 31,
+        "context_note": "Ecclesiastes spends most of its length on what does not last. This short passage is one of its few plain goods: two are better than one, because of what happens when one falls. The Hebrew is concrete — literally, there is no second to lift him. It is not a sentiment about friendship but an observation about odds.",
         "key_themes": [
-          "「随时」包括不方便的时候",
-          "患难显出真正的关系",
-          "被陪伴过的人才会陪伴"
+          "她不是在等我恢复",
+          "留在够得着的距离",
+          "比想象中安静的工"
         ],
-        "version_note": "KJV 的 born for adversity 与 NIV 的 born for a time of adversity 同源;希伯来原文简练,意为「为患难而生」。",
+        "version_note": "KJV 'lift up his fellow' 希伯来文极具体,直译是「没有第二个人扶他起来」;和合本作「扶起他的同伴」。",
         "life_connection": [
-          "生病或变故时谁留下了",
-          "很久没有人真正在场",
-          "想成为那样的人"
+          "有一年谁的消息都不想回",
+          "被人默默守着却没道谢",
+          "现在想为谁做同样的事"
         ]
       },
       "devotional": {
         "structure": "见证",
         "copyright_check": {
-          "niv_words": 16,
-          "required_min": 48,
-          "en_words": 116
+          "niv_words": 31,
+          "required_min": 93,
+          "en_words": 115
         },
         "en": {
-          "meditation": "The year everything came apart, most people were kind for about three weeks. That is not a complaint; three weeks is what most of us have to give, and I have been the three-week friend to other people plenty of times. What I remember is the two who were still there in month seven, when there was nothing new to say and nothing left to fix. One of them was family and had no particular reason to like me. She came anyway.\n\nThis proverb is not sentimental. It is an observation about which relationships hold under load. At all times means the inconvenient ones. I know now what that costs, because someone paid it for me.",
-          "action_step": "Think of someone in month seven of something hard. Contact them tomorrow, with nothing useful to offer."
+          "meditation": "There was a year I stopped answering messages. Not out of anger — I just did not have anything to say back, and it seemed easier than explaining. One woman kept sending them anyway. Nothing demanding. A photograph. A line about her week. I did not thank her at the time. I am not sure I even replied for a while.\n\nWhat I understand now is that she was not waiting for me to be good company again. She was staying near enough to reach, so that on the day I could finally speak, there was somebody already standing there. I have tried to be that for someone since. It is quieter work than I expected.",
+          "action_step": "Send one message tonight to someone who has gone quiet. Ask nothing of them."
         }
       },
       "prayer": {
@@ -8409,7 +8409,7 @@
         "copyright_check": {
           "en_words": 55
         },
-        "en": "Dear Heavenly Father, thank You for the people who stayed past the point where it was interesting to stay. I know what that cost them now. Make me one of those for somebody else, and bring to mind tonight the person who is in the quiet part of a hard year. In Jesus' name, amen."
+        "en": "Dear Heavenly Father, thank You for the people who stayed near me when I had nothing to give back. I did not always notice, and I rarely said so. Show me tonight who has gone quiet, and keep me close enough to reach without asking them to explain themselves. In Jesus' name, amen."
       }
     }
   ]

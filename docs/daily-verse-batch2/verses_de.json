@@ -323,20 +323,20 @@
       "reference": {
         "book": "Philippians",
         "chapter": 4,
-        "verse": "13",
-        "full_reference": "Philippians 4:13"
+        "verse": "8",
+        "full_reference": "Philippians 4:8"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨力量",
-        "#日常疲惫",
-        "#学习知足"
+        "#思绪纷乱",
+        "#想要专注",
+        "#被念头缠住"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Ich vermag alles durch den, der mich mächtig macht, Christus."
+            "text": "Weiter, liebe Brüder, was wahrhaftig ist, was ehrbar, was gerecht, was keusch, was lieblich, was wohllautet, ist etwa eine Tugend, ist etwa ein Lob, dem denket nach!"
           },
           "modern": {
             "version": "HFA",
@@ -348,21 +348,21 @@
         "verse_category": {
           "testament": "NT",
           "genre": "epistle",
-          "primary_theme": "contentment"
+          "primary_theme": "thoughts"
         },
-        "niv_word_count": 11,
-        "context_note": "Paulus dankt der Gemeinde in Philippi für eine Gabe und betont zugleich, dass er auch ohne sie zurechtgekommen wäre. Die beiden Verse davor nennen Überfluss und Hunger, Fülle und Not. Sein Wort für Zufriedenheit ist autarkes — bei den Stoikern die Selbstgenügsamkeit, die er still umdeutet: nicht in sich selbst genug, sondern in Christus."
+        "niv_word_count": 41,
+        "context_note": "Paulus schreibt aus dem Hausarrest an eine Gemeinde, die er liebt und nicht besuchen kann. Das griechische logizomai ist ein Wort aus der Buchführung: zusammenrechnen, in Rechnung stellen. Luther macht daraus „dem denket nach“ — eine Richtung, in die man sein Denken schickt. Beides beschreibt bewusste Aufmerksamkeit, keine Stimmung; nur deshalb lässt es sich überhaupt gebieten."
       },
       "devotional": {
         "structure": "同行劝勉",
         "de": {
-          "meditation": "Wahrscheinlich ist das der meistzitierte Vers des ganzen Briefes, und fast immer wird er in die falsche Richtung gezogen — als Treibstoff dafür, irgendetwas zu gewinnen.\n\nSchau, was Paulus unmittelbar davor schreibt. Er spricht davon, zufrieden zu sein: satt sein und hungern, Überfluss haben und Mangel leiden. „Alles“ meint genau diese Spannweite. Als Christinnen dürfen wir aufhören, den Satz als Erfolgsgarantie zu lesen. Er ist die Zusage, dass wir gehalten werden — in welcher dieser Lagen wir diese Woche auch gerade stecken.",
-          "action_step": "Sprich den Vers heute über den mühsamsten gewöhnlichen Teil deines Tages, nicht über ein großes Ziel. Diesen Schulweg schaffe ich. Diese Schicht schaffe ich."
+          "meditation": "Das ist kein Befehl, positiv zu denken. Paulus schreibt aus der Haft, und auf seiner Liste steht auch, was wahr und was gerecht ist — nicht nur, was angenehm ist.\n\nEntscheidend ist das Verb. Luther sagt: Denkt dem nach. Nachdenken heißt wörtlich, einer Sache hinterherzugehen; dein Denken folgt etwas. Und welche Richtung es einschlägt, kannst du tatsächlich wählen — dein Gefühl nicht. Wir versuchen meistens, an etwas nicht mehr zu denken. Das funktioniert fast nie. Hier steht die andere Bewegung: nicht etwas herausdrängen, sondern etwas hineinstellen, dem dein Denken dann nachgeht.",
+          "action_step": "Nimm eine wahre Sache über Gott mit in deinen ersten schwierigen Moment heute. Sag sie einmal, bevor du selbst etwas sagst."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, ich habe diesen Vers oft benutzt, um dich um Ergebnisse zu bitten. Heute möchte ich ihn richtig gebrauchen. Ob diese Woche reich wird oder dünn — lehre mich, mich in beidem halten zu lassen. Gib mir Kraft für die gewöhnlichen Strecken, die ich am liebsten überspringen würde. In Jesu Namen, Amen."
+        "de": "Lieber himmlischer Vater, mein Kopf geht ohne meine Erlaubnis immer wieder an dieselben abgenutzten Stellen, und mir selbst zu sagen, ich soll damit aufhören, hat noch nie funktioniert. Gib mir heute Morgen etwas Besseres, dem ich nachdenken kann. Zeig mir eine Sache, die wahr ist, und lass sie mir vor Augen bleiben durch die Teile dieses Tages, vor denen mir schon jetzt graut. In Jesu Namen, Amen."
       }
     },
     {
@@ -671,22 +671,22 @@
       "segment": "morning",
       "language": "de",
       "reference": {
-        "book": "Jeremiah",
-        "chapter": 29,
-        "verse": "11",
-        "full_reference": "Jeremiah 29:11"
+        "book": "Micah",
+        "chapter": 7,
+        "verse": "7",
+        "full_reference": "Micah 7:7"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#看不见未来",
-        "#神有计划"
+        "#等了很久",
+        "#盼望未至",
+        "#想要交托"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Denn ich weiß wohl, was ich für Gedanken über euch habe, spricht der HERR: Gedanken des Friedens und nicht des Leidens, daß ich euch gebe das Ende, des ihr wartet."
+            "text": "Ich aber will auf den HERRN schauen und des Gottes meines Heils warten; mein Gott wird mich hören."
           },
           "modern": {
             "version": "HFA",
@@ -697,22 +697,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "OT",
-          "genre": "prophecy/letter",
+          "genre": "prophecy",
           "primary_theme": "hope"
         },
-        "niv_word_count": 29,
-        "context_note": "Der Satz stammt aus einem Brief, den Jeremia an bereits nach Babylon Verschleppte schickte — und die Verse davor sagen ihnen: Baut Häuser, pflanzt Gärten, richtet euch ein, denn ihr bleibt siebzig Jahre. Die Zusage ist echt, und der Zeitraum ist lang. Wer den Vers zitiert, hat den Satz davor meist nicht gelesen."
+        "niv_word_count": 27,
+        "context_note": "Micha 7 beginnt mit einer zerfallenden Gesellschaft — bestochene Richter, Verrat bis in die eigene Familie. Luther setzt dagegen kein „darum“, sondern ein „Ich aber“: ein Widerspruch, keine Schlussfolgerung. Das hebräische tsaphah heißt Wache halten wie ein Posten auf der Mauer: wach, absichtlich, nach außen gewandt. Eine Haltung, keine Stimmung — deshalb ist sie auch an einem schlechten Morgen wählbar."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "de": {
-          "meditation": "Diesen Vers druckt man auf Karten, und geschrieben wurde er an Menschen, denen man gerade gesagt hatte, dass sie siebzig Jahre lang nicht heimkehren. Baut Häuser. Pflanzt Gärten. Heiratet, bekommt Kinder. Und dann der Satz von den Gedanken, die Gott über sie hat: Gedanken des Friedens, nicht des Leidens. Die Zusage lautet also nicht, dass die schwere Zeit fast vorbei ist.\n\nDer Vers sagt vielmehr: Diese Zeit ist kein Umweg, und Gott hält die ganze Form deines Lebens in der Hand, auch das Stück, das viel länger dauert als geplant. Du wartest nicht in einem Vorzimmer. Du lebst schon — hier, in genau diesem Jahr, und er ist darin bei dir!",
-          "action_step": "Tu heute eine Sache, die diese Zeit als echtes Leben behandelt und nicht als Wartezimmer: etwas pflanzen, etwas reparieren, jemanden einladen."
+          "meditation": "Lies, was direkt davor steht. Micha hat gerade eine Gesellschaft beschrieben, in der du weder dem Nachbarn noch der Freundin noch dem Menschen trauen kannst, der neben dir schläft. Es ist der düsterste Abschnitt des Buches. Und dann kein „darum“, sondern ein „aber“: Ich aber will schauen. Das ist keine Folgerung aus der Lage, sondern ein Widerspruch, den er ihr entgegenstellt.\n\nDrei Verben, und keines davon ist eine Lösung. Schauen. Warten. Und: Mein Gott wird mich hören. Das mittlere ist das schwerste. Warten ist hier nichts Passives — es ist die Haltung einer Wache, absichtlich wach, in die Richtung gedreht, aus der Hilfe kommt. Du versagst nicht darin, nur weil sich noch nichts geändert hat. Ausschauhalten ist die Aufgabe!",
+          "action_step": "Bevor du heute Morgen irgendetwas anderes anschaust, blick einmal auf und sag, aus welcher Richtung du Hilfe erwartest."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, ich habe diese Strecke behandelt, als wäre sie eine Unterbrechung meines eigentlichen Lebens. Vergib mir, dass ich die Luft anhalte. Danke, dass du in einer Zeit da bist, die du nicht weggenommen hast. Hilf mir, hier etwas zu bauen, in dieser einen, während ich auf das warte, was kommt. In Jesu Namen, Amen."
+        "de": "Lieber himmlischer Vater, es hat sich nichts geändert, und mir sind die Ideen ausgegangen, wie ich es ändern könnte. Heute Morgen bitte ich nicht um einen Plan. Ich bitte um die Geduld, in deine Richtung gedreht zu bleiben, solange ich warte. Danke, dass Ausschauhalten nicht dasselbe ist wie Nichtstun, und dass du mich so oder so hörst. In Jesu Namen, Amen."
       }
     },
     {
@@ -821,22 +821,22 @@
       "segment": "morning",
       "language": "de",
       "reference": {
-        "book": "Psalms",
-        "chapter": 119,
-        "verse": "105",
-        "full_reference": "Psalms 119:105"
+        "book": "Daniel",
+        "chapter": 2,
+        "verse": "22",
+        "full_reference": "Daniel 2:22"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
         "#看不清前路",
-        "#一步之光"
+        "#寻求方向",
+        "#心里发暗"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Dein Wort ist meine Fußes Leuchte und ein Licht auf meinem Wege."
+            "text": "er offenbart, was tief und verborgen ist; er weiß, was in der Finsternis liegt, denn bei ihm ist eitel Licht."
           },
           "modern": {
             "version": "HFA",
@@ -847,22 +847,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "OT",
-          "genre": "psalm",
+          "genre": "narrative",
           "primary_theme": "guidance"
         },
-        "niv_word_count": 13,
-        "context_note": "Die Lampe in diesem Bild ist eine kleine Tonlampe, in der Hand getragen oder am Knöchel befestigt — sie erhellte vielleicht den nächsten Schritt, nicht die Straße. Wer Psalm 119 geschrieben hat, bekam keine Übersicht zugesagt, sondern genug Licht, um einen Schritt weiter zu gehen, ohne zu stürzen."
+        "niv_word_count": 22,
+        "context_note": "Daniel soll zusammen mit den übrigen Ratgebern Babylons hingerichtet werden, weil niemand einen Traum deuten kann, den der König nicht erzählen will. Das sind seine Worte, nachdem er die Antwort bekommen hat. Das aramäische Wort für „tief“ steht für das Unerforschliche. Die Zusage ist nicht, dass Gott alles erklärt, sondern dass ihm nichts verborgen bleibt."
       },
       "devotional": {
         "structure": "同行劝勉",
         "de": {
-          "meditation": "Die Leuchte in diesem Vers ist kein Flutlicht. Gemeint ist eine kleine Öllampe aus Ton, tief getragen, die Licht etwa einen Schritt weit wirft.\n\nGenau das ist die ehrliche Zusage. Nicht, dass wir sehen, wohin das alles führt. Sondern dass wir den nächsten Schritt tun können, ohne zu stürzen. Die meisten von uns warten darauf, erst die ganze Straße zu überblicken, bevor sie sich bewegen — und warten damit auf etwas, das uns nie versprochen wurde. Ein Licht auf dem Weg reicht für den nächsten Schritt.",
-          "action_step": "Bestimme den allernächsten Schritt — nicht den Plan, den Schritt — und tu ihn heute, bevor der Tag dich davon abbringt."
+          "meditation": "Daniel sagt das, nachdem man ihm aufgetragen hat, einen Traum zu deuten, den niemand ihm erzählen wollte. Ein unmöglicher Auftrag — und seine Antwort handelt nicht von seiner eigenen Fähigkeit.\n\nAchte auf die mittlere Zeile. Er weiß, was dort in der Finsternis liegt — nicht: er räumt sie weg. Als Christinnen bitten wir darum, dass das Licht angeht. Hier steht: Jemand kann da bereits hineinsehen. Das ist ein anderer Trost, und oft ist es der einzige, den wir haben.",
+          "action_step": "Benenne eine Sache, bei der du keinen Weg siehst. Übergib sie, ohne heute schon die Erklärung dafür zu verlangen."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, ich will die ganze Straße sehen, und du hast mir Licht für einen Schritt gegeben. Hilf mir, nicht länger um mehr Licht zu verhandeln, sondern mit dem zu gehen, was ich habe. Zeig mir heute Morgen den nächsten Schritt. In Jesu Namen, Amen."
+        "de": "Lieber himmlischer Vater, ich sehe hier nicht durch, und ich tue nicht länger so, als ob. Danke, dass das Dunkel für dich nicht dunkel ist. Sieh weiter, was ich nicht sehen kann, und gib mir Licht genug für heute. In Jesu Namen, Amen."
       }
     },
     {
@@ -1521,22 +1521,22 @@
       "segment": "morning",
       "language": "de",
       "reference": {
-        "book": "1 Corinthians",
-        "chapter": 15,
-        "verse": "57",
-        "full_reference": "1 Corinthians 15:57"
+        "book": "2 Thessalonians",
+        "chapter": 3,
+        "verse": "3",
+        "full_reference": "2 Thessalonians 3:3"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#屡战屡败",
-        "#得胜是被赐的"
+        "#被人辜负",
+        "#想要依靠",
+        "#学习分辨"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Gott aber sei Dank, der uns den Sieg gegeben hat durch unsern HERRN Jesus Christus!"
+            "text": "Aber der HERR ist treu; der wird euch stärken und bewahren vor dem Argen."
           },
           "modern": {
             "version": "HFA",
@@ -1548,21 +1548,21 @@
         "verse_category": {
           "testament": "NT",
           "genre": "epistle",
-          "primary_theme": "victory"
+          "primary_theme": "faithfulness"
         },
-        "niv_word_count": 15,
-        "context_note": "Diese Zeile schließt Paulus' langes Kapitel über die Auferstehung ab. Der Sieg, von dem er spricht, ist der über den Tod — nicht über deine hartnäckigste Gewohnheit. Auffällig ist die Reihenfolge: Paulus dankt, bevor irgendetwas Sichtbares sich geändert hat. Genau so ist das ganze Kapitel gebaut."
+        "niv_word_count": 14,
+        "context_note": "Paulus schreibt an eine Gemeinde, die von außen unter Druck steht und von innen durch falsche Lehre verunsichert wird. Im Griechischen gehört „treu“ (pistos) zum selben Wortfeld wie der „Glaube“, den im Satz davor nicht alle haben — ein bewusstes Echo, das im Deutschen verlorengeht. Paulus antwortet auf menschliche Unzuverlässigkeit mit Gottes Treue, ohne die erste zu leugnen."
       },
       "devotional": {
         "structure": "同行劝勉",
         "de": {
-          "meditation": "Der Satz beginnt nicht mit uns. Er beginnt mit dem Dank — und erst danach kommt, wofür. Der Sieg ist gegeben, abgeschlossen, durch Christus, nicht durch unsere gute Woche.\n\nDie meisten von uns rechnen umgekehrt: erst durchhalten, dann danken. Als Christinnen machen wir daraus leise eine Frage der Disziplin und fühlen uns am Donnerstag wie Betrügerinnen. Paulus sagt nicht, dass wir gewinnen. Er sagt, dass gegeben wurde, was wir nie erkämpfen könnten. Darum darf dasselbe Versagen, das du vorige Woche hergebracht hast, heute Morgen wieder mitkommen — es nimmt dir nicht, was längst gegeben ist.",
-          "action_step": "Nenne die eine Sache, gegen die du immer wieder verlierst. Sag sie Gott, und sag den Dank davor, nicht danach."
+          "meditation": "Achte auf den Gegensatz, den Paulus aufbaut. Der Satz davor handelt von Menschen, auf die kein Verlass ist — nicht jeder ist glaubwürdig, sagt er ganz nüchtern. Und dann: Aber der Herr ist treu.\n\nEr sagt nicht, sie sollen sich bessere Leute suchen. Er verlagert das Gewicht. Wir versuchen oft, Vertrauen dort wiederherzustellen, wo es sachlich nicht gerechtfertigt ist, und halten es dann für unser eigenes Versagen an der Gnade. Das verlangt Paulus nicht. Er legt das Tragfähige an eine andere Stelle und lässt das Unzuverlässige stehen, wie es ist — benannt, aber nicht mehr belastet.",
+          "action_step": "Benenne einen Menschen, den du immer wieder zuverlässig zu machen versuchst. Leg dieses Gewicht heute Morgen bewusst woanders hin, und sag laut, wohin."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, ich bringe dir wieder dasselbe Versagen und schäme mich dafür. Danke, dass der Sieg nicht von meiner Woche abhängt, sondern längst gegeben ist, durch deinen Sohn. Ich behaupte heute Morgen nicht, etwas gewonnen zu haben. Ich nehme an, was du schon aus der Hand gegeben hast, und fange mit dem Dank an. In Jesu Namen, Amen."
+        "de": "Lieber himmlischer Vater, ich lehne mich immer wieder an jemanden, der das nicht tragen kann, und gebe mir dann selbst die Schuld, wenn es nachgibt. Heute Morgen will ich mein Gewicht dorthin legen, wo es hält. Mach mich von innen fest, damit ich von Menschen nicht mehr verlange, was nur du geben kannst. In Jesu Namen, Amen."
       }
     },
     {
@@ -1871,22 +1871,22 @@
       "segment": "morning",
       "language": "de",
       "reference": {
-        "book": "2 Timothy",
-        "chapter": 1,
-        "verse": "7",
-        "full_reference": "2 Timothy 1:7"
+        "book": "Psalms",
+        "chapter": 119,
+        "verse": "114",
+        "full_reference": "Psalms 119:114"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨力量",
-        "#畏缩不前",
-        "#刚强的心"
+        "#需要庇护",
+        "#鼓起勇气",
+        "#今天要面对"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Denn Gott hat uns nicht gegeben den Geist der Furcht, sondern der Kraft und der Liebe und der Zucht."
+            "text": "Du bist mein Schirm und Schild; ich hoffe auf dein Wort."
           },
           "modern": {
             "version": "HFA",
@@ -1896,23 +1896,23 @@
       },
       "exegesis": {
         "verse_category": {
-          "testament": "NT",
-          "genre": "epistle",
+          "testament": "OT",
+          "genre": "psalm",
           "primary_theme": "courage"
         },
-        "niv_word_count": 18,
-        "context_note": "Paulus schreibt an einen jüngeren Mitarbeiter, der offenbar zurückweicht. Die drei Gaben gehören zusammen: Kraft ohne Liebe wird hart, Liebe ohne sōphronismos verliert die Form. Dieses letzte Wort meint einen gesunden, selbst geführten Verstand — Klarheit, nicht Unterdrückung. Luther gibt es mit „Zucht\" wieder, was heute leicht härter klingt, als es gemeint ist."
+        "niv_word_count": 15,
+        "context_note": "Psalm 119 ist ein alphabetisches Lied über Gottes Wort, geschrieben von jemandem unter anhaltender Anfeindung. Das hebräische sether meint einen wirklichen Unterschlupf, ein Versteck, in das ein Verfolgter kriecht; Luther macht daraus den „Schirm“. Die zwei Bilder sind keine poetische Doppelung — sie beschreiben zwei verschiedene Lagen, denen derselbe Gott begegnet."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "de": {
-          "meditation": "Drei Dinge, zusammen gegeben, und sie brauchen einander. Kraft allein wird hart. Liebe allein hat keine Form. Und das dritte Wort, Zucht, klingt heute nach Strenge und Unterdrückung — gemeint ist aber etwas anderes: ein klarer, bei sich bleibender Verstand. Nicht Selbstverleugnung, sondern Urteilskraft.\n\nPaulus schreibt das, weil Timotheus sich zurückzieht — und weil das, was du bekommen hast, nicht Furcht ist. Wo du diese Woche still geworden bist, obwohl du hättest reden sollen, liegen die drei bereit: Kraft, Liebe und ein klarer Kopf, zusammen und heute!",
-          "action_step": "Finde den Satz, den du diese Woche nicht gesagt hast. Entscheide heute, ob du ihn noch sagst — und wenn ja, wann."
+          "meditation": "Zwei Bilder, und sie tun Verschiedenes. Ein Schirm wird über dich gehalten; du gehst darunter, wenn du nichts mehr abwehren kannst. Ein Schild nimmst du selbst vor dich und gehst damit weiter. Beides, von derselben Person, in einer Zeile.\n\nEs geht hier also nicht um die Frage, ob du dich zurückziehen oder standhalten sollst. Es geht darum, wer bei dir ist, so oder so. Es gibt Morgen zum Unterstellen und Morgen zum Losgehen. Er wechselt dazwischen nicht!",
+          "action_step": "Entscheide, was für ein Morgen das ist, einer zum Unterstellen oder einer zum Losgehen, und sag es laut, bevor du anfängst."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, ich bin still geblieben, wo ich hätte reden sollen, und habe es Demut genannt. Gib mir die Kraft, die Liebe und den klaren Kopf zusammen, nicht eines ohne die anderen. Zeig mir heute, was ich sagen soll. In Jesu Namen, Amen."
+        "de": "Lieber himmlischer Vater, ich weiß heute Morgen nicht, ob ich mich zurückziehen oder standhalten soll, und ich habe daraus eine Frage gemacht, die ich richtig beantworten muss. Sei mir beides. Deck mich, wo ich Deckung brauche, und geh vor mir her, wo ich gehen muss. In Jesu Namen, Amen."
       }
     },
     {
@@ -1971,22 +1971,22 @@
       "segment": "morning",
       "language": "de",
       "reference": {
-        "book": "Hebrews",
-        "chapter": 11,
-        "verse": "1",
-        "full_reference": "Hebrews 11:1"
+        "book": "Matthew",
+        "chapter": 7,
+        "verse": "24",
+        "full_reference": "Matthew 7:24"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#看不见证据",
-        "#信心的实底"
+        "#听了很多",
+        "#想要落地",
+        "#没人看见"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Es ist aber der Glaube eine gewisse Zuversicht des, das man hofft, und ein Nichtzweifeln an dem, das man nicht sieht."
+            "text": "Darum, wer diese meine Rede hört und tut sie, den vergleiche ich einem klugen Mann, der sein Haus auf einen Felsen baute."
           },
           "modern": {
             "version": "HFA",
@@ -1997,22 +1997,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "epistle",
+          "genre": "gospel",
           "primary_theme": "faith"
         },
-        "niv_word_count": 17,
-        "context_note": "Der Hebräerbrief definiert Glauben hier nicht über die Stärke eines Gefühls. Im Griechischen steht hypostasis — das, was darunter steht, ein Fundament oder ein Besitztitel — und elenchos, ein Wort aus dem Gerichtssaal für erbrachten Beweis. Luther gibt beides mit „gewisser Zuversicht\" und „Nichtzweifeln\" wieder; das Gewicht liegt auf gewiss."
+        "niv_word_count": 30,
+        "context_note": "Damit schließt die Bergpredigt — das Letzte, was Jesus nach drei Kapiteln Lehre sagt. In Galiläa hieß auf Felsen bauen: durch die trockene Oberschicht bis zum gewachsenen Stein graben, Arbeit, die man am fertigen Haus nicht mehr sieht. Beide Bauleute im Gleichnis hören dieselben Worte; unterschieden sind sie nur durch das Tun."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "de": {
-          "meditation": "Das entscheidende Wort ist nicht Zuversicht, sondern gewiss. Nicht: eine besonders starke Zuversicht. Sondern: eine, die etwas hat, worauf sie sich gründet — und daneben ein Nichtzweifeln, das seinen Halt nicht in dir hat.\n\nAlso hängt heute Morgen nichts daran, wie fest sich dein Glaube gerade anfühlt. Das Gewicht liegt bei dem, dem du glaubst. Eine Frau mit leiser Zuversicht und zittriger Stimme steht damit genau auf demselben Grund wie alle anderen!",
-          "action_step": "Hör heute auf zu prüfen, wie viel Glauben du spürst. Handle einmal nach dem, was du für wahr hältst, und lass das den Maßstab sein."
+          "meditation": "Beide Bauleute in der Geschichte hören. Das ist der Teil, den wir überlesen. Der Unterschied ist nicht das Wissen, nicht die Aufrichtigkeit, nicht wie gut ihnen die Predigt gefallen hat. Der Unterschied steht in zwei Wörtern: und tut.\n\nUnd der Felsen ist von außen später nicht mehr zu sehen. Die beiden Häuser sehen gleich aus, bis das Wetter kommt. Also ist genau die kleine, unscheinbare Sache gemeint, die du heute getan hast und die niemand bemerkt hat!",
+          "action_step": "Nimm eine Sache, von der du längst weißt, dass du sie tun solltest, und tu sie heute, so klein sie ist. Erzähl es niemandem."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, ich prüfe ständig, ob ich genug Glauben fühle, und finde jedes Mal zu wenig. Danke, dass die Gewissheit nicht aus meinem Gefühl kommt, sondern von dir. Lass mich heute darauf stehen, statt sie ständig zu prüfen. In Jesu Namen, Amen."
+        "de": "Lieber himmlischer Vater, ich habe mehr gehört als getan, und ich weiß das. Danke, dass du kein verwandeltes Leben bis Freitag verlangst, sondern nur, dass sich eine Sache bewegt. Zeig mir welche, und gib mir den Willen anzufangen. In Jesu Namen, Amen."
       }
     },
     {
@@ -2221,22 +2221,22 @@
       "segment": "morning",
       "language": "de",
       "reference": {
-        "book": "Proverbs",
-        "chapter": 3,
-        "verse": "5",
-        "full_reference": "Proverbs 3:5"
+        "book": "Psalms",
+        "chapter": 62,
+        "verse": "7",
+        "full_reference": "Psalms 62:7"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#想不明白",
-        "#专心倚靠"
+        "#寻找依靠",
+        "#心里不稳",
+        "#学习交托"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Verlaß dich auf den HERRN von ganzem Herzen und verlaß dich nicht auf deinen Verstand;"
+            "text": "Bei Gott ist mein Heil, meine Ehre, der Fels meiner Stärke; meine Zuversicht ist auf Gott."
           },
           "modern": {
             "version": "HFA",
@@ -2247,23 +2247,24 @@
       "exegesis": {
         "verse_category": {
           "testament": "OT",
-          "genre": "wisdom",
+          "genre": "psalm",
           "primary_theme": "trust"
         },
-        "niv_word_count": 15,
-        "context_note": "Das hebräische Verb, das hier mit sich verlassen wiedergegeben wird, heißt eigentlich: sein Gewicht auf etwas legen, wie man sich auf einen Stock stützt. Die Sprüche sind nicht gegen den Verstand — das ganze Buch will ihn schärfen. Gewehrt wird sich nur dagegen, das volle Gewicht darauf zu setzen."
+        "niv_word_count": 18,
+        "context_note": "Psalm 62 ist für Jeduthun geschrieben, einen der Musiker Davids. Bei Luther ist es Vers 8, weil die Überschrift als erster Vers zählt. Das hebräische tsur, Fels, meint gewachsenen Stein, nicht einen Brocken: etwas, das vor dir da war und sich nicht bewegt. David häuft vier Begriffe an einer einzigen Adresse — bei Gott — mit voller Absicht."
       },
       "devotional": {
         "structure": "同行劝勉",
         "de": {
-          "meditation": "Der Vers stellt zwei Adressen nebeneinander: sich dem HERRN überlassen — und sich nicht dem eigenen Verstand überlassen. Das hebräische Verb dahinter heißt wörtlich: sein Gewicht auf etwas legen, wie man sich auf einen Stock stützt.\n\nDas ist kein Verbot zu denken; die Sprüche sind ein Buch über gutes Denken. Es geht darum, wem wir uns überlassen. Wir können unseren Verstand den ganzen Tag gebrauchen und uns trotzdem nicht auf ihn verlassen. Darin liegt der Unterschied zwischen einer Frau, die sorgfältig plant, und einer Frau, die nicht schlafen kann, solange etwas ungelöst ist.",
-          "action_step": "Denk das Problem so weit durch, wie du ehrlich kommst. Hör dann auf und übergib es dem, der die Nacht wach bleibt."
+          "meditation": "Zähl mit, wie oft er es sagt. Heil, Ehre, Fels, Zuversicht — vier Wörter, und alle an derselben Adresse. Bei Gott. Er wechselt das Vokabular nicht der Schönheit wegen; er wiederholt einen Ort.\n\nWir verteilen diese vier normalerweise. Kraft hier, guter Ruf dort, Sicherheit noch woanders. David legt alle vier an eine Stelle, und das ist entweder leichtsinnig oder die einzige Anordnung, die hält.",
+          "action_step": "Benenne, worauf dein Gefühl von Sicherheit heute Morgen tatsächlich ruht. Sag dann einen Satz, der es woandershin legt."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, ich habe das durchdacht, so weit Denken kommt, und drehe es immer noch. Ich höre nicht auf, meinen Kopf zu gebrauchen. Ich höre auf, mich ihm zu überlassen. Nimm mir das Gewicht heute Morgen ab. In Jesu Namen, Amen."
-      }
+        "de": "Lieber himmlischer Vater, meine Sicherheit liegt dünn verteilt auf mehreren Dingen, die alle nachgeben können. Heute Morgen will ich sie an einer Stelle haben. Sei der Fels, auf dem ich wirklich stehe, nicht der, von dem ich rede. In Jesu Namen, Amen."
+      },
+      "verse_local": "Psalms 62:8"
     },
     {
       "id": "m_046",
@@ -2371,22 +2372,22 @@
       "segment": "morning",
       "language": "de",
       "reference": {
-        "book": "Romans",
-        "chapter": 15,
-        "verse": "13",
-        "full_reference": "Romans 15:13"
+        "book": "John",
+        "chapter": 1,
+        "verse": "5",
+        "full_reference": "John 1:5"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#心里干涸",
-        "#盼望满溢"
+        "#长夜未明",
+        "#盼望微弱",
+        "#仍在等"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Der Gott aber der Hoffnung erfülle euch mit aller Freude und Frieden im Glauben, daß ihr völlige Hoffnung habet durch die Kraft des heiligen Geistes."
+            "text": "Und das Licht scheint in der Finsternis, und die Finsternis hat's nicht begriffen."
           },
           "modern": {
             "version": "HFA",
@@ -2397,22 +2398,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "epistle/benediction",
+          "genre": "gospel",
           "primary_theme": "hope"
         },
-        "niv_word_count": 31,
-        "context_note": "Mit diesem Segen bringt Paulus seinen längsten Brief zum Abschluss. Er nennt Gott den Gott der Hoffnung — Hoffnung ist damit Gottes Eigenschaft und keine Stimmung, die wir selbst erzeugen. Gefüllt wird mit Freude und Frieden, und die Kraft dazu kommt vom Heiligen Geist, nicht aus uns."
+        "niv_word_count": 15,
+        "context_note": "Johannes beginnt sein Evangelium mit einem Echo auf die Schöpfung — Licht, Finsternis, Anfang. Das griechische katalambano trägt zwei Bedeutungen: begreifen und überwältigen; die Übersetzer sind darüber bis heute geteilt. Luther entscheidet sich für „begriffen“. Das Verb „scheint“ steht im Präsens: fortdauernd, kein einmaliges Ereignis."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "de": {
-          "meditation": "Lies zuerst, wessen Hoffnung das ist. Hier heißt sie nicht deine, sondern seine: der Gott der Hoffnung. Ihm gehört sie, bevor sie je bei dir ankommt.\n\nUnd lies, was er tut: Er füllt. Mit Freude, mit Frieden, mitten im Glauben. Und was dabei herauskommt, heißt völlig — ganz, nicht ein Rest, den du mühsam auffrischen musst. Die Kraft dahinter ist der Heilige Geist und nicht deine Tagesform. Heute Morgen musst du also keine Hoffnung herstellen. Du darfst gefüllt werden!",
-          "action_step": "Bevor du heute irgendjemandem etwas gibst, bitte zuerst darum, gefüllt zu werden. Sag es genau mit diesen Worten, laut."
+          "meditation": "Die Zeit des Verbs ist Präsens. Nicht: schien einmal, damals. Sondern: scheint, jetzt, weiter. Wie dieser Morgen auch aussieht — an diesem Verb hat sich nichts geändert.\n\nUnd die zweite Hälfte: Luther sagt, die Finsternis hat es nicht begriffen. Sie versteht es nicht. Sie hat es nie verstanden, seit dem ersten Satz der Bibel, und in all den Nächten seither hat sie es trotzdem nicht ausgemacht!",
+          "action_step": "Benenne, bevor der Tag anfängt, eine Stelle, die immer noch dunkel aussieht. Sag das Verb laut: Dort scheint es."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, du bist der Gott der Hoffnung, und ich habe versucht, sie mir selbst zu machen. Fülle mich heute Morgen mit Freude und Frieden — nicht damit ich mich besser fühle, sondern damit das, was bei anderen ankommt, wirklich von dir kommt. In Jesu Namen, Amen."
+        "de": "Lieber himmlischer Vater, das sieht seit langem gleich aus, und ich habe angefangen, das als deine Abwesenheit zu lesen. Erinnere mich heute Morgen daran, dass das Licht nicht ausgegangen ist, sondern dass ich nur nicht weit sehe. Scheine weiter, wo ich nichts erkenne. In Jesu Namen, Amen."
       }
     },
     {
@@ -2721,22 +2722,22 @@
       "segment": "morning",
       "language": "de",
       "reference": {
-        "book": "Deuteronomy",
-        "chapter": 31,
-        "verse": "6",
-        "full_reference": "Deuteronomy 31:6"
+        "book": "Psalms",
+        "chapter": 59,
+        "verse": "16",
+        "full_reference": "Psalms 59:16"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨力量",
-        "#怕面对的人",
-        "#祂不撇下"
+        "#清晨无力",
+        "#还没有解决",
+        "#选择赞美"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Seid getrost und unverzagt, fürchtet euch nicht und laßt euch nicht vor ihnen grauen; denn der HERR, dein Gott, wird selber mit dir wandeln und wird die Hand nicht abtun noch dich verlassen."
+            "text": "Ich aber will von deiner Macht singen und des Morgens rühmen deine Güte; denn du bist mir Schutz und Zuflucht in meiner Not."
           },
           "modern": {
             "version": "HFA",
@@ -2747,23 +2748,24 @@
       "exegesis": {
         "verse_category": {
           "testament": "OT",
-          "genre": "narrative/exhortation",
+          "genre": "psalm",
           "primary_theme": "courage"
         },
-        "niv_word_count": 29,
-        "context_note": "Mose sagt das dem ganzen Volk, bevor er es Josua noch einmal unter vier Augen wiederholt — Mut ist hier nicht den Führenden vorbehalten. „Vor ihnen“ zeigt auf bestimmte Gegner, nicht auf eine allgemeine Unruhe. Im Hebräischen steht eine doppelte Verneinung, die den Ton verstärkt: nicht loslassen, nicht verlassen."
+        "niv_word_count": 33,
+        "context_note": "Die Überschrift setzt diesen Psalm in die Nacht, in der Sauls Männer Davids Haus bewachten und auf das Tageslicht warteten, um ihn zu töten. Bei Luther ist es Vers 17, weil die Überschrift mitzählt. Die Uhrzeit ist Absicht: der Morgen, die Stunde, zu der die Gefahr fällig war. Geklärt war nichts."
       },
       "devotional": {
         "structure": "同行劝勉",
         "de": {
-          "meditation": "Beachte, dass das zuerst allen gesagt wird und erst danach Josua allein. Mut wird nicht nur an die ausgegeben, die vorne stehen.\n\nUnd beachte, wie konkret es ist: fürchtet euch nicht vor ihnen. Keine allgemeine Anweisung gegen Angst — eine bestimmte Gruppe von Menschen, an einem bestimmten Tag. Als Christinnen vergeistigen wir Furcht gern zu etwas Vagem. Die Schrift hält sie meistens konkret, weil sie genau dort tatsächlich wohnt.",
-          "action_step": "Benenne den einen Menschen oder das eine Gespräch, vor dem dir graut. Bete heute über genau das, mit Namen."
+          "meditation": "Achte auf die Uhrzeit. Am Morgen — und geschrieben hat das ein Mann, dessen Haus die ganze Nacht von Leuten umstellt war, die ihn töten wollten.\n\nEr singt nicht, weil es vorbei ist. Er singt zu der Stunde, in der es noch läuft, und zwar über etwas, das sich längst bewährt hat. Wir schieben das Singen meistens auf, bis das Ergebnis feststeht. David stellt es an den Anfang des Tages und nennt es Schutz.",
+          "action_step": "Sag oder sing eine wahre Sache über Gott, bevor du auf dein Handy schaust. Laut, und ruhig auch schief."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, es ist heute Morgen keine Angst im Allgemeinen. Es ist ein bestimmtes Gespräch und ein bestimmter Mensch. Geh mit mir in diesen Raum. Danke, dass du deine Hand nicht wegziehst und nicht hinausgehst. In Jesu Namen, Amen."
-      }
+        "de": "Lieber himmlischer Vater, nichts ist geklärt, und es ist schon Morgen. Mir ist nicht nach Singen, also fange ich trotzdem an. Du hast mich schon einmal gehalten, und darauf setze ich heute. Sei wieder mein Schutz. In Jesu Namen, Amen."
+      },
+      "verse_local": "Psalms 59:17"
     },
     {
       "id": "m_056",
@@ -2921,22 +2923,22 @@
       "segment": "morning",
       "language": "de",
       "reference": {
-        "book": "Galatians",
-        "chapter": 5,
-        "verse": "22",
-        "full_reference": "Galatians 5:22"
+        "book": "Proverbs",
+        "chapter": 19,
+        "verse": "8",
+        "full_reference": "Proverbs 19:8"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#结不出果子",
-        "#圣灵的工作"
+        "#想要成长",
+        "#总在给别人",
+        "#学着善待自己"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Die Frucht aber des Geistes ist Liebe, Freude, Friede, Geduld, Freundlichkeit, Gütigkeit, Glaube, Sanftmut, Keuschheit."
+            "text": "Wer klug wird, liebt sein Leben; und der Verständige findet Gutes."
           },
           "modern": {
             "version": "HFA",
@@ -2946,23 +2948,23 @@
       },
       "exegesis": {
         "verse_category": {
-          "testament": "NT",
-          "genre": "epistle",
+          "testament": "OT",
+          "genre": "wisdom",
           "primary_theme": "growth"
         },
-        "niv_word_count": 14,
-        "context_note": "Das Wort für Frucht steht im Griechischen in der Einzahl — eine Frucht mit neun Seiten, keine Liste von neun Aufgaben. Paulus stellt sie den „Werken des Fleisches“ aus den Versen davor gegenüber: Werke werden gemacht, Frucht wächst. Niemand bringt einen Apfel hervor, indem er sich mehr anstrengt."
+        "niv_word_count": 19,
+        "context_note": "Wörtlich steht im Hebräischen „wer Herz erwirbt“ — in dieser Literatur ist das Herz der Sitz des Urteils, nicht des Gefühls. Luther macht daraus „wer klug wird“. Das „Gutes finden“ der zweiten Zeile ist das gewöhnliche Wort für Finden, wie bei etwas Gesuchtem. Die Sprüche stellen Weisheit hier als gesunde Selbstsorge dar: Wer sie gewinnt, hat als Erste selbst etwas davon."
       },
       "devotional": {
         "structure": "同行劝勉",
         "de": {
-          "meditation": "Frucht steht hier in der Einzahl. Eine Frucht mit neun Seiten — nicht neun Kästchen, an denen man einzeln scheitern kann. Und achte auf den Gegensatz, den Paulus aufmacht: Die Liste davor heißt Werke. Diese heißt Frucht. Werke werden hergestellt; Frucht wächst, langsam, durch etwas, das in der Pflanze geschieht und nicht mit ihr gemacht wird.\n\nDeshalb hat sich noch nie jemand geduldig angestrengt und war danach geduldig. Als Christinnen dürfen wir aufhören, an der Frucht zu zerren, und stattdessen auf die Wurzel achten. Das ist keine Bequemlichkeit. Es ist die Arbeit, die tatsächlich etwas bewirkt.",
-          "action_step": "Hör heute auf, an der Eigenschaft zu arbeiten, die du am dringendsten haben willst. Gib diese Zeit stattdessen dem Zusammensein mit Gott."
+          "meditation": "Der Satz ist direkter, als er klingt: Wer klug wird, liebt sein Leben. Klugheit steht hier als eine Form, gut mit sich selbst umzugehen — den meisten von uns hat es so nie jemand erklärt.\n\nAls Christinnen behandeln wir Wachstum meist als Schuld: Wir schulden es Gott, der Familie, den Leuten, die auf uns bauen. Dieser Spruch dreht das um. Die Erste, der es zugutekommt, bist du. Denken zu lernen ist nicht noch eine Pflicht auf der Liste. Es ist näher am Essen als an der Arbeit — etwas, wovon du selbst lebst. Und die zweite Zeile verspricht nichts Großes, nur: Die Verständige findet Gutes.",
+          "action_step": "Gib heute fünfzehn Minuten an etwas, das dich klüger macht, nicht nützlicher. Trag es jetzt gleich in den Kalender ein."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, ich versuche herzustellen, was nur du wachsen lassen kannst, und komme mir dann wie eine Versagerin vor, wenn es nicht pünktlich erscheint. Wende meinen Blick heute Morgen auf die Wurzel statt auf die Frucht. Lass wachsen, was du wachsen lässt, in deinem Tempo, und gib mir die Geduld, nicht ständig nachzusehen. In Jesu Namen, Amen."
+        "de": "Lieber himmlischer Vater, ich habe das Wachsen als eine weitere Schuld behandelt, die ich anderen gegenüber abtrage, und war dann darüber verbittert. Zeig mir heute Morgen, dass du mir Klugheit um meinetwillen schenkst. Hilf mir, sie als Geschenk zu nehmen und nicht als Pflicht, und gib mir heute fünfzehn ehrliche Minuten dafür. In Jesu Namen, Amen."
       }
     },
     {
@@ -3272,21 +3274,21 @@
       "language": "de",
       "reference": {
         "book": "Psalms",
-        "chapter": 23,
-        "verse": "1",
-        "full_reference": "Psalms 23:1"
+        "chapter": 34,
+        "verse": "8",
+        "full_reference": "Psalms 34:8"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#感到匮乏",
-        "#神是牧者"
+        "#想要亲近神",
+        "#只是听说过",
+        "#今晚试一试"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Ein Psalm Davids. Der HERR ist mein Hirte; mir wird nichts mangeln."
+            "text": "Schmecket und sehet, wie freundlich der HERR ist. Wohl dem, der auf ihn traut!"
           },
           "modern": {
             "version": "HFA",
@@ -3300,20 +3302,21 @@
           "genre": "psalm",
           "primary_theme": "provision"
         },
-        "niv_word_count": 8,
-        "context_note": "David hat wirklich Schafe gehütet, und deshalb ist das Bild unsentimental: Hirtenarbeit war schmutzig, anstrengend und ging durch die Nacht. Hinter „mir wird nichts mangeln“ steht ein einziges hebräisches Verb für Mangel haben. Das ist keine Zusage von Überfluss, sondern von Genug."
+        "niv_word_count": 18,
+        "context_note": "Die Überschrift setzt Psalm 34 in die Zeit, als David sich vor Abimelech wahnsinnig stellte, um zu entkommen — keine würdevolle Rettung. Bei Luther ist es Vers 9, weil die Überschrift als Vers 1 mitgezählt wird. Das hebräische ta'am heißt schmecken, mit dem Mund probieren; es steht auch für Urteilsvermögen. David reicht dir keine Lehre, sondern den Löffel."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "de": {
-          "meditation": "Alles hängt an zwei kleinen Wörtern. Zuerst an „ist“ — nicht war, nicht wird vielleicht wieder. Gegenwart, heute Abend, in dem Zustand, in dem du gerade bist.\n\nUnd dann an „mein“. David sagt nicht: ein Hirte, auch nicht: der Hirte Israels, obwohl beides stimmt. Er sagt: meiner. Was dieser Tag dich auch gekostet hat, dieser Satz gehört immer noch dir, im Präsens, laut, bevor du einschläfst!",
-          "action_step": "Sprich den Vers heute Abend einmal langsam laut aus und setz deinen eigenen Namen davor. Dann hör auf zu reden und leg dich hin."
+          "meditation": "Schmecken ist ein seltsames Wort für Glauben. Nicht nachdenken, nicht zustimmen, nicht für wahrscheinlich halten — schmecken. Niemand kann das für dich tun.\n\nUnd achte auf die Reihenfolge: erst schmecken, dann sehen. Das Erkennen kommt hinterher. Du musst nicht erst überzeugt sein, um dich zu nähern. Du darfst heute Abend einen einzigen Bissen von seiner Freundlichkeit nehmen und das Verstehen danach kommen lassen!",
+          "action_step": "Tu heute Abend eine kleine Sache, die du nur tun würdest, wenn Gott wirklich gütig ist, und schau, was daraus wird."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, heute Abend bitte ich um nicht viel. Ich möchte diesen einen Satz sagen und ihn auch meinen: Du bist mein Hirte, mir wird nichts fehlen. Bring den Teil in mir zur Ruhe, der ständig aufzählt, was fehlt. In Jesu Namen, Amen."
-      }
+        "de": "Lieber himmlischer Vater, ich habe jahrelang Dinge über dich geglaubt, ohne sie je geschmeckt zu haben. Heute Abend möchte ich lieber dich kennen als über dich Bescheid wissen. Gib mir einen echten Bissen deiner Güte, bevor ich einschlafe. In Jesu Namen, Amen."
+      },
+      "verse_local": "Psalms 34:9"
     },
     {
       "id": "e_007",
@@ -3772,22 +3775,22 @@
       "segment": "evening",
       "language": "de",
       "reference": {
-        "book": "1 Corinthians",
-        "chapter": 13,
-        "verse": "4",
-        "full_reference": "1 Corinthians 13:4"
+        "book": "1 John",
+        "chapter": 4,
+        "verse": "12",
+        "full_reference": "1 John 4:12"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#亲密关系",
-        "#学习相爱"
+        "#关系疲惫",
+        "#想要看见神",
+        "#学习去爱"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Die Liebe ist langmütig und freundlich, die Liebe eifert nicht, die Liebe treibt nicht Mutwillen, sie blähet sich nicht,"
+            "text": "Niemand hat Gott jemals gesehen. So wir uns untereinander lieben, so bleibt Gott in uns, und seine Liebe ist völlig in uns."
           },
           "modern": {
             "version": "HFA",
@@ -3801,19 +3804,19 @@
           "genre": "epistle",
           "primary_theme": "love"
         },
-        "niv_word_count": 18,
-        "context_note": "Paulus schrieb das an eine Gemeinde, die sich über Rang und Gaben zerriss, nicht für eine Hochzeit. Die erste Eigenschaft, makrothumeō, heißt wörtlich „langmütig“ — das Gegenteil einer kurzen Zündschnur. Jedes Wort seiner Liste ist im Griechischen ein Verb: Liebe ist hier kein Gefühl, sondern eine Reihe von Dingen, die man tut."
+        "niv_word_count": 27,
+        "context_note": "Johannes schreibt an eine Gemeinde, die an Leuten zerbricht, die sich überlegene Gotteserkenntnis zuschreiben. Sein Prüfstein ist bewusst unspektakulär. Das griechische teteleiomene heißt: an sein Ziel gebracht — Liebe, die vollendet ist, nicht Liebe, die sich stärker anfühlt. Luther sagt, Gott „bleibt“ in uns; die Probe ist nicht unser Gefühl, sondern ob die Liebe bei einem anderen Menschen ankommt."
       },
       "devotional": {
         "structure": "同行劝勉",
         "de": {
-          "meditation": "Du hast das bei Hochzeiten so oft gehört, dass es nichts mehr sagt. Versuch es woanders. Lies es über den letzten Dienstag. Das erste Wort auf der Liste ist langmütig, und die Sprache sagt es selbst: ein langer Atem, das Gegenteil einer kurzen Zündschnur. Kein Gefühl, sondern eine Länge. Das zweite Wort ist freundlich — auch das tut man eher, als dass man es fühlt.\n\nUnd darin liegt für müde Frauen in langen Beziehungen eine merkwürdig gute Nachricht. An den Abenden, an denen das Gefühl dünn ist, bleibt uns die Liebe trotzdem erreichbar. Liebe ist etwas, das wir um elf Uhr abends tun können, obwohl uns gar nicht danach ist.",
-          "action_step": "Nimm dir morgen eine einzige Zeile aus diesem Vers vor und tu sie einmal an dem Menschen, der dir am nächsten steht — absichtlich, ob du es fühlst oder nicht."
+          "meditation": "Johannes fängt mit einem Problem an und löst es anders, als wir erwarten. Niemand hat Gott je gesehen. Statt einen Beweis nachzuschieben, zeigt er auf die eine Stelle, an der Gott sichtbar wird: zwei Menschen, die einander weiter lieben.\n\nAls Christinnen suchen wir ihn gern in der Stille, im Lesen, im Alleinsein. Da ist er auch. Aber Johannes nennt einen viel weniger privaten Ort — eine Ehe, in der sich jemand noch einmal für Geduld entscheidet; eine Liebe, die den Satz überlebt hat, der gefallen ist. Dort bleibt Gott, sagt er, und dort wird seine Liebe ganz. Nicht daran, wie warm wir für ihn empfinden. Daran, wie wir miteinander umgehen, wenn es niemand sieht.",
+          "action_step": "Tu heute Abend eine ganz gewöhnliche liebevolle Sache für den Menschen, der dir diese Woche am schwersten fällt, ohne Ankündigung, ohne dass es jemand mitbekommt."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, ich habe diese Worte so oft gehört, dass ich sie nicht mehr höre. Mach sie wieder gewöhnlich — für die Küche, für morgen früh, für den Menschen, mit dem ich am härtesten umgehe. Wo das Gefühl dünn ist, lass mich trotzdem die Langmut wählen, und lass mich trotzdem freundlich sein. In Jesu Namen, Amen."
+        "de": "Lieber himmlischer Vater, ich wollte dich sehen und habe an den stillen Orten gesucht. Zeig mir heute Abend, dass du auch in der gewöhnlichen Geduld bist, für die ich mich bei den Menschen entscheiden muss, die mir am nächsten stehen. Wo Liebe kalt geworden ist, wärme sie. Wo ich aufgehört habe, es zu versuchen, hilf mir noch einmal anzufangen, nicht weil ich es fühle, sondern weil du darin bleibst. In Jesu Namen, Amen."
       }
     },
     {
@@ -3822,22 +3825,22 @@
       "segment": "evening",
       "language": "de",
       "reference": {
-        "book": "1 Thessalonians",
-        "chapter": 5,
-        "verse": "11",
-        "full_reference": "1 Thessalonians 5:11"
+        "book": "Psalms",
+        "chapter": 118,
+        "verse": "5",
+        "full_reference": "Psalms 118:5"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚交托",
-        "#关系疏离",
-        "#彼此建立"
+        "#被压得很紧",
+        "#需要喘息",
+        "#向神呼求"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Darum ermahnet euch untereinander und bauet einer den andern, wie ihr denn tut."
+            "text": "In der Angst rief ich den HERRN an, und der HERR erhörte mich und tröstete mich."
           },
           "modern": {
             "version": "HFA",
@@ -3847,23 +3850,23 @@
       },
       "exegesis": {
         "verse_category": {
-          "testament": "NT",
-          "genre": "epistle/exhortation",
+          "testament": "OT",
+          "genre": "psalm",
           "primary_theme": "encouragement"
         },
-        "niv_word_count": 16,
-        "context_note": "Paulus hängt vier Wörter an, die man leicht überliest: wie ihr denn tut. Er korrigiert die Gemeinde nicht, er benennt etwas, das sie schon tut, und bittet um mehr. Das griechische oikodomeō, „bauen“, ist ein Wort vom Bau — eine weitere Lage Steine, kein nettes Wort nebenbei."
+        "niv_word_count": 18,
+        "context_note": "Psalm 118 wurde zum Passafest gesungen; Jesus hat ihn wahrscheinlich in der Nacht vor dem Kreuz mitgesungen. Im Hebräischen ist Not ein enger Ort, aus dem man sich nicht drehen kann — das deutsche Wort Angst kommt vom selben Bild, von Enge. Luther übersetzt die Antwort Gottes nicht als Befreiung, sondern als Trost: erhört und getröstet, mitten darin."
       },
       "devotional": {
         "structure": "发问",
         "de": {
-          "meditation": "Paulus hängt vier Wörter an, die die meisten überlesen: wie ihr denn tut. Er treibt sie nicht mit Vorwürfen an. Er nennt etwas, das sie längst tun, und bittet um mehr davon. Und er sagt nicht „tröstet“, sondern: ermahnt einander — sprecht euch zu, haltet einander wach.\n\nBauen ist ein Handwerkerwort: eine weitere Lage Steine setzen, nicht ein Kompliment machen. Also — wen hast du heute gebaut, und wen wolltest du bauen und hast es gelassen?",
-          "action_step": "Schick einer Person den einen Satz, den du heute über sie gedacht, aber nicht gesagt hast — heute Abend noch, kurz und konkret."
+          "meditation": "Lies, was hier eigentlich passiert. Er ruft in der Angst, und dann stehen zwei Verben da, aber keines davon heißt: Die Angst war weg. Er wurde gehört. Und er wurde getröstet.\n\nDas ist die ganze Antwort, und sie kommt hinein in die Enge, nicht statt ihrer. Trost heißt nicht, dass jemand die Lage geändert hat, sondern dass jemand bei dir ist, während sie noch andauert. Wo bist du heute Abend eng, und hast du je darum gebeten, getröstet zu werden, statt nur darum, dass es aufhört?",
+          "action_step": "Sag heute Abend laut, wo es eng ist. Und bitte dann in einem Satz nicht um die Lösung, sondern darum, dass jemand dabei bleibt."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, ich sehe Gutes an Menschen und behalte es für mich. Damit ist niemandem geholfen. Lass mich morgen eines davon laut sagen. Und wo ich selbst leer werde, schick mir jemanden, der es mir sagt. In Jesu Namen, Amen."
+        "de": "Lieber himmlischer Vater, ich habe dich lange nur gebeten, meine Umstände zu ändern, und kein einziges Mal darum, dass du mich darin tröstest. Heute Abend bitte ich darum. Höre mich und bleib bei mir, bis ich einschlafe. In Jesu Namen, Amen."
       }
     },
     {
@@ -3872,22 +3875,22 @@
       "segment": "evening",
       "language": "de",
       "reference": {
-        "book": "John",
-        "chapter": 11,
-        "verse": "25",
-        "full_reference": "John 11:25"
+        "book": "Romans",
+        "chapter": 6,
+        "verse": "14",
+        "full_reference": "Romans 6:14"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#面对失去",
-        "#基督的应许"
+        "#反复失败",
+        "#想要自由",
+        "#不再被定义"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Jesus spricht zu ihr: Ich bin die Auferstehung und das Leben. Wer an mich glaubt, der wird leben, ob er gleich stürbe;"
+            "text": "Denn die Sünde wird nicht herrschen können über euch, sintemal ihr nicht unter dem Gesetz seid, sondern unter der Gnade."
           },
           "modern": {
             "version": "HFA",
@@ -3898,22 +3901,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "gospel/narrative",
-          "primary_theme": "life"
+          "genre": "epistle",
+          "primary_theme": "freedom"
         },
-        "niv_word_count": 23,
-        "context_note": "Martha hat gerade gesagt, sie wisse, dass ihr Bruder am Jüngsten Tag auferstehen wird — richtige Lehre, auf sicherer Distanz gehalten. Jesus holt das Ganze in die Gegenwart und in eine Person: Ich bin. Er sagt es vier Tage zu spät, vor einem Grab, zu einer Frau, die ohne ihn getrauert hat."
+        "niv_word_count": 20,
+        "context_note": "Paulus schreibt an Christen, die fürchten, Gnade mache den Gehorsam beliebig. Hinter „herrschen“ steht kyrieuo — die Vollmacht eines Herrn ausüben, ein Rechtsverhältnis, kein Gefühl. Luther verschärft es noch: Bei ihm kann die Sünde gar nicht mehr herrschen. Es geht darum, wer befehlen darf, nicht darum, wie stark der Zug noch ist."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "de": {
-          "meditation": "Martha sagte das Richtige: Er wird auferstehen am Jüngsten Tag. Es stimmt, es ist sehr weit weg, und an jenem Nachmittag half es ihr kein Stück weiter. Jesus korrigiert ihre Theologie nicht. Er verlegt sie. Kein Datum, sondern eine Person, die vor ihr steht, in der Gegenwart: Ich bin die Auferstehung.\n\nWas immer du heute Abend betrauerst, wen immer du vermisst — die Zusage ist nicht auf später terminiert. Die Zusage hat einen Namen, sie ist mit dir im Zimmer, und sie kam vier Tage zu spät, ohne sich zu entschuldigen und ohne dadurch auch nur ein bisschen weniger wahr zu sein!",
-          "action_step": "Sprich den Namen des Menschen aus, den du vermisst. Und sprich dann die ersten Worte des Verses laut aus: Ich bin die Auferstehung."
+          "meditation": "Sieh dir die Form des Satzes an. Da steht nicht: Die Sünde soll nicht über dich herrschen. Da steht: Sie wird es nicht können. Das ist keine Anweisung, an der du gerade scheiterst, sondern eine Aussage darüber, was sein wird.\n\nUnd achte auf die Begründung. Nicht: weil du dich mehr anstrengst. Sondern: weil du woanders stehst. Herrschen ist ein Wort über Zuständigkeit — wer das Recht hat, dir Befehle zu geben. Paulus sagt, die alte Herrschaft hat dieses Recht über dich verloren, ganz gleich, wie laut sie noch redet. Das Ding, gegen das du das ganze Jahr gekämpft hast, ist nicht dein Herr. Es hat vielleicht noch eine Stimme. Vollmacht hat es nicht mehr!",
+          "action_step": "Benenne das eine, gegen das du immer wieder verlierst. Sag heute Abend einen Satz laut: Das hat eine Stimme, aber keine Vollmacht."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, manches, was wahr ist, ist mir heute Abend zu weit weg, um mich zu erreichen. Danke, dass Jesus der Martha kein Datum gab, sondern sich selbst. Sei mir so nah. Ich bitte nicht darum, jemanden weniger zu vermissen. Ich bitte darum, damit nicht allein zu sein. In Jesu Namen, Amen."
+        "de": "Lieber himmlischer Vater, ich kämpfe so lange gegen dieselbe Sache, dass ich angefangen habe, sie für mich selbst zu halten. Heute Abend möchte ich dich es anders sagen hören. Danke, dass sie das Recht verloren hat, über mich zu herrschen, auch an den Tagen, an denen sie laut ist. Lehre mich, ihr zu antworten wie etwas, das nicht mehr befiehlt. In Jesu Namen, Amen."
       }
     },
     {
@@ -4573,22 +4576,22 @@
       "segment": "evening",
       "language": "de",
       "reference": {
-        "book": "Matthew",
-        "chapter": 11,
-        "verse": "28",
-        "full_reference": "Matthew 11:28"
+        "book": "1 Peter",
+        "chapter": 5,
+        "verse": "10",
+        "full_reference": "1 Peter 5:10"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#疲惫不堪",
-        "#重担压身"
+        "#撑得太久",
+        "#盼望被修复",
+        "#想要安稳"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Kommet her zu mir alle, die ihr mühselig und beladen seid; ich will euch erquicken."
+            "text": "Der Gott aber aller Gnade, der uns berufen hat zu seiner ewigen Herrlichkeit in Christo Jesu, der wird euch, die ihr eine kleine Zeit leidet, vollbereiten, stärken, kräftigen, gründen."
           },
           "modern": {
             "version": "HFA",
@@ -4599,22 +4602,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "gospel/invitation",
+          "genre": "epistle",
           "primary_theme": "rest"
         },
-        "niv_word_count": 16,
-        "context_note": "Jesus sagt das zu Menschen, die religiöse Vorschriften mürbe gemacht haben — Regeln, die immer schwerer und immer kleinteiliger geworden waren. Das griechische anapauō meint das Durchatmen einer Arbeiterin, wenn die Last heruntergenommen wird, nicht den Schlaf. Niemand muss sich vorher qualifizieren; die Einladung gilt gerade denen, die schon erschöpft ankommen."
+        "niv_word_count": 38,
+        "context_note": "Petrus schreibt an verstreute Christen unter echtem Druck, nicht an Leute mit schlechter Laune. Sein letztes Verb, themelioo, heißt: auf ein Fundament setzen. Alle vier Verben sind Dinge, die Gott tut; der Anteil der Leser besteht darin, zu bleiben. Das griechische oligon, „eine kleine Zeit“, ist bewusst unbemessen."
       },
       "devotional": {
         "structure": "同行劝勉",
         "de": {
-          "meditation": "Er sagt nicht: Komm, wenn du dich sortiert hast. Er sagt: Komm — so, wie du am Ende eines Tages bist, der mehr genommen als gegeben hat.\n\nAls Christinnen machen wir sogar daraus noch eine Anweisung, an der wir scheitern: richtig abschalten, gelassen sein, endlich aufhören zu kämpfen. Aber schau, welches Verb dir gegeben ist. Es ist nicht erquicken. Es ist kommen. Das Erquicken ist seine Hälfte des Satzes — das Aufatmen, das kommt, wenn die Last von den Schultern genommen wird — und mit seiner Hälfte hatte er noch nie Hilfe nötig.",
-          "action_step": "Sag das Schwerste, was dir im Kopf liegt, laut — und dann: Das gebe ich dir heute Abend. Lass es dort bis morgen früh."
+          "meditation": "Vier Verben, und die Reihenfolge lohnt sich. Zuerst: wieder ganz machen, was auseinandergefallen ist. Dann stärken. Dann kräftigen. Und zuletzt gründen — ein Wort vom Bauen, etwas auf ein Fundament stellen, damit es aufhört zu wackeln.\n\nWir hätten das Gründen gern zuerst und das Leiden übersprungen. Petrus gibt die ehrliche Reihenfolge, und er tut nicht so, als wäre die Mitte kurz; er sagt nur: eine kleine Zeit, ohne sie zu messen. Aber sieh, wer die vier Verben tut. Nicht wir. Bei jedem einzelnen ist Gott das Subjekt. Wir sollen uns nicht selbst wieder aufbauen. Wir sollen nur noch da sein, wenn er es tut.",
+          "action_step": "Hör heute Abend auf, eine Sache reparieren zu wollen. Sag klar, welche es ist, und lass sie bis zum Morgen bei Gott."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, ich bin müde auf eine Art, die Schlaf allein nicht behebt. Danke, dass deine Einladung auch so spät noch offen steht und nicht verlangt, dass ich ausgeruht ankomme. Ich komme, wie ich bin. Nimm mir das Gewicht aus den Händen und halte es bis morgen früh, damit ich einmal durchatmen kann. In Jesu Namen, Amen."
+        "de": "Lieber himmlischer Vater, ich bin müde davon, diejenige zu sein, die alles zusammenhalten muss, und besonders gut kann ich es ohnehin nicht. Danke, dass das Heilen deine Arbeit ist und nicht meine. Mach die Teile, an die ich nicht herankomme. Gründe, was in mir immer wieder ins Rutschen gerät. Morgen früh bin ich noch da, und mehr verspreche ich heute Abend nicht. In Jesu Namen, Amen."
       }
     },
     {
@@ -5123,22 +5126,22 @@
       "segment": "evening",
       "language": "de",
       "reference": {
-        "book": "John",
-        "chapter": 16,
-        "verse": "33",
-        "full_reference": "John 16:33"
+        "book": "Luke",
+        "chapter": 8,
+        "verse": "50",
+        "full_reference": "Luke 8:50"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚平安",
-        "#难处不断",
-        "#祂已得胜"
+        "#已经放弃盼望",
+        "#怕再失望",
+        "#还想再信一次"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Solches habe ich mit euch geredet, daß ihr in mir Frieden habet. In der Welt habt ihr Angst; aber seid getrost, ich habe die Welt überwunden."
+            "text": "Da aber Jesus das hörte, antwortete er ihm und sprach: Fürchte dich nicht, glaube nur, so wird sie gesund!"
           },
           "modern": {
             "version": "HFA",
@@ -5149,22 +5152,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "gospel/farewell discourse",
-          "primary_theme": "overcoming"
+          "genre": "gospel",
+          "primary_theme": "faith"
         },
-        "niv_word_count": 29,
-        "context_note": "Jesus sagt das in den letzten Minuten vor Gethsemane. Das griechische tharseite heißt Mut fassen — was ein Befehlshaber sagt, nicht ein Freund auf einem Fest. Und das Überwinden steht im Perfekt: schon getan, bevor das Kreuz überhaupt geschehen war."
+        "niv_word_count": 22,
+        "context_note": "Jairus war Vorsteher der Synagoge — ein angesehener Mann, der öffentlich einen umherziehenden Lehrer um Hilfe bittet. Hinter dem Gesundwerden steht das griechische sozo, das Heilen und Retten zugleich meint; Luther gibt es hier rein körperlich wieder. Jesus spricht, bevor Jairus auf die Nachricht reagieren kann, und genau das ist der Punkt: Der Zuspruch kommt zuerst."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "de": {
-          "meditation": "Jesus verspricht keine leichtere Welt. Er sagt geradeheraus, dass in ihr Angst da ist — nicht als Aussicht für später, sondern als Zustand, jetzt. Und daneben stellt er etwas, das bereits fertig ist: Er hat die Welt überwunden. Gesagt hat er es vor dem Kreuz.\n\nDer Friede, den er heute Abend anbietet, ist also nicht das Fehlen von Angst. Er ist die Tatsache, dass der Ausgang feststand, bevor deine Angst anfing!",
-          "action_step": "Benenne heute Abend ehrlich, wovor dir Angst ist. Sprich danach die letzten Worte des Verses laut darüber aus; sie stehen schon fest."
+          "meditation": "Die Nachricht war schon angekommen: Sie ist tot, bemüh den Meister nicht länger. Jesus hört das und antwortet, bevor Jairus überhaupt reagieren kann.\n\nUnd achte darauf, worum er bittet. Nicht um mehr Glauben. Nur um Glauben — als würde er etwas wegnehmen statt etwas hinzufügen. Jairus soll sich nicht tapfer fühlen und keine Gewissheit herstellen. Er soll weitergehen, zu seiner Tochter, mit dieser einen Sache in der Hand. Mehr wird heute Abend auch von dir nicht verlangt!",
+          "action_step": "Benenne heute Abend das, was du längst abgeschrieben hast. Und geh dann trotzdem einen einzigen kleinen Schritt darauf zu."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, es kam eines nach dem anderen, und ich habe es satt, positiv denken zu sollen. Danke, dass Jesus nie etwas anderes versprochen hat. Gib mir heute Abend Mut statt guter Laune, und lass mich in dem ruhen, was schon vollbracht ist. In Jesu Namen, Amen."
+        "de": "Lieber himmlischer Vater, ich habe für diese Sache vor einer Weile aufgehört zu hoffen, weil das Hoffen mehr wehtat. Heute Abend bitte ich nicht um Gewissheit. Ich bitte darum, weitergehen zu können. Halt du das eine, was mir geblieben ist. In Jesu Namen, Amen."
       }
     },
     {
@@ -5173,22 +5176,22 @@
       "segment": "evening",
       "language": "de",
       "reference": {
-        "book": "Colossians",
-        "chapter": 3,
-        "verse": "15",
-        "full_reference": "Colossians 3:15"
+        "book": "John",
+        "chapter": 14,
+        "verse": "26",
+        "full_reference": "John 14:26"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚平安",
-        "#心里争战",
-        "#让平安作主"
+        "#夜里想不起",
+        "#需要提醒",
+        "#知道却抓不住"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Und der Friede Gottes regiere in euren Herzen, zu welchem ihr auch berufen seid in einem Leibe; und seid dankbar!"
+            "text": "Aber der Tröster, der Heilige Geist, welchen mein Vater senden wird in meinem Namen, der wird euch alles lehren und euch erinnern alles des, das ich euch gesagt habe."
           },
           "modern": {
             "version": "HFA",
@@ -5199,22 +5202,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "epistle/exhortation",
-          "primary_theme": "peace"
+          "genre": "gospel",
+          "primary_theme": "comfort"
         },
-        "niv_word_count": 23,
-        "context_note": "Das griechische brabeuō beschreibt, was ein Kampfrichter bei den Spielen tut: entscheiden, den Ausgang festlegen. Es ist also kein Rat, friedlich zu fühlen, sondern die Anweisung, den Frieden entscheiden zu lassen, wenn es in dir Streit gibt. Paulus hängt drei Worte an: und seid dankbar."
+        "niv_word_count": 34,
+        "context_note": "Jesus sagt das wenige Stunden vor seiner Verhaftung, zu Männern, die bis zum Morgen das meiste davon vergessen haben. Luther übersetzt parakletos mit „Tröster“; wörtlich ist es der Herbeigerufene, ein Beistand, kein Gefühl. Das Wort für erinnern, anamimnesko, ist das alltägliche Wort für etwas Bekanntes zurückholen. Die Zusage rechnet mit dem Vergessen."
       },
       "devotional": {
         "structure": "同行劝勉",
         "de": {
-          "meditation": "Das Wort für regieren kommt aus dem Sport: Es ist das, was ein Schiedsrichter tut — die Entscheidung fällen, den Streit beenden. Paulus fordert dich also nicht auf, friedlich zu fühlen. Er sagt, dass der Friede die entscheidende Stimme haben soll, wenn zwei Stimmen gleichzeitig in dir reden. Nicht die lauteste. Nicht die ängstlichste, die meistens am verantwortungsvollsten klingt. Die, bei der du ruhig wirst, wenn du bei ihr bleibst.\n\nUnd dann, fast nebenbei: dankbar sein. Die meisten von uns versuchen es in der umgekehrten Reihenfolge.",
-          "action_step": "Wo du heute Abend hin- und hergerissen bist: Merk dir, welche Möglichkeit dich ruhig werden lässt, und lass diese entscheiden."
+          "meditation": "Zwei Aufgaben, und die zweite ist die leisere. Er wird euch alles lehren — das erwarten wir. Aber auch: erinnern. Keine neuen Informationen, sondern die alten, die du längst hattest und verloren hast.\n\nAls Christinnen nehmen wir meist an, die Hilfe, die wir brauchen, sei etwas, das wir noch nicht gelernt haben. An den meisten Abenden stimmt das nicht. Es ist das, was wir bei Tageslicht genau wussten und um elf Uhr nachts nicht mehr finden. Ein Teil der Arbeit des Geistes ist Wiederfinden. Was dich früher getragen hat, ist nicht weg. Es liegt verlegt, und du bist nicht diejenige, die suchen muss.",
+          "action_step": "Schreib eine Sache auf, die du in einer besseren Zeit über Gott gewusst hast. Leg den Zettel dorthin, wo du ihn morgen früh siehst."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, heute Abend reden zwei Stimmen in mir, und die ängstliche ist lauter. Lass stattdessen deinen Frieden entscheiden. Beende den Streit in meiner Brust, und während er sich legt, zeig mir eine Sache, für die ich ehrlich dankbar sein kann. Ausnahmsweise in dieser Reihenfolge. In Jesu Namen, Amen."
+        "de": "Lieber himmlischer Vater, heute Abend finde ich Dinge nicht mehr, von denen ich sicher weiß, dass ich sie einmal wusste. Ich bitte dich nicht darum, mir etwas Neues beizubringen. Ich bitte dich, mir zurückzubringen, was du mir längst gegeben hast. Erinnere mich im Dunkeln an das, was im Licht selbstverständlich war. In Jesu Namen, Amen."
       }
     },
     {
@@ -5374,21 +5377,21 @@
       "language": "de",
       "reference": {
         "book": "Proverbs",
-        "chapter": 22,
-        "verse": "6",
-        "full_reference": "Proverbs 22:6"
+        "chapter": 6,
+        "verse": "20",
+        "full_reference": "Proverbs 6:20"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚交托",
-        "#为儿女忧心",
-        "#尽力之后交托"
+        "#想起母亲",
+        "#家庭传承",
+        "#未曾被道谢"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Wie man einen Knaben gewöhnt, so läßt er nicht davon, wenn er alt wird."
+            "text": "Mein Kind, bewahre die Gebote deines Vaters und laß nicht fahren das Gesetz deiner Mutter."
           },
           "modern": {
             "version": "HFA",
@@ -5400,21 +5403,21 @@
         "verse_category": {
           "testament": "OT",
           "genre": "wisdom",
-          "primary_theme": "parenting"
+          "primary_theme": "family"
         },
-        "niv_word_count": 21,
-        "context_note": "Die Sprüche beschreiben, wie das Leben in der Regel läuft, und nicht, was im Einzelfall garantiert wäre — dieselbe Sammlung kennt reichlich Ausnahmen. Am hebräischen Text wird zusätzlich die Lesart „gemäß seinem Weg“ diskutiert, also gemäß der Eigenart des Kindes. Beide Lesarten schließen aus, mit diesem Vers Schuld zu verteilen."
+        "niv_word_count": 16,
+        "context_note": "Im Alten Orient war der förmliche Unterricht Sache des Vaters — deshalb fällt diese Zeile auf. Für das, was die Mutter gibt, steht im Hebräischen torah, dasselbe Wort wie für Gottes Weisung; Luther übersetzt es mit „Gesetz“. Die Sprüche behandeln ihren Unterricht als verbindlich, nicht als Ergänzung."
       },
       "devotional": {
         "structure": "同行劝勉",
         "de": {
-          "meditation": "Die Sprüche sagen, wie es im Allgemeinen zugeht. Ein Vertrag sind sie nicht und waren nie als einer gemeint — was ungeheuer wichtig ist, wenn dein Kind gegangen ist und du seither still eine Strafe absitzt. Die deutsche Fassung spricht schlicht davon, wie ein Kind an etwas gewöhnt wird; am hebräischen Urtext diskutieren Ausleger zusätzlich die Lesart „gemäß seinem Weg“, also gemäß dem einzelnen Kind, das vor dir steht, und nicht gemäß einer Methode für alle.\n\nWir haben diesen Satz oft als Garantie gelesen und ihn uns dann als Urteil ausgelegt. Wie man die Lesart auch entscheidet: Der Vers bleibt eine weise Faustregel über das lange Formen eines Lebens. Ein Urteil über dich um elf Uhr nachts ist er nicht, und das war er nie.",
-          "action_step": "Wenn du dir seit Langem vorwirfst, wie ein Kind geworden ist, sprich heute Abend einen Satz, der es zurück in Gottes Hände legt."
+          "meditation": "Achte darauf, wer hier genannt wird. Die Gebote des Vaters — und im selben Atemzug, mit demselben Gewicht, das Gesetz der Mutter. Luther wählt für sie kein kleineres Wort. Im Hebräischen steht dort torah, dasselbe Wort wie für Gottes eigene Weisung. Was eine Mutter in der Kultur dieses Buches sonst galt: Was sie lehrte, bekommt hier denselben Rang.\n\nAls Christinnen geben wir sehr viel davon weiter, ohne es zu merken. Keine Vorträge. Sondern wie du am Tisch mit schlechten Nachrichten umgehst. Was du tust, wenn du unrecht hattest. Die meisten von uns haben mehr vom Zusehen gelernt als vom Zuhören, und die Frauen in unseren Familien haben mehr gelehrt, als ihnen je gedankt wurde.",
+          "action_step": "Benenne eine Sache, die dir eine Frau in deiner Familie beigebracht hat, ohne es zu wollen. Dank ihr heute Abend, oder dank Gott für sie."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, ich habe diesen Vers jahrelang gegen mich selbst verwendet. Heute Abend lege ich ihn hin. Ich hatte nie die Macht, ein Ergebnis zu garantieren, und ich habe sie auch jetzt nicht. Nimm mein Kind zurück in deine Hände, wo es die ganze Zeit gewesen ist. Lass mich schlafen, ohne mir selbst ein Urteil zu sprechen. In Jesu Namen, Amen."
+        "de": "Lieber himmlischer Vater, danke für das, was mir von Frauen weitergegeben wurde, denen wahrscheinlich nie jemand gesagt hat, dass es zählt. Von manchem davon lebe ich bis heute. Wo das Empfangene gut war, hilf mir, es weiterzugeben, ohne es schwer zu machen. Wo es nicht gut war, hilf mir, es abzulegen, ohne bitter zu werden. In Jesu Namen, Amen."
       }
     },
     {
@@ -5474,22 +5477,22 @@
       "segment": "evening",
       "language": "de",
       "reference": {
-        "book": "1 John",
-        "chapter": 1,
-        "verse": "9",
-        "full_reference": "1 John 1:9"
+        "book": "Hebrews",
+        "chapter": 8,
+        "verse": "12",
+        "full_reference": "Hebrews 8:12"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚赦免",
-        "#心中自责",
-        "#被神接纳"
+        "#反复自责",
+        "#难以放过自己",
+        "#想要被赦免"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "So wir aber unsre Sünden bekennen, so ist er treu und gerecht, daß er uns die Sünden vergibt und reinigt uns von aller Untugend."
+            "text": "Denn ich will gnädig sein ihrer Untugend und ihren Sünden, und ihrer Ungerechtigkeit will ich nicht mehr gedenken."
           },
           "modern": {
             "version": "HFA",
@@ -5503,19 +5506,19 @@
           "genre": "epistle",
           "primary_theme": "forgiveness"
         },
-        "niv_word_count": 22,
-        "context_note": "Johannes schreibt gegen Lehrer, die bestritten, dass es Sünde überhaupt gibt. Das griechische homologeō für bekennen heißt wörtlich: dasselbe sagen — etwas so beschreiben, wie Gott es beschreibt, ohne Beschönigung und ohne Übertreibung. Treu und gerecht stehen mit Absicht beieinander: Vergebung ist ein gehaltenes Versprechen, keine Stimmung."
+        "niv_word_count": 20,
+        "context_note": "Der Hebräerbrief zitiert die Zusage des neuen Bundes aus Jeremia, für Leser, die das jährliche Wiederholen der Opfer kannten. Das griechische mnestho hat einen juristischen Klang: etwas als Anklage vorbringen. Luther trifft das mit „gedenken“ — kein Vergessen, sondern der feste Entschluss, nie wieder Anklage zu erheben."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "de": {
-          "meditation": "Treu und gerecht. Nicht barmherzig und nachsichtig — das wären andere Worte. Vergebung ist hier also keine Ausnahme, die Gott an einem guten Tag für dich macht, sondern Gott, der sein Wort hält, und darin ist er noch nie ein einziges Mal ausgefallen.\n\nDu bittest heute Abend nicht um einen Gefallen, und du hoffst auch nicht, ihn in großzügiger Stimmung zu erwischen. Du bittest ihn, zu sein, was er ohnehin ist. Mit dieser Gewissheit geht man ganz anders in einen Raum!",
-          "action_step": "Sag Gott heute Abend eine bestimmte Sache, über die du lieber hinweggehen würdest. Ein Satz. Dann hör auf — ohne die Selbstkritik hinterher."
+          "meditation": "Gott vergisst nicht. Er kann keine Information verlieren. „Nicht mehr gedenken“ kann also nicht heißen, dass die Akte verschwunden ist.\n\nSieh dir das Wort an, das Luther gewählt hat. Nicht vergessen — gedenken. Gedenken ist etwas, das man tut: etwas hervorholen, aufrufen, wieder zur Sprache bringen. Was Gott zusagt, ist kein Gedächtnisverlust, sondern eine Entscheidung: Er wird es nie wieder gegen dich vorbringen. Das ist etwas anderes, und es ist besser. Vergessen könnte sich rückgängig machen. Ein Entschluss nicht. Was du immer wieder aufmachst, hat er zugemacht!",
+          "action_step": "Benenne die Sache, die du immer wieder gegen dich selbst vorbringst. Sag einmal laut: Gott hat das abgeschlossen."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, danke, dass ich heute Abend nicht um einen Gefallen bitte, sondern um etwas, das du längst zugesagt hast. Hier ist die Sache, über die ich lieber geschwiegen hätte. Mach sie rein, und lass mich schlafen, ohne alles noch zweimal durchzugehen. Hilf mir, morgen sanfter aufzuwachen mit den Menschen, die mir am nächsten wohnen. In Jesu Namen, Amen."
+        "de": "Lieber himmlischer Vater, ich habe eine kurze Liste, die ich mir immer wieder selbst vorlese, und du hast gesagt, dass du nichts davon gegen mich vorbringen wirst. Hilf mir, das heute Abend zu glauben, statt dagegen zu argumentieren. Schließ, was ich immer wieder aufheble. Lass mich schlafen wie jemand, gegen den kein Verfahren läuft. In Jesu Namen, Amen."
       }
     },
     {
@@ -5625,22 +5628,22 @@
       "segment": "evening",
       "language": "de",
       "reference": {
-        "book": "1 Peter",
-        "chapter": 5,
-        "verse": "7",
-        "full_reference": "1 Peter 5:7"
+        "book": "Psalms",
+        "chapter": 38,
+        "verse": "9",
+        "full_reference": "Psalms 38:9"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚交托",
-        "#焦虑不安",
-        "#被神看顾"
+        "#说不出口",
+        "#被神看见",
+        "#心里有话"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Alle Sorge werfet auf ihn; denn er sorgt für euch."
+            "text": "HERR, vor dir ist alle meine Begierde, und mein Seufzen ist dir nicht verborgen."
           },
           "modern": {
             "version": "HFA",
@@ -5650,24 +5653,25 @@
       },
       "exegesis": {
         "verse_category": {
-          "testament": "NT",
-          "genre": "epistle/exhortation",
+          "testament": "OT",
+          "genre": "psalm",
           "primary_theme": "care"
         },
-        "niv_word_count": 11,
-        "context_note": "Im griechischen Text ist das kein eigener Satz: Er setzt den vorigen fort — demütigt euch, und werft eure Sorge auf ihn. Beides ist eine einzige Bewegung, und darum ist das Abgeben ein Akt der Demut, keine Schwäche. Epiriptō beschreibt das Aufladen eines schweren Bündels auf ein Lasttier: eine entschiedene Übergabe."
+        "niv_word_count": 16,
+        "context_note": "Psalm 38 gehört zu den Bußpsalmen; geschrieben von jemandem, der krank ist und von seinen Leuten gemieden wird. Bei Luther ist es Vers 10, weil die Überschrift als erster Vers zählt. Das hebräische anachah ist ein Stöhnen — Laut, keine Sprache. David stellt es gleichberechtigt neben das, was er sagen kann."
       },
       "devotional": {
         "structure": "发问",
         "de": {
-          "meditation": "Das Verb heißt nicht „teilen“ und nicht „besprechen“. Es ist die Bewegung, mit der man eine Last vom eigenen Rücken schwingt — auf ein Tier, das sie tragen kann. Eine Bewegung, und die Hände sind leer. Im griechischen Text hängt dieser Satz sogar noch am vorigen: Demütigt euch, und werft. Im Deutschen steht er für sich, aber die Verbindung bleibt wahr. Die Sorge festzuhalten ist keine Stärke. Es ist ein leises Beharren darauf, dass du diejenige bist, die tragen muss.\n\nWas trägst du heute Abend noch mit dir herum, weil das Abgeben ein Eingeständnis wäre?",
-          "action_step": "Benenne die Sorge und sag dann: Das ist heute Nacht nicht meine Last. Leg sie hin, bevor du ins Bett gehst."
+          "meditation": "Zwei verschiedene Dinge stehen hier nebeneinander, und die meisten von uns bringen nur das erste. Das Verlangen — das, was du in Worte fassen könntest, wenn dich jemand fragt. Und das Seufzen: der Laut, der übrig bleibt, wenn keine Worte mehr darin sind.\n\nDavid ordnet das Zweite nicht in das Erste ein. Er sagt, beides liege längst vor Gott, auch der Teil, den er nicht hätte erklären können. Worauf wartest du also? Darauf, es richtig sagen zu können, bevor du es bringst? Und wer hat dir gesagt, dass das die Bedingung ist?",
+          "action_step": "Bring Gott heute Abend das, was du nicht in Worte bekommst. Erklär es nicht. Damit dazusitzen zählt schon."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, ich halte meine Sorgen fest, weil Loslassen sich anfühlt wie das Eingeständnis, dass ich es nicht schaffe. Heute Abend gestehe ich es ein. Hier ist die ganze Last, hinübergeschwungen auf dich. Danke, dass dir auch die kleinen Dinge wichtig sind, die ich mich schämen würde laut zu sagen. In Jesu Namen, Amen."
-      }
+        "de": "Lieber himmlischer Vater, da ist etwas, das ich dir nicht gebracht habe, weil ich es nicht richtig sagen kann, und ich habe auf die Worte gewartet. Heute Abend bringe ich es unfertig. Du hörst den Teil unter dem Satz längst. Danke, dass ich nicht erst gut formulieren muss, damit du zuhörst. In Jesu Namen, Amen."
+      },
+      "verse_local": "Psalms 38:10"
     },
     {
       "id": "e_054",
@@ -5976,22 +5980,22 @@
       "segment": "evening",
       "language": "de",
       "reference": {
-        "book": "Proverbs",
-        "chapter": 17,
-        "verse": "17",
-        "full_reference": "Proverbs 17:17"
+        "book": "Ecclesiastes",
+        "chapter": 4,
+        "verse": "10",
+        "full_reference": "Ecclesiastes 4:10"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#被陪伴",
-        "#患难中的家人"
+        "#孤单过一阵",
+        "#有人守着",
+        "#想要陪伴谁"
       ],
       "translations": {
         "de": {
           "traditional": {
             "version": "Lutherbibel 1912",
-            "text": "Ein Freund liebt allezeit, und als ein Bruder wird er in Not erfunden."
+            "text": "Fällt ihrer einer so hilft ihm sein Gesell auf. Weh dem, der allein ist! Wenn er fällt, so ist keiner da, der ihm aufhelfe."
           },
           "modern": {
             "version": "HFA",
@@ -6005,19 +6009,19 @@
           "genre": "wisdom",
           "primary_theme": "friendship"
         },
-        "niv_word_count": 16,
-        "context_note": "Der hebräische Vers ist knapp gebaut. Luther übersetzt die zweite Hälfte so, dass sie weiter vom selben Freund spricht: In der Not erweist er sich als Bruder. Sprüche ist über Beziehungen nicht rührselig — hier wird beobachtet, welche unter Last halten. „Allezeit“ schließt die unbequemen Zeiten ein, und darin liegt die ganze Pointe."
+        "niv_word_count": 31,
+        "context_note": "Der Prediger spricht über weite Strecken davon, was nicht bleibt. Diese kurze Stelle ist eine seiner wenigen schlichten Gewissheiten: Zwei sind besser als einer, wegen dem, was passiert, wenn einer fällt. Das Hebräische ist ganz konkret — es ist kein Zweiter da, der ihn aufhebt. Das ist keine Freundschaftsromantik, sondern eine Rechnung."
       },
       "devotional": {
         "structure": "见证",
         "de": {
-          "meditation": "In dem Jahr, in dem alles auseinanderfiel, waren die meisten Menschen etwa drei Wochen lang freundlich. Das ist kein Vorwurf; drei Wochen sind, was die meisten von uns aufbringen können, und ich war oft genug selbst diese Freundin. Woran ich mich erinnere, sind die zwei, die im siebten Monat noch da waren, als es nichts Neues mehr zu sagen und nichts mehr zu reparieren gab. Eine von ihnen gehörte zur Familie und hatte keinen besonderen Grund, mich zu mögen. Gekommen ist sie trotzdem.\n\nDieser Spruch ist nicht rührselig. Er beobachtet, welche Beziehungen unter Last halten. „Allezeit“ meint gerade die unbequemen Zeiten — und in der Not zeigt sich, ob ein Freund auch ein Bruder ist. Ich weiß heute, was das kostet, weil jemand es für mich bezahlt hat.",
-          "action_step": "Denk an jemanden, der im siebten Monat einer schweren Zeit steckt. Melde dich morgen bei ihr, ohne etwas Nützliches anzubieten."
+          "meditation": "Es gab ein Jahr, in dem ich auf Nachrichten nicht mehr geantwortet habe. Nicht aus Ärger — ich hatte einfach nichts zurückzugeben, und schweigen war leichter als erklären. Meine Schwester schrieb trotzdem weiter. Nichts Forderndes. Ein Foto. Ein Satz über ihre Woche. Ich habe mich damals nicht bedankt. Ich glaube, ich habe eine ganze Weile überhaupt nicht geantwortet.\n\nWas ich heute verstehe: Sie hat nicht darauf gewartet, dass ich wieder angenehme Gesellschaft werde. Sie ist in Reichweite geblieben, damit an dem Tag, an dem ich endlich reden konnte, schon jemand dastand. Ich habe seitdem versucht, das für eine andere zu sein. Es ist leisere Arbeit, als ich dachte.",
+          "action_step": "Schreib heute Abend einer Person aus deiner Familie, die still geworden ist. Erwarte nichts zurück, nicht einmal eine Antwort."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "de": "Lieber himmlischer Vater, danke für die Menschen, die geblieben sind, lange nachdem es interessant war zu bleiben. Ich weiß jetzt, was sie das gekostet hat. Mach mich zu einer von ihnen für jemand anderen, und bring mir heute Abend den Menschen in den Sinn, der gerade im stillen Teil eines schweren Jahres ist. In Jesu Namen, Amen."
+        "de": "Lieber himmlischer Vater, danke für die Menschen, die in meiner Nähe geblieben sind, als ich nichts zurückgeben konnte. Ich habe es nicht immer bemerkt und fast nie gesagt. Zeig mir heute Abend, wer in meiner Familie still geworden ist, und halte mich nah genug, um erreichbar zu sein, ohne dass jemand sich erklären muss. In Jesu Namen, Amen."
       }
     }
   ]

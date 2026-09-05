@@ -323,20 +323,20 @@
       "reference": {
         "book": "Philippians",
         "chapter": 4,
-        "verse": "13",
-        "full_reference": "Philippians 4:13"
+        "verse": "8",
+        "full_reference": "Philippians 4:8"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨力量",
-        "#日常疲惫",
-        "#学习知足"
+        "#思绪纷乱",
+        "#想要专注",
+        "#被念头缠住"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "Todo lo puedo en Cristo que me fortalece."
+            "text": "Por lo demás, hermanos, todo lo que es verdadero, todo lo honesto, todo lo justo, todo lo puro, todo lo amable, todo lo que es de buen nombre; si hay virtud alguna, si alguna alabanza, en esto pensad."
           },
           "modern": {
             "version": "NVI",
@@ -348,21 +348,21 @@
         "verse_category": {
           "testament": "NT",
           "genre": "epistle",
-          "primary_theme": "contentment"
+          "primary_theme": "thoughts"
         },
-        "niv_word_count": 11,
-        "context_note": "Pablo agradece un regalo a los filipenses mientras insiste en que ya había aprendido a arreglárselas sin él. Los dos versículos anteriores hablan de abundancia y de hambre, de tener mucho y de necesitar. Su palabra para contento es autarkes, el término estoico para bastarse a sí mismo, y él lo redefine sin ruido: no le basta él, le basta Cristo."
+        "niv_word_count": 41,
+        "context_note": "Pablo escribe esto bajo arresto domiciliario, a una iglesia que quiere y no puede visitar. Detrás de pensad está el griego logizomai, un término contable: hacer cuentas, anotar en el libro. Describe atención deliberada, no estado de ánimo, y por eso se puede mandar. Nuestra versión lo dice más sencillo: hacia esto dirige lo que piensas."
       },
       "devotional": {
         "structure": "同行劝勉",
         "es": {
-          "meditation": "Es probablemente el versículo más citado del libro, y casi siempre en la dirección equivocada: como combustible para ganar algo.\n\nMira lo que Pablo dice justo antes. Habla de estar contento: cómo estar saciado, cómo tener hambre, cómo vivir con abundancia y cómo vivir con nada. Todo incluye todo eso. Como cristianas podemos dejar de leerlo como la promesa de que nos irá bien. Es la promesa de que seremos sostenidas, en cualquiera de esas situaciones en que nos toque estar esta semana.",
-          "action_step": "Di el versículo hoy sobre la parte más pesada de lo ordinario, no sobre una meta. Puedo con este viaje a la escuela. Puedo con este turno."
+          "meditation": "Esto no es una orden de ser positiva. Pablo escribe preso, y en su lista hay cosas verdaderas y justas, no solamente agradables.\n\nY fíjate en la construcción: en esto pensad. No dice sentid distinto; dice hacia dónde apuntar el pensamiento, que es algo que sí podemos elegir. Nosotras casi siempre intentamos lo contrario: dejar de pensar en algo. Eso funciona pocas veces. La instrucción va en la otra dirección: meter algo, en vez de pelear por sacar algo. No se vacía la cabeza. Se le da otro sitio donde apoyarse.",
+          "action_step": "Elige una cosa verdadera sobre Dios y llévala contigo al primer momento difícil de hoy. Dila una vez, para ti, antes de abrir la boca."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, he usado este versículo para pedirte resultados. Hoy quiero usarlo bien. Sea que esta semana venga llena o escasa, enséñame a dejarme sostener en las dos. No te pido que el camino se acomode a mí. Dame fuerza para las partes ordinarias que sigo queriendo saltarme. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, mi cabeza vuelve sola a los mismos sitios gastados, y decirme que pare nunca me ha servido. Dame esta mañana algo mejor que poner ahí. Muéstrame una cosa que sea verdad y déjame tenerla a la vista durante las partes del día que ya vengo temiendo. En el nombre de Jesús, amén."
       }
     },
     {
@@ -671,22 +671,22 @@
       "segment": "morning",
       "language": "es",
       "reference": {
-        "book": "Jeremiah",
-        "chapter": 29,
-        "verse": "11",
-        "full_reference": "Jeremiah 29:11"
+        "book": "Micah",
+        "chapter": 7,
+        "verse": "7",
+        "full_reference": "Micah 7:7"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#看不见未来",
-        "#神有计划"
+        "#等了很久",
+        "#盼望未至",
+        "#想要交托"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "Porque yo sé los pensamientos que tengo acerca de vosotros, dice Jehová, pensamientos de paz, y no de mal, para daros el fin que esperáis."
+            "text": "Yo empero á Jehová esperaré, esperaré al Dios de mi salud: el Dios mío me oirá."
           },
           "modern": {
             "version": "NVI",
@@ -697,22 +697,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "OT",
-          "genre": "prophecy/letter",
+          "genre": "prophecy",
           "primary_theme": "hope"
         },
-        "niv_word_count": 29,
-        "context_note": "Viene de una carta que Jeremías envió a gente ya deportada a Babilonia, y los versículos anteriores les dicen que construyan casas, planten huertos y se instalen, porque estarán allí setenta años. La promesa es real y el plazo es largo. Casi nadie que cita este versículo ha leído la frase que va antes."
+        "niv_word_count": 27,
+        "context_note": "Miqueas 7 abre con una sociedad deshecha: jueces comprados, traición dentro de la casa. Sobre todo eso se levanta el yo del versículo. El hebreo tsaphah es montar guardia como un centinela sobre la muralla, despierto a propósito y de cara al horizonte. Nuestra versión repite esperaré dos veces, y en español la palabra ya trae dentro las dos cosas: aguardar y confiar."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "es": {
-          "meditation": "Este es el versículo que la gente pone en tarjetas, y fue escrito a personas a las que acababan de avisarles que no volverían a casa en setenta años. Construyan casas. Planten huertos. Cásense, tengan hijos. Y en medio de eso, la promesa.\n\nAsí que escúchala como fue dicha. No promete que tu temporada dura está por terminar; promete que esa temporada no es un desvío, y que Alguien sostiene la forma completa de tu vida, incluida la parte que se está tardando mucho más de lo que planeaste. Esta etapa cuenta. No estás en la sala de espera de tu vida real. ¡Ya estás dentro de ella!",
-          "action_step": "Haz hoy algo que trate esta etapa como vida real y no como sala de espera: siembra algo, arregla algo, invita a alguien a tu mesa."
+          "meditation": "Lee lo que viene antes. Miqueas acaba de describir un lugar donde no puedes fiarte del vecino, ni de tu amiga, ni de quien duerme a tu lado. Es el párrafo más oscuro del libro. Y entonces: yo. Yo esperaré. No dice yo lo arreglaré.\n\nY lo dice dos veces seguidas: esperaré, esperaré. No es un descuido del traductor; es el peso puesto en el mismo sitio, dos veces. En español tenemos suerte: esperar significa las dos cosas a la vez, aguardar y tener esperanza. No estás nada más dejando pasar el tiempo. Mientras esperas, estás esperando algo, y él ya dijo lo tercero: mi Dios me oirá. ¡Esperar no es quedarse quieta, es la tarea de hoy!",
+          "action_step": "Antes de mirar cualquier otra cosa esta mañana, levanta la vista una vez y di en voz alta qué es lo que estás esperando."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, he estado tratando esta etapa como una interrupción de mi vida verdadera. Perdóname por vivir conteniendo la respiración. Gracias porque no estás ausente de una temporada que no quitaste. Tú también estás en esta. Ayúdame a construir algo aquí, mientras espero lo que venga después. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, nada ha cambiado y ya no me quedan maneras de cambiarlo. Esta mañana no te pido un plan. Te pido paciencia para seguir mirando hacia ti mientras espero. Gracias porque esperar no es lo mismo que no hacer nada, y porque me oyes igual, haya novedades o no. En el nombre de Jesús, amén."
       }
     },
     {
@@ -821,22 +821,22 @@
       "segment": "morning",
       "language": "es",
       "reference": {
-        "book": "Psalms",
-        "chapter": 119,
-        "verse": "105",
-        "full_reference": "Psalms 119:105"
+        "book": "Daniel",
+        "chapter": 2,
+        "verse": "22",
+        "full_reference": "Daniel 2:22"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
         "#看不清前路",
-        "#一步之光"
+        "#寻求方向",
+        "#心里发暗"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "NUN. Lámpara es á mis pies tu palabra, y lumbrera á mi camino."
+            "text": "El revela lo profundo y lo escondido: conoce lo que está en tinieblas, y la luz mora con él."
           },
           "modern": {
             "version": "NVI",
@@ -847,22 +847,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "OT",
-          "genre": "psalm",
+          "genre": "narrative",
           "primary_theme": "guidance"
         },
-        "niv_word_count": 13,
-        "context_note": "El NUN que aparece antes del versículo no es parte de la oración: el Salmo 119 es un poema alfabético y cada bloque de ocho versículos empieza con una letra hebrea. La lámpara de la imagen era pequeña, de barro, llevada en la mano o atada al tobillo: alumbraba el siguiente paso, no el camino. A quien la escribió no le prometieron ver de lejos."
+        "niv_word_count": 22,
+        "context_note": "A Daniel están a punto de ejecutarlo junto con los demás sabios de Babilonia, por no interpretar un sueño que el rey se negó a describir. Esta es su respuesta cuando recibe la respuesta. El arameo detrás de lo profundo se usa para lo que no se puede escudriñar; no promete que Dios lo explique todo, sino que nada se le esconde."
       },
       "devotional": {
         "structure": "同行劝勉",
         "es": {
-          "meditation": "La lámpara de este versículo no es un reflector. Es una lamparita de barro con aceite, que se lleva abajo y alumbra más o menos un paso adelante.\n\nY esa es la promesa que nosotras tenemos de verdad. No que veremos hacia dónde va todo esto. Que daremos el siguiente paso sin caernos. Si llevamos tiempo esperando ver el camino entero antes de movernos, estamos esperando algo que nunca se nos ofreció.",
-          "action_step": "Identifica el siguiente paso, no el plan entero, solo el paso, y dalo hoy antes de que termine el día."
+          "meditation": "Daniel dice esto después de que le ordenaran interpretar un sueño que nadie quiso contarle. Un encargo imposible, y su respuesta no habla de su propia capacidad.\n\nFíjate en la línea del medio. Él ya conoce lo que hay dentro de las tinieblas: no dice que vaya a quitarlas. Nosotras pedimos que enciendan la luz. Esto dice que Alguien ya puede ver ahí dentro, que es otro consuelo distinto y muchas veces el único disponible.",
+          "action_step": "Nombra una cosa a la que no le ves salida. Entrégasela sin pedirle todavía la explicación, y sigue con lo que sí puedes hacer hoy."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, yo quiero ver el camino entero y tú me diste una lámpara para un paso. Ayúdame a dejar de negociar por más luz y a empezar a caminar con la que tengo. Muéstrame el siguiente paso esta mañana. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, no consigo ver dentro de esto y he dejado de fingir que sí. Gracias porque la oscuridad no es oscura para ti. Sigue viendo tú lo que yo no veo, y dame luz suficiente para hoy. En el nombre de Jesús, amén."
       }
     },
     {
@@ -1521,22 +1521,22 @@
       "segment": "morning",
       "language": "es",
       "reference": {
-        "book": "1 Corinthians",
-        "chapter": 15,
-        "verse": "57",
-        "full_reference": "1 Corinthians 15:57"
+        "book": "2 Thessalonians",
+        "chapter": 3,
+        "verse": "3",
+        "full_reference": "2 Thessalonians 3:3"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#屡战屡败",
-        "#得胜是被赐的"
+        "#被人辜负",
+        "#想要依靠",
+        "#学习分辨"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "Mas á Dios gracias, que nos da la victoria por el Señor nuestro Jesucristo."
+            "text": "Mas fiel es el Señor, que os confirmará y guardará del mal."
           },
           "modern": {
             "version": "NVI",
@@ -1548,21 +1548,21 @@
         "verse_category": {
           "testament": "NT",
           "genre": "epistle",
-          "primary_theme": "victory"
+          "primary_theme": "faithfulness"
         },
-        "niv_word_count": 15,
-        "context_note": "Con esto Pablo cierra su largo argumento sobre la resurrección, y la victoria de la que habla es sobre la muerte misma, no sobre tu peor costumbre. El verbo griego está en presente continuo: Dios sigue dando. Y Pablo da gracias antes de que nada visible haya cambiado, que es la forma de todo el capítulo."
+        "niv_word_count": 14,
+        "context_note": "Pablo escribe a una iglesia presionada desde fuera e inquieta por enseñanzas falsas dentro. El griego pistos, fiel, tiene la misma raíz que la fe que no todos tienen en la línea anterior: es un eco puesto a propósito, y en español se oye igual, fe y fiel. Responde a lo poco fiable de las personas nombrando lo fiable de Dios, sin negar lo primero."
       },
       "devotional": {
         "structure": "同行劝勉",
         "es": {
-          "meditation": "Mira el verbo. No dice dio, una vez, hace mucho. Dice da: sigue dando, también esta mañana.\n\nY mira quién lo hace. Nosotras convertimos esto sin darnos cuenta en un versículo sobre nuestra propia disciplina, y para el jueves ya nos sentimos unas farsantes. Pablo no dice que nosotras ganamos. Dice que el agradecimiento va a Dios, porque es él quien la da. Lo cual significa que el mismo fracaso que trajiste la semana pasada no te descalifica para recibir hoy la misma victoria, en los mismos términos de la primera vez.",
-          "action_step": "Nombra aquello contra lo que siempre pierdes. Después dilo en presente delante de Dios: hoy él sigue dando la victoria, también en esto."
+          "meditation": "Fíjate en el contraste que arma Pablo. La frase anterior habla de gente en la que no se puede confiar: no es de todos la fe, dice, sin adornarlo. Y entonces: mas fiel es el Señor.\n\nNo les dice que se busquen mejor gente. Mueve el peso de sitio. Nosotras solemos intentar reconstruir la confianza justo donde de verdad no está justificada, y después nos sentimos malas cristianas por no lograrlo. Pablo no pide eso. Pone lo confiable en otro lugar y deja que lo poco confiable siga llamándose por su nombre. Fe y fiel son la misma raíz: lo que a las personas les falta, él lo es.",
+          "action_step": "Nombra a una persona a la que llevas tiempo intentando volver confiable. Esta mañana pon ese peso en otro lado y déjala ser quien es."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, estoy cansada de traerte el mismo fracaso. Gracias porque tú sigues dando y no has empezado a racionar. Esta mañana no vengo a decir que gané algo, porque no gané nada. Vengo simplemente a recibir lo que tú sigues repartiendo, en los mismos términos de siempre. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, me sigo apoyando en alguien que no puede sostenerme, y luego me culpo a mí cuando cede. Esta mañana quiero poner mi peso donde de verdad aguante. Hazme firme por dentro, para que deje de pedirle a la gente algo que solo tú puedes dar. En el nombre de Jesús, amén."
       }
     },
     {
@@ -1871,22 +1871,22 @@
       "segment": "morning",
       "language": "es",
       "reference": {
-        "book": "2 Timothy",
-        "chapter": 1,
-        "verse": "7",
-        "full_reference": "2 Timothy 1:7"
+        "book": "Psalms",
+        "chapter": 119,
+        "verse": "114",
+        "full_reference": "Psalms 119:114"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨力量",
-        "#畏缩不前",
-        "#刚强的心"
+        "#需要庇护",
+        "#鼓起勇气",
+        "#今天要面对"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "Porque no nos ha dado Dios el espíritu de temor, sino el de fortaleza, y de amor, y de templanza."
+            "text": "Mi escondedero y mi escudo eres tú: en tu palabra he esperado."
           },
           "modern": {
             "version": "NVI",
@@ -1896,23 +1896,23 @@
       },
       "exegesis": {
         "verse_category": {
-          "testament": "NT",
-          "genre": "epistle",
+          "testament": "OT",
+          "genre": "psalm",
           "primary_theme": "courage"
         },
-        "niv_word_count": 18,
-        "context_note": "Pablo le escribe a un colaborador joven que parece estar echándose atrás. Los tres dones vienen en juego: la fortaleza sin amor se endurece, y el amor sin templanza se queda sin forma. Reina-Valera traduce esa tercera palabra como templanza, es decir dominio propio y buen juicio, no represión de lo que sientes."
+        "niv_word_count": 15,
+        "context_note": "El Salmo 119 es un acróstico sobre la palabra de Dios, escrito por alguien bajo oposición constante. El hebreo sether, escondedero, es un refugio físico: una cueva, un sitio al que corre de verdad quien está siendo perseguido. Las dos imágenes no son adorno poético; describen dos situaciones distintas atendidas por la misma persona."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "es": {
-          "meditation": "Tres cosas, dadas juntas, y se necesitan entre sí. La fortaleza sola se endurece. El amor solo se queda sin forma. Y templanza es la palabra que Reina-Valera usa aquí: dominio de una misma, mesura, saber medirse. No represión: gobierno.\n\nY fíjate en lo que no aparece en la lista. La timidez nunca te fue entregada. ¡Sea lo que sea que te hizo callar esta semana, no vino de Dios!",
-          "action_step": "Identifica la frase que esta semana no dijiste. Decide hoy si toca decirla, y si toca, elige el momento y dila con calma."
+          "meditation": "Dos imágenes, y hacen cosas contrarias. Un escondedero es adonde vas para quedarte fuera de esto. Un escudo es lo que llevas contigo para meterte dentro. Las dos, de la misma persona, en un solo renglón.\n\nAsí que el versículo no decide si te toca retirarte o plantarte. Habla de quién está contigo en las dos. Hay mañanas de entrar y mañanas de salir. ¡Él no cambia entre una y otra!",
+          "action_step": "Decide qué clase de mañana es esta, de esconderte o de salir con escudo, y dilo en voz alta antes de empezar el día."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, me quedé callada donde debía hablar, y le puse el nombre de humildad. Dame las tres juntas: la fortaleza, el amor y la templanza para medir mis palabras. Muéstrame qué decir hoy. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, esta mañana no sé si me toca esconderme o mantenerme en pie, y lo he vivido como algo que debo acertar. Sé las dos cosas para mí. Cúbreme donde necesito cobijo, y ve delante de mí donde tengo que ir. En el nombre de Jesús, amén."
       }
     },
     {
@@ -1971,22 +1971,22 @@
       "segment": "morning",
       "language": "es",
       "reference": {
-        "book": "Hebrews",
-        "chapter": 11,
-        "verse": "1",
-        "full_reference": "Hebrews 11:1"
+        "book": "Matthew",
+        "chapter": 7,
+        "verse": "24",
+        "full_reference": "Matthew 7:24"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#看不见证据",
-        "#信心的实底"
+        "#听了很多",
+        "#想要落地",
+        "#没人看见"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "ES pues la fe la sustancia de las cosas que se esperan, la demostración de las cosas que no se ven."
+            "text": "Cualquiera, pues, que me oye estas palabras, y las hace, le compararé á un hombre prudente, que edificó su casa sobre la peña;"
           },
           "modern": {
             "version": "NVI",
@@ -1997,22 +1997,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "epistle",
+          "genre": "gospel",
           "primary_theme": "faith"
         },
-        "niv_word_count": 17,
-        "context_note": "La palabra griega hypostasis significa lo que está debajo sosteniendo: un cimiento o un título de propiedad. Elenchos es un término legal, la prueba que se presenta en un juicio. Ninguna de las dos habla de intensidad emocional. Hebreos define la fe como algo con peso y respaldo, no como un entusiasmo que una se fabrica."
+        "niv_word_count": 30,
+        "context_note": "Con esto cierra Jesús el Sermón del Monte: lo último que dice tras tres capítulos de enseñanza. En Galilea, construir sobre la peña obligaba a bajar por la tierra seca hasta la roca madre, un trabajo que ya no se ve una vez levantada la casa. Los dos constructores de la parábola oyen; lo único que cambia es lo que hicieron después."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "es": {
-          "meditation": "Las dos palabras de este versículo son palabras sólidas. Sustancia es lo que se sostiene por debajo: un cimiento, o un título de propiedad. Demostración es palabra de tribunal, prueba presentada.\n\nAsí que la fe no es cuánto sientes esta mañana. Es algo con peso, que sostiene aquello que esperas. ¡Y eso significa que una mujer de fe callada y voz temblorosa está parada exactamente en el mismo suelo que cualquier otra!",
-          "action_step": "Deja hoy de medir cuánta fe sientes. Actúa una vez conforme a lo que dices creer, y que esa acción sea la medida."
+          "meditation": "Los dos hombres de la historia oyen. Esa es la parte que se salta. La diferencia no está en lo que saben, ni en lo sinceros que son, ni en cuánto les gustó el sermón. La diferencia es que uno lo hizo.\n\nY prudente aquí no significa lista. Significa alguien que actúa según lo que ya sabe. Además, la peña no se ve desde fuera cuando la casa está terminada: las dos casas parecen iguales hasta que llega el mal tiempo. ¡Esa cosa pequeña que hiciste hoy y que nadie vio es exactamente de lo que habla esto!",
+          "action_step": "Toma una cosa que ya sabes que deberías hacer y hazla hoy, por pequeña que sea. No se lo cuentes a nadie."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, vivo revisando si siento suficiente fe y siempre concluyo que no. Gracias porque la fe es un cimiento y no un sentimiento. Déjame pararme hoy sobre ella en vez de seguir midiéndola. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, he oído mucho más de lo que he hecho, y lo sé. Gracias porque no me pides una vida transformada para el viernes, sino que se mueva una sola cosa. Muéstrame cuál es y dame ganas de hacerla hoy. En el nombre de Jesús, amén."
       }
     },
     {
@@ -2221,22 +2221,22 @@
       "segment": "morning",
       "language": "es",
       "reference": {
-        "book": "Proverbs",
-        "chapter": 3,
-        "verse": "5",
-        "full_reference": "Proverbs 3:5"
+        "book": "Psalms",
+        "chapter": 62,
+        "verse": "7",
+        "full_reference": "Psalms 62:7"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#想不明白",
-        "#专心倚靠"
+        "#寻找依靠",
+        "#心里不稳",
+        "#学习交托"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "Fíate de Jehová de todo tu corazón, y no estribes en tu prudencia."
+            "text": "En Dios está mi salvación y mi gloria: en Dios está la roca de mi fortaleza, y mi refugio."
           },
           "modern": {
             "version": "NVI",
@@ -2247,22 +2247,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "OT",
-          "genre": "wisdom",
+          "genre": "psalm",
           "primary_theme": "trust"
         },
-        "niv_word_count": 15,
-        "context_note": "El verbo hebreo que aquí se traduce estribar significa descansar el peso sobre algo, como quien se apoya en un bastón. Proverbios no está en contra de la inteligencia: el libro entero trata de conseguirla. Está en contra de poner sobre ella todo tu peso, que es otra cosa muy distinta."
+        "niv_word_count": 18,
+        "context_note": "El Salmo 62 se escribió para Jedutún, uno de los músicos de David, y su estribillo repite la idea de solamente: Dios y nadie más. El hebreo tsur, roca, no es una piedra suelta sino el peñasco de abajo, algo que ya estaba ahí antes que tú y no se mueve. David amontona cuatro términos en un mismo lugar a propósito."
       },
       "devotional": {
         "structure": "同行劝勉",
         "es": {
-          "meditation": "Estribar es apoyar el peso en algo, como quien se apoya en un bastón. Esto no es una orden de dejar de pensar: Proverbios es un libro sobre aprender a pensar bien.\n\nEs una orden sobre dónde va el peso. Nosotras podemos usar la cabeza todo el día y aun así no descansar en ella del todo. Esa diferencia es la que separa a la mujer que planifica con cuidado de la que no puede dormir hasta resolverlo.",
-          "action_step": "Piensa el problema hasta donde honestamente puedas llegar. Después detente, cierra el cuaderno y pon el peso en otro lugar: en Dios, en voz alta."
+          "meditation": "Cuenta cuántas veces lo dice. Salvación, gloria, roca, refugio: cuatro palabras, y las cuatro puestas en el mismo lugar. En Dios. No está variando el vocabulario por belleza; está repitiendo una dirección.\n\nNosotras solemos repartirlas entre varios sitios. La fuerza aquí, el buen nombre allá, la seguridad en otra parte. David mete las cuatro en uno solo, lo cual es una imprudencia o la única distribución que aguanta.",
+          "action_step": "Nombra dónde está apoyada de verdad tu sensación de seguridad esta mañana. Después di una sola frase que la mueva de sitio."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, ya pensé esto hasta donde alcanza el pensar y sigo dándole vueltas. No voy a dejar de usar la cabeza. Voy a dejar de pararme sobre ella. Toma tú el peso de este asunto esta mañana. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, tengo mi seguridad repartida en cosas que podrían ceder cualquiera de ellas. Esta mañana la quiero en un solo lugar. Sé tú la roca sobre la que de verdad estoy parada, no la que digo. En el nombre de Jesús, amén."
       }
     },
     {
@@ -2371,22 +2371,22 @@
       "segment": "morning",
       "language": "es",
       "reference": {
-        "book": "Romans",
-        "chapter": 15,
-        "verse": "13",
-        "full_reference": "Romans 15:13"
+        "book": "John",
+        "chapter": 1,
+        "verse": "5",
+        "full_reference": "John 1:5"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#心里干涸",
-        "#盼望满溢"
+        "#长夜未明",
+        "#盼望微弱",
+        "#仍在等"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "Y el Dios de esperanza os llene de todo gozo y paz creyendo, para que abundéis en esperanza por la virtud del Espíritu Santo."
+            "text": "Y la luz en las tinieblas resplandece; mas las tinieblas no la comprendieron."
           },
           "modern": {
             "version": "NVI",
@@ -2397,22 +2397,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "epistle/benediction",
+          "genre": "gospel",
           "primary_theme": "hope"
         },
-        "niv_word_count": 31,
-        "context_note": "Esta es la bendición con la que Pablo cierra su carta más larga. Fíjate en el orden: Dios llena, y el rebosar viene después; nadie desborda lo que antes no se llenó. Y lo llama el Dios de esperanza, con lo cual la esperanza es algo suyo, no un ánimo que tú tengas que producir."
+        "niv_word_count": 15,
+        "context_note": "Juan abre su evangelio haciendo eco de Génesis: luz, tinieblas, principio. El griego katalambano quiere decir a la vez captar con la mente y apoderarse de algo, y los traductores se han dividido sobre cuál pensaba Juan. Nuestra versión elige comprendieron, en pasado, mientras deja resplandece en presente: un verbo cerrado frente a otro que sigue abierto."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "es": {
-          "meditation": "Fíjate en el orden, porque casi siempre lo intentamos al revés. Primero llenar, después abundar. Nadie hace rebosar una taza vacía apretándola por los lados.\n\nY fíjate en el nombre: el Dios de esperanza. La esperanza es suya antes de ser tuya. Así que esta mañana no se te pide fabricar ninguna. ¡Se te pide dejarte llenar!",
-          "action_step": "Antes de darle algo a alguien hoy, pide primero que Dios te llene. Dilo con esas palabras, en voz alta, antes de salir de casa."
+          "meditation": "Mira los tiempos verbales, porque no coinciden. La luz resplandece: presente, ahora, sin parar. Las tinieblas no la comprendieron: pasado, cerrado, terminado.\n\nUno de los dos verbos sigue ocurriendo mientras lees esto. El otro ya acabó. La oscuridad tuvo su turno de entender y se le pasó; la luz no ha dejado de brillar ni una noche desde el principio. ¡Sea lo que sea esta mañana, ese verbo en presente no ha cambiado!",
+          "action_step": "Antes de que empiece el día, nombra un sitio que todavía se ve oscuro. Di el verbo en voz alta: ahí está resplandeciendo."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, he estado sirviendo desde una taza vacía y a eso lo llamé entrega. Lléname primero esta mañana. No para sentirme mejor, sino para que lo que llegue a los demás sea tuyo de verdad. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, esto lleva mucho tiempo igual y he empezado a leerlo como si fuera tu ausencia. Recuérdame esta mañana que la luz no se apagó, que soy yo la que no ve lejos. Sigue brillando donde no alcanzo a mirar. En el nombre de Jesús, amén."
       }
     },
     {
@@ -2721,22 +2721,22 @@
       "segment": "morning",
       "language": "es",
       "reference": {
-        "book": "Deuteronomy",
-        "chapter": 31,
-        "verse": "6",
-        "full_reference": "Deuteronomy 31:6"
+        "book": "Psalms",
+        "chapter": 59,
+        "verse": "16",
+        "full_reference": "Psalms 59:16"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨力量",
-        "#怕面对的人",
-        "#祂不撇下"
+        "#清晨无力",
+        "#还没有解决",
+        "#选择赞美"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "Esforzaos y cobrad ánimo; no temáis, ni tengáis miedo de ellos: que Jehová tu Dios es el que va contigo: no te dejará ni te desamparará."
+            "text": "Yo empero cantaré tu fortaleza, y loaré de mañana tu misericordia: porque has sido mi amparo y refugio en el día de mi angustia."
           },
           "modern": {
             "version": "NVI",
@@ -2747,22 +2747,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "OT",
-          "genre": "narrative/exhortation",
+          "genre": "psalm",
           "primary_theme": "courage"
         },
-        "niv_word_count": 29,
-        "context_note": "Moisés dice esto delante de toda la nación antes de repetírselo a Josué en privado: el valor no queda reservado para los líderes. La expresión de ellos apunta a unos enemigos concretos, no a una ansiedad difusa. Y en hebreo la doble negación es enfática: no te dejará, no te abandonará."
+        "niv_word_count": 33,
+        "context_note": "El encabezado sitúa este salmo la noche en que los hombres de Saúl vigilaron la casa de David esperando el día para matarlo. El hebreo detrás de cantar es un grito de alegría, y la hora está puesta a propósito: la mañana, justo cuando iba a llegar el peligro. Nada estaba resuelto cuando lo escribió."
       },
       "devotional": {
         "structure": "同行劝勉",
         "es": {
-          "meditation": "Fíjate en que esto se dice primero a todo el pueblo, y solo después a Josué a solas. El valor no se le entrega únicamente a la que va al frente.\n\nY fíjate en lo concreto que es: no tengas miedo de ellos. No es una instrucción general sobre la ansiedad, es un grupo de personas, un día determinado. Nosotras solemos espiritualizar el miedo hasta volverlo difuso. La Biblia suele mantenerlo concreto, porque ahí es donde vive.",
-          "action_step": "Nombra a la persona concreta o la reunión que estás temiendo. Ora por esa, con nombre y hora, antes de que empiece el día."
+          "meditation": "Fíjate en la hora: de mañana. Y lo escribió un hombre cuya casa estuvo rodeada toda la noche por gente que esperaba el amanecer para matarlo.\n\nNo canta porque ya pasó. Canta a la hora en que todavía está pasando, y canta sobre algo que ya se probó cierto: has sido mi amparo. Nosotras tendemos a dejar el canto para cuando se sepa el resultado. David lo pone al principio del día, y lo llama refugio.",
+          "action_step": "Di o canta una cosa verdadera sobre Dios antes de mirar el teléfono. En voz alta, aunque te salga mal."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, esta mañana no es el miedo en general. Es una conversación concreta y una persona concreta. Entra conmigo a esa sala. Gracias porque tú no me vas a fallar ni te vas a ir. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, nada está resuelto y ya es de mañana. No tengo ganas de cantar, así que empiezo igual. Me has sostenido antes y hoy cuento con eso. Vuelve a ser mi amparo. En el nombre de Jesús, amén."
       }
     },
     {
@@ -2921,22 +2921,22 @@
       "segment": "morning",
       "language": "es",
       "reference": {
-        "book": "Galatians",
-        "chapter": 5,
-        "verse": "22",
-        "full_reference": "Galatians 5:22"
+        "book": "Proverbs",
+        "chapter": 19,
+        "verse": "8",
+        "full_reference": "Proverbs 19:8"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#早晨盼望",
-        "#结不出果子",
-        "#圣灵的工作"
+        "#想要成长",
+        "#总在给别人",
+        "#学着善待自己"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "Mas el fruto del Espíritu es: caridad, gozo, paz, tolerancia, benignidad, bondad, fe,"
+            "text": "El que posee entendimiento, ama su alma: el que guarda la inteligencia, hallará el bien."
           },
           "modern": {
             "version": "NVI",
@@ -2946,23 +2946,23 @@
       },
       "exegesis": {
         "verse_category": {
-          "testament": "NT",
-          "genre": "epistle",
+          "testament": "OT",
+          "genre": "wisdom",
           "primary_theme": "growth"
         },
-        "niv_word_count": 14,
-        "context_note": "En griego la palabra fruto está en singular: un solo fruto con nueve aspectos, no una lista de nueve tareas. Pablo lo contrasta con las obras de la carne de los versículos anteriores: las obras se producen, el fruto se cría. Nadie fabrica una manzana esforzándose más."
+        "niv_word_count": 19,
+        "context_note": "En hebreo dice literalmente adquiere corazón, y en esta literatura el corazón es la sede del juicio, no del sentimiento. Hallar el bien usa el verbo corriente de encontrar, como quien encuentra lo que andaba buscando. Proverbios presenta la sabiduría como amor propio en el sentido sano: la primera persona que sale ganando es la que la consigue."
       },
       "devotional": {
         "structure": "同行劝勉",
         "es": {
-          "meditation": "Fruto, en singular. Un solo fruto con nueve caras, no nueve casillas en las que fracasar por separado. Y fíjate en el contraste que hace Pablo: la lista anterior se llama obras. Esta se llama fruto. Las obras se producen; el fruto se cría, despacio, por algo que ocurre dentro de la planta y no sobre ella.\n\nPor eso esforzarse más por ser paciente no ha hecho paciente a nadie jamás. Nosotras podemos dejar de tironear del fruto y ocuparnos de la raíz.",
-          "action_step": "Deja hoy de trabajar en la cualidad que más te gustaría tener. Dale ese rato a estar con Dios, sin pedir nada, y mira qué crece."
+          "meditation": "El proverbio lo dice sin suavizarlo: quien tiene entendimiento ama su propia alma. La sabiduría aparece aquí como un acto de cuidado hacia una misma, que no es como solemos oírlo contar.\n\nNosotras solemos tratar el crecer como algo que debemos: a Dios, a la familia, a la gente que depende de nosotras. Y así se vuelve una deuda más. Este proverbio dice que la primera beneficiada eres tú. Aprender a pensar bien no es otro deber en la lista. Se parece más a comer: algo que haces por ti, sin pedir permiso, porque si no lo haces te vas quedando sin fuerzas para lo demás.",
+          "action_step": "Dale hoy quince minutos a algo que te haga más sabia, no más útil. Ponlo ahora mismo en el calendario, con hora."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, he intentado fabricar lo que solo tú puedes hacer crecer, y luego me he sentido fracasada cuando no aparecía a tiempo. Vuelve mi atención a la raíz esta mañana, y no al fruto. Haz crecer lo que estés criando, a tu ritmo, y dame la paciencia de no andar revisando. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, he tratado el crecer como una cosa más que le debo a los demás, y después me ha dado rabia. Muéstrame esta mañana que volverme sabia es algo que tú me das para mi propio bien. Ayúdame a recibirlo como regalo y no como deber, y dame hoy quince minutos honestos para eso. En el nombre de Jesús, amén."
       }
     },
     {
@@ -3272,21 +3272,21 @@
       "language": "es",
       "reference": {
         "book": "Psalms",
-        "chapter": 23,
-        "verse": "1",
-        "full_reference": "Psalms 23:1"
+        "chapter": 34,
+        "verse": "8",
+        "full_reference": "Psalms 34:8"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#感到匮乏",
-        "#神是牧者"
+        "#想要亲近神",
+        "#只是听说过",
+        "#今晚试一试"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "Salmo de David. JEHOVÁ es mi pastor; nada me faltará."
+            "text": "Gustad, y ved que es bueno Jehová: dichoso el hombre que confiará en él."
           },
           "modern": {
             "version": "NVI",
@@ -3300,19 +3300,19 @@
           "genre": "psalm",
           "primary_theme": "provision"
         },
-        "niv_word_count": 8,
-        "context_note": "David había cuidado ovejas de verdad, y por eso la imagen no es dulzona: pastorear era trabajo duro, sucio y nocturno. Detrás de 'nada me faltará' hay un solo verbo hebreo que significa carecer. No promete abundancia, sino suficiencia: que lo necesario estará ahí."
+        "niv_word_count": 18,
+        "context_note": "El encabezado del Salmo 34 lo sitúa después de que David escapara de Abimelec fingiendo estar loco: un rescate nada digno. El verbo hebreo ta'am significa probar con la boca, y también se usa para discernir. David no te está ofreciendo una doctrina bien armada. Te está pasando la cuchara."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "es": {
-          "meditation": "Siete palabras, y todo queda decidido en las dos primeras: Jehová es. No fue, no podría ser. Presente, esta noche.\n\nY mi. David no dice un pastor, ni el pastor de Israel, aunque las dos cosas son ciertas. Dice mío. Te haya costado lo que te haya costado el día, ¡esa frase sigue siendo tuya esta noche, en presente, para decirla en voz alta antes de dormir!",
-          "action_step": "Di el versículo una vez en voz alta, despacio, poniendo tu nombre delante. Después quédate callada un momento y no añadas nada más."
+          "meditation": "Gustar es un verbo extraño para hablar de Dios. David no dice piénsalo, ni concluye, ni créelo porque alguien de confianza te lo dijo. Dice pruébalo. No hay palabra más directa. Nadie puede probar por ti.\n\nY fíjate en el orden: primero gustar, después ver. El conocer viene detrás, no delante. No se te pide estar convencida antes de acercarte. Se te pide probar un solo bocado de él esta noche y dejar que el saber llegue solo. ¡Prueba, y verás!",
+          "action_step": "Haz esta noche una sola cosa pequeña que solo harías si Dios fuera bueno de verdad. Una llamada, un perdón, un descanso. Y fíjate en lo que pasa."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, esta noche no pido mucho. Solo quiero decirlo y creerlo de verdad: tú eres mi pastor, y nada me faltará. Calla en mí esa parte que sigue haciendo la lista de lo que falta. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, llevo años creyendo cosas sobre ti sin haberlas probado nunca. Esta noche prefiero conocerte a ti antes que saber cosas de ti. Dame un bocado real de tu bondad antes de dormir. En el nombre de Jesús, amén."
       }
     },
     {
@@ -3771,22 +3771,22 @@
       "segment": "evening",
       "language": "es",
       "reference": {
-        "book": "1 Corinthians",
-        "chapter": 13,
-        "verse": "4",
-        "full_reference": "1 Corinthians 13:4"
+        "book": "1 John",
+        "chapter": 4,
+        "verse": "12",
+        "full_reference": "1 John 4:12"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#亲密关系",
-        "#学习相爱"
+        "#关系疲惫",
+        "#想要看见神",
+        "#学习去爱"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "La caridad es sufrida, es benigna; la caridad no tiene envidia, la caridad no hace sinrazón, no se ensancha;"
+            "text": "Ninguno vió jamás á Dios. Si nos amamos unos á otros, Dios está en nosotros, y su amor es perfecto en nosotros:"
           },
           "modern": {
             "version": "NVI",
@@ -3800,19 +3800,19 @@
           "genre": "epistle",
           "primary_theme": "love"
         },
-        "niv_word_count": 18,
-        "context_note": "Pablo escribió esto a una iglesia que se destrozaba por cuestiones de estatus y de dones, no para una boda. La primera cualidad que nombra, makrothumeō, es literalmente 'de temperamento largo', lo contrario de la mecha corta. En griego cada punto de su lista es un verbo: aquí el amor no es un sentimiento, sino un conjunto de cosas que una persona hace."
+        "niv_word_count": 27,
+        "context_note": "Juan escribe a una iglesia partida por gente que presumía de un conocimiento espiritual superior. Su prueba es a propósito poco lucida. El griego teteleiomene significa llevado a su fin previsto: un amor completado, no un amor más intenso. La Reina-Valera no describe un amor que se va completando: dice que ya es perfecto, y lo que lo vuelve perfecto es que alcanza a otra persona."
       },
       "devotional": {
         "structure": "同行劝勉",
         "es": {
-          "meditation": "Como cristianas lo hemos oído en tantas bodas que ya dejó de significar algo. Pruébalo en otro sitio. Léelo pensando en el martes pasado. Lo primero de la lista es la paciencia, y en griego es literalmente ser de temperamento largo, lo contrario de la mecha corta. No es un sentimiento. Es una medida de tiempo. Y lo segundo es la bondad, que también es algo que se hace, no algo que se siente.\n\nY eso resulta ser una noticia buenísima para una mujer cansada dentro de una relación larga. Las noches en que el sentimiento anda flaco, el amor sigue estando a tu alcance. Es algo que puedes hacer a las once, cuando preferirías no hacerlo.",
-          "action_step": "Escoge una sola cosa de esta lista y hazla mañana una vez por la persona más cercana a ti, a propósito, la sientas o no."
+          "meditation": "Juan empieza con un problema y no lo resuelve como esperamos. Nadie ha visto jamás a Dios. Y en vez de ofrecer una prueba, señala el único lugar donde Dios se vuelve visible: dos personas que siguen amándose.\n\nNosotras solemos buscarlo en el silencio, en la lectura, en el rato a solas. Ahí está, es verdad. Pero Juan dice que el Dios invisible aparece en un sitio mucho menos íntimo y bastante más incómodo: en el matrimonio que vuelve a elegir la paciencia, en la pareja que sobrevive a lo que se dijo anoche. Y fíjate en cómo lo dice. No que su amor se vaya completando de a poco, sino que ya está perfecto en nosotras cuando nos amamos. Perfecto no por lo fuerte que lo sintamos, sino porque llegó hasta la otra persona.",
+          "action_step": "Haz esta noche una cosa amorosa y común por la persona que más te ha costado querer esta semana. Sin anunciarlo, sin esperar que te lo reconozca."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, he escuchado estas palabras tantas veces que dejé de oírlas. Vuélvelas cotidianas: que hablen de la cocina, de mañana por la mañana, de la persona con la que soy más dura. Donde el sentimiento esté flaco, déjame elegir igual la paciencia, y déjame elegir igual la bondad. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, he querido verte y te he buscado en los ratos callados. Esta noche muéstrame que también estás en la paciencia corriente que tengo que volver a elegir con quien vive a mi lado. Donde el amor se enfrió, caliéntalo. Donde dejé de intentarlo, ayúdame a empezar otra vez, no porque lo sienta, sino porque tú estás ahí. En el nombre de Jesús, amén."
       }
     },
     {
@@ -3821,22 +3821,22 @@
       "segment": "evening",
       "language": "es",
       "reference": {
-        "book": "1 Thessalonians",
-        "chapter": 5,
-        "verse": "11",
-        "full_reference": "1 Thessalonians 5:11"
+        "book": "Psalms",
+        "chapter": 118,
+        "verse": "5",
+        "full_reference": "Psalms 118:5"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚交托",
-        "#关系疏离",
-        "#彼此建立"
+        "#被压得很紧",
+        "#需要喘息",
+        "#向神呼求"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "Por lo cual, consolaos los unos á los otros, y edificaos los unos á los otros, así como lo hacéis."
+            "text": "Desde la angustia invoqué á JAH; y respondióme JAH, poniéndome en anchura."
           },
           "modern": {
             "version": "NVI",
@@ -3846,23 +3846,23 @@
       },
       "exegesis": {
         "verse_category": {
-          "testament": "NT",
-          "genre": "epistle/exhortation",
+          "testament": "OT",
+          "genre": "psalm",
           "primary_theme": "encouragement"
         },
-        "niv_word_count": 16,
-        "context_note": "Pablo añade cuatro palabras fáciles de saltarse: así como ya lo hacéis. No los está corrigiendo; nombra algo que la iglesia ya hace y pide más de lo mismo. El griego oikodomeo, 'edificar', viene de la construcción: añadir una hilera de ladrillos, no ofrecer un cumplido amable."
+        "niv_word_count": 18,
+        "context_note": "El Salmo 118 se cantaba en la Pascua; Jesús probablemente lo cantó la noche antes de la cruz. El hebreo metsar nombra un sitio angosto, apretado, y merchav el campo abierto. Nuestra palabra angustia guarda esa misma raíz. El salmo no describe una salida del problema, sino un cambio de espacio dentro de él."
       },
       "devotional": {
         "structure": "发问",
         "es": {
-          "meditation": "Pablo añade cuatro palabras que casi todas leemos de largo: así como lo hacéis. No las está regañando para que empiecen. Está nombrando algo que ya hacen, y pidiendo más.\n\nEdificar, en griego, es una palabra de construcción: poner otra hilera de ladrillos, no soltar un cumplido. Así que, ¿a quién edificaste hoy, y a quién quisiste edificar y no lo hiciste?",
-          "action_step": "Mándale hoy a una persona esa frase concreta que pensaste sobre ella y no le dijiste. Escríbela tal cual la pensaste, sin adornarla."
+          "meditation": "Fíjate en la palabra angustia. Viene de angosto: un lugar estrecho, sin sitio para darte la vuelta. No es solo un sentimiento; es una medida del espacio que te queda.\n\nY la respuesta no fue que las paredes se movieran. Se movió él: lo pusieron en anchura, en campo abierto. No dice que el problema terminó. Dice que cambió de lugar. ¿Dónde estás tú apretada esta noche, y le has pedido de verdad que te dé espacio, o solo le has pedido que corra las paredes?",
+          "action_step": "Dile en voz alta esta noche cuál es tu lugar estrecho. Después pide, en una sola frase, espacio para respirar dentro de él, y no que desaparezca."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, noto cosas buenas de la gente y me las guardo. Así no ayudo a nadie. Mañana déjame decir una en voz alta. Y donde yo ande escasa, mándame a alguien que me diga una a mí. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, llevo tiempo pidiéndote que cambies mis circunstancias y ni una vez te he pedido aire para respirar dentro de ellas. Esta noche te lo pido. Ponme los pies en un lugar más ancho antes de dormir. En el nombre de Jesús, amén."
       }
     },
     {
@@ -3871,22 +3871,22 @@
       "segment": "evening",
       "language": "es",
       "reference": {
-        "book": "John",
-        "chapter": 11,
-        "verse": "25",
-        "full_reference": "John 11:25"
+        "book": "Romans",
+        "chapter": 6,
+        "verse": "14",
+        "full_reference": "Romans 6:14"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#面对失去",
-        "#基督的应许"
+        "#反复失败",
+        "#想要自由",
+        "#不再被定义"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "Dícele Jesús: Yo soy la resurrección y la vida: el que cree en mí, aunque esté muerto, vivirá."
+            "text": "Porque el pecado no se enseñoreará de vosotros; pues no estáis bajo la ley, sino bajo la gracia."
           },
           "modern": {
             "version": "NVI",
@@ -3897,22 +3897,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "gospel/narrative",
-          "primary_theme": "life"
+          "genre": "epistle",
+          "primary_theme": "freedom"
         },
-        "niv_word_count": 23,
-        "context_note": "Marta acaba de decir que sabe que su hermano resucitará en el día final: doctrina correcta, sostenida a una distancia segura. Jesús lo mueve todo al presente y a una persona. Lo dice de pie, cuatro días tarde, junto a un sepulcro, delante de una mujer que ha estado llorando sin él."
+        "niv_word_count": 20,
+        "context_note": "Pablo escribe a cristianos preocupados por si la gracia vuelve opcional la obediencia. Detrás de enseñorearse está el griego kyrieuo: ejercer autoridad de señor, una posición legal más que un sentimiento. Su argumento es de jurisdicción, sobre qué amo tiene derecho a mandar, no sobre cuánta fuerza tiene todavía el tirón."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "es": {
-          "meditation": "Marta dijo lo correcto. Que su hermano resucitaría en el día postrero. Es verdad, y queda muy lejos, y esa tarde no le servía de nada. Jesús no le corrige la teología. Se la cambia de lugar. No una fecha: una persona, de pie delante de ella, hablando en presente. Yo soy, le dice.\n\nSea lo que sea que estés llorando esta noche, fíjate en que la promesa no está programada para más adelante, no es una fecha en un calendario lejano. Tiene nombre, está en el cuarto contigo, y llegó cuatro días tarde sin disculparse y ¡sin ser ni un poco menos verdad!",
-          "action_step": "Di el nombre de la persona que extrañas. Después di en voz alta las dos primeras palabras del versículo, despacio, y quédate un rato con ellas."
+          "meditation": "Mira el tiempo del verbo. No dice que el pecado no debería mandar en ti: dice que no se enseñoreará. Es una afirmación sobre lo que va a ser cierto, no una orden que estás fallando en cumplir.\n\nY fíjate en la razón que da. No porque te vayas a esforzar más. Por el lugar donde ahora estás parada. Enseñorearse es hacer de señor: tener el derecho de darte órdenes y que tú tengas que obedecer. Pablo dice que el viejo señor perdió ese derecho sobre ti, por mucho que siga gritando. Así que eso que llevas todo el año peleando no es tu dueño. Todavía tiene voz. ¡Ya no tiene autoridad!",
+          "action_step": "Nombra eso contra lo que sigues perdiendo. Di una sola frase en voz alta esta noche: esto tiene voz, pero no tiene autoridad sobre mí."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, hay consuelos que son verdad y aun así esta noche me quedan demasiado lejos para alcanzarlos. Gracias porque Jesús no le ofreció a Marta una fecha. Se ofreció a sí mismo. Ponte así de cerca de mí. No te pido dejar de extrañar a nadie. Te pido no quedarme sola con esto. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, llevo tanto tiempo peleando con lo mismo que empecé a llamarlo mi nombre. Esta noche quiero oírte decirlo de otra manera. Gracias porque perdió el derecho de mandar en mí incluso los días en que grita fuerte. Enséñame a contestarle como a alguien que ya no da las órdenes en esta casa. En el nombre de Jesús, amén."
       }
     },
     {
@@ -4571,22 +4571,22 @@
       "segment": "evening",
       "language": "es",
       "reference": {
-        "book": "Matthew",
-        "chapter": 11,
-        "verse": "28",
-        "full_reference": "Matthew 11:28"
+        "book": "1 Peter",
+        "chapter": 5,
+        "verse": "10",
+        "full_reference": "1 Peter 5:10"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#疲惫不堪",
-        "#重担压身"
+        "#撑得太久",
+        "#盼望被修复",
+        "#想要安稳"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "Venid á mí todos los que estáis trabajados y cargados, que yo os haré descansar."
+            "text": "Mas el Dios de toda gracia, que nos ha llamado á su gloria eterna por Jesucristo, después que hubiereis un poco de tiempo padecido, él mismo os perfeccione, confirme, corrobore y establezca."
           },
           "modern": {
             "version": "NVI",
@@ -4597,22 +4597,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "gospel/invitation",
+          "genre": "epistle",
           "primary_theme": "rest"
         },
-        "niv_word_count": 16,
-        "context_note": "Jesús habla a multitudes agotadas por reglas religiosas que se habían vuelto pesadas y minuciosas. 'Descanso' es anapauō: el respiro del trabajador cuando le quitan la carga de encima, no el sueño. No les pide que se pongan a punto primero; la invitación apunta justamente a quien llega ya cansada."
+        "niv_word_count": 38,
+        "context_note": "Pedro escribe a creyentes dispersos y bajo presión real, no de mal humor pasajero. El último de sus cuatro verbos, themelioo, significa asentar sobre un cimiento. Los cuatro los hace Dios; la parte de quien lee es permanecer. Y ese poco de tiempo es oligon en griego: poco, y a propósito sin medir."
       },
       "devotional": {
         "structure": "同行劝勉",
         "es": {
-          "meditation": "Él no dice ven cuando ya te hayas ordenado por dentro. Dice ven, así como estás, al final de un día que te quitó más de lo que te dio.\n\nComo cristianas convertimos hasta esto en una orden que estamos fallando: descansa bien, ten paz, deja de esforzarte. Pero mira otra vez el verbo que te toca. No es descansar. Es venir. Ese sí lo puedes hacer cansada. El descanso es su mitad de la frase, y Él nunca ha necesitado ayuda con su mitad de nada.",
-          "action_step": "Di en voz alta lo más pesado que traes en la cabeza y luego: esto te lo entrego esta noche. Déjalo ahí hasta la mañana."
+          "meditation": "Cuatro verbos, y el orden vale la pena. Perfeccionar: volver a juntar lo que se rompió. Confirmar. Corroborar. Y al final establecer, que es poner algo sobre una base para que deje de moverse.\n\nNosotras normalmente queremos lo último primero y saltarnos el padecer. Pedro da la secuencia honesta, y no finge que el medio sea corto. Pero mira quién hace los cuatro verbos. No nosotras. En los cuatro el sujeto es Dios. No se nos pide reconstruirnos solas; se nos pide seguir aquí cuando él lo haga.",
+          "action_step": "Deja de arreglar una sola cosa esta noche. Di con claridad cuál es, y déjala en las manos de Dios hasta mañana por la mañana."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, estoy cansada de una manera que el sueño solo no arregla. No tengo fuerzas para cargarlo una noche más. Gracias porque tu invitación sigue abierta a esta hora, y porque no me exige llegar descansada antes de venir. Quítame el peso de las manos y sostenlo tú hasta la mañana. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, estoy cansada de ser la que tiene que sostenerlo todo, y además no se me da bien. Gracias porque la reparación es tu trabajo y no el mío. Haz tú las partes que no alcanzo. Asienta lo que dentro de mí no deja de moverse. Mañana seguiré aquí, y esta noche eso es todo lo que prometo. En el nombre de Jesús, amén."
       }
     },
     {
@@ -5121,22 +5121,22 @@
       "segment": "evening",
       "language": "es",
       "reference": {
-        "book": "John",
-        "chapter": 16,
-        "verse": "33",
-        "full_reference": "John 16:33"
+        "book": "Luke",
+        "chapter": 8,
+        "verse": "50",
+        "full_reference": "Luke 8:50"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚平安",
-        "#难处不断",
-        "#祂已得胜"
+        "#已经放弃盼望",
+        "#怕再失望",
+        "#还想再信一次"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "Estas cosas os he hablado, para que en mí tengáis paz. En el mundo tendréis aflicción: mas confiad, yo he vencido al mundo."
+            "text": "Y oyéndolo Jesús, le respondió: No temas: cree solamente, y será salva."
           },
           "modern": {
             "version": "NVI",
@@ -5147,22 +5147,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "gospel/farewell discourse",
-          "primary_theme": "overcoming"
+          "genre": "gospel",
+          "primary_theme": "faith"
         },
-        "niv_word_count": 29,
-        "context_note": "Jesús dice esto minutos antes de Getsemaní. El griego tharseite se parece más a 'ten valor' que a 'anímate': es lo que dice un comandante, no lo que dice una amiga en una fiesta. Y 'he vencido' está en tiempo perfecto: ya hecho, antes de que la cruz sucediera."
+        "niv_word_count": 22,
+        "context_note": "Jairo era principal de la sinagoga, un hombre con posición pidiendo ayuda en público a un maestro ambulante. Detrás de será salva está el griego sozo, que sirve igual para sanar y para salvar. Jesús habla antes de que Jairo pueda reaccionar a la noticia, y ese es el punto: el consuelo llega primero."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "es": {
-          "meditation": "Escucha las dos mitades y no suavices ninguna. Habrá aflicción mientras estés en este mundo: lo dijo sin adornos, y tenía razón.\n\nY luego: he vencido. Ya está terminado, dicho antes de que la cruz ocurriera. Así que la paz que se te ofrece esta noche no es la ausencia de problemas. Es que el desenlace quedó resuelto antes de que empezara tu aflicción. ¡Ten ánimo!",
-          "action_step": "Nombra con honestidad la aflicción de esta noche. Después repite sobre ella lo último que dijo Jesús: él ya venció."
+          "meditation": "El recado ya había llegado: tu hija murió, no molestes más al Maestro. Jesús lo oye y responde antes de que Jairo alcance a reaccionar.\n\nFíjate en lo que le pide. No más fe. Solamente fe, como si estuviera quitando cosas en vez de añadirlas. A Jairo no le pide sentirse valiente ni producir certeza. Le pide seguir caminando hacia su hija con una sola cosa intacta. ¡Es lo único que se te pide a ti también esta noche!",
+          "action_step": "Nombra esta noche eso que ya diste por perdido. Y después da un paso pequeño hacia ello de todos modos, aunque no sientas nada."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, ha sido una cosa tras otra y estoy cansada de que me digan que sea positiva. Gracias porque Jesús nunca prometió lo contrario. Dame valor en lugar de alegría, y déjame descansar en la parte que ya está terminada. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, hace tiempo que dejé de esperar en esto porque esperar dolía más. Esta noche no te pido sentirme segura. Te pido poder seguir caminando. Sostén tú lo único que me queda. En el nombre de Jesús, amén."
       }
     },
     {
@@ -5171,22 +5171,22 @@
       "segment": "evening",
       "language": "es",
       "reference": {
-        "book": "Colossians",
-        "chapter": 3,
-        "verse": "15",
-        "full_reference": "Colossians 3:15"
+        "book": "John",
+        "chapter": 14,
+        "verse": "26",
+        "full_reference": "John 14:26"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚平安",
-        "#心里争战",
-        "#让平安作主"
+        "#夜里想不起",
+        "#需要提醒",
+        "#知道却抓不住"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "Y la paz de Dios gobierne en vuestros corazones, á la cual asimismo sois llamados en un cuerpo; y sed agradecidos."
+            "text": "Mas el Consolador, el Espíritu Santo, al cual el Padre enviará en mi nombre, él os enseñará todas las cosas, y os recordará todas las cosas que os he dicho."
           },
           "modern": {
             "version": "NVI",
@@ -5197,22 +5197,22 @@
       "exegesis": {
         "verse_category": {
           "testament": "NT",
-          "genre": "epistle/exhortation",
-          "primary_theme": "peace"
+          "genre": "gospel",
+          "primary_theme": "comfort"
         },
-        "niv_word_count": 23,
-        "context_note": "El griego brabeuō es lo que hace el árbitro en los juegos: arbitrar, dar el fallo. Así que esto no es una sugerencia para que te sientas tranquila. Es una instrucción: que la paz sea la que decide cuando hay una disputa dentro de ti. Y Pablo añade tres palabras más: y sed agradecidos."
+        "niv_word_count": 34,
+        "context_note": "Jesús dice esto horas antes de su arresto, a hombres que para la mañana siguiente lo habrán olvidado casi todo. Nuestra Biblia traduce Consolador, pero el griego parakletos significa el que es llamado a tu lado: un abogado que se para junto a ti, no un sentimiento. Y recordar es la palabra corriente para traer de vuelta algo ya sabido. La promesa cuenta con que vamos a olvidar."
       },
       "devotional": {
         "structure": "同行劝勉",
         "es": {
-          "meditation": "La palabra que se traduce 'gobierne' es lo que hace un árbitro: decide, resuelve la disputa. Así que Pablo no te está pidiendo que te sientas en paz. Te pide que la paz tenga el voto decisivo cuando hay dos voces discutiendo dentro de ti. No la más fuerte. No la más ansiosa, que casi siempre suena a la más responsable. La que te deja tranquila cuando te sientas con ella.\n\nY después, casi como una nota al margen: da gracias. Nosotras solemos intentarlo en el orden contrario.",
-          "action_step": "Donde estés dividida esta noche, fíjate cuál de las dos opciones te deja en paz al sentarte con ella, y deja que ese sea el voto."
+          "meditation": "Dos tareas, y la segunda es más callada. Que te enseñe todas las cosas: eso lo esperábamos. Pero también que te recuerde: no información nueva, sino la vieja, la que ya tenías y perdiste.\n\nNosotras damos por hecho que la ayuda que necesitamos es algo que aún no hemos aprendido. Casi nunca es eso. Es lo que sabíamos perfectamente de día y no encontramos a las once de la noche. Parte del trabajo del Espíritu es ir a buscarlo. Lo que te sostuvo antes no se perdió. Está traspapelado, y no eres tú la que tiene que salir a buscarlo.",
+          "action_step": "Anota una cosa que sabías de Dios en una temporada mejor. Déjala escrita donde vayas a verla mañana al despertar."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, hay dos voces dentro de mí esta noche y la ansiosa suena más fuerte. Que sea tu paz la que decida. Resuelve tú la disputa en mi pecho, y mientras se calma, dame una sola cosa por la que pueda dar gracias con honestidad. En ese orden, aunque sea por una vez. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, esta noche no encuentro cosas que estoy segura de haber sabido. No te pido que me enseñes algo nuevo. Te pido que me devuelvas lo que ya me diste. Recuérdame en lo oscuro lo que de día me resultaba evidente, y quédate cerca mientras vuelvo a encontrarlo. En el nombre de Jesús, amén."
       }
     },
     {
@@ -5372,21 +5372,21 @@
       "language": "es",
       "reference": {
         "book": "Proverbs",
-        "chapter": 22,
-        "verse": "6",
-        "full_reference": "Proverbs 22:6"
+        "chapter": 6,
+        "verse": "20",
+        "full_reference": "Proverbs 6:20"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚交托",
-        "#为儿女忧心",
-        "#尽力之后交托"
+        "#想起母亲",
+        "#家庭传承",
+        "#未曾被道谢"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "Instruye al niño en su carrera: aun cuando fuere viejo no se apartará de ella."
+            "text": "Guarda, hijo mío, el mandamiento de tu padre, y no dejes la enseñanza de tu madre:"
           },
           "modern": {
             "version": "NVI",
@@ -5398,21 +5398,21 @@
         "verse_category": {
           "testament": "OT",
           "genre": "wisdom",
-          "primary_theme": "parenting"
+          "primary_theme": "family"
         },
-        "niv_word_count": 21,
-        "context_note": "Proverbios enuncia verdades generales sobre cómo suele funcionar la vida, no garantías para casos concretos; el mismo libro tiene excepciones por todas partes. Algunos estudiosos leen el hebreo como 'según su camino', es decir, según la inclinación propia de ese niño. Cualquiera de las dos lecturas descarta usar este versículo para repartir culpas."
+        "niv_word_count": 16,
+        "context_note": "En el antiguo Oriente la instrucción formal era cosa del padre, lo que vuelve rara esta línea. En hebreo, lo que da la madre es torah, la misma palabra que se usa para la instrucción de Dios. Nuestra versión lo traduce enseñanza, que suena más suave de lo que es: Proverbios la trata como algo con autoridad, no como un complemento."
       },
       "devotional": {
         "structure": "同行劝勉",
         "es": {
-          "meditation": "Proverbios describe cómo suelen ir las cosas. No es un contrato, y nunca se escribió para leerse así, lo cual importa muchísimo si tu hijo se apartó y llevas años cumpliendo una condena silenciosa por ello. Algunos leen el hebreo como 'según su camino': según el niño concreto que tienes delante, y no según un único método para todos.\n\nComo cristianas necesitamos oírlo así, sobre todo las que oramos de noche. Este versículo es una verdad general y sabia sobre el largo moldear de una vida entera. No es un veredicto sobre ti a las once de la noche, y nunca lo ha sido.",
-          "action_step": "Si te has culpado por cómo resultó un hijo, di esta noche una sola frase que lo vuelva a poner en las manos de Dios."
+          "meditation": "Fíjate en los dos verbos. Al mandamiento del padre hay que guardarlo. A la enseñanza de la madre, no dejarla. Uno se cuida; el otro se puede soltar sin darse cuenta, casi sin querer. Y eso es justo lo que suele pasar con lo que enseñó una madre: nadie lo tira, se va quedando atrás.\n\nNosotras transmitimos muchísimo de esto sin notar que lo estamos haciendo. No con discursos. Con la forma de recibir una mala noticia en la mesa. Con lo que haces cuando te equivocas. Casi todas aprendimos más mirando que escuchando, y las mujeres de nuestras familias enseñaron mucho más de lo que alguien les agradeció.",
+          "action_step": "Nombra una cosa que te enseñó una mujer de tu familia sin proponérselo. Agradécele a ella esta noche, o dale gracias a Dios por ella."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, he usado este versículo contra mí misma durante años. Esta noche lo dejo en el suelo. Nunca tuve el poder de garantizar un resultado, y nunca lo tendré. Recibe otra vez a mi hijo en tus manos, donde ha estado todo este tiempo. Déjame dormir sin el veredicto encima. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, gracias por lo que me entregaron mujeres a las que probablemente nadie les dijo que aquello importaba. De algunas cosas sigo viviendo todavía. Donde lo que recibí fue bueno, ayúdame a pasarlo sin volverlo una carga. Donde no lo fue, ayúdame a soltarlo sin amargura. En el nombre de Jesús, amén."
       }
     },
     {
@@ -5471,22 +5471,22 @@
       "segment": "evening",
       "language": "es",
       "reference": {
-        "book": "1 John",
-        "chapter": 1,
-        "verse": "9",
-        "full_reference": "1 John 1:9"
+        "book": "Hebrews",
+        "chapter": 8,
+        "verse": "12",
+        "full_reference": "Hebrews 8:12"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚赦免",
-        "#心中自责",
-        "#被神接纳"
+        "#反复自责",
+        "#难以放过自己",
+        "#想要被赦免"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "Si confesamos nuestros pecados, él es fiel y justo para que nos perdone nuestros pecados, y nos limpie de toda maldad."
+            "text": "Porque seré propicio á sus injusticias, y de sus pecados y de sus iniquidades no me acordaré más."
           },
           "modern": {
             "version": "NVI",
@@ -5500,19 +5500,19 @@
           "genre": "epistle",
           "primary_theme": "forgiveness"
         },
-        "niv_word_count": 22,
-        "context_note": "Juan escribía contra maestros que negaban que el pecado existiera. El griego para 'confesar' es homologeō: literalmente decir lo mismo, describir algo tal como Dios ya lo describe, sin disfrazarlo ni exagerarlo. 'Fiel y justo' van juntos a propósito: el perdón es una promesa cumplida, no un estado de ánimo."
+        "niv_word_count": 20,
+        "context_note": "Hebreos cita la promesa del nuevo pacto en Jeremías, a lectores que conocían la repetición anual de los sacrificios. El griego mnestho, acordarse, tiene un sentido legal: presentar algo como cargo. Nuestra versión dice no me acordaré más, que en español suena a olvido; la promesa no es que Dios pierda la memoria, sino que decidió no volver a acusarte."
       },
       "devotional": {
         "structure": "宣告鼓励",
         "es": {
-          "meditation": "Fiel y justo. No dice misericordioso e indulgente; esas serían otras palabras. Lo cual significa que el perdón aquí no es Dios haciendo una excepción contigo en un día bueno. Es Dios cumpliendo su palabra, algo que jamás ha fallado en hacer, ni una sola vez.\n\nAsí que esta noche no estás pidiendo un favor, ni esperando encontrarlo de buen humor. Le estás pidiendo que sea lo que ya es y siempre ha sido. ¡Y eso es algo muy distinto para llevar en las manos!",
-          "action_step": "Dile a Dios esta noche una cosa concreta que preferirías pasar por alto. Una sola frase. Después detente: no añadas la autocrítica."
+          "meditation": "Dios no olvida. No pierde información. Así que no me acordaré más no puede significar que el archivo se traspapeló.\n\nEs lenguaje de tribunal. Acordarse, aquí, es sacar algo otra vez a la mesa, presentarlo como prueba, volver a nombrarlo en tu contra. Lo que Dios promete no es amnesia. Es que nunca más lo va a levantar contra ti. Y eso es distinto, y mejor. Un olvido se puede deshacer. Una decisión de no volver a mencionarlo es una decisión, y él ya la tomó. ¡Eso que tú vuelves a abrir cada noche él lo dio por cerrado!",
+          "action_step": "Nombra eso que sigues sacándote a ti misma en cara. Dilo una vez en voz alta esta noche: Dios ya cerró este asunto."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, gracias porque esta noche no te pido un favor, sino algo que ya prometiste. Aquí está lo que habría preferido callar. Límpialo, y déjame dormir sin repasar la escena dos veces más. Ayúdame a despertar mañana más suave con las personas que viven más cerca de mí. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, tengo una lista corta que me releo a mí misma, y tú has dicho que no vas a levantar nada de eso en mi contra. Ayúdame a creerte esta noche en vez de discutir contigo. Cierra lo que yo vuelvo a abrir con las uñas. Déjame dormir como alguien que no está en juicio. En el nombre de Jesús, amén."
       }
     },
     {
@@ -5621,22 +5621,22 @@
       "segment": "evening",
       "language": "es",
       "reference": {
-        "book": "1 Peter",
-        "chapter": 5,
-        "verse": "7",
-        "full_reference": "1 Peter 5:7"
+        "book": "Psalms",
+        "chapter": 38,
+        "verse": "9",
+        "full_reference": "Psalms 38:9"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚交托",
-        "#焦虑不安",
-        "#被神看顾"
+        "#说不出口",
+        "#被神看见",
+        "#心里有话"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "Echando toda vuestra solicitud en él, porque él tiene cuidado de vosotros."
+            "text": "Señor, delante de ti están todos mis deseos; y mi suspiro no te es oculto."
           },
           "modern": {
             "version": "NVI",
@@ -5646,23 +5646,23 @@
       },
       "exegesis": {
         "verse_category": {
-          "testament": "NT",
-          "genre": "epistle/exhortation",
+          "testament": "OT",
+          "genre": "psalm",
           "primary_theme": "care"
         },
-        "niv_word_count": 11,
-        "context_note": "En griego esta frase continúa la anterior: humíllense, y echen su ansiedad sobre él. Las dos son un solo movimiento, así que entregar la preocupación es un acto de humildad y no de debilidad. Epiriptō describe el gesto de lanzar el bulto sobre el animal de carga: una transferencia decidida."
+        "niv_word_count": 16,
+        "context_note": "El Salmo 38 es uno de los penitenciales, escrito por alguien enfermo y abandonado por los suyos. El hebreo anachah es un gemido, sonido sin palabras; nuestra versión lo traduce suspiro, que suena más suave de lo que era. David lo pone junto al deseo que sí sabe expresar, como algo que Dios ya conoce entero, sin traducción previa."
       },
       "devotional": {
         "structure": "发问",
         "es": {
-          "meditation": "El verbo no es 'compartir' ni 'comentar'. Es el movimiento de descolgar una carga de tu propia espalda y echarla sobre un animal que sí puede llevarla. Un solo gesto, y después tienes las manos vacías. Y va gramaticalmente unido a la frase anterior: humíllate, y echa. Eso cambia todo el asunto. Aferrarte a tu preocupación no es fortaleza. Es una insistencia callada en que tú eres la que tiene que cargarla.\n\nEntonces, ¿qué es lo que sigues cargando esta noche porque entregarlo significaría admitir que no puedes?",
-          "action_step": "Nombra la preocupación y luego di en voz alta: esta noche no me toca a mí cargarla. Déjala en el suelo antes de acostarte."
+          "meditation": "Aquí se nombran dos cosas distintas, y casi todas traemos solo la primera. El deseo: eso que sabrías poner en palabras si alguien te lo preguntara. Y el suspiro: el sonido que se te escapa cuando ya no queda nada que decir.\n\nDavid no ordena el segundo dentro del primero. Dice que los dos están ya delante de Dios, incluido lo que él no habría sabido explicar aunque lo intentara. El suspiro no es una oración a medias; ya está oído. ¿Qué llevas esperando a poder decir bien antes de traerlo, y quién te dijo que ese era el requisito?",
+          "action_step": "Tráele a Dios eso que no sabes formular. No lo expliques. Quedarte ahí sentada con ello, en silencio, ya cuenta como oración."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, me aferro a mis preocupaciones porque soltarlas se siente como admitir que no puedo sola. Esta noche lo admito. Aquí está la carga entera, echada sobre ti de una vez. Gracias porque también te importan las cosas pequeñas que me daría vergüenza decir en voz alta. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, hay algo que no te he traído porque no sé decirlo bien, y llevo tiempo esperando a tener las palabras. Esta noche te lo traigo a medio hacer. Tú ya escuchas lo que va por debajo de la frase. Gracias porque no necesitas que yo sea elocuente para prestarme atención. En el nombre de Jesús, amén."
       }
     },
     {
@@ -5971,22 +5971,22 @@
       "segment": "evening",
       "language": "es",
       "reference": {
-        "book": "Proverbs",
-        "chapter": 17,
-        "verse": "17",
-        "full_reference": "Proverbs 17:17"
+        "book": "Ecclesiastes",
+        "chapter": 4,
+        "verse": "10",
+        "full_reference": "Ecclesiastes 4:10"
       },
       "special_occasion": null,
       "mood_tags": [
-        "#夜晚安息",
-        "#被陪伴",
-        "#患难中的家人"
+        "#孤单过一阵",
+        "#有人守着",
+        "#想要陪伴谁"
       ],
       "translations": {
         "es": {
           "traditional": {
             "version": "Reina-Valera 1909",
-            "text": "En todo tiempo ama el amigo; y el hermano para la angustia es nacido."
+            "text": "Porque si cayeren, el uno levantará á su compañero: mas ¡ay del solo! que cuando cayere, no habrá segundo que lo levante."
           },
           "modern": {
             "version": "NVI",
@@ -6000,19 +6000,19 @@
           "genre": "wisdom",
           "primary_theme": "friendship"
         },
-        "niv_word_count": 16,
-        "context_note": "El hebreo es compacto: el amigo ama en todo tiempo, y el hermano nace para la angustia. Proverbios no es sentimental con las relaciones; observa cuáles aguantan el peso. 'En todo tiempo' incluye los momentos inconvenientes, y ese es justamente el sentido de la línea."
+        "niv_word_count": 31,
+        "context_note": "Eclesiastés dedica casi todo su espacio a lo que no dura. Este pasaje corto es uno de sus pocos bienes sin peros: mejores son dos que uno, por lo que ocurre cuando uno cae. El hebreo es muy concreto, casi frío: no hay un segundo que lo levante. No es una frase bonita sobre la amistad, sino una cuenta de probabilidades."
       },
       "devotional": {
         "structure": "见证",
         "es": {
-          "meditation": "El año en que todo se vino abajo, casi todos fueron amables durante unas tres semanas. No es una queja; tres semanas es lo que la mayoría tenemos para dar, y yo he sido la amiga de tres semanas para otras personas. Lo que recuerdo son las dos que seguían ahí en el mes siete, cuando ya no había nada nuevo que decir ni nada que arreglar. Una de ellas era de la familia y no tenía ningún motivo para quererme. Vino igual.\n\nEste proverbio no es sentimental. Es una observación sobre qué relaciones aguantan el peso. En todo tiempo significa también los tiempos inconvenientes. Ahora sé lo que cuesta, porque alguien lo pagó por mí.",
-          "action_step": "Piensa en alguien que va por el mes siete de algo difícil. Escríbele mañana, sin nada útil que ofrecer, solo para estar ahí."
+          "meditation": "Hubo un año en que dejé de contestar mensajes. No por enojo. Simplemente no tenía nada que devolver, y me parecía más fácil que ponerme a explicar. Mi hermana siguió escribiéndome igual. Nada que exigiera respuesta. Una foto. Una línea sobre su semana. No se lo agradecí entonces. Creo que durante meses ni siquiera le contesté.\n\nLo que entiendo ahora es que ella no estaba esperando a que yo volviera a ser buena compañía. Se estaba quedando lo bastante cerca como para alcanzarme, para que el día en que por fin pudiera hablar hubiera alguien ya de pie ahí. Desde entonces he intentado ser eso para otra persona de la familia. Es un trabajo más callado de lo que yo pensaba.",
+          "action_step": "Manda un mensaje esta noche a alguien de tu familia que se haya quedado en silencio. No le pidas nada a cambio."
         }
       },
       "prayer": {
         "structure_used": "free_form",
-        "es": "Amado Padre celestial, gracias por las personas que se quedaron mucho después de que dejara de ser interesante quedarse. Ahora sé lo que les costó. Hazme una de esas para alguien más, y tráeme a la mente esta noche a la persona que está atravesando la parte callada de un año difícil. En el nombre de Jesús, amén."
+        "es": "Amado Padre celestial, gracias por las personas que se quedaron cerca de mí cuando yo no tenía nada que devolver. No siempre me di cuenta, y casi nunca lo dije. Muéstrame esta noche quién de los míos se ha quedado callado, y mantenme lo bastante cerca como para alcanzarle sin pedirle que me explique nada. En el nombre de Jesús, amén."
       }
     }
   ]

@@ -32,8 +32,12 @@ WRANGLER="${HOME}/claude_herbible_plan/workers/herbible-plans-7languages/node_mo
 # Fall back to npx when the workers checkout isn't on this machine.
 if [ ! -x "$WRANGLER" ]; then WRANGLER="npx --yes wrangler"; fi
 BUCKET="herbible-verses-7languages"
-VERSION="v2"
-SRC_DIR="$(cd "$(dirname "$0")/.." && pwd)/_cdn_ready"
+VERSION="v4"
+# $1 overrides the source dir. It used to be silently IGNORED (hardcoded
+# _cdn_ready) — that shipped a stale leftover cut to v3/ on 2026-09-05 while
+# the fresh files sat in the ignored argument; v3/ is abandoned, poisoned by
+# edge-cached stale bytes. Always spot-check a CHANGED entry after upload.
+SRC_DIR="${1:-$(cd "$(dirname "$0")/.." && pwd)/_cdn_ready}"
 
 LANGS=(en zh-Hans zh-Hant de fr es pt)
 

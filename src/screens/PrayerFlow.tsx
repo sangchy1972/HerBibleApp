@@ -396,7 +396,17 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // so the `listenStep === page` identity on the deep pages stays valid.
   // Re-enabling narration must add a page→step map that skips this page
   // (checklist in dailyVerseAudioCdn.ts).
-  const hasCtxPage = !!dailyVerse?.contextNote;
+  // Latched ONCE per flow entry, on the first non-null verse:
+  // DailyVersesContext swaps its array bundled→cache→CDN mid-session, and a
+  // PagerView must never gain/lose a child mid-flow — a 4→5 flip would shift
+  // every page index under her finger. Within one batch the note's presence
+  // is identical across bundled/cache/CDN for a given day, so this only
+  // guards the pathological orderings (late load, midnight rollover).
+  const hasCtxPageRef = useRef<boolean | null>(null);
+  if (dailyVerse && hasCtxPageRef.current === null) {
+    hasCtxPageRef.current = !!dailyVerse.contextNote;
+  }
+  const hasCtxPage = hasCtxPageRef.current ?? false;
   const medIdx = hasCtxPage ? 2 : 1;
   const actIdx = hasCtxPage ? 3 : 2;
   const prayIdx = hasCtxPage ? 4 : 3;
@@ -936,7 +946,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // and we correctly do nothing. Same, mirrored, at the top for going back.
   // Pages whose content fits the screen are left alone: they can't scroll, so
   // Android already hands those to the pager natively.
-  const PAGE_COUNT = 4;
+  // Bound is the DYNAMIC page count: with the context page the prayer page
+  // sits at index 4, and a stale `4` here froze the action page's forward
+  // hand-off (3 < 3) — scroll to the bottom, swipe, nothing. Caught in the
+  // 2026-09-05 re-audit.
   const EDGE_EPS = 2;                                   // px slop for "at the edge"
   const dragStart = useRef<{ top: boolean; bottom: boolean; scrollable: boolean } | null>(null);
 
@@ -980,7 +993,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
       if (!start || !start.scrollable) return;           // short page — pager has it
       const end = edgeState(e);
       // Pushed against the bottom with nowhere to go → advance.
-      if (start.bottom && end.bottom && pageIndex < PAGE_COUNT - 1) {
+      if (start.bottom && end.bottom && pageIndex < pageCount - 1) {
         pagerRef.current?.setPage(pageIndex + 1);
         return;
       }

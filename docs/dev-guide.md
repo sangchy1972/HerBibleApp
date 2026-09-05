@@ -1335,6 +1335,11 @@ above the Account block; merger in `services/progressMerge.ts`; tests
   stay 4; the deep-page indices (`medIdx/actIdx/prayIdx`) shift accordingly.
   Narration and the context page are mutually exclusive today — re-enabling
   narration needs a page→step map first (checklist in dailyVerseAudioCdn.ts).
+  Re-audit receipts (same day): the edge hand-off's forward bound was a stale
+  `PAGE_COUNT = 4` — on 5-page days the action page couldn't swipe to prayer
+  (3 < 3); now the dynamic `pageCount`. And `hasCtxPage` is LATCHED per flow
+  entry so the bundled→cache→CDN identity swap can never add/remove a
+  PagerView child mid-swipe.
 - **Upstream corpus defects** found by content-side: de ×2 (Ps 119:105
   `meine→meines`, Isa 25:1 `dein→deine`) + es/pt ×7 from batch 1 — fix in
   pd-text-corpus then bump `CORPUS_COMMIT` AND the verify script's pin;

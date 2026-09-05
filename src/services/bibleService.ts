@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { localizeBookName } from '../constants/bibleBookNames';
-import { CORPUS_COMMIT } from '../constants/corpus';
+import { CORPUS_COMMIT, CORPUS_CDN_ROOT, CORPUS_FALLBACK_ROOT } from '../constants/corpus';
 
 // Short cache-bust tag derived from the pinned corpus commit. Bumping the pin
 // changes this and forces every device to re-fetch fresh chapters/indexes
@@ -52,7 +52,7 @@ const downloadStateKey = (code: string) => `bible:dl:${CACHE_TAG}:${code}`;
 // Gospel & Psalm could hang while plans degraded gracefully.
 const BIBLE_NET_TIMEOUT_MS = 12_000;
 
-async function fetchJson<T>(url: string): Promise<T> {
+async function fetchJsonOnce<T>(url: string): Promise<T> {
   const ctl = new AbortController();
   const id = setTimeout(() => ctl.abort(), BIBLE_NET_TIMEOUT_MS);
   try {
@@ -61,6 +61,22 @@ async function fetchJson<T>(url: string): Promise<T> {
     return await res.json() as T;
   } finally {
     clearTimeout(id);
+  }
+}
+
+// Primary → fallback (1.6.1): every corpus read goes to OUR R2 mirror first
+// (verses.everlandapps.com — reachable where jsDelivr is not, mainland China
+// included); if that fails for any reason the SAME path is retried once
+// against jsDelivr. One choke point, so index/chapter/commentary all inherit
+// the failover without touching their call sites.
+async function fetchJson<T>(url: string): Promise<T> {
+  try {
+    return await fetchJsonOnce<T>(url);
+  } catch (e) {
+    if (url.startsWith(CORPUS_CDN_ROOT)) {
+      return await fetchJsonOnce<T>(url.replace(CORPUS_CDN_ROOT, CORPUS_FALLBACK_ROOT));
+    }
+    throw e;
   }
 }
 

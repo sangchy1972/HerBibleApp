@@ -868,6 +868,8 @@ export default function BibleScreen() {
   const [verses, setVerses] = useState<Verse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Bumping re-runs the chapter fetch — the Try-again pill under the error.
+  const [retryTick, setRetryTick] = useState(0);
   const [drawer, setDrawer] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   // New-user defaults per design: 18 px / 1.8 line-height / 24 px paragraph
@@ -979,7 +981,7 @@ export default function BibleScreen() {
       .catch(err => { if (!cancelled) setError(err.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [translation.code, translation.source, bookSlug, chapter]);
+  }, [translation.code, translation.source, bookSlug, chapter, retryTick]);
 
   // ─── 5-minute reading timer ────────────────────────────────────────────
   // Per v2.3 spec: a day counts as "Days Read" once the user has spent 5+
@@ -1654,9 +1656,22 @@ export default function BibleScreen() {
         )}
 
         {error && (
-          <Text style={{ fontSize: 15, color: '#C84444', textAlign: 'center', paddingVertical: 40 }}>
-            {t('bibleReader.chapterLoadError', { error })}
-          </Text>
+          <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+            {/* Friendly line only — raw fetch errors ("Aborted", HTTP codes)
+                must never reach the user (owner 2026-09-06). */}
+            <Text style={{ fontSize: 15, color: TXTSUB, textAlign: 'center', paddingHorizontal: 24, lineHeight: 22 }}>
+              {t('bibleReader.chapterLoadError')}
+            </Text>
+            <TouchableOpacity
+              onPress={() => { setError(null); setRetryTick(n => n + 1); }}
+              activeOpacity={0.9}
+              style={{ marginTop: 18, height: 46, paddingHorizontal: 28, borderRadius: BTN_RADIUS, backgroundColor: ROSE, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 15.5, fontWeight: '700', fontFamily: FONTS.latoBold, letterSpacing: 0.4 }}>
+                {t('bibleReader.chapterRetry')}
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
 
         {verses.map((v, i) => {

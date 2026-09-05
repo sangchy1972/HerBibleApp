@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, ImageBackground, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -11,7 +11,6 @@ import { useOnboarding } from '../state/OnboardingContext';
 import { useDailyVerses } from '../state/DailyVersesContext';
 import { localeFor } from '../i18n/locale';
 import { useT } from '../i18n/useT';
-import { startFirstOpenAdGate, getFirstOpenGateState, subscribeFirstOpenGate } from '../services/firstOpenAdGate';
 import { LOADING_LINES } from '../constants/loadingContent';
 import { LOADING_IMAGE_FILES } from '../constants/loadingImages';
 import {
@@ -84,7 +83,7 @@ const RISE_MS = 750;            // brand centre → top. Slow-fast-slow (inOut c
 const BG_FADE_MS = 700;         // photo crosses in under the rising brand
 const TAGLINE_OUT_MS = 260;     // tagline belongs to the pink card only
 const ZOOM_TO = 1.10;           // user: 100 % → 110 %
-const ZOOM_MS = 4300;           // spans the whole of stage 2 + the exit fade (3300 → 4300, tracks CONTENT_HOLD_MS)
+const ZOOM_MS = 3700;           // spans stage 2 + the exit fade (tracks CONTENT_HOLD_MS + ~1300)
 const DATE_DELAY_MS = 750;      // lands just as the brand finishes rising
 const DATE_FADE_MS = 500;
 const VERSE_DELAY_MS = 1000;
@@ -95,7 +94,7 @@ const RISE_UP_PX = 14;          // date/verse drift up as they fade in
 // (otherwise a fast-booting device would jump to stage 2 before the tagline
 // ever appears).
 const BRAND_MIN_MS = 2000;      // brand-card floor (per user 2026-07-18: → 2s)
-const CONTENT_HOLD_MS = 3000;  // stage-2 dwell (per user 2026-07-18: 4000 → 3000)
+const CONTENT_HOLD_MS = 2400;  // stage-2 dwell (4000 → 3000 → 2400, owner 2026-09-06: get her in faster)
 const MAX_VISIBLE_MS = 11000;  // hard safety cap — never hang the launch
 
 // English ordinal suffix ("July 17th"); other locales use their own date format.
@@ -203,17 +202,12 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   // and only for brand-new users (returning users don't see a slow cold start).
   const isNewUser = onboarding.ready && !onboarding.done;
 
-  // First-open ad gate (owner 2026-08-22): a brand-new user's overlay also
-  // waits briefly for the loading-screen ad — shown, or a short grace, never
-  // a wall (owner 2026-09-06). Returning users never start it.
-  const gateState = useSyncExternalStore(subscribeFirstOpenGate, getFirstOpenGateState);
-  // Guarded on hidingRef: if onboarding hydration outlived the 11s cap the
-  // overlay is already leaving — starting the gate then would pop the ad at a
-  // random onboarding moment instead of during loading (swarm 2026-08-22).
-  useEffect(() => { if (isNewUser && !hidingRef.current) startFirstOpenAdGate(); }, [isNewUser]);
-  const gateHolding = isNewUser && gateState !== 'idle' && gateState !== 'done';
-
-  const allReady = contentReady && contextsReady && !gateHolding;
+  // The first-open ad gate is FULLY RETIRED (owner 2026-09-06, second pass):
+  // loading never waits for an ad at all. The first-open interstitial shows
+  // during the onboarding questionnaire instead — OnboardingFlow.goNext()
+  // attempts it on every page transition (except into the paywall) and
+  // latches after one success. Loading is now purely content-driven.
+  const allReady = contentReady && contextsReady;
   const [progress, setProgress] = useState(0);
   useEffect(() => {
     if (!isNewUser) return;
@@ -281,19 +275,18 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
   // from when stage 2 actually began, so a slow-to-ready app adds no extra time
   // beyond what it genuinely needs. MAX_VISIBLE_MS still hard-caps everything.
   useEffect(() => {
-    if (phase !== 'content' || !contextsReady || gateHolding) return;
+    if (phase !== 'content' || !contextsReady) return;
     const started = contentStartRef.current ?? Date.now();
     const remaining = Math.max(0, CONTENT_HOLD_MS - (Date.now() - started));
     const tm = setTimeout(fadeOut, remaining);
     return () => clearTimeout(tm);
-  }, [phase, contextsReady, gateHolding, fadeOut]);
+  }, [phase, contextsReady, fadeOut]);
 
   // Hard safety cap — force away even if something never signals ready.
   useEffect(() => {
-    if (gateHolding) return;   // first-open gate owns its own exits (8s pending watchdog, 3s grace)
     const cap = setTimeout(fadeOut, MAX_VISIBLE_MS);
     return () => clearTimeout(cap);
-  }, [fadeOut, gateHolding]);
+  }, [fadeOut]);
 
   // Stage-2 content (only computed/shown once resolved).
   const idx = rot != null ? lineIndexFor(rot) : 0;
@@ -386,9 +379,6 @@ export default function LoadingOverlay({ appReady, onHide }: Props) {
           The ads notice sits ABOVE the bar (owner 2026-09-06). */}
       {isNewUser && (
         <View style={styles.progressWrap} pointerEvents="none">
-          <Text style={[styles.adsNotice, onContent && onPhoto && { color: 'rgba(255,255,255,0.82)' }, onContent && onPhoto && styles.shadow]}>
-            {t('loading.adsNotice')}
-          </Text>
           <View style={[styles.progressTrack, onContent && onPhoto && styles.progressTrackOnPhoto]}>
             <View style={[styles.progressFill, { width: `${progress}%` }]} />
           </View>
@@ -493,10 +483,6 @@ const styles = StyleSheet.create({
   },
   progressFill: { height: '100%', borderRadius: 3.5, backgroundColor: ROSE },
   progressTrackOnPhoto: { backgroundColor: 'rgba(255,255,255,0.28)' },
-  adsNotice: {
-    marginBottom: 9, fontSize: 11.5, color: TXTSUB,   // sits ABOVE the bar (owner 2026-09-06)
-    fontFamily: FONTS.lato, letterSpacing: 0.3,
-  },
   progressPct: {
     marginTop: 10, fontFamily: FONTS.merriweatherBold, fontSize: 13,
     fontWeight: '700', letterSpacing: 0.3, color: TXTSUB,

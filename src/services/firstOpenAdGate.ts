@@ -1,8 +1,16 @@
 import { onInterstitialVisibility, isInterstitialVisible } from './interstitialVisibility';
 
-// First-open loading-screen ad gate (owner 2026-08-22): a brand-new user's
-// LoadingOverlay holds until the GMA SDK has initialized AND the first-open
-// interstitial got its answer — the goal is one ad DURING loading.
+// ⚠️ RETIRED as of 1.6.1 (owner 2026-09-06): loading NEVER waits for an ad
+// anymore — nothing calls startFirstOpenAdGate, so this gate sits in 'idle'
+// forever and every guarded gateSignal* emission in ads.ts / adEngine.ts is a
+// no-op. The first-open interstitial shows during the onboarding
+// questionnaire instead (OnboardingFlow.goNext retries each transition).
+// The module is kept because those emission call sites are wired through
+// firstOpenGateActive() and ripping them out of the ad engine buys nothing.
+//
+// Original design (owner 2026-08-22): a brand-new user's LoadingOverlay held
+// until the GMA SDK had initialized AND the first-open interstitial got its
+// answer — the goal was one ad DURING loading.
 //
 // States and their exits:
 //   idle    — gate never started (returning user) → overlay ignores it.

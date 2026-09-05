@@ -486,7 +486,6 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'wellDone.v4':                   { en: 'Thy word have I hid in mine heart, that I might not sin against thee.', context: 'Verse 4 of 5.' },
   'wellDone.r5':                   { en: 'Isaiah 40:8', context: 'Verse reference 5 of 5.' },
   'wellDone.v5':                   { en: 'The grass withereth, the flower fadeth: but the word of our God shall stand for ever.', context: 'Verse 5 of 5.' },
-  'loading.adsNotice':             { en: 'This process may contain ads.', context: 'Tiny line under the first-run loading progress bar, disclosing that an ad may show during loading. Owner-specified copy (his message said “progress”; normalized to “process”).' },
   'sharePromo.message':            { en: "I've been using Her Bible for my daily verses, prayers and reading plans — I think you'll love it too! {url}", context: 'System share-sheet message when she taps the home-screen share-our-app card. {url} is the store link (may be empty on iOS lookup failure — message must read complete without it).' },
   'sharePromo.fallbackTitle':      { en: 'Love Her Bible?', context: 'Title on the share-promo card’s offline fallback (pink gradient box shown only when the CDN image cannot load).' },
   'sharePromo.fallbackBody':       { en: "Help us spread God's Word — tap to share the app with friends and family.", context: 'Body on the share-promo offline fallback. Tapping still opens the share sheet.' },
@@ -1349,7 +1348,8 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'about.contact.email.intro':     { en: 'For any other suggestions or issues, our email is:', context: 'Sentence introducing the support email on About Us (duplicate of about.emailIntro — kept for clarity of placement). Use the same translation in both.' },
 
   // ─── Final cleanup pass — strings flagged by screen agents ───────────────
-  'bibleReader.chapterLoadError':  { en: 'Failed to load chapter: {error}', context: 'Inline red-text error shown in the Bible reader when chapter JSON fetch fails. {error} is the error message string.' },
+  'bibleReader.chapterLoadError':  { en: 'Could not load this chapter. Check your connection and try again.', context: 'Friendly inline error in the Bible reader when the chapter fetch fails (raw error strings like "Aborted" must never reach the user — owner 2026-09-06).' },
+  'bibleReader.chapterRetry':      { en: 'Try again', context: 'Retry pill under the chapter load error.' },
   'toast.saved':                   { en: 'Saved',          context: 'Single-word confirmation toast (e.g. after tapping the bookmark icon).' },
   'toast.removed':                 { en: 'Removed',        context: 'Single-word toast after unsaving a verse.' },
   'verseNote.toast.saved':         { en: 'Saved',          context: 'Toast after saving a note attached to a verse.' },

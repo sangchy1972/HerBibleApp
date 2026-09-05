@@ -71,11 +71,24 @@
 //   for 30,836 verses + Claude-filled devotionals for the 266 gap verses).
 export const CORPUS_COMMIT = 'e9df0306d76c8b1bf66aae71fc6e93ed8622c8cc';
 
-// Root of the corpus tree (no `/bibles` suffix). Use this when reading
-// non-Bible payloads like commentary or any future cross-bible asset. The
-// existing `CORPUS_CDN_BASE` below appends `/bibles` for backward compat
-// with every fetchTranslation/fetchChapter call site.
+// ── Dual-source since 1.6.1 (owner incident 2026-09-06) ────────────────────
+// jsDelivr is intermittently unreachable from mainland China: on build 36 the
+// Bible reader and Gospel & Psalm sat EMPTY for minutes (book lists 0/0,
+// chapters "Aborted") while plans — served from our own Cloudflare domain —
+// loaded instantly. The corpus tree (bibles/ + commentary/) is now mirrored
+// into our R2 bucket under a commit-versioned, immutable prefix
+// (scripts/upload_corpus_r2.sh), and the app reads OUR domain first;
+// bibleService falls back to jsDelivr per-request if the mirror ever fails.
+// When CORPUS_COMMIT bumps: run the mirror script for the new commit FIRST,
+// then update both constants here in the same change.
+const CORPUS_SHORT = CORPUS_COMMIT.slice(0, 8);
+
+// Root of the corpus tree (no `/bibles` suffix) — OUR mirror, the primary.
 export const CORPUS_CDN_ROOT =
+  `https://verses.everlandapps.com/corpus/${CORPUS_SHORT}`;
+
+// jsDelivr root — the per-request fallback (see bibleService.fetchJson).
+export const CORPUS_FALLBACK_ROOT =
   `https://cdn.jsdelivr.net/gh/sangchy1972/pd-text-corpus@${CORPUS_COMMIT}`;
 
 export const CORPUS_CDN_BASE =

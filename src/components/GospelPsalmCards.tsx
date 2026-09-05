@@ -1,30 +1,44 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { ROSE, LAV, TXT, TXTSUB, FONTS } from '../constants/theme';
 import { useGospelsPsalms, type Slot } from '../state/GospelsPsalmsContext';
 import { useTranslation } from '../state/TranslationsContext';
 import { localizeBookName } from '../constants/bibleBookNames';
 import { useT } from '../i18n/useT';
+import { gpGospelHeroUrl, gpPsalmHeroUrl } from '../constants/gpHeroImages';
 
 // Home-screen entry for the 89-day Gospels & Psalms plan. Two cards (Morning +
-// Evening) built to MATCH PlanProgressCard byte-for-byte — same card metrics
-// (white, 12.7 radius, 11.4/12 padding, soft shadow), same 92.15² left tile,
-// and the SAME meta typography (label 13 Lato, title 16 Lato-bold / 21 line)
-// so this section reads as one continuous stack with "Plans In Progress".
+// Evening). Historically byte-matched PlanProgressCard; the left tile has
+// since diverged on purpose (owner 2026-09-05): it now shows the DAY'S OWN
+// chapter art (morning = the gospel chapter's piece, evening = the evening
+// psalm's) at 4:3 instead of the square sunrise/moon glyph tile — the glyph
+// tile stays underneath as loading/offline fallback. Meta typography still
+// matches the plan cards so the stack reads as one family.
 const GREEN = '#3FAE6A';
 
-function SlotCard({ slot, done, title, subtitle, onPress }: {
-  slot: Slot; done: boolean; title: string; subtitle: string; onPress: () => void;
+function SlotCard({ slot, done, title, subtitle, art, onPress }: {
+  slot: Slot; done: boolean; title: string; subtitle: string; art: string | null; onPress: () => void;
 }) {
   const accent = slot === 'morning' ? ROSE : LAV;
   const t = useT();
+  // Art failure (offline first day, CDN hiccup) falls back to the glyph tile
+  // underneath; reset when the day rolls over and the url changes.
+  const [artBroken, setArtBroken] = useState(false);
+  useEffect(() => { setArtBroken(false); }, [art]);
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
-      {/* Left tile — same 92.15² footprint as the plan cover, tinted with the
-          slot accent and centring the sunrise/moon glyph. */}
+      {/* Left tile — 4:3 chapter art over the tinted glyph fallback. */}
       <View style={[styles.tile, { backgroundColor: `${accent}1A` }]}>
         <Feather name={slot === 'morning' ? 'sunrise' : 'moon'} size={34} color={accent} />
+        {art != null && !artBroken && (
+          <Image
+            source={{ uri: art }}
+            style={styles.tileArt}
+            resizeMode="cover"
+            onError={() => setArtBroken(true)}
+          />
+        )}
       </View>
       <View style={styles.meta}>
         {/* Top row mirrors PlanProgressCard's "Day N" row metrics. */}
@@ -77,8 +91,8 @@ export default function GospelPsalmCards({ onOpen }: { onOpen: (slot: Slot) => v
     <View>
       <Text style={styles.sectionTitle}>{t('gp.section')}</Text>
       {ready && planComplete && <Text style={styles.completeNote}>{t('gp.planComplete')}</Text>}
-      <SlotCard slot="morning" done={ready && (morning.doneToday || morning.complete)} title={cardTitle} subtitle={mSub} onPress={() => onOpen('morning')} />
-      <SlotCard slot="evening" done={ready && (evening.doneToday || evening.complete)} title={cardTitle} subtitle={eSub} onPress={() => onOpen('evening')} />
+      <SlotCard slot="morning" done={ready && (morning.doneToday || morning.complete)} title={cardTitle} subtitle={mSub} art={ready ? gpGospelHeroUrl(morning.today.gospel) : null} onPress={() => onOpen('morning')} />
+      <SlotCard slot="evening" done={ready && (evening.doneToday || evening.complete)} title={cardTitle} subtitle={eSub} art={ready ? gpPsalmHeroUrl(evening.today.eveningPsalm) : null} onPress={() => onOpen('evening')} />
     </View>
   );
 }
@@ -87,16 +101,20 @@ const styles = StyleSheet.create({
   // Matches PrayerScreen.sectionTitle ("Plans In Progress") so the heading is identical.
   sectionTitle: { fontSize: 19.85, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold },
   completeNote: { fontSize: 13, color: '#3FAE6A', fontFamily: FONTS.latoBold, letterSpacing: 0.4, marginTop: 4 },
-  // card byte-matches PlanProgressCard.
+  // card metrics started as PlanProgressCard's; padding re-raised 2026-09-05
+  // (+10 % card height per user, to let the new art tile breathe).
   card: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
     backgroundColor: '#FFFFFF', borderRadius: 20,
-    paddingVertical: 10.26, paddingHorizontal: 12, marginTop: 12,                // 11.4 × 0.9 (-10 % card height per user; text unchanged)
+    paddingVertical: 11.29, paddingHorizontal: 12, marginTop: 12,                // 10.26 × 1.1 (+10 % per user 2026-09-05)
   },
   tile: {
-    width: 82.01, height: 82.01, borderRadius: 10,                              // 92.15 × 0.89 (-11 % per user)
+    width: 120.28, height: 90.21, borderRadius: 10,                             // 4:3, height 82.01 × 1.1 (art tile per user 2026-09-05)
     alignItems: 'center', justifyContent: 'center',
+    overflow: 'hidden',                                                          // clips the art to the tile's radius
   },
+  // Chapter art over the glyph tile; same rounding via the parent's clip.
+  tileArt: { ...StyleSheet.absoluteFillObject },
   meta: { flex: 1, minWidth: 0 },
   // labelRow matches PlanProgressCard.dayRow (gap 6, marginBottom 6).
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },

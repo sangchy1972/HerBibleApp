@@ -1281,7 +1281,9 @@ above the Account block; merger in `services/progressMerge.ts`; tests
   evening psalm's, morning psalm's piece sits above its own section. Split
   psalms without range art (105/106/119) fall back to the whole-psalm piece.
   The prayer background stays layered underneath as placeholder + offline
-  fallback; art failures degrade, never blank. Convert+upload:
+  fallback; art failures degrade, never blank. The HOME cards
+  (GospelPsalmCards) use the same art in their left tile — 4:3, card +10 %
+  (owner 2026-09-05), glyph tile kept underneath as fallback. Convert+upload:
   `scripts/upload_gp_heroes.sh` (sips 1280px q72 JPEG from the owner's PNG
   set). Re-cut art bumps /v1/ → /v2/ in BOTH the script and gpHeroImages.ts —
   never same-name overwrites.

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Dimensions,
-  Keyboard, Platform, Linking, Modal, AppState, BackHandler,
+  Keyboard, Platform, Linking, Modal, AppState,
   type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent,
 } from 'react-native';
 import * as Notifications from 'expo-notifications';
@@ -80,7 +80,6 @@ const LISTEN_GUIDE_KEY = 'listenGuide:v1';
 // One-shot coach for the verse page's ⓘ (context note). Burned on display,
 // same rationale as the listen guide: a force-quit mid-guide must not hand
 // her the same lifetime show again.
-const CTX_GUIDE_KEY = 'guide:contextNote:v1';
 async function loadListenGuide(): Promise<ListenGuidePersisted> {
   try {
     const raw = await AsyncStorage.getItem(LISTEN_GUIDE_KEY);
@@ -387,26 +386,21 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const verseRef = refSource ? localizeReference(translation.code, refSource) : '';
   const verseText = dailyVerse?.modernText || '';
 
-  // ── Context-note (ⓘ) dialog + its one-shot coach ─────────────────────────
-  const [showCtxNote, setShowCtxNote] = useState(false);
-  const ctxInfoRef = useRef<View>(null);
-  const measureCtxInfo = useCallback(() => measureRefInWindow(ctxInfoRef), []);
-  const [ctxGuideUp, setCtxGuideUp] = useState(false);
-  const openContextNote = useCallback(() => {
-    // She did the thing the coach asks for — drop it before the dialog paints.
-    setCtxGuideUp(false);
-    setShowCtxNote(true);
-  }, []);
-  // Android hardware back over the dialog closes IT — without this the press
-  // bubbles to the navigator and exits the whole prayer flow (swarm F4).
-  useEffect(() => {
-    if (!showCtxNote) return;
-    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      setShowCtxNote(false);
-      return true;
-    });
-    return () => sub.remove();
-  }, [showCtxNote]);
+  // ── Context-note page (owner 2026-09-05: a full page, not a ⓘ dialog) ────
+  // When today's entry carries a context_note (batch 2+), the flow gains a
+  // fifth page right after the verse: verse → context → meditation → action
+  // → prayer. Batch-1-cache/holiday entries have none and keep 4 pages.
+  // INVARIANT the narration wiring leans on: narration and this page cannot
+  // co-occur today — both AVAILABLE_*_AUDIO_LANGS sets are empty, and the
+  // batch-2 entries that HAVE notes are exactly the ones with no recordings —
+  // so the `listenStep === page` identity on the deep pages stays valid.
+  // Re-enabling narration must add a page→step map that skips this page
+  // (checklist in dailyVerseAudioCdn.ts).
+  const hasCtxPage = !!dailyVerse?.contextNote;
+  const medIdx = hasCtxPage ? 2 : 1;
+  const actIdx = hasCtxPage ? 3 : 2;
+  const prayIdx = hasCtxPage ? 4 : 3;
+  const pageCount = hasCtxPage ? 5 : 4;
 
   // Verse action-row state — same trio of affordances as the home verse
   // card (Save / Notes / Share). The Save toggle mirrors the home card's
@@ -538,14 +532,16 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // Each page that can overflow has its own inner ScrollView. Reset whichever
   // one is no longer active so swiping back into it lands on its caption,
   // not on whatever scroll offset the user last left there.
+  const ctxScrollRef = useRef<ScrollView>(null);
   const meditationScrollRef = useRef<ScrollView>(null);
   const actionScrollRef = useRef<ScrollView>(null);
   const prayerScrollRef = useRef<ScrollView>(null);
   useEffect(() => {
-    if (page !== 1) meditationScrollRef.current?.scrollTo({ y: 0, animated: false });
-    if (page !== 2) actionScrollRef.current?.scrollTo({ y: 0, animated: false });
-    if (page !== 3) prayerScrollRef.current?.scrollTo({ y: 0, animated: false });
-  }, [page]);
+    if (hasCtxPage && page !== 1) ctxScrollRef.current?.scrollTo({ y: 0, animated: false });
+    if (page !== medIdx) meditationScrollRef.current?.scrollTo({ y: 0, animated: false });
+    if (page !== actIdx) actionScrollRef.current?.scrollTo({ y: 0, animated: false });
+    if (page !== prayIdx) prayerScrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [page, hasCtxPage, medIdx, actIdx, prayIdx]);
 
   // ── Daily-verse "listen / 导读" narration (English only) ────────────────
   // A SECOND, independent audio player layered over the looping background
@@ -803,28 +799,6 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listenOk, readUris]);
 
-  // Decide the ⓘ coach ONCE per flow, only while the verse page (page 0) is
-  // showing and the icon actually rendered — spotlighting absent chrome is
-  // the exact failure the listen guide's comment warns about. One lifetime
-  // show, burned on display. No arbitration needed with the listen coach in
-  // practice (narration is disabled while batch 2 has no audio), but the
-  // render below still yields to it defensively.
-  const ctxGuideDecidedRef = useRef(false);
-  useEffect(() => {
-    if (ctxGuideDecidedRef.current) return;
-    if (page !== 0 || !dailyVerse?.contextNote) return;
-    ctxGuideDecidedRef.current = true;
-    let live = true;
-    (async () => {
-      const seen = await AsyncStorage.getItem(CTX_GUIDE_KEY).catch(() => null);
-      if (!live || seen === '1') return;
-      AsyncStorage.setItem(CTX_GUIDE_KEY, '1').catch(() => {});
-      setCtxGuideUp(true);
-    })();
-    return () => { live = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, dailyVerse?.contextNote]);
-
   const noteListenStarted = useCallback(() => {
     usedListenRef.current = true;
     if (listenLoggedRef.current) return;   // once per flow, not once per resume
@@ -928,9 +902,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   const onPageSelected = (e: { nativeEvent: { position: number } }) => {
     const landed = e.nativeEvent.position;
     setPage(landed);
-    const inner = landed === 1 ? meditationScrollRef
-      : landed === 2 ? actionScrollRef
-      : landed === 3 ? prayerScrollRef
+    const inner = landed === medIdx ? meditationScrollRef
+      : landed === actIdx ? actionScrollRef
+      : landed === prayIdx ? prayerScrollRef
+      : hasCtxPage && landed === 1 ? ctxScrollRef
       : null;
     inner?.current?.scrollTo({ y: 0, animated: false });
     if (listenOn && landed !== listenStep) {
@@ -1441,10 +1416,10 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
 
       {!amened && (
         <View style={styles.progressDots}>
-          {SECTIONS.map((_, i) => (
+          {Array.from({ length: pageCount }).map((_, i) => (
             <PageDot key={i} isActive={i === page} isPast={i < page} />
           ))}
-          <Text style={styles.pageCount}>{page + 1} / {SECTIONS.length}</Text>
+          <Text style={styles.pageCount}>{page + 1} / {pageCount}</Text>
         </View>
       )}
 
@@ -1471,17 +1446,6 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
                   it keep the plain reference line. */}
               <View style={styles.pageRefRow}>
                 <Text style={[styles.pageRef, styles.pageRefInRow]}>{verseRef}</Text>
-                {!!dailyVerse?.contextNote && (
-                  <TouchableOpacity
-                    ref={ctxInfoRef}
-                    onPress={openContextNote}
-                    hitSlop={10}
-                    activeOpacity={0.7}
-                    accessibilityLabel={t('prayerFlow.ctx.a11y')}
-                  >
-                    <Feather name="info" size={17} color="rgba(255,255,255,0.92)" />
-                  </TouchableOpacity>
-                )}
               </View>
               <NarratedBody
                 player={readPlayer}
@@ -1511,6 +1475,32 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
             </Animated.View>
           </View>
 
+          {/* Context page — the verse's background note as its own reading
+              page (owner 2026-09-05; replaces the old ⓘ dialog + coach).
+              Conditional child: PagerView only carries it when the entry has
+              a note, so batch-1 cache / holiday days keep the 4-page flow.
+              No NarratedBody — this page has no narration step by design
+              (see the hasCtxPage invariant above). */}
+          {hasCtxPage && (
+            <View key="context" style={styles.pagerPage}>
+              <ScrollView
+                ref={ctxScrollRef}
+                showsVerticalScrollIndicator={false}
+                nestedScrollEnabled
+                overScrollMode="never"   // see meditation page — one-swipe page hand-off
+                bounces={false}          // iOS counterpart — see meditation page
+                {...deepPageScrollProps(1)}
+                style={styles.pageScroll}
+                contentContainerStyle={styles.pageScrollContent}
+              >
+                <Animated.View style={[styles.pageContent, { paddingTop: insets.top + DEEP_PAGE_TOP }]}>
+                  <Text style={[styles.pageCaption, styles.deepPageCaption]}>{t('prayerFlow.ctxGuide.title')}</Text>
+                  <Text style={[styles.pageBody, styles.prayerBody]}>{dailyVerse?.contextNote}</Text>
+                </Animated.View>
+              </ScrollView>
+            </View>
+          )}
+
           <View key="meditation" style={styles.pagerPage}>
             {/* Inner ScrollView for long reflections. nestedScrollEnabled keeps
                 Android scrolling this content first; PagerView natively hands the
@@ -1531,7 +1521,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               // gesture pass straight to PagerView in one swipe.
               bounces={false}
               // Drives the page hand-off from JS — see the EDGE HAND-OFF note.
-              {...deepPageScrollProps(1)}
+              {...deepPageScrollProps(medIdx)}
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >
@@ -1567,7 +1557,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               nestedScrollEnabled
               overScrollMode="never"   // see meditation page — one-swipe page hand-off
               bounces={false}          // iOS counterpart — see meditation page
-              {...deepPageScrollProps(2)}
+              {...deepPageScrollProps(actIdx)}
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >
@@ -1602,7 +1592,7 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
               nestedScrollEnabled
               overScrollMode="never"   // see meditation page — one-swipe page hand-off
               bounces={false}          // iOS counterpart — see meditation page
-              {...deepPageScrollProps(3)}
+              {...deepPageScrollProps(prayIdx)}
               style={styles.pageScroll}
               contentContainerStyle={styles.pageScrollContent}
             >
@@ -1747,39 +1737,6 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
           already hidden and the hole would frame nothing.
           `focused` is hardcoded true: PrayerFlow is a fullScreenModal the user is
           looking at, not a tab screen that can lose focus behind another. */}
-      {ctxGuideUp && !amened && !listenGuideUp && (
-        <SpotlightCoach
-          focused={page === 0}
-          measure={measureCtxInfo}
-          pad={10}
-          radius={22}
-          title={t('prayerFlow.ctxGuide.title')}
-          body={t('prayerFlow.ctxGuide.body')}
-          primaryLabel={t('prayerFlow.ctxGuide.cta')}
-          // Let her tap the ⓘ through the hole — openContextNote drops the
-          // coach itself before the dialog paints over it.
-          interactiveHole
-          onPrimary={() => setCtxGuideUp(false)}
-          onSkip={() => setCtxGuideUp(false)}
-          onUnmeasurable={() => setCtxGuideUp(false)}
-        />
-      )}
-
-      {showCtxNote && !!dailyVerse?.contextNote && (
-        <View style={styles.ctxDlgOverlay}>
-          <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={() => setShowCtxNote(false)} />
-          <View style={styles.ctxDlgCard}>
-            <Text style={styles.ctxDlgTitle}>{verseRef}</Text>
-            <ScrollView style={styles.ctxDlgScroll} showsVerticalScrollIndicator={false}>
-              <Text style={styles.ctxDlgBody}>{dailyVerse.contextNote}</Text>
-            </ScrollView>
-            <TouchableOpacity onPress={() => setShowCtxNote(false)} style={styles.ctxDlgBtn} activeOpacity={0.9}>
-              <Text style={styles.ctxDlgBtnText}>{t('prayerFlow.ctxGuide.cta')}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-
       {listenGuideUp && !amened && (
         <SpotlightCoach
           focused
@@ -2135,48 +2092,6 @@ const styles = StyleSheet.create({
   // and verse text; wrapping it in a row must not move it (swarm F1).
   pageRefRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: 8, marginBottom: 27.6 },
   pageRefInRow: { marginBottom: 0 },
-  // Context-note dialog — same house dialog family as the language-switch
-  // and no-network cards (white card, CARD-radius 20, rose pill).
-  ctxDlgOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(20,12,24,0.45)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-    zIndex: 60,
-  },
-  ctxDlgCard: {
-    width: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingTop: 22,
-    paddingBottom: 16,
-    paddingHorizontal: 22,
-  },
-  ctxDlgTitle: {
-    fontSize: 18,
-    fontWeight: '600',                     // loraBold + 600 (never 700 on Android)
-    fontFamily: FONTS.loraBold,
-    color: TXT,
-    marginBottom: 10,
-  },
-  ctxDlgScroll: { maxHeight: 260 },
-  ctxDlgBody: {
-    fontSize: 14.5,
-    lineHeight: 22,
-    color: TXTSUB,
-    fontFamily: FONTS.lato,
-    letterSpacing: 0.3,
-  },
-  ctxDlgBtn: {
-    marginTop: 18,
-    height: 46,
-    borderRadius: BTN_RADIUS,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: ROSE,
-  },
-  ctxDlgBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
   pageVerse: {
     fontFamily: FONTS.merriweather,                                             // matches heroText
     fontSize: 23.09,                                                            // 20.99 → 23.09 (+10 % per user)

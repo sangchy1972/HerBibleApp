@@ -1327,9 +1327,14 @@ above the Account block; merger in `services/progressMerge.ts`; tests
   used to ignore its dir argument and shipped a stale `_cdn_ready` leftover to
   v3/, and the verification curls cached those bytes at the edge. The script
   now honors `$1`; always spot-check a CHANGED entry after any upload.
-- **`context_note`** (schema 3.2): per-language background note behind the ⓘ
-  on the verse page; house dialog + a one-shot SpotlightCoach
-  (`guide:contextNote:v1`, burned on display, yields to the listen coach).
+- **`context_note`** (schema 3.2): per-language background note, rendered as
+  its OWN prayer-flow page right after the verse (owner 2026-09-05 — the
+  earlier ⓘ dialog + one-shot SpotlightCoach are retired; the burned
+  `guide:contextNote:v1` flag is orphaned and harmless). Days with a note run
+  5 pages (verse → context → meditation → action → prayer), days without
+  stay 4; the deep-page indices (`medIdx/actIdx/prayIdx`) shift accordingly.
+  Narration and the context page are mutually exclusive today — re-enabling
+  narration needs a page→step map first (checklist in dailyVerseAudioCdn.ts).
 - **Upstream corpus defects** found by content-side: de ×2 (Ps 119:105
   `meine→meines`, Isa 25:1 `dein→deine`) + es/pt ×7 from batch 1 — fix in
   pd-text-corpus then bump `CORPUS_COMMIT` AND the verify script's pin;

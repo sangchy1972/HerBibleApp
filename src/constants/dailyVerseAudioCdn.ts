@@ -40,6 +40,12 @@ export const DAILY_VERSE_AUDIO_LANG = 'en';
 // references). When batch-2 audio lands: run
 // scripts/gen_dailyverse_audio_manifest.mjs against the new files, probe
 // full coverage (check_daily_verse_audio.sh), THEN re-add languages here.
+// ⚠️ ALSO: the prayer flow now inserts a CONTEXT page after the verse when
+// the entry has a context_note (PrayerFlow hasCtxPage, 2026-09-05). The
+// narration wiring still assumes listenStep === page — valid only while
+// narration and that page are mutually exclusive. Before re-adding langs,
+// give PrayerFlow a page→step map that skips the context page (it has no
+// clip), or five-page days will narrate the wrong text.
 // This set gates ONLY the regular daily-verse narration — holiday narration
 // has its own set below (separate folder, separate manifest, untouched by
 // batch 2; emptying this one must never silence the holidays again).

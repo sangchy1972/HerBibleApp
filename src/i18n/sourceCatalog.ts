@@ -1445,10 +1445,7 @@ export const SOURCE_CATALOG: Record<string, CatalogEntry> = {
   'listenGuide.cta':               { en: 'Got it', context: 'The single button on that coach mark; dismisses it. MUST stay short — it is a small pill in the corner of a bubble. Two words at most, ideally one. Not "OK" (too curt) and not a full sentence.' },
 
   // ─── Verse context note (ⓘ on the daily-verse page) ─────────────────────
-  'prayerFlow.ctxGuide.title':     { en: 'The story behind this verse', context: 'Title of the one-time coach mark spotlighting the ⓘ icon next to the daily verse reference.' },
-  'prayerFlow.ctxGuide.body':      { en: 'Tap here to see when and why these words were written.', context: 'Body of that coach mark. One sentence; invites a tap on the ⓘ.' },
-  'prayerFlow.ctxGuide.cta':       { en: 'Got it', context: 'Single dismiss button on the ⓘ coach mark AND on the context-note dialog. Short.' },
-  'prayerFlow.ctx.a11y':           { en: 'About this verse', context: 'Accessibility label of the ⓘ icon that opens the verse background note.' },
+  'prayerFlow.ctxGuide.title':     { en: 'The story behind this verse', context: 'Caption of the context-note page — the verse background note rendered as its own prayer-flow page right after the verse (owner 2026-09-05; formerly a ⓘ dialog).' },
 
   // ─── Full-screen reminder flow ───────────────────────────────────────────
   // ReminderTimeScreen (cream ground, rose CTA) then, if she declines the OS

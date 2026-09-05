@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ImageBackground,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, ImageBackground, Image,
   ActivityIndicator, AppState,
   type NativeSyntheticEvent, type NativeScrollEvent, type LayoutChangeEvent,
 } from 'react-native';
@@ -11,7 +11,8 @@ import * as Clipboard from 'expo-clipboard';
 import { useAudioPlayer } from 'expo-audio';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ROSE, LAV, TXT, TXTSUB, P, FONTS, BTN_RADIUS } from '../constants/theme';
+import { ROSE, LAV, TXT, TXTSUB, P, FONTS, BTN_RADIUS, CARD_RADIUS } from '../constants/theme';
+import { gpGospelHeroUrl, gpPsalmHeroUrl } from '../constants/gpHeroImages';
 import { useGospelsPsalms, type Slot } from '../state/GospelsPsalmsContext';
 import { usePrayerBackgrounds } from '../state/PrayerBackgroundsContext';
 import { useTranslation } from '../state/TranslationsContext';
@@ -25,8 +26,9 @@ import { GOSPELS_PSALMS_PLAN, type PsalmRef, type GPlanDay } from '../constants/
 
 // Gospel & Psalm reader. Morning shows a Gospel chapter + a Psalm; Evening
 // shows the Psalm alone. Layout mirrors the daily-verse reading screen the
-// user referenced: hero photo (morning = Verse-of-Day image, evening =
-// Verse-of-Night image) → section title + reference rule → serif body, with
+// user referenced: hero art (per-chapter piece from gpHeroImages, layered
+// over the slot's prayer background as instant placeholder + offline
+// fallback) → section title + reference rule → serif body, with
 // share / copy actions, a background-music toggle in the header, and an Amen
 // button that marks the slot done. All colours/fonts are the app's own.
 
@@ -145,6 +147,11 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
     f(d.gospel.bookSlug, d.gospel.chapter);
     f('psalms', d.morningPsalm.chapter);
     f('psalms', d.eveningPsalm.chapter);
+    // Hero art rides the same warm: RN's native disk cache holds it, so the
+    // no-signal-subway day gets its pictures along with its text.
+    Image.prefetch(gpGospelHeroUrl(d.gospel)).catch(() => {});
+    Image.prefetch(gpPsalmHeroUrl(d.morningPsalm)).catch(() => {});
+    Image.prefetch(gpPsalmHeroUrl(d.eveningPsalm)).catch(() => {});
   }, [translation.code, translation.source]);
   useEffect(() => {
     // Warm BOTH slots' current day + their tomorrows — the two slots may sit
@@ -156,6 +163,17 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
   }, [mView.today, mView.day, eView.today, eView.day, total, warmDay]);
 
   const heroImg = useMemo(() => prayerBg.imageFor(slot), [prayerBg, slot]);
+
+  // Per-chapter hero art (owner 2026-09-05). Morning hero = the day's Gospel
+  // chapter piece; evening hero = the evening Psalm's. The morning Psalm gets
+  // its own piece above its section (that's where the Psalm-18 range art
+  // lands, days 29/30). The prayer background stays underneath as instant
+  // placeholder + offline fallback; a failed load just leaves it showing.
+  const chapterArtUrl = morning ? gpGospelHeroUrl(today.gospel) : gpPsalmHeroUrl(today.eveningPsalm);
+  const psalmArtUrl = morning ? gpPsalmHeroUrl(today.morningPsalm) : null;
+  const [chapterArtBroken, setChapterArtBroken] = useState(false);
+  const [psalmArtBroken, setPsalmArtBroken] = useState(false);
+  useEffect(() => { setChapterArtBroken(false); setPsalmArtBroken(false); }, [chapterArtUrl, psalmArtUrl]);
 
   // Copy the WHOLE reading (all sections) — replaces the old per-section share,
   // which used the verse-card template that truncated the long Gospel+Psalm.
@@ -243,10 +261,30 @@ export default function GospelPsalmReader({ route, navigation }: RootStackScreen
           onLayout={onScrollLayout}
           onContentSizeChange={onContentSizeChange}
         >
-          <ImageBackground source={heroImg} style={styles.hero} resizeMode="cover" />
+          <ImageBackground source={heroImg} style={styles.hero} resizeMode="cover">
+            {!chapterArtBroken && (
+              <Image
+                source={{ uri: chapterArtUrl }}
+                style={StyleSheet.absoluteFill}
+                resizeMode="cover"
+                onError={() => setChapterArtBroken(true)}
+              />
+            )}
+          </ImageBackground>
 
           {sections.map((s, i) => (
             <Animated.View key={s.caption} entering={FadeIn.duration(320).delay(i * 80)} style={styles.sectionWrap}>
+              {/* Morning's Psalm section carries its own art piece (i === 1 is
+                  the Psalm — morning sections are [gospel, psalm]). No
+                  placeholder block: a failed load collapses to nothing. */}
+              {morning && i === 1 && psalmArtUrl && !psalmArtBroken && (
+                <Image
+                  source={{ uri: psalmArtUrl }}
+                  style={styles.sectionArt}
+                  resizeMode="cover"
+                  onError={() => setPsalmArtBroken(true)}
+                />
+              )}
               <Text style={styles.sectionCaption}>{s.caption}</Text>
               <View style={styles.refRow}>
                 <View style={styles.refLine} />
@@ -386,6 +424,9 @@ const styles = StyleSheet.create({
   retryText: { color: '#fff', fontSize: 15, fontWeight: '700', fontFamily: FONTS.latoBold, letterSpacing: 0.4 },
   hero: { width: '100%', height: 215, backgroundColor: '#EADFE8' },
   sectionWrap: { paddingHorizontal: P + 7, paddingTop: 26 },
+  // Morning-Psalm art piece: inset + rounded like the app's cards, 3:2-ish
+  // crop of the 1280×853 source. Sits above the section caption.
+  sectionArt: { width: '100%', height: 190, borderRadius: CARD_RADIUS, marginBottom: 22, backgroundColor: '#EADFE8' },
   sectionCaption: {
     fontSize: 25, fontWeight: '600', color: TXT, fontFamily: FONTS.loraBold,
     textAlign: 'center', marginBottom: 14,

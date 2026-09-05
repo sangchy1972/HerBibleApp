@@ -1274,6 +1274,17 @@ above the Account block; merger in `services/progressMerge.ts`; tests
   do, re-check the ⓘ-dialog/listen-coach stacking (dialog z60, coaches z90;
   both are one-shots so a collision is rare, but the choreography has never
   been exercised live).
+- **Gospels & Psalms hero art** (2026-09-05): 241 per-chapter pieces at
+  `covers.everlandapps.com/backgrounds/gp/v1/` (89 gospel chapters + 150
+  psalms + Psalm-18's two range pieces), mapped by NAME in
+  `constants/gpHeroImages.ts` — morning hero = gospel piece, evening hero =
+  evening psalm's, morning psalm's piece sits above its own section. Split
+  psalms without range art (105/106/119) fall back to the whole-psalm piece.
+  The prayer background stays layered underneath as placeholder + offline
+  fallback; art failures degrade, never blank. Convert+upload:
+  `scripts/upload_gp_heroes.sh` (sips 1280px q72 JPEG from the owner's PNG
+  set). Re-cut art bumps /v1/ → /v2/ in BOTH the script and gpHeroImages.ts —
+  never same-name overwrites.
 - **Batch numbering is globally continuous from batch 3 on** (owner 2026-09-05):
   batch N covers days (N−1)·60+1 … N·60 (batch 3 = 61–120), id ≡ m_/e_ + day
   padded to three. Batch 2's restart-at-1 was per the old handoff spec — the

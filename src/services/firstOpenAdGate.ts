@@ -33,7 +33,13 @@ import { onInterstitialVisibility, isInterstitialVisible } from './interstitialV
 // double-fire.
 export type FirstOpenGateState = 'idle' | 'pending' | 'shown' | 'grace' | 'network' | 'done';
 
-const PENDING_WATCHDOG_MS = 12_000;
+// 15s, not 12: day-0 initAds now starts 2.5s after interactions settle
+// (DAY0_ADS_INIT_STAGGER_MS in App.tsx — the ANR stagger, owner 2026-09-05),
+// so the watchdog grows by the same budget to keep the ad's effective
+// init+fill window at ~12s. The overlay's MAX_VISIBLE_MS cap is neutered
+// while the gate holds (gateHolding in LoadingOverlay), so no other number
+// needs to move.
+const PENDING_WATCHDOG_MS = 15_000;
 const GRACE_MS = 3_000;
 const POLL_MS = 400;
 

@@ -1491,11 +1491,21 @@ the fleet, never overnight. Families, each with its receipt:
   2. The warmup thread stays for the remaining WebView consumers (UMP's
      consent form is a WebView).
   3. Android ads init (GMA + UMP) deferred 6s past interactions-settled
-     (`ADS_INIT_COLD_START_DELAY_MS`, App.tsx). **Install day is exempt**
-     (swarm finding): onboarding_first must land before onboarding ends, and
-     the fresh install is the slowest init path; the ANR cohort is existing
-     users' daily cold starts. A hot-start return whose excursion fits inside
-     the init window is dropped — known, rare, fail-safe. iOS untouched.
+     (`ADS_INIT_COLD_START_DELAY_MS`, App.tsx). **Install day was fully
+     exempt** (swarm finding): onboarding_first must land before onboarding
+     ends, and the fresh install is the slowest init path; the ANR cohort is
+     existing users' daily cold starts. A hot-start return whose excursion
+     fits inside the init window is dropped — known, rare, fail-safe. iOS
+     untouched. **Amended 2026-09-05 (owner: stability first)**: the full
+     exemption made day-0 initAds land on top of RN's first-frame burst —
+     the last unstaggered heavyweight in the day-0 window and the prime
+     suspect for 1.4.2's residual ANR trickle (7 events/17d, CSV; sporadic,
+     no burst → residual class, not a new pathology). Day-0 now staggers
+     initAds by `DAY0_ADS_INIT_STAGGER_MS` (2.5s) and the first-open gate's
+     pending watchdog grew 12s→15s to keep the ad's fill window whole; the
+     loading overlay already shows verse-on-photo + the ads notice, so the
+     wait is dressed. Verify via Crashlytics ANR (filter day-0 cohort) on
+     the release that ships this.
   **Swarm-review hardening of the hot-start beat (same batch)**: the suppress
   flag is consumed only when it actually decided the outcome (an iOS
   control-center flap during the ~4s TestFlight fallback fetch was burning

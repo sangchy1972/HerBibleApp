@@ -121,11 +121,17 @@ export default function App() {
     // excursion fits inside the init window is silently dropped (rare — needs
     // backgrounding within the first seconds AND ≥15s away), and every second
     // of deferral eats into onboarding_first's once-only window on fresh
-    // installs — which is why install day is EXEMPT below. The ANR cohort is
-    // existing users' daily cold starts; a day-0 device cold-starts in that
-    // state once ever, and keeps the other two layers (cookie-inert client +
-    // WebView warmup).
+    // installs — which is why install day doesn't take the full 6s below. It
+    // used to be fully EXEMPT (initAds immediately), which parked GMA+UMP's
+    // heavy init right on top of RN's own first-frame burst — the last
+    // unstaggered heavyweight in the day-0 window, and the prime suspect for
+    // 1.4.2's residual ANR trickle (owner decision 2026-09-05: stability
+    // first). Day-0 now gets a short stagger instead: the launch peak passes,
+    // the loading-screen ad gate (watchdog 12s→15s in firstOpenAdGate.ts)
+    // keeps the first-open ad's fill window intact, and the ANR cohort keeps
+    // the other two layers (cookie-inert client + WebView warmup).
     const ADS_INIT_COLD_START_DELAY_MS = 6000;
+    const DAY0_ADS_INIT_STAGGER_MS = 2500;
     let adsTimer: ReturnType<typeof setTimeout> | null = null;
     const task = InteractionManager.runAfterInteractions(() => {
       // ATT FIRST, on its own — Apple requires the tracking prompt to appear
@@ -142,9 +148,11 @@ export default function App() {
           adsTimer = setTimeout(() => { adsTimer = null; initAds(); }, ADS_INIT_COLD_START_DELAY_MS);
           Promise.all([isInstallDay(), isFirstOpenUser()]).then(([day0, firstOpen]) => {
             if ((day0 || firstOpen) && adsTimer) {
+              // Re-arm the SAME handle (not a second variable): the unmount
+              // cleanup below clears whatever adsTimer holds, and the
+              // null-on-fire discipline keeps the double-init guard intact.
               clearTimeout(adsTimer);
-              adsTimer = null;
-              initAds();
+              adsTimer = setTimeout(() => { adsTimer = null; initAds(); }, DAY0_ADS_INIT_STAGGER_MS);
             }
           }).catch(() => { /* keep the deferral */ });
         } else {

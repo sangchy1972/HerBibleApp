@@ -1,7 +1,8 @@
 // State-machine tests for the first-open loading-ad gate. The two swarm
 // reviews (2026-08-22) flagged the module as zero-covered; these pin the
 // transitions the owner specified: fill→shown→done, no-fill→3s grace→done,
-// network→hold→recover, 12s silent watchdog, purchaser release.
+// network→hold→recover, 15s silent watchdog (12s + the 2.5s day-0 ads-init
+// stagger budget, see firstOpenAdGate.ts), purchaser release.
 jest.mock('../src/services/ads', () => ({
   areAdsRemoved: jest.fn(() => false),
   maybeShowOnboardingInterstitial: jest.fn(() => false),
@@ -70,7 +71,7 @@ test('fill → shown, ad close → done', () => {
   expect(getFirstOpenGateState()).toBe('done');
 });
 
-test('real no-fill → 3s grace → done; the 12s watchdog no longer applies', () => {
+test('real no-fill → 3s grace → done; the pending watchdog no longer applies', () => {
   startFirstOpenAdGate();
   gateSignalError('nofill');
   expect(getFirstOpenGateState()).toBe('grace');
@@ -93,7 +94,7 @@ test('network holds past every watchdog and recovers on a later fill', () => {
   startFirstOpenAdGate();
   gateSignalError('network');
   expect(getFirstOpenGateState()).toBe('network');
-  jest.advanceTimersByTime(60_000);            // far past the 12s pending watchdog
+  jest.advanceTimersByTime(60_000);            // far past the 15s pending watchdog
   expect(getFirstOpenGateState()).toBe('network');
   ads.maybeShowOnboardingInterstitial.mockImplementation(() => { vis.__setVisible(true); return true; });
   gateSignalFill();
@@ -109,9 +110,11 @@ test('network → later real no-fill falls into the 3s grace', () => {
   expect(getFirstOpenGateState()).toBe('done');
 });
 
-test('12 silent seconds in pending give up', () => {
+test('15 silent seconds in pending give up', () => {
   startFirstOpenAdGate();
-  jest.advanceTimersByTime(12_000);
+  jest.advanceTimersByTime(14_999);
+  expect(getFirstOpenGateState()).toBe('pending');
+  jest.advanceTimersByTime(1);
   expect(getFirstOpenGateState()).toBe('done');
 });
 

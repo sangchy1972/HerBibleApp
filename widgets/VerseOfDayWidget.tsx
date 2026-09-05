@@ -99,7 +99,11 @@ export function VerseOfDayWidget({
   // Wide bumps verse body for the extra real estate; compact shrinks the
   // eyebrow/ref since the verse body is dropped.
   const eyebrowSize = compact ? 11.8 : 13.9;   // 11 / 13 × 1.07
-  const bodySize = wide ? 20.3 : 18.7;         // 19 / 17.5 × 1.07
+  // Verse body only −4% (owner 2026-09-06: the block read crowded). NOTE:
+  // the requested line-spacing −8% is NOT possible — RemoteViews TextView
+  // line spacing isn't exposed by react-native-android-widget (fontSize /
+  // letterSpacing only); the size cut shrinks the leading proportionally.
+  const bodySize = wide ? 19.5 : 18;           // 20.3 / 18.7 × 0.96
   const refSize = compact ? 13.9 : 15;         // 13 / 14 × 1.07
   const iconSize = compact ? 16 : 20;
   const appIconSize = compact ? 15 : 18;

@@ -38,8 +38,9 @@ export default function WidgetPreview({ size, width, body, reference, segment = 
   const resolvedReference = reference ?? t('widgetPreview.sampleRef');
   const compact = size === '2x2';
   const src = bgSource ?? (segment === 'evening' ? EVENING_BG : MORNING_BG);
-  // ×1.07 pass mirrors the live widget (owner 2026-09-05).
-  const bodySize = compact ? 15 : size === '5x2' ? 19.3 : 17.1;
+  // ×1.07 pass mirrors the live widget (owner 2026-09-05); verse body then
+  // −4% (owner 2026-09-06) — keep in lockstep with VerseOfDayWidget.
+  const bodySize = compact ? 14.4 : size === '5x2' ? 18.5 : 16.4;
 
   return (
     <View style={[styles.shell, { aspectRatio: ASPECTS[size], width: width ?? '100%' }]}>

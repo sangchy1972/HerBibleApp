@@ -1572,6 +1572,40 @@ dispatching timed out (No focused window)`. Verdicts, each from its exported tra
 crashes carry no app frames — this key is the only attribution the next occurrence
 will have. Filter by it in Crashlytics before theorizing.
 
+### Crash 2026-08-31 (1.4.2 (32)) — `IllegalStateException: targetPackageName is null`, HsdpShimActivity
+Google's Play `hsdp` library (transitive dep of `play-services-ads` — we never
+reference it) ships `HsdpShimActivity`, which validates
+`intent.getStringExtra("target_package_name")` only in `onAttachedToWindow` and
+throws when it's missing → process death. **No upgrade exit** (receipts
+2026-09-05): GMA 25.4.0 (latest; what RNGMA 16.4.0 pins) still declares hsdp
+2.0.1 in `play-services-ads-api`'s POM, and a javap diff of hsdp 2.0.1 vs 2.1.0
+(latest) shows the identical unguarded throw; the launch-intent construction
+lives outside our APK (Play/GMA side). FIXED app-side:
+`plugins/withHsdpCrashGuard.js` registers ActivityLifecycleCallbacks in
+MainApplication and `finish()`es exactly the doomed configuration (shim created
+with the extra null) in `onActivityCreated`, before the window can attach —
+launches carrying the extra are untouched. Verify: issue 80e49a5e stays at zero
+events on builds ≥36. Drop the guard only when a future hsdp's shim handles the
+null itself (re-run the javap check on upgrade).
+
+### Crash 2026-09-04 (1.4.2 (32)) — `OutOfMemoryError` in `RNWidget.drawViewToBitmap`
+`react-native-android-widget` 0.20.3 renders the home-screen widget by drawing
+its view tree into an ARGB_8888 bitmap; the `Bitmap.createBitmap` at
+RNWidget.java:137 is unguarded, and the module entry points catch only
+`Exception` — an OOM (an `Error`) escapes and kills the process. Trigger is
+heap-pressure timing, not payload: our widget bg is server-cropped to 384×192
+(`widgetBgUrlFor`), tiny; the redraw just landed while the app's heap was full
+(images/ads). FIXED via `patches/react-native-android-widget+0.20.3.patch`
+(patch-package, applied by the existing `postinstall`): (1) `drawViewToBitmap`
+catches OOM and retries at half resolution (¼ memory; launcher upscales), then
+converts a second OOM into a checked Exception; (2) all three
+`AndroidWidgetModule` entry points catch `Throwable`, so the worst case is a
+skipped widget refresh (stale content until the next sync), never a crash.
+`:react-native-android-widget:compileDebugJavaWithJavac` green 2026-09-05. On
+any library upgrade, re-verify the patch still applies (patch-package fails the
+EAS build loudly if not — re-cut it against the new sources, or drop it if
+upstream guards the draw path).
+
 ---
 
 ## 13. Mistakes ledger

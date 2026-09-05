@@ -62,6 +62,7 @@
     "plugins": [
       "./plugins/withAndroidPackageQueries.js",
       "./plugins/withCookieWarmup.js",
+      "./plugins/withHsdpCrashGuard.js",
       "./plugins/withLargeScreenCompat.js",
       "./plugins/withNativeDebugSymbols.js",
       "./plugins/withNotifeeMavenRepo.js",

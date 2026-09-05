@@ -24,7 +24,9 @@ import { useT } from '../i18n/useT';
 import { ROSE, BTN_RADIUS, TXT, FONTS } from '../constants/theme';
 
 const SCREEN_H = Dimensions.get('window').height;
-const TOP_GAP = 50;   // sheets rise to ~full height, leaving 50px at the top
+// 50 → 0 (owner 2026-09-06): the check-in is a FULL-SCREEN page now — the
+// 3×3 avatar grid wants the whole canvas. The rise/backdrop machinery stays.
+const TOP_GAP = 0;
 // Slow, curved rise (per user): 0.6 s on a long-tail deceleration — quick to
 // commit, then a soft landing, so the sheet reads as gliding into place.
 const ENTER_MS = 600;
@@ -190,10 +192,9 @@ function Sheet() {
           this but only the backdrop had it, so a tap on Save during the 260 ms
           exit still ran recordPick + setStep on an unmounting sheet. */}
       <Animated.View
-        style={[styles.sheet, { height: winH - TOP_GAP }, sheetAnim]}
+        style={[styles.sheet, { height: winH - TOP_GAP, paddingTop: insets.top + 6 }, sheetAnim]}
         pointerEvents={closing ? 'none' : 'auto'}
       >
-        <View style={styles.handle} />
         <ScrollView
           ref={scrollRef}
           showsVerticalScrollIndicator={false}
@@ -457,12 +458,11 @@ function DoneStep({ picks, onDone }: { picks: Record<string, Mood>; onDone: () =
 const styles = StyleSheet.create({
   overlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'flex-end', zIndex: 210, elevation: 210 },
   backdrop: { backgroundColor: 'rgba(0,0,0,0.4)' },
+  // Full-screen page (owner 2026-09-06): no more top gap, so no rounded lip
+  // and no drag handle — the X in the card and Android back both dismiss.
   sheet: {
     backgroundColor: '#FBF7F6',
-    borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    paddingTop: 8,
   },
-  handle: { width: 40, height: 5, borderRadius: 3, backgroundColor: 'rgba(30,27,46,0.16)', alignSelf: 'center', marginBottom: 6 },
 
   verseTitle: {
     fontFamily: FONTS.loraBold, fontWeight: '600', color: TXT,

@@ -117,7 +117,9 @@ runbook says WHY, which is the part that stops the mistake recurring.
   those are wrangler's and touching them cannot affect live users.
   Its `Last Seen` column is the fastest way to answer "can live users still
   reach the plans Worker".
-- **Ad unit / placement IDs** live in `docs/ad-unit-ids.md` (Meta Audience Network app id
-  `1020655230368479` + its 6 placements, created for Meta *bidding* inside AdMob mediation).
-  The app renders **interstitials only**, so only the Interstitial placement can ever fill,
-  and the Meta adapter is still `enabled: false` in `plugins/withAdMobMediation.js`.
+- **Ad unit / placement IDs** live in the AdMob / Meta consoles (the repo mirror
+  `docs/ad-unit-ids.md` was removed in the 2026-09-05 owner cleanup). Meta Audience
+  Network app id `1020655230368479` + its 6 placements exist for Meta *bidding*
+  inside AdMob mediation. The app renders **interstitials only**, so only the
+  Interstitial placement can ever fill, and the Meta adapter is still
+  `enabled: false` in `plugins/withAdMobMediation.js`.

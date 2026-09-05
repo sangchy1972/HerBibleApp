@@ -3,7 +3,7 @@
     "name": "Her Bible",
     "slug": "HerBibleApp",
     "scheme": "herbible",
-    "version": "1.4.4",
+    "version": "1.6.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

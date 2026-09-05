@@ -402,9 +402,11 @@ export default function PrayerFlow({ route, navigation }: RootStackScreenProps<'
   // every page index under her finger. Within one batch the note's presence
   // is identical across bundled/cache/CDN for a given day, so this only
   // guards the pathological orderings (late load, midnight rollover).
+  // trim(): a whitespace-only note must count as ABSENT — latching true on
+  // one would mount a page with nothing on it.
   const hasCtxPageRef = useRef<boolean | null>(null);
   if (dailyVerse && hasCtxPageRef.current === null) {
-    hasCtxPageRef.current = !!dailyVerse.contextNote;
+    hasCtxPageRef.current = !!dailyVerse.contextNote?.trim();
   }
   const hasCtxPage = hasCtxPageRef.current ?? false;
   const medIdx = hasCtxPage ? 2 : 1;

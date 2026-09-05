@@ -121,7 +121,15 @@ export default function MysteryDrawOverlay({
     const gap = 14;
     const w = Math.min(140, (width - gutter * 2 - gap) / 2);
     const h = Math.round(w * 1.12);
-    return { gutter, gap, w, h, finalW: width - gutter * 2 };
+    // Centre the 2×2 spread. The cards were anchored to the LEFT gutter, and
+    // with w capped at 140 every device wider than 324pt showed the whole
+    // grid hugging the left edge (owner screenshot 2026-09-05 — ~100pt of
+    // dead space on a Max-width phone). originX centres the block; on an SE
+    // (320pt) it degrades to exactly the old gutter. The chosen card still
+    // grows to the full gutter-to-gutter panel, unchanged.
+    const blockW = w * 2 + gap;
+    const originX = Math.max(gutter, (width - blockW) / 2);
+    return { gutter, gap, w, h, originX, finalW: width - gutter * 2 };
   }, [width]);
 
   // A REF, not `phase`. `phase` in this closure is a render behind, so two taps
@@ -336,7 +344,7 @@ function DrawCard({
 }: {
   card: MysteryCard;
   index: number;
-  geom: { gutter: number; gap: number; w: number; h: number; finalW: number };
+  geom: { gutter: number; gap: number; w: number; h: number; originX: number; finalW: number };
   lang: UILanguageCode;
   phase: Phase;
   isChosen: boolean;
@@ -350,7 +358,7 @@ function DrawCard({
   const col = index % 2;
   const row = Math.floor(index / 2);
 
-  const startLeft = geom.gutter + col * (geom.w + geom.gap);
+  const startLeft = geom.originX + col * (geom.w + geom.gap);
   const startTop = height * 0.26 + row * (geom.h + geom.gap);
   const grownH = Math.max(210, finalH ?? 210);
   // Centre the grown card on the same band the spread occupied, so it does not

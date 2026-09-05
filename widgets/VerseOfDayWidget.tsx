@@ -33,6 +33,7 @@ import {
 
 const MORNING_BG = require('../assets/widget/bg-morning.webp');
 const EVENING_BG = require('../assets/widget/bg-evening.webp');
+const APP_ICON = require('../assets/widget/appicon.png');
 
 const WHITE = '#FFFFFF';
 const ROSE = '#E63F69';
@@ -94,20 +95,23 @@ export function VerseOfDayWidget({
   const wide = w >= 320;
 
   // Type scale per variant. 4×2 stays at the design baseline (+15% over the
-  // first cut). Wide bumps verse body by ~1.5pt for the extra real estate;
-  // compact shrinks the eyebrow/ref since the verse body is dropped.
-  const eyebrowSize = compact ? 11 : 13;
-  const bodySize = wide ? 19 : 17.5;
-  const refSize = compact ? 13 : 14;
+  // first cut, then EVERY text ×1.07 — owner 2026-09-05: "widget字号全部放大7%").
+  // Wide bumps verse body for the extra real estate; compact shrinks the
+  // eyebrow/ref since the verse body is dropped.
+  const eyebrowSize = compact ? 11.8 : 13.9;   // 11 / 13 × 1.07
+  const bodySize = wide ? 20.3 : 18.7;         // 19 / 17.5 × 1.07
+  const refSize = compact ? 13.9 : 15;         // 13 / 14 × 1.07
   const iconSize = compact ? 16 : 20;
+  const appIconSize = compact ? 15 : 18;
   const pad = compact ? 11 : 15;
 
   // Amen pill — bumped ~20% larger than the first cut, then widened ~15%
-  // more (horizontal padding only; height/font/radius held constant) so it
-  // stays in step with the in-app WidgetPreview's pill. Hidden on compact
-  // (2×2) — no horizontal room next to the reference.
-  const amenFont = 14.5;
-  const heartSize = 17;
+  // more (horizontal padding only). Font rides the ×1.07 pass; the heart got
+  // its own bump 17→19 (owner: the white pill's icon read too small). Keep
+  // in step with the in-app WidgetPreview's pill. Hidden on compact (2×2) —
+  // no horizontal room next to the reference.
+  const amenFont = 15.5;                       // 14.5 × 1.07
+  const heartSize = 19;
   const pillPadH = 20;
   const pillPadV = 7;
   const pillRadius = 22;
@@ -162,7 +166,18 @@ export function VerseOfDayWidget({
         {/* Top cluster: eyebrow + (verse on 4×2 / 5×2 only). */}
         <FlexWidget style={{ flexDirection: 'column', width: 'match_parent' }}>
           <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', width: 'match_parent', marginBottom: compact ? 5 : 7 }}>
-            <FlexWidget style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: ROSE, marginRight: 6 }} />
+            {/* The real app icon (owner 2026-09-05: so she knows WHICH app this
+                is) — replaces the anonymous rose dot. A pre-sized 96px copy of
+                assets/icon.png: the widget renders in a headless process with
+                the OOM history (see the drawViewToBitmap patch), so it never
+                decodes the 1024² original. */}
+            <ImageWidget
+              image={APP_ICON}
+              imageWidth={appIconSize}
+              imageHeight={appIconSize}
+              radius={4}
+            />
+            <FlexWidget style={{ width: 7, height: 1 }} />
             <TextWidget
               text="HER BIBLE"
               style={{ fontSize: eyebrowSize, fontWeight: '700', color: WHITE, letterSpacing: 1.4 }}
@@ -179,6 +194,9 @@ export function VerseOfDayWidget({
             <TextWidget
               text={bodyText}
               maxLines={3}
+              // A verse that outgrows its three lines ends in an ellipsis
+              // instead of a hard clip (owner 2026-09-05).
+              truncate="END"
               style={{ fontSize: bodySize, fontFamily: 'Lora_400Regular', color: WHITE }}
             />
           )}
@@ -188,6 +206,8 @@ export function VerseOfDayWidget({
         <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', width: 'match_parent' }}>
           <TextWidget
             text={refText}
+            maxLines={1}
+            truncate="END"
             style={{ fontSize: refSize, fontWeight: '700', color: WHITE, letterSpacing: 0.3 }}
           />
           <FlexWidget style={{ flex: 1, height: 1 }} />

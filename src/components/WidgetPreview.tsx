@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, Image, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -38,7 +38,8 @@ export default function WidgetPreview({ size, width, body, reference, segment = 
   const resolvedReference = reference ?? t('widgetPreview.sampleRef');
   const compact = size === '2x2';
   const src = bgSource ?? (segment === 'evening' ? EVENING_BG : MORNING_BG);
-  const bodySize = compact ? 14 : size === '5x2' ? 18 : 16;
+  // ×1.07 pass mirrors the live widget (owner 2026-09-05).
+  const bodySize = compact ? 15 : size === '5x2' ? 19.3 : 17.1;
 
   return (
     <View style={[styles.shell, { aspectRatio: ASPECTS[size], width: width ?? '100%' }]}>
@@ -50,7 +51,7 @@ export default function WidgetPreview({ size, width, body, reference, segment = 
         <View style={[styles.content, { padding: compact ? 12 : 15 }]}>
           <View>
             <View style={styles.eyebrowRow}>
-              <View style={styles.dot} />
+              <Image source={require('../../assets/widget/appicon.png')} style={styles.appIcon} />
               <Text style={styles.eyebrow}>HER BIBLE</Text>
               <View style={styles.spacer} />
               <Feather name={segment === 'evening' ? 'moon' : 'sun'} size={compact ? 15 : 19} color="#FFFFFF" />
@@ -61,12 +62,12 @@ export default function WidgetPreview({ size, width, body, reference, segment = 
           </View>
 
           <View style={styles.bottomRow}>
-            <Text style={[styles.reference, { fontSize: compact ? 12 : 14 }]} numberOfLines={1}>
+            <Text style={[styles.reference, { fontSize: compact ? 12.8 : 15 }]} numberOfLines={1}>
               {resolvedReference}
             </Text>
             <View style={styles.spacer} />
             <View style={styles.amenPill}>
-              <Ionicons name="heart" size={compact ? 13 : 15} color={ROSE} />
+              <Ionicons name="heart" size={compact ? 14.5 : 17} color={ROSE} />
               <Text style={styles.amenText}>{t('widget.amen')}</Text>
             </View>
           </View>
@@ -86,8 +87,8 @@ const styles = StyleSheet.create({
   img: { borderRadius: 20 },           // 18 → 23.4 — mirrors the shell's card radius
   content: { flex: 1, justifyContent: 'space-between' },
   eyebrowRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 7 },
-  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: ROSE, marginRight: 6 },
-  eyebrow: { fontSize: 12, fontWeight: '700', color: '#FFFFFF', letterSpacing: 1.4 },
+  appIcon: { width: 16, height: 16, borderRadius: 3.5, marginRight: 7 },
+  eyebrow: { fontSize: 12.8, fontWeight: '700', color: '#FFFFFF', letterSpacing: 1.4 },
   spacer: { flex: 1 },
   body: { color: '#FFFFFF', fontFamily: FONTS.lora },
   bottomRow: { flexDirection: 'row', alignItems: 'center' },
@@ -101,5 +102,5 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     gap: 5,
   },
-  amenText: { fontWeight: '700', color: ROSE, fontSize: 14.5 },
+  amenText: { fontWeight: '700', color: ROSE, fontSize: 15.5 },
 });
